@@ -92,7 +92,7 @@ class WhatsAppOtpService
     {
         $title = $context === 'login'
             ? 'Kode OTP login portal Anda: '.$otp
-            : 'Kode OTP aktivasi akun PaperTime Anda: '.$otp;
+            : 'Kode OTP aktivasi akun Humi - Easy HR Management Anda: '.$otp;
 
         return implode("\n", [
             $title,

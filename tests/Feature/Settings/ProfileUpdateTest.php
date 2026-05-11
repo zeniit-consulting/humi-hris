@@ -6,6 +6,8 @@ use App\Models\CompanySetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class ProfileUpdateTest extends TestCase
@@ -89,6 +91,60 @@ class ProfileUpdateTest extends TestCase
         $this->assertSame('6281200001111', $user->phone);
         $this->assertNull($user->phone_verified_at);
         $this->assertNotNull($user->whatsapp_otp_code);
+    }
+
+    public function test_profile_avatar_can_be_uploaded_to_r2(): void
+    {
+        Storage::fake('r2');
+
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'avatar' => UploadedFile::fake()->image('avatar.jpg'),
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('profile.edit'));
+
+        $user->refresh();
+
+        $this->assertNotNull($user->avatar_path);
+        Storage::disk('r2')->assertExists($user->avatar_path);
+    }
+
+    public function test_existing_profile_avatar_can_be_removed(): void
+    {
+        Storage::fake('r2');
+
+        $path = UploadedFile::fake()->image('avatar.jpg')->store('avatars', 'r2');
+
+        $user = User::factory()->create([
+            'avatar_path' => $path,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'remove_avatar' => '1',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('profile.edit'));
+
+        $user->refresh();
+
+        $this->assertNull($user->avatar_path);
+        Storage::disk('r2')->assertMissing($path);
     }
 
     public function test_user_can_delete_their_account()

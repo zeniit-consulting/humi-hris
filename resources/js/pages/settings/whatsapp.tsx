@@ -38,7 +38,7 @@ export default function WhatsappSettingsPage({
 }) {
     const form = useForm({
         phone: defaultPhone ?? '',
-        message: 'Halo! Ini pesan uji coba dari PaperTime.',
+        message: 'Halo! Ini pesan uji coba dari Humi - Easy HR Management.',
     });
     const { flash } = usePage<{
         flash?: { success?: string | null; error?: string | null };

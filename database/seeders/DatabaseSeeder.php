@@ -52,7 +52,7 @@ class DatabaseSeeder extends Seeder
         CompanySetting::query()->updateOrCreate(
             ['user_id' => $owner->id],
             [
-                'name' => 'PaperTime Demo',
+                'name' => 'Humi - Easy HR Management Demo',
                 'details' => 'Demo company profile',
             ]
         );

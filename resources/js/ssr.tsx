@@ -3,7 +3,8 @@ import createServer from '@inertiajs/react/server';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import ReactDOMServer from 'react-dom/server';
 
-const appName = import.meta.env.VITE_APP_NAME || 'PaperTime';
+const appName =
+    import.meta.env.VITE_APP_NAME || 'Humi - Easy HR Management';
 
 createServer((page) =>
     createInertiaApp({

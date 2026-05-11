@@ -58,7 +58,20 @@ class HandleInertiaRequests extends Middleware
                 return Storage::disk('public')->url($setting->logo_path);
             },
             'auth' => [
-                'user' => $request->user(),
+                'user' => function () use ($request) {
+                    $user = $request->user();
+
+                    if (! $user) {
+                        return null;
+                    }
+
+                    return [
+                        ...$user->toArray(),
+                        'avatar' => $user->avatar_path
+                            ? Storage::disk('r2')->url($user->avatar_path)
+                            : null,
+                    ];
+                },
             ],
             'permissions' => [
                 'can_manage_sub_users' => $request->user()?->canManageSubUsers() ?? false,

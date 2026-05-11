@@ -394,7 +394,10 @@ export default function PortalPage() {
                 />
                 <meta
                     name="apple-mobile-web-app-title"
-                    content={import.meta.env.VITE_APP_NAME || 'PaperTime'}
+                    content={
+                        import.meta.env.VITE_APP_NAME ||
+                        'Humi - Easy HR Management'
+                    }
                 />
                 <link rel="manifest" href="/manifest.webmanifest" />
                 <link rel="preconnect" href="https://fonts.googleapis.com" />

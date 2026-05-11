@@ -52,6 +52,9 @@ export default function Profile({
     };
 }) {
     const { auth } = usePage().props;
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(
+        (auth.user.avatar as string | null | undefined) ?? null,
+    );
     const [logoPreview, setLogoPreview] = useState<string | null>(
         company.logo_url,
     );
@@ -68,10 +71,14 @@ export default function Profile({
                   },
               ],
     );
+    const avatarPreviewRef = useRef<string | null>(null);
     const uploadedPreviewRef = useRef<string | null>(null);
 
     useEffect(() => {
         return () => {
+            if (avatarPreviewRef.current) {
+                URL.revokeObjectURL(avatarPreviewRef.current);
+            }
             if (uploadedPreviewRef.current) {
                 URL.revokeObjectURL(uploadedPreviewRef.current);
             }
@@ -96,11 +103,134 @@ export default function Profile({
                         {...ProfileController.update.form()}
                         options={{
                             preserveScroll: true,
+                            forceFormData: true,
                         }}
                         className="space-y-6"
                     >
                         {({ processing, recentlySuccessful, errors }) => (
                             <>
+                                <div className="grid gap-3">
+                                    <Label htmlFor="avatar">
+                                        Foto profil
+                                    </Label>
+
+                                    <div className="flex items-center gap-4 rounded-lg border bg-slate-50/60 p-4">
+                                        {avatarPreview ? (
+                                            <img
+                                                src={avatarPreview}
+                                                alt="Pratinjau avatar"
+                                                className="size-16 rounded-full border object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex size-16 items-center justify-center rounded-full border bg-white">
+                                                <ImagePlus className="size-5 text-slate-400" />
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-2">
+                                            <label
+                                                htmlFor="avatar"
+                                                className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-100"
+                                            >
+                                                <Upload className="size-4" />
+                                                Upload avatar
+                                            </label>
+                                            <input
+                                                id="avatar"
+                                                name="avatar"
+                                                type="file"
+                                                accept="image/png,image/jpeg,image/webp"
+                                                className="hidden"
+                                                onChange={(event) => {
+                                                    const file =
+                                                        event.target.files?.[0];
+
+                                                    if (
+                                                        avatarPreviewRef.current
+                                                    ) {
+                                                        URL.revokeObjectURL(
+                                                            avatarPreviewRef.current,
+                                                        );
+                                                        avatarPreviewRef.current =
+                                                            null;
+                                                    }
+
+                                                    if (!file) {
+                                                        setAvatarPreview(
+                                                            (auth.user.avatar as
+                                                                | string
+                                                                | null
+                                                                | undefined) ??
+                                                                null,
+                                                        );
+                                                        return;
+                                                    }
+
+                                                    const previewUrl =
+                                                        URL.createObjectURL(
+                                                            file,
+                                                        );
+                                                    avatarPreviewRef.current =
+                                                        previewUrl;
+                                                    setAvatarPreview(
+                                                        previewUrl,
+                                                    );
+                                                }}
+                                            />
+
+                                            <p className="text-xs text-slate-500">
+                                                PNG/JPG/WEBP, maksimum 2MB.
+                                            </p>
+
+                                            {(auth.user.avatar as
+                                                | string
+                                                | null
+                                                | undefined) ? (
+                                                <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="remove_avatar"
+                                                        value="1"
+                                                        onChange={(event) => {
+                                                            if (
+                                                                event.target
+                                                                    .checked
+                                                            ) {
+                                                                if (
+                                                                    avatarPreviewRef.current
+                                                                ) {
+                                                                    URL.revokeObjectURL(
+                                                                        avatarPreviewRef.current,
+                                                                    );
+                                                                    avatarPreviewRef.current =
+                                                                        null;
+                                                                }
+                                                                setAvatarPreview(
+                                                                    null,
+                                                                );
+                                                            } else {
+                                                                setAvatarPreview(
+                                                                    (auth.user.avatar as
+                                                                        | string
+                                                                        | null
+                                                                        | undefined) ??
+                                                                        null,
+                                                                );
+                                                            }
+                                                        }}
+                                                    />
+                                                    Hapus avatar saat simpan
+                                                </label>
+                                            ) : null}
+                                        </div>
+                                    </div>
+
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.avatar}
+                                    />
+                                </div>
+
                                 <div className="grid gap-2">
                                     <Label htmlFor="name">Name</Label>
 

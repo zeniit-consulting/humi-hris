@@ -10,6 +10,7 @@ use App\Services\WhatsAppOtpService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -68,25 +69,41 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request, WhatsAppOtpService $otpService): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->safe()->except(['avatar', 'remove_avatar']);
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill($validated);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $phoneChanged = $request->user()->isDirty('phone');
+        $phoneChanged = $user->isDirty('phone');
 
         if ($phoneChanged) {
-            $request->user()->phone_verified_at = null;
-            $request->user()->whatsapp_otp_code = null;
-            $request->user()->whatsapp_otp_sent_at = null;
-            $request->user()->whatsapp_otp_expires_at = null;
+            $user->phone_verified_at = null;
+            $user->whatsapp_otp_code = null;
+            $user->whatsapp_otp_sent_at = null;
+            $user->whatsapp_otp_expires_at = null;
         }
 
-        $request->user()->save();
+        if ($request->boolean('remove_avatar')) {
+            $this->deleteAvatar($user->avatar_path);
+            $user->avatar_path = null;
+        }
+
+        if ($request->file('avatar') instanceof UploadedFile) {
+            $this->deleteAvatar($user->avatar_path);
+            $user->avatar_path = $request->file('avatar')->storePublicly(
+                'avatars',
+                'r2',
+            );
+        }
+
+        $user->save();
 
         if ($phoneChanged) {
-            $otpService->send($request->user());
+            $otpService->send($user);
 
             return redirect()
                 ->route('activation.notice')
@@ -94,6 +111,15 @@ class ProfileController extends Controller
         }
 
         return to_route('profile.edit');
+    }
+
+    private function deleteAvatar(?string $path): void
+    {
+        if (! $path) {
+            return;
+        }
+
+        Storage::disk('r2')->delete($path);
     }
 
     /**
