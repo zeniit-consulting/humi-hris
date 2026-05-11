@@ -26,7 +26,7 @@ return new class extends Migration
         DB::table('payroll_runs')->whereNull('type')->orWhere('type', '')->update(['type' => 'regular']);
 
         // Step 3: create the new (user_id, period, type) unique index if not exists
-        $newIndexExists = collect(DB::select("SHOW INDEX FROM payroll_runs WHERE Key_name = 'payroll_runs_user_id_period_type_unique'"))->isNotEmpty();
+        $newIndexExists = Schema::hasIndex('payroll_runs', 'payroll_runs_user_id_period_type_unique');
         if (! $newIndexExists) {
             Schema::table('payroll_runs', function (Blueprint $table): void {
                 $table->unique(['user_id', 'period', 'type'], 'payroll_runs_user_id_period_type_unique');
@@ -34,7 +34,7 @@ return new class extends Migration
         }
 
         // Step 4: drop the old (user_id, period) unique — MySQL can now use the new index for the FK
-        $oldIndexExists = collect(DB::select("SHOW INDEX FROM payroll_runs WHERE Key_name = 'payroll_runs_user_id_period_unique'"))->isNotEmpty();
+        $oldIndexExists = Schema::hasIndex('payroll_runs', 'payroll_runs_user_id_period_unique');
         if ($oldIndexExists) {
             Schema::table('payroll_runs', function (Blueprint $table): void {
                 $table->dropUnique('payroll_runs_user_id_period_unique');
@@ -48,7 +48,7 @@ return new class extends Migration
     public function down(): void
     {
         // Restore old (user_id, period) unique first so FK constraint stays satisfied
-        $oldIndexExists = collect(DB::select("SHOW INDEX FROM payroll_runs WHERE Key_name = 'payroll_runs_user_id_period_unique'"))->isNotEmpty();
+        $oldIndexExists = Schema::hasIndex('payroll_runs', 'payroll_runs_user_id_period_unique');
         if (! $oldIndexExists) {
             Schema::table('payroll_runs', function (Blueprint $table): void {
                 $table->unique(['user_id', 'period'], 'payroll_runs_user_id_period_unique');
@@ -56,8 +56,8 @@ return new class extends Migration
         }
 
         // Then drop the new unique and remove columns
+        $newIndexExists = Schema::hasIndex('payroll_runs', 'payroll_runs_user_id_period_type_unique');
         Schema::table('payroll_runs', function (Blueprint $table): void {
-            $newIndexExists = collect(DB::select("SHOW INDEX FROM payroll_runs WHERE Key_name = 'payroll_runs_user_id_period_type_unique'"))->isNotEmpty();
             if ($newIndexExists) {
                 $table->dropUnique('payroll_runs_user_id_period_type_unique');
             }
