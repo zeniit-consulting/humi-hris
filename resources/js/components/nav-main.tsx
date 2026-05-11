@@ -1,0 +1,47 @@
+import { Link } from '@inertiajs/react';
+import { Lock } from 'lucide-react';
+import {
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from '@/components/ui/sidebar';
+import { useCurrentUrl } from '@/hooks/use-current-url';
+import { toUrl } from '@/lib/utils';
+import type { NavGroup } from '@/types';
+
+export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
+    const { isCurrentUrl } = useCurrentUrl();
+
+    return (
+        <>
+            {groups.map((group) => (
+                <SidebarGroup key={group.title} className="px-2 py-0">
+                    <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {group.items.map((item) => (
+                            <SidebarMenuItem
+                                key={`${group.title}-${item.title}`}
+                            >
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isCurrentUrl(item.href)}
+                                    tooltip={{ children: item.title }}
+                                >
+                                    <Link href={toUrl(item.href)} prefetch>
+                                        {item.icon && <item.icon />}
+                                        <span className="flex-1">{item.title}</span>
+                                        {item.locked && (
+                                            <Lock className="ml-auto size-3 opacity-50" />
+                                        )}
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </SidebarGroup>
+            ))}
+        </>
+    );
+}

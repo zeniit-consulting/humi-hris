@@ -1,0 +1,74 @@
+{
+    "name": "Humi - HR Information System",
+    "short_name": "Humi",
+    "description": "Portal HRIS untuk karyawan: absensi, cuti, lembur, dan payroll dalam satu aplikasi.",
+    "start_url": "/portal",
+    "scope": "/",
+    "display": "standalone",
+    "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+    "background_color": "#ffffff",
+    "theme_color": "#006069",
+    "orientation": "portrait",
+    "lang": "id-ID",
+    "dir": "ltr",
+    "categories": ["business", "productivity", "utilities"],
+    "icons": [
+        {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Absensi",
+            "short_name": "Absensi",
+            "description": "Clock in/out hari ini",
+            "url": "/portal/attendance",
+            "icons": [
+                {
+                    "src": "/icons/icon-96.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Ajukan Cuti",
+            "short_name": "Cuti",
+            "description": "Ajukan cuti baru",
+            "url": "/portal/leaves",
+            "icons": [
+                {
+                    "src": "/icons/icon-96.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Payroll",
+            "short_name": "Gaji",
+            "description": "Lihat informasi gaji",
+            "url": "/portal/payroll",
+            "icons": [
+                {
+                    "src": "/icons/icon-96.png",
+                    "sizes": "96x96"
+                }
+            ]
+        }
+    ],
+    "prefer_related_applications": false
+}
