@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Mobile\V1\OvertimeController;
 use App\Http\Controllers\Api\Mobile\V1\PayrollController;
 use App\Http\Controllers\Api\Mobile\V1\PortalController;
 use App\Http\Controllers\Api\PortalResourceController;
+use App\Http\Controllers\Admin\SubscriberManagementController;
 use App\Http\Controllers\Auth\PortalOtpLoginController;
 use App\Http\Controllers\Auth\WhatsappActivationController;
 use App\Http\Controllers\BillingController;
@@ -75,6 +76,16 @@ Route::middleware(['auth', 'account.activated', 'admin.access'])->group(function
     Route::post('billing/invoices', [BillingController::class, 'createInvoice'])->name('billing.invoices.store');
     Route::post('billing/invoices/{invoice}/proof', [BillingController::class, 'uploadProof'])->name('billing.invoices.proof');
     Route::delete('billing/invoices/{invoice}', [BillingController::class, 'cancelInvoice'])->name('billing.invoices.cancel');
+});
+
+Route::middleware(['auth', 'account.activated', 'admin.access'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('subscribers', [SubscriberManagementController::class, 'index'])->name('subscribers.index');
+    Route::put('subscribers/{subscriber}/subscription', [SubscriberManagementController::class, 'updateSubscription'])
+        ->name('subscribers.subscription.update');
+    Route::post('subscribers/invoices/{invoice}/approve', [SubscriberManagementController::class, 'approveInvoice'])
+        ->name('subscribers.invoices.approve');
+    Route::post('subscribers/invoices/{invoice}/cancel', [SubscriberManagementController::class, 'cancelInvoice'])
+        ->name('subscribers.invoices.cancel');
 });
 
 Route::middleware(['auth', 'account.activated'])->group(function () {

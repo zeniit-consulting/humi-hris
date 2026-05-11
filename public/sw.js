@@ -20,7 +20,6 @@ const APP_SHELL = [
     '/portal',
     '/manifest.webmanifest',
     '/logo.png',
-    '/logo-color.png',
     '/icons/icon-96.png',
     '/icons/icon-192.png',
     '/icons/icon-512.png',

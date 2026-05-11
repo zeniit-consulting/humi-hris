@@ -112,6 +112,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Determine whether this user can manage platform subscribers.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'superadmin';
+    }
+
+    /**
      * Get the latest subscription for this user.
      */
     public function subscription(): HasOne

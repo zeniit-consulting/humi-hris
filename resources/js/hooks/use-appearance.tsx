@@ -11,6 +11,7 @@ export type UseAppearanceReturn = {
 
 const listeners = new Set<() => void>();
 let currentAppearance: Appearance = 'light';
+const appearanceValues: Appearance[] = ['light', 'dark', 'system'];
 
 const prefersDark = (): boolean => {
     if (typeof window === 'undefined') return false;
@@ -24,10 +25,27 @@ const setCookie = (name: string, value: string, days = 365): void => {
     document.cookie = `${name}=${value};path=/;max-age=${maxAge};SameSite=Lax`;
 };
 
+const getCookie = (name: string): string | null => {
+    if (typeof document === 'undefined') return null;
+
+    const cookies = document.cookie.split('; ');
+    const value = cookies.find((cookie) => cookie.startsWith(`${name}=`));
+
+    return value ? decodeURIComponent(value.split('=').slice(1).join('=')) : null;
+};
+
+const normalizeAppearance = (value: string | null): Appearance => {
+    return appearanceValues.includes(value as Appearance)
+        ? (value as Appearance)
+        : 'light';
+};
+
 const getStoredAppearance = (): Appearance => {
     if (typeof window === 'undefined') return 'light';
 
-    return (localStorage.getItem('appearance') as Appearance) || 'light';
+    return normalizeAppearance(
+        localStorage.getItem('appearance') ?? getCookie('appearance'),
+    );
 };
 
 const isDarkMode = (appearance: Appearance): boolean => {
@@ -62,12 +80,17 @@ const handleSystemThemeChange = (): void => applyTheme(currentAppearance);
 export function initializeTheme(): void {
     if (typeof window === 'undefined') return;
 
+    const storedAppearance = getStoredAppearance();
+
     if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'light');
-        setCookie('appearance', 'light');
+        localStorage.setItem('appearance', storedAppearance);
     }
 
-    currentAppearance = getStoredAppearance();
+    if (!getCookie('appearance')) {
+        setCookie('appearance', storedAppearance);
+    }
+
+    currentAppearance = storedAppearance;
     applyTheme(currentAppearance);
 
     // Set up system theme change listener

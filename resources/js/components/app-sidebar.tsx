@@ -10,6 +10,7 @@ import {
     HandCoins,
     LayoutGrid,
     PackageCheck,
+    ShieldCheck,
     Timer,
     UsersRound,
     WalletCards,
@@ -137,10 +138,26 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
 }
 
 export function AppSidebar() {
-    const { subscription } = usePage().props;
+    const { subscription, permissions } = usePage().props as {
+        subscription?: { locked_features?: string[] };
+        permissions?: { can_manage_subscribers?: boolean };
+    };
     const mainNavGroups = buildNavGroups(
-        (subscription as any)?.locked_features ?? [],
+        subscription?.locked_features ?? [],
     );
+
+    if (permissions?.can_manage_subscribers) {
+        mainNavGroups.push({
+            title: 'Platform',
+            items: [
+                {
+                    title: 'Subscriber',
+                    href: '/admin/subscribers',
+                    icon: ShieldCheck,
+                },
+            ],
+        });
+    }
 
     return (
         <Sidebar collapsible="icon" variant="inset">
