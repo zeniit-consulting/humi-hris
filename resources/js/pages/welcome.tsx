@@ -66,6 +66,82 @@ const benefits = [
     'Akses berbasis role dengan audit log lengkap',
 ];
 
+const fmt = new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+});
+
+const PRICE_CORE = 2900;
+const PRICE_PLUS = 7500;
+
+const coreFeaturesIncluded = [
+    'Manajemen Karyawan',
+    'Kehadiran & Absensi',
+    'Jadwal Kerja',
+    'Cuti & Izin',
+    'Lembur',
+    'Notifikasi',
+    'Survey',
+    'Struktur Organisasi',
+];
+
+const coreFeatureLocked = [
+    'Rekrutmen',
+    'Penggajian',
+    'Kasbon',
+    'Asset Management',
+];
+
+const plusFeatures = [...coreFeaturesIncluded, ...coreFeatureLocked];
+
+const pricingPlans = [
+    {
+        name: 'Free',
+        price: 'Gratis',
+        description:
+            'Cocok untuk uji coba awal sebelum tim Anda masuk ke workflow HR yang lebih lengkap.',
+        highlight: false,
+        badge: 'GRATIS',
+        cta: 'Mulai Gratis',
+        features: [
+            'Manajemen Karyawan',
+            'Kehadiran & Absensi',
+            'Jadwal Kerja',
+            'Cuti & Izin',
+            'Lembur',
+            'Notifikasi',
+            'Survey',
+            'Struktur Organisasi',
+            'Maks. 10 karyawan',
+            'Maks. 2 bulan',
+        ],
+        lockedFeatures: coreFeatureLocked,
+    },
+    {
+        name: 'Core',
+        price: fmt.format(PRICE_CORE),
+        period: '/karyawan/bulan',
+        description:
+            'Paket inti untuk operasional HR harian dengan fitur dasar yang sudah siap dipakai.',
+        highlight: false,
+        cta: 'Pilih Paket Core',
+        features: coreFeaturesIncluded,
+        lockedFeatures: coreFeatureLocked,
+    },
+    {
+        name: 'Plus',
+        price: fmt.format(PRICE_PLUS),
+        period: '/karyawan/bulan',
+        description:
+            'Paket paling lengkap untuk tim yang butuh payroll, rekrutmen, kasbon, dan asset management.',
+        highlight: true,
+        badge: 'REKOMENDASI',
+        cta: 'Pilih Paket Plus',
+        features: plusFeatures,
+    },
+];
+
 export default function Welcome({
     canRegister = true,
 }: {
@@ -417,16 +493,164 @@ export default function Welcome({
                         </div>
                     </section>
 
-                    {/* CTA Section */}
+                    {/* Pricing Section */}
                     <section id="pricing" className="py-20">
+                        <div className="mx-auto max-w-6xl px-6">
+                            <div className="mx-auto max-w-2xl text-center">
+                                <p className="text-xs font-semibold tracking-[0.12em] text-[#14a8b0] uppercase">
+                                    Pricing
+                                </p>
+                                <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+                                    Harga yang mengikuti skala tim Anda
+                                </h2>
+                                <p className="mt-4 text-base text-slate-600">
+                                    Paket dan fitur di bawah ini disamakan dengan halaman billing agar calon pelanggan melihat penawaran yang sama.
+                                </p>
+                            </div>
+
+                            <div className="mt-12 grid gap-6 lg:grid-cols-3">
+                                {pricingPlans.map((plan) => (
+                                    <article
+                                        key={plan.name}
+                                        className={
+                                            plan.highlight
+                                                ? 'relative overflow-hidden rounded-3xl border border-[#0d4d52] bg-[#0d4d52] p-8 text-white shadow-[0_24px_80px_rgba(13,77,82,0.22)]'
+                                                : 'rounded-3xl border border-slate-200 bg-white p-8 text-slate-900'
+                                        }
+                                    >
+                                        {plan.badge ? (
+                                            <span
+                                                className={
+                                                    plan.highlight
+                                                        ? 'inline-flex rounded-full bg-white/14 px-3 py-1 text-xs font-semibold tracking-[0.12em] uppercase text-white'
+                                                        : 'inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tracking-[0.12em] uppercase text-slate-700'
+                                                }
+                                            >
+                                                {plan.badge}
+                                            </span>
+                                        ) : null}
+
+                                        <div className="mt-4">
+                                            <h3 className="text-2xl font-bold tracking-tight">
+                                                {plan.name}
+                                            </h3>
+                                            <p
+                                                className={
+                                                    plan.highlight
+                                                        ? 'mt-3 text-sm leading-relaxed text-white/78'
+                                                        : 'mt-3 text-sm leading-relaxed text-slate-600'
+                                                }
+                                            >
+                                                {plan.description}
+                                            </p>
+                                        </div>
+
+                                        <div className="mt-8 flex items-end gap-2">
+                                            <span className="text-4xl font-bold tracking-[-0.05em]">
+                                                {plan.price}
+                                            </span>
+                                            {plan.period ? (
+                                                <span
+                                                    className={
+                                                        plan.highlight
+                                                            ? 'pb-1 text-sm text-white/72'
+                                                            : 'pb-1 text-sm text-slate-500'
+                                                    }
+                                                >
+                                                    {plan.period}
+                                                </span>
+                                            ) : null}
+                                        </div>
+
+                                        <ul className="mt-8 space-y-3">
+                                            {plan.features.map((feature) => (
+                                                <li
+                                                    key={feature}
+                                                    className="flex items-start gap-3"
+                                                >
+                                                    <CheckCircle2
+                                                        className={
+                                                            plan.highlight
+                                                                ? 'mt-0.5 h-5 w-5 shrink-0 text-[#7ae5e0]'
+                                                                : 'mt-0.5 h-5 w-5 shrink-0 text-[#14a8b0]'
+                                                        }
+                                                    />
+                                                    <span
+                                                        className={
+                                                            plan.highlight
+                                                                ? 'text-sm text-white/88'
+                                                                : 'text-sm text-slate-700'
+                                                        }
+                                                    >
+                                                        {feature}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                            {plan.lockedFeatures?.map(
+                                                (feature) => (
+                                                    <li
+                                                        key={feature}
+                                                        className="flex items-start gap-3"
+                                                    >
+                                                        <Shield
+                                                            className={
+                                                                plan.highlight
+                                                                    ? 'mt-0.5 h-5 w-5 shrink-0 text-white/55'
+                                                                    : 'mt-0.5 h-5 w-5 shrink-0 text-slate-400'
+                                                            }
+                                                        />
+                                                        <span
+                                                            className={
+                                                                plan.highlight
+                                                                    ? 'text-sm text-white/60'
+                                                                    : 'text-sm text-slate-500'
+                                                            }
+                                                        >
+                                                            {feature}
+                                                        </span>
+                                                    </li>
+                                                ),
+                                            )}
+                                        </ul>
+
+                                        <div className="mt-8">
+                                            <Link
+                                                href={
+                                                    auth.user
+                                                        ? dashboard()
+                                                        : canRegister
+                                                          ? register()
+                                                          : login()
+                                                }
+                                                className={
+                                                    plan.highlight
+                                                        ? 'inline-flex w-full items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#0d4d52] transition hover:bg-slate-100'
+                                                        : 'inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-100'
+                                                }
+                                            >
+                                                {plan.cta}
+                                            </Link>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+
+                            <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 px-6 py-5 text-center text-sm text-slate-600">
+                                <Sparkles className="mr-1 inline size-4 text-[#14a8b0]" />
+                                Harga belum termasuk PPN. Pembayaran via transfer bank. Invoice dibuat setelah konfirmasi.
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* CTA Section */}
+                    <section className="pb-20">
                         <div className="mx-auto max-w-4xl px-6">
                             <div className="rounded-3xl bg-gradient-to-br from-[#0d4d52] to-[#14a8b0] px-8 py-12 text-center text-white md:px-12 md:py-16">
                                 <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
                                     Siap mengelola HR dengan lebih baik?
                                 </h2>
                                 <p className="mx-auto mt-4 max-w-xl text-base opacity-90">
-                                    Mulai gratis hari ini. Tidak perlu kartu
-                                    kredit, setup dalam hitungan menit.
+                                    Mulai gratis hari ini. Tidak perlu kartu kredit, setup dalam hitungan menit.
                                 </p>
 
                                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
