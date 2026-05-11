@@ -1,0 +1,46 @@
+<?php
+
+return [
+    'accepted' => ':Attribute harus disetujui.',
+    'array' => ':Attribute harus berupa daftar.',
+    'confirmed' => 'Konfirmasi :attribute tidak cocok.',
+    'current_password' => 'Kata sandi saat ini tidak sesuai.',
+    'date' => ':Attribute harus berupa tanggal yang valid.',
+    'date_format' => 'Format :attribute tidak valid.',
+    'digits' => ':Attribute harus terdiri dari :digits digit.',
+    'email' => ':Attribute harus berupa alamat email yang valid.',
+    'exists' => ':Attribute yang dipilih tidak valid.',
+    'file' => ':Attribute harus berupa file.',
+    'image' => ':Attribute harus berupa gambar.',
+    'in' => ':Attribute yang dipilih tidak valid.',
+    'integer' => ':Attribute harus berupa angka bulat.',
+    'max' => [
+        'file' => ':Attribute tidak boleh lebih dari :max KB.',
+        'numeric' => ':Attribute tidak boleh lebih dari :max.',
+        'string' => ':Attribute tidak boleh lebih dari :max karakter.',
+        'array' => ':Attribute tidak boleh lebih dari :max item.',
+    ],
+    'mimes' => ':Attribute harus berupa file dengan format: :values.',
+    'min' => [
+        'file' => ':Attribute minimal :min KB.',
+        'numeric' => ':Attribute minimal :min.',
+        'string' => ':Attribute minimal :min karakter.',
+        'array' => ':Attribute minimal :min item.',
+    ],
+    'numeric' => ':Attribute harus berupa angka.',
+    'required' => ':Attribute wajib diisi.',
+    'required_with' => ':Attribute wajib diisi saat :values tersedia.',
+    'same' => ':Attribute dan :other harus sama.',
+    'string' => ':Attribute harus berupa teks.',
+    'unique' => ':Attribute sudah digunakan.',
+
+    'attributes' => [
+        'name' => 'nama',
+        'company_name' => 'nama perusahaan',
+        'email' => 'alamat email',
+        'phone' => 'nomor WhatsApp',
+        'password' => 'kata sandi',
+        'password_confirmation' => 'konfirmasi kata sandi',
+        'remember' => 'ingat saya',
+    ],
+];

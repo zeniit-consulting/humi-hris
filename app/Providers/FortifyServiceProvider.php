@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
@@ -51,13 +50,6 @@ class FortifyServiceProvider extends ServiceProvider
 
             if (! $user || ! Hash::check($password, $user->password)) {
                 return null;
-            }
-
-            // Portal users are required to use WhatsApp OTP login.
-            if ($user->role === 'user') {
-                throw ValidationException::withMessages([
-                    Fortify::username() => 'Akun karyawan masuk melalui OTP WhatsApp di /portal/login.',
-                ]);
             }
 
             return $user;
