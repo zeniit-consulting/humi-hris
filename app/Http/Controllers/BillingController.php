@@ -61,7 +61,7 @@ class BillingController extends Controller
                 'due_date' => $invoice->due_date?->toDateString(),
                 'paid_at' => $invoice->paid_at?->toDateTimeString(),
                 'payment_proof' => $invoice->payment_proof
-                    ? Storage::disk('public')->url($invoice->payment_proof)
+                    ? Storage::disk('r2')->url($invoice->payment_proof)
                     : null,
                 'notes' => $invoice->notes,
                 'created_at' => $invoice->created_at?->toDateTimeString(),
@@ -113,7 +113,7 @@ class BillingController extends Controller
         ]);
 
         $path = $request->file('payment_proof')
-            ->store("billing/proofs/{$ownerId}", 'public');
+            ->store("billing/proofs/{$ownerId}", 'r2');
 
         $invoice->update([
             'payment_proof' => $path,

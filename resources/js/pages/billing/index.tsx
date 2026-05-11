@@ -54,7 +54,7 @@ type Invoice = {
     status: 'pending' | 'paid' | 'expired' | 'cancelled';
     issued_at: string;
     paid_at: string | null;
-    proof_url: string | null;
+    payment_proof: string | null;
 };
 
 type PageProps = {
@@ -264,8 +264,8 @@ function UploadProofDialog({
     onClose: () => void;
 }) {
     const { data, setData, post, processing, errors, reset } = useForm<{
-        proof: File | null;
-    }>({ proof: null });
+        payment_proof: File | null;
+    }>({ payment_proof: null });
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -294,9 +294,14 @@ function UploadProofDialog({
                             id="proof_file"
                             type="file"
                             accept="image/*,.pdf"
-                            onChange={(e) => setData('proof', e.target.files?.[0] ?? null)}
+                            onChange={(e) =>
+                                setData(
+                                    'payment_proof',
+                                    e.target.files?.[0] ?? null,
+                                )
+                            }
                         />
-                        <InputError message={errors.proof} />
+                        <InputError message={errors.payment_proof} />
                         <p className="text-xs text-muted-foreground">Format: JPG, PNG, PDF. Maks 5 MB.</p>
                     </div>
 
@@ -304,7 +309,10 @@ function UploadProofDialog({
                         <Button type="button" variant="outline" onClick={() => { reset(); onClose(); }} disabled={processing}>
                             Batal
                         </Button>
-                        <Button type="submit" disabled={processing || !data.proof}>
+                        <Button
+                            type="submit"
+                            disabled={processing || !data.payment_proof}
+                        >
                             <Upload className="mr-2 size-4" />
                             {processing ? 'Mengunggah…' : 'Upload'}
                         </Button>
@@ -470,9 +478,9 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                                                 </Button>
                                             </div>
                                         )}
-                                        {inv.status === 'paid' && inv.proof_url && (
+                                        {inv.status === 'paid' && inv.payment_proof && (
                                             <Button size="sm" variant="ghost" asChild>
-                                                <a href={inv.proof_url} target="_blank" rel="noopener noreferrer">
+                                                <a href={inv.payment_proof} target="_blank" rel="noopener noreferrer">
                                                     Lihat Bukti
                                                 </a>
                                             </Button>
