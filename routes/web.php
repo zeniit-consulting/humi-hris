@@ -25,11 +25,7 @@ Route::get('/', function (Request $request) {
     $forcedVariant = $request->query('landing_variant');
     $variant = in_array($forcedVariant, $allowedVariants, true)
         ? $forcedVariant
-        : $request->cookie('landing_variant');
-
-    if (! in_array($variant, $allowedVariants, true)) {
-        $variant = random_int(0, 1) === 1 ? 'workable' : 'original';
-    }
+        : 'original';
 
     Cookie::queue(
         Cookie::make('landing_variant', $variant, 60 * 24 * 30, sameSite: 'Lax')
@@ -69,7 +65,7 @@ Route::middleware('guest')->group(function () {
         ->name('portal.login.verify-otp');
 });
 
-Route::middleware(['auth', 'account.activated', 'admin.access'])->group(function () {
+Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
@@ -78,17 +74,23 @@ Route::middleware(['auth', 'account.activated', 'admin.access'])->group(function
     Route::delete('billing/invoices/{invoice}', [BillingController::class, 'cancelInvoice'])->name('billing.invoices.cancel');
 });
 
-Route::middleware(['auth', 'account.activated', 'admin.access'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('subscribers', [SubscriberManagementController::class, 'index'])->name('subscribers.index');
+    Route::get('invoices', [SubscriberManagementController::class, 'invoices'])->name('invoices.index');
+    Route::get('audit-logs', [SubscriberManagementController::class, 'auditLogs'])->name('audit-logs.index');
     Route::put('subscribers/{subscriber}/subscription', [SubscriberManagementController::class, 'updateSubscription'])
         ->name('subscribers.subscription.update');
+    Route::post('subscribers/{subscriber}/suspend', [SubscriberManagementController::class, 'suspend'])
+        ->name('subscribers.suspend');
+    Route::post('subscribers/{subscriber}/reactivate', [SubscriberManagementController::class, 'reactivate'])
+        ->name('subscribers.reactivate');
     Route::post('subscribers/invoices/{invoice}/approve', [SubscriberManagementController::class, 'approveInvoice'])
         ->name('subscribers.invoices.approve');
     Route::post('subscribers/invoices/{invoice}/cancel', [SubscriberManagementController::class, 'cancelInvoice'])
         ->name('subscribers.invoices.cancel');
 });
 
-Route::middleware(['auth', 'account.activated'])->group(function () {
+Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group(function () {
     Route::get('portal', UserPortalController::class)->name('portal.index');
     Route::get('portal/api/summary', [PortalController::class, 'summary'])->name('portal.api.summary');
     Route::get('portal/api/attendances', [AttendanceController::class, 'index'])->name('portal.api.attendances.index');

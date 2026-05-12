@@ -37,6 +37,10 @@ class UpdateEmployeeRequest extends FormRequest
             $normalizedPayload['employee_code'] = strtoupper((string) $this->input('employee_code'));
         }
 
+        if ($this->input('sub_company_id') === '') {
+            $normalizedPayload['sub_company_id'] = null;
+        }
+
         if (($this->input('marital_status') ?? '') === 'single') {
             $normalizedPayload['children_count'] = 0;
         }
@@ -105,6 +109,7 @@ class UpdateEmployeeRequest extends FormRequest
             'pph21_rate' => ['required', 'integer', 'min:0'],
             'ptkp_category' => ['nullable', Rule::in(['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'])],
             'division_id' => ['required', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
+            'sub_company_id' => ['nullable', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $ownerId)],
             'position_id' => [
                 'required',
                 'integer',

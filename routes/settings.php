@@ -8,7 +8,7 @@ use App\Http\Controllers\Settings\TwoFactorAuthenticationController;
 use App\Http\Controllers\Settings\WhatsappTestController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'admin.access'])->group(function () {
+Route::middleware(['auth', 'account.not_suspended', 'admin.access'])->group(function () {
     Route::redirect('settings', '/settings/profile');
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -22,7 +22,7 @@ Route::middleware(['auth', 'admin.access'])->group(function () {
     Route::post('settings/whatsapp/send', [WhatsappTestController::class, 'send'])->name('settings.whatsapp.send');
 });
 
-Route::middleware(['auth', 'account.activated'])->group(function () {
+Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group(function () {
     Route::get('settings/password', [PasswordController::class, 'edit'])->name('user-password.edit');
 
     Route::put('settings/password', [PasswordController::class, 'update'])
@@ -33,7 +33,7 @@ Route::middleware(['auth', 'account.activated'])->group(function () {
         ->name('user-password.skip');
 });
 
-Route::middleware(['auth', 'account.activated', 'admin.access'])->group(function () {
+Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access'])->group(function () {
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');

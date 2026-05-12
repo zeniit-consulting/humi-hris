@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\CompanySetting;
 use App\Services\SubscriptionService;
+use App\Support\R2Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
@@ -67,9 +68,7 @@ class HandleInertiaRequests extends Middleware
 
                     return [
                         ...$user->toArray(),
-                        'avatar' => $user->avatar_path
-                            ? Storage::disk('r2')->url($user->avatar_path)
-                            : null,
+                        'avatar' => R2Storage::url($user->avatar_path),
                     ];
                 },
             ],

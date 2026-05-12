@@ -2,15 +2,18 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     BellRing,
     Briefcase,
+    Building2,
     CalendarClock,
     CalendarDays,
     CalendarRange,
     ClipboardList,
+    FileText,
     GitBranch,
     HandCoins,
     LayoutGrid,
     PackageCheck,
     ShieldCheck,
+    ScrollText,
     Timer,
     UsersRound,
     WalletCards,
@@ -62,6 +65,11 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     title: 'Karyawan',
                     href: employeesIndex(),
                     icon: UsersRound,
+                },
+                {
+                    title: 'Sub Company',
+                    href: '/hris/sub-companies',
+                    icon: Building2,
                 },
                 {
                     title: 'Rekrutmen',
@@ -142,9 +150,7 @@ export function AppSidebar() {
         subscription?: { locked_features?: string[] };
         permissions?: { can_manage_subscribers?: boolean };
     };
-    const mainNavGroups = buildNavGroups(
-        subscription?.locked_features ?? [],
-    );
+    const mainNavGroups = buildNavGroups(subscription?.locked_features ?? []);
 
     if (permissions?.can_manage_subscribers) {
         mainNavGroups.push({
@@ -154,6 +160,16 @@ export function AppSidebar() {
                     title: 'Subscriber',
                     href: '/admin/subscribers',
                     icon: ShieldCheck,
+                },
+                {
+                    title: 'Invoice',
+                    href: '/admin/invoices',
+                    icon: FileText,
+                },
+                {
+                    title: 'Audit Log',
+                    href: '/admin/audit-logs',
+                    icon: ScrollText,
                 },
             ],
         });

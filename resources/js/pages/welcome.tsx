@@ -156,6 +156,23 @@ export default function Welcome({
                     name="description"
                     content="Humi adalah platform HRIS terpadu untuk kelola karyawan, absensi, cuti, dan payroll dengan workflow yang sederhana."
                 />
+                <meta property="og:type" content="website" />
+                <meta property="og:title" content="Humi - Easy HR Management" />
+                <meta
+                    property="og:description"
+                    content="Humi adalah platform HRIS terpadu untuk kelola karyawan, absensi, cuti, dan payroll dengan workflow yang sederhana."
+                />
+                <meta property="og:image" content="/icons/icon-512.png" />
+                <meta property="og:image:type" content="image/png" />
+                <meta property="og:image:width" content="512" />
+                <meta property="og:image:height" content="512" />
+                <meta name="twitter:card" content="summary" />
+                <meta name="twitter:title" content="Humi - Easy HR Management" />
+                <meta
+                    name="twitter:description"
+                    content="Humi adalah platform HRIS terpadu untuk kelola karyawan, absensi, cuti, dan payroll dengan workflow yang sederhana."
+                />
+                <meta name="twitter:image" content="/icons/icon-512.png" />
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link
                     rel="preconnect"

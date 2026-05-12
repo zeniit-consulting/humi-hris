@@ -3,6 +3,7 @@
 use App\Http\Middleware\CheckEmployeeLimit;
 use App\Http\Middleware\CheckSubscriptionFeature;
 use App\Http\Middleware\EnsureAccountActivated;
+use App\Http\Middleware\EnsureAccountNotSuspended;
 use App\Http\Middleware\EnsureAdminAccess;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin.access' => EnsureAdminAccess::class,
             'account.activated' => EnsureAccountActivated::class,
+            'account.not_suspended' => EnsureAccountNotSuspended::class,
             'subscription.feature' => CheckSubscriptionFeature::class,
             'employee.limit' => CheckEmployeeLimit::class,
         ]);

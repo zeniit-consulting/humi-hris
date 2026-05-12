@@ -32,6 +32,9 @@ class User extends Authenticatable
         'role',
         'parent_user_id',
         'phone_verified_at',
+        'suspended_at',
+        'suspension_reason',
+        'suspended_by',
         'whatsapp_otp_code',
         'whatsapp_otp_sent_at',
         'whatsapp_otp_expires_at',
@@ -62,6 +65,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
+            'suspended_at' => 'datetime',
             'whatsapp_otp_sent_at' => 'datetime',
             'whatsapp_otp_expires_at' => 'datetime',
             'requires_password_change' => 'boolean',
@@ -85,6 +89,14 @@ class User extends Authenticatable
     public function parentUser(): BelongsTo
     {
         return $this->belongsTo(self::class, 'parent_user_id');
+    }
+
+    /**
+     * Get the superadmin who suspended this account.
+     */
+    public function suspendedBy(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'suspended_by');
     }
 
     /**
@@ -117,6 +129,14 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->role === 'superadmin';
+    }
+
+    /**
+     * Determine whether this tenant owner is suspended.
+     */
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
     }
 
     /**

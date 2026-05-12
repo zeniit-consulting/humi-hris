@@ -9,6 +9,7 @@ use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\Position;
+use App\Models\SubCompany;
 use App\Models\User;
 use App\Services\UserPortalAccountService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -44,6 +45,7 @@ class EmployeeController extends Controller
         $rawFilters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
             'division_id' => ['nullable', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
+            'sub_company_id' => ['nullable', 'string'],
             'status' => ['nullable', 'string'],
             'division_search' => ['nullable', 'string', 'max:100'],
             'position_search' => ['nullable', 'string', 'max:100'],
@@ -52,6 +54,7 @@ class EmployeeController extends Controller
         $filters = [
             'search' => $rawFilters['search'] ?? '',
             'division_id' => isset($rawFilters['division_id']) ? (string) $rawFilters['division_id'] : '',
+            'sub_company_id' => $rawFilters['sub_company_id'] ?? '',
             'status' => $rawFilters['status'] ?? '',
             'division_search' => $rawFilters['division_search'] ?? '',
             'position_search' => $rawFilters['position_search'] ?? '',
@@ -60,6 +63,7 @@ class EmployeeController extends Controller
         $employees = Employee::query()
             ->with([
                 'division:id,name',
+                'subCompany:id,code,name',
                 'position:id,name',
                 'manager:id,employee_code,first_name,last_name',
                 'bankAccounts:id,employee_id,bank_name,account_number,account_holder_name,branch,currency,is_primary',
@@ -75,6 +79,11 @@ class EmployeeController extends Controller
                 });
             })
             ->when($filters['division_id'] !== '', fn ($query) => $query->where('division_id', $filters['division_id']))
+            ->when($filters['sub_company_id'] === '__internal', fn ($query) => $query->whereNull('sub_company_id'))
+            ->when(
+                $filters['sub_company_id'] !== '' && $filters['sub_company_id'] !== '__internal',
+                fn ($query) => $query->where('sub_company_id', $filters['sub_company_id']),
+            )
             ->when($filters['status'] !== '', fn ($query) => $query->where('employment_status', $filters['status']))
             ->orderBy('first_name')
             ->orderBy('last_name')
@@ -100,6 +109,7 @@ class EmployeeController extends Controller
                 'pph21_rate' => (int) $employee->pph21_rate,
                 'ptkp_category' => $employee->ptkp_category,
                 'division_id' => $employee->division_id,
+                'sub_company_id' => $employee->sub_company_id,
                 'position_id' => $employee->position_id,
                 'manager_id' => $employee->manager_id,
                 'base_salary' => $employee->base_salary ? (int) $employee->base_salary : null,
@@ -118,6 +128,11 @@ class EmployeeController extends Controller
                 'division' => $employee->division ? [
                     'id' => $employee->division->id,
                     'name' => $employee->division->name,
+                ] : null,
+                'sub_company' => $employee->subCompany ? [
+                    'id' => $employee->subCompany->id,
+                    'code' => $employee->subCompany->code,
+                    'name' => $employee->subCompany->name,
                 ] : null,
                 'position' => $employee->position ? [
                     'id' => $employee->position->id,
@@ -280,17 +295,33 @@ class EmployeeController extends Controller
             ])
             ->values();
 
+        $subCompanyOptions = SubCompany::query()
+            ->withCount('employees')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (SubCompany $subCompany) => [
+                'id' => $subCompany->id,
+                'code' => $subCompany->code,
+                'name' => $subCompany->name,
+                'employees_count' => $subCompany->employees_count,
+            ])
+            ->values();
+
         return Inertia::render('hris/employees/index', [
             'employees' => $employees,
             'divisions' => $divisions,
             'positions' => $positions,
             'divisionOptions' => $divisionOptions,
+            'subCompanyOptions' => $subCompanyOptions,
             'positionOptions' => $positionOptions,
             'managerOptions' => $managerOptions,
             'filters' => $filters,
             'stats' => [
                 'employees_total' => Employee::query()->count(),
                 'employees_active' => Employee::query()->where('is_active', true)->count(),
+                'employees_internal' => Employee::query()->whereNull('sub_company_id')->count(),
+                'employees_outsourcing' => Employee::query()->whereNotNull('sub_company_id')->count(),
                 'divisions_total' => Division::query()->count(),
                 'positions_total' => Position::query()->count(),
             ],
@@ -355,11 +386,12 @@ class EmployeeController extends Controller
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
             'division_id' => ['nullable', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
+            'sub_company_id' => ['nullable', 'string'],
             'status' => ['nullable', 'string'],
         ]);
 
         $rows = Employee::query()
-            ->with(['division:id,name', 'position:id,name'])
+            ->with(['division:id,name', 'subCompany:id,name', 'position:id,name'])
             ->when(($filters['search'] ?? '') !== '', function ($query) use ($filters): void {
                 $query->where(function ($builder) use ($filters): void {
                     $builder
@@ -370,6 +402,11 @@ class EmployeeController extends Controller
                 });
             })
             ->when(isset($filters['division_id']), fn ($query) => $query->where('division_id', $filters['division_id']))
+            ->when(($filters['sub_company_id'] ?? '') === '__internal', fn ($query) => $query->whereNull('sub_company_id'))
+            ->when(
+                ($filters['sub_company_id'] ?? '') !== '' && ($filters['sub_company_id'] ?? '') !== '__internal',
+                fn ($query) => $query->where('sub_company_id', $filters['sub_company_id']),
+            )
             ->when(($filters['status'] ?? '') !== '', fn ($query) => $query->where('employment_status', $filters['status']))
             ->orderBy('first_name')
             ->orderBy('last_name')
@@ -386,6 +423,7 @@ class EmployeeController extends Controller
                 'Email',
                 'Telepon',
                 'Divisi',
+                'Sub Company',
                 'Jabatan',
                 'Status',
                 'Tanggal Masuk',
@@ -398,6 +436,7 @@ class EmployeeController extends Controller
                     $employee->email,
                     $employee->phone,
                     $employee->division?->name,
+                    $employee->subCompany?->name ?? 'Internal',
                     $employee->position?->name,
                     $employee->employment_status,
                     $employee->hire_date?->format('Y-m-d'),
@@ -431,6 +470,7 @@ class EmployeeController extends Controller
             'pph21_method',
             'pph21_rate',
             'division_code',
+            'sub_company_code',
             'position_code',
             'manager_employee_code',
             'base_salary',
@@ -494,13 +534,20 @@ class EmployeeController extends Controller
             ->get()
             ->keyBy(fn (Position $position) => strtoupper((string) $position->code));
 
-        DB::transaction(function () use ($rows, $ownerId, $divisionMap, $positionMap): void {
+        $subCompanyMap = SubCompany::query()
+            ->where('user_id', $ownerId)
+            ->get()
+            ->keyBy(fn (SubCompany $subCompany) => strtoupper((string) $subCompany->code));
+
+        DB::transaction(function () use ($rows, $ownerId, $divisionMap, $positionMap, $subCompanyMap): void {
             foreach ($rows as $rowNumber => $row) {
                 $divisionCode = strtoupper((string) ($row['division_code'] ?? ''));
+                $subCompanyCode = strtoupper((string) ($row['sub_company_code'] ?? ''));
                 $positionCode = strtoupper((string) ($row['position_code'] ?? ''));
                 $managerCode = strtoupper((string) ($row['manager_employee_code'] ?? ''));
 
                 $division = $divisionCode !== '' ? $divisionMap->get($divisionCode) : null;
+                $subCompany = $subCompanyCode !== '' ? $subCompanyMap->get($subCompanyCode) : null;
                 $position = $positionCode !== '' ? $positionMap->get($positionCode) : null;
                 $managerId = null;
 
@@ -529,6 +576,7 @@ class EmployeeController extends Controller
                     'pph21_method' => $this->nullableString($row['pph21_method'] ?? null) ?? 'gross',
                     'pph21_rate' => $this->normalizeImportedAmount($row['pph21_rate'] ?? null) ?? '0',
                     'division_id' => $division?->id,
+                    'sub_company_id' => $subCompany?->id,
                     'position_id' => $position?->id,
                     'manager_id' => $managerId,
                     'base_salary' => $this->normalizeImportedAmount($row['base_salary'] ?? null),
@@ -569,6 +617,7 @@ class EmployeeController extends Controller
                     'pph21_method' => ['required', Rule::in(['ter_harian', 'gross', 'net', 'gross_up'])],
                     'pph21_rate' => ['required', 'integer', 'min:0'],
                     'division_id' => ['required', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
+                    'sub_company_id' => ['nullable', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $ownerId)],
                     'position_id' => [
                         'required',
                         'integer',
@@ -615,6 +664,12 @@ class EmployeeController extends Controller
                 if ($positionCode !== '' && $position === null) {
                     $validator->after(function ($validator) use ($positionCode): void {
                         $validator->errors()->add('position_id', 'Kode jabatan '.$positionCode.' tidak ditemukan.');
+                    });
+                }
+
+                if ($subCompanyCode !== '' && $subCompany === null) {
+                    $validator->after(function ($validator) use ($subCompanyCode): void {
+                        $validator->errors()->add('sub_company_id', 'Kode sub-company '.$subCompanyCode.' tidak ditemukan.');
                     });
                 }
 

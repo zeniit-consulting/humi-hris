@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Mobile\V1\Concerns\InteractsWithSelfService;
 use App\Http\Controllers\Controller;
 use App\Models\CompanyAssetAssignment;
 use App\Models\CompanySetting;
+use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeLeaveBalance;
 use App\Models\EmployeeSchedule;
@@ -16,6 +17,7 @@ use App\Models\LeaveRequest;
 use App\Models\NotificationAnnouncement;
 use App\Models\OvertimeRequest;
 use App\Models\PayrollRun;
+use App\Models\SubCompanyAttendanceLocation;
 use App\Models\User;
 use App\Models\WorkShift;
 use Illuminate\Http\JsonResponse;
@@ -399,16 +401,7 @@ class PortalController extends Controller
                     'longitude' => (float) $companySetting->location_longitude,
                     'radius_meters' => (int) ($companySetting->attendance_radius_meters ?? 100),
                 ] : null,
-                'locations' => collect($companySetting?->attendance_locations ?? [])
-                    ->map(fn (array $location) => [
-                        'name' => $location['name'] ?? 'Lokasi absensi',
-                        'address' => $location['address'] ?? null,
-                        'latitude' => isset($location['latitude']) ? (float) $location['latitude'] : null,
-                        'longitude' => isset($location['longitude']) ? (float) $location['longitude'] : null,
-                        'radius_meters' => (int) ($location['radius_meters'] ?? ($companySetting?->attendance_radius_meters ?? 100)),
-                    ])
-                    ->filter(fn (array $location) => $location['latitude'] !== null && $location['longitude'] !== null)
-                    ->values(),
+                'locations' => $this->attendanceLocationsForEmployee($employee, $companySetting),
             ],
             'shift_options' => $availableShifts->map(fn (WorkShift $shift) => [
                 'id' => $shift->id,
@@ -458,5 +451,36 @@ class PortalController extends Controller
         return in_array($timezone, timezone_identifiers_list(), true)
             ? $timezone
             : config('app.timezone');
+    }
+
+    private function attendanceLocationsForEmployee(?Employee $employee, ?CompanySetting $companySetting): \Illuminate\Support\Collection
+    {
+        if ($employee?->sub_company_id !== null) {
+            return SubCompanyAttendanceLocation::query()
+                ->where('user_id', $employee->user_id)
+                ->where('sub_company_id', $employee->sub_company_id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get()
+                ->map(fn (SubCompanyAttendanceLocation $location) => [
+                    'name' => $location->name,
+                    'address' => $location->address,
+                    'latitude' => (float) $location->latitude,
+                    'longitude' => (float) $location->longitude,
+                    'radius_meters' => $location->radius_meters,
+                ])
+                ->values();
+        }
+
+        return collect($companySetting?->attendance_locations ?? [])
+            ->map(fn (array $location) => [
+                'name' => $location['name'] ?? 'Lokasi absensi',
+                'address' => $location['address'] ?? null,
+                'latitude' => isset($location['latitude']) ? (float) $location['latitude'] : null,
+                'longitude' => isset($location['longitude']) ? (float) $location['longitude'] : null,
+                'radius_meters' => (int) ($location['radius_meters'] ?? ($companySetting?->attendance_radius_meters ?? 100)),
+            ])
+            ->filter(fn (array $location) => $location['latitude'] !== null && $location['longitude'] !== null)
+            ->values();
     }
 }

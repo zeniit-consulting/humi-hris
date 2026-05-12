@@ -37,11 +37,23 @@
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
         <link rel="icon" href="/icons/favicon-32x32.png" sizes="32x32" type="image/png">
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+        <link rel="apple-touch-icon" href="/icons/icon-512.png">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+
+        @if (in_array($page['component'] ?? null, ['welcome', 'landing/workable'], true))
+            <!-- Google tag (gtag.js) -->
+            <script async src="https://www.googletagmanager.com/gtag/js?id=G-WNXD5DZY5C"></script>
+            <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+
+                gtag('config', 'G-WNXD5DZY5C');
+            </script>
+        @endif
 
         @viteReactRefresh
         @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])

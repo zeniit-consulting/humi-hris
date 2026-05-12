@@ -20,6 +20,7 @@ class Employee extends Model
      */
     protected $fillable = [
         'user_id',
+        'sub_company_id',
         'employee_code',
         'first_name',
         'last_name',
@@ -77,6 +78,11 @@ class Employee extends Model
     public function division(): BelongsTo
     {
         return $this->belongsTo(Division::class);
+    }
+
+    public function subCompany(): BelongsTo
+    {
+        return $this->belongsTo(SubCompany::class);
     }
 
     /**

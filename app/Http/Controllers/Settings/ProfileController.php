@@ -7,6 +7,7 @@ use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\CompanySetting;
 use App\Services\WhatsAppOtpService;
+use App\Support\R2Storage;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -93,11 +94,14 @@ class ProfileController extends Controller
         }
 
         if ($request->file('avatar') instanceof UploadedFile) {
+            if (! R2Storage::isConfigured()) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['avatar' => 'Cloudflare R2 belum dikonfigurasi lengkap. Isi R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, dan R2_ENDPOINT.']);
+            }
+
             $this->deleteAvatar($user->avatar_path);
-            $user->avatar_path = $request->file('avatar')->storePublicly(
-                'avatars',
-                'r2',
-            );
+            $user->avatar_path = R2Storage::disk()->putFile('avatars', $request->file('avatar'), 'public');
         }
 
         $user->save();
@@ -119,7 +123,9 @@ class ProfileController extends Controller
             return;
         }
 
-        Storage::disk('r2')->delete($path);
+        if (R2Storage::isConfigured()) {
+            R2Storage::disk()->delete($path);
+        }
     }
 
     /**

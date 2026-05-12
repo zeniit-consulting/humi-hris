@@ -6,9 +6,9 @@ use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\SubscriptionService;
+use App\Support\R2Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -60,9 +60,7 @@ class BillingController extends Controller
                 'status' => $invoice->status,
                 'due_date' => $invoice->due_date?->toDateString(),
                 'paid_at' => $invoice->paid_at?->toDateTimeString(),
-                'payment_proof' => $invoice->payment_proof
-                    ? Storage::disk('r2')->url($invoice->payment_proof)
-                    : null,
+                'payment_proof' => R2Storage::url($invoice->payment_proof),
                 'notes' => $invoice->notes,
                 'created_at' => $invoice->created_at?->toDateTimeString(),
             ]),
@@ -112,8 +110,13 @@ class BillingController extends Controller
             'payment_proof' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ]);
 
-        $path = $request->file('payment_proof')
-            ->store("billing/proofs/{$ownerId}", 'r2');
+        if (! R2Storage::isConfigured()) {
+            return back()
+                ->withInput()
+                ->withErrors(['payment_proof' => 'Cloudflare R2 belum dikonfigurasi lengkap. Isi R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, dan R2_ENDPOINT.']);
+        }
+
+        $path = R2Storage::disk()->putFile("billing/proofs/{$ownerId}", $request->file('payment_proof'));
 
         $invoice->update([
             'payment_proof' => $path,

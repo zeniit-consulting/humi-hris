@@ -8,7 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Hris\StoreAttendanceRequest;
 use App\Http\Requests\Hris\UpdateAttendanceRequest;
 use App\Models\CompanySetting;
+use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\SubCompanyAttendanceLocation;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -108,6 +110,7 @@ class AttendanceController extends Controller
             $validated['status'] = 'present';
             $this->ensureWithinAttendanceRadius(
                 $user,
+                $employee,
                 $validated['check_in_latitude'] ?? null,
                 $validated['check_in_longitude'] ?? null,
             );
@@ -234,30 +237,51 @@ class AttendanceController extends Controller
             : config('app.timezone');
     }
 
-    private function ensureWithinAttendanceRadius(User $user, mixed $latitude, mixed $longitude): void
+    private function ensureWithinAttendanceRadius(User $user, Employee $employee, mixed $latitude, mixed $longitude): void
     {
         if ($latitude === null || $longitude === null) {
             return;
+        }
+
+        $locations = collect();
+
+        if ($employee->sub_company_id !== null) {
+            $locations = SubCompanyAttendanceLocation::query()
+                ->where('user_id', $user->accountOwnerId())
+                ->where('sub_company_id', $employee->sub_company_id)
+                ->where('is_active', true)
+                ->get()
+                ->map(fn (SubCompanyAttendanceLocation $location) => [
+                    'latitude' => (float) $location->latitude,
+                    'longitude' => (float) $location->longitude,
+                    'radius_meters' => $location->radius_meters,
+                ]);
+
+            if ($locations->isEmpty()) {
+                abort(422, 'Lokasi absensi sub-company belum dikonfigurasi.');
+            }
         }
 
         $setting = CompanySetting::query()
             ->where('user_id', $user->accountOwnerId())
             ->first();
 
-        if (! $setting) {
+        if (! $setting && $locations->isEmpty()) {
             return;
         }
 
-        $locations = collect($setting->attendance_locations ?? [])
-            ->map(fn (array $location) => [
-                'latitude' => $location['latitude'] ?? null,
-                'longitude' => $location['longitude'] ?? null,
-                'radius_meters' => (int) ($location['radius_meters'] ?? ($setting->attendance_radius_meters ?? 100)),
-            ])
-            ->filter(fn (array $location) => $location['latitude'] !== null && $location['longitude'] !== null)
-            ->values();
+        if ($locations->isEmpty() && $setting) {
+            $locations = collect($setting->attendance_locations ?? [])
+                ->map(fn (array $location) => [
+                    'latitude' => $location['latitude'] ?? null,
+                    'longitude' => $location['longitude'] ?? null,
+                    'radius_meters' => (int) ($location['radius_meters'] ?? ($setting->attendance_radius_meters ?? 100)),
+                ])
+                ->filter(fn (array $location) => $location['latitude'] !== null && $location['longitude'] !== null)
+                ->values();
+        }
 
-        if ($locations->isEmpty() && $setting->location_latitude !== null && $setting->location_longitude !== null) {
+        if ($locations->isEmpty() && $setting?->location_latitude !== null && $setting?->location_longitude !== null) {
             $locations = collect([[
                 'latitude' => (float) $setting->location_latitude,
                 'longitude' => (float) $setting->location_longitude,

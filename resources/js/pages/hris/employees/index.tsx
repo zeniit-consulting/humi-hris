@@ -122,6 +122,13 @@ type DivisionOption = {
     employees_count: number;
 };
 
+type SubCompanyOption = {
+    id: number;
+    code: string;
+    name: string;
+    employees_count: number;
+};
+
 type BankAccount = {
     id: number;
     bank_name: string;
@@ -162,6 +169,7 @@ type Employee = {
     pph21_rate: string;
     ptkp_category: string | null;
     division_id: number | null;
+    sub_company_id: number | null;
     position_id: number | null;
     manager_id: number | null;
     base_salary: string | null;
@@ -179,6 +187,11 @@ type Employee = {
     is_active: boolean;
     division: {
         id: number;
+        name: string;
+    } | null;
+    sub_company: {
+        id: number;
+        code: string;
         name: string;
     } | null;
     position: {
@@ -222,6 +235,7 @@ type EmployeeFormData = {
     pph21_rate: string;
     ptkp_category: string;
     division_id: string;
+    sub_company_id: string;
     position_id: string;
     manager_id: string;
     base_salary: string;
@@ -264,6 +278,7 @@ type EmployeeImportFormData = {
 type Filters = {
     search: string;
     division_id: string;
+    sub_company_id: string;
     status: string;
     division_search: string;
     position_search: string;
@@ -274,12 +289,15 @@ type PageProps = {
     divisions: Paginator<Division>;
     positions: Paginator<Position>;
     divisionOptions: DivisionOption[];
+    subCompanyOptions: SubCompanyOption[];
     positionOptions: PositionOption[];
     managerOptions: ManagerOption[];
     filters: Filters;
     stats: {
         employees_total: number;
         employees_active: number;
+        employees_internal: number;
+        employees_outsourcing: number;
         divisions_total: number;
         positions_total: number;
     };
@@ -323,6 +341,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     pph21_rate: '0',
     ptkp_category: '',
     division_id: '',
+    sub_company_id: '',
     position_id: '',
     manager_id: '',
     base_salary: '',
@@ -410,6 +429,7 @@ const employeeFieldLabels: Record<string, string> = {
     pph21_method: 'Metode PPh21',
     pph21_rate: 'Nominal PPh21',
     division_id: 'Divisi',
+    sub_company_id: 'Sub Company',
     position_id: 'Jabatan',
     manager_id: 'Atasan',
     base_salary: 'Gaji pokok',
@@ -528,6 +548,7 @@ export default function EmployeesIndex() {
         employees,
         divisions,
         divisionOptions,
+        subCompanyOptions,
         positionOptions,
         managerOptions,
         filters,
@@ -554,9 +575,7 @@ export default function EmployeesIndex() {
     const [editingAllowance, setEditingAllowance] =
         useState<EmployeeAllowance | null>(null);
 
-    const employeeForm = useForm<EmployeeFormData>(
-        buildEmployeeDefault(),
-    );
+    const employeeForm = useForm<EmployeeFormData>(buildEmployeeDefault());
     const bankAccountForm = useForm<BankAccountFormData>(BANK_ACCOUNT_DEFAULT);
     const allowanceForm = useForm<AllowanceFormData>(ALLOWANCE_DEFAULT);
     const employeeImportForm = useForm<EmployeeImportFormData>({
@@ -588,6 +607,7 @@ export default function EmployeesIndex() {
                 'pph21_rate',
                 'ptkp_category',
                 'division_id',
+                'sub_company_id',
                 'position_id',
                 'manager_id',
                 'base_salary',
@@ -739,11 +759,16 @@ export default function EmployeesIndex() {
             division_id: employee.division_id
                 ? String(employee.division_id)
                 : '',
+            sub_company_id: employee.sub_company_id
+                ? String(employee.sub_company_id)
+                : '',
             position_id: employee.position_id
                 ? String(employee.position_id)
                 : '',
             manager_id: employee.manager_id ? String(employee.manager_id) : '',
-            base_salary: employee.base_salary ? String(employee.base_salary) : '',
+            base_salary: employee.base_salary
+                ? String(employee.base_salary)
+                : '',
             address: employee.address ?? '',
             family_card_number: employee.family_card_number ?? '',
             bpjs_kesehatan_number: employee.bpjs_kesehatan_number ?? '',
@@ -813,7 +838,10 @@ export default function EmployeesIndex() {
 
         if (step === 2) {
             if (employeeForm.data.hire_date.trim() === '') {
-                employeeForm.setError('hire_date', 'Tanggal masuk wajib diisi.');
+                employeeForm.setError(
+                    'hire_date',
+                    'Tanggal masuk wajib diisi.',
+                );
                 isValid = false;
             }
 
@@ -823,12 +851,18 @@ export default function EmployeesIndex() {
             }
 
             if (employeeForm.data.pph21_method.trim() === '') {
-                employeeForm.setError('pph21_method', 'Metode PPh21 wajib dipilih.');
+                employeeForm.setError(
+                    'pph21_method',
+                    'Metode PPh21 wajib dipilih.',
+                );
                 isValid = false;
             }
 
             if (employeeForm.data.pph21_rate.trim() === '') {
-                employeeForm.setError('pph21_rate', 'Nominal PPh21 wajib diisi.');
+                employeeForm.setError(
+                    'pph21_rate',
+                    'Nominal PPh21 wajib diisi.',
+                );
                 isValid = false;
             } else {
                 const rateValue = Number(
@@ -1069,6 +1103,7 @@ export default function EmployeesIndex() {
         const initialFilters = {
             search: '',
             division_id: '',
+            sub_company_id: '',
             status: '',
             division_search: '',
             position_search: '',
@@ -1093,6 +1128,17 @@ export default function EmployeesIndex() {
                   )?.name ?? filterState.division_id
               }`
             : null,
+        filterState.sub_company_id !== ''
+            ? `Perusahaan: ${
+                  filterState.sub_company_id === '__internal'
+                      ? 'Internal'
+                      : (subCompanyOptions.find(
+                            (company) =>
+                                String(company.id) ===
+                                filterState.sub_company_id,
+                        )?.name ?? filterState.sub_company_id)
+              }`
+            : null,
         filterState.status !== ''
             ? `Status: ${statusLabels[filterState.status] ?? filterState.status}`
             : null,
@@ -1104,6 +1150,7 @@ export default function EmployeesIndex() {
         Object.entries({
             search: filterState.search,
             division_id: filterState.division_id,
+            sub_company_id: filterState.sub_company_id,
             status: filterState.status,
         }).filter(([, value]) => value !== ''),
     ).toString();
@@ -1162,7 +1209,7 @@ export default function EmployeesIndex() {
             <Head title="HRIS Karyawan" />
 
             <div className="space-y-6 p-4">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Total Karyawan</CardDescription>
@@ -1176,6 +1223,22 @@ export default function EmployeesIndex() {
                             <CardDescription>Karyawan Aktif</CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.employees_active}
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+                    <Card className="gap-2 py-3">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription>Internal</CardDescription>
+                            <CardTitle className="text-2xl">
+                                {stats.employees_internal}
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+                    <Card className="gap-2 py-3">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription>Outsourcing</CardDescription>
+                            <CardTitle className="text-2xl">
+                                {stats.employees_outsourcing}
                             </CardTitle>
                         </CardHeader>
                     </Card>
@@ -1208,7 +1271,7 @@ export default function EmployeesIndex() {
                     <CardContent>
                         <form
                             onSubmit={submitFilters}
-                            className="grid gap-3 md:grid-cols-[1fr_220px_220px_auto_auto]"
+                            className="grid gap-3 md:grid-cols-[1fr_220px_220px_220px_auto_auto]"
                         >
                             <div className="grid gap-2">
                                 <Label htmlFor="search">Pencarian</Label>
@@ -1302,6 +1365,44 @@ export default function EmployeesIndex() {
                                 </Select>
                             </div>
 
+                            <div className="grid gap-2">
+                                <Label htmlFor="sub-company-filter">
+                                    Sub Company
+                                </Label>
+                                <SearchableSelect
+                                    id="sub-company-filter"
+                                    value={
+                                        filterState.sub_company_id === ''
+                                            ? '__all'
+                                            : filterState.sub_company_id
+                                    }
+                                    onValueChange={(value) =>
+                                        setFilterState((current) => ({
+                                            ...current,
+                                            sub_company_id:
+                                                value === '__all' ? '' : value,
+                                        }))
+                                    }
+                                    placeholder="Semua perusahaan"
+                                    searchPlaceholder="Cari sub-company..."
+                                    options={[
+                                        {
+                                            value: '__all',
+                                            label: 'Semua perusahaan',
+                                        },
+                                        {
+                                            value: '__internal',
+                                            label: 'Internal',
+                                        },
+                                        ...subCompanyOptions.map((company) => ({
+                                            value: String(company.id),
+                                            label: `${company.code} - ${company.name}`,
+                                        })),
+                                    ]}
+                                    className="w-full"
+                                />
+                            </div>
+
                             <div className="flex items-end">
                                 <Button type="submit" className="w-full">
                                     <Filter className="size-4" />
@@ -1343,10 +1444,10 @@ export default function EmployeesIndex() {
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1480px] text-sm">
+                            <table className="w-full min-w-[1600px] text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
-                                        <th className="bg-background sticky left-0 z-20 min-w-[260px] px-3 py-2 font-medium shadow-[6px_0_8px_-8px_rgba(15,23,42,0.25)]">
+                                        <th className="sticky left-0 z-20 min-w-[260px] bg-background px-3 py-2 font-medium shadow-[6px_0_8px_-8px_rgba(15,23,42,0.25)]">
                                             Nama
                                         </th>
                                         <th className="min-w-[130px] px-3 py-2 font-medium">
@@ -1357,6 +1458,9 @@ export default function EmployeesIndex() {
                                         </th>
                                         <th className="px-3 py-2 font-medium">
                                             Divisi
+                                        </th>
+                                        <th className="min-w-[180px] px-3 py-2 font-medium">
+                                            Perusahaan
                                         </th>
                                         <th className="px-3 py-2 font-medium">
                                             Jabatan
@@ -1373,7 +1477,7 @@ export default function EmployeesIndex() {
                                         <th className="px-3 py-2 font-medium">
                                             Status
                                         </th>
-                                        <th className="bg-background sticky right-0 z-20 min-w-[220px] px-3 py-2 font-medium shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.25)]">
+                                        <th className="sticky right-0 z-20 min-w-[220px] bg-background px-3 py-2 font-medium shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.25)]">
                                             Aksi
                                         </th>
                                     </tr>
@@ -1382,7 +1486,7 @@ export default function EmployeesIndex() {
                                     {employees.data.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={10}
+                                                colSpan={11}
                                                 className="px-3 py-8 text-center text-muted-foreground"
                                             >
                                                 Belum ada data karyawan.
@@ -1394,7 +1498,7 @@ export default function EmployeesIndex() {
                                             key={employee.id}
                                             className="border-b align-top"
                                         >
-                                            <td className="bg-background sticky left-0 z-10 px-3 py-3 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.25)]">
+                                            <td className="sticky left-0 z-10 bg-background px-3 py-3 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.25)]">
                                                 <div className="flex items-center gap-3">
                                                     <Avatar className="size-8">
                                                         <AvatarFallback>
@@ -1408,7 +1512,8 @@ export default function EmployeesIndex() {
                                                             {employee.full_name}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            {employee.position?.name ?? '-'}
+                                                            {employee.position
+                                                                ?.name ?? '-'}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -1418,7 +1523,9 @@ export default function EmployeesIndex() {
                                             </td>
                                             <td className="px-3 py-3">
                                                 <div className="space-y-1">
-                                                    <p>{employee.email ?? '-'}</p>
+                                                    <p>
+                                                        {employee.email ?? '-'}
+                                                    </p>
                                                     <p className="text-xs text-muted-foreground">
                                                         {employee.phone ?? '-'}
                                                     </p>
@@ -1428,17 +1535,42 @@ export default function EmployeesIndex() {
                                                 {employee.division?.name ?? '-'}
                                             </td>
                                             <td className="px-3 py-3">
+                                                {employee.sub_company ? (
+                                                    <div>
+                                                        <p>
+                                                            {
+                                                                employee
+                                                                    .sub_company
+                                                                    .name
+                                                            }
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Outsourcing
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <Badge variant="outline">
+                                                        Internal
+                                                    </Badge>
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-3">
                                                 {employee.position?.name ?? '-'}
                                             </td>
                                             <td className="px-3 py-3">
-                                                {formatDateDisplay(employee.hire_date)}
+                                                {formatDateDisplay(
+                                                    employee.hire_date,
+                                                )}
                                             </td>
                                             <td className="px-3 py-3">
-                                                {typeLabels[employee.employment_type] ??
-                                                    employee.employment_type}
+                                                {typeLabels[
+                                                    employee.employment_type
+                                                ] ?? employee.employment_type}
                                             </td>
                                             <td className="px-3 py-3">
-                                                {formatCurrencyDisplay(employee.base_salary)}
+                                                {formatCurrencyDisplay(
+                                                    employee.base_salary,
+                                                )}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <Badge
@@ -1456,7 +1588,7 @@ export default function EmployeesIndex() {
                                                         employee.employment_status}
                                                 </Badge>
                                             </td>
-                                            <td className="bg-background sticky right-0 z-10 px-3 py-3 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.25)]">
+                                            <td className="sticky right-0 z-10 bg-background px-3 py-3 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.25)]">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <ActionIconButton
                                                         label="Detail karyawan"
@@ -1479,7 +1611,9 @@ export default function EmployeesIndex() {
                                                         }
                                                     />
                                                     <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
+                                                        <DropdownMenuTrigger
+                                                            asChild
+                                                        >
                                                             <Button
                                                                 type="button"
                                                                 size="icon"
@@ -1568,7 +1702,6 @@ export default function EmployeesIndex() {
                         </div>
                     </CardContent>
                 </Card>
-
             </div>
 
             <Dialog
@@ -1586,7 +1719,8 @@ export default function EmployeesIndex() {
                     <DialogHeader>
                         <DialogTitle>Import Data Karyawan</DialogTitle>
                         <DialogDescription>
-                            Unduh template Excel, isi data sesuai kolom, lalu upload file untuk menambahkan karyawan sekaligus.
+                            Unduh template Excel, isi data sesuai kolom, lalu
+                            upload file untuk menambahkan karyawan sekaligus.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -1599,7 +1733,9 @@ export default function EmployeesIndex() {
                                 Template import
                             </p>
                             <p className="mt-1">
-                                Gunakan `division_code` dan `position_code` yang sudah terdaftar. File yang didukung: XLSX, XLS, CSV, atau TXT.
+                                Gunakan `division_code` dan `position_code` yang
+                                sudah terdaftar. File yang didukung: XLSX, XLS,
+                                CSV, atau TXT.
                             </p>
                             <Button
                                 asChild
@@ -1639,7 +1775,9 @@ export default function EmployeesIndex() {
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => setEmployeeImportDialogOpen(false)}
+                                onClick={() =>
+                                    setEmployeeImportDialogOpen(false)
+                                }
                             >
                                 Batal
                             </Button>
@@ -1732,6 +1870,11 @@ export default function EmployeesIndex() {
                                     {detailEmployee.division?.name ?? '-'}
                                 </p>
                                 <p>
+                                    Perusahaan:{' '}
+                                    {detailEmployee.sub_company?.name ??
+                                        'Internal'}
+                                </p>
+                                <p>
                                     Jabatan:{' '}
                                     {detailEmployee.position?.name ?? '-'}
                                 </p>
@@ -1795,7 +1938,9 @@ export default function EmployeesIndex() {
                                             ? 'border-primary bg-primary/10'
                                             : 'border-border bg-muted/30'
                                     }`}
-                                    onClick={() => setEmployeeFormStep(item.step)}
+                                    onClick={() =>
+                                        setEmployeeFormStep(item.step)
+                                    }
                                 >
                                     <p className="text-xs text-muted-foreground">
                                         Langkah {item.step}
@@ -1811,17 +1956,22 @@ export default function EmployeesIndex() {
                                     <AlertTriangle className="mt-0.5 size-4 text-rose-700" />
                                     <div className="space-y-1 text-sm text-rose-800">
                                         <p className="font-semibold">
-                                            Data belum bisa disimpan. Periksa input berikut:
+                                            Data belum bisa disimpan. Periksa
+                                            input berikut:
                                         </p>
                                         <ul className="list-disc space-y-1 pl-5">
-                                            {employeeErrorSummary.map((error) => (
-                                                <li key={`${error.field}-${error.message}`}>
-                                                    <span className="font-medium">
-                                                        {error.label}:
-                                                    </span>{' '}
-                                                    {error.message}
-                                                </li>
-                                            ))}
+                                            {employeeErrorSummary.map(
+                                                (error) => (
+                                                    <li
+                                                        key={`${error.field}-${error.message}`}
+                                                    >
+                                                        <span className="font-medium">
+                                                            {error.label}:
+                                                        </span>{' '}
+                                                        {error.message}
+                                                    </li>
+                                                ),
+                                            )}
                                         </ul>
                                     </div>
                                 </div>
@@ -1959,9 +2109,7 @@ export default function EmployeesIndex() {
                                             </SelectContent>
                                         </Select>
                                         <InputError
-                                            message={
-                                                employeeForm.errors.gender
-                                            }
+                                            message={employeeForm.errors.gender}
                                         />
                                     </div>
                                 </div>
@@ -2059,8 +2207,7 @@ export default function EmployeesIndex() {
                                                             .marital_status ===
                                                         ''
                                                             ? '__none'
-                                                            : employeeForm
-                                                                  .data
+                                                            : employeeForm.data
                                                                   .marital_status
                                                     }
                                                     onValueChange={(value) => {
@@ -2101,12 +2248,13 @@ export default function EmployeesIndex() {
                                                             (status) => (
                                                                 <SelectItem
                                                                     key={status}
-                                                                    value={status}
+                                                                    value={
+                                                                        status
+                                                                    }
                                                                 >
                                                                     {maritalStatusLabels[
                                                                         status
-                                                                    ] ??
-                                                                        status}
+                                                                    ] ?? status}
                                                                 </SelectItem>
                                                             ),
                                                         )}
@@ -2135,9 +2283,7 @@ export default function EmployeesIndex() {
                                                                     .data
                                                                     .children_count
                                                             }
-                                                            onChange={(
-                                                                event,
-                                                            ) =>
+                                                            onChange={(event) =>
                                                                 employeeForm.setData(
                                                                     'children_count',
                                                                     event.target
@@ -2335,7 +2481,9 @@ export default function EmployeesIndex() {
                                     </Label>
                                     <div className="space-y-1">
                                         <Select
-                                            value={employeeForm.data.pph21_method}
+                                            value={
+                                                employeeForm.data.pph21_method
+                                            }
                                             onValueChange={(value) =>
                                                 employeeForm.setData(
                                                     'pph21_method',
@@ -2416,7 +2564,10 @@ export default function EmployeesIndex() {
                                     </Label>
                                     <div className="space-y-1">
                                         <Select
-                                            value={employeeForm.data.ptkp_category || ''}
+                                            value={
+                                                employeeForm.data
+                                                    .ptkp_category || ''
+                                            }
                                             onValueChange={(value) =>
                                                 employeeForm.setData(
                                                     'ptkp_category',
@@ -2494,9 +2645,7 @@ export default function EmployeesIndex() {
                                                     if (
                                                         selectedPosition &&
                                                         selectedPosition.division_id !==
-                                                            Number(
-                                                                divisionId,
-                                                            )
+                                                            Number(divisionId)
                                                     ) {
                                                         employeeForm.setData(
                                                             'position_id',
@@ -2526,6 +2675,60 @@ export default function EmployeesIndex() {
                                         <InputError
                                             message={
                                                 employeeForm.errors.division_id
+                                            }
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                    <Label htmlFor="sub_company_id">
+                                        Sub Company
+                                    </Label>
+                                    <div className="space-y-1">
+                                        <SearchableSelect
+                                            id="sub_company_id"
+                                            value={
+                                                employeeForm.data
+                                                    .sub_company_id === ''
+                                                    ? '__internal'
+                                                    : employeeForm.data
+                                                          .sub_company_id
+                                            }
+                                            onValueChange={(value) =>
+                                                employeeForm.setData(
+                                                    'sub_company_id',
+                                                    value === '__internal'
+                                                        ? ''
+                                                        : value,
+                                                )
+                                            }
+                                            placeholder="Pilih sub-company"
+                                            searchPlaceholder="Cari sub-company..."
+                                            options={[
+                                                {
+                                                    value: '__internal',
+                                                    label: 'Internal',
+                                                },
+                                                ...subCompanyOptions.map(
+                                                    (company) => ({
+                                                        value: String(
+                                                            company.id,
+                                                        ),
+                                                        label: `${company.code} - ${company.name}`,
+                                                    }),
+                                                ),
+                                            ]}
+                                            className="w-full"
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Kosongkan sebagai Internal. Pilih
+                                            sub-company untuk karyawan
+                                            outsourcing.
+                                        </p>
+                                        <InputError
+                                            message={
+                                                employeeForm.errors
+                                                    .sub_company_id
                                             }
                                         />
                                     </div>
@@ -2668,7 +2871,9 @@ export default function EmployeesIndex() {
                                     <div className="flex items-center gap-2">
                                         <Checkbox
                                             id="employee_is_active"
-                                            checked={employeeForm.data.is_active}
+                                            checked={
+                                                employeeForm.data.is_active
+                                            }
                                             onCheckedChange={(checked) =>
                                                 employeeForm.setData(
                                                     'is_active',
@@ -2691,7 +2896,8 @@ export default function EmployeesIndex() {
                                         <span className="font-medium">
                                             Nama:
                                         </span>{' '}
-                                        {employeeForm.data.full_name.trim() || '-'}
+                                        {employeeForm.data.full_name.trim() ||
+                                            '-'}
                                     </p>
                                     <p>
                                         <span className="font-medium">
@@ -2706,8 +2912,20 @@ export default function EmployeesIndex() {
                                         {statusLabels[
                                             employeeForm.data.employment_status
                                         ] ??
-                                            employeeForm.data
-                                                .employment_status}
+                                            employeeForm.data.employment_status}
+                                    </p>
+                                    <p>
+                                        <span className="font-medium">
+                                            Perusahaan:
+                                        </span>{' '}
+                                        {employeeForm.data.sub_company_id === ''
+                                            ? 'Internal'
+                                            : (subCompanyOptions.find(
+                                                  (company) =>
+                                                      String(company.id) ===
+                                                      employeeForm.data
+                                                          .sub_company_id,
+                                              )?.name ?? '-')}
                                     </p>
                                     <p>
                                         <span className="font-medium">

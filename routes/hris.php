@@ -19,11 +19,19 @@ use App\Http\Controllers\Hris\PayrollController;
 use App\Http\Controllers\Hris\PositionController;
 use App\Http\Controllers\Hris\RecruitmentController;
 use App\Http\Controllers\Hris\ScheduleController;
+use App\Http\Controllers\Hris\SubCompanyController;
 use App\Http\Controllers\Hris\SurveyController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'account.activated', 'admin.access'])->prefix('hris')->name('hris.')->group(function () {
+Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access'])->prefix('hris')->name('hris.')->group(function () {
     Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('sub-companies', [SubCompanyController::class, 'index'])->name('sub-companies.index');
+    Route::post('sub-companies', [SubCompanyController::class, 'store'])->name('sub-companies.store');
+    Route::put('sub-companies/{subCompany}', [SubCompanyController::class, 'update'])->name('sub-companies.update');
+    Route::delete('sub-companies/{subCompany}', [SubCompanyController::class, 'destroy'])->name('sub-companies.destroy');
+    Route::post('sub-companies/{subCompany}/locations', [SubCompanyController::class, 'storeLocation'])->name('sub-companies.locations.store');
+    Route::put('sub-companies/{subCompany}/locations/{location}', [SubCompanyController::class, 'updateLocation'])->name('sub-companies.locations.update');
+    Route::delete('sub-companies/{subCompany}/locations/{location}', [SubCompanyController::class, 'destroyLocation'])->name('sub-companies.locations.destroy');
     Route::get('employees/master-data', [EmployeeMasterController::class, 'index'])->name('employees.master-data');
     Route::get('employees/import-template', [EmployeeController::class, 'downloadImportTemplate'])->name('employees.import-template');
     Route::post('employees/import', [EmployeeController::class, 'import'])->name('employees.import');
