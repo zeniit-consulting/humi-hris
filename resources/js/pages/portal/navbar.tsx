@@ -8,7 +8,7 @@ type PortalNavbarProps = {
 
 const navItems = [
     { key: 'home', label: 'Beranda', icon: House, href: '/portal' },
-    { key: 'attendance', label: 'Absensi', icon: Clock3 },
+    { key: 'attendance', label: 'Jadwal', icon: Clock3 },
     { key: 'payroll', label: 'Payroll', icon: Wallet },
     { key: 'profile', label: 'Profil', icon: User },
 ] as const;

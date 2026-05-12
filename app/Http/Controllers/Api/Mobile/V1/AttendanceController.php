@@ -167,6 +167,15 @@ class AttendanceController extends Controller
             $employee = $this->resolveRequiredSelfServiceEmployee($user);
             $validated['employee_id'] = $employee->id;
             $validated['status'] = $employeeAttendance->status ?: 'present';
+
+            if (($validated['check_out_at'] ?? null) !== null) {
+                $this->ensureWithinAttendanceRadius(
+                    $user,
+                    $employee,
+                    $validated['check_out_latitude'] ?? null,
+                    $validated['check_out_longitude'] ?? null,
+                );
+            }
         }
 
         if (

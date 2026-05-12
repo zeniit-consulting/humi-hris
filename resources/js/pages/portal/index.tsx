@@ -229,7 +229,6 @@ async function requestApi<T>(
 export default function PortalPage() {
     const [summary, setSummary] = useState<PortalSummary | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isMutating, setIsMutating] = useState(false);
     const [currentTime, setCurrentTime] = useState(() =>
         new Intl.DateTimeFormat('id-ID', {
             hour: '2-digit',
@@ -296,65 +295,6 @@ export default function PortalPage() {
         return () => window.clearInterval(intervalId);
     }, []);
 
-    const refreshSummary = async () => {
-        const response = await requestApi<PortalSummary>('/portal/api/summary');
-
-        startTransition(() => {
-            setSummary(response.data);
-        });
-    };
-
-    const handleClockOut = async () => {
-        if (!summary?.employee || !summary.quick_action.open_attendance) {
-            return;
-        }
-
-        const attendance = summary.quick_action.open_attendance;
-        const shiftId =
-            attendance.shift?.id ??
-            summary.quick_action.shift?.id ??
-            summary.quick_action.attendance?.shift?.id;
-
-        if (!shiftId) {
-            notifyPortal('error', 'Shift belum tersedia untuk absensi ini.');
-            return;
-        }
-
-        try {
-            setIsMutating(true);
-
-            await requestApi(
-                `/portal/api/attendances/${attendance.id}`,
-                'PUT',
-                {
-                    employee_id: summary.employee.id,
-                    shift_id: shiftId,
-                    attendance_date:
-                        attendance.attendance_date ?? summary.today.date,
-                    status: attendance.status,
-                    check_in_at: attendance.check_in_at,
-                    check_out_at: new Date().toISOString(),
-                    notes: attendance.notes,
-                },
-            );
-
-            notifyPortal('success', 'Jam pulang berhasil direkam.');
-            await refreshSummary();
-        } catch (mutationError) {
-            notifyPortal(
-                'error',
-                mutationError instanceof Error
-                    ? translatePortalError(
-                          mutationError.message,
-                          'Jam pulang gagal.',
-                      )
-                    : 'Jam pulang gagal.',
-            );
-        } finally {
-            setIsMutating(false);
-        }
-    };
-
     const headlineName =
         summary?.employee?.full_name ?? summary?.user.name ?? 'Pengguna';
     const workingDays = useMemo(() => {
@@ -400,6 +340,7 @@ export default function PortalPage() {
                     }
                 />
                 <link rel="manifest" href="/manifest.webmanifest" />
+                <link rel="apple-touch-icon" href="/icons/icon-192.png" />
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link
                     rel="preconnect"
@@ -505,16 +446,15 @@ export default function PortalPage() {
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        void (summary?.quick_action.can_clock_in
-                                            ? (window.location.href =
-                                                  '/portal/check-in')
-                                            : handleClockOut())
+                                        void (window.location.href = summary
+                                            ?.quick_action.can_clock_in
+                                            ? '/portal/check-in'
+                                            : '/portal/check-out')
                                     }
                                     disabled={
-                                        isMutating ||
-                                        (!summary?.quick_action.can_clock_in &&
+                                        !summary?.quick_action.can_clock_in &&
                                             !summary?.quick_action
-                                                .can_clock_out)
+                                                .can_clock_out
                                     }
                                     className="portal-primary-bg inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[11px] px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
                                 >

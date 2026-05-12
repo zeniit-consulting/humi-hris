@@ -21,12 +21,22 @@ class UserPortalSectionController extends Controller
 {
     public function attendance(Request $request): Response|RedirectResponse
     {
-        return $this->renderForUser($request, 'portal/attendance', 'Attendance');
+        return $this->renderForUser($request, 'portal/attendance', 'Jadwal');
     }
 
     public function checkIn(Request $request): Response|RedirectResponse
     {
         return $this->renderForUser($request, 'portal/check-in', 'Absensi');
+    }
+
+    public function checkOut(Request $request): Response|RedirectResponse
+    {
+        return $this->renderForUser($request, 'portal/check-out', 'Pulang');
+    }
+
+    public function shiftChange(Request $request): Response|RedirectResponse
+    {
+        return $this->renderForUser($request, 'portal/shift-change', 'Ubah Jadwal');
     }
 
     public function leaves(Request $request): Response|RedirectResponse

@@ -12,22 +12,23 @@ type PortalShellProps = PropsWithChildren<{
     active: 'home' | 'attendance' | 'payroll' | 'profile';
     links: PortalLinkMap;
     headerAction?: ReactNode;
+    hideNavbar?: boolean;
 }>;
 
 export function PortalShell({
     children,
     title,
-    eyebrow,
-    description,
     active,
     links,
     headerAction,
+    hideNavbar = false,
 }: PortalShellProps) {
     return (
         <>
             <Head title={title}>
                 <meta name="theme-color" content="#006069" />
                 <link rel="manifest" href="/manifest.webmanifest" />
+                <link rel="apple-touch-icon" href="/icons/icon-192.png" />
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link
                     rel="preconnect"
@@ -71,7 +72,9 @@ export function PortalShell({
 
                     <main className="flex-1">{children}</main>
 
-                    <PortalNavbar active={active} links={links} />
+                    {hideNavbar ? null : (
+                        <PortalNavbar active={active} links={links} />
+                    )}
                 </div>
             </div>
         </>

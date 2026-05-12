@@ -1,7 +1,7 @@
-import { Crosshair, LoaderCircle, MapPin, ShieldCheck } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { LoaderCircle } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Circle,
     MapContainer,
@@ -38,7 +38,10 @@ type PortalSummary = {
             end_time: string | null;
             is_day_off: boolean;
         } | null;
+        attendance: AttendancePayload | null;
+        open_attendance: AttendancePayload | null;
         can_clock_in: boolean;
+        can_clock_out: boolean;
     };
     attendance_policy: {
         radius_meters: number;
@@ -60,10 +63,33 @@ type PortalSummary = {
     links: PortalLinkMap;
 };
 
+type AttendancePayload = {
+    id: number;
+    attendance_date: string | null;
+    status: string;
+    shift: {
+        id: number;
+        code: string;
+        name: string;
+        start_time: string | null;
+        end_time: string | null;
+        is_day_off: boolean;
+    } | null;
+    check_in_at: string | null;
+    check_in_latitude: number | null;
+    check_in_longitude: number | null;
+    check_out_at: string | null;
+    check_out_latitude: number | null;
+    check_out_longitude: number | null;
+    notes: string | null;
+};
+
 type Coordinates = {
     latitude: number;
     longitude: number;
 };
+
+type AttendanceMode = 'clock-in' | 'clock-out';
 
 const geolocationOptions: PositionOptions = {
     enableHighAccuracy: true,
@@ -144,7 +170,10 @@ function MapAutoCenter({ coordinates }: { coordinates: Coordinates | null }) {
     return null;
 }
 
-export default function PortalCheckInPage({ pageTitle }: Props) {
+export function PortalAttendanceLocationPage({
+    pageTitle,
+    mode = 'clock-in',
+}: Props & { mode?: AttendanceMode }) {
     const [portal, setPortal] = useState<PortalSummary | null>(null);
     const [selectedShiftId, setSelectedShiftId] = useState<string>('');
     const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
@@ -152,6 +181,7 @@ export default function PortalCheckInPage({ pageTitle }: Props) {
     const [isTrackingLocation, setIsTrackingLocation] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const locationWatchId = useRef<number | null>(null);
+    const hasStartedLocationCheckRef = useRef(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -209,8 +239,14 @@ export default function PortalCheckInPage({ pageTitle }: Props) {
         portal?.shift_options.find(
             (shift) => String(shift.id) === selectedShiftId,
         ) ?? null;
-    const hasTodayShift = Boolean(portal?.quick_action.shift);
-    const attendanceShift = portal?.quick_action.shift ?? selectedShift;
+    const openAttendance = portal?.quick_action.open_attendance ?? null;
+    const attendanceShift =
+        mode === 'clock-out'
+            ? (openAttendance?.shift ??
+              portal?.quick_action.shift ??
+              portal?.quick_action.attendance?.shift ??
+              selectedShift)
+            : (portal?.quick_action.shift ?? selectedShift);
 
     const closestLocation = useMemo(() => {
         if (!coordinates || locations.length === 0) {
@@ -242,12 +278,31 @@ export default function PortalCheckInPage({ pageTitle }: Props) {
         return [-6.2, 106.816666];
     }, [coordinates, locations]);
 
+    const isWithinRadius =
+        !!closestLocation &&
+        closestLocation.distance <= closestLocation.radius_meters;
     const canSubmit =
         !!portal?.employee &&
         !!attendanceShift &&
         !!closestLocation &&
-        closestLocation.distance <= closestLocation.radius_meters &&
-        portal.quick_action.can_clock_in;
+        isWithinRadius &&
+        (mode === 'clock-out'
+            ? !!openAttendance && portal.quick_action.can_clock_out
+            : portal.quick_action.can_clock_in);
+    const isOutsideRadius =
+        !!closestLocation &&
+        closestLocation.distance > closestLocation.radius_meters;
+    const actionButtonText = isOutsideRadius
+        ? 'Refresh Lokasi Anda'
+        : isSubmitting
+          ? mode === 'clock-out'
+              ? 'Menyimpan jam pulang...'
+              : 'Menyimpan absensi...'
+          : isLocating
+            ? 'Mengecek lokasi...'
+            : mode === 'clock-out'
+              ? 'Clock Out'
+              : 'Clock In';
 
     const handleDetectLocation = () => {
         if (!navigator.geolocation) {
@@ -285,6 +340,15 @@ export default function PortalCheckInPage({ pageTitle }: Props) {
         );
     };
 
+    useEffect(() => {
+        if (!portal || hasStartedLocationCheckRef.current) {
+            return;
+        }
+
+        hasStartedLocationCheckRef.current = true;
+        handleDetectLocation();
+    }, [portal]);
+
     const handleSubmit = async () => {
         if (!portal?.employee || !attendanceShift || !coordinates) {
             return;
@@ -293,15 +357,45 @@ export default function PortalCheckInPage({ pageTitle }: Props) {
         try {
             setIsSubmitting(true);
 
-            await requestApi('/portal/api/attendances', 'POST', {
-                employee_id: portal.employee.id,
-                shift_id: attendanceShift.id,
-                attendance_date: portal.today.date,
-                status: 'present',
-                check_in_at: new Date().toISOString(),
-                check_in_latitude: coordinates.latitude,
-                check_in_longitude: coordinates.longitude,
-            });
+            if (mode === 'clock-out') {
+                if (!openAttendance) {
+                    notifyPortal(
+                        'error',
+                        'Tidak ada absensi aktif untuk clock out.',
+                    );
+                    return;
+                }
+
+                await requestApi(
+                    `/portal/api/attendances/${openAttendance.id}`,
+                    'PUT',
+                    {
+                        employee_id: portal.employee.id,
+                        shift_id: attendanceShift.id,
+                        attendance_date:
+                            openAttendance.attendance_date ??
+                            portal.today.date,
+                        status: openAttendance.status,
+                        check_in_at: openAttendance.check_in_at,
+                        check_in_latitude: openAttendance.check_in_latitude,
+                        check_in_longitude: openAttendance.check_in_longitude,
+                        check_out_at: new Date().toISOString(),
+                        check_out_latitude: coordinates.latitude,
+                        check_out_longitude: coordinates.longitude,
+                        notes: openAttendance.notes,
+                    },
+                );
+            } else {
+                await requestApi('/portal/api/attendances', 'POST', {
+                    employee_id: portal.employee.id,
+                    shift_id: attendanceShift.id,
+                    attendance_date: portal.today.date,
+                    status: 'present',
+                    check_in_at: new Date().toISOString(),
+                    check_in_latitude: coordinates.latitude,
+                    check_in_longitude: coordinates.longitude,
+                });
+            }
 
             window.location.href = '/portal';
         } catch (submitError) {
@@ -310,9 +404,13 @@ export default function PortalCheckInPage({ pageTitle }: Props) {
                 submitError instanceof Error
                     ? translatePortalError(
                           submitError.message,
-                          'Absensi masuk gagal.',
+                          mode === 'clock-out'
+                              ? 'Jam pulang gagal.'
+                              : 'Absensi masuk gagal.',
                       )
-                    : 'Absensi masuk gagal.',
+                    : mode === 'clock-out'
+                      ? 'Jam pulang gagal.'
+                      : 'Absensi masuk gagal.',
             );
         } finally {
             setIsSubmitting(false);
@@ -322,9 +420,14 @@ export default function PortalCheckInPage({ pageTitle }: Props) {
     return (
         <PortalShell
             title={pageTitle}
-            eyebrow="Clock in"
-            description="Pastikan Anda berada di lokasi kerja yang diizinkan sebelum absensi masuk."
+            eyebrow={mode === 'clock-out' ? 'Clock out' : 'Clock in'}
+            description={
+                mode === 'clock-out'
+                    ? 'Pastikan Anda berada di lokasi kerja yang diizinkan sebelum absensi pulang.'
+                    : 'Pastikan Anda berada di lokasi kerja yang diizinkan sebelum absensi masuk.'
+            }
             active="attendance"
+            hideNavbar
             links={
                 portal?.links ?? {
                     attendance: '/portal/attendance',
@@ -334,78 +437,17 @@ export default function PortalCheckInPage({ pageTitle }: Props) {
                 }
             }
         >
-            <section className="rounded-[16px] bg-white px-5 py-5 shadow-[0_16px_42px_rgba(15,23,42,0.07)]">
-                <div className="flex items-center gap-3">
-                    <span className="portal-primary-soft inline-flex size-11 items-center justify-center rounded-lg">
-                        <Crosshair className="size-5" />
-                    </span>
-                    <div>
-                        <h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">
-                            Cek Radius Lokasi Absensi
-                        </h2>
-                    </div>
-                </div>
-
-                <div className="mt-5 space-y-3">
-                    <div className="rounded-[12px] border border-stone-200 bg-stone-50 px-4 py-4">
-                        <p className="text-xs tracking-[0.18em] text-slate-500 uppercase">
-                            Shift hari ini
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-slate-900">
-                            {attendanceShift
-                                ? `${attendanceShift.name}${attendanceShift.start_time && attendanceShift.end_time ? ` • ${attendanceShift.start_time.slice(0, 5)}-${attendanceShift.end_time.slice(0, 5)}` : ''}`
-                                : 'Belum ada shift terdaftar'}
-                        </p>
-                    </div>
-
-                    {!hasTodayShift ? (
-                        <select
-                            value={selectedShiftId}
-                            onChange={(event) =>
-                                setSelectedShiftId(event.target.value)
-                            }
-                            className="h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
-                        >
-                            <option value="">Pilih shift</option>
-                            {portal?.shift_options.map((shift) => (
-                                <option key={shift.id} value={shift.id}>
-                                    {shift.name} ({shift.code})
-                                </option>
-                            ))}
-                        </select>
-                    ) : null}
-
-                    <button
-                        type="button"
-                        onClick={handleDetectLocation}
-                        disabled={isLocating}
-                        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[9px] border border-slate-200 bg-white text-sm font-semibold text-slate-900 disabled:opacity-60"
-                    >
-                        {isLocating ? (
-                            <LoaderCircle className="size-4 animate-spin" />
-                        ) : (
-                            <MapPin className="size-4" />
-                        )}
-                        {isLocating
-                            ? 'Mengecek lokasi...'
-                            : isTrackingLocation
-                              ? 'Lokasi tersinkron'
-                              : 'Cek lokasi saya'}
-                    </button>
-                </div>
-            </section>
-
-            <section className="mt-5 rounded-[16px] bg-white px-5 py-5 shadow-[0_16px_42px_rgba(15,23,42,0.07)]">
-                <div className="mt-4 overflow-hidden rounded-[12px] border border-stone-200">
+            <section className="relative -mx-4 -mt-4 h-[calc(100svh-5rem)] overflow-hidden bg-slate-950 sm:-mx-4">
+                <div className="absolute inset-0">
                     <MapContainer
                         center={mapCenter}
                         zoom={16}
-                        scrollWheelZoom={false}
-                        className="h-72 w-full"
+                        scrollWheelZoom
+                        className="h-full w-full"
                     >
                         <TileLayer
-                            attribution='&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://stamen.com/" target="_blank">Stamen Design</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
-                            url="https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png"
+                            attribution='&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+                            url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
                         />
                         <MapAutoCenter coordinates={coordinates} />
 
@@ -475,61 +517,101 @@ export default function PortalCheckInPage({ pageTitle }: Props) {
                     </MapContainer>
                 </div>
 
-                {closestLocation ? (
-                    <div className="mt-4 space-y-3">
-                        <div className="rounded-[12px] border border-stone-200 bg-stone-50 px-4 py-4">
-                            <p className="text-sm font-semibold text-slate-900">
-                                {closestLocation.name}
-                            </p>
-                            <p className="mt-1 text-sm text-slate-500">
-                                {closestLocation.address ??
-                                    'Alamat belum diisi'}
-                            </p>
-                            <p className="mt-3 text-sm text-slate-700">
-                                Jarak Anda:{' '}
-                                {Math.round(closestLocation.distance)} m
-                            </p>
-                            <p className="mt-1 text-sm text-slate-700">
-                                Radius diizinkan:{' '}
-                                {closestLocation.radius_meters} m
-                            </p>
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] bg-gradient-to-b from-slate-950/55 via-slate-950/18 to-transparent px-3 pt-3 pb-16">
+                    <div className="pointer-events-auto rounded-[18px] border border-white/20 bg-white/90 p-3 text-slate-950 shadow-[0_20px_48px_rgba(15,23,42,0.2)] backdrop-blur-xl">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-semibold tracking-[0.16em] text-slate-500 uppercase">
+                                    {mode === 'clock-out'
+                                        ? 'Clock out'
+                                        : 'Clock in'}
+                                </p>
+                                <h2 className="mt-0.5 truncate text-base font-black tracking-[-0.04em]">
+                                    Lokasi Absensi
+                                </h2>
+                            </div>
+                            <span
+                                className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${
+                                    isLocating
+                                        ? 'bg-slate-100 text-slate-600'
+                                        : isTrackingLocation
+                                          ? 'bg-[#e6f7f6] text-[#006069]'
+                                          : 'bg-amber-50 text-amber-700'
+                                }`}
+                            >
+                                {isLocating ? (
+                                    <LoaderCircle className="size-3 animate-spin" />
+                                ) : null}
+                                {isLocating
+                                    ? 'Mencari lokasi'
+                                    : isTrackingLocation
+                                      ? 'Live'
+                                      : 'Belum aktif'}
+                            </span>
                         </div>
 
-                        <div
-                            className={`rounded-[12px] px-4 py-4 text-sm ${
-                                closestLocation.distance <=
-                                closestLocation.radius_meters
-                                    ? 'portal-primary-text border border-[#b9dfe0] bg-[#f3fbfb]'
-                                    : 'border border-amber-200 bg-amber-50 text-amber-900'
+                        {closestLocation ? (
+                            <div className="mt-3 grid grid-cols-[1fr_auto] items-end gap-3 rounded-xl bg-slate-50 p-2.5">
+                                <div className="min-w-0">
+                                    <p className="truncate text-xs font-bold text-slate-950">
+                                        {closestLocation.name}
+                                    </p>
+                                    <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-slate-500">
+                                        {closestLocation.address ??
+                                            'Lokasi absensi'}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-lg font-black tracking-[-0.05em] text-slate-950">
+                                        {Math.round(closestLocation.distance)}m
+                                    </p>
+                                    <p className="text-[10px] font-semibold text-slate-500">
+                                        radius {closestLocation.radius_meters}m
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="mt-3 rounded-xl bg-slate-50 p-2.5 text-xs text-slate-500">
+                                {isLocating
+                                    ? 'Mengambil lokasi perangkat secara otomatis...'
+                                    : 'Menunggu izin lokasi untuk menghitung radius absensi.'}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[500] bg-gradient-to-t from-slate-950/70 via-slate-950/24 to-transparent px-4 pt-24 pb-5">
+                    <div className="pointer-events-auto space-y-3">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (isOutsideRadius) {
+                                    handleDetectLocation();
+                                    return;
+                                }
+
+                                void handleSubmit();
+                            }}
+                            disabled={
+                                isSubmitting ||
+                                isLocating ||
+                                (!isOutsideRadius && !canSubmit)
+                            }
+                            className={`inline-flex h-14 w-full items-center justify-center rounded-[18px] text-sm font-bold shadow-[0_22px_52px_rgba(0,96,105,0.4)] disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100 ${
+                                isOutsideRadius
+                                    ? 'bg-red-600 text-white hover:bg-red-700'
+                                    : 'portal-primary-bg'
                             }`}
                         >
-                            <div className="flex items-start gap-3">
-                                <ShieldCheck className="mt-0.5 size-4 shrink-0" />
-                                <p>
-                                    {closestLocation.distance <=
-                                    closestLocation.radius_meters
-                                        ? 'Anda berada dalam radius absensi dan bisa melakukan clock in.'
-                                        : 'Anda berada di luar radius absensi. Dekati lokasi kerja yang diizinkan untuk melanjutkan.'}
-                                </p>
-                            </div>
-                        </div>
+                            {actionButtonText}
+                        </button>
                     </div>
-                ) : (
-                    <div className="mt-4 rounded-[12px] bg-stone-50 px-4 py-5 text-sm text-slate-500">
-                        Lakukan pengecekan lokasi untuk melihat status radius
-                        absensi.
-                    </div>
-                )}
+                </div>
             </section>
-
-            <button
-                type="button"
-                onClick={() => void handleSubmit()}
-                disabled={!canSubmit || isSubmitting}
-                className="portal-primary-bg mt-5 inline-flex h-12 w-full items-center justify-center rounded-[9px] text-sm font-semibold disabled:opacity-60"
-            >
-                {isSubmitting ? 'Menyimpan absensi...' : 'Lanjut absensi masuk'}
-            </button>
         </PortalShell>
     );
+}
+
+export default function PortalCheckInPage({ pageTitle }: Props) {
+    return <PortalAttendanceLocationPage pageTitle={pageTitle} />;
 }

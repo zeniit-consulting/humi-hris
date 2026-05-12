@@ -74,6 +74,8 @@ const fmt = new Intl.NumberFormat('id-ID', {
 
 const PRICE_CORE = 2900;
 const PRICE_PLUS = 7500;
+const WHATSAPP_CONTACT_URL =
+    'https://wa.me/628111111111?text=Halo%20Humi%2C%20saya%20ingin%20konsultasi%20tentang%20HRIS.';
 
 const coreFeaturesIncluded = [
     'Manajemen Karyawan',
@@ -167,7 +169,10 @@ export default function Welcome({
                 <meta property="og:image:width" content="512" />
                 <meta property="og:image:height" content="512" />
                 <meta name="twitter:card" content="summary" />
-                <meta name="twitter:title" content="Humi - Easy HR Management" />
+                <meta
+                    name="twitter:title"
+                    content="Humi - Easy HR Management"
+                />
                 <meta
                     name="twitter:description"
                     content="Humi adalah platform HRIS terpadu untuk kelola karyawan, absensi, cuti, dan payroll dengan workflow yang sederhana."
@@ -521,33 +526,37 @@ export default function Welcome({
                                     Harga yang mengikuti skala tim Anda
                                 </h2>
                                 <p className="mt-4 text-base text-slate-600">
-                                    Paket dan fitur di bawah ini disamakan dengan halaman billing agar calon pelanggan melihat penawaran yang sama.
+                                    Paket dan fitur di bawah ini disamakan
+                                    dengan halaman billing agar calon pelanggan
+                                    melihat penawaran yang sama.
                                 </p>
                             </div>
 
-                            <div className="mt-12 grid gap-6 lg:grid-cols-3">
+                            <div className="mt-12 grid items-stretch gap-6 lg:grid-cols-3">
                                 {pricingPlans.map((plan) => (
                                     <article
                                         key={plan.name}
                                         className={
                                             plan.highlight
-                                                ? 'relative overflow-hidden rounded-3xl border border-[#0d4d52] bg-[#0d4d52] p-8 text-white shadow-[0_24px_80px_rgba(13,77,82,0.22)]'
-                                                : 'rounded-3xl border border-slate-200 bg-white p-8 text-slate-900'
+                                                ? 'relative flex h-full flex-col overflow-hidden rounded-3xl border border-[#0d4d52] bg-[#0d4d52] p-8 text-white shadow-[0_24px_80px_rgba(13,77,82,0.22)]'
+                                                : 'flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-8 text-slate-900'
                                         }
                                     >
-                                        {plan.badge ? (
-                                            <span
-                                                className={
-                                                    plan.highlight
-                                                        ? 'inline-flex rounded-full bg-white/14 px-3 py-1 text-xs font-semibold tracking-[0.12em] uppercase text-white'
-                                                        : 'inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tracking-[0.12em] uppercase text-slate-700'
-                                                }
-                                            >
-                                                {plan.badge}
-                                            </span>
-                                        ) : null}
+                                        <div className="flex min-h-7 items-start">
+                                            {plan.badge ? (
+                                                <span
+                                                    className={
+                                                        plan.highlight
+                                                            ? 'inline-flex rounded-full bg-white/14 px-3 py-1 text-xs font-semibold tracking-[0.12em] text-white uppercase'
+                                                            : 'inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tracking-[0.12em] text-slate-700 uppercase'
+                                                    }
+                                                >
+                                                    {plan.badge}
+                                                </span>
+                                            ) : null}
+                                        </div>
 
-                                        <div className="mt-4">
+                                        <div className="mt-4 min-h-[132px]">
                                             <h3 className="text-2xl font-bold tracking-tight">
                                                 {plan.name}
                                             </h3>
@@ -579,7 +588,7 @@ export default function Welcome({
                                             ) : null}
                                         </div>
 
-                                        <ul className="mt-8 space-y-3">
+                                        <ul className="mt-8 flex-1 space-y-3">
                                             {plan.features.map((feature) => (
                                                 <li
                                                     key={feature}
@@ -630,7 +639,7 @@ export default function Welcome({
                                             )}
                                         </ul>
 
-                                        <div className="mt-8">
+                                        <div className="mt-8 pt-2">
                                             <Link
                                                 href={
                                                     auth.user
@@ -654,7 +663,9 @@ export default function Welcome({
 
                             <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 px-6 py-5 text-center text-sm text-slate-600">
                                 <Sparkles className="mr-1 inline size-4 text-[#14a8b0]" />
-                                Harga belum termasuk PPN. Pembayaran via transfer bank. Invoice dibuat setelah konfirmasi.
+                                Harga belum termasuk PPN. Pembayaran via
+                                transfer bank. Invoice dibuat setelah
+                                konfirmasi.
                             </div>
                         </div>
                     </section>
@@ -667,7 +678,8 @@ export default function Welcome({
                                     Siap mengelola HR dengan lebih baik?
                                 </h2>
                                 <p className="mx-auto mt-4 max-w-xl text-base opacity-90">
-                                    Mulai gratis hari ini. Tidak perlu kartu kredit, setup dalam hitungan menit.
+                                    Mulai gratis hari ini. Tidak perlu kartu
+                                    kredit, setup dalam hitungan menit.
                                 </p>
 
                                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -740,6 +752,20 @@ export default function Welcome({
                         </div>
                     </div>
                 </footer>
+
+                <a
+                    href={WHATSAPP_CONTACT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Hubungi Humi via WhatsApp"
+                    className="fixed right-5 bottom-5 z-50 inline-flex size-16 items-center justify-center rounded-full bg-white shadow-[0_18px_46px_rgba(15,23,42,0.24)] ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-[0_22px_60px_rgba(15,23,42,0.28)] focus-visible:ring-4 focus-visible:ring-[#25d366]/30 focus-visible:outline-none md:right-8 md:bottom-8"
+                >
+                    <img
+                        src="/icons/whatsapp.webp"
+                        alt=""
+                        className="size-14 object-contain"
+                    />
+                </a>
             </div>
         </>
     );

@@ -1,7 +1,23 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { ImagePlus, MapPin, Plus, Trash2, Upload } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import {
+    ImagePlus,
+    LoaderCircle,
+    MapPin,
+    Plus,
+    Trash2,
+    Upload,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import {
+    MapContainer,
+    Marker,
+    TileLayer,
+    useMap,
+    useMapEvents,
+} from 'react-leaflet';
 import CompanySettingController from '@/actions/App/Http/Controllers/Settings/CompanySettingController';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
@@ -22,6 +38,108 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: edit(),
     },
 ];
+
+const defaultMapCenter: [number, number] = [-2.548926, 118.0148634];
+
+const selectedLocationIcon = new L.DivIcon({
+    className: 'leaflet-profile-marker-wrapper',
+    html: '<div style="width:22px;height:22px;border-radius:9999px;background:#0f766e;border:4px solid #ffffff;box-shadow:0 12px 24px rgba(15,118,110,.35);"></div>',
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+});
+
+const parseCoordinate = (value: string): number | null => {
+    if (value.trim() === '') {
+        return null;
+    }
+
+    const parsed = Number(value);
+
+    return Number.isFinite(parsed) ? parsed : null;
+};
+
+type LocationMapPickerProps = {
+    latitude: string;
+    longitude: string;
+    onSelect: (latitude: number, longitude: number) => void;
+};
+
+function MapAutoCenter({
+    latitude,
+    longitude,
+}: {
+    latitude: number | null;
+    longitude: number | null;
+}) {
+    const map = useMap();
+
+    useEffect(() => {
+        if (latitude === null || longitude === null) {
+            return;
+        }
+
+        map.flyTo([latitude, longitude], Math.max(map.getZoom(), 16), {
+            animate: true,
+            duration: 0.6,
+        });
+    }, [latitude, longitude, map]);
+
+    return null;
+}
+
+function MapClickHandler({
+    onSelect,
+}: {
+    onSelect: (latitude: number, longitude: number) => void;
+}) {
+    useMapEvents({
+        click(event) {
+            onSelect(event.latlng.lat, event.latlng.lng);
+        },
+    });
+
+    return null;
+}
+
+function LocationMapPicker({
+    latitude,
+    longitude,
+    onSelect,
+}: LocationMapPickerProps) {
+    const parsedLatitude = parseCoordinate(latitude);
+    const parsedLongitude = parseCoordinate(longitude);
+    const hasSelectedPoint =
+        parsedLatitude !== null && parsedLongitude !== null;
+    const center: [number, number] = hasSelectedPoint
+        ? [parsedLatitude, parsedLongitude]
+        : defaultMapCenter;
+
+    return (
+        <MapContainer
+            center={center}
+            zoom={hasSelectedPoint ? 16 : 5}
+            scrollWheelZoom
+            className="h-80 w-full"
+        >
+            <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <MapClickHandler onSelect={onSelect} />
+            <MapAutoCenter
+                latitude={parsedLatitude}
+                longitude={parsedLongitude}
+            />
+
+            {hasSelectedPoint ? (
+                <Marker
+                    position={[parsedLatitude, parsedLongitude]}
+                    icon={selectedLocationIcon}
+                />
+            ) : null}
+        </MapContainer>
+    );
+}
 
 export default function Profile({
     mustVerifyEmail,
@@ -58,6 +176,23 @@ export default function Profile({
     const [logoPreview, setLogoPreview] = useState<string | null>(
         company.logo_url,
     );
+    const [primaryLocation, setPrimaryLocation] = useState({
+        address: company.location_address ?? '',
+        latitude:
+            company.location_latitude !== null &&
+            company.location_latitude !== undefined
+                ? String(company.location_latitude)
+                : '',
+        longitude:
+            company.location_longitude !== null &&
+            company.location_longitude !== undefined
+                ? String(company.location_longitude)
+                : '',
+    });
+    const [isResolvingAddress, setIsResolvingAddress] = useState(false);
+    const [reverseGeocodeError, setReverseGeocodeError] = useState<
+        string | null
+    >(null);
     const [attendanceLocations, setAttendanceLocations] = useState(
         company.attendance_locations.length > 0
             ? company.attendance_locations
@@ -73,6 +208,7 @@ export default function Profile({
     );
     const avatarPreviewRef = useRef<string | null>(null);
     const uploadedPreviewRef = useRef<string | null>(null);
+    const reverseGeocodeRequestRef = useRef(0);
 
     useEffect(() => {
         return () => {
@@ -84,6 +220,71 @@ export default function Profile({
             }
         };
     }, []);
+
+    const handlePrimaryLocationSelect = async (
+        latitude: number,
+        longitude: number,
+    ) => {
+        const requestId = reverseGeocodeRequestRef.current + 1;
+        reverseGeocodeRequestRef.current = requestId;
+        const nextLatitude = latitude.toFixed(7);
+        const nextLongitude = longitude.toFixed(7);
+
+        setPrimaryLocation((current) => ({
+            ...current,
+            latitude: nextLatitude,
+            longitude: nextLongitude,
+        }));
+        setReverseGeocodeError(null);
+        setIsResolvingAddress(true);
+
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(
+                    nextLatitude,
+                )}&lon=${encodeURIComponent(nextLongitude)}`,
+                {
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                },
+            );
+
+            if (!response.ok) {
+                throw new Error('Reverse geocoding failed.');
+            }
+
+            const payload = (await response.json()) as {
+                display_name?: string;
+            };
+            const address = payload.display_name?.trim();
+
+            if (reverseGeocodeRequestRef.current !== requestId) {
+                return;
+            }
+
+            if (address) {
+                setPrimaryLocation((current) => ({
+                    ...current,
+                    address,
+                }));
+            } else {
+                setReverseGeocodeError(
+                    'Alamat tidak ditemukan. Koordinat sudah terisi, alamat bisa diisi manual.',
+                );
+            }
+        } catch {
+            if (reverseGeocodeRequestRef.current === requestId) {
+                setReverseGeocodeError(
+                    'Alamat otomatis gagal dimuat. Koordinat sudah terisi, alamat bisa diisi manual.',
+                );
+            }
+        } finally {
+            if (reverseGeocodeRequestRef.current === requestId) {
+                setIsResolvingAddress(false);
+            }
+        }
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -103,16 +304,13 @@ export default function Profile({
                         {...ProfileController.update.form()}
                         options={{
                             preserveScroll: true,
-                            forceFormData: true,
                         }}
                         className="space-y-6"
                     >
                         {({ processing, recentlySuccessful, errors }) => (
                             <>
                                 <div className="grid gap-3">
-                                    <Label htmlFor="avatar">
-                                        Foto profil
-                                    </Label>
+                                    <Label htmlFor="avatar">Foto profil</Label>
 
                                     <div className="flex items-center gap-4 rounded-lg border bg-slate-50/60 p-4">
                                         {avatarPreview ? (
@@ -157,7 +355,8 @@ export default function Profile({
 
                                                     if (!file) {
                                                         setAvatarPreview(
-                                                            (auth.user.avatar as
+                                                            (auth.user
+                                                                .avatar as
                                                                 | string
                                                                 | null
                                                                 | undefined) ??
@@ -210,7 +409,8 @@ export default function Profile({
                                                                 );
                                                             } else {
                                                                 setAvatarPreview(
-                                                                    (auth.user.avatar as
+                                                                    (auth.user
+                                                                        .avatar as
                                                                         | string
                                                                         | null
                                                                         | undefined) ??
@@ -475,13 +675,32 @@ export default function Profile({
                                             <textarea
                                                 id="location_address"
                                                 className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                defaultValue={
-                                                    company.location_address ??
-                                                    ''
-                                                }
+                                                value={primaryLocation.address}
                                                 name="location_address"
+                                                onChange={(event) =>
+                                                    setPrimaryLocation(
+                                                        (current) => ({
+                                                            ...current,
+                                                            address:
+                                                                event.target
+                                                                    .value,
+                                                        }),
+                                                    )
+                                                }
                                                 placeholder="Alamat kantor pusat"
                                             />
+                                            {isResolvingAddress ? (
+                                                <p className="inline-flex items-center gap-2 text-xs text-slate-500">
+                                                    <LoaderCircle className="size-3 animate-spin" />
+                                                    Mengambil alamat dari titik
+                                                    map...
+                                                </p>
+                                            ) : null}
+                                            {reverseGeocodeError ? (
+                                                <p className="text-xs text-amber-600">
+                                                    {reverseGeocodeError}
+                                                </p>
+                                            ) : null}
                                             <InputError
                                                 className="mt-2"
                                                 message={
@@ -490,43 +709,72 @@ export default function Profile({
                                             />
                                         </div>
 
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="location_latitude">
-                                                Latitude
-                                            </Label>
-                                            <Input
-                                                id="location_latitude"
+                                        <div className="grid gap-3 md:col-span-2">
+                                            <input
+                                                type="hidden"
                                                 name="location_latitude"
-                                                type="number"
-                                                step="0.0000001"
-                                                defaultValue={String(
-                                                    company.location_latitude ??
-                                                        '',
-                                                )}
-                                                placeholder="-6.2000000"
+                                                value={primaryLocation.latitude}
                                             />
+                                            <input
+                                                type="hidden"
+                                                name="location_longitude"
+                                                value={
+                                                    primaryLocation.longitude
+                                                }
+                                            />
+
+                                            <div>
+                                                <Label>
+                                                    Pilih titik lokasi di map
+                                                </Label>
+                                                <p className="mt-1 text-xs text-slate-500">
+                                                    Klik pada map untuk mengisi
+                                                    latitude, longitude, dan
+                                                    alamat lokasi utama secara
+                                                    otomatis.
+                                                </p>
+                                            </div>
+
+                                            <div className="overflow-hidden rounded-lg border bg-white">
+                                                <LocationMapPicker
+                                                    latitude={
+                                                        primaryLocation.latitude
+                                                    }
+                                                    longitude={
+                                                        primaryLocation.longitude
+                                                    }
+                                                    onSelect={
+                                                        handlePrimaryLocationSelect
+                                                    }
+                                                />
+                                            </div>
+
+                                            <div className="grid gap-3 rounded-md border bg-white p-3 text-sm md:grid-cols-2">
+                                                <div>
+                                                    <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                                        Latitude
+                                                    </p>
+                                                    <p className="mt-1 font-mono text-slate-900">
+                                                        {primaryLocation.latitude ||
+                                                            'Belum dipilih'}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                                        Longitude
+                                                    </p>
+                                                    <p className="mt-1 font-mono text-slate-900">
+                                                        {primaryLocation.longitude ||
+                                                            'Belum dipilih'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
                                             <InputError
                                                 className="mt-2"
                                                 message={
                                                     errors.location_latitude
                                                 }
-                                            />
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="location_longitude">
-                                                Longitude
-                                            </Label>
-                                            <Input
-                                                id="location_longitude"
-                                                name="location_longitude"
-                                                type="number"
-                                                step="0.0000001"
-                                                defaultValue={String(
-                                                    company.location_longitude ??
-                                                        '',
-                                                )}
-                                                placeholder="106.8166667"
                                             />
                                             <InputError
                                                 className="mt-2"

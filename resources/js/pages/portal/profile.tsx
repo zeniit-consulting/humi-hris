@@ -61,7 +61,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
         try {
             const [portalResponse, profileResponse] = await Promise.all([
                 requestApi<PortalSummary>('/portal/api/summary'),
-                requestApi<ProfileData>('/api/mobile/v1/profile'),
+                requestApi<ProfileData>('/portal/api/profile'),
             ]);
 
             setPortal(portalResponse.data);
@@ -114,7 +114,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
         try {
             setIsSaving(true);
 
-            await requestApi('/api/mobile/v1/profile', 'PUT', formProfile);
+            await requestApi('/portal/api/profile', 'PUT', formProfile);
             notifyPortal('success', 'Profil berhasil diperbarui.');
 
             await loadData();
@@ -141,7 +141,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
             setIsSaving(true);
 
             await requestApi(
-                '/api/mobile/v1/profile/bank-account',
+                '/portal/api/profile/bank-account',
                 'PUT',
                 formBank,
             );
