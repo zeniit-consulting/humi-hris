@@ -6,11 +6,13 @@ use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAllowance;
 use App\Models\EmployeeBankAccount;
+use App\Models\EmployeeDocument;
 use App\Models\Position;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -756,6 +758,142 @@ class EmployeeManagementTest extends TestCase
 
         $response->assertRedirect(route('hris.employees.index'));
         $response->assertSessionHasErrors(['pph21_method', 'pph21_rate']);
+    }
+
+    public function test_employee_document_can_be_uploaded_and_downloaded(): void
+    {
+        Storage::fake('local');
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $this->actingAs($user)->post(route('hris.employees.documents.store', $employee), [
+            'document_type' => 'ktp',
+            'document_number' => '3174-0001',
+            'issued_at' => '2026-01-01',
+            'expires_at' => now()->addYear()->toDateString(),
+            'issuing_authority' => 'Disdukcapil',
+            'document_file' => UploadedFile::fake()->create('ktp.pdf', 120, 'application/pdf'),
+        ])->assertRedirect();
+
+        $document = EmployeeDocument::query()->firstOrFail();
+
+        $this->assertSame('ktp', $document->document_type);
+        Storage::disk('local')->assertExists($document->file_path);
+
+        $response = $this->actingAs($user)->get(route('hris.employees.documents.download', [
+            'employee' => $employee,
+            'employeeDocument' => $document,
+        ]));
+
+        $response->assertOk();
+        $response->assertHeader('content-disposition', 'attachment; filename=ktp.pdf');
+    }
+
+    public function test_employee_document_can_be_updated_and_deleted(): void
+    {
+        Storage::fake('local');
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $document = EmployeeDocument::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'document_type' => 'npwp',
+            'document_number' => '09.111.222.3-444.000',
+            'file_disk' => 'local',
+            'file_path' => UploadedFile::fake()->create('npwp.pdf', 100, 'application/pdf')
+                ->store("employee-documents/{$employee->id}", 'local'),
+            'file_original_name' => 'npwp.pdf',
+        ]);
+
+        $oldPath = $document->file_path;
+
+        $this->actingAs($user)->post(route('hris.employees.documents.update', [
+            'employee' => $employee,
+            'employeeDocument' => $document,
+        ]), [
+            '_method' => 'PUT',
+            'document_type' => 'npwp',
+            'document_number' => '09.111.222.3-555.000',
+            'document_file' => UploadedFile::fake()->create('npwp-baru.pdf', 128, 'application/pdf'),
+        ])->assertRedirect();
+
+        $document->refresh();
+
+        $this->assertSame('09.111.222.3-555.000', $document->document_number);
+        $this->assertNotSame($oldPath, $document->file_path);
+        Storage::disk('local')->assertMissing($oldPath);
+        Storage::disk('local')->assertExists($document->file_path);
+
+        $path = $document->file_path;
+
+        $this->actingAs($user)->delete(route('hris.employees.documents.destroy', [
+            'employee' => $employee,
+            'employeeDocument' => $document,
+        ]))->assertRedirect();
+
+        $this->assertDatabaseMissing('employee_documents', [
+            'id' => $document->id,
+        ]);
+        Storage::disk('local')->assertMissing($path);
+    }
+
+    public function test_employee_document_compliance_status_is_reported_correctly(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $missing = EmployeeDocument::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'document_type' => 'ktp',
+        ]);
+        $expired = EmployeeDocument::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'document_type' => 'npwp',
+            'file_disk' => 'local',
+            'file_path' => 'employee-documents/test-expired.pdf',
+            'expires_at' => now()->subDay()->toDateString(),
+        ]);
+        $expiring = EmployeeDocument::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'document_type' => 'sim',
+            'file_disk' => 'local',
+            'file_path' => 'employee-documents/test-expiring.pdf',
+            'expires_at' => now()->addDays(15)->toDateString(),
+        ]);
+        $valid = EmployeeDocument::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'document_type' => 'passport',
+            'file_disk' => 'local',
+            'file_path' => 'employee-documents/test-valid.pdf',
+            'expires_at' => now()->addDays(90)->toDateString(),
+        ]);
+
+        $this->assertSame('missing', $missing->complianceStatus());
+        $this->assertSame('expired', $expired->complianceStatus());
+        $this->assertSame('expiring', $expiring->complianceStatus());
+        $this->assertSame('valid', $valid->complianceStatus());
     }
 
     /**

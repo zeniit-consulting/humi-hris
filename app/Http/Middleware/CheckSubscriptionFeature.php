@@ -63,7 +63,7 @@ class CheckSubscriptionFeature
         };
 
         // Fitur terkunci di Free → tersedia mulai Core
-        $freeOnlyLocked = ['survey', 'notifications'];
+        $freeOnlyLocked = ['survey', 'notifications', 'payroll'];
         $upgradeTarget = in_array($feature, $freeOnlyLocked, true) ? 'Core atau Plus' : 'Plus';
 
         $request->session()->flash(

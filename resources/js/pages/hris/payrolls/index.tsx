@@ -21,6 +21,13 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import {
     generate as generatePayroll,
@@ -43,6 +50,8 @@ type PayrollRun = {
     total_allowances: string;
     total_deductions: string;
     total_net_salary: string;
+    unfiltered_employees_count?: number;
+    unfiltered_total_net_salary?: string;
     type: string;
     thr_reference_date?: string | null;
 };
@@ -51,6 +60,7 @@ type PayrollItem = {
     id: number;
     employee_id: number;
     employee_label: string;
+    sub_company_label: string;
     can_send_payslip: boolean;
     base_salary: string;
     allowances_total: string;
@@ -75,6 +85,8 @@ type PageProps = {
     run: PayrollRun | null;
     items: PayrollItem[];
     type: string;
+    sub_company_id: string;
+    subCompanies: Array<{ id: number; label: string }>;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -121,12 +133,16 @@ const pph21Label = (method: string | null) => {
 };
 
 export default function PayrollPage() {
-    const { period, run, items, type } = usePage<PageProps>().props;
+    const { period, run, items, type, sub_company_id, subCompanies } =
+        usePage<PageProps>().props;
     const { subscription } = usePage().props;
     const isLocked =
         subscription?.locked_features?.includes('payroll') ?? false;
 
     const [periodState, setPeriodState] = useState(period);
+    const [subCompanyState, setSubCompanyState] = useState(
+        sub_company_id || '__all',
+    );
     const [sendingPayslips, setSendingPayslips] = useState(false);
     const [sendingPayslipItemIds, setSendingPayslipItemIds] = useState<
         number[]
@@ -191,6 +207,8 @@ export default function PayrollPage() {
             {
                 period: periodState,
                 type,
+                sub_company_id:
+                    subCompanyState === '__all' ? undefined : subCompanyState,
             },
             {
                 preserveScroll: true,
@@ -270,7 +288,7 @@ export default function PayrollPage() {
             {isLocked && (
                 <LockedFeatureBanner
                     featureName="Penggajian"
-                    planRequired="plus"
+                    planRequired="core"
                 />
             )}
 
@@ -278,7 +296,7 @@ export default function PayrollPage() {
                 {isLocked && (
                     <LockedFeatureBanner
                         featureName="Penggajian"
-                        planRequired="plus"
+                        planRequired="core"
                     />
                 )}
 
@@ -289,7 +307,14 @@ export default function PayrollPage() {
                         onClick={() =>
                             router.get(
                                 payrollsIndex.url(),
-                                { period, type: 'regular' },
+                                {
+                                    period,
+                                    type: 'regular',
+                                    sub_company_id:
+                                        subCompanyState === '__all'
+                                            ? undefined
+                                            : subCompanyState,
+                                },
                                 { replace: true, preserveScroll: true },
                             )
                         }
@@ -302,7 +327,14 @@ export default function PayrollPage() {
                         onClick={() =>
                             router.get(
                                 payrollsIndex.url(),
-                                { period, type: 'thr' },
+                                {
+                                    period,
+                                    type: 'thr',
+                                    sub_company_id:
+                                        subCompanyState === '__all'
+                                            ? undefined
+                                            : subCompanyState,
+                                },
                                 { replace: true, preserveScroll: true },
                             )
                         }
@@ -351,6 +383,30 @@ export default function PayrollPage() {
                                     <Filter className="size-4" />
                                     Lihat Preview
                                 </Button>
+                            </div>
+                            <div className="grid w-[280px] shrink-0 gap-2">
+                                <Label>Sub-company</Label>
+                                <Select
+                                    value={subCompanyState}
+                                    onValueChange={setSubCompanyState}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="__all">
+                                            Semua karyawan
+                                        </SelectItem>
+                                        {subCompanies.map((company) => (
+                                            <SelectItem
+                                                key={company.id}
+                                                value={String(company.id)}
+                                            >
+                                                {company.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             {type === 'regular' ? (
@@ -413,7 +469,7 @@ export default function PayrollPage() {
                                                     asChild
                                                 >
                                                     <a
-                                                        href={`/hris/payrolls/${run.id}/export/mandiri`}
+                                                        href={`/hris/payrolls/${run.id}/export/mandiri${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                     >
                                                         <Download className="mr-1.5 size-3.5" />
                                                         Export Mandiri
@@ -427,7 +483,7 @@ export default function PayrollPage() {
                                                     asChild
                                                 >
                                                     <a
-                                                        href={`/hris/payrolls/${run.id}/export/bca`}
+                                                        href={`/hris/payrolls/${run.id}/export/bca${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                     >
                                                         <Download className="mr-1.5 size-3.5" />
                                                         Export BCA
@@ -583,6 +639,18 @@ export default function PayrollPage() {
                                   ? 'Belum ada data THR untuk periode ini. Klik "Generate THR".'
                                   : 'Belum ada data payroll untuk periode ini. Klik "Generate Payroll".'}
                         </CardDescription>
+                        {run &&
+                            subCompanyState !== '__all' &&
+                            run.unfiltered_employees_count != null && (
+                                <CardDescription>
+                                    Filter sub-company aktif: {totals.employees}{' '}
+                                    dari {run.unfiltered_employees_count}{' '}
+                                    karyawan payroll. Total seluruh payroll:{' '}
+                                    {formatCurrency(
+                                        run.unfiltered_total_net_salary ?? 0,
+                                    )}
+                                </CardDescription>
+                            )}
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -636,6 +704,11 @@ export default function PayrollPage() {
                                                                 parseEmployeeLabel(
                                                                     item.employee_label,
                                                                 ).code
+                                                            }
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {
+                                                                item.sub_company_label
                                                             }
                                                         </p>
                                                     </div>
@@ -732,6 +805,11 @@ export default function PayrollPage() {
                                                                 parseEmployeeLabel(
                                                                     item.employee_label,
                                                                 ).code
+                                                            }
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {
+                                                                item.sub_company_label
                                                             }
                                                         </p>
                                                     </div>

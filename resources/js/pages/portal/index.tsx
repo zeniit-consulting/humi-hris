@@ -229,6 +229,7 @@ async function requestApi<T>(
 export default function PortalPage() {
     const [summary, setSummary] = useState<PortalSummary | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(() =>
         new Intl.DateTimeFormat('id-ID', {
             hour: '2-digit',
@@ -393,15 +394,16 @@ export default function PortalPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Link
-                                        href="/logout"
-                                        method="post"
-                                        as="button"
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setLogoutConfirmOpen(true)
+                                        }
                                         className="inline-flex size-10 items-center justify-center rounded-full border border-stone-200 bg-white text-slate-900"
                                         aria-label="Logout"
                                     >
                                         <LogOut className="size-4" />
-                                    </Link>
+                                    </button>
                                 </div>
                             </div>
 
@@ -761,6 +763,46 @@ export default function PortalPage() {
                         }
                     />
                 </div>
+
+                {logoutConfirmOpen ? (
+                    <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-slate-950/45 px-4 py-5 backdrop-blur-sm sm:items-center">
+                        <div className="w-full max-w-sm rounded-[22px] bg-white p-5 text-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.28)]">
+                            <div className="flex items-start gap-3">
+                                <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
+                                    <LogOut className="size-5" />
+                                </span>
+                                <div>
+                                    <h2 className="text-lg font-black tracking-[-0.04em]">
+                                        Keluar dari portal?
+                                    </h2>
+                                    <p className="mt-1 text-sm leading-5 text-slate-500">
+                                        Anda harus login ulang untuk membuka
+                                        portal karyawan setelah logout.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="mt-5 grid grid-cols-2 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setLogoutConfirmOpen(false)
+                                    }
+                                    className="inline-flex h-12 items-center justify-center rounded-[13px] border border-slate-200 bg-white text-sm font-bold text-slate-900"
+                                >
+                                    Batal
+                                </button>
+                                <Link
+                                    href="/logout"
+                                    method="post"
+                                    as="button"
+                                    className="inline-flex h-12 items-center justify-center rounded-[13px] bg-red-600 text-sm font-bold text-white"
+                                >
+                                    Logout
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
             </div>
         </>
     );

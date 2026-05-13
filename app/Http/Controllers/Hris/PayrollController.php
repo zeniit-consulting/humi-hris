@@ -7,11 +7,13 @@ use App\Http\Requests\Hris\GeneratePayrollRequest;
 use App\Jobs\SendPayslipToWhatsApp;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
+use App\Models\SubCompany;
 use App\Services\PayrollGenerationService;
 use App\Support\WhatsAppPhone;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -28,23 +30,51 @@ class PayrollController extends Controller
         $validated = $request->validate([
             'period' => ['nullable', 'date_format:Y-m'],
             'type'   => ['nullable', 'in:regular,thr'],
+            'sub_company_id' => ['nullable', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $ownerId)],
         ]);
 
         $period = $validated['period'] ?? now()->format('Y-m');
         $type = $validated['type'] ?? 'regular';
+        $subCompanyId = $validated['sub_company_id'] ?? null;
 
         $run = PayrollRun::query()
             ->with([
-                'items.employee:id,employee_code,first_name,last_name,phone',
+                'items.employee:id,employee_code,first_name,last_name,phone,sub_company_id',
+                'items.employee.subCompany:id,code,name',
             ])
             ->where('user_id', $ownerId)
             ->where('period', $period)
             ->where('type', $type)
             ->first();
 
+        $items = $run
+            ? $run->items
+                ->when($subCompanyId !== null, fn ($collection) => $collection->filter(
+                    fn ($item) => (int) ($item->employee?->sub_company_id ?? 0) === (int) $subCompanyId
+                ))
+                ->values()
+            : collect();
+
+        $filteredTotals = [
+            'employees_count' => $items->count(),
+            'total_base_salary' => round((float) $items->sum('base_salary'), 2),
+            'total_allowances' => round((float) $items->sum('allowances_total'), 2),
+            'total_deductions' => round((float) $items->sum('deductions_total'), 2),
+            'total_net_salary' => round((float) $items->sum('net_salary'), 2),
+        ];
+
         return Inertia::render('hris/payrolls/index', [
             'period' => $period,
             'type' => $type,
+            'sub_company_id' => $subCompanyId ? (string) $subCompanyId : '',
+            'subCompanies' => SubCompany::query()
+                ->where('user_id', $ownerId)
+                ->orderBy('name')
+                ->get(['id', 'code', 'name'])
+                ->map(fn (SubCompany $company): array => [
+                    'id' => $company->id,
+                    'label' => $company->code.' - '.$company->name,
+                ]),
             'run' => $run ? [
                 'id' => $run->id,
                 'period' => $run->period,
@@ -55,19 +85,24 @@ class PayrollController extends Controller
                 'generated_at' => $run->generated_at?->toDateTimeString(),
                 'is_saved' => $run->is_saved,
                 'saved_at' => $run->saved_at?->toDateTimeString(),
-                'employees_count' => $run->employees_count,
-                'total_base_salary' => $run->total_base_salary,
-                'total_allowances' => $run->total_allowances,
-                'total_deductions' => $run->total_deductions,
-                'total_net_salary' => $run->total_net_salary,
+                'employees_count' => $filteredTotals['employees_count'],
+                'total_base_salary' => $filteredTotals['total_base_salary'],
+                'total_allowances' => $filteredTotals['total_allowances'],
+                'total_deductions' => $filteredTotals['total_deductions'],
+                'total_net_salary' => $filteredTotals['total_net_salary'],
+                'unfiltered_employees_count' => $run->employees_count,
+                'unfiltered_total_net_salary' => $run->total_net_salary,
             ] : null,
-            'items' => $run
-                ? $run->items->map(fn ($item) => [
+            'items' => $items
+                ->map(fn ($item) => [
                     'id' => $item->id,
                     'employee_id' => $item->employee_id,
                     'employee_label' => $item->employee
                         ? $item->employee->employee_code.' - '.$item->employee->full_name
                         : '-',
+                    'sub_company_label' => $item->employee?->subCompany
+                        ? $item->employee->subCompany->code.' - '.$item->employee->subCompany->name
+                        : 'Internal',
                     'can_send_payslip' => $item->employee?->phone
                         ? WhatsAppPhone::isValid($item->employee->phone)
                         : false,
@@ -88,7 +123,6 @@ class PayrollController extends Controller
                     'thr_months_of_service' => $item->thr_months_of_service,
                     'thr_amount' => $item->thr_amount,
                 ])->values()
-                : [],
         ]);
     }
 
@@ -148,14 +182,21 @@ class PayrollController extends Controller
         abort_unless($payrollRun->is_saved, 422, 'Simpan payroll terlebih dahulu.');
 
         $payrollRun->loadMissing([
-            'items.employee:id,employee_code,first_name,last_name',
+            'items.employee:id,employee_code,first_name,last_name,sub_company_id',
             'items.employee.bankAccounts' => fn ($q) => $q->where('is_primary', true)->limit(1),
         ]);
+
+        $subCompanyId = $request->integer('sub_company_id') ?: null;
+        $items = $payrollRun->items
+            ->when($subCompanyId !== null, fn ($collection) => $collection->filter(
+                fn ($item) => (int) ($item->employee?->sub_company_id ?? 0) === (int) $subCompanyId
+            ))
+            ->values();
 
         $period = Carbon::createFromFormat('Y-m', $payrollRun->period)->locale('id')->translatedFormat('F Y');
         $filename = 'transfer_mandiri_'.$payrollRun->period.'.csv';
 
-        return response()->streamDownload(function () use ($payrollRun, $period): void {
+        return response()->streamDownload(function () use ($items, $period): void {
             $out = fopen('php://output', 'wb');
             // BOM untuk Excel compatibility
             fwrite($out, "\xEF\xBB\xBF");
@@ -163,7 +204,7 @@ class PayrollController extends Controller
             fputcsv($out, ['No', 'Nama Penerima', 'No Rekening', 'Kode Bank', 'Nominal', 'Keterangan'], ';');
 
             $no = 1;
-            foreach ($payrollRun->items as $item) {
+            foreach ($items as $item) {
                 $employee = $item->employee;
                 $bank = $employee?->bankAccounts->first();
                 fputcsv($out, [
@@ -189,20 +230,27 @@ class PayrollController extends Controller
         abort_unless($payrollRun->is_saved, 422, 'Simpan payroll terlebih dahulu.');
 
         $payrollRun->loadMissing([
-            'items.employee:id,employee_code,first_name,last_name',
+            'items.employee:id,employee_code,first_name,last_name,sub_company_id',
             'items.employee.bankAccounts' => fn ($q) => $q->where('is_primary', true)->limit(1),
         ]);
+
+        $subCompanyId = $request->integer('sub_company_id') ?: null;
+        $items = $payrollRun->items
+            ->when($subCompanyId !== null, fn ($collection) => $collection->filter(
+                fn ($item) => (int) ($item->employee?->sub_company_id ?? 0) === (int) $subCompanyId
+            ))
+            ->values();
 
         $period = Carbon::createFromFormat('Y-m', $payrollRun->period)->locale('id')->translatedFormat('F Y');
         $filename = 'transfer_bca_'.$payrollRun->period.'.csv';
 
-        return response()->streamDownload(function () use ($payrollRun, $period): void {
+        return response()->streamDownload(function () use ($items, $period): void {
             $out = fopen('php://output', 'wb');
             fwrite($out, "\xEF\xBB\xBF");
             // Header BCA - format comma, quoted
             fputcsv($out, ['NAMA PENERIMA', 'NO REKENING', 'NOMINAL', 'BERITA TRANSFER']);
 
-            foreach ($payrollRun->items as $item) {
+            foreach ($items as $item) {
                 $employee = $item->employee;
                 $bank = $employee?->bankAccounts->first();
                 fputcsv($out, [

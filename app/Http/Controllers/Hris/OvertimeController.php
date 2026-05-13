@@ -83,6 +83,125 @@ class OvertimeController extends Controller
         ]);
     }
 
+    public function approvals(Request $request): Response
+    {
+        $ownerId = $request->user()->accountOwnerId();
+
+        $validated = $request->validate([
+            'status' => ['nullable', Rule::in(['pending', 'approved', 'rejected'])],
+            'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
+            'date' => ['nullable', 'date'],
+        ]);
+
+        $filters = [
+            'status' => $validated['status'] ?? 'pending',
+            'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
+            'date' => $validated['date'] ?? '',
+        ];
+
+        $overtimes = OvertimeRequest::query()
+            ->with(['employee:id,employee_code,first_name,last_name,division_id,position_id', 'employee.division:id,name', 'employee.position:id,name', 'approver:id,name'])
+            ->where('user_id', $ownerId)
+            ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
+            ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']))
+            ->when($filters['date'] !== '', fn ($query) => $query->whereDate('work_date', $filters['date']))
+            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
+            ->orderByDesc('work_date')
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (OvertimeRequest $overtime) => [
+                'id' => $overtime->id,
+                'employee_id' => $overtime->employee_id,
+                'employee_label' => $overtime->employee ? $overtime->employee->employee_code.' - '.$overtime->employee->full_name : '-',
+                'division_name' => $overtime->employee?->division?->name,
+                'position_name' => $overtime->employee?->position?->name,
+                'work_date' => $overtime->work_date->format('Y-m-d'),
+                'start_time' => $this->normalizeTime($overtime->start_time),
+                'end_time' => $this->normalizeTime($overtime->end_time),
+                'break_minutes' => $overtime->break_minutes,
+                'total_hours' => $overtime->total_hours,
+                'reason' => $overtime->reason,
+                'status' => $overtime->status,
+                'approved_by' => $overtime->approver?->name,
+                'approved_at' => $overtime->approved_at?->toIso8601String(),
+                'notes' => $overtime->notes,
+                'created_at' => $overtime->created_at?->toIso8601String(),
+            ]);
+
+        $employees = Employee::query()
+            ->where('user_id', $ownerId)
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get(['id', 'employee_code', 'first_name', 'last_name']);
+
+        $stats = OvertimeRequest::query()
+            ->where('user_id', $ownerId)
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        return Inertia::render('hris/overtime-approvals/index', [
+            'overtimes' => $overtimes,
+            'employees' => $employees->map(fn (Employee $employee) => [
+                'id' => $employee->id,
+                'label' => $employee->employee_code.' - '.$employee->full_name,
+            ]),
+            'filters' => $filters,
+            'statusOptions' => ['pending', 'approved', 'rejected'],
+            'stats' => [
+                'pending' => (int) ($stats['pending'] ?? 0),
+                'approved' => (int) ($stats['approved'] ?? 0),
+                'rejected' => (int) ($stats['rejected'] ?? 0),
+            ],
+        ]);
+    }
+
+    public function approve(Request $request, OvertimeRequest $overtime): RedirectResponse
+    {
+        abort_unless((int) $overtime->user_id === $request->user()->accountOwnerId(), 404);
+
+        if ($overtime->status !== 'pending') {
+            return back()->with('error', 'Request lembur sudah diproses.');
+        }
+
+        $overtime->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $request->user()->id,
+            'notes' => null,
+        ]);
+
+        $overtime->loadMissing('employee');
+        app(\App\Services\WhatsAppNotificationService::class)->notifyOvertimeStatus($overtime);
+
+        return back()->with('success', 'Pengajuan lembur disetujui.');
+    }
+
+    public function reject(Request $request, OvertimeRequest $overtime): RedirectResponse
+    {
+        abort_unless((int) $overtime->user_id === $request->user()->accountOwnerId(), 404);
+
+        if ($overtime->status !== 'pending') {
+            return back()->with('error', 'Request lembur sudah diproses.');
+        }
+
+        $validated = $request->validate([
+            'notes' => ['required', 'string', 'max:255'],
+        ]);
+
+        $overtime->update([
+            'status' => 'rejected',
+            'approved_at' => now(),
+            'approved_by' => $request->user()->id,
+            'notes' => $validated['notes'],
+        ]);
+
+        $overtime->loadMissing('employee');
+        app(\App\Services\WhatsAppNotificationService::class)->notifyOvertimeStatus($overtime);
+
+        return back()->with('success', 'Pengajuan lembur ditolak.');
+    }
+
     /**
      * Store overtime request.
      */

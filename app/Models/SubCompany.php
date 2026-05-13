@@ -39,4 +39,14 @@ class SubCompany extends Model
     {
         return $this->hasMany(SubCompanyAttendanceLocation::class);
     }
+
+    public function clientInvoices(): HasMany
+    {
+        return $this->hasMany(ClientInvoice::class);
+    }
+
+    public function manpowerRequests(): HasMany
+    {
+        return $this->hasMany(ManpowerRequest::class);
+    }
 }

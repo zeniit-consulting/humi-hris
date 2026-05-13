@@ -84,7 +84,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
 
         $this->assertDatabaseHas('payroll_runs', [
             'period' => '2026-02',
@@ -128,7 +128,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
 
         $this->assertDatabaseHas('payroll_items', [
             'employee_id' => $employee->id,
@@ -179,7 +179,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-04',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-04']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-04', 'type' => 'regular']));
 
         $this->assertDatabaseHas('payroll_items', [
             'employee_id' => $employee->id,
@@ -233,7 +233,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-04',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-04']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-04', 'type' => 'regular']));
 
         $this->assertDatabaseHas('payroll_items', [
             'employee_id' => $employee->id,
@@ -264,7 +264,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
 
         $this->assertDatabaseHas('payroll_items', [
             'employee_id' => $employee->id,
@@ -308,7 +308,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
 
         $this->assertDatabaseHas('payroll_items', [
             'employee_id' => $employee->id,
@@ -335,7 +335,7 @@ class PayrollGenerationTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('hris.payrolls.save', $run))
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
 
         $this->assertDatabaseHas('payroll_runs', [
             'id' => $run->id,
@@ -565,13 +565,13 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
 
         $this->actingAs($secondUser)
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
 
         $this->assertDatabaseCount('payroll_runs', 2);
         $this->assertDatabaseHas('payroll_runs', [

@@ -39,6 +39,11 @@ class UserPortalSectionController extends Controller
         return $this->renderForUser($request, 'portal/shift-change', 'Ubah Jadwal');
     }
 
+    public function attendanceRequest(Request $request): Response|RedirectResponse
+    {
+        return $this->renderForUser($request, 'portal/attendance-request', 'Request Absensi');
+    }
+
     public function leaves(Request $request): Response|RedirectResponse
     {
         return $this->renderForUser($request, 'portal/leaves', 'Leave');

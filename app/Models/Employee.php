@@ -181,6 +181,11 @@ class Employee extends Model
         return $this->hasMany(CompanyAssetAssignment::class);
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(EmployeeDocument::class);
+    }
+
     /**
      * Build a full name from first and last name.
      */

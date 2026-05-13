@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\StoreSubUserRequest;
 use App\Http\Requests\Settings\UpdateSubUserRequest;
+use App\Models\SubCompany;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,9 +22,15 @@ class SubUserController extends Controller
         $admin = $this->resolveAdmin($request);
 
         $subUsers = User::query()
+            ->with('clientSubCompany:id,code,name')
             ->where('parent_user_id', $admin->id)
             ->orderBy('name')
-            ->get(['id', 'name', 'email', 'role', 'created_at']);
+            ->get(['id', 'name', 'email', 'role', 'client_sub_company_id', 'created_at']);
+
+        $subCompanies = SubCompany::query()
+            ->where('user_id', $admin->id)
+            ->orderBy('name')
+            ->get(['id', 'code', 'name']);
 
         return Inertia::render('settings/users', [
             'subUsers' => $subUsers->map(fn (User $user) => [
@@ -31,7 +38,15 @@ class SubUserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'client_sub_company_id' => $user->client_sub_company_id,
+                'client_sub_company_label' => $user->clientSubCompany
+                    ? $user->clientSubCompany->code.' - '.$user->clientSubCompany->name
+                    : null,
                 'created_at' => $user->created_at?->toDateTimeString(),
+            ]),
+            'subCompanies' => $subCompanies->map(fn (SubCompany $company) => [
+                'id' => $company->id,
+                'label' => $company->code.' - '.$company->name,
             ]),
         ]);
     }
@@ -48,9 +63,13 @@ class SubUserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'],
-            'role' => 'user',
+            'role' => $validated['role'],
+            'client_sub_company_id' => $validated['role'] === 'client_supervisor'
+                ? $validated['client_sub_company_id']
+                : null,
             'parent_user_id' => $admin->id,
             'email_verified_at' => now(),
+            'phone_verified_at' => now(),
         ]);
 
         return back()->with('success', 'Sub-user berhasil dibuat.');
@@ -68,6 +87,10 @@ class SubUserController extends Controller
         $target->fill([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'role' => $validated['role'],
+            'client_sub_company_id' => $validated['role'] === 'client_supervisor'
+                ? $validated['client_sub_company_id']
+                : null,
         ]);
 
         if (! empty($validated['password'])) {

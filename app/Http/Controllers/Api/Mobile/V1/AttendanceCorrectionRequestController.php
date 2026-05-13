@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Http\Controllers\Api\Mobile\V1;
+
+use App\Http\Controllers\Api\Concerns\InteractsWithMobileApiResponse;
+use App\Http\Controllers\Api\Mobile\V1\Concerns\InteractsWithSelfService;
+use App\Http\Controllers\Controller;
+use App\Models\AttendanceCorrectionRequest;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+
+class AttendanceCorrectionRequestController extends Controller
+{
+    use InteractsWithMobileApiResponse, InteractsWithSelfService;
+
+    public function index(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $employee = $this->resolveRequiredSelfServiceEmployee($user);
+
+        $requests = AttendanceCorrectionRequest::query()
+            ->with('shift:id,code,name,start_time,end_time,is_day_off')
+            ->where('user_id', $user->accountOwnerId())
+            ->where('employee_id', $employee->id)
+            ->latest('attendance_date')
+            ->latest('id')
+            ->limit(15)
+            ->get();
+
+        return $this->success([
+            'items' => $requests->map(fn (AttendanceCorrectionRequest $request) => $this->payload($request))->values(),
+        ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $ownerId = $user->accountOwnerId();
+        $employee = $this->resolveRequiredSelfServiceEmployee($user);
+
+        $validated = $request->validate([
+            'attendance_date' => ['required', 'date', 'before_or_equal:today'],
+            'shift_id' => ['nullable', 'integer', Rule::exists('work_shifts', 'id')->where('user_id', $ownerId)],
+            'check_in_at' => ['nullable', 'date'],
+            'check_out_at' => ['nullable', 'date', 'after_or_equal:check_in_at'],
+            'reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        if (empty($validated['check_in_at']) && empty($validated['check_out_at'])) {
+            return $this->error('Jam masuk atau jam pulang wajib diisi.');
+        }
+
+        $attendanceRequest = AttendanceCorrectionRequest::query()->create([
+            'user_id' => $ownerId,
+            'employee_id' => $employee->id,
+            'attendance_date' => $validated['attendance_date'],
+            'shift_id' => $validated['shift_id'] ?? null,
+            'check_in_at' => $validated['check_in_at'] ?? null,
+            'check_out_at' => $validated['check_out_at'] ?? null,
+            'reason' => $validated['reason'],
+            'status' => 'pending',
+        ]);
+
+        $attendanceRequest->load('shift:id,code,name,start_time,end_time,is_day_off');
+
+        return $this->success($this->payload($attendanceRequest), 'Pengajuan absensi berhasil dikirim.', 201);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function payload(AttendanceCorrectionRequest $request): array
+    {
+        return [
+            'id' => $request->id,
+            'attendance_date' => $request->attendance_date?->format('Y-m-d'),
+            'shift' => $request->shift ? [
+                'id' => $request->shift->id,
+                'code' => $request->shift->code,
+                'name' => $request->shift->name,
+                'start_time' => $request->shift->start_time,
+                'end_time' => $request->shift->end_time,
+                'is_day_off' => $request->shift->is_day_off,
+            ] : null,
+            'check_in_at' => $request->check_in_at?->toIso8601String(),
+            'check_out_at' => $request->check_out_at?->toIso8601String(),
+            'reason' => $request->reason,
+            'status' => $request->status,
+            'rejection_reason' => $request->rejection_reason,
+        ];
+    }
+}

@@ -8,6 +8,7 @@ use App\Http\Requests\Hris\UpdateEmployeeRequest;
 use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
+use App\Models\EmployeeDocument;
 use App\Models\Position;
 use App\Models\SubCompany;
 use App\Models\User;
@@ -68,6 +69,7 @@ class EmployeeController extends Controller
                 'manager:id,employee_code,first_name,last_name',
                 'bankAccounts:id,employee_id,bank_name,account_number,account_holder_name,branch,currency,is_primary',
                 'allowances:id,employee_id,name,amount,is_active,effective_start_date,effective_end_date,notes',
+                'documents:id,employee_id,document_type,document_number,issued_at,expires_at,issuing_authority,file_path,file_disk,file_original_name,file_mime_type,file_size,notes,verified_at,verified_by',
             ])
             ->when($filters['search'] !== '', function ($query) use ($filters): void {
                 $query->where(function ($builder) use ($filters): void {
@@ -167,6 +169,35 @@ class EmployeeController extends Controller
                         'notes' => $allowance->notes,
                     ])
                     ->values(),
+                'documents' => $employee->documents
+                    ->sortBy('document_type')
+                    ->map(fn (EmployeeDocument $document) => [
+                        'id' => $document->id,
+                        'document_type' => $document->document_type,
+                        'document_number' => $document->document_number,
+                        'issued_at' => $document->issued_at?->format('Y-m-d'),
+                        'expires_at' => $document->expires_at?->format('Y-m-d'),
+                        'issuing_authority' => $document->issuing_authority,
+                        'file_original_name' => $document->file_original_name,
+                        'file_mime_type' => $document->file_mime_type,
+                        'file_size' => $document->file_size,
+                        'notes' => $document->notes,
+                        'verified_at' => $document->verified_at?->format(DATE_ATOM),
+                        'compliance_status' => $document->complianceStatus(),
+                        'download_url' => $document->file_path
+                            ? route('hris.employees.documents.download', [
+                                'employee' => $employee->id,
+                                'employeeDocument' => $document->id,
+                            ])
+                            : null,
+                    ])
+                    ->values(),
+                'compliance_summary' => [
+                    'valid' => $employee->documents->filter(fn (EmployeeDocument $document) => $document->complianceStatus() === 'valid')->count(),
+                    'expiring' => $employee->documents->filter(fn (EmployeeDocument $document) => $document->complianceStatus() === 'expiring')->count(),
+                    'expired' => $employee->documents->filter(fn (EmployeeDocument $document) => $document->complianceStatus() === 'expired')->count(),
+                    'missing_files' => $employee->documents->filter(fn (EmployeeDocument $document) => $document->complianceStatus() === 'missing')->count(),
+                ],
                 'portal_user' => (function () use ($employee) {
                     if (! $employee->email && ! $employee->phone) {
                         return null;
@@ -363,6 +394,19 @@ class EmployeeController extends Controller
                     'S1',
                     'S2',
                     'S3',
+                ],
+                'document_types' => [
+                    ['value' => 'ktp', 'label' => 'KTP'],
+                    ['value' => 'kk', 'label' => 'Kartu Keluarga'],
+                    ['value' => 'npwp', 'label' => 'NPWP'],
+                    ['value' => 'bpjs_kesehatan', 'label' => 'BPJS Kesehatan'],
+                    ['value' => 'bpjs_ketenagakerjaan', 'label' => 'BPJS Ketenagakerjaan'],
+                    ['value' => 'ijazah', 'label' => 'Ijazah'],
+                    ['value' => 'sertifikat', 'label' => 'Sertifikat'],
+                    ['value' => 'passport', 'label' => 'Paspor'],
+                    ['value' => 'sim', 'label' => 'SIM'],
+                    ['value' => 'kontrak_kerja', 'label' => 'Kontrak Kerja'],
+                    ['value' => 'lainnya', 'label' => 'Lainnya'],
                 ],
                 'position_levels' => [
                     ['value' => '0', 'label' => 'Level 0 - Direktur Utama'],

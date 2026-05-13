@@ -1,4 +1,15 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import {
+    AlertTriangle,
+    Building2,
+    CalendarDays,
+    ChevronDown,
+    Filter,
+    ReceiptText,
+    UsersRound,
+    WalletCards,
+} from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -7,6 +18,20 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -37,8 +62,67 @@ type DashboardStats = {
     today_attendance_rate: number;
 };
 
+type ActionQueueItem = {
+    key: string;
+    label: string;
+    count: number;
+    severity: 'high' | 'medium';
+    href: string;
+};
+
+type ActionQueue = {
+    total: number;
+    items: ActionQueueItem[];
+};
+
 type DashboardFilters = {
     range: 'today' | 'this_week' | 'this_month';
+    outsourcing_period: string;
+    outsourcing_sub_company_id: string;
+};
+
+type OutsourcingOption = {
+    id: number;
+    label: string;
+};
+
+type OutsourcingStats = {
+    active_clients: number;
+    outsourced_employees: number;
+    internal_employees: number;
+    present_today: number;
+    absent_today: number;
+    attendance_rate: number;
+    billed_amount: number;
+    paid_amount: number;
+    outstanding_amount: number;
+    payroll_cost: number;
+    gross_margin: number;
+    manpower_requests: number;
+    remaining_manpower: number;
+};
+
+type OutsourcingClientRow = {
+    id: number;
+    label: string;
+    active: boolean;
+    employees: number;
+    present_today: number;
+    absent_today: number;
+    attendance_rate: number;
+    invoice_total: number;
+    payroll_cost: number;
+    margin: number;
+    remaining_manpower: number;
+    outstanding_invoice: number;
+    sla_score: number;
+    sla_breaches: string[];
+};
+
+type OutsourcingSummary = {
+    subCompanies: OutsourcingOption[];
+    stats: OutsourcingStats;
+    perClient: OutsourcingClientRow[];
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -74,11 +158,16 @@ export default function Dashboard({
     stats,
     attendanceChart,
     filters,
+    actionQueue,
+    outsourcing,
 }: {
     stats: DashboardStats;
     attendanceChart: AttendancePoint[];
     filters: DashboardFilters;
+    actionQueue: ActionQueue;
+    outsourcing: OutsourcingSummary;
 }) {
+    const [outsourcingOpen, setOutsourcingOpen] = useState(true);
     const maxEmployees = Math.max(stats.active_employees, 1);
     const rangeOptions: Array<{
         value: DashboardFilters['range'];
@@ -88,12 +177,84 @@ export default function Dashboard({
         { value: 'this_week', label: 'Minggu Ini' },
         { value: 'this_month', label: 'Bulan Ini' },
     ];
+    const applyOutsourcingFilter = (
+        next: Partial<
+            Pick<
+                DashboardFilters,
+                'outsourcing_period' | 'outsourcing_sub_company_id'
+            >
+        >,
+    ) => {
+        router.get(
+            dashboard.url(),
+            { ...filters, ...next },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
 
             <div className="space-y-4 p-4">
+                <Card>
+                    <CardHeader>
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <CardTitle>Action Queue</CardTitle>
+                                <CardDescription>
+                                    Pekerjaan operasional yang perlu ditangani.
+                                </CardDescription>
+                            </div>
+                            <div className="rounded-md border px-3 py-2 text-sm">
+                                <span className="font-semibold">
+                                    {actionQueue.total}
+                                </span>{' '}
+                                pending
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {actionQueue.items.length === 0 ? (
+                            <div className="rounded-md border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                                Tidak ada action pending.
+                            </div>
+                        ) : (
+                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                {actionQueue.items.map((item) => (
+                                    <Link
+                                        key={item.key}
+                                        href={item.href}
+                                        className="rounded-md border p-3 transition-colors hover:bg-muted/40"
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p className="text-sm font-medium">
+                                                    {item.label}
+                                                </p>
+                                                <p className="mt-1 text-2xl font-semibold">
+                                                    {item.count}
+                                                </p>
+                                            </div>
+                                            <AlertTriangle
+                                                className={`size-5 ${
+                                                    item.severity === 'high'
+                                                        ? 'text-destructive'
+                                                        : 'text-amber-600'
+                                                }`}
+                                            />
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
                     <Card className="gap-2 py-2">
                         <CardHeader className="px-4 pb-0">
@@ -292,7 +453,328 @@ export default function Dashboard({
                         </div>
                     </CardContent>
                 </Card>
+
+                <Collapsible
+                    open={outsourcingOpen}
+                    onOpenChange={setOutsourcingOpen}
+                    className="rounded-lg border bg-card text-card-foreground shadow-xs"
+                >
+                    <div className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold">
+                                Operasional Outsourcing
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                Headcount, absensi, manpower demand, invoice
+                                klien, payroll cost, dan margin.
+                            </p>
+                        </div>
+                        <CollapsibleTrigger asChild>
+                            <Button type="button" variant="outline" size="sm">
+                                <ChevronDown
+                                    className={`size-4 transition-transform ${outsourcingOpen ? 'rotate-180' : ''}`}
+                                />
+                                {outsourcingOpen ? 'Sembunyikan' : 'Tampilkan'}
+                            </Button>
+                        </CollapsibleTrigger>
+                    </div>
+
+                    <CollapsibleContent>
+                        <div className="space-y-4 border-t p-4">
+                            <div className="flex flex-wrap items-end gap-3">
+                                <div className="grid w-[180px] gap-2">
+                                    <Label htmlFor="outsourcing-period">
+                                        Periode
+                                    </Label>
+                                    <Input
+                                        id="outsourcing-period"
+                                        type="month"
+                                        value={filters.outsourcing_period}
+                                        onChange={(event) =>
+                                            applyOutsourcingFilter({
+                                                outsourcing_period:
+                                                    event.target.value,
+                                            })
+                                        }
+                                    />
+                                </div>
+                                <div className="grid w-[280px] gap-2">
+                                    <Label htmlFor="outsourcing-client">
+                                        Sub-company
+                                    </Label>
+                                    <Select
+                                        value={
+                                            filters.outsourcing_sub_company_id ||
+                                            '__all'
+                                        }
+                                        onValueChange={(value) =>
+                                            applyOutsourcingFilter({
+                                                outsourcing_sub_company_id:
+                                                    value === '__all'
+                                                        ? ''
+                                                        : value,
+                                            })
+                                        }
+                                    >
+                                        <SelectTrigger id="outsourcing-client">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__all">
+                                                Semua sub-company
+                                            </SelectItem>
+                                            {outsourcing.subCompanies.map(
+                                                (company) => (
+                                                    <SelectItem
+                                                        key={company.id}
+                                                        value={String(
+                                                            company.id,
+                                                        )}
+                                                    >
+                                                        {company.label}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() =>
+                                        router.get(
+                                            dashboard.url(),
+                                            { range: filters.range },
+                                            {
+                                                replace: true,
+                                                preserveScroll: true,
+                                            },
+                                        )
+                                    }
+                                >
+                                    <Filter className="size-4" />
+                                    Reset
+                                </Button>
+                            </div>
+
+                            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                <OutsourcingStat
+                                    icon={Building2}
+                                    label="Klien Aktif"
+                                    value={outsourcing.stats.active_clients}
+                                    description={`${outsourcing.stats.outsourced_employees} karyawan outsourcing`}
+                                />
+                                <OutsourcingStat
+                                    icon={UsersRound}
+                                    label="Karyawan Internal"
+                                    value={outsourcing.stats.internal_employees}
+                                    description="Tidak terikat sub-company"
+                                />
+                                <OutsourcingStat
+                                    icon={CalendarDays}
+                                    label="Kehadiran Hari Ini"
+                                    value={`${outsourcing.stats.attendance_rate}%`}
+                                    description={`${outsourcing.stats.present_today} hadir, ${outsourcing.stats.absent_today} absen`}
+                                />
+                                <OutsourcingStat
+                                    icon={UsersRound}
+                                    label="Kebutuhan Tenaga"
+                                    value={outsourcing.stats.remaining_manpower}
+                                    description={`${outsourcing.stats.manpower_requests} request open/diproses`}
+                                />
+                                <OutsourcingStat
+                                    icon={ReceiptText}
+                                    label="Total Tagihan Klien"
+                                    value={formatRupiahCompact(
+                                        outsourcing.stats.billed_amount,
+                                    )}
+                                    description={`${formatRupiahCompact(outsourcing.stats.paid_amount)} paid`}
+                                />
+                                <OutsourcingStat
+                                    icon={ReceiptText}
+                                    label="Outstanding"
+                                    value={formatRupiahCompact(
+                                        outsourcing.stats.outstanding_amount,
+                                    )}
+                                    description="Draft + terkirim"
+                                />
+                                <OutsourcingStat
+                                    icon={WalletCards}
+                                    label="Payroll Cost"
+                                    value={formatRupiahCompact(
+                                        outsourcing.stats.payroll_cost,
+                                    )}
+                                    description="Payroll reguler atau fallback gaji pokok"
+                                />
+                                <OutsourcingStat
+                                    icon={WalletCards}
+                                    label="Gross Margin"
+                                    value={formatRupiahCompact(
+                                        outsourcing.stats.gross_margin,
+                                    )}
+                                    description="Tagihan klien - payroll cost"
+                                />
+                            </div>
+
+                            <div className="overflow-x-auto rounded-md border">
+                                <table className="w-full min-w-[1250px] text-sm">
+                                    <thead>
+                                        <tr className="border-b bg-muted/30 text-left">
+                                            <th className="px-3 py-2">
+                                                Sub-company
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                SLA Score
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                Headcount
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                Attendance
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                Manpower Gap
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                Invoice
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                Outstanding
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                Payroll Cost
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                Margin
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {outsourcing.perClient.length === 0 && (
+                                            <tr>
+                                                <td
+                                                    colSpan={9}
+                                                    className="px-3 py-8 text-center text-muted-foreground"
+                                                >
+                                                    Belum ada sub-company.
+                                                </td>
+                                            </tr>
+                                        )}
+                                        {outsourcing.perClient.map((client) => (
+                                            <tr
+                                                key={client.id}
+                                                className="border-b align-top last:border-0"
+                                            >
+                                                <td className="px-3 py-3 font-medium">
+                                                    {client.label}
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {client.active
+                                                            ? 'Aktif'
+                                                            : 'Nonaktif'}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    <div
+                                                        className={`inline-flex rounded px-2 py-1 text-xs font-semibold ${
+                                                            client.sla_score >=
+                                                            75
+                                                                ? 'bg-emerald-50 text-emerald-700'
+                                                                : client.sla_score >=
+                                                                    50
+                                                                  ? 'bg-amber-50 text-amber-700'
+                                                                  : 'bg-rose-50 text-rose-700'
+                                                        }`}
+                                                    >
+                                                        {client.sla_score}
+                                                    </div>
+                                                    <div className="mt-1 text-xs text-muted-foreground">
+                                                        {client.sla_breaches
+                                                            .length === 0
+                                                            ? 'On track'
+                                                            : client.sla_breaches.join(
+                                                                  ', ',
+                                                              )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    {client.employees}
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    {client.attendance_rate}%
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {client.present_today}{' '}
+                                                        hadir,{' '}
+                                                        {client.absent_today}{' '}
+                                                        absen
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    {
+                                                        client.remaining_manpower
+                                                    }
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    {formatRupiahCompact(
+                                                        client.invoice_total,
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    {formatRupiahCompact(
+                                                        client.outstanding_invoice,
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    {formatRupiahCompact(
+                                                        client.payroll_cost,
+                                                    )}
+                                                </td>
+                                                <td
+                                                    className={`px-3 py-3 font-semibold ${
+                                                        client.margin < 0
+                                                            ? 'text-destructive'
+                                                            : 'text-emerald-600'
+                                                    }`}
+                                                >
+                                                    {formatRupiahCompact(
+                                                        client.margin,
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </CollapsibleContent>
+                </Collapsible>
             </div>
         </AppLayout>
+    );
+}
+
+function OutsourcingStat({
+    icon: Icon,
+    label,
+    value,
+    description,
+}: {
+    icon: typeof Building2;
+    label: string;
+    value: string | number;
+    description: string;
+}) {
+    return (
+        <Card className="gap-2 py-3">
+            <CardHeader className="px-4 pb-0">
+                <div className="flex items-center justify-between gap-3">
+                    <CardDescription>{label}</CardDescription>
+                    <Icon className="size-4 text-muted-foreground" />
+                </div>
+                <CardTitle className="text-2xl">{value}</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pt-0 pb-2">
+                <p className="text-sm text-muted-foreground">{description}</p>
+            </CardContent>
+        </Card>
     );
 }

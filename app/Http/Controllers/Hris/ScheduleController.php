@@ -7,7 +7,9 @@ use App\Http\Requests\Hris\StoreAttendanceScheduleRequest;
 use App\Http\Requests\Hris\StoreScheduleRosterRequest;
 use App\Http\Requests\Hris\StoreWorkShiftRequest;
 use App\Models\Employee;
+use App\Models\EmployeeAttendance;
 use App\Models\EmployeeSchedule;
+use App\Models\ShiftChangeRequest;
 use App\Models\WorkShift;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -175,13 +177,52 @@ class ScheduleController extends Controller
         WorkShift::query()->create([
             'user_id' => $ownerId,
             'code' => $code,
-            'name' => $code,
+            'name' => ($validated['name'] ?? '') !== '' ? $validated['name'] : $code,
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
             'is_day_off' => false,
         ]);
 
         return back();
+    }
+
+    public function updateShift(StoreWorkShiftRequest $request, WorkShift $workShift): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_unless((int) $workShift->user_id === $ownerId, 404);
+
+        if ($workShift->is_day_off) {
+            return back()->with('error', 'Shift day off bawaan tidak bisa diubah.');
+        }
+
+        $validated = $request->validated();
+
+        $workShift->update([
+            'name' => ($validated['name'] ?? '') !== '' ? $validated['name'] : $workShift->code,
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'is_day_off' => false,
+        ]);
+
+        return back()->with('success', 'Data shift berhasil diperbarui.');
+    }
+
+    public function destroyShift(Request $request, WorkShift $workShift): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_unless((int) $workShift->user_id === $ownerId, 404);
+
+        if ($workShift->is_day_off) {
+            return back()->with('error', 'Shift day off bawaan tidak bisa dihapus.');
+        }
+
+        if ($this->shiftHasRelatedData($workShift, $ownerId)) {
+            return back()->with('error', 'Shift tidak bisa dihapus karena sudah dipakai pada jadwal, absensi, atau request perubahan jadwal.');
+        }
+
+        $workShift->delete();
+
+        return back()->with('success', 'Shift berhasil dihapus.');
     }
 
     /**
@@ -307,6 +348,26 @@ class ScheduleController extends Controller
                 $shift,
             );
         }
+    }
+
+    private function shiftHasRelatedData(WorkShift $shift, int $ownerId): bool
+    {
+        return EmployeeSchedule::query()
+            ->where('user_id', $ownerId)
+            ->where('shift_code', $shift->code)
+            ->exists()
+            || EmployeeAttendance::query()
+                ->where('user_id', $ownerId)
+                ->where('shift_id', $shift->id)
+                ->exists()
+            || ShiftChangeRequest::query()
+                ->where('user_id', $ownerId)
+                ->where(function ($query) use ($shift): void {
+                    $query
+                        ->where('current_shift_id', $shift->id)
+                        ->orWhere('requested_shift_id', $shift->id);
+                })
+                ->exists();
     }
 
     /**

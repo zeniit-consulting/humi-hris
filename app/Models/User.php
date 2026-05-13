@@ -31,6 +31,7 @@ class User extends Authenticatable
         'password',
         'role',
         'parent_user_id',
+        'client_sub_company_id',
         'phone_verified_at',
         'suspended_at',
         'suspension_reason',
@@ -107,6 +108,11 @@ class User extends Authenticatable
         return $this->hasMany(self::class, 'parent_user_id');
     }
 
+    public function clientSubCompany(): BelongsTo
+    {
+        return $this->belongsTo(SubCompany::class, 'client_sub_company_id');
+    }
+
     /**
      * Resolve the owner account id for data isolation.
      */
@@ -129,6 +135,11 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->role === 'superadmin';
+    }
+
+    public function isClientSupervisor(): bool
+    {
+        return $this->role === 'client_supervisor';
     }
 
     /**

@@ -232,6 +232,12 @@ export default function PortalAttendancePage({ pageTitle }: Props) {
                 >
                     Ubah Jadwal Saya
                 </a>
+                <a
+                    href="/portal/attendance-request"
+                    className="mt-3 inline-flex h-12 w-full items-center justify-center rounded-[12px] border border-slate-200 bg-white text-sm font-bold text-slate-900"
+                >
+                    Request Absensi Manual
+                </a>
             </section>
 
             <section className="mt-5 rounded-[18px] border border-slate-200 bg-white px-5 py-5">

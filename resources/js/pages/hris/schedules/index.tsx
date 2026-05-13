@@ -1,13 +1,16 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     CalendarDays,
+    Pencil,
     Filter,
     Plus,
     RefreshCcw,
     Save,
+    Trash2,
     WandSparkles,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import ActionIconButton from '@/components/action-icon-button';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -95,6 +98,7 @@ type QuickScheduleFormData = {
 };
 
 type ShiftFormData = {
+    name: string;
     start_time: string;
     end_time: string;
 };
@@ -151,7 +155,10 @@ export default function SchedulePage() {
     const [filterState, setFilterState] = useState<Filters>(filters);
     const [quickDialogOpen, setQuickDialogOpen] = useState(false);
     const [rosterDialogOpen, setRosterDialogOpen] = useState(false);
+    const [shiftListDialogOpen, setShiftListDialogOpen] = useState(false);
     const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
+    const [editingShift, setEditingShift] = useState<ShiftOption | null>(null);
+    const [deletingShift, setDeletingShift] = useState<ShiftOption | null>(null);
     const [scheduleRows, setScheduleRows] = useState<ScheduleRow[]>([]);
 
     const shiftOptions = useMemo(
@@ -207,6 +214,7 @@ export default function SchedulePage() {
     });
 
     const shiftForm = useForm<ShiftFormData>({
+        name: '',
         start_time: '08:00',
         end_time: '17:00',
     });
@@ -271,10 +279,23 @@ export default function SchedulePage() {
     };
 
     const openShiftDialog = () => {
+        setEditingShift(null);
         shiftForm.clearErrors();
         shiftForm.setData({
+            name: '',
             start_time: '08:00',
             end_time: '17:00',
+        });
+        setShiftDialogOpen(true);
+    };
+
+    const openEditShiftDialog = (shift: ShiftOption) => {
+        setEditingShift(shift);
+        shiftForm.clearErrors();
+        shiftForm.setData({
+            name: shift.name,
+            start_time: shift.start_time ?? '08:00',
+            end_time: shift.end_time ?? '17:00',
         });
         setShiftDialogOpen(true);
     };
@@ -379,10 +400,36 @@ export default function SchedulePage() {
     };
 
     const saveShift = () => {
-        shiftForm.post(scheduleShifts.store.url(), {
+        const options = {
             preserveScroll: true,
             onSuccess: () => {
                 setShiftDialogOpen(false);
+                setEditingShift(null);
+                router.get(schedulesIndex.url(), filterState, {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                });
+            },
+        };
+
+        if (editingShift) {
+            shiftForm.put(`/hris/schedules/shifts/${editingShift.id}`, options);
+            return;
+        }
+
+        shiftForm.post(scheduleShifts.store.url(), options);
+    };
+
+    const deleteShift = () => {
+        if (!deletingShift) {
+            return;
+        }
+
+        router.delete(`/hris/schedules/shifts/${deletingShift.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setDeletingShift(null);
                 router.get(schedulesIndex.url(), filterState, {
                     preserveState: true,
                     preserveScroll: true,
@@ -413,9 +460,13 @@ export default function SchedulePage() {
                             </CardDescription>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            <Button type="button" variant="outline" onClick={openShiftDialog}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setShiftListDialogOpen(true)}
+                            >
                                 <Plus className="size-4" />
-                                Tambah Shift
+                                Kelola Shift
                             </Button>
                             <Button type="button" variant="outline" onClick={openRosterDialog}>
                                 <WandSparkles className="size-4" />
@@ -502,46 +553,6 @@ export default function SchedulePage() {
                                     Reset
                                 </Button>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Daftar Shift Tersedia</CardTitle>
-                        <CardDescription>
-                            Shift yang ditambahkan di popup akan muncul di sini dan bisa dipilih
-                            pada jadwal bulanan.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[640px] text-sm">
-                                <thead>
-                                    <tr className="border-b text-left">
-                                        <th className="px-2 py-2">Kode</th>
-                                        <th className="px-2 py-2">Nama</th>
-                                        <th className="px-2 py-2">Jam Kerja</th>
-                                        <th className="px-2 py-2">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {shifts.map((shift) => (
-                                        <tr key={shift.id} className="border-b">
-                                            <td className="px-2 py-2 font-medium">
-                                                {shift.code}
-                                            </td>
-                                            <td className="px-2 py-2">{shift.name}</td>
-                                            <td className="px-2 py-2">
-                                                {formatShiftTime(shift)}
-                                            </td>
-                                            <td className="px-2 py-2">
-                                                {shift.is_day_off ? 'Day Off' : 'Aktif'}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
                         </div>
                     </CardContent>
                 </Card>
@@ -640,23 +651,128 @@ export default function SchedulePage() {
             </div>
 
             <Dialog
+                open={shiftListDialogOpen}
+                onOpenChange={setShiftListDialogOpen}
+            >
+                <DialogContent className="sm:max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Daftar Shift Tersedia</DialogTitle>
+                        <DialogDescription>
+                            Kelola master shift. Shift hanya bisa dihapus jika
+                            belum dipakai pada jadwal, absensi, atau request
+                            perubahan jadwal.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex justify-end">
+                        <Button type="button" onClick={openShiftDialog}>
+                            <Plus className="size-4" />
+                            Tambah Shift
+                        </Button>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[760px] text-sm">
+                            <thead>
+                                <tr className="border-b text-left">
+                                    <th className="px-2 py-2">Kode</th>
+                                    <th className="px-2 py-2">Nama</th>
+                                    <th className="px-2 py-2">Jam Kerja</th>
+                                    <th className="px-2 py-2">Status</th>
+                                    <th className="px-2 py-2">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {shifts.map((shift) => (
+                                    <tr key={shift.id} className="border-b">
+                                        <td className="px-2 py-2 font-medium">
+                                            {shift.code}
+                                        </td>
+                                        <td className="px-2 py-2">
+                                            {shift.name}
+                                        </td>
+                                        <td className="px-2 py-2">
+                                            {formatShiftTime(shift)}
+                                        </td>
+                                        <td className="px-2 py-2">
+                                            {shift.is_day_off
+                                                ? 'Day Off'
+                                                : 'Aktif'}
+                                        </td>
+                                        <td className="px-2 py-2">
+                                            {shift.is_day_off ? (
+                                                <span className="text-xs text-muted-foreground">
+                                                    Bawaan sistem
+                                                </span>
+                                            ) : (
+                                                <div className="flex gap-1.5">
+                                                    <ActionIconButton
+                                                        label="Ubah shift"
+                                                        icon={Pencil}
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            openEditShiftDialog(
+                                                                shift,
+                                                            )
+                                                        }
+                                                    />
+                                                    <ActionIconButton
+                                                        label="Hapus shift"
+                                                        icon={Trash2}
+                                                        variant="destructive"
+                                                        onClick={() =>
+                                                            setDeletingShift(
+                                                                shift,
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
                 open={shiftDialogOpen}
                 onOpenChange={(open) => {
                     setShiftDialogOpen(open);
                     if (!open) {
                         shiftForm.clearErrors();
+                        setEditingShift(null);
                     }
                 }}
             >
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Tambah Shift</DialogTitle>
+                        <DialogTitle>
+                            {editingShift ? 'Ubah Shift' : 'Tambah Shift'}
+                        </DialogTitle>
                         <DialogDescription>
-                            Kode shift akan dibuat otomatis dari jam mulai dan jam selesai.
+                            {editingShift
+                                ? 'Perubahan nama dan jam shift akan dipakai untuk pilihan jadwal berikutnya.'
+                                : 'Kode shift akan dibuat otomatis dari jam mulai dan jam selesai.'}
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-2 md:col-span-2">
+                            <Label htmlFor="shift_name">Nama Shift</Label>
+                            <Input
+                                id="shift_name"
+                                value={shiftForm.data.name}
+                                onChange={(event) =>
+                                    shiftForm.setData('name', event.target.value)
+                                }
+                                placeholder={editingShift?.code ?? shiftPreviewCode}
+                            />
+                            <InputError message={shiftForm.errors.name} />
+                        </div>
+
                         <div className="grid gap-2">
                             <Label htmlFor="shift_start_time">Jam Mulai</Label>
                             <Input
@@ -684,10 +800,14 @@ export default function SchedulePage() {
                         </div>
 
                         <div className="grid gap-2 md:col-span-2">
-                            <Label htmlFor="shift_preview_code">Preview Kode Shift</Label>
+                            <Label htmlFor="shift_preview_code">
+                                {editingShift
+                                    ? 'Kode Shift'
+                                    : 'Preview Kode Shift'}
+                            </Label>
                             <Input
                                 id="shift_preview_code"
-                                value={shiftPreviewCode}
+                                value={editingShift?.code ?? shiftPreviewCode}
                                 readOnly
                                 className="font-medium"
                             />
@@ -698,7 +818,10 @@ export default function SchedulePage() {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setShiftDialogOpen(false)}
+                            onClick={() => {
+                                setShiftDialogOpen(false);
+                                setEditingShift(null);
+                            }}
                         >
                             Batal
                         </Button>
@@ -708,7 +831,51 @@ export default function SchedulePage() {
                             disabled={shiftForm.processing}
                         >
                             <Save className="size-4" />
-                            Simpan Shift
+                            {editingShift ? 'Simpan Perubahan' : 'Simpan Shift'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={deletingShift !== null}
+                onOpenChange={(open) => !open && setDeletingShift(null)}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Hapus Shift</DialogTitle>
+                        <DialogDescription>
+                            Shift hanya bisa dihapus jika belum dipakai pada
+                            jadwal, absensi, atau request perubahan jadwal.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+                        <p className="font-medium">
+                            {deletingShift
+                                ? `${deletingShift.code} - ${deletingShift.name}`
+                                : '-'}
+                        </p>
+                        <p className="mt-1 text-muted-foreground">
+                            {deletingShift ? formatShiftTime(deletingShift) : '-'}
+                        </p>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setDeletingShift(null)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={deleteShift}
+                        >
+                            <Trash2 className="size-4" />
+                            Hapus Shift
                         </Button>
                     </div>
                 </DialogContent>

@@ -149,6 +149,22 @@ type EmployeeAllowance = {
     notes: string | null;
 };
 
+type EmployeeDocument = {
+    id: number;
+    document_type: string;
+    document_number: string | null;
+    issued_at: string | null;
+    expires_at: string | null;
+    issuing_authority: string | null;
+    file_original_name: string | null;
+    file_mime_type: string | null;
+    file_size: number | null;
+    notes: string | null;
+    verified_at: string | null;
+    compliance_status: 'valid' | 'expiring' | 'expired' | 'missing';
+    download_url: string | null;
+};
+
 type Employee = {
     id: number;
     employee_code: string;
@@ -205,6 +221,13 @@ type Employee = {
     } | null;
     bank_accounts: BankAccount[];
     allowances: EmployeeAllowance[];
+    documents: EmployeeDocument[];
+    compliance_summary: {
+        valid: number;
+        expiring: number;
+        expired: number;
+        missing_files: number;
+    };
     portal_user?: {
         id: number;
         email: string | null;
@@ -275,6 +298,17 @@ type EmployeeImportFormData = {
     import_file: File | null;
 };
 
+type EmployeeDocumentFormData = {
+    document_type: string;
+    document_number: string;
+    issued_at: string;
+    expires_at: string;
+    issuing_authority: string;
+    document_file: File | null;
+    remove_file: boolean;
+    notes: string;
+};
+
 type Filters = {
     search: string;
     division_id: string;
@@ -312,6 +346,10 @@ type PageProps = {
         genders: string[];
         marital_statuses: string[];
         last_education_levels: string[];
+        document_types: Array<{
+            value: string;
+            label: string;
+        }>;
     };
 };
 
@@ -377,6 +415,17 @@ const ALLOWANCE_DEFAULT: AllowanceFormData = {
     notes: '',
 };
 
+const DOCUMENT_DEFAULT: EmployeeDocumentFormData = {
+    document_type: 'ktp',
+    document_number: '',
+    issued_at: '',
+    expires_at: '',
+    issuing_authority: '',
+    document_file: null,
+    remove_file: false,
+    notes: '',
+};
+
 const statusLabels: Record<string, string> = {
     active: 'Aktif',
     probation: 'Probation',
@@ -407,6 +456,20 @@ const ptkpCategoryLabels: Record<string, string> = {
     'K/1': 'K/1 - Kawin 1 Tanggungan',
     'K/2': 'K/2 - Kawin 2 Tanggungan',
     'K/3': 'K/3 - Kawin 3 Tanggungan',
+};
+
+const documentTypeLabels: Record<string, string> = {
+    ktp: 'KTP',
+    kk: 'Kartu Keluarga',
+    npwp: 'NPWP',
+    bpjs_kesehatan: 'BPJS Kesehatan',
+    bpjs_ketenagakerjaan: 'BPJS Ketenagakerjaan',
+    ijazah: 'Ijazah',
+    sertifikat: 'Sertifikat',
+    passport: 'Paspor',
+    sim: 'SIM',
+    kontrak_kerja: 'Kontrak Kerja',
+    lainnya: 'Lainnya',
 };
 
 const employeeFieldLabels: Record<string, string> = {
@@ -574,10 +637,13 @@ export default function EmployeesIndex() {
         useState<BankAccount | null>(null);
     const [editingAllowance, setEditingAllowance] =
         useState<EmployeeAllowance | null>(null);
+    const [editingDocument, setEditingDocument] =
+        useState<EmployeeDocument | null>(null);
 
     const employeeForm = useForm<EmployeeFormData>(buildEmployeeDefault());
     const bankAccountForm = useForm<BankAccountFormData>(BANK_ACCOUNT_DEFAULT);
     const allowanceForm = useForm<AllowanceFormData>(ALLOWANCE_DEFAULT);
+    const documentForm = useForm<EmployeeDocumentFormData>(DOCUMENT_DEFAULT);
     const employeeImportForm = useForm<EmployeeImportFormData>({
         import_file: null,
     });
@@ -998,6 +1064,27 @@ export default function EmployeesIndex() {
         setEditingAllowance(allowance);
     };
 
+    const openDocumentCreate = () => {
+        documentForm.clearErrors();
+        documentForm.setData(DOCUMENT_DEFAULT);
+        setEditingDocument(null);
+    };
+
+    const openDocumentEdit = (document: EmployeeDocument) => {
+        documentForm.clearErrors();
+        documentForm.setData({
+            document_type: document.document_type,
+            document_number: document.document_number ?? '',
+            issued_at: document.issued_at ?? '',
+            expires_at: document.expires_at ?? '',
+            issuing_authority: document.issuing_authority ?? '',
+            document_file: null,
+            remove_file: false,
+            notes: document.notes ?? '',
+        });
+        setEditingDocument(document);
+    };
+
     const submitBankAccountForm = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -1079,6 +1166,60 @@ export default function EmployeesIndex() {
                     if (editingAllowance?.id === allowance.id) {
                         allowanceForm.reset();
                         setEditingAllowance(null);
+                    }
+                },
+            },
+        );
+    };
+
+    const submitDocumentForm = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!selectedEmployee) {
+            return;
+        }
+
+        const baseUrl = `/hris/employees/${selectedEmployee.id}/documents`;
+
+        if (editingDocument) {
+            documentForm.post(`${baseUrl}/${editingDocument.id}?_method=PUT`, {
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    documentForm.reset();
+                    documentForm.clearErrors();
+                    setEditingDocument(null);
+                },
+            });
+
+            return;
+        }
+
+        documentForm.post(baseUrl, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                documentForm.reset();
+                documentForm.clearErrors();
+                setEditingDocument(null);
+            },
+        });
+    };
+
+    const deleteDocument = (document: EmployeeDocument) => {
+        if (!selectedEmployee) {
+            return;
+        }
+
+        router.delete(
+            `/hris/employees/${selectedEmployee.id}/documents/${document.id}`,
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (editingDocument?.id === document.id) {
+                        documentForm.reset();
+                        documentForm.clearErrors();
+                        setEditingDocument(null);
                     }
                 },
             },
@@ -3192,20 +3333,23 @@ export default function EmployeesIndex() {
                         setSelectedEmployeeId(null);
                         setEditingBankAccount(null);
                         setEditingAllowance(null);
+                        setEditingDocument(null);
                         bankAccountForm.reset();
                         bankAccountForm.clearErrors();
                         allowanceForm.reset();
                         allowanceForm.clearErrors();
+                        documentForm.reset();
+                        documentForm.clearErrors();
                     }
                 }}
             >
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
                     <DialogHeader>
-                        <DialogTitle>Kelola Rekening & Tunjangan</DialogTitle>
+                        <DialogTitle>Kelola Kompensasi & Dokumen</DialogTitle>
                         <DialogDescription>
                             {selectedEmployee
                                 ? `${selectedEmployee.employee_code} - ${selectedEmployee.full_name}`
-                                : 'Pilih karyawan dari tabel untuk mengelola rekening dan tunjangan.'}
+                                : 'Pilih karyawan dari tabel untuk mengelola rekening, tunjangan, dan dokumen kepatuhan.'}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -3234,6 +3378,56 @@ export default function EmployeesIndex() {
                                           )
                                         : '-'}
                                 </p>
+                            </div>
+
+                            <div className="grid gap-3 md:grid-cols-4">
+                                <Card className="gap-1 py-3">
+                                    <CardHeader className="px-4 pb-0">
+                                        <CardDescription>Valid</CardDescription>
+                                        <CardTitle className="text-2xl text-emerald-600">
+                                            {
+                                                selectedEmployee
+                                                    .compliance_summary.valid
+                                            }
+                                        </CardTitle>
+                                    </CardHeader>
+                                </Card>
+                                <Card className="gap-1 py-3">
+                                    <CardHeader className="px-4 pb-0">
+                                        <CardDescription>
+                                            Akan Habis
+                                        </CardDescription>
+                                        <CardTitle className="text-2xl text-amber-600">
+                                            {
+                                                selectedEmployee
+                                                    .compliance_summary.expiring
+                                            }
+                                        </CardTitle>
+                                    </CardHeader>
+                                </Card>
+                                <Card className="gap-1 py-3">
+                                    <CardHeader className="px-4 pb-0">
+                                        <CardDescription>Kedaluwarsa</CardDescription>
+                                        <CardTitle className="text-2xl text-rose-600">
+                                            {
+                                                selectedEmployee
+                                                    .compliance_summary.expired
+                                            }
+                                        </CardTitle>
+                                    </CardHeader>
+                                </Card>
+                                <Card className="gap-1 py-3">
+                                    <CardHeader className="px-4 pb-0">
+                                        <CardDescription>Tanpa File</CardDescription>
+                                        <CardTitle className="text-2xl text-slate-600">
+                                            {
+                                                selectedEmployee
+                                                    .compliance_summary
+                                                    .missing_files
+                                            }
+                                        </CardTitle>
+                                    </CardHeader>
+                                </Card>
                             </div>
 
                             <div className="space-y-3 rounded-lg border p-3">
@@ -3448,6 +3642,324 @@ export default function EmployeesIndex() {
                                         {editingBankAccount
                                             ? 'Simpan'
                                             : 'Tambah Rekening'}
+                                    </Button>
+                                </div>
+                            </form>
+
+                            <div className="space-y-3 rounded-lg border p-3">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-medium">
+                                        Dokumen Kepatuhan
+                                    </p>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={openDocumentCreate}
+                                    >
+                                        Tambah Dokumen
+                                    </Button>
+                                </div>
+
+                                <div className="space-y-2">
+                                    {selectedEmployee.documents.length === 0 && (
+                                        <p className="text-sm text-muted-foreground">
+                                            Belum ada dokumen karyawan.
+                                        </p>
+                                    )}
+
+                                    {selectedEmployee.documents.map((document) => (
+                                        <div
+                                            key={document.id}
+                                            className="flex flex-col gap-2 rounded-md border p-3 md:flex-row md:items-center md:justify-between"
+                                        >
+                                            <div>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <p className="font-medium">
+                                                        {documentTypeLabels[
+                                                            document
+                                                                .document_type
+                                                        ] ??
+                                                            document
+                                                                .document_type}
+                                                    </p>
+                                                    <Badge
+                                                        variant={
+                                                            document.compliance_status ===
+                                                            'valid'
+                                                                ? 'default'
+                                                                : 'outline'
+                                                        }
+                                                    >
+                                                        {document.compliance_status ===
+                                                        'valid'
+                                                            ? 'Valid'
+                                                            : document.compliance_status ===
+                                                                'expiring'
+                                                              ? 'Akan habis'
+                                                              : document.compliance_status ===
+                                                                  'expired'
+                                                                ? 'Kedaluwarsa'
+                                                                : 'File belum ada'}
+                                                    </Badge>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {document.document_number ||
+                                                        'Tanpa nomor'}{' '}
+                                                    • Berakhir:{' '}
+                                                    {formatDateDisplay(
+                                                        document.expires_at,
+                                                    )}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    File:{' '}
+                                                    {document.file_original_name ??
+                                                        'Belum diunggah'}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                {document.download_url && (
+                                                    <ActionIconButton
+                                                        label="Lihat dokumen"
+                                                        icon={Eye}
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            window.open(
+                                                                document.download_url ??
+                                                                    undefined,
+                                                                '_blank',
+                                                            )
+                                                        }
+                                                    />
+                                                )}
+                                                <ActionIconButton
+                                                    label="Edit dokumen"
+                                                    icon={Pencil}
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        openDocumentEdit(
+                                                            document,
+                                                        )
+                                                    }
+                                                />
+                                                <ActionIconButton
+                                                    label="Hapus dokumen"
+                                                    icon={Trash2}
+                                                    variant="destructive"
+                                                    onClick={() =>
+                                                        deleteDocument(document)
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <form
+                                onSubmit={submitDocumentForm}
+                                className="grid gap-3 rounded-lg border p-3 md:grid-cols-2"
+                            >
+                                <p className="text-sm font-medium md:col-span-2">
+                                    {editingDocument
+                                        ? 'Edit dokumen'
+                                        : 'Tambah dokumen baru'}
+                                </p>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="document_type">
+                                        Jenis Dokumen
+                                    </Label>
+                                    <Select
+                                        value={documentForm.data.document_type}
+                                        onValueChange={(value) =>
+                                            documentForm.setData(
+                                                'document_type',
+                                                value,
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger id="document_type">
+                                            <SelectValue placeholder="Pilih dokumen" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {options.document_types.map(
+                                                (documentType) => (
+                                                    <SelectItem
+                                                        key={
+                                                            documentType.value
+                                                        }
+                                                        value={
+                                                            documentType.value
+                                                        }
+                                                    >
+                                                        {documentType.label}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError
+                                        message={
+                                            documentForm.errors.document_type
+                                        }
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="document_number">
+                                        Nomor Dokumen
+                                    </Label>
+                                    <Input
+                                        id="document_number"
+                                        value={documentForm.data.document_number}
+                                        onChange={(event) =>
+                                            documentForm.setData(
+                                                'document_number',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={
+                                            documentForm.errors.document_number
+                                        }
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="issued_at">
+                                        Tanggal Terbit
+                                    </Label>
+                                    <Input
+                                        id="issued_at"
+                                        type="date"
+                                        value={documentForm.data.issued_at}
+                                        onChange={(event) =>
+                                            documentForm.setData(
+                                                'issued_at',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={documentForm.errors.issued_at}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="expires_at">
+                                        Tanggal Berakhir
+                                    </Label>
+                                    <Input
+                                        id="expires_at"
+                                        type="date"
+                                        value={documentForm.data.expires_at}
+                                        onChange={(event) =>
+                                            documentForm.setData(
+                                                'expires_at',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={documentForm.errors.expires_at}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="issuing_authority">
+                                        Instansi Penerbit
+                                    </Label>
+                                    <Input
+                                        id="issuing_authority"
+                                        value={
+                                            documentForm.data.issuing_authority
+                                        }
+                                        onChange={(event) =>
+                                            documentForm.setData(
+                                                'issuing_authority',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={
+                                            documentForm.errors
+                                                .issuing_authority
+                                        }
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="document_file">
+                                        File Dokumen
+                                    </Label>
+                                    <Input
+                                        id="document_file"
+                                        type="file"
+                                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                        onChange={(event) =>
+                                            documentForm.setData(
+                                                'document_file',
+                                                event.target.files?.[0] ?? null,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={
+                                            documentForm.errors.document_file
+                                        }
+                                    />
+                                </div>
+                                <div className="grid gap-2 md:col-span-2">
+                                    <Label htmlFor="document_notes">
+                                        Catatan
+                                    </Label>
+                                    <textarea
+                                        id="document_notes"
+                                        rows={3}
+                                        value={documentForm.data.notes}
+                                        onChange={(event) =>
+                                            documentForm.setData(
+                                                'notes',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                    />
+                                    <InputError
+                                        message={documentForm.errors.notes}
+                                    />
+                                </div>
+                                {editingDocument && (
+                                    <div className="flex items-center gap-2 md:col-span-2">
+                                        <Checkbox
+                                            id="remove_file"
+                                            checked={
+                                                documentForm.data.remove_file
+                                            }
+                                            onCheckedChange={(checked) =>
+                                                documentForm.setData(
+                                                    'remove_file',
+                                                    checked === true,
+                                                )
+                                            }
+                                        />
+                                        <Label htmlFor="remove_file">
+                                            Hapus file lama jika dokumen perlu
+                                            disimpan tanpa lampiran
+                                        </Label>
+                                    </div>
+                                )}
+                                <div className="flex justify-end gap-2 md:col-span-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={openDocumentCreate}
+                                    >
+                                        Reset Form
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        disabled={documentForm.processing}
+                                    >
+                                        {editingDocument
+                                            ? 'Simpan Dokumen'
+                                            : 'Tambah Dokumen'}
                                     </Button>
                                 </div>
                             </form>

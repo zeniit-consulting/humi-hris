@@ -4,6 +4,7 @@ namespace App\Http\Requests\Settings;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class StoreSubUserRequest extends FormRequest
@@ -27,6 +28,8 @@ class StoreSubUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:150', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
+            'role' => ['required', Rule::in(['admin_staff', 'client_supervisor'])],
+            'client_sub_company_id' => ['nullable', 'required_if:role,client_supervisor', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $this->user()?->accountOwnerId())],
         ];
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Mobile\V1\AttendanceController;
+use App\Http\Controllers\Api\Mobile\V1\AttendanceCorrectionRequestController;
 use App\Http\Controllers\Api\Mobile\V1\LeaveController;
 use App\Http\Controllers\Api\Mobile\V1\OvertimeController;
 use App\Http\Controllers\Api\Mobile\V1\PayrollController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Auth\PortalOtpLoginController;
 use App\Http\Controllers\Auth\WhatsappActivationController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CareerController;
+use App\Http\Controllers\Client\ApprovalController as ClientApprovalController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserPortalController;
 use App\Http\Controllers\UserPortalSectionController;
@@ -92,6 +94,16 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         ->name('subscribers.invoices.cancel');
 });
 
+Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->prefix('client')->name('client.')->group(function () {
+    Route::get('approvals', [ClientApprovalController::class, 'index'])->name('approvals.index');
+    Route::post('approvals/attendance/{attendanceRequest}/approve', [ClientApprovalController::class, 'approveAttendance'])->name('approvals.attendance.approve');
+    Route::post('approvals/attendance/{attendanceRequest}/reject', [ClientApprovalController::class, 'rejectAttendance'])->name('approvals.attendance.reject');
+    Route::post('approvals/leaves/{leave}/approve', [ClientApprovalController::class, 'approveLeave'])->name('approvals.leaves.approve');
+    Route::post('approvals/leaves/{leave}/reject', [ClientApprovalController::class, 'rejectLeave'])->name('approvals.leaves.reject');
+    Route::post('approvals/overtimes/{overtime}/approve', [ClientApprovalController::class, 'approveOvertime'])->name('approvals.overtimes.approve');
+    Route::post('approvals/overtimes/{overtime}/reject', [ClientApprovalController::class, 'rejectOvertime'])->name('approvals.overtimes.reject');
+});
+
 Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group(function () {
     Route::get('portal', UserPortalController::class)->name('portal.index');
     Route::get('portal/api/summary', [PortalController::class, 'summary'])->name('portal.api.summary');
@@ -99,6 +111,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::post('portal/api/attendances', [AttendanceController::class, 'store'])->name('portal.api.attendances.store');
     Route::put('portal/api/attendances/{employeeAttendance}', [AttendanceController::class, 'update'])->name('portal.api.attendances.update');
     Route::delete('portal/api/attendances/{employeeAttendance}', [AttendanceController::class, 'destroy'])->name('portal.api.attendances.destroy');
+    Route::get('portal/api/attendance-requests', [AttendanceCorrectionRequestController::class, 'index'])->name('portal.api.attendance-requests.index');
+    Route::post('portal/api/attendance-requests', [AttendanceCorrectionRequestController::class, 'store'])->name('portal.api.attendance-requests.store');
     Route::get('portal/api/leaves', [LeaveController::class, 'index'])->name('portal.api.leaves.index');
     Route::post('portal/api/leaves', [LeaveController::class, 'store'])->name('portal.api.leaves.store');
     Route::put('portal/api/leaves/{leave}', [LeaveController::class, 'update'])->name('portal.api.leaves.update');
@@ -121,6 +135,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/check-in', [UserPortalSectionController::class, 'checkIn'])->name('portal.check-in');
     Route::get('portal/check-out', [UserPortalSectionController::class, 'checkOut'])->name('portal.check-out');
     Route::get('portal/shift-change', [UserPortalSectionController::class, 'shiftChange'])->name('portal.shift-change');
+    Route::get('portal/attendance-request', [UserPortalSectionController::class, 'attendanceRequest'])->name('portal.attendance-request');
     Route::get('portal/leaves', [UserPortalSectionController::class, 'leaves'])->name('portal.leaves');
     Route::get('portal/overtimes', [UserPortalSectionController::class, 'overtimes'])->name('portal.overtimes');
     Route::get('portal/payroll', [UserPortalSectionController::class, 'payroll'])->name('portal.payroll');

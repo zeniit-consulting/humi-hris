@@ -83,6 +83,7 @@ const coreFeaturesIncluded = [
     'Jadwal Kerja',
     'Cuti & Izin',
     'Lembur',
+    'Penggajian',
     'Notifikasi',
     'Survey',
     'Struktur Organisasi',
@@ -90,7 +91,6 @@ const coreFeaturesIncluded = [
 
 const coreFeatureLocked = [
     'Rekrutmen',
-    'Penggajian',
     'Kasbon',
     'Asset Management',
 ];
@@ -136,7 +136,7 @@ const pricingPlans = [
         price: fmt.format(PRICE_PLUS),
         period: '/karyawan/bulan',
         description:
-            'Paket paling lengkap untuk tim yang butuh payroll, rekrutmen, kasbon, dan asset management.',
+            'Paket paling lengkap untuk tim yang butuh rekrutmen, kasbon, dan asset management.',
         highlight: true,
         badge: 'REKOMENDASI',
         cta: 'Pilih Paket Plus',

@@ -12,8 +12,10 @@ class RoleRedirect
             return route('login');
         }
 
-        return $user->role === 'user'
-            ? route('portal.index')
-            : route('dashboard');
+        return match ($user->role) {
+            'user' => route('portal.index'),
+            'client_supervisor' => route('client.approvals.index'),
+            default => route('dashboard'),
+        };
     }
 }

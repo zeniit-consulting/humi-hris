@@ -2,17 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AttendanceCorrectionRequest;
+use App\Models\ClientInvoice;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeDocument;
 use App\Models\JobVacancy;
+use App\Models\LeaveRequest;
+use App\Models\ManpowerRequest;
+use App\Models\OvertimeRequest;
 use App\Models\PayrollRun;
 use App\Models\Position;
+use App\Models\ShiftChangeRequest;
+use App\Models\SubCompany;
 use App\Models\User;
 use App\Support\RoleRedirect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,11 +40,17 @@ class DashboardController extends Controller
             return redirect()->to(RoleRedirect::for($user));
         }
 
+        $ownerId = $user->accountOwnerId();
+
         $validated = $request->validate([
             'range' => ['nullable', 'in:today,this_week,this_month'],
+            'outsourcing_period' => ['nullable', 'date_format:Y-m'],
+            'outsourcing_sub_company_id' => ['nullable', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $ownerId)],
         ]);
 
         $activeRange = $validated['range'] ?? 'this_week';
+        $outsourcingPeriod = $validated['outsourcing_period'] ?? now()->format('Y-m');
+        $outsourcingSubCompanyId = $validated['outsourcing_sub_company_id'] ?? null;
         $today = Carbon::today();
         $startDate = match ($activeRange) {
             'today' => $today->copy(),
@@ -133,6 +149,8 @@ class DashboardController extends Controller
         return Inertia::render('dashboard', [
             'filters' => [
                 'range' => $activeRange,
+                'outsourcing_period' => $outsourcingPeriod,
+                'outsourcing_sub_company_id' => $outsourcingSubCompanyId ? (string) $outsourcingSubCompanyId : '',
             ],
             'stats' => [
                 'total_employees' => $totalEmployees,
@@ -150,6 +168,250 @@ class DashboardController extends Controller
                 'today_attendance_rate' => $todayRate,
             ],
             'attendanceChart' => $attendanceChart,
+            'actionQueue' => $this->actionQueue($ownerId, $today),
+            'outsourcing' => $this->outsourcingSummary(
+                $ownerId,
+                $outsourcingPeriod,
+                $outsourcingSubCompanyId,
+                $today,
+            ),
         ]);
+    }
+
+    private function outsourcingSummary(
+        int $ownerId,
+        string $period,
+        ?int $subCompanyId,
+        Carbon $today,
+    ): array {
+        $subCompanies = SubCompany::query()
+            ->where('user_id', $ownerId)
+            ->when($subCompanyId, fn ($query) => $query->where('id', $subCompanyId))
+            ->withCount([
+                'employees as outsourced_employees_count' => fn ($query) => $query->where('is_active', true),
+            ])
+            ->orderBy('name')
+            ->get(['id', 'code', 'name', 'is_active']);
+
+        $subCompanyIds = $subCompanies->pluck('id');
+        $todayDate = $today->toDateString();
+
+        $outsourcedEmployees = Employee::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('sub_company_id', $subCompanyIds)
+            ->where('is_active', true);
+
+        $attendanceCounts = EmployeeAttendance::query()
+            ->where('user_id', $ownerId)
+            ->whereDate('attendance_date', $todayDate)
+            ->whereHas('employee', fn ($query) => $query->whereIn('sub_company_id', $subCompanyIds))
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $activeOutsourced = (clone $outsourcedEmployees)->count();
+        $presentToday = (int) ($attendanceCounts['present'] ?? 0);
+        $lateToday = (int) ($attendanceCounts['late'] ?? 0);
+        $onLeaveToday = (int) ($attendanceCounts['on_leave'] ?? 0);
+        $absentToday = max($activeOutsourced - ($presentToday + $lateToday + $onLeaveToday), 0);
+
+        $invoiceQuery = ClientInvoice::query()
+            ->where('user_id', $ownerId)
+            ->where('period', $period)
+            ->whereIn('sub_company_id', $subCompanyIds);
+
+        $billedAmount = (float) (clone $invoiceQuery)->where('status', '!=', 'cancelled')->sum('total_amount');
+        $paidAmount = (float) (clone $invoiceQuery)->where('status', 'paid')->sum('total_amount');
+        $outstandingAmount = (float) (clone $invoiceQuery)->whereIn('status', ['draft', 'sent'])->sum('total_amount');
+        $payrollCost = $this->outsourcingPayrollCost($ownerId, $period, $subCompanyIds->all());
+
+        $manpowerOpen = ManpowerRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('sub_company_id', $subCompanyIds)
+            ->whereIn('status', ['open', 'in_progress'])
+            ->selectRaw('COUNT(*) as requests, SUM(requested_headcount - fulfilled_headcount) as remaining')
+            ->first();
+
+        return [
+            'subCompanies' => SubCompany::query()
+                ->where('user_id', $ownerId)
+                ->orderBy('name')
+                ->get(['id', 'code', 'name'])
+                ->map(fn (SubCompany $company): array => [
+                    'id' => $company->id,
+                    'label' => $company->code.' - '.$company->name,
+                ]),
+            'stats' => [
+                'active_clients' => $subCompanies->where('is_active', true)->count(),
+                'outsourced_employees' => $activeOutsourced,
+                'internal_employees' => Employee::query()->where('user_id', $ownerId)->whereNull('sub_company_id')->where('is_active', true)->count(),
+                'present_today' => $presentToday + $lateToday,
+                'absent_today' => $absentToday,
+                'attendance_rate' => $activeOutsourced > 0 ? round((($presentToday + $lateToday) / $activeOutsourced) * 100, 1) : 0,
+                'billed_amount' => $billedAmount,
+                'paid_amount' => $paidAmount,
+                'outstanding_amount' => $outstandingAmount,
+                'payroll_cost' => $payrollCost,
+                'gross_margin' => $billedAmount - $payrollCost,
+                'manpower_requests' => (int) ($manpowerOpen?->requests ?? 0),
+                'remaining_manpower' => (int) ($manpowerOpen?->remaining ?? 0),
+            ],
+            'perClient' => $subCompanies->map(function (SubCompany $company) use ($ownerId, $period, $todayDate): array {
+                $employees = (int) $company->outsourced_employees_count;
+                $attendance = EmployeeAttendance::query()
+                    ->where('user_id', $ownerId)
+                    ->whereDate('attendance_date', $todayDate)
+                    ->whereHas('employee', fn ($query) => $query->where('sub_company_id', $company->id))
+                    ->selectRaw('status, COUNT(*) as total')
+                    ->groupBy('status')
+                    ->pluck('total', 'status');
+
+                $present = (int) ($attendance['present'] ?? 0);
+                $late = (int) ($attendance['late'] ?? 0);
+                $leave = (int) ($attendance['on_leave'] ?? 0);
+                $invoiceTotal = (float) ClientInvoice::query()
+                    ->where('user_id', $ownerId)
+                    ->where('sub_company_id', $company->id)
+                    ->where('period', $period)
+                    ->where('status', '!=', 'cancelled')
+                    ->sum('total_amount');
+                $outstandingInvoice = (float) ClientInvoice::query()
+                    ->where('user_id', $ownerId)
+                    ->where('sub_company_id', $company->id)
+                    ->where('period', $period)
+                    ->whereIn('status', ['draft', 'sent'])
+                    ->sum('total_amount');
+                $payroll = $this->outsourcingPayrollCost($ownerId, $period, [$company->id]);
+                $remainingManpower = (int) (ManpowerRequest::query()
+                    ->where('user_id', $ownerId)
+                    ->where('sub_company_id', $company->id)
+                    ->whereIn('status', ['open', 'in_progress'])
+                    ->sum(DB::raw('requested_headcount - fulfilled_headcount')) ?? 0);
+                $attendanceRate = $employees > 0 ? round((($present + $late) / $employees) * 100, 1) : 0;
+                $margin = $invoiceTotal - $payroll;
+                $slaBreaches = collect([
+                    $attendanceRate < 95 ? 'attendance' : null,
+                    $remainingManpower > 0 ? 'manpower' : null,
+                    $outstandingInvoice > 0 ? 'billing' : null,
+                    $margin < 0 ? 'margin' : null,
+                ])->filter()->values();
+
+                return [
+                    'id' => $company->id,
+                    'label' => $company->code.' - '.$company->name,
+                    'active' => $company->is_active,
+                    'employees' => $employees,
+                    'present_today' => $present + $late,
+                    'absent_today' => max($employees - ($present + $late + $leave), 0),
+                    'attendance_rate' => $attendanceRate,
+                    'invoice_total' => $invoiceTotal,
+                    'outstanding_invoice' => $outstandingInvoice,
+                    'payroll_cost' => $payroll,
+                    'margin' => $margin,
+                    'remaining_manpower' => $remainingManpower,
+                    'sla_score' => max(100 - ($slaBreaches->count() * 25), 0),
+                    'sla_breaches' => $slaBreaches,
+                ];
+            })->values(),
+        ];
+    }
+
+    private function actionQueue(int $ownerId, Carbon $today): array
+    {
+        $documentThreshold = $today->copy()->addDays(30)->toDateString();
+        $expiredDocuments = EmployeeDocument::query()
+            ->where('user_id', $ownerId)
+            ->whereNotNull('file_path')
+            ->whereDate('expires_at', '<', $today->toDateString())
+            ->count();
+        $expiringDocuments = EmployeeDocument::query()
+            ->where('user_id', $ownerId)
+            ->whereNotNull('file_path')
+            ->whereBetween('expires_at', [$today->toDateString(), $documentThreshold])
+            ->count();
+
+        $items = [
+            [
+                'key' => 'attendance_corrections',
+                'label' => 'Approval koreksi absensi',
+                'count' => AttendanceCorrectionRequest::query()->where('user_id', $ownerId)->where('status', 'pending')->count(),
+                'severity' => 'high',
+                'href' => route('hris.attendance-approvals.index'),
+            ],
+            [
+                'key' => 'leave_approvals',
+                'label' => 'Approval cuti',
+                'count' => LeaveRequest::query()->where('user_id', $ownerId)->where('status', 'pending')->count(),
+                'severity' => 'medium',
+                'href' => route('hris.leave-approvals.index'),
+            ],
+            [
+                'key' => 'overtime_approvals',
+                'label' => 'Approval lembur',
+                'count' => OvertimeRequest::query()->where('user_id', $ownerId)->where('status', 'pending')->count(),
+                'severity' => 'medium',
+                'href' => route('hris.overtime-approvals.index'),
+            ],
+            [
+                'key' => 'shift_change_approvals',
+                'label' => 'Approval perubahan jadwal',
+                'count' => ShiftChangeRequest::query()->where('user_id', $ownerId)->where('status', 'pending')->count(),
+                'severity' => 'medium',
+                'href' => route('hris.shift-change-requests.index'),
+            ],
+            [
+                'key' => 'manpower_gap',
+                'label' => 'Kebutuhan tenaga belum terpenuhi',
+                'count' => (int) (ManpowerRequest::query()
+                    ->where('user_id', $ownerId)
+                    ->whereIn('status', ['open', 'in_progress'])
+                    ->sum(DB::raw('requested_headcount - fulfilled_headcount')) ?? 0),
+                'severity' => 'high',
+                'href' => route('hris.manpower-requests.index'),
+            ],
+            [
+                'key' => 'billing_outstanding',
+                'label' => 'Invoice klien draft/terkirim',
+                'count' => ClientInvoice::query()->where('user_id', $ownerId)->whereIn('status', ['draft', 'sent'])->count(),
+                'severity' => 'medium',
+                'href' => route('hris.client-billings.index'),
+            ],
+            [
+                'key' => 'document_compliance',
+                'label' => 'Dokumen expired/akan habis',
+                'count' => $expiredDocuments + $expiringDocuments,
+                'severity' => $expiredDocuments > 0 ? 'high' : 'medium',
+                'href' => route('hris.employees.index'),
+            ],
+        ];
+
+        return [
+            'total' => collect($items)->sum('count'),
+            'items' => collect($items)
+                ->filter(fn (array $item): bool => $item['count'] > 0)
+                ->sortBy(fn (array $item): int => (($item['severity'] === 'high' ? 0 : 1) * 100_000) - $item['count'])
+                ->values(),
+        ];
+    }
+
+    private function outsourcingPayrollCost(int $ownerId, string $period, array $subCompanyIds): float
+    {
+        $run = PayrollRun::query()
+            ->where('user_id', $ownerId)
+            ->where('period', $period)
+            ->where('type', 'regular')
+            ->first();
+
+        if (! $run) {
+            return (float) Employee::query()
+                ->where('user_id', $ownerId)
+                ->whereIn('sub_company_id', $subCompanyIds)
+                ->where('is_active', true)
+                ->sum('base_salary');
+        }
+
+        return (float) $run->items()
+            ->whereHas('employee', fn ($query) => $query->whereIn('sub_company_id', $subCompanyIds))
+            ->sum('net_salary');
     }
 }

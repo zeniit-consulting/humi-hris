@@ -1,17 +1,21 @@
 <?php
 
 use App\Http\Controllers\Hris\AttendanceController;
+use App\Http\Controllers\Hris\AttendanceCorrectionApprovalController;
 use App\Http\Controllers\Hris\AttendanceScheduleController;
+use App\Http\Controllers\Hris\ClientBillingController;
 use App\Http\Controllers\Hris\CompanyAssetController;
 use App\Http\Controllers\Hris\DivisionController;
 use App\Http\Controllers\Hris\EmployeeAllowanceController;
 use App\Http\Controllers\Hris\EmployeeBankAccountController;
 use App\Http\Controllers\Hris\EmployeeController;
+use App\Http\Controllers\Hris\EmployeeDocumentController;
 use App\Http\Controllers\Hris\EmployeeMasterController;
 use App\Http\Controllers\Hris\KasbonController;
 use App\Http\Controllers\Hris\LeaveBalanceController;
 use App\Http\Controllers\Hris\LeaveController;
 use App\Http\Controllers\Hris\LeavePolicyController;
+use App\Http\Controllers\Hris\ManpowerRequestController;
 use App\Http\Controllers\Hris\NotificationController;
 use App\Http\Controllers\Hris\OrganizationChartController;
 use App\Http\Controllers\Hris\OvertimeController;
@@ -19,6 +23,7 @@ use App\Http\Controllers\Hris\PayrollController;
 use App\Http\Controllers\Hris\PositionController;
 use App\Http\Controllers\Hris\RecruitmentController;
 use App\Http\Controllers\Hris\ScheduleController;
+use App\Http\Controllers\Hris\ShiftChangeApprovalController;
 use App\Http\Controllers\Hris\SubCompanyController;
 use App\Http\Controllers\Hris\SurveyController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +37,14 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::post('sub-companies/{subCompany}/locations', [SubCompanyController::class, 'storeLocation'])->name('sub-companies.locations.store');
     Route::put('sub-companies/{subCompany}/locations/{location}', [SubCompanyController::class, 'updateLocation'])->name('sub-companies.locations.update');
     Route::delete('sub-companies/{subCompany}/locations/{location}', [SubCompanyController::class, 'destroyLocation'])->name('sub-companies.locations.destroy');
+    Route::get('client-billings', [ClientBillingController::class, 'index'])->name('client-billings.index');
+    Route::post('client-billings', [ClientBillingController::class, 'store'])->name('client-billings.store');
+    Route::put('client-billings/{clientInvoice}', [ClientBillingController::class, 'update'])->name('client-billings.update');
+    Route::delete('client-billings/{clientInvoice}', [ClientBillingController::class, 'destroy'])->name('client-billings.destroy');
+    Route::get('manpower-requests', [ManpowerRequestController::class, 'index'])->name('manpower-requests.index');
+    Route::post('manpower-requests', [ManpowerRequestController::class, 'store'])->name('manpower-requests.store');
+    Route::put('manpower-requests/{manpowerRequest}', [ManpowerRequestController::class, 'update'])->name('manpower-requests.update');
+    Route::delete('manpower-requests/{manpowerRequest}', [ManpowerRequestController::class, 'destroy'])->name('manpower-requests.destroy');
     Route::get('employees/master-data', [EmployeeMasterController::class, 'index'])->name('employees.master-data');
     Route::get('employees/import-template', [EmployeeController::class, 'downloadImportTemplate'])->name('employees.import-template');
     Route::post('employees/import', [EmployeeController::class, 'import'])->name('employees.import');
@@ -68,6 +81,14 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         ->name('employees.bank-accounts.update');
     Route::delete('employees/{employee}/bank-accounts/{employeeBankAccount}', [EmployeeBankAccountController::class, 'destroy'])
         ->name('employees.bank-accounts.destroy');
+    Route::post('employees/{employee}/documents', [EmployeeDocumentController::class, 'store'])
+        ->name('employees.documents.store');
+    Route::put('employees/{employee}/documents/{employeeDocument}', [EmployeeDocumentController::class, 'update'])
+        ->name('employees.documents.update');
+    Route::delete('employees/{employee}/documents/{employeeDocument}', [EmployeeDocumentController::class, 'destroy'])
+        ->name('employees.documents.destroy');
+    Route::get('employees/{employee}/documents/{employeeDocument}/download', [EmployeeDocumentController::class, 'download'])
+        ->name('employees.documents.download');
     Route::post('employees/{employee}/allowances', [EmployeeAllowanceController::class, 'store'])
         ->name('employees.allowances.store');
     Route::put('employees/{employee}/allowances/{employeeAllowance}', [EmployeeAllowanceController::class, 'update'])
@@ -85,7 +106,15 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
     Route::post('schedules/shifts', [ScheduleController::class, 'storeShift'])->name('schedules.shifts.store');
+    Route::put('schedules/shifts/{workShift}', [ScheduleController::class, 'updateShift'])->name('schedules.shifts.update');
+    Route::delete('schedules/shifts/{workShift}', [ScheduleController::class, 'destroyShift'])->name('schedules.shifts.destroy');
     Route::post('schedules/roster', [ScheduleController::class, 'roster'])->name('schedules.roster');
+    Route::get('shift-change-requests', [ShiftChangeApprovalController::class, 'index'])->name('shift-change-requests.index');
+    Route::post('shift-change-requests/{shiftChangeRequest}/approve', [ShiftChangeApprovalController::class, 'approve'])->name('shift-change-requests.approve');
+    Route::post('shift-change-requests/{shiftChangeRequest}/reject', [ShiftChangeApprovalController::class, 'reject'])->name('shift-change-requests.reject');
+    Route::get('attendance-approvals', [AttendanceCorrectionApprovalController::class, 'index'])->name('attendance-approvals.index');
+    Route::post('attendance-approvals/{attendanceRequest}/approve', [AttendanceCorrectionApprovalController::class, 'approve'])->name('attendance-approvals.approve');
+    Route::post('attendance-approvals/{attendanceRequest}/reject', [AttendanceCorrectionApprovalController::class, 'reject'])->name('attendance-approvals.reject');
 
     Route::middleware('subscription.feature:payroll')->group(function () {
         Route::get('payrolls', [PayrollController::class, 'index'])->name('payrolls.index');
@@ -111,6 +140,9 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
 
     Route::get('leaves', [LeaveController::class, 'index'])->name('leaves.index');
     Route::get('leaves/export', [LeaveController::class, 'export'])->name('leaves.export');
+    Route::get('leave-approvals', [LeaveController::class, 'approvals'])->name('leave-approvals.index');
+    Route::post('leave-approvals/{leave}/approve', [LeaveController::class, 'approve'])->name('leave-approvals.approve');
+    Route::post('leave-approvals/{leave}/reject', [LeaveController::class, 'reject'])->name('leave-approvals.reject');
 
     // Leave Policy
     Route::post('leaves/policy', [LeavePolicyController::class, 'store'])->name('leaves.policy.store');
@@ -129,6 +161,9 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
 
     Route::get('overtimes', [OvertimeController::class, 'index'])->name('overtimes.index');
     Route::get('overtimes/export', [OvertimeController::class, 'export'])->name('overtimes.export');
+    Route::get('overtime-approvals', [OvertimeController::class, 'approvals'])->name('overtime-approvals.index');
+    Route::post('overtime-approvals/{overtime}/approve', [OvertimeController::class, 'approve'])->name('overtime-approvals.approve');
+    Route::post('overtime-approvals/{overtime}/reject', [OvertimeController::class, 'reject'])->name('overtime-approvals.reject');
     Route::post('overtimes', [OvertimeController::class, 'store'])->name('overtimes.store');
     Route::put('overtimes/{overtime}', [OvertimeController::class, 'update'])->name('overtimes.update');
     Route::delete('overtimes/{overtime}', [OvertimeController::class, 'destroy'])->name('overtimes.destroy');

@@ -25,7 +25,7 @@ class SubscriptionPlanSeeder extends Seeder
                 'price_per_employee' => 2900,
                 'max_employees' => null,
                 'max_months' => null,
-                'locked_features' => ['recruitment', 'payroll', 'kasbon', 'assets'],
+                'locked_features' => ['recruitment', 'kasbon', 'assets'],
                 'is_active' => true,
             ],
             [

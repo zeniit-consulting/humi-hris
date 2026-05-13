@@ -6,6 +6,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
@@ -16,8 +17,11 @@ type SubUser = {
     name: string;
     email: string;
     role: string;
+    client_sub_company_id: number | null;
+    client_sub_company_label: string | null;
     created_at: string | null;
 };
+type SubCompanyOption = { id: number; label: string };
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -26,7 +30,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function SettingsUsersPage({ subUsers }: { subUsers: SubUser[] }) {
+export default function SettingsUsersPage({ subUsers, subCompanies }: { subUsers: SubUser[]; subCompanies: SubCompanyOption[] }) {
     const [editingUser, setEditingUser] = useState<SubUser | null>(null);
 
     const createForm = useForm({
@@ -34,6 +38,8 @@ export default function SettingsUsersPage({ subUsers }: { subUsers: SubUser[] })
         email: '',
         password: '',
         password_confirmation: '',
+        role: 'admin_staff',
+        client_sub_company_id: '',
     });
 
     const updateForm = useForm({
@@ -41,6 +47,8 @@ export default function SettingsUsersPage({ subUsers }: { subUsers: SubUser[] })
         email: '',
         password: '',
         password_confirmation: '',
+        role: 'admin_staff',
+        client_sub_company_id: '',
     });
 
     const submitCreate = (event: FormEvent<HTMLFormElement>) => {
@@ -110,6 +118,42 @@ export default function SettingsUsersPage({ subUsers }: { subUsers: SubUser[] })
                             <InputError message={createForm.errors.email} />
                         </div>
                         <div className="grid gap-2">
+                            <Label>Role</Label>
+                            <Select
+                                value={createForm.data.role}
+                                onValueChange={(value) => {
+                                    createForm.setData('role', value);
+                                    if (value !== 'client_supervisor') {
+                                        createForm.setData('client_sub_company_id', '');
+                                    }
+                                }}
+                            >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="admin_staff">Admin Staff</SelectItem>
+                                    <SelectItem value="client_supervisor">Supervisor Klien</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError message={createForm.errors.role} />
+                        </div>
+                        {createForm.data.role === 'client_supervisor' && (
+                            <div className="grid gap-2">
+                                <Label>Sub-company yang Diawasi</Label>
+                                <Select
+                                    value={createForm.data.client_sub_company_id || ''}
+                                    onValueChange={(value) => createForm.setData('client_sub_company_id', value)}
+                                >
+                                    <SelectTrigger><SelectValue placeholder="Pilih sub-company" /></SelectTrigger>
+                                    <SelectContent>
+                                        {subCompanies.map((company) => (
+                                            <SelectItem key={company.id} value={String(company.id)}>{company.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={createForm.errors.client_sub_company_id} />
+                            </div>
+                        )}
+                        <div className="grid gap-2">
                             <Label htmlFor="new_user_password">Kata sandi</Label>
                             <Input
                                 id="new_user_password"
@@ -151,6 +195,7 @@ export default function SettingsUsersPage({ subUsers }: { subUsers: SubUser[] })
                                         <th className="py-2">Nama</th>
                                         <th className="py-2">Email</th>
                                         <th className="py-2">Role</th>
+                                        <th className="py-2">Scope Klien</th>
                                         <th className="py-2">Aksi</th>
                                     </tr>
                                 </thead>
@@ -158,7 +203,7 @@ export default function SettingsUsersPage({ subUsers }: { subUsers: SubUser[] })
                                     {subUsers.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={4}
+                                                colSpan={5}
                                                 className="py-5 text-center text-muted-foreground"
                                             >
                                                 Belum ada sub-user.
@@ -169,7 +214,8 @@ export default function SettingsUsersPage({ subUsers }: { subUsers: SubUser[] })
                                         <tr key={subUser.id} className="border-b">
                                             <td className="py-2">{subUser.name}</td>
                                             <td className="py-2">{subUser.email}</td>
-                                            <td className="py-2">{subUser.role}</td>
+                                            <td className="py-2">{subUser.role === 'client_supervisor' ? 'Supervisor Klien' : 'Admin Staff'}</td>
+                                            <td className="py-2">{subUser.client_sub_company_label ?? '-'}</td>
                                             <td className="py-2">
                                                 <div className="flex gap-2">
                                                     <Button
@@ -184,6 +230,8 @@ export default function SettingsUsersPage({ subUsers }: { subUsers: SubUser[] })
                                                                 password: '',
                                                                 password_confirmation:
                                                                     '',
+                                                                role: subUser.role === 'client_supervisor' ? 'client_supervisor' : 'admin_staff',
+                                                                client_sub_company_id: subUser.client_sub_company_id ? String(subUser.client_sub_company_id) : '',
                                                             });
                                                             updateForm.clearErrors();
                                                         }}
@@ -262,6 +310,42 @@ export default function SettingsUsersPage({ subUsers }: { subUsers: SubUser[] })
                                 />
                                 <InputError message={updateForm.errors.email} />
                             </div>
+                            <div className="grid gap-2">
+                                <Label>Role</Label>
+                                <Select
+                                    value={updateForm.data.role}
+                                    onValueChange={(value) => {
+                                        updateForm.setData('role', value);
+                                        if (value !== 'client_supervisor') {
+                                            updateForm.setData('client_sub_company_id', '');
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="admin_staff">Admin Staff</SelectItem>
+                                        <SelectItem value="client_supervisor">Supervisor Klien</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={updateForm.errors.role} />
+                            </div>
+                            {updateForm.data.role === 'client_supervisor' && (
+                                <div className="grid gap-2">
+                                    <Label>Sub-company yang Diawasi</Label>
+                                    <Select
+                                        value={updateForm.data.client_sub_company_id || ''}
+                                        onValueChange={(value) => updateForm.setData('client_sub_company_id', value)}
+                                    >
+                                        <SelectTrigger><SelectValue placeholder="Pilih sub-company" /></SelectTrigger>
+                                        <SelectContent>
+                                            {subCompanies.map((company) => (
+                                                <SelectItem key={company.id} value={String(company.id)}>{company.label}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={updateForm.errors.client_sub_company_id} />
+                                </div>
+                            )}
                             <div className="grid gap-2">
                                 <Label htmlFor="edit_user_password">
                                     Password Baru (opsional)

@@ -6,10 +6,12 @@ import {
     CalendarClock,
     CalendarDays,
     CalendarRange,
+    CalendarSync,
     ClipboardList,
     FileText,
     GitBranch,
     HandCoins,
+    ReceiptText,
     LayoutGrid,
     PackageCheck,
     ShieldCheck,
@@ -72,6 +74,11 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     icon: Building2,
                 },
                 {
+                    title: 'Manpower Request',
+                    href: '/hris/manpower-requests',
+                    icon: ClipboardList,
+                },
+                {
                     title: 'Rekrutmen',
                     href: '/hris/recruitment',
                     icon: Briefcase,
@@ -120,6 +127,31 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
             ],
         },
         {
+            title: 'Approval',
+            items: [
+                {
+                    title: 'Approval Absensi',
+                    href: '/hris/attendance-approvals',
+                    icon: CalendarDays,
+                },
+                {
+                    title: 'Approval Cuti',
+                    href: '/hris/leave-approvals',
+                    icon: CalendarClock,
+                },
+                {
+                    title: 'Approval Lembur',
+                    href: '/hris/overtime-approvals',
+                    icon: Timer,
+                },
+                {
+                    title: 'Approval Jadwal',
+                    href: '/hris/shift-change-requests',
+                    icon: CalendarSync,
+                },
+            ],
+        },
+        {
             title: 'Payroll',
             items: [
                 {
@@ -127,6 +159,11 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     href: payrollsIndex(),
                     icon: WalletCards,
                     ...locked('payroll'),
+                },
+                {
+                    title: 'Billing Klien',
+                    href: '/hris/client-billings',
+                    icon: ReceiptText,
                 },
                 {
                     title: 'Kasbon',
@@ -147,10 +184,21 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
 
 export function AppSidebar() {
     const { subscription, permissions } = usePage().props as {
+        auth?: { user?: { role?: string } | null };
         subscription?: { locked_features?: string[] };
         permissions?: { can_manage_subscribers?: boolean };
     };
-    const mainNavGroups = buildNavGroups(subscription?.locked_features ?? []);
+    const { auth } = usePage().props as { auth?: { user?: { role?: string } | null } };
+    const mainNavGroups = auth?.user?.role === 'client_supervisor'
+        ? [{
+            title: 'Klien',
+            items: [{
+                title: 'Approval',
+                href: '/client/approvals',
+                icon: ShieldCheck,
+            }],
+        }]
+        : buildNavGroups(subscription?.locked_features ?? []);
 
     if (permissions?.can_manage_subscribers) {
         mainNavGroups.push({

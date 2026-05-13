@@ -331,12 +331,13 @@ const coreFeaturesIncluded = [
     'Jadwal Kerja',
     'Cuti & Izin',
     'Lembur',
+    'Penggajian',
     'Notifikasi',
     'Survey',
     'Struktur Organisasi',
 ];
 
-const coreFeatureLocked = ['Rekrutmen', 'Penggajian', 'Kasbon', 'Asset Management'];
+const coreFeatureLocked = ['Rekrutmen', 'Kasbon', 'Asset Management'];
 const plusFeatures = [...coreFeaturesIncluded, ...coreFeatureLocked];
 
 // ── Plan Card ─────────────────────────────────────────────────────────────────
