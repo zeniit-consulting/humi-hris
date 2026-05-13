@@ -12,6 +12,13 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
@@ -78,9 +85,16 @@ export default function NotificationIndex() {
         channelOptions,
         stats,
     } = usePage<PageProps>().props;
+    const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
     const [editing, setEditing] = useState<NotificationRow | null>(null);
     const [filterState, setFilterState] = useState(filters);
     const form = useForm<NotificationForm>(defaultForm);
+
+    const resetForm = () => {
+        form.reset();
+        form.clearErrors();
+        setEditing(null);
+    };
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
@@ -88,8 +102,8 @@ export default function NotificationIndex() {
         const options = {
             preserveScroll: true,
             onSuccess: () => {
-                form.reset();
-                setEditing(null);
+                resetForm();
+                setNotificationDialogOpen(false);
             },
         };
 
@@ -102,6 +116,7 @@ export default function NotificationIndex() {
     };
 
     const startEdit = (row: NotificationRow) => {
+        setNotificationDialogOpen(true);
         setEditing(row);
         form.setData({
             title: row.title,
@@ -148,140 +163,19 @@ export default function NotificationIndex() {
                             </p>
                         </div>
                     </div>
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            resetForm();
+                            setNotificationDialogOpen(true);
+                        }}
+                    >
+                        <Plus className="size-4" />
+                        Buat notifikasi
+                    </Button>
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-[380px_1fr]">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Plus className="size-4" />
-                                {editing
-                                    ? 'Edit notifikasi'
-                                    : 'Buat notifikasi'}
-                            </CardTitle>
-                            <CardDescription>
-                                Siapkan pengumuman untuk portal, WhatsApp, atau
-                                email.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form className="grid gap-4" onSubmit={submit}>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="title">Judul</Label>
-                                    <Input
-                                        id="title"
-                                        value={form.data.title}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'title',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError message={form.errors.title} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="message">Pesan</Label>
-                                    <textarea
-                                        id="message"
-                                        className="min-h-28 rounded-md border bg-background px-3 py-2 text-sm"
-                                        value={form.data.message}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'message',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError message={form.errors.message} />
-                                </div>
-                                <div className="grid gap-3 md:grid-cols-2">
-                                    <FieldSelect
-                                        label="Audience"
-                                        value={form.data.audience}
-                                        options={audienceOptions}
-                                        onChange={(value) =>
-                                            form.setData('audience', value)
-                                        }
-                                    />
-                                    <FieldSelect
-                                        label="Channel"
-                                        value={form.data.channel}
-                                        options={channelOptions}
-                                        onChange={(value) =>
-                                            form.setData('channel', value)
-                                        }
-                                    />
-                                    <FieldSelect
-                                        label="Status"
-                                        value={form.data.status}
-                                        options={statusOptions}
-                                        onChange={(value) =>
-                                            form.setData('status', value)
-                                        }
-                                    />
-                                </div>
-                                <div className="grid gap-3 md:grid-cols-2">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="publish_at">
-                                            Publish
-                                        </Label>
-                                        <Input
-                                            id="publish_at"
-                                            type="datetime-local"
-                                            value={form.data.publish_at}
-                                            onChange={(event) =>
-                                                form.setData(
-                                                    'publish_at',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={form.errors.publish_at}
-                                        />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="expires_at">
-                                            Berakhir
-                                        </Label>
-                                        <Input
-                                            id="expires_at"
-                                            type="datetime-local"
-                                            value={form.data.expires_at}
-                                            onChange={(event) =>
-                                                form.setData(
-                                                    'expires_at',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={form.errors.expires_at}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button disabled={form.processing}>
-                                        {editing ? 'Simpan' : 'Tambah'}
-                                    </Button>
-                                    {editing ? (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => {
-                                                setEditing(null);
-                                                form.reset();
-                                            }}
-                                        >
-                                            Batal
-                                        </Button>
-                                    ) : null}
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
-
+                <div className="grid gap-4">
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -413,6 +307,107 @@ export default function NotificationIndex() {
                         </CardContent>
                     </Card>
                 </div>
+
+                <Dialog
+                    open={notificationDialogOpen}
+                    onOpenChange={(open) => {
+                        setNotificationDialogOpen(open);
+                        if (!open) resetForm();
+                    }}
+                >
+                    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                                <Plus className="size-4" />
+                                {editing ? 'Edit notifikasi' : 'Buat notifikasi'}
+                            </DialogTitle>
+                            <DialogDescription>
+                                Siapkan pengumuman untuk portal, WhatsApp, atau email.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form className="grid gap-4" onSubmit={submit}>
+                            <div className="grid gap-2">
+                                <Label htmlFor="title">Judul</Label>
+                                <Input
+                                    id="title"
+                                    value={form.data.title}
+                                    onChange={(event) =>
+                                        form.setData('title', event.target.value)
+                                    }
+                                />
+                                <InputError message={form.errors.title} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="message">Pesan</Label>
+                                <textarea
+                                    id="message"
+                                    className="min-h-28 rounded-md border bg-background px-3 py-2 text-sm"
+                                    value={form.data.message}
+                                    onChange={(event) =>
+                                        form.setData('message', event.target.value)
+                                    }
+                                />
+                                <InputError message={form.errors.message} />
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <FieldSelect
+                                    label="Audience"
+                                    value={form.data.audience}
+                                    options={audienceOptions}
+                                    onChange={(value) => form.setData('audience', value)}
+                                />
+                                <FieldSelect
+                                    label="Channel"
+                                    value={form.data.channel}
+                                    options={channelOptions}
+                                    onChange={(value) => form.setData('channel', value)}
+                                />
+                                <FieldSelect
+                                    label="Status"
+                                    value={form.data.status}
+                                    options={statusOptions}
+                                    onChange={(value) => form.setData('status', value)}
+                                />
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="publish_at">Publish</Label>
+                                    <Input
+                                        id="publish_at"
+                                        type="datetime-local"
+                                        value={form.data.publish_at}
+                                        onChange={(event) =>
+                                            form.setData('publish_at', event.target.value)
+                                        }
+                                    />
+                                    <InputError message={form.errors.publish_at} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="expires_at">Berakhir</Label>
+                                    <Input
+                                        id="expires_at"
+                                        type="datetime-local"
+                                        value={form.data.expires_at}
+                                        onChange={(event) =>
+                                            form.setData('expires_at', event.target.value)
+                                        }
+                                    />
+                                    <InputError message={form.errors.expires_at} />
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
+                                {editing ? (
+                                    <Button type="button" variant="outline" onClick={resetForm}>
+                                        Batal
+                                    </Button>
+                                ) : null}
+                                <Button disabled={form.processing}>
+                                    {editing ? 'Simpan' : 'Tambah'}
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     );

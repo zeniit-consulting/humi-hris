@@ -21,6 +21,13 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
@@ -123,6 +130,7 @@ const LOCATION_DEFAULT: LocationFormData = {
 
 export default function SubCompaniesIndex() {
     const { filters, subCompanies, stats } = usePage<PageProps>().props;
+    const [companyDialogOpen, setCompanyDialogOpen] = useState(false);
     const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
         subCompanies.data[0]?.id ?? null,
     );
@@ -165,6 +173,7 @@ export default function SubCompaniesIndex() {
     };
 
     const editCompany = (company: SubCompany) => {
+        setCompanyDialogOpen(true);
         setEditingCompany(company);
         companyForm.clearErrors();
         companyForm.setData({
@@ -185,14 +194,20 @@ export default function SubCompaniesIndex() {
         if (editingCompany) {
             companyForm.put(`/hris/sub-companies/${editingCompany.id}`, {
                 preserveScroll: true,
-                onSuccess: resetCompanyForm,
+                onSuccess: () => {
+                    resetCompanyForm();
+                    setCompanyDialogOpen(false);
+                },
             });
             return;
         }
 
         companyForm.post('/hris/sub-companies', {
             preserveScroll: true,
-            onSuccess: resetCompanyForm,
+            onSuccess: () => {
+                resetCompanyForm();
+                setCompanyDialogOpen(false);
+            },
         });
     };
 
@@ -200,6 +215,10 @@ export default function SubCompaniesIndex() {
         if (!confirm(`Hapus sub-company ${company.name}?`)) return;
         router.delete(`/hris/sub-companies/${company.id}`, {
             preserveScroll: true,
+            onSuccess: () => {
+                resetCompanyForm();
+                setCompanyDialogOpen(false);
+            },
         });
     };
 
@@ -271,14 +290,28 @@ export default function SubCompaniesIndex() {
                     />
                 </div>
 
-                <div className="grid gap-6 xl:grid-cols-[1.25fr_0.95fr]">
+                <div className="grid gap-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Daftar Sub Company</CardTitle>
-                            <CardDescription>
-                                Kelola perusahaan klien yang menampung karyawan
-                                outsourcing.
-                            </CardDescription>
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <CardTitle>Daftar Sub Company</CardTitle>
+                                    <CardDescription>
+                                        Kelola perusahaan klien yang menampung
+                                        karyawan outsourcing.
+                                    </CardDescription>
+                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={() => {
+                                        resetCompanyForm();
+                                        setCompanyDialogOpen(true);
+                                    }}
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Sub Company
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <form
@@ -417,155 +450,6 @@ export default function SubCompaniesIndex() {
                                     </Button>
                                 ))}
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>
-                                {editingCompany
-                                    ? 'Edit Sub Company'
-                                    : 'Tambah Sub Company'}
-                            </CardTitle>
-                            <CardDescription>
-                                Karyawan dengan `sub_company_id` kosong dianggap
-                                karyawan internal.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form
-                                onSubmit={submitCompany}
-                                className="space-y-3"
-                            >
-                                <div className="grid gap-3 md:grid-cols-2">
-                                    <Field
-                                        id="code"
-                                        label="Kode"
-                                        value={companyForm.data.code}
-                                        onChange={(value) =>
-                                            companyForm.setData('code', value)
-                                        }
-                                        error={companyForm.errors.code}
-                                        required
-                                    />
-                                    <Field
-                                        id="name"
-                                        label="Nama perusahaan"
-                                        value={companyForm.data.name}
-                                        onChange={(value) =>
-                                            companyForm.setData('name', value)
-                                        }
-                                        error={companyForm.errors.name}
-                                        required
-                                    />
-                                    <Field
-                                        id="contact_person"
-                                        label="PIC"
-                                        value={companyForm.data.contact_person}
-                                        onChange={(value) =>
-                                            companyForm.setData(
-                                                'contact_person',
-                                                value,
-                                            )
-                                        }
-                                        error={
-                                            companyForm.errors.contact_person
-                                        }
-                                    />
-                                    <Field
-                                        id="contact_phone"
-                                        label="Telepon PIC"
-                                        value={companyForm.data.contact_phone}
-                                        onChange={(value) =>
-                                            companyForm.setData(
-                                                'contact_phone',
-                                                value,
-                                            )
-                                        }
-                                        error={companyForm.errors.contact_phone}
-                                    />
-                                </div>
-                                <Field
-                                    id="contact_email"
-                                    label="Email PIC"
-                                    type="email"
-                                    value={companyForm.data.contact_email}
-                                    onChange={(value) =>
-                                        companyForm.setData(
-                                            'contact_email',
-                                            value,
-                                        )
-                                    }
-                                    error={companyForm.errors.contact_email}
-                                />
-                                <TextareaField
-                                    id="address"
-                                    label="Alamat"
-                                    value={companyForm.data.address}
-                                    onChange={(value) =>
-                                        companyForm.setData('address', value)
-                                    }
-                                    error={companyForm.errors.address}
-                                />
-                                <TextareaField
-                                    id="notes"
-                                    label="Catatan"
-                                    value={companyForm.data.notes}
-                                    onChange={(value) =>
-                                        companyForm.setData('notes', value)
-                                    }
-                                    error={companyForm.errors.notes}
-                                />
-                                <CheckboxField
-                                    id="company_active"
-                                    label="Sub-company aktif"
-                                    checked={companyForm.data.is_active}
-                                    onChange={(checked) =>
-                                        companyForm.setData(
-                                            'is_active',
-                                            checked,
-                                        )
-                                    }
-                                />
-                                <div className="flex flex-wrap justify-between gap-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={resetCompanyForm}
-                                    >
-                                        Reset
-                                    </Button>
-                                    <div className="flex gap-2">
-                                        {editingCompany ? (
-                                            <Button
-                                                type="button"
-                                                variant="destructive"
-                                                onClick={() =>
-                                                    deleteCompany(
-                                                        editingCompany,
-                                                    )
-                                                }
-                                            >
-                                                <Trash2 className="size-4" />
-                                                Hapus
-                                            </Button>
-                                        ) : null}
-                                        <Button
-                                            type="submit"
-                                            disabled={companyForm.processing}
-                                        >
-                                            {editingCompany ? (
-                                                <Pencil className="size-4" />
-                                            ) : (
-                                                <Plus className="size-4" />
-                                            )}
-                                            {editingCompany
-                                                ? 'Update'
-                                                : 'Tambah'}
-                                        </Button>
-                                    </div>
-                                </div>
-                            </form>
                         </CardContent>
                     </Card>
                 </div>
@@ -770,6 +654,145 @@ export default function SubCompaniesIndex() {
                     </CardContent>
                 </Card>
             </div>
+
+            <Dialog
+                open={companyDialogOpen}
+                onOpenChange={(open) => {
+                    setCompanyDialogOpen(open);
+                    if (!open) {
+                        resetCompanyForm();
+                    }
+                }}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {editingCompany
+                                ? 'Edit Sub Company'
+                                : 'Tambah Sub Company'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Karyawan dengan `sub_company_id` kosong dianggap
+                            karyawan internal.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={submitCompany} className="space-y-3">
+                        <div className="grid gap-3 md:grid-cols-2">
+                            <Field
+                                id="code"
+                                label="Kode"
+                                value={companyForm.data.code}
+                                onChange={(value) =>
+                                    companyForm.setData('code', value)
+                                }
+                                error={companyForm.errors.code}
+                                required
+                            />
+                            <Field
+                                id="name"
+                                label="Nama perusahaan"
+                                value={companyForm.data.name}
+                                onChange={(value) =>
+                                    companyForm.setData('name', value)
+                                }
+                                error={companyForm.errors.name}
+                                required
+                            />
+                            <Field
+                                id="contact_person"
+                                label="PIC"
+                                value={companyForm.data.contact_person}
+                                onChange={(value) =>
+                                    companyForm.setData(
+                                        'contact_person',
+                                        value,
+                                    )
+                                }
+                                error={companyForm.errors.contact_person}
+                            />
+                            <Field
+                                id="contact_phone"
+                                label="Telepon PIC"
+                                value={companyForm.data.contact_phone}
+                                onChange={(value) =>
+                                    companyForm.setData('contact_phone', value)
+                                }
+                                error={companyForm.errors.contact_phone}
+                            />
+                        </div>
+                        <Field
+                            id="contact_email"
+                            label="Email PIC"
+                            type="email"
+                            value={companyForm.data.contact_email}
+                            onChange={(value) =>
+                                companyForm.setData('contact_email', value)
+                            }
+                            error={companyForm.errors.contact_email}
+                        />
+                        <TextareaField
+                            id="address"
+                            label="Alamat"
+                            value={companyForm.data.address}
+                            onChange={(value) =>
+                                companyForm.setData('address', value)
+                            }
+                            error={companyForm.errors.address}
+                        />
+                        <TextareaField
+                            id="notes"
+                            label="Catatan"
+                            value={companyForm.data.notes}
+                            onChange={(value) =>
+                                companyForm.setData('notes', value)
+                            }
+                            error={companyForm.errors.notes}
+                        />
+                        <CheckboxField
+                            id="company_active"
+                            label="Sub-company aktif"
+                            checked={companyForm.data.is_active}
+                            onChange={(checked) =>
+                                companyForm.setData('is_active', checked)
+                            }
+                        />
+                        <div className="flex flex-wrap justify-between gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={resetCompanyForm}
+                            >
+                                Reset
+                            </Button>
+                            <div className="flex gap-2">
+                                {editingCompany ? (
+                                    <Button
+                                        type="button"
+                                        variant="destructive"
+                                        onClick={() =>
+                                            deleteCompany(editingCompany)
+                                        }
+                                    >
+                                        <Trash2 className="size-4" />
+                                        Hapus
+                                    </Button>
+                                ) : null}
+                                <Button
+                                    type="submit"
+                                    disabled={companyForm.processing}
+                                >
+                                    {editingCompany ? (
+                                        <Pencil className="size-4" />
+                                    ) : (
+                                        <Plus className="size-4" />
+                                    )}
+                                    {editingCompany ? 'Update' : 'Tambah'}
+                                </Button>
+                            </div>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

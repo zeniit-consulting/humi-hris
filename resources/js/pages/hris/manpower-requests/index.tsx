@@ -106,54 +106,63 @@ export default function ManpowerRequestPage() {
                         <CardDescription>Catat kebutuhan tenaga kerja dari klien/sub-company.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={submit} className="grid gap-3 md:grid-cols-3">
-                            <Field label="Sub-company" error={form.errors.sub_company_id}>
+                        <form onSubmit={submit} className="space-y-5">
+                            <div className="rounded-lg border bg-muted/30 p-4">
+                                <p className="font-medium">{editing ? 'Perbarui kebutuhan manpower yang sudah tercatat.' : 'Isi kebutuhan manpower baru dari klien atau sub-company.'}</p>
+                                <p className="mt-1 text-sm text-muted-foreground">Lengkapi detail posisi, target headcount, serta status pemenuhan agar tim operasional mudah menindaklanjuti.</p>
+                            </div>
+
+                            <div className="grid gap-4 xl:grid-cols-12">
+                            <Field label="Sub-company" error={form.errors.sub_company_id} className="xl:col-span-4">
                                 <Select value={form.data.sub_company_id} onValueChange={(value) => form.setData('sub_company_id', value)}>
                                     <SelectTrigger><SelectValue placeholder="Pilih klien" /></SelectTrigger>
                                     <SelectContent>{subCompanies.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.label}</SelectItem>)}</SelectContent>
                                 </Select>
                             </Field>
-                            <Field label="Posisi" error={form.errors.position_id}>
+                            <Field label="Posisi" error={form.errors.position_id} className="xl:col-span-4">
                                 <Select value={form.data.position_id || '__none'} onValueChange={(value) => form.setData('position_id', value === '__none' ? '' : value)}>
                                     <SelectTrigger><SelectValue placeholder="Opsional" /></SelectTrigger>
                                     <SelectContent><SelectItem value="__none">Tanpa posisi master</SelectItem>{positions.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name}</SelectItem>)}</SelectContent>
                                 </Select>
                             </Field>
-                            <Field label="Judul kebutuhan" error={form.errors.title}>
+                            <Field label="Judul kebutuhan" error={form.errors.title} className="xl:col-span-4">
                                 <Input value={form.data.title} onChange={(event) => form.setData('title', event.target.value)} />
                             </Field>
-                            <Field label="Headcount Diminta" error={form.errors.requested_headcount}>
+                            <Field label="Headcount Diminta" error={form.errors.requested_headcount} className="md:col-span-1 xl:col-span-3">
                                 <Input type="number" min="1" value={form.data.requested_headcount} onChange={(event) => form.setData('requested_headcount', event.target.value)} />
                             </Field>
-                            <Field label="Headcount Terpenuhi" error={form.errors.fulfilled_headcount}>
+                            <Field label="Headcount Terpenuhi" error={form.errors.fulfilled_headcount} className="md:col-span-1 xl:col-span-3">
                                 <Input type="number" min="0" value={form.data.fulfilled_headcount} onChange={(event) => form.setData('fulfilled_headcount', event.target.value)} />
                             </Field>
-                            <Field label="Dibutuhkan sebelum" error={form.errors.needed_by}>
+                            <Field label="Dibutuhkan sebelum" error={form.errors.needed_by} className="md:col-span-1 xl:col-span-3">
                                 <Input type="date" value={form.data.needed_by} onChange={(event) => form.setData('needed_by', event.target.value)} />
                             </Field>
-                            <Field label="Status" error={form.errors.status}>
+                            <Field label="Status" error={form.errors.status} className="md:col-span-1 xl:col-span-3">
                                 <Select value={form.data.status} onValueChange={(value) => form.setData('status', value)}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>{statusOptions.map((status) => <SelectItem key={status} value={status}>{statusLabels[status]}</SelectItem>)}</SelectContent>
                                 </Select>
                             </Field>
-                            <Field label="Prioritas" error={form.errors.priority}>
+                            <Field label="Prioritas" error={form.errors.priority} className="md:col-span-1 xl:col-span-3">
                                 <Select value={form.data.priority} onValueChange={(value) => form.setData('priority', value)}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>{priorityOptions.map((priority) => <SelectItem key={priority} value={priority}>{priorityLabels[priority]}</SelectItem>)}</SelectContent>
                                 </Select>
                             </Field>
-                            <div className="grid gap-2 md:col-span-3">
+                            <div className="grid gap-2 xl:col-span-6">
                                 <Label>Requirement</Label>
                                 <textarea className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm" value={form.data.requirements} onChange={(event) => form.setData('requirements', event.target.value)} />
+                                <InputError message={form.errors.requirements} />
                             </div>
-                            <div className="grid gap-2 md:col-span-3">
+                            <div className="grid gap-2 xl:col-span-6">
                                 <Label>Catatan</Label>
                                 <textarea className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm" value={form.data.notes} onChange={(event) => form.setData('notes', event.target.value)} />
+                                <InputError message={form.errors.notes} />
                             </div>
-                            <div className="flex gap-2 md:col-span-3">
-                                <Button disabled={form.processing}>{editing ? 'Simpan Perubahan' : 'Tambah Request'}</Button>
+                            </div>
+                            <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
                                 {editing && <Button type="button" variant="outline" onClick={() => { setEditing(null); form.setData(emptyForm); }}>Batal</Button>}
+                                <Button disabled={form.processing}>{editing ? 'Simpan Perubahan' : 'Tambah Request'}</Button>
                             </div>
                         </form>
                     </CardContent>
@@ -210,6 +219,6 @@ function Stat({ label, value }: { label: string; value: string | number }) {
     return <Card className="gap-2 py-3"><CardHeader className="px-4 pb-0"><CardDescription>{label}</CardDescription><CardTitle className="text-2xl">{value}</CardTitle></CardHeader></Card>;
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
-    return <div className="grid gap-2"><Label>{label}</Label>{children}<InputError message={error} /></div>;
+function Field({ label, error, children, className = '' }: { label: string; error?: string; children: ReactNode; className?: string }) {
+    return <div className={`grid gap-2 ${className}`.trim()}><Label>{label}</Label>{children}<InputError message={error} /></div>;
 }

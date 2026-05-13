@@ -201,7 +201,7 @@ export default function Dashboard({
             <Head title="Dashboard" />
 
             <div className="space-y-4 p-4">
-                <Card>
+                <Card className="border-rose-200 bg-rose-50/70">
                     <CardHeader>
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
@@ -210,7 +210,7 @@ export default function Dashboard({
                                     Pekerjaan operasional yang perlu ditangani.
                                 </CardDescription>
                             </div>
-                            <div className="rounded-md border px-3 py-2 text-sm">
+                            <div className="rounded-md border border-rose-200 bg-white/70 px-3 py-2 text-sm">
                                 <span className="font-semibold">
                                     {actionQueue.total}
                                 </span>{' '}
@@ -229,7 +229,7 @@ export default function Dashboard({
                                     <Link
                                         key={item.key}
                                         href={item.href}
-                                        className="rounded-md border p-3 transition-colors hover:bg-muted/40"
+                                        className="rounded-md border border-rose-200 bg-white/80 p-3 transition-colors hover:bg-white"
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
@@ -255,7 +255,7 @@ export default function Dashboard({
                     </CardContent>
                 </Card>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                     <Card className="gap-2 py-2">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Total Employees</CardDescription>
@@ -330,19 +330,6 @@ export default function Dashboard({
                         </CardContent>
                     </Card>
 
-                    <Card className="gap-2 py-2">
-                        <CardHeader className="px-4 pb-0">
-                            <CardDescription>Attrition YTD</CardDescription>
-                            <CardTitle className="text-2xl">
-                                {stats.attrition_ytd}%
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="px-4 pt-0 pb-2">
-                            <p className="text-sm text-muted-foreground">
-                                Resigned: {stats.resigned_ytd}
-                            </p>
-                        </CardContent>
-                    </Card>
                 </div>
 
                 <Card>

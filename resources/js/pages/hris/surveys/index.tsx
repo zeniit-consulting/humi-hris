@@ -19,6 +19,13 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SearchableSelect from '@/components/ui/searchable-select';
@@ -97,6 +104,7 @@ const defaultSurveyForm: SurveyForm = {
 export default function SurveyIndex() {
     const { surveys, employees, filters, statusOptions, stats } =
         usePage<PageProps>().props;
+    const [surveyDialogOpen, setSurveyDialogOpen] = useState(false);
     const [editing, setEditing] = useState<SurveyRow | null>(null);
     const [respondingTo, setRespondingTo] = useState<SurveyRow | null>(null);
     const [filterState, setFilterState] = useState(filters);
@@ -115,14 +123,20 @@ export default function SurveyIndex() {
         [employees],
     );
 
+    const resetSurveyForm = () => {
+        surveyForm.reset();
+        surveyForm.clearErrors();
+        setEditing(null);
+    };
+
     const submitSurvey = (event: FormEvent) => {
         event.preventDefault();
 
         const options = {
             preserveScroll: true,
             onSuccess: () => {
-                surveyForm.reset();
-                setEditing(null);
+                resetSurveyForm();
+                setSurveyDialogOpen(false);
             },
         };
 
@@ -135,6 +149,7 @@ export default function SurveyIndex() {
     };
 
     const startEdit = (row: SurveyRow) => {
+        setSurveyDialogOpen(true);
         setEditing(row);
         surveyForm.setData({
             title: row.title,
@@ -198,165 +213,19 @@ export default function SurveyIndex() {
                             </p>
                         </div>
                     </div>
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            resetSurveyForm();
+                            setSurveyDialogOpen(true);
+                        }}
+                    >
+                        <Plus className="size-4" />
+                        Buat survey
+                    </Button>
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Plus className="size-4" />
-                                {editing ? 'Edit survey' : 'Buat survey'}
-                            </CardTitle>
-                            <CardDescription>
-                                Tulis satu pertanyaan per baris. Jawaban
-                                disimpan sebagai teks.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form
-                                className="grid gap-4"
-                                onSubmit={submitSurvey}
-                            >
-                                <div className="grid gap-2">
-                                    <Label htmlFor="title">Judul</Label>
-                                    <Input
-                                        id="title"
-                                        value={surveyForm.data.title}
-                                        onChange={(event) =>
-                                            surveyForm.setData(
-                                                'title',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError
-                                        message={surveyForm.errors.title}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="description">
-                                        Deskripsi
-                                    </Label>
-                                    <textarea
-                                        id="description"
-                                        className="min-h-20 rounded-md border bg-background px-3 py-2 text-sm"
-                                        value={surveyForm.data.description}
-                                        onChange={(event) =>
-                                            surveyForm.setData(
-                                                'description',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError
-                                        message={surveyForm.errors.description}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="questions">
-                                        Pertanyaan
-                                    </Label>
-                                    <textarea
-                                        id="questions"
-                                        className="min-h-32 rounded-md border bg-background px-3 py-2 text-sm"
-                                        value={surveyForm.data.questions_text}
-                                        onChange={(event) =>
-                                            surveyForm.setData(
-                                                'questions_text',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError
-                                        message={
-                                            surveyForm.errors.questions_text
-                                        }
-                                    />
-                                </div>
-                                <div className="grid gap-3 md:grid-cols-2">
-                                    <FieldSelect
-                                        label="Status"
-                                        value={surveyForm.data.status}
-                                        options={statusOptions}
-                                        onChange={(value) =>
-                                            surveyForm.setData('status', value)
-                                        }
-                                    />
-                                    <label className="flex items-center gap-2 self-end rounded-md border px-3 py-2 text-sm">
-                                        <input
-                                            type="checkbox"
-                                            checked={
-                                                surveyForm.data.is_anonymous
-                                            }
-                                            onChange={(event) =>
-                                                surveyForm.setData(
-                                                    'is_anonymous',
-                                                    event.target.checked,
-                                                )
-                                            }
-                                        />
-                                        Anonim
-                                    </label>
-                                </div>
-                                <div className="grid gap-3 md:grid-cols-2">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="starts_at">Mulai</Label>
-                                        <Input
-                                            id="starts_at"
-                                            type="datetime-local"
-                                            value={surveyForm.data.starts_at}
-                                            onChange={(event) =>
-                                                surveyForm.setData(
-                                                    'starts_at',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={
-                                                surveyForm.errors.starts_at
-                                            }
-                                        />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="ends_at">Selesai</Label>
-                                        <Input
-                                            id="ends_at"
-                                            type="datetime-local"
-                                            value={surveyForm.data.ends_at}
-                                            onChange={(event) =>
-                                                surveyForm.setData(
-                                                    'ends_at',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={surveyForm.errors.ends_at}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button disabled={surveyForm.processing}>
-                                        {editing ? 'Simpan' : 'Tambah'}
-                                    </Button>
-                                    {editing ? (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => {
-                                                setEditing(null);
-                                                surveyForm.reset();
-                                            }}
-                                        >
-                                            Batal
-                                        </Button>
-                                    ) : null}
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
-
+                <div className="grid gap-4">
                     <div className="grid gap-4">
                         <Card>
                             <CardHeader>
@@ -603,6 +472,117 @@ export default function SurveyIndex() {
                         ) : null}
                     </div>
                 </div>
+
+                <Dialog
+                    open={surveyDialogOpen}
+                    onOpenChange={(open) => {
+                        setSurveyDialogOpen(open);
+                        if (!open) resetSurveyForm();
+                    }}
+                >
+                    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                                <Plus className="size-4" />
+                                {editing ? 'Edit survey' : 'Buat survey'}
+                            </DialogTitle>
+                            <DialogDescription>
+                                Tulis satu pertanyaan per baris. Jawaban disimpan sebagai teks.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form className="grid gap-4" onSubmit={submitSurvey}>
+                            <div className="grid gap-2">
+                                <Label htmlFor="title">Judul</Label>
+                                <Input
+                                    id="title"
+                                    value={surveyForm.data.title}
+                                    onChange={(event) =>
+                                        surveyForm.setData('title', event.target.value)
+                                    }
+                                />
+                                <InputError message={surveyForm.errors.title} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="description">Deskripsi</Label>
+                                <textarea
+                                    id="description"
+                                    className="min-h-20 rounded-md border bg-background px-3 py-2 text-sm"
+                                    value={surveyForm.data.description}
+                                    onChange={(event) =>
+                                        surveyForm.setData('description', event.target.value)
+                                    }
+                                />
+                                <InputError message={surveyForm.errors.description} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="questions">Pertanyaan</Label>
+                                <textarea
+                                    id="questions"
+                                    className="min-h-32 rounded-md border bg-background px-3 py-2 text-sm"
+                                    value={surveyForm.data.questions_text}
+                                    onChange={(event) =>
+                                        surveyForm.setData('questions_text', event.target.value)
+                                    }
+                                />
+                                <InputError message={surveyForm.errors.questions_text} />
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <FieldSelect
+                                    label="Status"
+                                    value={surveyForm.data.status}
+                                    options={statusOptions}
+                                    onChange={(value) => surveyForm.setData('status', value)}
+                                />
+                                <label className="flex items-center gap-2 self-end rounded-md border px-3 py-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={surveyForm.data.is_anonymous}
+                                        onChange={(event) =>
+                                            surveyForm.setData('is_anonymous', event.target.checked)
+                                        }
+                                    />
+                                    Anonim
+                                </label>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="starts_at">Mulai</Label>
+                                    <Input
+                                        id="starts_at"
+                                        type="datetime-local"
+                                        value={surveyForm.data.starts_at}
+                                        onChange={(event) =>
+                                            surveyForm.setData('starts_at', event.target.value)
+                                        }
+                                    />
+                                    <InputError message={surveyForm.errors.starts_at} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="ends_at">Selesai</Label>
+                                    <Input
+                                        id="ends_at"
+                                        type="datetime-local"
+                                        value={surveyForm.data.ends_at}
+                                        onChange={(event) =>
+                                            surveyForm.setData('ends_at', event.target.value)
+                                        }
+                                    />
+                                    <InputError message={surveyForm.errors.ends_at} />
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
+                                {editing ? (
+                                    <Button type="button" variant="outline" onClick={resetSurveyForm}>
+                                        Batal
+                                    </Button>
+                                ) : null}
+                                <Button disabled={surveyForm.processing}>
+                                    {editing ? 'Simpan' : 'Tambah'}
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     );
