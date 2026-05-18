@@ -8,7 +8,7 @@
  * - POST/PUT/DELETE requests: Network-only with background sync queue
  */
 
-const VERSION = 'v2.2.0';
+const VERSION = 'v2.3.0';
 const STATIC_CACHE = `humi-static-${VERSION}`;
 const RUNTIME_CACHE = `humi-runtime-${VERSION}`;
 const API_CACHE = `humi-api-${VERSION}`;
@@ -19,8 +19,10 @@ const APP_SHELL = [
     '/login',
     '/portal',
     '/manifest.webmanifest',
+    '/icons/apple-touch-icon.png',
     '/icons/icon-96.png',
     '/icons/icon-192.png',
+    '/icons/icon-512.png',
     '/offline.html',
 ];
 

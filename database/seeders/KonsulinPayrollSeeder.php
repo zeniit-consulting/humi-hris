@@ -6,8 +6,8 @@ use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAllowance;
 use App\Models\EmployeeDeduction;
-use App\Models\PayrollRun;
 use App\Models\PayrollItem;
+use App\Models\PayrollRun;
 use App\Models\Position;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -185,7 +185,7 @@ class KonsulinPayrollSeeder extends Seeder
                     'children_count' => null,
                     'hire_date' => now()->startOfYear(),
                     'employment_status' => 'active',
-                    'employment_type' => 'permanent',
+                    'employment_type' => 'PKWTT',
                     'pph21_method' => 'gross',
                     'pph21_rate' => 0,
                     'ptkp_category' => $data['ptkp'] ?? null,
@@ -392,8 +392,8 @@ class KonsulinPayrollSeeder extends Seeder
         }
 
         $this->command->info('Konsulin payroll data seeded successfully!');
-        $this->command->info("Total employees: " . count($employees));
-        $this->command->info("Payroll Run ID: " . $payrollRun->id);
+        $this->command->info('Total employees: '.count($employees));
+        $this->command->info('Payroll Run ID: '.$payrollRun->id);
     }
 
     /**
@@ -454,7 +454,8 @@ class KonsulinPayrollSeeder extends Seeder
     private function generateEmployeeCode(string $name): string
     {
         $initials = implode('', array_map(fn ($word) => strtoupper($word[0]), explode(' ', $name)));
-        return 'EMP-' . $initials . '-' . date('Ymd');
+
+        return 'EMP-'.$initials.'-'.date('Ymd');
     }
 
     /**
@@ -463,6 +464,7 @@ class KonsulinPayrollSeeder extends Seeder
     private function generateEmail(string $name): string
     {
         $email = strtolower(Str::slug($name, '.'));
-        return $email . '@konsulin.id';
+
+        return $email.'@konsulin.id';
     }
 }

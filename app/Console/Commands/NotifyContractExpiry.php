@@ -28,7 +28,7 @@ class NotifyContractExpiry extends Command
         $employees = Employee::query()
             ->withoutGlobalScopes()
             ->where('is_active', true)
-            ->where('employment_type', 'contract')
+            ->where('employment_type', 'PKWT')
             ->whereNotNull('contract_end_date')
             ->whereBetween('contract_end_date', [$today->toDateString(), $threshold->toDateString()])
             ->get();

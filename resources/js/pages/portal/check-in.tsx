@@ -1,15 +1,6 @@
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { LoaderCircle } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-    Circle,
-    MapContainer,
-    Marker,
-    Popup,
-    TileLayer,
-    useMap,
-} from 'react-leaflet';
+import { MapboxLocationMap } from '@/components/mapbox-location-map';
 import { notifyPortal, requestApi, translatePortalError } from './lib';
 import type { PortalLinkMap } from './lib';
 import { PortalShell } from './shell';
@@ -131,44 +122,6 @@ const calculateDistanceMeters = (
 
     return 2 * earthRadius * Math.asin(Math.min(1, Math.sqrt(a)));
 };
-
-const officeIcon = new L.DivIcon({
-    className: 'leaflet-portal-marker-wrapper',
-    html: '<div class="leaflet-portal-marker leaflet-portal-marker-office"></div>',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-});
-
-const createUserIcon = (isLocating: boolean) =>
-    new L.DivIcon({
-        className: 'leaflet-portal-marker-wrapper',
-        html: `<div class="leaflet-portal-marker leaflet-portal-marker-user ${
-            isLocating ? 'leaflet-portal-marker-pulse' : ''
-        }"></div>`,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11],
-    });
-
-function MapAutoCenter({ coordinates }: { coordinates: Coordinates | null }) {
-    const map = useMap();
-
-    useEffect(() => {
-        if (!coordinates) {
-            return;
-        }
-
-        map.flyTo(
-            [coordinates.latitude, coordinates.longitude],
-            Math.max(map.getZoom(), 16),
-            {
-                animate: true,
-                duration: 0.8,
-            },
-        );
-    }, [coordinates, map]);
-
-    return null;
-}
 
 export function PortalAttendanceLocationPage({
     pageTitle,
@@ -373,8 +326,7 @@ export function PortalAttendanceLocationPage({
                         employee_id: portal.employee.id,
                         shift_id: attendanceShift.id,
                         attendance_date:
-                            openAttendance.attendance_date ??
-                            portal.today.date,
+                            openAttendance.attendance_date ?? portal.today.date,
                         status: openAttendance.status,
                         check_in_at: openAttendance.check_in_at,
                         check_in_latitude: openAttendance.check_in_latitude,
@@ -439,82 +391,25 @@ export function PortalAttendanceLocationPage({
         >
             <section className="relative -mx-4 -mt-4 h-[calc(100svh-5rem)] overflow-hidden bg-slate-950 sm:-mx-4">
                 <div className="absolute inset-0">
-                    <MapContainer
-                        center={mapCenter}
+                    <MapboxLocationMap
+                        center={{
+                            latitude: mapCenter[0],
+                            longitude: mapCenter[1],
+                        }}
                         zoom={16}
-                        scrollWheelZoom
                         className="h-full w-full"
-                    >
-                        <TileLayer
-                            attribution='&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
-                            url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
-                        />
-                        <MapAutoCenter coordinates={coordinates} />
-
-                        {locations.map((location) => (
-                            <Circle
-                                key={`${location.name}-${location.latitude}-${location.longitude}`}
-                                center={[location.latitude, location.longitude]}
-                                radius={location.radius_meters}
-                                pathOptions={{
-                                    color: '#0f766e',
-                                    fillColor: '#5eead4',
-                                    fillOpacity: 0.18,
-                                    weight: 2,
-                                }}
-                            />
-                        ))}
-
-                        {locations.map((location) => (
-                            <Marker
-                                key={`marker-${location.name}-${location.latitude}-${location.longitude}`}
-                                position={[
-                                    location.latitude,
-                                    location.longitude,
-                                ]}
-                                icon={officeIcon}
-                            >
-                                <Popup>
-                                    <div className="text-sm">
-                                        <p className="font-semibold">
-                                            {location.name}
-                                        </p>
-                                        <p>
-                                            {location.address ??
-                                                'Lokasi absensi'}
-                                        </p>
-                                        <p>
-                                            Radius: {location.radius_meters} m
-                                        </p>
-                                    </div>
-                                </Popup>
-                            </Marker>
-                        ))}
-
-                        {coordinates ? (
-                            <Marker
-                                position={[
-                                    coordinates.latitude,
-                                    coordinates.longitude,
-                                ]}
-                                icon={createUserIcon(
-                                    isLocating || isTrackingLocation,
-                                )}
-                            >
-                                <Popup>
-                                    <div className="text-sm">
-                                        <p className="font-semibold">
-                                            Posisi Anda
-                                        </p>
-                                        <p>
-                                            {coordinates.latitude.toFixed(6)},{' '}
-                                            {coordinates.longitude.toFixed(6)}
-                                        </p>
-                                    </div>
-                                </Popup>
-                            </Marker>
-                        ) : null}
-                    </MapContainer>
+                        locations={locations.map((location) => ({
+                            id: `${location.name}-${location.latitude}-${location.longitude}`,
+                            name: location.name,
+                            address: location.address,
+                            latitude: location.latitude,
+                            longitude: location.longitude,
+                            radiusMeters: location.radius_meters,
+                        }))}
+                        userLocation={coordinates}
+                        isUserPulsing={isLocating || isTrackingLocation}
+                        autoCenter={coordinates}
+                    />
                 </div>
 
                 <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] bg-gradient-to-b from-slate-950/55 via-slate-950/18 to-transparent px-3 pt-3 pb-16">

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\SubscriberManagementController;
 use App\Http\Controllers\Api\Mobile\V1\AttendanceController;
 use App\Http\Controllers\Api\Mobile\V1\AttendanceCorrectionRequestController;
 use App\Http\Controllers\Api\Mobile\V1\LeaveController;
@@ -9,13 +10,13 @@ use App\Http\Controllers\Api\Mobile\V1\PortalController;
 use App\Http\Controllers\Api\Mobile\V1\ProfileController as MobileProfileController;
 use App\Http\Controllers\Api\Mobile\V1\ShiftChangeRequestController;
 use App\Http\Controllers\Api\PortalResourceController;
-use App\Http\Controllers\Admin\SubscriberManagementController;
 use App\Http\Controllers\Auth\PortalOtpLoginController;
 use App\Http\Controllers\Auth\WhatsappActivationController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CareerController;
 use App\Http\Controllers\Client\ApprovalController as ClientApprovalController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DocsManualController;
 use App\Http\Controllers\UserPortalController;
 use App\Http\Controllers\UserPortalSectionController;
 use Illuminate\Http\Request;
@@ -23,6 +24,16 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
+
+if (config('docs.domain')) {
+    Route::domain(config('docs.domain'))->group(function () {
+        Route::get('/', DocsManualController::class)->name('docs.manual');
+    });
+}
+
+if (config('docs.fallback_path')) {
+    Route::get('docs', DocsManualController::class)->name('docs.manual.preview');
+}
 
 Route::get('/', function (Request $request) {
     $allowedVariants = ['original', 'workable'];

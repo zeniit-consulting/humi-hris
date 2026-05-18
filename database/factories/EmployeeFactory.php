@@ -29,7 +29,7 @@ class EmployeeFactory extends Factory
             'children_count' => $this->faker->numberBetween(0, 4),
             'hire_date' => $this->faker->date(),
             'employment_status' => 'active',
-            'employment_type' => 'permanent',
+            'employment_type' => 'PKWTT',
             'pph21_method' => 'gross',
             'pph21_rate' => 5,
             'division_id' => null,

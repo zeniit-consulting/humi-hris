@@ -13,6 +13,8 @@ class Employee extends Model
     /** @use HasFactory<\Database\Factories\EmployeeFactory> */
     use BelongsToAccount, HasFactory;
 
+    public const EMPLOYMENT_TYPES = ['FL', 'PKWT', 'PKWTT', 'OS'];
+
     /**
      * The attributes that are mass assignable.
      *

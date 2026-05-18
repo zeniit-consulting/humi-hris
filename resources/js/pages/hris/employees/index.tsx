@@ -330,8 +330,7 @@ type PageProps = {
     stats: {
         employees_total: number;
         employees_active: number;
-        employees_internal: number;
-        employees_outsourcing: number;
+        employees_by_type: Record<string, number>;
         divisions_total: number;
         positions_total: number;
     };
@@ -374,7 +373,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     children_count: '0',
     hire_date: todayDate(),
     employment_status: 'active',
-    employment_type: 'permanent',
+    employment_type: 'PKWTT',
     pph21_method: 'gross',
     pph21_rate: '0',
     ptkp_category: '',
@@ -434,10 +433,14 @@ const statusLabels: Record<string, string> = {
 };
 
 const typeLabels: Record<string, string> = {
-    permanent: 'Permanent',
-    contract: 'Contract',
-    internship: 'Internship',
-    freelance: 'Freelance',
+    FL: 'FL',
+    PKWT: 'PKWT',
+    PKWTT: 'PKWTT',
+    OS: 'OS',
+    permanent: 'PKWTT',
+    contract: 'PKWT',
+    internship: 'FL',
+    freelance: 'FL',
 };
 
 const pph21MethodLabels: Record<string, string> = {
@@ -1272,7 +1275,7 @@ export default function EmployeesIndex() {
         filterState.sub_company_id !== ''
             ? `Perusahaan: ${
                   filterState.sub_company_id === '__internal'
-                      ? 'Internal'
+                      ? 'Tanpa Sub Company'
                       : (subCompanyOptions.find(
                             (company) =>
                                 String(company.id) ===
@@ -1350,7 +1353,7 @@ export default function EmployeesIndex() {
             <Head title="HRIS Karyawan" />
 
             <div className="space-y-6 p-4">
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-8">
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Total Karyawan</CardDescription>
@@ -1369,17 +1372,33 @@ export default function EmployeesIndex() {
                     </Card>
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
-                            <CardDescription>Internal</CardDescription>
+                            <CardDescription>FL</CardDescription>
                             <CardTitle className="text-2xl">
-                                {stats.employees_internal}
+                                {stats.employees_by_type.FL ?? 0}
                             </CardTitle>
                         </CardHeader>
                     </Card>
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
-                            <CardDescription>Outsourcing</CardDescription>
+                            <CardDescription>PKWT</CardDescription>
                             <CardTitle className="text-2xl">
-                                {stats.employees_outsourcing}
+                                {stats.employees_by_type.PKWT ?? 0}
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+                    <Card className="gap-2 py-3">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription>PKWTT</CardDescription>
+                            <CardTitle className="text-2xl">
+                                {stats.employees_by_type.PKWTT ?? 0}
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+                    <Card className="gap-2 py-3">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription>OS</CardDescription>
+                            <CardTitle className="text-2xl">
+                                {stats.employees_by_type.OS ?? 0}
                             </CardTitle>
                         </CardHeader>
                     </Card>
@@ -1533,7 +1552,7 @@ export default function EmployeesIndex() {
                                         },
                                         {
                                             value: '__internal',
-                                            label: 'Internal',
+                                            label: 'Tanpa Sub Company',
                                         },
                                         ...subCompanyOptions.map((company) => ({
                                             value: String(company.id),
@@ -1610,7 +1629,7 @@ export default function EmployeesIndex() {
                                             Tgl Masuk
                                         </th>
                                         <th className="min-w-[140px] px-3 py-2 font-medium">
-                                            Tipe Kerja
+                                            Tipe Karyawan
                                         </th>
                                         <th className="min-w-[170px] px-3 py-2 font-medium">
                                             Gaji Pokok
@@ -1686,12 +1705,12 @@ export default function EmployeesIndex() {
                                                             }
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            Outsourcing
+                                                            Sub Company
                                                         </p>
                                                     </div>
                                                 ) : (
                                                     <Badge variant="outline">
-                                                        Internal
+                                                        -
                                                     </Badge>
                                                 )}
                                             </td>
@@ -2012,8 +2031,13 @@ export default function EmployeesIndex() {
                                 </p>
                                 <p>
                                     Perusahaan:{' '}
-                                    {detailEmployee.sub_company?.name ??
-                                        'Internal'}
+                                    {detailEmployee.sub_company?.name ?? '-'}
+                                </p>
+                                <p>
+                                    Tipe Karyawan:{' '}
+                                    {typeLabels[
+                                        detailEmployee.employment_type
+                                    ] ?? detailEmployee.employment_type}
                                 </p>
                                 <p>
                                     Jabatan:{' '}
@@ -2835,20 +2859,39 @@ export default function EmployeesIndex() {
                                                     : employeeForm.data
                                                           .sub_company_id
                                             }
-                                            onValueChange={(value) =>
-                                                employeeForm.setData(
-                                                    'sub_company_id',
+                                            onValueChange={(value) => {
+                                                const subCompanyId =
                                                     value === '__internal'
                                                         ? ''
-                                                        : value,
-                                                )
-                                            }
+                                                        : value;
+
+                                                employeeForm.setData(
+                                                    'sub_company_id',
+                                                    subCompanyId,
+                                                );
+
+                                                if (subCompanyId !== '') {
+                                                    employeeForm.setData(
+                                                        'employment_type',
+                                                        'OS',
+                                                    );
+                                                } else if (
+                                                    employeeForm.data
+                                                        .employment_type ===
+                                                    'OS'
+                                                ) {
+                                                    employeeForm.setData(
+                                                        'employment_type',
+                                                        'PKWTT',
+                                                    );
+                                                }
+                                            }}
                                             placeholder="Pilih sub-company"
                                             searchPlaceholder="Cari sub-company..."
                                             options={[
                                                 {
                                                     value: '__internal',
-                                                    label: 'Internal',
+                                                    label: 'Tanpa Sub Company',
                                                 },
                                                 ...subCompanyOptions.map(
                                                     (company) => ({
@@ -2862,9 +2905,8 @@ export default function EmployeesIndex() {
                                             className="w-full"
                                         />
                                         <p className="text-xs text-muted-foreground">
-                                            Kosongkan sebagai Internal. Pilih
-                                            sub-company untuk karyawan
-                                            outsourcing.
+                                            Pilih sub-company jika karyawan
+                                            berada di bawah perusahaan klien.
                                         </p>
                                         <InputError
                                             message={
@@ -3060,13 +3102,21 @@ export default function EmployeesIndex() {
                                             Perusahaan:
                                         </span>{' '}
                                         {employeeForm.data.sub_company_id === ''
-                                            ? 'Internal'
+                                            ? '-'
                                             : (subCompanyOptions.find(
                                                   (company) =>
                                                       String(company.id) ===
                                                       employeeForm.data
                                                           .sub_company_id,
                                               )?.name ?? '-')}
+                                    </p>
+                                    <p>
+                                        <span className="font-medium">
+                                            Tipe Karyawan:
+                                        </span>{' '}
+                                        {typeLabels[
+                                            employeeForm.data.employment_type
+                                        ] ?? employeeForm.data.employment_type}
                                     </p>
                                     <p>
                                         <span className="font-medium">
@@ -3407,7 +3457,9 @@ export default function EmployeesIndex() {
                                 </Card>
                                 <Card className="gap-1 py-3">
                                     <CardHeader className="px-4 pb-0">
-                                        <CardDescription>Kedaluwarsa</CardDescription>
+                                        <CardDescription>
+                                            Kedaluwarsa
+                                        </CardDescription>
                                         <CardTitle className="text-2xl text-rose-600">
                                             {
                                                 selectedEmployee
@@ -3418,7 +3470,9 @@ export default function EmployeesIndex() {
                                 </Card>
                                 <Card className="gap-1 py-3">
                                     <CardHeader className="px-4 pb-0">
-                                        <CardDescription>Tanpa File</CardDescription>
+                                        <CardDescription>
+                                            Tanpa File
+                                        </CardDescription>
                                         <CardTitle className="text-2xl text-slate-600">
                                             {
                                                 selectedEmployee
@@ -3661,97 +3715,101 @@ export default function EmployeesIndex() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    {selectedEmployee.documents.length === 0 && (
+                                    {selectedEmployee.documents.length ===
+                                        0 && (
                                         <p className="text-sm text-muted-foreground">
                                             Belum ada dokumen karyawan.
                                         </p>
                                     )}
 
-                                    {selectedEmployee.documents.map((document) => (
-                                        <div
-                                            key={document.id}
-                                            className="flex flex-col gap-2 rounded-md border p-3 md:flex-row md:items-center md:justify-between"
-                                        >
-                                            <div>
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <p className="font-medium">
-                                                        {documentTypeLabels[
-                                                            document
-                                                                .document_type
-                                                        ] ??
-                                                            document
-                                                                .document_type}
-                                                    </p>
-                                                    <Badge
-                                                        variant={
-                                                            document.compliance_status ===
+                                    {selectedEmployee.documents.map(
+                                        (document) => (
+                                            <div
+                                                key={document.id}
+                                                className="flex flex-col gap-2 rounded-md border p-3 md:flex-row md:items-center md:justify-between"
+                                            >
+                                                <div>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <p className="font-medium">
+                                                            {documentTypeLabels[
+                                                                document
+                                                                    .document_type
+                                                            ] ??
+                                                                document.document_type}
+                                                        </p>
+                                                        <Badge
+                                                            variant={
+                                                                document.compliance_status ===
+                                                                'valid'
+                                                                    ? 'default'
+                                                                    : 'outline'
+                                                            }
+                                                        >
+                                                            {document.compliance_status ===
                                                             'valid'
-                                                                ? 'default'
-                                                                : 'outline'
-                                                        }
-                                                    >
-                                                        {document.compliance_status ===
-                                                        'valid'
-                                                            ? 'Valid'
-                                                            : document.compliance_status ===
-                                                                'expiring'
-                                                              ? 'Akan habis'
-                                                              : document.compliance_status ===
-                                                                  'expired'
-                                                                ? 'Kedaluwarsa'
-                                                                : 'File belum ada'}
-                                                    </Badge>
+                                                                ? 'Valid'
+                                                                : document.compliance_status ===
+                                                                    'expiring'
+                                                                  ? 'Akan habis'
+                                                                  : document.compliance_status ===
+                                                                      'expired'
+                                                                    ? 'Kedaluwarsa'
+                                                                    : 'File belum ada'}
+                                                        </Badge>
+                                                    </div>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {document.document_number ||
+                                                            'Tanpa nomor'}{' '}
+                                                        • Berakhir:{' '}
+                                                        {formatDateDisplay(
+                                                            document.expires_at,
+                                                        )}
+                                                    </p>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        File:{' '}
+                                                        {document.file_original_name ??
+                                                            'Belum diunggah'}
+                                                    </p>
                                                 </div>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {document.document_number ||
-                                                        'Tanpa nomor'}{' '}
-                                                    • Berakhir:{' '}
-                                                    {formatDateDisplay(
-                                                        document.expires_at,
+                                                <div className="flex gap-2">
+                                                    {document.download_url && (
+                                                        <ActionIconButton
+                                                            label="Lihat dokumen"
+                                                            icon={Eye}
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                window.open(
+                                                                    document.download_url ??
+                                                                        undefined,
+                                                                    '_blank',
+                                                                )
+                                                            }
+                                                        />
                                                     )}
-                                                </p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    File:{' '}
-                                                    {document.file_original_name ??
-                                                        'Belum diunggah'}
-                                                </p>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                {document.download_url && (
                                                     <ActionIconButton
-                                                        label="Lihat dokumen"
-                                                        icon={Eye}
+                                                        label="Edit dokumen"
+                                                        icon={Pencil}
                                                         variant="outline"
                                                         onClick={() =>
-                                                            window.open(
-                                                                document.download_url ??
-                                                                    undefined,
-                                                                '_blank',
+                                                            openDocumentEdit(
+                                                                document,
                                                             )
                                                         }
                                                     />
-                                                )}
-                                                <ActionIconButton
-                                                    label="Edit dokumen"
-                                                    icon={Pencil}
-                                                    variant="outline"
-                                                    onClick={() =>
-                                                        openDocumentEdit(
-                                                            document,
-                                                        )
-                                                    }
-                                                />
-                                                <ActionIconButton
-                                                    label="Hapus dokumen"
-                                                    icon={Trash2}
-                                                    variant="destructive"
-                                                    onClick={() =>
-                                                        deleteDocument(document)
-                                                    }
-                                                />
+                                                    <ActionIconButton
+                                                        label="Hapus dokumen"
+                                                        icon={Trash2}
+                                                        variant="destructive"
+                                                        onClick={() =>
+                                                            deleteDocument(
+                                                                document,
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ),
+                                    )}
                                 </div>
                             </div>
 
@@ -3784,9 +3842,7 @@ export default function EmployeesIndex() {
                                             {options.document_types.map(
                                                 (documentType) => (
                                                     <SelectItem
-                                                        key={
-                                                            documentType.value
-                                                        }
+                                                        key={documentType.value}
                                                         value={
                                                             documentType.value
                                                         }
@@ -3809,7 +3865,9 @@ export default function EmployeesIndex() {
                                     </Label>
                                     <Input
                                         id="document_number"
-                                        value={documentForm.data.document_number}
+                                        value={
+                                            documentForm.data.document_number
+                                        }
                                         onChange={(event) =>
                                             documentForm.setData(
                                                 'document_number',

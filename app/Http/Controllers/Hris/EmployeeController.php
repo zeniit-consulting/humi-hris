@@ -351,14 +351,17 @@ class EmployeeController extends Controller
             'stats' => [
                 'employees_total' => Employee::query()->count(),
                 'employees_active' => Employee::query()->where('is_active', true)->count(),
-                'employees_internal' => Employee::query()->whereNull('sub_company_id')->count(),
-                'employees_outsourcing' => Employee::query()->whereNotNull('sub_company_id')->count(),
+                'employees_by_type' => collect(Employee::EMPLOYMENT_TYPES)
+                    ->mapWithKeys(fn (string $type) => [
+                        $type => Employee::query()->where('employment_type', $type)->count(),
+                    ])
+                    ->all(),
                 'divisions_total' => Division::query()->count(),
                 'positions_total' => Position::query()->count(),
             ],
             'options' => [
                 'employment_statuses' => ['active', 'probation', 'on_leave', 'resigned'],
-                'employment_types' => ['permanent', 'contract', 'internship', 'freelance'],
+                'employment_types' => Employee::EMPLOYMENT_TYPES,
                 'pph21_methods' => [
                     [
                         'value' => 'ter_harian',
@@ -468,6 +471,7 @@ class EmployeeController extends Controller
                 'Telepon',
                 'Divisi',
                 'Sub Company',
+                'Tipe Karyawan',
                 'Jabatan',
                 'Status',
                 'Tanggal Masuk',
@@ -480,7 +484,8 @@ class EmployeeController extends Controller
                     $employee->email,
                     $employee->phone,
                     $employee->division?->name,
-                    $employee->subCompany?->name ?? 'Internal',
+                    $employee->subCompany?->name ?? '-',
+                    $employee->employment_type,
                     $employee->position?->name,
                     $employee->employment_status,
                     $employee->hire_date?->format('Y-m-d'),
@@ -616,7 +621,9 @@ class EmployeeController extends Controller
                     'children_count' => $this->nullableInteger($row['children_count'] ?? null),
                     'hire_date' => $this->nullableString($row['hire_date'] ?? null),
                     'employment_status' => $this->nullableString($row['employment_status'] ?? null),
-                    'employment_type' => $this->nullableString($row['employment_type'] ?? null),
+                    'employment_type' => $subCompany
+                        ? 'OS'
+                        : $this->normalizeEmploymentType($row['employment_type'] ?? null),
                     'pph21_method' => $this->nullableString($row['pph21_method'] ?? null) ?? 'gross',
                     'pph21_rate' => $this->normalizeImportedAmount($row['pph21_rate'] ?? null) ?? '0',
                     'division_id' => $division?->id,
@@ -657,7 +664,7 @@ class EmployeeController extends Controller
                     'children_count' => ['nullable', 'integer', 'min:0'],
                     'hire_date' => ['required', 'date'],
                     'employment_status' => ['required', Rule::in(['active', 'probation', 'on_leave', 'resigned'])],
-                    'employment_type' => ['required', Rule::in(['permanent', 'contract', 'internship', 'freelance'])],
+                    'employment_type' => ['required', Rule::in(Employee::EMPLOYMENT_TYPES)],
                     'pph21_method' => ['required', Rule::in(['ter_harian', 'gross', 'net', 'gross_up'])],
                     'pph21_rate' => ['required', 'integer', 'min:0'],
                     'division_id' => ['required', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
@@ -788,10 +795,10 @@ class EmployeeController extends Controller
             'contractDateText' => $hireDate->locale('id')->translatedFormat('d F Y'),
             'hireDateText' => $hireDate->locale('id')->translatedFormat('d F Y'),
             'employmentTypeLabel' => match ($employee->employment_type) {
-                'contract' => 'Kontrak',
-                'internship' => 'Magang',
-                'freelance' => 'Freelance',
-                default => 'Tetap',
+                'FL' => 'Freelance',
+                'PKWT' => 'PKWT',
+                'OS' => 'Outsourcing',
+                default => 'PKWTT',
             },
             'baseSalaryText' => $employee->base_salary !== null
                 ? 'Rp '.number_format((float) $employee->base_salary, 0, ',', '.')
@@ -1111,5 +1118,19 @@ class EmployeeController extends Controller
         $normalized = strtolower($this->nullableString($value) ?? '1');
 
         return in_array($normalized, ['1', 'true', 'yes', 'ya', 'aktif'], true);
+    }
+
+    private function normalizeEmploymentType(mixed $value): string
+    {
+        return match (strtolower($this->nullableString($value) ?? '')) {
+            'permanent' => 'PKWTT',
+            'contract' => 'PKWT',
+            'internship', 'freelance' => 'FL',
+            'fl' => 'FL',
+            'pkwt' => 'PKWT',
+            'pkwtt' => 'PKWTT',
+            'os' => 'OS',
+            default => 'PKWTT',
+        };
     }
 }

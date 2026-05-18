@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
@@ -60,5 +61,40 @@ class RegistrationTest extends TestCase
         $response->assertSessionHasErrors(['phone']);
         $this->assertGuest();
         $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_registration_sends_whatsapp_message_to_registration_group(): void
+    {
+        config()->set('services.waha.enabled', true);
+        config()->set('services.waha.base_url', 'https://waha.example.test');
+        config()->set('services.waha.session', 'ZeniConsulting');
+        config()->set('services.waha.registration_group_chat_id', '120363407707938809@g.us');
+
+        Http::fake([
+            'https://waha.example.test/api/sendText' => Http::response([
+                'key' => ['id' => 'message-id'],
+                'status' => 'PENDING',
+            ]),
+        ]);
+
+        $this->post(route('register.store'), [
+            'name' => 'Test User',
+            'company_name' => 'PT Test Company',
+            'email' => 'test-group@example.com',
+            'phone' => '081234567890',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        Http::assertSent(function ($request): bool {
+            $payload = $request->data();
+
+            return $request->url() === 'https://waha.example.test/api/sendText'
+                && $payload['chatId'] === '120363407707938809@g.us'
+                && str_contains($payload['text'], 'Registrasi Akun Baru')
+                && str_contains($payload['text'], 'PT Test Company')
+                && str_contains($payload['text'], 'test-group@example.com')
+                && str_contains($payload['text'], '6281234567890');
+        });
     }
 }

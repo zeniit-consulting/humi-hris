@@ -6,6 +6,7 @@ use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\CompanySetting;
 use App\Models\User;
+use App\Services\WhatsAppNotificationService;
 use App\Services\WhatsAppOtpService;
 use App\Support\WhatsAppPhone;
 use Illuminate\Support\Facades\Validator;
@@ -15,7 +16,10 @@ class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules, ProfileValidationRules;
 
-    public function __construct(private readonly WhatsAppOtpService $otpService) {}
+    public function __construct(
+        private readonly WhatsAppOtpService $otpService,
+        private readonly WhatsAppNotificationService $whatsAppNotifications,
+    ) {}
 
     /**
      * Validate and create a newly registered user.
@@ -59,6 +63,7 @@ class CreateNewUser implements CreatesNewUsers
         );
 
         $this->otpService->send($user);
+        $this->whatsAppNotifications->notifyNewRegistration($user);
 
         return $user;
     }

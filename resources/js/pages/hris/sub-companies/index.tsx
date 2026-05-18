@@ -30,6 +30,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -356,65 +364,145 @@ export default function SubCompaniesIndex() {
                                     filter.
                                 </div>
                             ) : (
-                                <div className="space-y-3">
-                                    {subCompanies.data.map((company) => (
-                                        <button
-                                            key={company.id}
-                                            type="button"
-                                            onClick={() =>
-                                                setSelectedCompanyId(company.id)
-                                            }
-                                            className={`w-full rounded-lg border p-4 text-left transition ${
-                                                selectedCompany?.id ===
-                                                company.id
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'border-border hover:border-primary/40'
-                                            }`}
-                                        >
-                                            <div className="flex flex-wrap items-start justify-between gap-3">
-                                                <div>
-                                                    <p className="font-semibold">
-                                                        {company.code} -{' '}
-                                                        {company.name}
-                                                    </p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {company.contact_person ||
-                                                            'Tanpa PIC'}{' '}
-                                                        ·{' '}
-                                                        {company.contact_phone ||
-                                                            company.contact_email ||
-                                                            '-'}
-                                                    </p>
-                                                </div>
-                                                <Badge
-                                                    variant={
-                                                        company.is_active
-                                                            ? 'default'
-                                                            : 'secondary'
-                                                    }
-                                                >
-                                                    {company.is_active
-                                                        ? 'Aktif'
-                                                        : 'Nonaktif'}
-                                                </Badge>
-                                            </div>
-                                            <div className="mt-3 grid gap-2 text-sm text-muted-foreground md:grid-cols-3">
-                                                <span>
-                                                    {company.employees_count}{' '}
-                                                    karyawan
-                                                </span>
-                                                <span>
-                                                    {
-                                                        company.attendance_locations_count
-                                                    }{' '}
-                                                    lokasi
-                                                </span>
-                                                <span>
-                                                    {company.address || '-'}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ))}
+                                <div className="rounded-lg border">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>
+                                                    Sub Company
+                                                </TableHead>
+                                                <TableHead>PIC</TableHead>
+                                                <TableHead>Alamat</TableHead>
+                                                <TableHead className="text-right">
+                                                    Karyawan
+                                                </TableHead>
+                                                <TableHead className="text-right">
+                                                    Lokasi
+                                                </TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead className="w-[96px] text-right">
+                                                    Aksi
+                                                </TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {subCompanies.data.map(
+                                                (company) => (
+                                                    <TableRow
+                                                        key={company.id}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        aria-selected={
+                                                            selectedCompany?.id ===
+                                                            company.id
+                                                        }
+                                                        className={
+                                                            selectedCompany?.id ===
+                                                            company.id
+                                                                ? 'bg-primary/5'
+                                                                : undefined
+                                                        }
+                                                        onClick={() =>
+                                                            setSelectedCompanyId(
+                                                                company.id,
+                                                            )
+                                                        }
+                                                        onKeyDown={(event) => {
+                                                            if (
+                                                                event.key ===
+                                                                    'Enter' ||
+                                                                event.key ===
+                                                                    ' '
+                                                            ) {
+                                                                event.preventDefault();
+                                                                setSelectedCompanyId(
+                                                                    company.id,
+                                                                );
+                                                            }
+                                                        }}
+                                                    >
+                                                        <TableCell>
+                                                            <div className="min-w-56">
+                                                                <p className="font-semibold">
+                                                                    {
+                                                                        company.code
+                                                                    }{' '}
+                                                                    -{' '}
+                                                                    {
+                                                                        company.name
+                                                                    }
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    Klik baris
+                                                                    untuk kelola
+                                                                    lokasi
+                                                                </p>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="min-w-44">
+                                                                <p>
+                                                                    {company.contact_person ||
+                                                                        'Tanpa PIC'}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {company.contact_phone ||
+                                                                        company.contact_email ||
+                                                                        '-'}
+                                                                </p>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="max-w-[320px] truncate text-muted-foreground">
+                                                            {company.address ||
+                                                                '-'}
+                                                        </TableCell>
+                                                        <TableCell className="text-right tabular-nums">
+                                                            {
+                                                                company.employees_count
+                                                            }
+                                                        </TableCell>
+                                                        <TableCell className="text-right tabular-nums">
+                                                            {
+                                                                company.attendance_locations_count
+                                                            }
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge
+                                                                variant={
+                                                                    company.is_active
+                                                                        ? 'default'
+                                                                        : 'secondary'
+                                                                }
+                                                            >
+                                                                {company.is_active
+                                                                    ? 'Aktif'
+                                                                    : 'Nonaktif'}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex justify-end gap-2">
+                                                                <Button
+                                                                    type="button"
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={(
+                                                                        event,
+                                                                    ) => {
+                                                                        event.stopPropagation();
+                                                                        editCompany(
+                                                                            company,
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    <Pencil className="size-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ),
+                                            )}
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             )}
 
@@ -703,10 +791,7 @@ export default function SubCompaniesIndex() {
                                 label="PIC"
                                 value={companyForm.data.contact_person}
                                 onChange={(value) =>
-                                    companyForm.setData(
-                                        'contact_person',
-                                        value,
-                                    )
+                                    companyForm.setData('contact_person', value)
                                 }
                                 error={companyForm.errors.contact_person}
                             />

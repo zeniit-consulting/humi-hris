@@ -1,7 +1,5 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import {
     ImagePlus,
     LoaderCircle,
@@ -11,18 +9,12 @@ import {
     Upload,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import {
-    MapContainer,
-    Marker,
-    TileLayer,
-    useMap,
-    useMapEvents,
-} from 'react-leaflet';
 import CompanySettingController from '@/actions/App/Http/Controllers/Settings/CompanySettingController';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { MapboxLocationMap } from '@/components/mapbox-location-map';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,13 +33,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const defaultMapCenter: [number, number] = [-2.548926, 118.0148634];
 
-const selectedLocationIcon = new L.DivIcon({
-    className: 'leaflet-profile-marker-wrapper',
-    html: '<div style="width:22px;height:22px;border-radius:9999px;background:#0f766e;border:4px solid #ffffff;box-shadow:0 12px 24px rgba(15,118,110,.35);"></div>',
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
-});
-
 const parseCoordinate = (value: string): number | null => {
     if (value.trim() === '') {
         return null;
@@ -64,43 +49,6 @@ type LocationMapPickerProps = {
     onSelect: (latitude: number, longitude: number) => void;
 };
 
-function MapAutoCenter({
-    latitude,
-    longitude,
-}: {
-    latitude: number | null;
-    longitude: number | null;
-}) {
-    const map = useMap();
-
-    useEffect(() => {
-        if (latitude === null || longitude === null) {
-            return;
-        }
-
-        map.flyTo([latitude, longitude], Math.max(map.getZoom(), 16), {
-            animate: true,
-            duration: 0.6,
-        });
-    }, [latitude, longitude, map]);
-
-    return null;
-}
-
-function MapClickHandler({
-    onSelect,
-}: {
-    onSelect: (latitude: number, longitude: number) => void;
-}) {
-    useMapEvents({
-        click(event) {
-            onSelect(event.latlng.lat, event.latlng.lng);
-        },
-    });
-
-    return null;
-}
-
 function LocationMapPicker({
     latitude,
     longitude,
@@ -114,30 +62,19 @@ function LocationMapPicker({
         ? [parsedLatitude, parsedLongitude]
         : defaultMapCenter;
 
-    return (
-        <MapContainer
-            center={center}
-            zoom={hasSelectedPoint ? 16 : 5}
-            scrollWheelZoom
-            className="h-80 w-full"
-        >
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <MapClickHandler onSelect={onSelect} />
-            <MapAutoCenter
-                latitude={parsedLatitude}
-                longitude={parsedLongitude}
-            />
+    const selectedLocation = hasSelectedPoint
+        ? { latitude: parsedLatitude, longitude: parsedLongitude }
+        : null;
 
-            {hasSelectedPoint ? (
-                <Marker
-                    position={[parsedLatitude, parsedLongitude]}
-                    icon={selectedLocationIcon}
-                />
-            ) : null}
-        </MapContainer>
+    return (
+        <MapboxLocationMap
+            center={{ latitude: center[0], longitude: center[1] }}
+            zoom={hasSelectedPoint ? 16 : 5}
+            className="h-80 w-full"
+            selectedLocation={selectedLocation}
+            autoCenter={selectedLocation}
+            onSelect={onSelect}
+        />
     );
 }
 

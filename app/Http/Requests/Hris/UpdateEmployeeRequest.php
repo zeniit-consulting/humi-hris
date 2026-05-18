@@ -41,6 +41,20 @@ class UpdateEmployeeRequest extends FormRequest
             $normalizedPayload['sub_company_id'] = null;
         }
 
+        if ($this->has('employment_type')) {
+            $normalizedPayload['employment_type'] = $this->normalizeEmploymentType(
+                $this->input('employment_type')
+            );
+        }
+
+        $subCompanyValue = array_key_exists('sub_company_id', $normalizedPayload)
+            ? $normalizedPayload['sub_company_id']
+            : $this->input('sub_company_id');
+
+        if ($subCompanyValue !== null && $subCompanyValue !== '') {
+            $normalizedPayload['employment_type'] = 'OS';
+        }
+
         if (($this->input('marital_status') ?? '') === 'single') {
             $normalizedPayload['children_count'] = 0;
         }
@@ -104,7 +118,7 @@ class UpdateEmployeeRequest extends FormRequest
             'children_count' => ['nullable', 'integer', 'min:0'],
             'hire_date' => ['required', 'date'],
             'employment_status' => ['required', Rule::in(['active', 'probation', 'on_leave', 'resigned'])],
-            'employment_type' => ['required', Rule::in(['permanent', 'contract', 'internship', 'freelance'])],
+            'employment_type' => ['required', Rule::in(Employee::EMPLOYMENT_TYPES)],
             'pph21_method' => ['required', Rule::in(['ter_harian', 'gross', 'net', 'gross_up'])],
             'pph21_rate' => ['required', 'integer', 'min:0'],
             'ptkp_category' => ['nullable', Rule::in(['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'])],
@@ -173,5 +187,15 @@ class UpdateEmployeeRequest extends FormRequest
         $normalized = preg_replace('/[^\d]/', '', (string) $value);
 
         return $normalized === '' ? null : $normalized;
+    }
+
+    private function normalizeEmploymentType(mixed $value): string
+    {
+        return match (strtolower((string) $value)) {
+            'permanent' => 'PKWTT',
+            'contract' => 'PKWT',
+            'internship', 'freelance' => 'FL',
+            default => strtoupper((string) $value),
+        };
     }
 }

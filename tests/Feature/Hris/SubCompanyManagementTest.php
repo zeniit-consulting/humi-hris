@@ -6,7 +6,6 @@ use App\Models\Division;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\SubCompany;
-use App\Models\SubCompanyAttendanceLocation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -108,6 +107,7 @@ class SubCompanyManagementTest extends TestCase
             'user_id' => $user->id,
             'first_name' => 'Rina Outsource',
             'sub_company_id' => $subCompany->id,
+            'employment_type' => 'OS',
         ]);
     }
 

@@ -22,7 +22,7 @@ return new class extends Migration
             $table->date('birth_date')->nullable();
             $table->date('hire_date');
             $table->string('employment_status', 30)->default('active');
-            $table->string('employment_type', 30)->default('permanent');
+            $table->string('employment_type', 30)->default('PKWTT');
             $table->foreignId('division_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('position_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('manager_id')->nullable()->constrained('employees')->nullOnDelete();

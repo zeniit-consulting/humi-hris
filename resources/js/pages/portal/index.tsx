@@ -328,6 +328,16 @@ export default function PortalPage() {
         <>
             <Head title="Employee App">
                 <meta name="theme-color" content="#006069" />
+                <meta
+                    name="theme-color"
+                    content="#006069"
+                    media="(prefers-color-scheme: light)"
+                />
+                <meta
+                    name="theme-color"
+                    content="#006069"
+                    media="(prefers-color-scheme: dark)"
+                />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta
                     name="apple-mobile-web-app-status-bar-style"
@@ -341,7 +351,10 @@ export default function PortalPage() {
                     }
                 />
                 <link rel="manifest" href="/manifest.webmanifest" />
-                <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+                <link
+                    rel="apple-touch-icon"
+                    href="/icons/apple-touch-icon.png"
+                />
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link
                     rel="preconnect"
@@ -455,8 +468,7 @@ export default function PortalPage() {
                                     }
                                     disabled={
                                         !summary?.quick_action.can_clock_in &&
-                                            !summary?.quick_action
-                                                .can_clock_out
+                                        !summary?.quick_action.can_clock_out
                                     }
                                     className="portal-primary-bg inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[11px] px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
                                 >
@@ -784,9 +796,7 @@ export default function PortalPage() {
                             <div className="mt-5 grid grid-cols-2 gap-2">
                                 <button
                                     type="button"
-                                    onClick={() =>
-                                        setLogoutConfirmOpen(false)
-                                    }
+                                    onClick={() => setLogoutConfirmOpen(false)}
                                     className="inline-flex h-12 items-center justify-center rounded-[13px] border border-slate-200 bg-white text-sm font-bold text-slate-900"
                                 >
                                     Batal

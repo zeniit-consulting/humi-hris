@@ -93,3 +93,4 @@ Artisan::command('payroll:recalculate {runId? : Payroll run ID} {--period= : Pay
 
 Schedule::command('leave:accrue-monthly')->monthlyOn(1, '00:00');
 Schedule::command('employee:notify-contract-expiry')->dailyAt('08:00');
+Schedule::command('subscription:notify-renewal-reminder --days=7')->dailyAt('09:00');

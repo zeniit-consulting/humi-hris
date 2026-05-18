@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
+use App\Models\Subscription;
+use App\Models\User;
 use App\Support\WhatsAppPhone;
 use Illuminate\Support\Facades\Log;
 
@@ -101,6 +103,83 @@ class WhatsAppNotificationService
         } catch (\Throwable $e) {
             Log::warning('whatsapp.contract_expiry.failed', [
                 'employee_id' => $employee->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function notifyNewRegistration(User $user): void
+    {
+        if (! config('services.waha.enabled')) {
+            return;
+        }
+
+        $chatId = (string) config('services.waha.registration_group_chat_id');
+
+        if ($chatId === '') {
+            return;
+        }
+
+        $registeredAt = $user->created_at?->timezone(config('app.timezone'))->format('d M Y H:i') ?? now()->format('d M Y H:i');
+        $message = implode("\n", [
+            '🆕 *Registrasi Akun Baru*',
+            '',
+            '*Nama:* '.$user->name,
+            '*Perusahaan:* '.($user->company_name ?: '-'),
+            '*Email:* '.($user->email ?: '-'),
+            '*WhatsApp:* '.($user->phone ?: '-'),
+            '*Role:* '.$user->role,
+            '*Waktu:* '.$registeredAt,
+            '*User ID:* '.$user->id,
+        ]);
+
+        try {
+            $this->wahaClient->sendText($chatId, $message);
+        } catch (\Throwable $e) {
+            Log::warning('whatsapp.registration_notify.failed', [
+                'user_id' => $user->id,
+                'chat_id' => $chatId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function notifySubscriptionRenewalReminder(Subscription $subscription): void
+    {
+        $user = $subscription->user;
+
+        if (! $user?->phone || ! WhatsAppPhone::isValid($user->phone)) {
+            return;
+        }
+
+        if (! config('services.waha.enabled')) {
+            return;
+        }
+
+        $planLabel = match ($subscription->plan_slug) {
+            'core' => 'Core',
+            'plus' => 'Plus',
+            default => strtoupper($subscription->plan_slug),
+        };
+        $endDate = $subscription->current_period_end?->locale('id')->translatedFormat('d F Y');
+
+        $message = implode("\n", [
+            '⏰ *Reminder Renewal Plan Humi*',
+            '',
+            'Halo '.$user->name.',',
+            'Plan *'.$planLabel.'* untuk '.($user->company_name ?: 'akun Anda').' akan berakhir pada *'.$endDate.'*.',
+            '',
+            'Mohon lakukan renewal sebelum tanggal tersebut agar akses HRIS tetap aktif.',
+            '',
+            'Buka menu Billing di dashboard Humi untuk membuat invoice renewal.',
+        ]);
+
+        try {
+            $this->wahaClient->sendTextToPhone($user->phone, $message);
+        } catch (\Throwable $e) {
+            Log::warning('whatsapp.subscription_renewal_reminder.failed', [
+                'subscription_id' => $subscription->id,
+                'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
         }

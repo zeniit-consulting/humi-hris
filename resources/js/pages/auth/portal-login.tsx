@@ -118,6 +118,16 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
         <>
             <Head title="Portal Karyawan">
                 <meta name="theme-color" content="#006069" />
+                <meta
+                    name="theme-color"
+                    content="#006069"
+                    media="(prefers-color-scheme: light)"
+                />
+                <meta
+                    name="theme-color"
+                    content="#006069"
+                    media="(prefers-color-scheme: dark)"
+                />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta
                     name="apple-mobile-web-app-status-bar-style"
@@ -126,7 +136,10 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
                 <meta name="apple-mobile-web-app-title" content="Humi" />
                 <meta name="application-name" content="Humi" />
                 <link rel="manifest" href="/manifest.webmanifest" />
-                <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+                <link
+                    rel="apple-touch-icon"
+                    href="/icons/apple-touch-icon.png"
+                />
             </Head>
 
             <main className="relative min-h-svh overflow-hidden bg-[#006069] text-white">
@@ -145,10 +158,10 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
                             <p className="mb-3 text-xs font-semibold tracking-[0.32em] text-white/65 uppercase">
                                 Portal Karyawan
                             </p>
-                            <h1 className="max-w-sm text-4xl font-black tracking-[-0.07em] text-white">
+                            <h1 className="max-w-sm text-4xl font-semibold text-white">
                                 Masuk cepat dengan OTP WhatsApp.
                             </h1>
-                            <p className="mt-4 max-w-sm text-sm leading-6 text-white/75">
+                            <p className="mt-4 max-w-sm text-sm leading-6 font-normal text-white/75">
                                 Gunakan nomor WhatsApp terdaftar untuk mengakses
                                 absensi, cuti, lembur, dan payroll karyawan.
                             </p>
