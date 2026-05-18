@@ -72,7 +72,7 @@ class PortalController extends Controller
                 ->first();
 
             $todayShift = EmployeeSchedule::query()
-                ->with(['employee:id,employee_code,full_name'])
+                ->with(['employee:id,employee_code,first_name,last_name'])
                 ->where('employee_id', $employee->id)
                 ->whereDate('work_date', $today->toDateString())
                 ->first();
@@ -346,7 +346,7 @@ class PortalController extends Controller
                     'check_out_longitude' => $openAttendance->check_out_longitude,
                     'notes' => $openAttendance->notes,
                 ] : null,
-                'can_clock_in' => $employee !== null && $openAttendance === null,
+                'can_clock_in' => $employee !== null && $openAttendance === null && $todayAttendance === null,
                 'can_clock_out' => $openAttendance !== null,
                 'hint' => $employee
                     ? ($openAttendance

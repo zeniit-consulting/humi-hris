@@ -27,7 +27,7 @@ class StoreAttendanceRequest extends FormRequest
 
         return [
             'employee_id' => ['required', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
-            'shift_id' => ['required', 'integer', Rule::exists('work_shifts', 'id')->where('user_id', $ownerId)],
+            'shift_id' => ['nullable', 'integer', Rule::exists('work_shifts', 'id')->where('user_id', $ownerId)],
             'attendance_date' => [
                 'required',
                 'date',

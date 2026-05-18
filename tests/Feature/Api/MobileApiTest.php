@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeSchedule;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\Position;
@@ -264,6 +265,108 @@ class MobileApiTest extends TestCase
             ->assertJsonPath('data.shift_options.0.id', $shift->id)
             ->assertJsonPath('data.quick_action.can_clock_out', true)
             ->assertJsonPath('data.quick_action.open_attendance.id', EmployeeAttendance::query()->first()->id);
+    }
+
+    public function test_portal_summary_handles_scheduled_employee_full_name_accessor(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'email' => 'staff@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'level' => '2',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'staff@example.com',
+            'first_name' => 'Staff',
+            'last_name' => 'Portal',
+        ]);
+
+        EmployeeSchedule::query()->create([
+            'user_id' => $owner->id,
+            'employee_id' => $employee->id,
+            'work_date' => today()->toDateString(),
+            'shift_code' => 'SHIFT-1',
+            'start_time' => '08:00:00',
+            'end_time' => '17:00:00',
+            'is_day_off' => false,
+        ]);
+
+        Sanctum::actingAs($subUser, ['mobile']);
+
+        $this->getJson('/api/mobile/v1/portal/summary')
+            ->assertOk()
+            ->assertJsonPath('data.employee.full_name', 'Staff Portal')
+            ->assertJsonPath('data.quick_action.shift.code', 'SHIFT-1');
+    }
+
+    public function test_self_service_clock_in_can_be_stored_without_configured_shift(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'email' => 'staff@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'level' => '2',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'staff@example.com',
+        ]);
+
+        Sanctum::actingAs($subUser, ['mobile']);
+
+        $this->postJson('/api/mobile/v1/attendances', [
+            'employee_id' => $employee->id,
+            'shift_id' => null,
+            'attendance_date' => today()->toDateString(),
+            'status' => 'present',
+            'check_in_at' => today()->setTime(8, 0)->toIso8601String(),
+            'check_in_latitude' => -6.20001,
+            'check_in_longitude' => 106.81667,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.shift', null);
+
+        $attendance = EmployeeAttendance::query()
+            ->where('employee_id', $employee->id)
+            ->whereDate('attendance_date', today()->toDateString())
+            ->firstOrFail();
+
+        $this->assertNull($attendance->shift_id);
     }
 
     public function test_self_service_attendance_flow_stores_location_and_updates_open_record(): void

@@ -137,7 +137,7 @@ class AttendanceController extends Controller
 
         $attendance = EmployeeAttendance::query()->create([
             'employee_id' => $validated['employee_id'],
-            'shift_id' => $validated['shift_id'],
+            'shift_id' => $validated['shift_id'] ?? null,
             'attendance_date' => $validated['attendance_date'],
             'status' => $validated['status'],
             'check_in_at' => $validated['check_in_at'] ?? null,

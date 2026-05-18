@@ -236,7 +236,6 @@ export function PortalAttendanceLocationPage({
         closestLocation.distance <= closestLocation.radius_meters;
     const canSubmit =
         !!portal?.employee &&
-        !!attendanceShift &&
         !!closestLocation &&
         isWithinRadius &&
         (mode === 'clock-out'
@@ -303,7 +302,7 @@ export function PortalAttendanceLocationPage({
     }, [portal]);
 
     const handleSubmit = async () => {
-        if (!portal?.employee || !attendanceShift || !coordinates) {
+        if (!portal?.employee || !coordinates) {
             return;
         }
 
@@ -324,7 +323,7 @@ export function PortalAttendanceLocationPage({
                     'PUT',
                     {
                         employee_id: portal.employee.id,
-                        shift_id: attendanceShift.id,
+                        shift_id: attendanceShift?.id ?? null,
                         attendance_date:
                             openAttendance.attendance_date ?? portal.today.date,
                         status: openAttendance.status,
@@ -340,7 +339,7 @@ export function PortalAttendanceLocationPage({
             } else {
                 await requestApi('/portal/api/attendances', 'POST', {
                     employee_id: portal.employee.id,
-                    shift_id: attendanceShift.id,
+                    shift_id: attendanceShift?.id ?? null,
                     attendance_date: portal.today.date,
                     status: 'present',
                     check_in_at: new Date().toISOString(),
