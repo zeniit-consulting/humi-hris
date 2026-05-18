@@ -5,6 +5,34 @@ import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+    build: {
+        chunkSizeWarningLimit: 1800,
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (!id.includes('node_modules')) {
+                        return;
+                    }
+
+                    if (id.includes('mapbox-gl')) {
+                        return 'vendor-mapbox';
+                    }
+
+                    if (
+                        id.includes('react') ||
+                        id.includes('@inertiajs') ||
+                        id.includes('@vitejs')
+                    ) {
+                        return 'vendor-react';
+                    }
+
+                    if (id.includes('@radix-ui') || id.includes('lucide-react')) {
+                        return 'vendor-ui';
+                    }
+                },
+            },
+        },
+    },
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],

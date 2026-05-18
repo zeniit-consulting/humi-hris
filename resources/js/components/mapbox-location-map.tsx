@@ -1,6 +1,6 @@
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 export type MapLocation = {
     id?: string;
@@ -28,8 +28,9 @@ type MapboxLocationMapProps = {
     autoCenter?: MapCoordinates | null;
 };
 
-const tileAttribution =
-    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>';
+const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
+
+const tileAttribution = '';
 
 const mapStyle: mapboxgl.Style = {
     version: 8,
@@ -135,6 +136,11 @@ export function MapboxLocationMap({
     const onSelectRef = useRef(onSelect);
     const initialCenterRef = useRef(center);
     const initialZoomRef = useRef(zoom);
+    const [mapError, setMapError] = useState<string | null>(
+        mapboxAccessToken
+            ? null
+            : 'Mapbox access token belum dikonfigurasi.',
+    );
     const circleData = useMemo<GeoJSON.FeatureCollection>(() => {
         return {
             type: 'FeatureCollection',
@@ -169,19 +175,39 @@ export function MapboxLocationMap({
     }, [onSelect]);
 
     useEffect(() => {
-        if (!containerRef.current || mapRef.current) {
+        if (!mapboxAccessToken || !containerRef.current || mapRef.current) {
             return;
         }
 
-        const map = new mapboxgl.Map({
-            container: containerRef.current,
-            style: mapStyle,
-            center: [
-                initialCenterRef.current.longitude,
-                initialCenterRef.current.latitude,
-            ],
-            zoom: initialZoomRef.current,
-            attributionControl: false,
+        mapboxgl.accessToken = mapboxAccessToken;
+
+        let map: mapboxgl.Map;
+
+        try {
+            map = new mapboxgl.Map({
+                container: containerRef.current,
+                style: mapStyle,
+                center: [
+                    initialCenterRef.current.longitude,
+                    initialCenterRef.current.latitude,
+                ],
+                zoom: initialZoomRef.current,
+                attributionControl: false,
+            });
+        } catch (error) {
+            setMapError(
+                error instanceof Error
+                    ? error.message
+                    : 'Map gagal dimuat.',
+            );
+
+            return;
+        }
+
+        map.on('error', (event) => {
+            if (event.error) {
+                setMapError(event.error.message);
+            }
         });
 
         map.addControl(
@@ -335,5 +361,15 @@ export function MapboxLocationMap({
         });
     }, [autoCenter]);
 
-    return <div ref={containerRef} className={className} />;
+    return (
+        <div className={className}>
+            {mapError ? (
+                <div className="flex h-full min-h-48 items-center justify-center rounded-lg border border-dashed border-amber-300 bg-amber-50 p-4 text-center text-sm font-medium text-amber-900">
+                    {mapError}
+                </div>
+            ) : (
+                <div ref={containerRef} className="h-full w-full" />
+            )}
+        </div>
+    );
 }
