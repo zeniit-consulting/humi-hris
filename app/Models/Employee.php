@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToAccount;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class Employee extends Model
 {
@@ -15,6 +18,8 @@ class Employee extends Model
 
     public const EMPLOYMENT_TYPES = ['FL', 'PKWT', 'PKWTT', 'OS'];
 
+    private static ?bool $hasCreatedByUserIdColumn = null;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -22,6 +27,7 @@ class Employee extends Model
      */
     protected $fillable = [
         'user_id',
+        'created_by_user_id',
         'sub_company_id',
         'employee_code',
         'first_name',
@@ -72,6 +78,42 @@ class Employee extends Model
             'pph21_rate' => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('sub_user_sub_company_records', function (Builder $builder): void {
+            $user = Auth::user();
+
+            if (! $user || ! $user->parent_user_id || $user->role === 'user') {
+                return;
+            }
+
+            $subCompanyIds = $user->subCompanyScopeIds();
+
+            if ($subCompanyIds === []) {
+                $builder->whereRaw('1 = 0');
+
+                return;
+            }
+
+            $builder->whereIn($builder->qualifyColumn('sub_company_id'), $subCompanyIds);
+        });
+
+        static::creating(function (Employee $employee): void {
+            $user = Auth::user();
+
+            if (! $user || ! self::hasCreatedByUserIdColumn() || $employee->created_by_user_id) {
+                return;
+            }
+
+            $employee->created_by_user_id = $user->id;
+        });
+    }
+
+    private static function hasCreatedByUserIdColumn(): bool
+    {
+        return self::$hasCreatedByUserIdColumn ??= Schema::hasColumn((new static)->getTable(), 'created_by_user_id');
     }
 
     /**

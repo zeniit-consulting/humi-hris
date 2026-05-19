@@ -85,7 +85,11 @@ class StoreEmployeeRequest extends FormRequest
      */
     public function rules(): array
     {
-        $ownerId = $this->user()->accountOwnerId();
+        $user = $this->user();
+        $ownerId = $user->accountOwnerId();
+        $subCompanyScopeIds = $user->parent_user_id && $user->role !== 'user'
+            ? $user->subCompanyScopeIds()
+            : null;
 
         return [
             'full_name' => ['required', 'string', 'max:150'],
@@ -115,7 +119,18 @@ class StoreEmployeeRequest extends FormRequest
             'pph21_rate' => ['required', 'integer', 'min:0'],
             'ptkp_category' => ['nullable', Rule::in(['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'])],
             'division_id' => ['required', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
-            'sub_company_id' => ['nullable', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $ownerId)],
+            'sub_company_id' => [
+                $subCompanyScopeIds === null ? 'nullable' : 'required',
+                'integer',
+                Rule::exists('sub_companies', 'id')->where('user_id', $ownerId),
+                function (string $attribute, mixed $value, \Closure $fail) use ($subCompanyScopeIds): void {
+                    if ($subCompanyScopeIds === null || in_array((int) $value, $subCompanyScopeIds, true)) {
+                        return;
+                    }
+
+                    $fail('Sub-company tidak termasuk scope sub-user ini.');
+                },
+            ],
             'position_id' => [
                 'required',
                 'integer',
@@ -127,7 +142,7 @@ class StoreEmployeeRequest extends FormRequest
                         return;
                     }
 
-                    $isOccupied = Employee::query()
+                    $isOccupied = Employee::withoutGlobalScope('sub_user_sub_company_records')
                         ->where('user_id', $ownerId)
                         ->where('position_id', $value)
                         ->exists();

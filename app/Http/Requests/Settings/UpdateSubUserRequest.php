@@ -25,6 +25,7 @@ class UpdateSubUserRequest extends FormRequest
     public function rules(): array
     {
         $subUserId = (int) $this->route('subUser');
+        $ownerId = $this->user()?->accountOwnerId();
 
         return [
             'name' => ['required', 'string', 'max:120'],
@@ -36,7 +37,8 @@ class UpdateSubUserRequest extends FormRequest
             ],
             'password' => ['nullable', 'confirmed', Password::defaults()],
             'role' => ['required', Rule::in(['admin_staff', 'client_supervisor'])],
-            'client_sub_company_id' => ['nullable', 'required_if:role,client_supervisor', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $this->user()?->accountOwnerId())],
+            'client_sub_company_ids' => ['required', 'array', 'min:1'],
+            'client_sub_company_ids.*' => ['integer', Rule::exists('sub_companies', 'id')->where('user_id', $ownerId)],
         ];
     }
 }

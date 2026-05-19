@@ -23,7 +23,7 @@ type RequestRow = {
 type RejectTarget = { type: 'attendance' | 'leaves' | 'overtimes'; row: RequestRow } | null;
 type PageProps = {
     status: string;
-    subCompany: { id: number; code: string; name: string } | null;
+    subCompanies: Array<{ id: number; code: string; name: string }>;
     attendanceRequests: RequestRow[];
     leaveRequests: RequestRow[];
     overtimeRequests: RequestRow[];
@@ -44,7 +44,7 @@ const rejectUrls = {
 };
 
 export default function ClientApprovalPage() {
-    const { status, subCompany, attendanceRequests, leaveRequests, overtimeRequests } = usePage<PageProps>().props;
+    const { status, subCompanies, attendanceRequests, leaveRequests, overtimeRequests } = usePage<PageProps>().props;
     const [rejectTarget, setRejectTarget] = useState<RejectTarget>(null);
     const rejectForm = useForm({ rejection_reason: '' });
 
@@ -69,7 +69,7 @@ export default function ClientApprovalPage() {
                     <CardHeader>
                         <CardTitle>Approval Klien</CardTitle>
                         <CardDescription>
-                            Scope: {subCompany ? `${subCompany.code} - ${subCompany.name}` : '-'}
+                            Scope: {subCompanies.length ? subCompanies.map((company) => `${company.code} - ${company.name}`).join(', ') : '-'}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="max-w-xs">

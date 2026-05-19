@@ -8,11 +8,13 @@ use App\Models\EmployeeAllowance;
 use App\Models\EmployeeBankAccount;
 use App\Models\EmployeeDocument;
 use App\Models\Position;
+use App\Models\SubCompany;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -87,6 +89,146 @@ class EmployeeManagementTest extends TestCase
             ->first();
 
         $this->assertNull($portalUser);
+    }
+
+    public function test_sub_user_only_sees_employees_from_linked_sub_companies(): void
+    {
+        $this->withoutVite();
+
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'parent_user_id' => $owner->id,
+            'role' => 'staff',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'level' => '3',
+        ]);
+
+        $linkedCompany = SubCompany::query()->create([
+            'user_id' => $owner->id,
+            'code' => 'SUB-A',
+            'name' => 'Sub A',
+        ]);
+
+        $unlinkedCompany = SubCompany::query()->create([
+            'user_id' => $owner->id,
+            'code' => 'SUB-B',
+            'name' => 'Sub B',
+        ]);
+
+        $subUser->clientSubCompanies()->attach($linkedCompany->id);
+
+        Employee::factory()->create([
+            'user_id' => $owner->id,
+            'created_by_user_id' => $owner->id,
+            'sub_company_id' => null,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'employee_code' => 'EMP-MASTER',
+            'first_name' => 'Master',
+            'last_name' => 'Employee',
+        ]);
+
+        $subEmployee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'created_by_user_id' => $owner->id,
+            'sub_company_id' => $linkedCompany->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'employee_code' => 'EMP-SUB',
+            'first_name' => 'Sub',
+            'last_name' => 'Employee',
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $owner->id,
+            'created_by_user_id' => $subUser->id,
+            'sub_company_id' => $unlinkedCompany->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'employee_code' => 'EMP-OTHER',
+            'first_name' => 'Other',
+            'last_name' => 'Company',
+        ]);
+
+        $this->actingAs($subUser)
+            ->get(route('hris.employees.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hris/employees/index')
+                ->where('employees.data.0.id', $subEmployee->id)
+                ->where('employees.data.0.employee_code', 'EMP-SUB')
+                ->has('employees.data', 1)
+            );
+    }
+
+    public function test_sub_user_created_employee_is_marked_with_creator(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'parent_user_id' => $owner->id,
+            'role' => 'staff',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $owner->id,
+            'code' => 'HR',
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'code' => 'ST',
+            'level' => '3',
+        ]);
+
+        $subCompany = SubCompany::query()->create([
+            'user_id' => $owner->id,
+            'code' => 'SUB-A',
+            'name' => 'Sub A',
+        ]);
+
+        $subUser->clientSubCompanies()->attach($subCompany->id);
+
+        $this->actingAs($subUser)->post(route('hris.employees.store'), [
+            'full_name' => 'Sub User Employee',
+            'email' => 'sub-employee@example.com',
+            'phone' => '08123456780',
+            'gender' => 'male',
+            'birth_date' => '1998-05-20',
+            'hire_date' => '2026-03-01',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+            'pph21_method' => 'gross',
+            'pph21_rate' => '5',
+            'division_id' => $division->id,
+            'sub_company_id' => $subCompany->id,
+            'position_id' => $position->id,
+            'base_salary' => '5000000',
+            'is_active' => true,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('employees', [
+            'user_id' => $owner->id,
+            'created_by_user_id' => $subUser->id,
+            'sub_company_id' => $subCompany->id,
+            'email' => 'sub-employee@example.com',
+        ]);
     }
 
     public function test_admin_can_activate_portal_user_for_employee(): void

@@ -3,20 +3,25 @@
 namespace App\Http\Controllers\Api\Mobile\V1;
 
 use App\Http\Controllers\Api\Concerns\InteractsWithMobileApiResponse;
+use App\Http\Controllers\Api\Mobile\V1\Concerns\InteractsWithSelfService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Hris\StorePayrollKasbonRequest;
 use App\Http\Requests\Hris\UpdatePayrollKasbonRequest;
+use App\Models\Employee;
 use App\Models\EmployeeDeduction;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
 class KasbonController extends Controller
 {
-    use InteractsWithMobileApiResponse;
+    use InteractsWithMobileApiResponse, InteractsWithSelfService;
 
     public function index(Request $request): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
         $validated = $request->validate([
             'period' => ['nullable', 'date_format:Y-m'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
@@ -25,15 +30,20 @@ class KasbonController extends Controller
         $period = $validated['period'] ?? now()->format('Y-m');
         $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth();
         $end = $start->copy()->endOfMonth();
+        $employee = $this->isSelfServiceUser($user)
+            ? $this->resolveRequiredSelfServiceEmployee($user)
+            : null;
 
         $query = EmployeeDeduction::query()
             ->with('employee:id,employee_code,first_name,last_name')
             ->where('type', 'kasbon')
             ->whereBetween('deduction_date', [$start->toDateString(), $end->toDateString()])
+            ->when($employee, fn ($builder) => $builder->where('employee_id', $employee->id))
             ->orderByDesc('deduction_date')
             ->orderByDesc('id');
 
         $totalAmount = (clone $query)->sum('amount');
+        $limit = $employee ? $this->kasbonLimitPayload($employee, (float) $totalAmount) : null;
 
         $paginator = $query
             ->paginate((int) ($validated['per_page'] ?? 20))
@@ -45,6 +55,7 @@ class KasbonController extends Controller
                 'total_entries' => $paginator->total(),
                 'total_amount' => (float) $totalAmount,
             ],
+            'limit' => $limit,
             'items' => collect($paginator->items())->map(fn (EmployeeDeduction $deduction) => $this->payload($deduction))->values(),
             'pagination' => [
                 'current_page' => $paginator->currentPage(),
@@ -58,6 +69,28 @@ class KasbonController extends Controller
     public function store(StorePayrollKasbonRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        /** @var User $user */
+        $user = $request->user();
+
+        if ($this->isSelfServiceUser($user)) {
+            $employee = $this->resolveRequiredSelfServiceEmployee($user);
+            $validated['employee_id'] = $employee->id;
+            $validated['deduction_date'] = $validated['deduction_date'] ?? now()->toDateString();
+
+            $period = Carbon::parse($validated['deduction_date'])->format('Y-m');
+            $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth();
+            $end = $start->copy()->endOfMonth();
+            $usedAmount = (float) EmployeeDeduction::query()
+                ->where('employee_id', $employee->id)
+                ->where('type', 'kasbon')
+                ->whereBetween('deduction_date', [$start->toDateString(), $end->toDateString()])
+                ->sum('amount');
+            $limit = $this->kasbonLimitPayload($employee, $usedAmount);
+
+            if ((float) $validated['amount'] > (float) $limit['available_amount']) {
+                return $this->error('Nominal kasbon melebihi limit yang tersedia.');
+            }
+        }
 
         $deduction = EmployeeDeduction::query()->create([
             'employee_id' => $validated['employee_id'],
@@ -74,6 +107,9 @@ class KasbonController extends Controller
 
     public function update(UpdatePayrollKasbonRequest $request, EmployeeDeduction $employeeDeduction): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+        $this->guardSelfServiceRecordOwnership($user, (int) $employeeDeduction->employee_id);
         abort_if($employeeDeduction->type !== 'kasbon', 404);
 
         $validated = $request->validated();
@@ -93,6 +129,9 @@ class KasbonController extends Controller
 
     public function destroy(EmployeeDeduction $employeeDeduction): JsonResponse
     {
+        /** @var User $user */
+        $user = request()->user();
+        $this->guardSelfServiceRecordOwnership($user, (int) $employeeDeduction->employee_id);
         abort_if($employeeDeduction->type !== 'kasbon', 404);
 
         $employeeDeduction->delete();
@@ -115,6 +154,20 @@ class KasbonController extends Controller
             'amount' => $deduction->amount,
             'deduction_date' => $deduction->deduction_date?->format('Y-m-d'),
             'notes' => $deduction->notes,
+        ];
+    }
+
+    /**
+     * @return array<string, float>
+     */
+    private function kasbonLimitPayload(Employee $employee, float $usedAmount): array
+    {
+        $maxAmount = round(((float) ($employee->base_salary ?? 0)) * 0.5, 2);
+
+        return [
+            'max_amount' => $maxAmount,
+            'used_amount' => round($usedAmount, 2),
+            'available_amount' => round(max($maxAmount - $usedAmount, 0), 2),
         ];
     }
 }

@@ -13,7 +13,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Http\Response as HttpResponse;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -52,6 +51,11 @@ class UserPortalSectionController extends Controller
     public function overtimes(Request $request): Response|RedirectResponse
     {
         return $this->renderForUser($request, 'portal/overtimes', 'Overtime');
+    }
+
+    public function kasbons(Request $request): Response|RedirectResponse
+    {
+        return $this->renderForUser($request, 'portal/kasbons', 'Kasbon');
     }
 
     public function payroll(Request $request): Response|RedirectResponse

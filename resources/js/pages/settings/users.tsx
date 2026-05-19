@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,6 +19,7 @@ type SubUser = {
     email: string;
     role: string;
     client_sub_company_id: number | null;
+    client_sub_company_ids: number[];
     client_sub_company_label: string | null;
     created_at: string | null;
 };
@@ -30,6 +32,14 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const toggleCompanyId = (currentIds: string[], companyId: number) => {
+    const value = String(companyId);
+
+    return currentIds.includes(value)
+        ? currentIds.filter((id) => id !== value)
+        : [...currentIds, value];
+};
+
 export default function SettingsUsersPage({ subUsers, subCompanies }: { subUsers: SubUser[]; subCompanies: SubCompanyOption[] }) {
     const [editingUser, setEditingUser] = useState<SubUser | null>(null);
 
@@ -39,7 +49,7 @@ export default function SettingsUsersPage({ subUsers, subCompanies }: { subUsers
         password: '',
         password_confirmation: '',
         role: 'admin_staff',
-        client_sub_company_id: '',
+        client_sub_company_ids: [] as string[],
     });
 
     const updateForm = useForm({
@@ -48,7 +58,7 @@ export default function SettingsUsersPage({ subUsers, subCompanies }: { subUsers
         password: '',
         password_confirmation: '',
         role: 'admin_staff',
-        client_sub_company_id: '',
+        client_sub_company_ids: [] as string[],
     });
 
     const submitCreate = (event: FormEvent<HTMLFormElement>) => {
@@ -123,9 +133,6 @@ export default function SettingsUsersPage({ subUsers, subCompanies }: { subUsers
                                 value={createForm.data.role}
                                 onValueChange={(value) => {
                                     createForm.setData('role', value);
-                                    if (value !== 'client_supervisor') {
-                                        createForm.setData('client_sub_company_id', '');
-                                    }
                                 }}
                             >
                                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -136,23 +143,34 @@ export default function SettingsUsersPage({ subUsers, subCompanies }: { subUsers
                             </Select>
                             <InputError message={createForm.errors.role} />
                         </div>
-                        {createForm.data.role === 'client_supervisor' && (
-                            <div className="grid gap-2">
-                                <Label>Sub-company yang Diawasi</Label>
-                                <Select
-                                    value={createForm.data.client_sub_company_id || ''}
-                                    onValueChange={(value) => createForm.setData('client_sub_company_id', value)}
-                                >
-                                    <SelectTrigger><SelectValue placeholder="Pilih sub-company" /></SelectTrigger>
-                                    <SelectContent>
-                                        {subCompanies.map((company) => (
-                                            <SelectItem key={company.id} value={String(company.id)}>{company.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <InputError message={createForm.errors.client_sub_company_id} />
+                        <div className="grid gap-2">
+                            <Label>Sub-company yang Ditautkan</Label>
+                            <div className="grid gap-2 rounded-md border p-3">
+                                {subCompanies.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        Belum ada sub-company.
+                                    </p>
+                                ) : null}
+                                {subCompanies.map((company) => (
+                                    <label
+                                        key={company.id}
+                                        className="flex items-center gap-2 text-sm"
+                                    >
+                                        <Checkbox
+                                            checked={createForm.data.client_sub_company_ids.includes(String(company.id))}
+                                            onCheckedChange={() =>
+                                                createForm.setData(
+                                                    'client_sub_company_ids',
+                                                    toggleCompanyId(createForm.data.client_sub_company_ids, company.id),
+                                                )
+                                            }
+                                        />
+                                        <span>{company.label}</span>
+                                    </label>
+                                ))}
                             </div>
-                        )}
+                            <InputError message={createForm.errors.client_sub_company_ids} />
+                        </div>
                         <div className="grid gap-2">
                             <Label htmlFor="new_user_password">Kata sandi</Label>
                             <Input
@@ -231,7 +249,7 @@ export default function SettingsUsersPage({ subUsers, subCompanies }: { subUsers
                                                                 password_confirmation:
                                                                     '',
                                                                 role: subUser.role === 'client_supervisor' ? 'client_supervisor' : 'admin_staff',
-                                                                client_sub_company_id: subUser.client_sub_company_id ? String(subUser.client_sub_company_id) : '',
+                                                                client_sub_company_ids: subUser.client_sub_company_ids.map(String),
                                                             });
                                                             updateForm.clearErrors();
                                                         }}
@@ -316,9 +334,6 @@ export default function SettingsUsersPage({ subUsers, subCompanies }: { subUsers
                                     value={updateForm.data.role}
                                     onValueChange={(value) => {
                                         updateForm.setData('role', value);
-                                        if (value !== 'client_supervisor') {
-                                            updateForm.setData('client_sub_company_id', '');
-                                        }
                                     }}
                                 >
                                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -329,23 +344,34 @@ export default function SettingsUsersPage({ subUsers, subCompanies }: { subUsers
                                 </Select>
                                 <InputError message={updateForm.errors.role} />
                             </div>
-                            {updateForm.data.role === 'client_supervisor' && (
-                                <div className="grid gap-2">
-                                    <Label>Sub-company yang Diawasi</Label>
-                                    <Select
-                                        value={updateForm.data.client_sub_company_id || ''}
-                                        onValueChange={(value) => updateForm.setData('client_sub_company_id', value)}
-                                    >
-                                        <SelectTrigger><SelectValue placeholder="Pilih sub-company" /></SelectTrigger>
-                                        <SelectContent>
-                                            {subCompanies.map((company) => (
-                                                <SelectItem key={company.id} value={String(company.id)}>{company.label}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={updateForm.errors.client_sub_company_id} />
+                            <div className="grid gap-2">
+                                <Label>Sub-company yang Ditautkan</Label>
+                                <div className="grid gap-2 rounded-md border p-3">
+                                    {subCompanies.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">
+                                            Belum ada sub-company.
+                                        </p>
+                                    ) : null}
+                                    {subCompanies.map((company) => (
+                                        <label
+                                            key={company.id}
+                                            className="flex items-center gap-2 text-sm"
+                                        >
+                                            <Checkbox
+                                                checked={updateForm.data.client_sub_company_ids.includes(String(company.id))}
+                                                onCheckedChange={() =>
+                                                    updateForm.setData(
+                                                        'client_sub_company_ids',
+                                                        toggleCompanyId(updateForm.data.client_sub_company_ids, company.id),
+                                                    )
+                                                }
+                                            />
+                                            <span>{company.label}</span>
+                                        </label>
+                                    ))}
                                 </div>
-                            )}
+                                <InputError message={updateForm.errors.client_sub_company_ids} />
+                            </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="edit_user_password">
                                     Password Baru (opsional)

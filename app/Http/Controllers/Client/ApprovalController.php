@@ -21,10 +21,12 @@ class ApprovalController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        abort_unless($user?->isClientSupervisor() && $user->client_sub_company_id, 403);
+        abort_unless($user?->isClientSupervisor(), 403);
 
         $ownerId = $user->accountOwnerId();
-        $subCompanyId = (int) $user->client_sub_company_id;
+        $subCompanyIds = $user->subCompanyScopeIds();
+        abort_if($subCompanyIds === [], 403);
+
         $validated = $request->validate([
             'status' => ['nullable', Rule::in(['pending', 'approved', 'rejected'])],
         ]);
@@ -32,11 +34,15 @@ class ApprovalController extends Controller
 
         return Inertia::render('client/approvals/index', [
             'status' => $status,
-            'subCompany' => $user->clientSubCompany?->only(['id', 'code', 'name']),
+            'subCompanies' => $user->clientSubCompanies()
+                ->orderBy('name')
+                ->get(['sub_companies.id', 'code', 'name'])
+                ->map(fn ($company) => $company->only(['id', 'code', 'name']))
+                ->values(),
             'attendanceRequests' => AttendanceCorrectionRequest::query()
                 ->with(['employee:id,employee_code,first_name,last_name,sub_company_id', 'shift:id,code,name'])
                 ->where('user_id', $ownerId)
-                ->whereHas('employee', fn ($query) => $query->where('sub_company_id', $subCompanyId))
+                ->whereHas('employee', fn ($query) => $query->whereIn('sub_company_id', $subCompanyIds))
                 ->where('status', $status)
                 ->orderByDesc('attendance_date')
                 ->limit(50)
@@ -52,7 +58,7 @@ class ApprovalController extends Controller
             'leaveRequests' => LeaveRequest::query()
                 ->with('employee:id,employee_code,first_name,last_name,sub_company_id')
                 ->where('user_id', $ownerId)
-                ->whereHas('employee', fn ($query) => $query->where('sub_company_id', $subCompanyId))
+                ->whereHas('employee', fn ($query) => $query->whereIn('sub_company_id', $subCompanyIds))
                 ->where('status', $status)
                 ->orderByDesc('start_date')
                 ->limit(50)
@@ -68,7 +74,7 @@ class ApprovalController extends Controller
             'overtimeRequests' => OvertimeRequest::query()
                 ->with('employee:id,employee_code,first_name,last_name,sub_company_id')
                 ->where('user_id', $ownerId)
-                ->whereHas('employee', fn ($query) => $query->where('sub_company_id', $subCompanyId))
+                ->whereHas('employee', fn ($query) => $query->whereIn('sub_company_id', $subCompanyIds))
                 ->where('status', $status)
                 ->orderByDesc('work_date')
                 ->limit(50)
@@ -182,12 +188,14 @@ class ApprovalController extends Controller
     private function authorizeScoped(Request $request, int $employeeId, int $ownerId): void
     {
         $user = $request->user();
-        abort_unless($user?->isClientSupervisor() && $user->client_sub_company_id, 403);
+        abort_unless($user?->isClientSupervisor(), 403);
         abort_unless((int) $ownerId === $user->accountOwnerId(), 404);
+        $subCompanyIds = $user->subCompanyScopeIds();
+        abort_if($subCompanyIds === [], 403);
 
         $exists = Employee::query()
             ->where('user_id', $user->accountOwnerId())
-            ->where('sub_company_id', $user->client_sub_company_id)
+            ->whereIn('sub_company_id', $subCompanyIds)
             ->where('id', $employeeId)
             ->exists();
 

@@ -601,7 +601,7 @@ class EmployeeController extends Controller
                 $managerId = null;
 
                 if ($managerCode !== '') {
-                    $managerId = Employee::query()
+                    $managerId = Employee::withoutGlobalScope('sub_user_sub_company_records')
                         ->where('user_id', $ownerId)
                         ->where('employee_code', $managerCode)
                         ->value('id');
@@ -680,7 +680,7 @@ class EmployeeController extends Controller
                                 return;
                             }
 
-                            $isOccupied = Employee::query()
+                            $isOccupied = Employee::withoutGlobalScope('sub_user_sub_company_records')
                                 ->where('user_id', $ownerId)
                                 ->where('position_id', $value)
                                 ->exists();
@@ -948,7 +948,7 @@ class EmployeeController extends Controller
         ?int $ignoreEmployeeId = null,
     ): string {
         $hireDateValue = CarbonImmutable::parse($hireDate);
-        $sequence = Employee::query()
+        $sequence = Employee::withoutGlobalScope('sub_user_sub_company_records')
             ->where('division_id', $division->id)
             ->when($ignoreEmployeeId !== null, fn ($query) => $query->whereKeyNot($ignoreEmployeeId))
             ->count() + 1;
@@ -957,7 +957,7 @@ class EmployeeController extends Controller
             .str_pad((string) $sequence, 3, '0', STR_PAD_LEFT)
             .$hireDateValue->format('my');
 
-        $exists = Employee::query()
+        $exists = Employee::withoutGlobalScope('sub_user_sub_company_records')
             ->when($ignoreEmployeeId !== null, fn ($query) => $query->whereKeyNot($ignoreEmployeeId))
             ->where('employee_code', $candidate)
             ->exists();

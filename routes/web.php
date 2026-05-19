@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\SubscriberManagementController;
 use App\Http\Controllers\Api\Mobile\V1\AttendanceController;
 use App\Http\Controllers\Api\Mobile\V1\AttendanceCorrectionRequestController;
+use App\Http\Controllers\Api\Mobile\V1\KasbonController;
 use App\Http\Controllers\Api\Mobile\V1\LeaveController;
 use App\Http\Controllers\Api\Mobile\V1\OvertimeController;
 use App\Http\Controllers\Api\Mobile\V1\PayrollController;
@@ -132,6 +133,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::post('portal/api/overtimes', [OvertimeController::class, 'store'])->name('portal.api.overtimes.store');
     Route::put('portal/api/overtimes/{overtime}', [OvertimeController::class, 'update'])->name('portal.api.overtimes.update');
     Route::delete('portal/api/overtimes/{overtime}', [OvertimeController::class, 'destroy'])->name('portal.api.overtimes.destroy');
+    Route::get('portal/api/kasbons', [KasbonController::class, 'index'])->name('portal.api.kasbons.index');
+    Route::post('portal/api/kasbons', [KasbonController::class, 'store'])->name('portal.api.kasbons.store');
     Route::get('portal/api/shift-change-requests', [ShiftChangeRequestController::class, 'index'])->name('portal.api.shift-change-requests.index');
     Route::post('portal/api/shift-change-requests', [ShiftChangeRequestController::class, 'store'])->name('portal.api.shift-change-requests.store');
     Route::get('portal/api/payrolls/preview', [PayrollController::class, 'preview'])->name('portal.api.payrolls.preview');
@@ -149,6 +152,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/attendance-request', [UserPortalSectionController::class, 'attendanceRequest'])->name('portal.attendance-request');
     Route::get('portal/leaves', [UserPortalSectionController::class, 'leaves'])->name('portal.leaves');
     Route::get('portal/overtimes', [UserPortalSectionController::class, 'overtimes'])->name('portal.overtimes');
+    Route::get('portal/kasbons', [UserPortalSectionController::class, 'kasbons'])->name('portal.kasbons');
     Route::get('portal/payroll', [UserPortalSectionController::class, 'payroll'])->name('portal.payroll');
     Route::get('portal/profile', [UserPortalSectionController::class, 'profile'])->name('portal.profile');
     Route::get('portal/announcements', [UserPortalSectionController::class, 'announcements'])->name('portal.announcements');

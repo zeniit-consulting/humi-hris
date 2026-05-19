@@ -3,6 +3,7 @@ import {
     BellRing,
     CalendarDays,
     Clock3,
+    HandCoins,
     LogOut,
     ScanLine,
     Sparkles,
@@ -121,6 +122,7 @@ type PortalSummary = {
         attendance: string;
         leaves: string;
         overtimes: string;
+        kasbons?: string;
         payroll: string;
         profile?: string;
         dashboard: string;
@@ -144,6 +146,11 @@ const quickLinks = [
         key: 'overtimes',
         label: 'Lembur',
         icon: Clock3,
+    },
+    {
+        key: 'kasbons',
+        label: 'Kasbon',
+        icon: HandCoins,
     },
     {
         key: 'payroll',
@@ -480,7 +487,7 @@ export default function PortalPage() {
                             </div>
 
                             <div className="portal-primary-soft mt-4 rounded-[14px] p-3">
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-5 gap-2">
                                     {quickLinks.map((item) => {
                                         const href =
                                             summary?.links[
@@ -491,9 +498,9 @@ export default function PortalPage() {
                                             <a
                                                 key={item.key}
                                                 href={href}
-                                                className="rounded-[11px] bg-white px-2 py-3 text-center shadow-[0_10px_22px_rgba(15,23,42,0.06)]"
+                                                className="rounded-[11px] bg-white px-1.5 py-3 text-center shadow-[0_10px_22px_rgba(15,23,42,0.06)]"
                                             >
-                                                <span className="portal-primary-soft mx-auto inline-flex size-11 items-center justify-center rounded-lg">
+                                                <span className="portal-primary-soft mx-auto inline-flex size-10 items-center justify-center rounded-lg">
                                                     <item.icon className="portal-primary-text size-5" />
                                                 </span>
                                                 <p className="mt-2 text-[11px] font-semibold text-slate-700">

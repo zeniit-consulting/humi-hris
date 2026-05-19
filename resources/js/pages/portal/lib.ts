@@ -8,6 +8,7 @@ export type PortalLinkMap = {
     attendance: string;
     leaves: string;
     overtimes: string;
+    kasbons?: string;
     payroll: string;
     profile?: string;
     dashboard?: string;

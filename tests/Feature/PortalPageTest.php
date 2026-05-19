@@ -58,6 +58,7 @@ class PortalPageTest extends TestCase
         $this->get(route('portal.attendance'))->assertOk();
         $this->get(route('portal.leaves'))->assertOk();
         $this->get(route('portal.overtimes'))->assertOk();
+        $this->get(route('portal.kasbons'))->assertOk();
         $this->get(route('portal.payroll'))->assertOk();
     }
 

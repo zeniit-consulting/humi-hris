@@ -5,10 +5,12 @@ namespace Tests\Feature\Api;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeDeduction;
 use App\Models\EmployeeSchedule;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\Position;
+use App\Models\SubCompany;
 use App\Models\User;
 use App\Models\WorkShift;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,7 +62,7 @@ class MobileApiTest extends TestCase
             ->assertUnauthorized();
     }
 
-    public function test_mobile_employee_list_is_scoped_to_account_owner(): void
+    public function test_mobile_employee_list_for_sub_user_only_returns_linked_sub_company_employees(): void
     {
         $owner = User::factory()->create([
             'email_verified_at' => now(),
@@ -88,12 +90,50 @@ class MobileApiTest extends TestCase
             'level' => '2',
         ]);
 
-        $ownerEmployee = Employee::factory()->create([
+        $linkedCompany = SubCompany::query()->create([
             'user_id' => $owner->id,
+            'code' => 'SUB-A',
+            'name' => 'Sub A',
+        ]);
+
+        $unlinkedCompany = SubCompany::query()->create([
+            'user_id' => $owner->id,
+            'code' => 'SUB-B',
+            'name' => 'Sub B',
+        ]);
+
+        $subUser->clientSubCompanies()->attach($linkedCompany->id);
+
+        Employee::factory()->create([
+            'user_id' => $owner->id,
+            'created_by_user_id' => $owner->id,
+            'sub_company_id' => null,
             'division_id' => $ownerDivision->id,
             'position_id' => $ownerPosition->id,
             'employee_code' => 'EMP-OWN1',
             'first_name' => 'Owner',
+            'last_name' => 'Employee',
+        ]);
+
+        $subUserEmployee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'created_by_user_id' => $subUser->id,
+            'sub_company_id' => $linkedCompany->id,
+            'division_id' => $ownerDivision->id,
+            'position_id' => $ownerPosition->id,
+            'employee_code' => 'EMP-SUB1',
+            'first_name' => 'Sub',
+            'last_name' => 'Employee',
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $owner->id,
+            'created_by_user_id' => $subUser->id,
+            'sub_company_id' => $unlinkedCompany->id,
+            'division_id' => $ownerDivision->id,
+            'position_id' => $ownerPosition->id,
+            'employee_code' => 'EMP-SUB2',
+            'first_name' => 'Unlinked',
             'last_name' => 'Employee',
         ]);
 
@@ -126,8 +166,8 @@ class MobileApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonCount(1, 'data.items')
-            ->assertJsonPath('data.items.0.id', $ownerEmployee->id)
-            ->assertJsonPath('data.items.0.employee_code', 'EMP-OWN1');
+            ->assertJsonPath('data.items.0.id', $subUserEmployee->id)
+            ->assertJsonPath('data.items.0.employee_code', 'EMP-SUB1');
     }
 
     public function test_self_service_payroll_preview_only_returns_the_logged_in_employee_item(): void
@@ -367,6 +407,141 @@ class MobileApiTest extends TestCase
             ->firstOrFail();
 
         $this->assertNull($attendance->shift_id);
+    }
+
+    public function test_self_service_kasbon_returns_limit_and_stores_own_request(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'email' => 'staff@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'level' => '2',
+        ]);
+
+        $selfEmployee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'staff@example.com',
+            'base_salary' => 6_000_000,
+        ]);
+
+        $otherEmployee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'other@example.com',
+            'base_salary' => 9_000_000,
+        ]);
+
+        EmployeeDeduction::query()->create([
+            'user_id' => $owner->id,
+            'employee_id' => $selfEmployee->id,
+            'type' => 'kasbon',
+            'amount' => 500_000,
+            'deduction_date' => today()->toDateString(),
+            'notes' => 'Transport',
+        ]);
+
+        EmployeeDeduction::query()->create([
+            'user_id' => $owner->id,
+            'employee_id' => $otherEmployee->id,
+            'type' => 'kasbon',
+            'amount' => 900_000,
+            'deduction_date' => today()->toDateString(),
+            'notes' => 'Other',
+        ]);
+
+        Sanctum::actingAs($subUser, ['mobile']);
+
+        $this->getJson('/api/mobile/v1/kasbons?period='.today()->format('Y-m'))
+            ->assertOk()
+            ->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.limit.max_amount', 3_000_000)
+            ->assertJsonPath('data.limit.used_amount', 500_000)
+            ->assertJsonPath('data.limit.available_amount', 2_500_000);
+
+        $this->postJson('/api/mobile/v1/kasbons', [
+            'employee_id' => $otherEmployee->id,
+            'amount' => 1_000_000,
+            'deduction_date' => today()->toDateString(),
+            'notes' => 'Keperluan keluarga',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.employee_id', $selfEmployee->id);
+
+        $this->assertDatabaseHas('employee_deductions', [
+            'employee_id' => $selfEmployee->id,
+            'type' => 'kasbon',
+            'amount' => 1_000_000,
+            'notes' => 'Keperluan keluarga',
+        ]);
+    }
+
+    public function test_self_service_kasbon_blocks_amount_over_available_limit(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'email' => 'staff@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'level' => '2',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'staff@example.com',
+            'base_salary' => 4_000_000,
+        ]);
+
+        EmployeeDeduction::query()->create([
+            'user_id' => $owner->id,
+            'employee_id' => $employee->id,
+            'type' => 'kasbon',
+            'amount' => 1_500_000,
+            'deduction_date' => today()->toDateString(),
+            'notes' => 'Existing',
+        ]);
+
+        Sanctum::actingAs($subUser, ['mobile']);
+
+        $this->postJson('/api/mobile/v1/kasbons', [
+            'employee_id' => $employee->id,
+            'amount' => 600_000,
+            'deduction_date' => today()->toDateString(),
+            'notes' => 'Melebihi limit',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false);
     }
 
     public function test_self_service_attendance_flow_stores_location_and_updates_open_record(): void

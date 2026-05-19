@@ -420,6 +420,7 @@ class PortalController extends Controller
                 'schedules' => route('portal.attendance'),
                 'leaves' => route('portal.leaves'),
                 'overtimes' => route('portal.overtimes'),
+                'kasbons' => route('portal.kasbons'),
                 'payroll' => route('portal.payroll'),
                 'profile' => route('portal.profile'),
                 'dashboard' => route('portal.index'),
