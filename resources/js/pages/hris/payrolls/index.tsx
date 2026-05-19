@@ -19,6 +19,13 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -144,6 +151,7 @@ export default function PayrollPage() {
         sub_company_id || '__all',
     );
     const [sendingPayslips, setSendingPayslips] = useState(false);
+    const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
     const [sendingPayslipItemIds, setSendingPayslipItemIds] = useState<
         number[]
     >([]);
@@ -221,12 +229,14 @@ export default function PayrollPage() {
         generateForm.setData('period', periodState);
         generateForm.post(generatePayroll.url(), {
             preserveScroll: true,
+            onSuccess: () => setGenerateDialogOpen(false),
         });
     };
 
     const handleGenerateTHR = () => {
         thrForm.post('/hris/payrolls/thr/generate', {
             preserveScroll: true,
+            onSuccess: () => setGenerateDialogOpen(false),
         });
     };
 
@@ -345,207 +355,111 @@ export default function PayrollPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>
-                            {type === 'thr'
-                                ? 'Generate THR'
-                                : 'Generate Payroll'}
-                        </CardTitle>
-                        <CardDescription>
-                            {type === 'thr'
-                                ? 'Generate Tunjangan Hari Raya (THR) berdasarkan masa kerja karyawan.'
-                                : 'Pilih periode payroll, lalu sistem akan auto-generate dari gaji pokok, tunjangan aktif, serta potongan kasbon dan denda.'}
-                        </CardDescription>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <CardTitle>
+                                    {type === 'thr'
+                                        ? 'Generate THR'
+                                        : 'Generate Payroll'}
+                                </CardTitle>
+                                <CardDescription>
+                                    Periode {periodState || '-'} ·{' '}
+                                    {subCompanyState === '__all'
+                                        ? 'Semua karyawan'
+                                        : (subCompanies.find(
+                                              (company) =>
+                                                  String(company.id) ===
+                                                  subCompanyState,
+                                          )?.label ?? 'Sub-company')}
+                                </CardDescription>
+                            </div>
+                            <Button
+                                type="button"
+                                onClick={() => setGenerateDialogOpen(true)}
+                                disabled={isLocked}
+                            >
+                                <Calculator className="size-4" />
+                                {type === 'thr'
+                                    ? 'Buka Generate THR'
+                                    : 'Buka Generate Payroll'}
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex flex-wrap items-end gap-3">
-                            <div className="grid w-[220px] shrink-0 gap-2">
-                                <Label htmlFor="period">Periode</Label>
-                                <div className="relative">
-                                    <CalendarDays className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        id="period"
-                                        type="month"
-                                        value={periodState}
-                                        onChange={(event) =>
-                                            setPeriodState(event.target.value)
-                                        }
-                                        className="pl-9"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex items-end">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={applyPeriodFilter}
-                                    className="whitespace-nowrap"
-                                >
-                                    <Filter className="size-4" />
-                                    Lihat Preview
-                                </Button>
-                            </div>
-                            <div className="grid w-[280px] shrink-0 gap-2">
-                                <Label>Sub-company</Label>
-                                <Select
-                                    value={subCompanyState}
-                                    onValueChange={setSubCompanyState}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="__all">
-                                            Semua karyawan
-                                        </SelectItem>
-                                        {subCompanies.map((company) => (
-                                            <SelectItem
-                                                key={company.id}
-                                                value={String(company.id)}
-                                            >
-                                                {company.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
+                        <div className="flex flex-wrap items-center gap-2">
                             {type === 'regular' ? (
                                 <>
-                                    <div className="flex items-end">
-                                        <Button
-                                            type="button"
-                                            onClick={handleGenerate}
-                                            disabled={
-                                                generateForm.processing ||
-                                                periodState === ''
-                                            }
-                                            className="whitespace-nowrap"
-                                        >
-                                            <Calculator className="size-4" />
-                                            {generateForm.processing
-                                                ? 'Memproses...'
-                                                : 'Generate Payroll'}
-                                        </Button>
-                                    </div>
-                                    <div className="flex items-end">
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            onClick={handleSave}
-                                            disabled={!run || run.is_saved}
-                                            className="whitespace-nowrap"
-                                        >
-                                            <Sparkles className="size-4" />
-                                            {run?.is_saved
-                                                ? 'Payroll Tersimpan'
-                                                : 'Simpan Payroll'}
-                                        </Button>
-                                    </div>
-                                    <div className="flex items-end">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={handleSendPayslips}
-                                            disabled={
-                                                !run ||
-                                                !run.is_saved ||
-                                                items.length === 0 ||
-                                                sendingPayslips
-                                            }
-                                            className="whitespace-nowrap"
-                                        >
-                                            <Send className="size-4" />
-                                            {sendingPayslips
-                                                ? 'Masuk queue...'
-                                                : 'Kirim Payslip WA'}
-                                        </Button>
-                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={handleSave}
+                                        disabled={!run || run.is_saved}
+                                        className="whitespace-nowrap"
+                                    >
+                                        <Sparkles className="size-4" />
+                                        {run?.is_saved
+                                            ? 'Payroll Tersimpan'
+                                            : 'Simpan Payroll'}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleSendPayslips}
+                                        disabled={
+                                            !run ||
+                                            !run.is_saved ||
+                                            items.length === 0 ||
+                                            sendingPayslips
+                                        }
+                                        className="whitespace-nowrap"
+                                    >
+                                        <Send className="size-4" />
+                                        {sendingPayslips
+                                            ? 'Masuk queue...'
+                                            : 'Kirim Payslip WA'}
+                                    </Button>
                                     {run && run.is_saved && (
                                         <>
-                                            <div className="flex items-end">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    asChild
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                asChild
+                                            >
+                                                <a
+                                                    href={`/hris/payrolls/${run.id}/export/mandiri${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                 >
-                                                    <a
-                                                        href={`/hris/payrolls/${run.id}/export/mandiri${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
-                                                    >
-                                                        <Download className="mr-1.5 size-3.5" />
-                                                        Export Mandiri
-                                                    </a>
-                                                </Button>
-                                            </div>
-                                            <div className="flex items-end">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    asChild
+                                                    <Download className="mr-1.5 size-3.5" />
+                                                    Export Mandiri
+                                                </a>
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                asChild
+                                            >
+                                                <a
+                                                    href={`/hris/payrolls/${run.id}/export/bca${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                 >
-                                                    <a
-                                                        href={`/hris/payrolls/${run.id}/export/bca${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
-                                                    >
-                                                        <Download className="mr-1.5 size-3.5" />
-                                                        Export BCA
-                                                    </a>
-                                                </Button>
-                                            </div>
+                                                    <Download className="mr-1.5 size-3.5" />
+                                                    Export BCA
+                                                </a>
+                                            </Button>
                                         </>
                                     )}
                                 </>
                             ) : (
-                                <>
-                                    <div className="grid w-[220px] shrink-0 gap-2">
-                                        <Label htmlFor="reference_date">
-                                            Tanggal Referensi THR
-                                        </Label>
-                                        <Input
-                                            id="reference_date"
-                                            type="date"
-                                            value={thrForm.data.reference_date}
-                                            onChange={(event) =>
-                                                thrForm.setData(
-                                                    'reference_date',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            Tanggal ini digunakan menghitung
-                                            masa kerja karyawan
-                                        </p>
-                                    </div>
-                                    <div className="flex items-end">
-                                        <Button
-                                            type="button"
-                                            onClick={handleGenerateTHR}
-                                            disabled={
-                                                thrForm.processing ||
-                                                !thrForm.data.reference_date
-                                            }
-                                            className="whitespace-nowrap"
-                                        >
-                                            <Calculator className="size-4" />
-                                            {thrForm.processing
-                                                ? 'Memproses...'
-                                                : 'Generate THR'}
-                                        </Button>
-                                    </div>
-                                    <div className="flex items-end">
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            onClick={handleSave}
-                                            disabled={!run || run.is_saved}
-                                            className="whitespace-nowrap"
-                                        >
-                                            <Sparkles className="size-4" />
-                                            {run?.is_saved
-                                                ? 'THR Tersimpan'
-                                                : 'Simpan THR'}
-                                        </Button>
-                                    </div>
-                                </>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={handleSave}
+                                    disabled={!run || run.is_saved}
+                                    className="whitespace-nowrap"
+                                >
+                                    <Sparkles className="size-4" />
+                                    {run?.is_saved
+                                        ? 'THR Tersimpan'
+                                        : 'Simpan THR'}
+                                </Button>
                             )}
                         </div>
                     </CardContent>
@@ -967,6 +881,127 @@ export default function PayrollPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            <Dialog
+                open={generateDialogOpen}
+                onOpenChange={setGenerateDialogOpen}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {type === 'thr'
+                                ? 'Generate THR'
+                                : 'Generate Payroll'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {type === 'thr'
+                                ? 'Generate Tunjangan Hari Raya berdasarkan tanggal referensi masa kerja.'
+                                : 'Pilih periode payroll, lalu sistem akan auto-generate dari gaji pokok, tunjangan aktif, potongan kasbon, dan denda.'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="period">Periode</Label>
+                            <div className="relative">
+                                <CalendarDays className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    id="period"
+                                    type="month"
+                                    value={periodState}
+                                    onChange={(event) =>
+                                        setPeriodState(event.target.value)
+                                    }
+                                    className="pl-9"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label>Sub-company</Label>
+                            <Select
+                                value={subCompanyState}
+                                onValueChange={setSubCompanyState}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__all">
+                                        Semua karyawan
+                                    </SelectItem>
+                                    {subCompanies.map((company) => (
+                                        <SelectItem
+                                            key={company.id}
+                                            value={String(company.id)}
+                                        >
+                                            {company.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {type === 'thr' ? (
+                            <div className="grid gap-2">
+                                <Label htmlFor="reference_date">
+                                    Tanggal Referensi THR
+                                </Label>
+                                <Input
+                                    id="reference_date"
+                                    type="date"
+                                    value={thrForm.data.reference_date}
+                                    onChange={(event) =>
+                                        thrForm.setData(
+                                            'reference_date',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Tanggal ini digunakan menghitung masa kerja
+                                    karyawan.
+                                </p>
+                            </div>
+                        ) : null}
+
+                        <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={applyPeriodFilter}
+                            >
+                                <Filter className="size-4" />
+                                Lihat Preview
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={
+                                    type === 'thr'
+                                        ? handleGenerateTHR
+                                        : handleGenerate
+                                }
+                                disabled={
+                                    type === 'thr'
+                                        ? thrForm.processing ||
+                                          !thrForm.data.reference_date
+                                        : generateForm.processing ||
+                                          periodState === ''
+                                }
+                            >
+                                <Calculator className="size-4" />
+                                {type === 'thr'
+                                    ? thrForm.processing
+                                        ? 'Memproses...'
+                                        : 'Generate THR'
+                                    : generateForm.processing
+                                      ? 'Memproses...'
+                                      : 'Generate Payroll'}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

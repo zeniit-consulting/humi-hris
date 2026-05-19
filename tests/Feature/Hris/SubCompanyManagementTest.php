@@ -107,7 +107,66 @@ class SubCompanyManagementTest extends TestCase
             'user_id' => $user->id,
             'first_name' => 'Rina Outsource',
             'sub_company_id' => $subCompany->id,
+            'employment_type' => 'PKWT',
+        ]);
+    }
+
+    public function test_master_can_update_sub_company_employee_type_to_pkwt_or_pkwtt(): void
+    {
+        $user = User::factory()->create();
+        $division = Division::factory()->create(['user_id' => $user->id]);
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'level' => '4',
+        ]);
+        $subCompany = SubCompany::query()->create([
+            'user_id' => $user->id,
+            'code' => 'CLIENT-D',
+            'name' => 'PT Client D',
+            'is_active' => true,
+        ]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-001',
+            'first_name' => 'Dina Client',
+            'last_name' => null,
+            'email' => 'dina@example.test',
+            'phone' => '628123456781',
+            'hire_date' => '2026-05-01',
+            'employment_status' => 'active',
             'employment_type' => 'OS',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'division_id' => $division->id,
+            'sub_company_id' => $subCompany->id,
+            'position_id' => $position->id,
+            'is_active' => true,
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->put(route('hris.employees.update', $employee), [
+                'employee_code' => $employee->employee_code,
+                'full_name' => 'Dina Client',
+                'email' => 'dina@example.test',
+                'phone' => '628123456781',
+                'hire_date' => '2026-05-01',
+                'employment_status' => 'active',
+                'employment_type' => 'PKWTT',
+                'pph21_method' => 'gross',
+                'pph21_rate' => 0,
+                'division_id' => $division->id,
+                'sub_company_id' => $subCompany->id,
+                'position_id' => $position->id,
+                'is_active' => true,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('employees', [
+            'id' => $employee->id,
+            'sub_company_id' => $subCompany->id,
+            'employment_type' => 'PKWTT',
         ]);
     }
 

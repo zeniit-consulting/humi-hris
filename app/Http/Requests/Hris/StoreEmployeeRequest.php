@@ -47,14 +47,6 @@ class StoreEmployeeRequest extends FormRequest
             );
         }
 
-        $subCompanyValue = array_key_exists('sub_company_id', $normalizedPayload)
-            ? $normalizedPayload['sub_company_id']
-            : $this->input('sub_company_id');
-
-        if ($subCompanyValue !== null && $subCompanyValue !== '') {
-            $normalizedPayload['employment_type'] = 'OS';
-        }
-
         if (($this->input('marital_status') ?? '') === 'single') {
             $normalizedPayload['children_count'] = 0;
         }

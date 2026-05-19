@@ -1,11 +1,18 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Filter, RotateCcw, Trash2 } from 'lucide-react';
+import { Filter, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -51,6 +58,7 @@ export default function ManpowerRequestPage() {
     const { requests, subCompanies, positions, filters, statusOptions, priorityOptions, stats } = usePage<PageProps>().props;
     const [filterState, setFilterState] = useState(filters);
     const [editing, setEditing] = useState<Row | null>(null);
+    const [formDialogOpen, setFormDialogOpen] = useState(false);
     const form = useForm(emptyForm);
 
     useEffect(() => {
@@ -62,15 +70,29 @@ export default function ManpowerRequestPage() {
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (editing) {
-            form.put(`${pageUrl}/${editing.id}`, { preserveScroll: true, onSuccess: () => { setEditing(null); form.setData(emptyForm); } });
+            form.put(`${pageUrl}/${editing.id}`, { preserveScroll: true, onSuccess: closeFormDialog });
             return;
         }
-        form.post(pageUrl, { preserveScroll: true, onSuccess: () => form.setData(emptyForm) });
+        form.post(pageUrl, { preserveScroll: true, onSuccess: closeFormDialog });
     };
 
     const applyFilter = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         router.get(pageUrl, filterState, { preserveState: true, preserveScroll: true, replace: true });
+    };
+
+    const openCreateDialog = () => {
+        setEditing(null);
+        form.clearErrors();
+        form.setData(emptyForm);
+        setFormDialogOpen(true);
+    };
+
+    const closeFormDialog = () => {
+        setFormDialogOpen(false);
+        setEditing(null);
+        form.clearErrors();
+        form.setData(emptyForm);
     };
 
     const startEdit = (row: Row) => {
@@ -88,7 +110,70 @@ export default function ManpowerRequestPage() {
             notes: row.notes ?? '',
         });
         form.clearErrors();
+        setFormDialogOpen(true);
     };
+
+    const requestForm = (
+        <form onSubmit={submit} className="space-y-5">
+            <div className="rounded-lg border bg-muted/30 p-4">
+                <p className="font-medium">{editing ? 'Perbarui kebutuhan manpower yang sudah tercatat.' : 'Isi kebutuhan manpower baru dari klien atau sub-company.'}</p>
+                <p className="mt-1 text-sm text-muted-foreground">Lengkapi detail posisi, target headcount, serta status pemenuhan agar tim operasional mudah menindaklanjuti.</p>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-12">
+                <Field label="Sub-company" error={form.errors.sub_company_id} className="xl:col-span-4">
+                    <Select value={form.data.sub_company_id} onValueChange={(value) => form.setData('sub_company_id', value)}>
+                        <SelectTrigger><SelectValue placeholder="Pilih klien" /></SelectTrigger>
+                        <SelectContent>{subCompanies.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                </Field>
+                <Field label="Posisi" error={form.errors.position_id} className="xl:col-span-4">
+                    <Select value={form.data.position_id || '__none'} onValueChange={(value) => form.setData('position_id', value === '__none' ? '' : value)}>
+                        <SelectTrigger><SelectValue placeholder="Opsional" /></SelectTrigger>
+                        <SelectContent><SelectItem value="__none">Tanpa posisi master</SelectItem>{positions.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                </Field>
+                <Field label="Judul kebutuhan" error={form.errors.title} className="xl:col-span-4">
+                    <Input value={form.data.title} onChange={(event) => form.setData('title', event.target.value)} />
+                </Field>
+                <Field label="Headcount Diminta" error={form.errors.requested_headcount} className="md:col-span-1 xl:col-span-3">
+                    <Input type="number" min="1" value={form.data.requested_headcount} onChange={(event) => form.setData('requested_headcount', event.target.value)} />
+                </Field>
+                <Field label="Headcount Terpenuhi" error={form.errors.fulfilled_headcount} className="md:col-span-1 xl:col-span-3">
+                    <Input type="number" min="0" value={form.data.fulfilled_headcount} onChange={(event) => form.setData('fulfilled_headcount', event.target.value)} />
+                </Field>
+                <Field label="Dibutuhkan sebelum" error={form.errors.needed_by} className="md:col-span-1 xl:col-span-3">
+                    <Input type="date" value={form.data.needed_by} onChange={(event) => form.setData('needed_by', event.target.value)} />
+                </Field>
+                <Field label="Status" error={form.errors.status} className="md:col-span-1 xl:col-span-3">
+                    <Select value={form.data.status} onValueChange={(value) => form.setData('status', value)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{statusOptions.map((status) => <SelectItem key={status} value={status}>{statusLabels[status]}</SelectItem>)}</SelectContent>
+                    </Select>
+                </Field>
+                <Field label="Prioritas" error={form.errors.priority} className="md:col-span-1 xl:col-span-3">
+                    <Select value={form.data.priority} onValueChange={(value) => form.setData('priority', value)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{priorityOptions.map((priority) => <SelectItem key={priority} value={priority}>{priorityLabels[priority]}</SelectItem>)}</SelectContent>
+                    </Select>
+                </Field>
+                <div className="grid gap-2 xl:col-span-6">
+                    <Label>Requirement</Label>
+                    <textarea className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm" value={form.data.requirements} onChange={(event) => form.setData('requirements', event.target.value)} />
+                    <InputError message={form.errors.requirements} />
+                </div>
+                <div className="grid gap-2 xl:col-span-6">
+                    <Label>Catatan</Label>
+                    <textarea className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm" value={form.data.notes} onChange={(event) => form.setData('notes', event.target.value)} />
+                    <InputError message={form.errors.notes} />
+                </div>
+            </div>
+            <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
+                <Button type="button" variant="outline" onClick={closeFormDialog}>Batal</Button>
+                <Button disabled={form.processing}>{editing ? 'Simpan Perubahan' : 'Tambah Request'}</Button>
+            </div>
+        </form>
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -100,73 +185,12 @@ export default function ManpowerRequestPage() {
                     <Stat label="Kebutuhan Belum Terpenuhi" value={stats.remaining} />
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{editing ? `Edit ${editing.request_number}` : 'Tambah Manpower Request'}</CardTitle>
-                        <CardDescription>Catat kebutuhan tenaga kerja dari klien/sub-company.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={submit} className="space-y-5">
-                            <div className="rounded-lg border bg-muted/30 p-4">
-                                <p className="font-medium">{editing ? 'Perbarui kebutuhan manpower yang sudah tercatat.' : 'Isi kebutuhan manpower baru dari klien atau sub-company.'}</p>
-                                <p className="mt-1 text-sm text-muted-foreground">Lengkapi detail posisi, target headcount, serta status pemenuhan agar tim operasional mudah menindaklanjuti.</p>
-                            </div>
-
-                            <div className="grid gap-4 xl:grid-cols-12">
-                            <Field label="Sub-company" error={form.errors.sub_company_id} className="xl:col-span-4">
-                                <Select value={form.data.sub_company_id} onValueChange={(value) => form.setData('sub_company_id', value)}>
-                                    <SelectTrigger><SelectValue placeholder="Pilih klien" /></SelectTrigger>
-                                    <SelectContent>{subCompanies.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.label}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </Field>
-                            <Field label="Posisi" error={form.errors.position_id} className="xl:col-span-4">
-                                <Select value={form.data.position_id || '__none'} onValueChange={(value) => form.setData('position_id', value === '__none' ? '' : value)}>
-                                    <SelectTrigger><SelectValue placeholder="Opsional" /></SelectTrigger>
-                                    <SelectContent><SelectItem value="__none">Tanpa posisi master</SelectItem>{positions.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </Field>
-                            <Field label="Judul kebutuhan" error={form.errors.title} className="xl:col-span-4">
-                                <Input value={form.data.title} onChange={(event) => form.setData('title', event.target.value)} />
-                            </Field>
-                            <Field label="Headcount Diminta" error={form.errors.requested_headcount} className="md:col-span-1 xl:col-span-3">
-                                <Input type="number" min="1" value={form.data.requested_headcount} onChange={(event) => form.setData('requested_headcount', event.target.value)} />
-                            </Field>
-                            <Field label="Headcount Terpenuhi" error={form.errors.fulfilled_headcount} className="md:col-span-1 xl:col-span-3">
-                                <Input type="number" min="0" value={form.data.fulfilled_headcount} onChange={(event) => form.setData('fulfilled_headcount', event.target.value)} />
-                            </Field>
-                            <Field label="Dibutuhkan sebelum" error={form.errors.needed_by} className="md:col-span-1 xl:col-span-3">
-                                <Input type="date" value={form.data.needed_by} onChange={(event) => form.setData('needed_by', event.target.value)} />
-                            </Field>
-                            <Field label="Status" error={form.errors.status} className="md:col-span-1 xl:col-span-3">
-                                <Select value={form.data.status} onValueChange={(value) => form.setData('status', value)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>{statusOptions.map((status) => <SelectItem key={status} value={status}>{statusLabels[status]}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </Field>
-                            <Field label="Prioritas" error={form.errors.priority} className="md:col-span-1 xl:col-span-3">
-                                <Select value={form.data.priority} onValueChange={(value) => form.setData('priority', value)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>{priorityOptions.map((priority) => <SelectItem key={priority} value={priority}>{priorityLabels[priority]}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </Field>
-                            <div className="grid gap-2 xl:col-span-6">
-                                <Label>Requirement</Label>
-                                <textarea className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm" value={form.data.requirements} onChange={(event) => form.setData('requirements', event.target.value)} />
-                                <InputError message={form.errors.requirements} />
-                            </div>
-                            <div className="grid gap-2 xl:col-span-6">
-                                <Label>Catatan</Label>
-                                <textarea className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm" value={form.data.notes} onChange={(event) => form.setData('notes', event.target.value)} />
-                                <InputError message={form.errors.notes} />
-                            </div>
-                            </div>
-                            <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
-                                {editing && <Button type="button" variant="outline" onClick={() => { setEditing(null); form.setData(emptyForm); }}>Batal</Button>}
-                                <Button disabled={form.processing}>{editing ? 'Simpan Perubahan' : 'Tambah Request'}</Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+                <div className="flex justify-end">
+                    <Button type="button" onClick={openCreateDialog}>
+                        <Plus className="size-4" />
+                        Tambah Manpower Request
+                    </Button>
+                </div>
 
                 <Card>
                     <CardHeader><CardTitle>Filter</CardTitle></CardHeader>
@@ -211,6 +235,25 @@ export default function ManpowerRequestPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            <Dialog
+                open={formDialogOpen}
+                onOpenChange={(open) => {
+                    if (open) {
+                        setFormDialogOpen(true);
+                    } else {
+                        closeFormDialog();
+                    }
+                }}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>{editing ? `Edit ${editing.request_number}` : 'Tambah Manpower Request'}</DialogTitle>
+                        <DialogDescription>Catat kebutuhan tenaga kerja dari klien/sub-company.</DialogDescription>
+                    </DialogHeader>
+                    {requestForm}
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

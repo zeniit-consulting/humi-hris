@@ -2870,12 +2870,8 @@ export default function EmployeesIndex() {
                                                     subCompanyId,
                                                 );
 
-                                                if (subCompanyId !== '') {
-                                                    employeeForm.setData(
-                                                        'employment_type',
-                                                        'OS',
-                                                    );
-                                                } else if (
+                                                if (
+                                                    subCompanyId === '' &&
                                                     employeeForm.data
                                                         .employment_type ===
                                                     'OS'

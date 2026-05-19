@@ -147,6 +147,7 @@ export default function SubCompaniesIndex() {
     );
     const [editingLocation, setEditingLocation] =
         useState<AttendanceLocation | null>(null);
+    const [locationDialogOpen, setLocationDialogOpen] = useState(false);
 
     const filterForm = useForm({
         search: filters.search,
@@ -241,12 +242,23 @@ export default function SubCompaniesIndex() {
             radius_meters: String(location.radius_meters),
             is_active: location.is_active,
         });
+        setLocationDialogOpen(true);
     };
 
     const resetLocationForm = () => {
         setEditingLocation(null);
         locationForm.clearErrors();
         locationForm.setData(LOCATION_DEFAULT);
+    };
+
+    const openCreateLocationDialog = () => {
+        resetLocationForm();
+        setLocationDialogOpen(true);
+    };
+
+    const closeLocationDialog = () => {
+        setLocationDialogOpen(false);
+        resetLocationForm();
     };
 
     const submitLocation = (event: FormEvent) => {
@@ -258,7 +270,7 @@ export default function SubCompaniesIndex() {
                 `/hris/sub-companies/${selectedCompany.id}/locations/${editingLocation.id}`,
                 {
                     preserveScroll: true,
-                    onSuccess: resetLocationForm,
+                    onSuccess: closeLocationDialog,
                 },
             );
             return;
@@ -268,7 +280,7 @@ export default function SubCompaniesIndex() {
             `/hris/sub-companies/${selectedCompany.id}/locations`,
             {
                 preserveScroll: true,
-                onSuccess: resetLocationForm,
+                onSuccess: closeLocationDialog,
             },
         );
     };
@@ -553,17 +565,26 @@ export default function SubCompaniesIndex() {
                             </CardDescription>
                         </div>
                         {selectedCompany ? (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => editCompany(selectedCompany)}
-                            >
-                                <Pencil className="size-4" />
-                                Edit Company
-                            </Button>
+                            <div className="flex flex-wrap gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => editCompany(selectedCompany)}
+                                >
+                                    <Pencil className="size-4" />
+                                    Edit Company
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={openCreateLocationDialog}
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Lokasi
+                                </Button>
+                            </div>
                         ) : null}
                     </CardHeader>
-                    <CardContent className="grid gap-6 xl:grid-cols-[1fr_0.85fr]">
+                    <CardContent>
                         <div className="space-y-3">
                             {!selectedCompany ? (
                                 <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
@@ -639,106 +660,6 @@ export default function SubCompaniesIndex() {
                                 )
                             )}
                         </div>
-
-                        <form onSubmit={submitLocation} className="space-y-3">
-                            <div className="rounded-lg border bg-muted/30 p-4">
-                                <p className="font-semibold">
-                                    {editingLocation
-                                        ? 'Edit Lokasi'
-                                        : 'Tambah Lokasi'}
-                                </p>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    Lokasi aktif dipakai sebagai radius absen
-                                    karyawan outsourcing di sub-company ini.
-                                </p>
-                            </div>
-                            <Field
-                                id="location_name"
-                                label="Nama lokasi"
-                                value={locationForm.data.name}
-                                onChange={(value) =>
-                                    locationForm.setData('name', value)
-                                }
-                                error={locationForm.errors.name}
-                                required
-                            />
-                            <TextareaField
-                                id="location_address"
-                                label="Alamat lokasi"
-                                value={locationForm.data.address}
-                                onChange={(value) =>
-                                    locationForm.setData('address', value)
-                                }
-                                error={locationForm.errors.address}
-                            />
-                            <div className="grid gap-3 md:grid-cols-2">
-                                <Field
-                                    id="latitude"
-                                    label="Latitude"
-                                    type="number"
-                                    step="0.0000001"
-                                    value={locationForm.data.latitude}
-                                    onChange={(value) =>
-                                        locationForm.setData('latitude', value)
-                                    }
-                                    error={locationForm.errors.latitude}
-                                    required
-                                />
-                                <Field
-                                    id="longitude"
-                                    label="Longitude"
-                                    type="number"
-                                    step="0.0000001"
-                                    value={locationForm.data.longitude}
-                                    onChange={(value) =>
-                                        locationForm.setData('longitude', value)
-                                    }
-                                    error={locationForm.errors.longitude}
-                                    required
-                                />
-                            </div>
-                            <Field
-                                id="radius_meters"
-                                label="Radius meter"
-                                type="number"
-                                min="10"
-                                value={locationForm.data.radius_meters}
-                                onChange={(value) =>
-                                    locationForm.setData('radius_meters', value)
-                                }
-                                error={locationForm.errors.radius_meters}
-                                required
-                            />
-                            <CheckboxField
-                                id="location_active"
-                                label="Lokasi aktif"
-                                checked={locationForm.data.is_active}
-                                onChange={(checked) =>
-                                    locationForm.setData('is_active', checked)
-                                }
-                            />
-                            <div className="flex justify-between gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={resetLocationForm}
-                                >
-                                    Reset
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={
-                                        !selectedCompany ||
-                                        locationForm.processing
-                                    }
-                                >
-                                    <MapPin className="size-4" />
-                                    {editingLocation
-                                        ? 'Update Lokasi'
-                                        : 'Tambah Lokasi'}
-                                </Button>
-                            </div>
-                        </form>
                     </CardContent>
                 </Card>
             </div>
@@ -874,6 +795,116 @@ export default function SubCompaniesIndex() {
                                     {editingCompany ? 'Update' : 'Tambah'}
                                 </Button>
                             </div>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={locationDialogOpen}
+                onOpenChange={(open) => {
+                    if (open) {
+                        setLocationDialogOpen(true);
+                    } else {
+                        closeLocationDialog();
+                    }
+                }}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {editingLocation ? 'Edit Lokasi' : 'Tambah Lokasi'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Lokasi aktif dipakai sebagai radius absen karyawan
+                            outsourcing di sub-company ini.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={submitLocation} className="space-y-3">
+                        <Field
+                            id="location_name"
+                            label="Nama lokasi"
+                            value={locationForm.data.name}
+                            onChange={(value) =>
+                                locationForm.setData('name', value)
+                            }
+                            error={locationForm.errors.name}
+                            required
+                        />
+                        <TextareaField
+                            id="location_address"
+                            label="Alamat lokasi"
+                            value={locationForm.data.address}
+                            onChange={(value) =>
+                                locationForm.setData('address', value)
+                            }
+                            error={locationForm.errors.address}
+                        />
+                        <div className="grid gap-3 md:grid-cols-2">
+                            <Field
+                                id="latitude"
+                                label="Latitude"
+                                type="number"
+                                step="0.0000001"
+                                value={locationForm.data.latitude}
+                                onChange={(value) =>
+                                    locationForm.setData('latitude', value)
+                                }
+                                error={locationForm.errors.latitude}
+                                required
+                            />
+                            <Field
+                                id="longitude"
+                                label="Longitude"
+                                type="number"
+                                step="0.0000001"
+                                value={locationForm.data.longitude}
+                                onChange={(value) =>
+                                    locationForm.setData('longitude', value)
+                                }
+                                error={locationForm.errors.longitude}
+                                required
+                            />
+                        </div>
+                        <Field
+                            id="radius_meters"
+                            label="Radius meter"
+                            type="number"
+                            min="10"
+                            value={locationForm.data.radius_meters}
+                            onChange={(value) =>
+                                locationForm.setData('radius_meters', value)
+                            }
+                            error={locationForm.errors.radius_meters}
+                            required
+                        />
+                        <CheckboxField
+                            id="location_active"
+                            label="Lokasi aktif"
+                            checked={locationForm.data.is_active}
+                            onChange={(checked) =>
+                                locationForm.setData('is_active', checked)
+                            }
+                        />
+                        <div className="flex justify-end gap-2 border-t pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={closeLocationDialog}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={
+                                    !selectedCompany || locationForm.processing
+                                }
+                            >
+                                <MapPin className="size-4" />
+                                {editingLocation
+                                    ? 'Update Lokasi'
+                                    : 'Tambah Lokasi'}
+                            </Button>
                         </div>
                     </form>
                 </DialogContent>
