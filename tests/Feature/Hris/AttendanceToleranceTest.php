@@ -19,15 +19,19 @@ class AttendanceToleranceTest extends TestCase
         $user = User::factory()->create();
         $employee = Employee::factory()->create(['user_id' => $user->id]);
 
-        WorkShift::query()->create([
-            'user_id' => $user->id,
-            'code' => '0817',
-            'name' => 'Pagi',
-            'start_time' => '08:00',
-            'end_time' => '17:00',
-            'is_day_off' => false,
-            'late_tolerance_minutes' => 15,
-        ]);
+        WorkShift::query()->updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'code' => '0817',
+            ],
+            [
+                'name' => 'Pagi',
+                'start_time' => '08:00',
+                'end_time' => '17:00',
+                'is_day_off' => false,
+                'late_tolerance_minutes' => 15,
+            ],
+        );
 
         EmployeeSchedule::query()->create([
             'user_id' => $user->id,
@@ -61,15 +65,19 @@ class AttendanceToleranceTest extends TestCase
         $user = User::factory()->create();
         $employee = Employee::factory()->create(['user_id' => $user->id]);
 
-        WorkShift::query()->create([
-            'user_id' => $user->id,
-            'code' => '0817',
-            'name' => 'Pagi',
-            'start_time' => '08:00',
-            'end_time' => '17:00',
-            'is_day_off' => false,
-            'late_tolerance_minutes' => 15,
-        ]);
+        WorkShift::query()->updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'code' => '0817',
+            ],
+            [
+                'name' => 'Pagi',
+                'start_time' => '08:00',
+                'end_time' => '17:00',
+                'is_day_off' => false,
+                'late_tolerance_minutes' => 15,
+            ],
+        );
 
         EmployeeSchedule::query()->create([
             'user_id' => $user->id,

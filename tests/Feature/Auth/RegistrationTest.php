@@ -44,6 +44,13 @@ class RegistrationTest extends TestCase
             'user_id' => $user->id,
             'name' => 'PT Test Company',
         ]);
+
+        foreach (['OFF', '0817', '0918', '1701', '0008'] as $code) {
+            $this->assertDatabaseHas('work_shifts', [
+                'user_id' => $user->id,
+                'code' => $code,
+            ]);
+        }
     }
 
     public function test_registration_rejects_invalid_whatsapp_number_format(): void

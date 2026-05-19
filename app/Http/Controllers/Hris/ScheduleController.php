@@ -300,8 +300,6 @@ class ScheduleController extends Controller
      */
     private function shiftTemplates(int $ownerId): array
     {
-        $this->ensureDefaultShifts($ownerId);
-
         return WorkShift::query()
             ->where('user_id', $ownerId)
             ->orderByRaw('CASE WHEN is_day_off = 1 THEN 0 ELSE 1 END')
@@ -324,8 +322,6 @@ class ScheduleController extends Controller
      */
     private function availableShifts(int $ownerId): array
     {
-        $this->ensureDefaultShifts($ownerId);
-
         return WorkShift::query()
             ->where('user_id', $ownerId)
             ->orderByRaw('CASE WHEN is_day_off = 1 THEN 0 ELSE 1 END')
@@ -341,27 +337,6 @@ class ScheduleController extends Controller
                 'late_tolerance_minutes' => $shift->late_tolerance_minutes,
             ])
             ->all();
-    }
-
-    private function ensureDefaultShifts(int $ownerId): void
-    {
-        $defaults = [
-            ['code' => 'OFF', 'name' => 'OFF', 'start_time' => null, 'end_time' => null, 'is_day_off' => true],
-            ['code' => '0817', 'name' => '0817', 'start_time' => '08:00', 'end_time' => '17:00', 'is_day_off' => false],
-            ['code' => '0918', 'name' => '0918', 'start_time' => '09:00', 'end_time' => '18:00', 'is_day_off' => false],
-            ['code' => '1701', 'name' => '1701', 'start_time' => '17:00', 'end_time' => '01:00', 'is_day_off' => false],
-            ['code' => '0008', 'name' => '0008', 'start_time' => '00:00', 'end_time' => '08:00', 'is_day_off' => false],
-        ];
-
-        foreach ($defaults as $shift) {
-            WorkShift::query()->firstOrCreate(
-                [
-                    'user_id' => $ownerId,
-                    'code' => $shift['code'],
-                ],
-                $shift + ['late_tolerance_minutes' => 15],
-            );
-        }
     }
 
     private function shiftHasRelatedData(WorkShift $shift, int $ownerId): bool

@@ -303,6 +303,41 @@ class WorkforceModulesTest extends TestCase
         ]);
     }
 
+    public function test_deleted_default_shift_is_not_recreated_on_schedule_reload()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.schedules.index'))
+            ->assertOk();
+
+        $shift = WorkShift::query()
+            ->where('user_id', $user->id)
+            ->where('code', '0817')
+            ->firstOrFail();
+
+        $this->actingAs($user)
+            ->delete(route('hris.schedules.shifts.destroy', $shift))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Shift berhasil dihapus.');
+
+        $this->assertDatabaseMissing('work_shifts', [
+            'user_id' => $user->id,
+            'code' => '0817',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.schedules.index'))
+            ->assertOk();
+
+        $this->assertDatabaseMissing('work_shifts', [
+            'user_id' => $user->id,
+            'code' => '0817',
+        ]);
+    }
+
     private function seedWorkShifts(User $user): void
     {
         foreach ([
@@ -310,14 +345,19 @@ class WorkforceModulesTest extends TestCase
             ['code' => '0817', 'name' => '0817', 'start_time' => '08:00', 'end_time' => '17:00', 'is_day_off' => false],
             ['code' => '0918', 'name' => '0918', 'start_time' => '09:00', 'end_time' => '18:00', 'is_day_off' => false],
         ] as $shift) {
-            WorkShift::query()->create([
-                'user_id' => $user->id,
-                'code' => $shift['code'],
-                'name' => $shift['name'],
-                'start_time' => $shift['start_time'],
-                'end_time' => $shift['end_time'],
-                'is_day_off' => $shift['is_day_off'],
-            ]);
+            WorkShift::query()->firstOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'code' => $shift['code'],
+                ],
+                [
+                    'name' => $shift['name'],
+                    'start_time' => $shift['start_time'],
+                    'end_time' => $shift['end_time'],
+                    'is_day_off' => $shift['is_day_off'],
+                    'late_tolerance_minutes' => 15,
+                ],
+            );
         }
     }
 }
