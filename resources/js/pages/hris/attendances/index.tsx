@@ -40,6 +40,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { index as attendancesIndex } from '@/routes/hris/attendances';
 import type { BreadcrumbItem } from '@/types';
 
@@ -488,7 +489,14 @@ export default function AttendancePage() {
                                         </tr>
                                     )}
                                     {attendances.data.map((row) => (
-                                        <tr key={row.id} className="border-b">
+                                        <tr
+                                            key={row.id}
+                                            className={cn(
+                                                'border-b',
+                                                row.status === 'late' &&
+                                                    'bg-destructive/10 text-destructive',
+                                            )}
+                                        >
                                             <td className="px-3 py-3">
                                                 {row.employee_label}
                                             </td>
@@ -498,9 +506,11 @@ export default function AttendancePage() {
                                             <td className="px-3 py-3">
                                                 <Badge
                                                     variant={
-                                                        row.status === 'present'
-                                                            ? 'default'
-                                                            : 'secondary'
+                                                        row.status === 'late'
+                                                            ? 'destructive'
+                                                            : row.status === 'present'
+                                                              ? 'default'
+                                                              : 'secondary'
                                                     }
                                                 >
                                                     {statusLabelMap[

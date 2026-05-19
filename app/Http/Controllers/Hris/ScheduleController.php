@@ -181,6 +181,7 @@ class ScheduleController extends Controller
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
             'is_day_off' => false,
+            'late_tolerance_minutes' => $validated['late_tolerance_minutes'] ?? 15,
         ]);
 
         return back();
@@ -202,6 +203,7 @@ class ScheduleController extends Controller
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
             'is_day_off' => false,
+            'late_tolerance_minutes' => $validated['late_tolerance_minutes'] ?? 15,
         ]);
 
         return back()->with('success', 'Data shift berhasil diperbarui.');
@@ -223,6 +225,16 @@ class ScheduleController extends Controller
         $workShift->delete();
 
         return back()->with('success', 'Shift berhasil dihapus.');
+    }
+
+    public function destroySchedule(Request $request, EmployeeSchedule $employeeSchedule): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_unless((int) $employeeSchedule->user_id === $ownerId, 404);
+
+        $employeeSchedule->delete();
+
+        return back()->with('success', 'Data jam kerja berhasil dihapus.');
     }
 
     /**
@@ -254,6 +266,7 @@ class ScheduleController extends Controller
 
             $days[] = [
                 'date' => $date,
+                'id' => $saved?->id,
                 'label' => $cursor->translatedFormat('d M (D)'),
                 'shift_code' => $saved?->shift_code ?? 'OFF',
                 'start_time' => $this->normalizeTime($saved?->start_time),
@@ -325,6 +338,7 @@ class ScheduleController extends Controller
                 'start_time' => $this->normalizeTime($shift->start_time),
                 'end_time' => $this->normalizeTime($shift->end_time),
                 'is_day_off' => $shift->is_day_off,
+                'late_tolerance_minutes' => $shift->late_tolerance_minutes,
             ])
             ->all();
     }
@@ -345,7 +359,7 @@ class ScheduleController extends Controller
                     'user_id' => $ownerId,
                     'code' => $shift['code'],
                 ],
-                $shift,
+                $shift + ['late_tolerance_minutes' => 15],
             );
         }
     }

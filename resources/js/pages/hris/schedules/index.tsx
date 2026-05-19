@@ -45,6 +45,7 @@ type EmployeeOption = {
 };
 
 type ScheduleDay = {
+    id: number | null;
     date: string;
     label: string;
     shift_code: string;
@@ -72,6 +73,7 @@ type ShiftOption = {
     start_time: string | null;
     end_time: string | null;
     is_day_off: boolean;
+    late_tolerance_minutes: number;
 };
 
 type PageProps = {
@@ -101,9 +103,11 @@ type ShiftFormData = {
     name: string;
     start_time: string;
     end_time: string;
+    late_tolerance_minutes: number;
 };
 
 type ScheduleRow = {
+    id: number | null;
     date: string;
     label: string;
     shift_code: string;
@@ -159,6 +163,8 @@ export default function SchedulePage() {
     const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
     const [editingShift, setEditingShift] = useState<ShiftOption | null>(null);
     const [deletingShift, setDeletingShift] = useState<ShiftOption | null>(null);
+    const [deletingSchedule, setDeletingSchedule] =
+        useState<ScheduleRow | null>(null);
     const [scheduleRows, setScheduleRows] = useState<ScheduleRow[]>([]);
 
     const shiftOptions = useMemo(
@@ -217,6 +223,7 @@ export default function SchedulePage() {
         name: '',
         start_time: '08:00',
         end_time: '17:00',
+        late_tolerance_minutes: 15,
     });
 
     useEffect(() => {
@@ -226,6 +233,7 @@ export default function SchedulePage() {
     useEffect(() => {
         setScheduleRows(
             scheduleDays.map((day) => ({
+                id: day.id,
                 date: day.date,
                 label: day.label,
                 shift_code: day.shift_code,
@@ -285,6 +293,7 @@ export default function SchedulePage() {
             name: '',
             start_time: '08:00',
             end_time: '17:00',
+            late_tolerance_minutes: 15,
         });
         setShiftDialogOpen(true);
     };
@@ -296,6 +305,7 @@ export default function SchedulePage() {
             name: shift.name,
             start_time: shift.start_time ?? '08:00',
             end_time: shift.end_time ?? '17:00',
+            late_tolerance_minutes: shift.late_tolerance_minutes,
         });
         setShiftDialogOpen(true);
     };
@@ -430,6 +440,24 @@ export default function SchedulePage() {
             preserveScroll: true,
             onSuccess: () => {
                 setDeletingShift(null);
+                router.get(schedulesIndex.url(), filterState, {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                });
+            },
+        });
+    };
+
+    const deleteSchedule = () => {
+        if (!deletingSchedule?.id) {
+            return;
+        }
+
+        router.delete(`/hris/schedules/${deletingSchedule.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setDeletingSchedule(null);
                 router.get(schedulesIndex.url(), filterState, {
                     preserveState: true,
                     preserveScroll: true,
@@ -586,13 +614,14 @@ export default function SchedulePage() {
                                         <th className="px-2 py-2">Jam Pulang</th>
                                         <th className="px-2 py-2">Status</th>
                                         <th className="px-2 py-2">Catatan</th>
+                                        <th className="px-2 py-2">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {scheduleRows.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={6}
+                                                colSpan={7}
                                                 className="px-2 py-6 text-center text-muted-foreground"
                                             >
                                                 Tidak ada jadwal pada filter ini.
@@ -640,6 +669,22 @@ export default function SchedulePage() {
                                                     }
                                                     placeholder="Opsional"
                                                 />
+                                            </td>
+                                            <td className="px-2 py-2">
+                                                {row.id ? (
+                                                    <ActionIconButton
+                                                        label="Hapus jam kerja"
+                                                        icon={Trash2}
+                                                        variant="destructive"
+                                                        onClick={() =>
+                                                            setDeletingSchedule(row)
+                                                        }
+                                                    />
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">
+                                                        Belum disimpan
+                                                    </span>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
@@ -692,7 +737,14 @@ export default function SchedulePage() {
                                             {shift.name}
                                         </td>
                                         <td className="px-2 py-2">
-                                            {formatShiftTime(shift)}
+                                            <div>
+                                                {formatShiftTime(shift)}
+                                                {!shift.is_day_off && (
+                                                    <div className="text-xs text-muted-foreground">
+                                                        Toleransi telat {shift.late_tolerance_minutes} menit
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-2 py-2">
                                             {shift.is_day_off
@@ -800,6 +852,28 @@ export default function SchedulePage() {
                         </div>
 
                         <div className="grid gap-2 md:col-span-2">
+                            <Label htmlFor="shift_late_tolerance">
+                                Toleransi Keterlambatan (menit)
+                            </Label>
+                            <Input
+                                id="shift_late_tolerance"
+                                type="number"
+                                min="0"
+                                max="180"
+                                value={shiftForm.data.late_tolerance_minutes}
+                                onChange={(event) =>
+                                    shiftForm.setData(
+                                        'late_tolerance_minutes',
+                                        Number(event.target.value),
+                                    )
+                                }
+                            />
+                            <InputError
+                                message={shiftForm.errors.late_tolerance_minutes}
+                            />
+                        </div>
+
+                        <div className="grid gap-2 md:col-span-2">
                             <Label htmlFor="shift_preview_code">
                                 {editingShift
                                     ? 'Kode Shift'
@@ -832,6 +906,54 @@ export default function SchedulePage() {
                         >
                             <Save className="size-4" />
                             {editingShift ? 'Simpan Perubahan' : 'Simpan Shift'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={deletingSchedule !== null}
+                onOpenChange={(open) => !open && setDeletingSchedule(null)}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Hapus Jam Kerja</DialogTitle>
+                        <DialogDescription>
+                            Data jadwal kerja pada tanggal ini akan dihapus dari
+                            portal admin.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+                        <p className="font-medium">
+                            {deletingSchedule?.label ?? '-'}
+                        </p>
+                        <p className="mt-1 text-muted-foreground">
+                            {deletingSchedule
+                                ? `${deletingSchedule.shift_code} - ${
+                                      deletingSchedule.is_day_off
+                                          ? 'Day Off'
+                                          : `${deletingSchedule.start_time} - ${deletingSchedule.end_time}`
+                                  }`
+                                : '-'}
+                        </p>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setDeletingSchedule(null)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={deleteSchedule}
+                        >
+                            <Trash2 className="size-4" />
+                            Hapus Jam Kerja
                         </Button>
                     </div>
                 </DialogContent>

@@ -12,6 +12,7 @@ use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\SubCompanyAttendanceLocation;
 use App\Models\User;
+use App\Services\AttendanceStatusService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -39,7 +40,7 @@ class AttendanceController extends Controller
         ]);
 
         $query = EmployeeAttendance::query()
-            ->with(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off'])
+            ->with(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes'])
             ->when(($validated['status'] ?? '') !== '', fn ($builder) => $builder->where('status', $validated['status']))
             ->when(isset($validated['employee_id']), fn ($builder) => $builder->where('employee_id', $validated['employee_id']));
 
@@ -97,7 +98,7 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function store(StoreAttendanceRequest $request): JsonResponse
+    public function store(StoreAttendanceRequest $request, AttendanceStatusService $statusService): JsonResponse
     {
         $validated = $request->validated();
         /** @var User $user */
@@ -135,7 +136,7 @@ class AttendanceController extends Controller
             return $this->error('Absensi untuk tanggal ini sudah ada.');
         }
 
-        $attendance = EmployeeAttendance::query()->create([
+        $payload = [
             'employee_id' => $validated['employee_id'],
             'shift_id' => $validated['shift_id'] ?? null,
             'attendance_date' => $validated['attendance_date'],
@@ -147,14 +148,18 @@ class AttendanceController extends Controller
             'check_out_latitude' => $validated['check_out_latitude'] ?? null,
             'check_out_longitude' => $validated['check_out_longitude'] ?? null,
             'notes' => $validated['notes'] ?? null,
-        ]);
+        ];
 
-        $attendance->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off']);
+        $payload['status'] = $statusService->resolveStatus($payload, $user->accountOwnerId());
+
+        $attendance = EmployeeAttendance::query()->create($payload);
+
+        $attendance->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes']);
 
         return $this->success($this->payload($attendance), 'Absensi berhasil disimpan.', 201);
     }
 
-    public function update(UpdateAttendanceRequest $request, EmployeeAttendance $employeeAttendance): JsonResponse
+    public function update(UpdateAttendanceRequest $request, EmployeeAttendance $employeeAttendance, AttendanceStatusService $statusService): JsonResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -189,8 +194,10 @@ class AttendanceController extends Controller
             return $this->error('Clock out hanya bisa dilakukan maksimal 3 hari dari tanggal absensi.');
         }
 
+        $validated['status'] = $statusService->resolveStatus($validated, $user->accountOwnerId());
+
         $employeeAttendance->update($validated);
-        $employeeAttendance->refresh()->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off']);
+        $employeeAttendance->refresh()->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes']);
 
         return $this->success($this->payload($employeeAttendance), 'Absensi berhasil diperbarui.');
     }
@@ -226,6 +233,7 @@ class AttendanceController extends Controller
                 'start_time' => $attendance->shift->start_time,
                 'end_time' => $attendance->shift->end_time,
                 'is_day_off' => $attendance->shift->is_day_off,
+                'late_tolerance_minutes' => $attendance->shift->late_tolerance_minutes,
             ] : null,
             'check_in_at' => $attendance->check_in_at?->toIso8601String(),
             'check_in_latitude' => $attendance->check_in_latitude,

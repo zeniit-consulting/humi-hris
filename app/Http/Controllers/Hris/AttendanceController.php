@@ -8,12 +8,13 @@ use App\Http\Requests\Hris\UpdateAttendanceRequest;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeSchedule;
+use App\Services\AttendanceStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceController extends Controller
 {
@@ -82,20 +83,20 @@ class AttendanceController extends Controller
                 ->pluck('shift_code', 'employee_id');
 
         $attendances = $attendancesPaginator->through(fn (EmployeeAttendance $attendance) => [
-                'id' => $attendance->id,
-                'employee_id' => $attendance->employee_id,
-                'employee_label' => $attendance->employee
-                    ? $attendance->employee->employee_code.' - '.$attendance->employee->full_name
-                    : '-',
-                'attendance_date' => $attendance->attendance_date->format('Y-m-d'),
-                'shift_name' => (string) ($shiftByEmployee->get($attendance->employee_id) ?? 'OFF'),
-                'status' => $attendance->status,
-                'check_in_at' => $attendance->check_in_at?->format('Y-m-d\\TH:i'),
-                'check_out_at' => $attendance->check_out_at?->format('Y-m-d\\TH:i'),
-                'check_in_time' => $attendance->check_in_at?->format('H:i'),
-                'check_out_time' => $attendance->check_out_at?->format('H:i'),
-                'notes' => $attendance->notes,
-            ]);
+            'id' => $attendance->id,
+            'employee_id' => $attendance->employee_id,
+            'employee_label' => $attendance->employee
+                ? $attendance->employee->employee_code.' - '.$attendance->employee->full_name
+                : '-',
+            'attendance_date' => $attendance->attendance_date->format('Y-m-d'),
+            'shift_name' => (string) ($shiftByEmployee->get($attendance->employee_id) ?? 'OFF'),
+            'status' => $attendance->status,
+            'check_in_at' => $attendance->check_in_at?->format('Y-m-d\\TH:i'),
+            'check_out_at' => $attendance->check_out_at?->format('Y-m-d\\TH:i'),
+            'check_in_time' => $attendance->check_in_at?->format('H:i'),
+            'check_out_time' => $attendance->check_out_at?->format('H:i'),
+            'notes' => $attendance->notes,
+        ]);
 
         $todaySummaryRows = EmployeeAttendance::query()
             ->selectRaw('status, COUNT(*) as total')
@@ -123,9 +124,11 @@ class AttendanceController extends Controller
     /**
      * Store new attendance record.
      */
-    public function store(StoreAttendanceRequest $request): RedirectResponse
+    public function store(StoreAttendanceRequest $request, AttendanceStatusService $statusService): RedirectResponse
     {
         $validated = $request->validated();
+        $ownerId = $request->user()->accountOwnerId();
+        $validated['status'] = $statusService->resolveStatus($validated, $ownerId);
 
         EmployeeAttendance::updateOrCreate(
             [
@@ -146,9 +149,12 @@ class AttendanceController extends Controller
     /**
      * Update attendance record.
      */
-    public function update(UpdateAttendanceRequest $request, EmployeeAttendance $employeeAttendance): RedirectResponse
+    public function update(UpdateAttendanceRequest $request, EmployeeAttendance $employeeAttendance, AttendanceStatusService $statusService): RedirectResponse
     {
-        $employeeAttendance->update($request->validated());
+        $validated = $request->validated();
+        $validated['status'] = $statusService->resolveStatus($validated, $request->user()->accountOwnerId());
+
+        $employeeAttendance->update($validated);
 
         return back();
     }
@@ -233,5 +239,4 @@ class AttendanceController extends Controller
             'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
         ]);
     }
-
 }

@@ -26,6 +26,7 @@ class StoreWorkShiftRequest extends FormRequest
             'name' => ['nullable', 'string', 'max:50'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['required', 'date_format:H:i'],
+            'late_tolerance_minutes' => ['nullable', 'integer', 'min:0', 'max:180'],
         ];
     }
 }
