@@ -38,6 +38,25 @@ export const notifyPortal = (type: PortalToastType, message: string) => {
     );
 };
 
+export const notifyPortalAfterRedirect = (
+    type: PortalToastType,
+    message: string,
+) => {
+    const normalizedMessage = message.trim();
+
+    if (normalizedMessage === '') {
+        return;
+    }
+
+    window.sessionStorage.setItem(
+        'portal-toast',
+        JSON.stringify({
+            type,
+            message: normalizedMessage,
+        } satisfies PortalToastPayload),
+    );
+};
+
 export async function requestApi<T>(
     url: string,
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',

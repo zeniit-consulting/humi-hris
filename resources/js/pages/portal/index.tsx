@@ -486,8 +486,8 @@ export default function PortalPage() {
                                 </button>
                             </div>
 
-                            <div className="portal-primary-soft mt-4 rounded-[14px] p-3">
-                                <div className="grid grid-cols-5 gap-2">
+                            <div className="mt-2 overflow-hidden rounded-[14px] bg-white px-2 py-1.5">
+                                <div className="-mx-2 flex snap-x snap-mandatory gap-2 overflow-x-auto px-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                     {quickLinks.map((item) => {
                                         const href =
                                             summary?.links[
@@ -498,9 +498,9 @@ export default function PortalPage() {
                                             <a
                                                 key={item.key}
                                                 href={href}
-                                                className="rounded-[11px] bg-white px-1.5 py-3 text-center shadow-[0_10px_22px_rgba(15,23,42,0.06)]"
+                                                className="min-w-[22.4%] flex-[0_0_22.4%] snap-start rounded-[11px] bg-white px-1.5 py-2 text-center"
                                             >
-                                                <span className="portal-primary-soft mx-auto inline-flex size-10 items-center justify-center rounded-lg">
+                                                <span className="mx-auto inline-flex size-10 items-center justify-center rounded-lg bg-white">
                                                     <item.icon className="portal-primary-text size-5" />
                                                 </span>
                                                 <p className="mt-2 text-[11px] font-semibold text-slate-700">
@@ -542,57 +542,29 @@ export default function PortalPage() {
                                     </span>
                                 </div>
 
-                                <div className="mt-5 grid gap-3">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="rounded-[12px] border border-slate-200 bg-white px-4 py-4">
-                                            <p className="text-xs tracking-[0.2em] text-slate-500 uppercase">
-                                                Sisa cuti
-                                            </p>
-                                            <p className="mt-2 text-2xl font-bold tracking-[-0.04em]">
-                                                {summary?.cards
-                                                    .annual_leave_days ?? 0}
-                                            </p>
-                                            <p className="text-sm text-slate-500">
-                                                hari
-                                            </p>
-                                        </div>
-                                        <div className="rounded-[12px] border border-slate-200 bg-white px-4 py-4">
-                                            <p className="text-xs tracking-[0.2em] text-slate-500 uppercase">
-                                                Hari kerja
-                                            </p>
-                                            <p className="mt-2 text-2xl font-bold tracking-[-0.04em]">
-                                                {workingDays}
-                                            </p>
-                                            <p className="text-sm text-slate-500">
-                                                hari kerja
-                                            </p>
-                                        </div>
+                                <div className="mt-5 grid grid-cols-2 gap-3">
+                                    <div className="rounded-[12px] border border-slate-200 bg-white px-4 py-4">
+                                        <p className="text-xs tracking-[0.2em] text-slate-500 uppercase">
+                                            Sisa cuti
+                                        </p>
+                                        <p className="mt-2 text-2xl font-bold tracking-[-0.04em]">
+                                            {summary?.cards.annual_leave_days ??
+                                                0}
+                                        </p>
+                                        <p className="text-sm text-slate-500">
+                                            hari
+                                        </p>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="rounded-[12px] border border-slate-200 bg-white px-4 py-4">
-                                            <p className="text-xs tracking-[0.2em] text-slate-500 uppercase">
-                                                Survey aktif
-                                            </p>
-                                            <p className="mt-2 text-2xl font-bold tracking-[-0.04em]">
-                                                {summary?.cards
-                                                    .pending_surveys ?? 0}
-                                            </p>
-                                            <p className="text-sm text-slate-500">
-                                                pending
-                                            </p>
-                                        </div>
-                                        <div className="rounded-[12px] border border-slate-200 bg-white px-4 py-4">
-                                            <p className="text-xs tracking-[0.2em] text-slate-500 uppercase">
-                                                Asset aktif
-                                            </p>
-                                            <p className="mt-2 text-2xl font-bold tracking-[-0.04em]">
-                                                {summary?.cards
-                                                    .assigned_assets ?? 0}
-                                            </p>
-                                            <p className="text-sm text-slate-500">
-                                                aktif
-                                            </p>
-                                        </div>
+                                    <div className="rounded-[12px] border border-slate-200 bg-white px-4 py-4">
+                                        <p className="text-xs tracking-[0.2em] text-slate-500 uppercase">
+                                            Hari kerja
+                                        </p>
+                                        <p className="mt-2 text-2xl font-bold tracking-[-0.04em]">
+                                            {workingDays}
+                                        </p>
+                                        <p className="text-sm text-slate-500">
+                                            hari kerja
+                                        </p>
                                     </div>
                                 </div>
                             </section>
@@ -688,7 +660,7 @@ export default function PortalPage() {
                                               <a
                                                   key={`survey-${survey.id}`}
                                                   href="/portal/surveys"
-                                                  className="rounded-[12px] border border-slate-200 bg-white px-4 py-4"
+                                                  className="block rounded-[12px] border border-slate-200 bg-white px-4 py-4"
                                               >
                                                   <div className="flex items-start justify-between gap-3">
                                                       <div>
@@ -725,31 +697,30 @@ export default function PortalPage() {
                                               <a
                                                   key={`asset-${asset.id}`}
                                                   href="/portal/assets"
-                                                  className="rounded-[12px] border border-slate-200 bg-white px-4 py-4"
+                                                  className="block rounded-[12px] border border-slate-200 bg-white px-3 py-3"
                                               >
-                                                  <div className="flex items-start justify-between gap-3">
-                                                      <div>
-                                                          <p className="text-sm font-semibold text-slate-900">
+                                                  <div className="flex items-center justify-between gap-3">
+                                                      <div className="min-w-0 flex-1">
+                                                          <p className="truncate text-sm font-semibold text-slate-900">
                                                               {asset.name}
                                                           </p>
-                                                          <p className="mt-1 text-sm text-slate-500">
+                                                          <p className="mt-0.5 truncate text-xs text-slate-500">
                                                               {asset.asset_code ??
                                                                   '-'}{' '}
                                                               •{' '}
                                                               {asset.category ??
                                                                   'Asset'}
                                                           </p>
-                                                          <p className="mt-2 text-sm text-slate-600">
-                                                              Dipinjam sejak{' '}
-                                                              {asset.issued_at
-                                                                  ? asset.issued_at
-                                                                  : '-'}
+                                                          <p className="mt-1 truncate text-xs text-slate-600">
+                                                              Sejak{' '}
+                                                              {asset.issued_at ??
+                                                                  '-'}
                                                               {asset.condition_out
-                                                                  ? ` • Kondisi ${asset.condition_out}`
+                                                                  ? ` • ${asset.condition_out}`
                                                                   : ''}
                                                           </p>
                                                       </div>
-                                                      <span className="portal-primary-soft rounded-full px-3 py-1 text-[11px] font-semibold uppercase">
+                                                      <span className="portal-primary-soft shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase">
                                                           asset
                                                       </span>
                                                   </div>

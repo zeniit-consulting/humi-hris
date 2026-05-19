@@ -100,6 +100,19 @@ export function PortalToastViewport() {
             });
         };
 
+        const storedToast = window.sessionStorage.getItem('portal-toast');
+
+        if (storedToast) {
+            window.sessionStorage.removeItem('portal-toast');
+
+            try {
+                const payload = JSON.parse(storedToast) as PortalToastPayload;
+                pushToast(payload);
+            } catch {
+                // Ignore malformed flash toast payloads from older sessions.
+            }
+        }
+
         window.addEventListener('portal-toast', handleToast);
         window.addEventListener('offline', handleOffline);
         window.addEventListener('online', handleOnline);

@@ -1,7 +1,12 @@
 import { CreditCard, Mail, Phone, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { notifyPortal, requestApi, translatePortalError } from './lib';
+import {
+    formatDate,
+    notifyPortal,
+    requestApi,
+    translatePortalError,
+} from './lib';
 import type { PortalLinkMap } from './lib';
 import { PortalShell } from './shell';
 
@@ -12,11 +17,33 @@ type Props = {
 type ProfileData = {
     employee: {
         id: number;
+        employee_code: string | null;
         first_name: string;
         last_name: string;
+        full_name: string;
         email: string | null;
         phone: string | null;
         address: string | null;
+        gender: string | null;
+        birth_date: string | null;
+        last_education: string | null;
+        marital_status: string | null;
+        children_count: number | null;
+        hire_date: string | null;
+        employment_status: string | null;
+        employment_type: string | null;
+        ptkp_category: string | null;
+        family_card_number: string | null;
+        bpjs_kesehatan_number: string | null;
+        bpjs_ketenagakerjaan_number: string | null;
+        sim_a_number: string | null;
+        sim_b_number: string | null;
+        sim_c_number: string | null;
+        biological_mother_name: string | null;
+        emergency_contact_name: string | null;
+        emergency_contact_phone: string | null;
+        division: { id: number; name: string } | null;
+        position: { id: number; name: string } | null;
     };
     bank_accounts: Array<{
         id: number;
@@ -39,6 +66,27 @@ type PortalSummary = {
         position?: { id: number; name: string } | null;
     } | null;
     links: PortalLinkMap;
+};
+
+const genderLabels: Record<string, string> = {
+    male: 'Laki-laki',
+    female: 'Perempuan',
+    other: 'Lainnya',
+};
+
+const maritalStatusLabels: Record<string, string> = {
+    single: 'Belum menikah',
+    married: 'Menikah',
+    divorced: 'Cerai hidup',
+    widowed: 'Cerai mati',
+};
+
+const formatProfileValue = (value: string | number | null | undefined) => {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+
+    return String(value);
 };
 
 export default function PortalProfilePage({ pageTitle }: Props) {
@@ -165,6 +213,108 @@ export default function PortalProfilePage({ pageTitle }: Props) {
 
     const bankAccounts = profile?.bank_accounts || [];
     const primaryBank = bankAccounts.find((b) => b.is_primary);
+    const personalDetails = profile?.employee
+        ? [
+              {
+                  label: 'Nama lengkap',
+                  value: profile.employee.full_name,
+              },
+              {
+                  label: 'Kode karyawan',
+                  value: profile.employee.employee_code,
+              },
+              {
+                  label: 'Email',
+                  value: profile.employee.email,
+              },
+              {
+                  label: 'Gender',
+                  value: profile.employee.gender
+                      ? (genderLabels[profile.employee.gender] ??
+                        profile.employee.gender)
+                      : null,
+              },
+              {
+                  label: 'Tanggal lahir',
+                  value: formatDate(profile.employee.birth_date),
+              },
+              {
+                  label: 'Pendidikan',
+                  value: profile.employee.last_education,
+              },
+              {
+                  label: 'Status nikah',
+                  value: profile.employee.marital_status
+                      ? (maritalStatusLabels[profile.employee.marital_status] ??
+                        profile.employee.marital_status)
+                      : null,
+              },
+              {
+                  label: 'Jumlah anak',
+                  value: profile.employee.children_count,
+              },
+              {
+                  label: 'Tanggal masuk',
+                  value: formatDate(profile.employee.hire_date),
+              },
+              {
+                  label: 'Status kerja',
+                  value: profile.employee.employment_status,
+              },
+              {
+                  label: 'Tipe kerja',
+                  value: profile.employee.employment_type,
+              },
+              {
+                  label: 'Divisi',
+                  value: profile.employee.division?.name,
+              },
+              {
+                  label: 'Posisi',
+                  value: profile.employee.position?.name,
+              },
+              {
+                  label: 'PTKP',
+                  value: profile.employee.ptkp_category,
+              },
+              {
+                  label: 'No. KK',
+                  value: profile.employee.family_card_number,
+              },
+              {
+                  label: 'BPJS Kesehatan',
+                  value: profile.employee.bpjs_kesehatan_number,
+              },
+              {
+                  label: 'BPJS Ketenagakerjaan',
+                  value: profile.employee.bpjs_ketenagakerjaan_number,
+              },
+              {
+                  label: 'SIM A',
+                  value: profile.employee.sim_a_number,
+              },
+              {
+                  label: 'SIM B',
+                  value: profile.employee.sim_b_number,
+              },
+              {
+                  label: 'SIM C',
+                  value: profile.employee.sim_c_number,
+              },
+              {
+                  label: 'Nama ibu kandung',
+                  value: profile.employee.biological_mother_name,
+              },
+              {
+                  label: 'Kontak darurat',
+                  value: profile.employee.emergency_contact_name,
+              },
+              {
+                  label: 'No. kontak darurat',
+                  value: profile.employee.emergency_contact_phone,
+              },
+          ]
+        : [];
 
     return (
         <PortalShell
@@ -230,6 +380,22 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                             Data Kontak
                         </h2>
                     </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                    {personalDetails.map((item) => (
+                        <div
+                            key={item.label}
+                            className="rounded-[10px] border border-stone-200 bg-stone-50 px-3 py-2.5"
+                        >
+                            <p className="text-[11px] font-medium text-slate-500">
+                                {item.label}
+                            </p>
+                            <p className="mt-1 truncate text-sm font-semibold text-slate-900">
+                                {formatProfileValue(item.value)}
+                            </p>
+                        </div>
+                    ))}
                 </div>
 
                 <form onSubmit={handleSaveProfile} className="mt-5 space-y-4">

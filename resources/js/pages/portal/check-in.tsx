@@ -1,7 +1,12 @@
 import { LoaderCircle } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapboxLocationMap } from '@/components/mapbox-location-map';
-import { notifyPortal, requestApi, translatePortalError } from './lib';
+import {
+    notifyPortal,
+    notifyPortalAfterRedirect,
+    requestApi,
+    translatePortalError,
+} from './lib';
 import type { PortalLinkMap } from './lib';
 import { PortalShell } from './shell';
 
@@ -348,6 +353,12 @@ export function PortalAttendanceLocationPage({
                 });
             }
 
+            notifyPortalAfterRedirect(
+                'success',
+                mode === 'clock-out'
+                    ? 'Absensi pulang berhasil disimpan.'
+                    : 'Absensi masuk berhasil disimpan.',
+            );
             window.location.href = '/portal';
         } catch (submitError) {
             notifyPortal(

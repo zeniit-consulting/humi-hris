@@ -104,7 +104,12 @@ export default function PortalLeavesPage({ pageTitle }: Props) {
                 end_date: '',
                 reason: '',
             });
-            notifyPortal('success', 'Pengajuan cuti berhasil dikirim.');
+            notifyPortal(
+                'success',
+                form.leave_type === 'sick'
+                    ? 'Pengajuan sakit berhasil dikirim.'
+                    : 'Pengajuan cuti berhasil dikirim.',
+            );
             await loadData();
         } catch (submitError) {
             notifyPortal(
