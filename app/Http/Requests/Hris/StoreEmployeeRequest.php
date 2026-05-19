@@ -41,6 +41,19 @@ class StoreEmployeeRequest extends FormRequest
             $normalizedPayload['sub_company_id'] = null;
         }
 
+        $user = $this->user();
+        $subCompanyScopeIds = $user && $user->parent_user_id && $user->role !== 'user'
+            ? $user->subCompanyScopeIds()
+            : null;
+
+        if (
+            $subCompanyScopeIds !== null
+            && count($subCompanyScopeIds) === 1
+            && ($this->input('sub_company_id') === '' || $this->input('sub_company_id') === null)
+        ) {
+            $normalizedPayload['sub_company_id'] = $subCompanyScopeIds[0];
+        }
+
         if ($this->has('employment_type')) {
             $normalizedPayload['employment_type'] = $this->normalizeEmploymentType(
                 $this->input('employment_type')
@@ -134,13 +147,19 @@ class StoreEmployeeRequest extends FormRequest
                         return;
                     }
 
+                    $subCompanyId = $this->input('sub_company_id');
                     $isOccupied = Employee::withoutGlobalScope('sub_user_sub_company_records')
                         ->where('user_id', $ownerId)
                         ->where('position_id', $value)
+                        ->when(
+                            $subCompanyId === null || $subCompanyId === '',
+                            fn ($query) => $query->whereNull('sub_company_id'),
+                            fn ($query) => $query->where('sub_company_id', $subCompanyId),
+                        )
                         ->exists();
 
                     if ($isOccupied) {
-                        $fail('Jabatan level 0-2 hanya boleh diisi oleh satu orang.');
+                        $fail('Jabatan level 0-2 hanya boleh diisi oleh satu orang per sub-company.');
                     }
                 },
             ],
@@ -168,7 +187,10 @@ class StoreEmployeeRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [];
+        return [
+            'sub_company_id.required' => 'Sub-company wajib dipilih untuk sub-user.',
+            'sub_company_id.exists' => 'Sub-company tidak ditemukan pada akun owner.',
+        ];
     }
 
     private function normalizeCurrencyInput(mixed $value): ?string

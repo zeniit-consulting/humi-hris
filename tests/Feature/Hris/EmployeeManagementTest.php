@@ -169,6 +169,8 @@ class EmployeeManagementTest extends TestCase
                 ->component('hris/employees/index')
                 ->where('employees.data.0.id', $subEmployee->id)
                 ->where('employees.data.0.employee_code', 'EMP-SUB')
+                ->where('subCompanyOptions.0.id', $linkedCompany->id)
+                ->has('subCompanyOptions', 1)
                 ->has('employees.data', 1)
             );
     }
@@ -228,6 +230,63 @@ class EmployeeManagementTest extends TestCase
             'created_by_user_id' => $subUser->id,
             'sub_company_id' => $subCompany->id,
             'email' => 'sub-employee@example.com',
+        ]);
+    }
+
+    public function test_sub_user_with_one_scope_can_create_employee_without_sub_company_payload(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'parent_user_id' => $owner->id,
+            'role' => 'staff',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $owner->id,
+            'code' => 'HR',
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'code' => 'ST',
+            'level' => '3',
+        ]);
+
+        $subCompany = SubCompany::query()->create([
+            'user_id' => $owner->id,
+            'code' => 'SUB-A',
+            'name' => 'Sub A',
+        ]);
+
+        $subUser->clientSubCompanies()->attach($subCompany->id);
+
+        $this->actingAs($subUser)->post(route('hris.employees.store'), [
+            'full_name' => 'Scoped Employee',
+            'email' => 'scoped-employee@example.com',
+            'phone' => '08123456780',
+            'gender' => 'male',
+            'birth_date' => '1998-05-20',
+            'hire_date' => '2026-03-01',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+            'pph21_method' => 'gross',
+            'pph21_rate' => '5',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'base_salary' => '5000000',
+            'is_active' => true,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('employees', [
+            'user_id' => $owner->id,
+            'created_by_user_id' => $subUser->id,
+            'sub_company_id' => $subCompany->id,
+            'email' => 'scoped-employee@example.com',
         ]);
     }
 
@@ -452,6 +511,82 @@ class EmployeeManagementTest extends TestCase
 
         $response->assertRedirect(route('hris.employees.index'));
         $response->assertSessionHasErrors(['position_id']);
+    }
+
+    public function test_level_zero_to_two_position_can_be_reused_per_sub_company()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'division_id' => $division->id,
+            'user_id' => $user->id,
+            'level' => '2',
+        ]);
+
+        $firstCompany = SubCompany::query()->create([
+            'user_id' => $user->id,
+            'code' => 'SUB-A',
+            'name' => 'Sub A',
+        ]);
+
+        $secondCompany = SubCompany::query()->create([
+            'user_id' => $user->id,
+            'code' => 'SUB-B',
+            'name' => 'Sub B',
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'position_id' => $position->id,
+            'division_id' => $division->id,
+            'sub_company_id' => $firstCompany->id,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.employees.store'), [
+                'full_name' => 'Manager Sub B',
+                'hire_date' => '2026-03-01',
+                'employment_status' => 'active',
+                'employment_type' => 'OS',
+                'pph21_method' => 'gross',
+                'pph21_rate' => '5',
+                'division_id' => $division->id,
+                'sub_company_id' => $secondCompany->id,
+                'position_id' => $position->id,
+                'is_active' => true,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('employees', [
+            'user_id' => $user->id,
+            'position_id' => $position->id,
+            'sub_company_id' => $secondCompany->id,
+            'first_name' => 'Manager Sub B',
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('hris.employees.index'))
+            ->post(route('hris.employees.store'), [
+                'full_name' => 'Another Manager Sub A',
+                'hire_date' => '2026-03-01',
+                'employment_status' => 'active',
+                'employment_type' => 'OS',
+                'pph21_method' => 'gross',
+                'pph21_rate' => '5',
+                'division_id' => $division->id,
+                'sub_company_id' => $firstCompany->id,
+                'position_id' => $position->id,
+                'is_active' => true,
+            ])
+            ->assertRedirect(route('hris.employees.index'))
+            ->assertSessionHasErrors(['position_id']);
     }
 
     public function test_level_three_to_five_position_can_be_assigned_to_multiple_employees()

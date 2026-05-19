@@ -41,7 +41,11 @@ class EmployeeController extends Controller
      */
     public function index(Request $request): InertiaResponse
     {
-        $ownerId = $request->user()->accountOwnerId();
+        $user = $request->user();
+        $ownerId = $user->accountOwnerId();
+        $subCompanyScopeIds = $user->parent_user_id && $user->role !== 'user'
+            ? $user->subCompanyScopeIds()
+            : null;
 
         $rawFilters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
@@ -329,6 +333,10 @@ class EmployeeController extends Controller
         $subCompanyOptions = SubCompany::query()
             ->withCount('employees')
             ->where('is_active', true)
+            ->when(
+                $subCompanyScopeIds !== null,
+                fn ($query) => $query->whereIn('id', $subCompanyScopeIds),
+            )
             ->orderBy('name')
             ->get()
             ->map(fn (SubCompany $subCompany) => [
@@ -347,6 +355,10 @@ class EmployeeController extends Controller
             'subCompanyOptions' => $subCompanyOptions,
             'positionOptions' => $positionOptions,
             'managerOptions' => $managerOptions,
+            'employeeAccess' => [
+                'requires_sub_company' => $subCompanyScopeIds !== null,
+                'sub_company_scope_ids' => $subCompanyScopeIds ?? [],
+            ],
             'filters' => $filters,
             'stats' => [
                 'employees_total' => Employee::query()->count(),

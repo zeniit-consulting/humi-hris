@@ -326,6 +326,10 @@ type PageProps = {
     subCompanyOptions: SubCompanyOption[];
     positionOptions: PositionOption[];
     managerOptions: ManagerOption[];
+    employeeAccess: {
+        requires_sub_company: boolean;
+        sub_company_scope_ids: number[];
+    };
     filters: Filters;
     stats: {
         employees_total: number;
@@ -617,6 +621,7 @@ export default function EmployeesIndex() {
         subCompanyOptions,
         positionOptions,
         managerOptions,
+        employeeAccess,
         filters,
         stats,
         options,
@@ -704,6 +709,10 @@ export default function EmployeesIndex() {
                   ) ?? null),
         [employees.data, selectedEmployeeId],
     );
+    const defaultScopedSubCompanyId =
+        employeeAccess.requires_sub_company && subCompanyOptions.length > 0
+            ? String(subCompanyOptions[0].id)
+            : '';
 
     const availablePositions = useMemo(() => {
         return positionOptions.filter((position) => {
@@ -722,9 +731,12 @@ export default function EmployeesIndex() {
             const allowsMultipleEmployees = ['3', '4', '5'].includes(
                 position.level ?? '',
             );
+            const canReuseScopedExecutivePosition =
+                employeeForm.data.sub_company_id !== '';
 
             return (
                 allowsMultipleEmployees ||
+                canReuseScopedExecutivePosition ||
                 position.employees_count === 0 ||
                 isCurrentEmployeePosition
             );
@@ -798,7 +810,11 @@ export default function EmployeesIndex() {
         setEditingEmployee(null);
         setEmployeeFormStep(1);
         employeeForm.clearErrors();
-        employeeForm.setData(buildEmployeeDefault());
+        employeeForm.setData({
+            ...buildEmployeeDefault(),
+            sub_company_id: defaultScopedSubCompanyId,
+            employment_type: defaultScopedSubCompanyId !== '' ? 'OS' : 'PKWTT',
+        });
         setEmployeeDialogOpen(true);
     };
 
@@ -2874,7 +2890,7 @@ export default function EmployeesIndex() {
                                                     subCompanyId === '' &&
                                                     employeeForm.data
                                                         .employment_type ===
-                                                    'OS'
+                                                        'OS'
                                                 ) {
                                                     employeeForm.setData(
                                                         'employment_type',
@@ -2885,10 +2901,14 @@ export default function EmployeesIndex() {
                                             placeholder="Pilih sub-company"
                                             searchPlaceholder="Cari sub-company..."
                                             options={[
-                                                {
-                                                    value: '__internal',
-                                                    label: 'Tanpa Sub Company',
-                                                },
+                                                ...(employeeAccess.requires_sub_company
+                                                    ? []
+                                                    : [
+                                                          {
+                                                              value: '__internal',
+                                                              label: 'Tanpa Sub Company',
+                                                          },
+                                                      ]),
                                                 ...subCompanyOptions.map(
                                                     (company) => ({
                                                         value: String(
