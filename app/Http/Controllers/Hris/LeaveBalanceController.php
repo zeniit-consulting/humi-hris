@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Hris;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Models\EmployeeLeaveBalance;
+use App\Models\User;
 use App\Services\LeaveBalanceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -25,50 +26,69 @@ class LeaveBalanceController extends Controller
         $validated = $request->validate([
             'year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
             'leave_type' => ['nullable', 'string'],
-            'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
+            'employee_id' => ['nullable', 'integer'],
         ]);
 
         $year = (int) ($validated['year'] ?? now()->year);
         $leaveType = $validated['leave_type'] ?? 'annual';
+        $visibleEmployees = Employee::query()
+            ->where('user_id', $ownerId)
+            ->orderBy('first_name')
+            ->get(['id', 'employee_code', 'first_name', 'last_name']);
+        $visibleEmployeeIds = $visibleEmployees->pluck('id');
+        $employeeFilter = $validated['employee_id'] ?? null;
+
+        abort_if(
+            $employeeFilter !== null && ! $visibleEmployeeIds->contains((int) $employeeFilter),
+            404
+        );
+
         $filters = [
             'year' => $year,
             'leave_type' => $leaveType,
-            'employee_id' => $validated['employee_id'] ?? '',
+            'employee_id' => $employeeFilter ?? '',
         ];
 
         $owner = $request->user()->accountOwnerId() === $request->user()->id
             ? $request->user()
-            : \App\Models\User::find($ownerId);
+            : User::find($ownerId);
 
         $policy = $this->balanceService->getPolicy($owner, $leaveType);
 
-        $balances = $this->balanceService->getBalanceSummary($owner, $year, $leaveType)
-            ->when($filters['employee_id'] !== '', fn ($col) => $col->where('employee_id', $filters['employee_id']))
-            ->map(fn ($balance) => [
-                'id' => $balance->id,
-                'employee_id' => $balance->employee_id,
-                'employee_label' => $balance->employee
-                    ? $balance->employee->employee_code.' - '.$balance->employee->full_name
-                    : '-',
-                'policy_type' => $balance->policy_type,
-                'total_quota' => $balance->total_quota,
-                'accrued_days' => $balance->accrued_days,
-                'used_days' => $balance->used_days,
-                'adjusted_days' => $balance->adjusted_days,
-                'remaining_balance' => $balance->remainingBalance(),
-            ])
+        $balancesByEmployeeId = $this->balanceService->getBalanceSummary($owner, $year, $leaveType)
+            ->whereIn('employee_id', $visibleEmployeeIds)
+            ->keyBy('employee_id');
+
+        $balances = $visibleEmployees
+            ->when($employeeFilter !== null, fn ($col) => $col->where('id', (int) $employeeFilter))
+            ->map(function (Employee $employee) use ($balancesByEmployeeId, $policy) {
+                /** @var EmployeeLeaveBalance|null $balance */
+                $balance = $balancesByEmployeeId->get($employee->id);
+                $policyType = $balance?->policy_type ?? $policy?->policy_type ?? 'lump_sum';
+                $totalQuota = $balance?->total_quota ?? (float) ($policy?->yearly_days ?? 12);
+
+                return [
+                    'id' => $balance?->id,
+                    'employee_id' => $employee->id,
+                    'employee_label' => $employee->employee_code.' - '.$employee->full_name,
+                    'policy_type' => $policyType,
+                    'total_quota' => $totalQuota,
+                    'accrued_days' => $balance?->accrued_days ?? 0,
+                    'used_days' => $balance?->used_days ?? 0,
+                    'adjusted_days' => $balance?->adjusted_days ?? 0,
+                    'remaining_balance' => $balance?->remainingBalance() ?? 0,
+                    'has_balance' => $balance !== null,
+                ];
+            })
             ->values();
 
-        $employees = Employee::withoutGlobalScopes()
-            ->where('user_id', $ownerId)
-            ->orderBy('first_name')
-            ->get(['id', 'employee_code', 'first_name', 'last_name'])
+        $employees = $visibleEmployees
             ->map(fn (Employee $e) => [
                 'id' => $e->id,
                 'label' => $e->employee_code.' - '.$e->full_name,
             ]);
 
-        return Inertia::render('hris/leaves/balances/index', [
+        return Inertia::render('hris/leaves/balances', [
             'balances' => $balances,
             'employees' => $employees,
             'policy' => $policy ? [
@@ -80,7 +100,7 @@ class LeaveBalanceController extends Controller
                 'is_active' => $policy->is_active,
             ] : null,
             'year' => $year,
-            'leaveType' => $leaveType,
+            'leave_type' => $leaveType,
             'filters' => $filters,
         ]);
     }
@@ -95,12 +115,13 @@ class LeaveBalanceController extends Controller
             'leave_type' => ['required', 'string', 'max:30'],
         ]);
 
-        $owner = \App\Models\User::find($request->user()->accountOwnerId());
+        $owner = User::find($request->user()->accountOwnerId());
 
         $count = $this->balanceService->initializeBalancesForAll(
             $owner,
             $validated['leave_type'],
-            (int) $validated['year']
+            (int) $validated['year'],
+            $this->visibleEmployeeIdsFor($request)
         );
 
         return back()->with('success', "Saldo cuti berhasil diinisialisasi untuk {$count} karyawan.");
@@ -115,9 +136,13 @@ class LeaveBalanceController extends Controller
             'leave_type' => ['required', 'string', 'max:30'],
         ]);
 
-        $owner = \App\Models\User::find($request->user()->accountOwnerId());
+        $owner = User::find($request->user()->accountOwnerId());
 
-        $count = $this->balanceService->accrueMonthly($owner, $validated['leave_type']);
+        $count = $this->balanceService->accrueMonthly(
+            $owner,
+            $validated['leave_type'],
+            $this->visibleEmployeeIdsFor($request)
+        );
 
         return back()->with('success', "Akrual bulanan berhasil dijalankan untuk {$count} karyawan.");
     }
@@ -127,6 +152,8 @@ class LeaveBalanceController extends Controller
      */
     public function adjust(Request $request, Employee $employee): RedirectResponse
     {
+        abort_if($employee->user_id !== $request->user()->accountOwnerId(), 404);
+
         $validated = $request->validate([
             'leave_type' => ['required', 'string', 'max:30'],
             'year' => ['required', 'integer', 'min:2000', 'max:2100'],
@@ -152,6 +179,8 @@ class LeaveBalanceController extends Controller
     {
         $ownerId = $request->user()->accountOwnerId();
 
+        abort_if($employee->user_id !== $ownerId, 404);
+
         $validated = $request->validate([
             'year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
             'leave_type' => ['nullable', 'string'],
@@ -160,7 +189,7 @@ class LeaveBalanceController extends Controller
         $year = (int) ($validated['year'] ?? now()->year);
         $leaveType = $validated['leave_type'] ?? 'annual';
 
-        $owner = \App\Models\User::find($ownerId);
+        $owner = User::find($ownerId);
 
         $transactions = $this->balanceService->getLedger($employee, $year, $leaveType)
             ->map(fn ($tx) => [
@@ -173,13 +202,13 @@ class LeaveBalanceController extends Controller
                 'leave_request_id' => $tx->leave_request_id,
             ]);
 
-        $balance = \App\Models\EmployeeLeaveBalance::withoutGlobalScopes()
+        $balance = EmployeeLeaveBalance::withoutGlobalScopes()
             ->where('employee_id', $employee->id)
             ->where('leave_type', $leaveType)
             ->where('year', $year)
             ->first();
 
-        return Inertia::render('hris/leaves/balances/ledger', [
+        return Inertia::render('hris/leaves/ledger', [
             'transactions' => $transactions,
             'employee' => [
                 'id' => $employee->id,
@@ -193,7 +222,20 @@ class LeaveBalanceController extends Controller
                 'remaining_balance' => $balance->remainingBalance(),
             ] : null,
             'year' => $year,
-            'leaveType' => $leaveType,
+            'leave_type' => $leaveType,
         ]);
+    }
+
+    private function visibleEmployeeIdsFor(Request $request): ?array
+    {
+        if (! $request->user()->parent_user_id) {
+            return null;
+        }
+
+        return Employee::query()
+            ->where('user_id', $request->user()->accountOwnerId())
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 }

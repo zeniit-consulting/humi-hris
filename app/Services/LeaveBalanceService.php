@@ -84,7 +84,7 @@ class LeaveBalanceService
     /**
      * Inisialisasi balance untuk SEMUA karyawan aktif milik $owner di tahun $year.
      */
-    public function initializeBalancesForAll(User $owner, string $leaveType, int $year): int
+    public function initializeBalancesForAll(User $owner, string $leaveType, int $year, ?array $employeeIds = null): int
     {
         $policy = $this->getPolicy($owner, $leaveType);
         $policyType = $policy?->policy_type ?? 'lump_sum';
@@ -94,12 +94,14 @@ class LeaveBalanceService
         $employees = Employee::withoutGlobalScopes()
             ->where('user_id', $owner->id)
             ->where('is_active', true)
+            ->when($employeeIds !== null, fn ($query) => $query->whereIn('id', $employeeIds))
             ->get();
 
         $existingEmployeeIds = EmployeeLeaveBalance::withoutGlobalScopes()
             ->where('user_id', $owner->id)
             ->where('leave_type', $leaveType)
             ->where('year', $year)
+            ->when($employeeIds !== null, fn ($query) => $query->whereIn('employee_id', $employeeIds))
             ->pluck('employee_id')
             ->toArray();
 
@@ -146,7 +148,7 @@ class LeaveBalanceService
     /**
      * Jalankan akrual bulanan untuk semua karyawan aktif milik $owner dengan policy accrual.
      */
-    public function accrueMonthly(User $owner, string $leaveType): int
+    public function accrueMonthly(User $owner, string $leaveType, ?array $employeeIds = null): int
     {
         $policy = $this->getPolicy($owner, $leaveType);
 
@@ -163,6 +165,7 @@ class LeaveBalanceService
             ->where('year', $year)
             ->where('policy_type', 'accrual')
             ->whereColumn('accrued_days', '<', 'total_quota')
+            ->when($employeeIds !== null, fn ($query) => $query->whereIn('employee_id', $employeeIds))
             ->get();
 
         $count = 0;

@@ -72,7 +72,7 @@ type PageProps = {
     policy: Policy | null;
     year: number;
     leave_type: string;
-    filters: { year: string; employee_id: string };
+    filters: { year: string | number; employee_id: string | number };
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -90,6 +90,7 @@ const yearOptions = [
 ];
 
 type PolicyFormData = {
+    leave_type: string;
     policy_type: 'lump_sum' | 'accrual';
     yearly_days: string;
     max_days_per_request: string;
@@ -104,9 +105,9 @@ export default function BalancesPage() {
     const { balances, employees, policy, year, leave_type, filters } =
         usePage<PageProps>().props;
 
-    const [filterYear, setFilterYear] = useState(filters.year || String(year));
+    const [filterYear, setFilterYear] = useState(String(filters.year || year));
     const [filterEmployee, setFilterEmployee] = useState(
-        filters.employee_id || '',
+        filters.employee_id ? String(filters.employee_id) : '',
     );
 
     const [initDialogOpen, setInitDialogOpen] = useState(false);
@@ -115,6 +116,7 @@ export default function BalancesPage() {
     const [adjustTarget, setAdjustTarget] = useState<BalanceRow | null>(null);
 
     const policyForm = useForm<PolicyFormData>({
+        leave_type,
         policy_type: policy?.policy_type ?? 'lump_sum',
         yearly_days: String(policy?.yearly_days ?? 12),
         max_days_per_request:
@@ -130,6 +132,11 @@ export default function BalancesPage() {
 
     const submitPolicy = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        policyForm.transform((data) => ({
+            ...data,
+            leave_type,
+        }));
+
         if (policy) {
             policyForm.put(`/hris/leaves/policy/${policy.id}`, {
                 preserveScroll: true,
@@ -185,6 +192,11 @@ export default function BalancesPage() {
     const submitAdjust = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!adjustTarget) return;
+        adjustForm.transform((data) => ({
+            ...data,
+            year: filterYear,
+            leave_type,
+        }));
         adjustForm.put(
             `/hris/leaves/balances/${adjustTarget.employee_id}/adjust`,
             {

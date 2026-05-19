@@ -3,9 +3,12 @@
 namespace Tests\Feature\Hris;
 
 use App\Models\Employee;
+use App\Models\EmployeeLeaveBalance;
+use App\Models\SubCompany;
 use App\Models\User;
 use App\Models\WorkShift;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class WorkforceModulesTest extends TestCase
@@ -24,6 +27,114 @@ class WorkforceModulesTest extends TestCase
         $this->actingAs($user)->get(route('hris.schedules.index'))->assertOk();
         $this->actingAs($user)->get(route('hris.leaves.index'))->assertOk();
         $this->actingAs($user)->get(route('hris.overtimes.index'))->assertOk();
+    }
+
+    public function test_leave_balances_page_can_be_opened()
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-001',
+            'first_name' => 'Ayu',
+            'last_name' => 'Lestari',
+        ]);
+
+        EmployeeLeaveBalance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'annual',
+            'year' => now()->year,
+            'policy_type' => 'lump_sum',
+            'total_quota' => 12,
+            'accrued_days' => 12,
+            'used_days' => 2,
+            'adjusted_days' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.leaves.balances.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hris/leaves/balances')
+                ->where('leave_type', 'annual')
+                ->has('balances', 1)
+                ->where('balances.0.employee_id', $employee->id)
+                ->where('balances.0.has_balance', true)
+                ->where('balances.0.remaining_balance', 10)
+            );
+    }
+
+    public function test_sub_user_leave_balances_are_limited_to_linked_sub_companies()
+    {
+        $this->withoutVite();
+
+        $admin = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $visibleCompany = SubCompany::query()->create([
+            'user_id' => $admin->id,
+            'code' => 'SUB-A',
+            'name' => 'Sub A',
+        ]);
+        $hiddenCompany = SubCompany::query()->create([
+            'user_id' => $admin->id,
+            'code' => 'SUB-B',
+            'name' => 'Sub B',
+        ]);
+
+        $subUser = User::factory()->create([
+            'parent_user_id' => $admin->id,
+            'role' => 'admin_staff',
+            'client_sub_company_id' => $visibleCompany->id,
+            'email_verified_at' => now(),
+        ]);
+        $subUser->clientSubCompanies()->attach($visibleCompany->id);
+
+        $visibleEmployee = Employee::factory()->create([
+            'user_id' => $admin->id,
+            'sub_company_id' => $visibleCompany->id,
+            'employee_code' => 'EMP-001',
+            'first_name' => 'Budi',
+            'last_name' => 'Santoso',
+        ]);
+        $hiddenEmployee = Employee::factory()->create([
+            'user_id' => $admin->id,
+            'sub_company_id' => $hiddenCompany->id,
+            'employee_code' => 'EMP-002',
+            'first_name' => 'Citra',
+            'last_name' => 'Dewi',
+        ]);
+
+        foreach ([$visibleEmployee, $hiddenEmployee] as $employee) {
+            EmployeeLeaveBalance::query()->create([
+                'user_id' => $admin->id,
+                'employee_id' => $employee->id,
+                'leave_type' => 'annual',
+                'year' => now()->year,
+                'policy_type' => 'lump_sum',
+                'total_quota' => 12,
+                'accrued_days' => 12,
+                'used_days' => 0,
+                'adjusted_days' => 0,
+            ]);
+        }
+
+        $this->actingAs($subUser)
+            ->get(route('hris.leaves.balances.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hris/leaves/balances')
+                ->has('balances', 1)
+                ->where('balances.0.employee_id', $visibleEmployee->id)
+                ->has('employees', 1)
+                ->where('employees.0.id', $visibleEmployee->id)
+            );
     }
 
     public function test_monthly_schedule_can_be_saved_per_employee()
