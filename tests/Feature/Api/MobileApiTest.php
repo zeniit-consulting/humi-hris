@@ -246,7 +246,7 @@ class MobileApiTest extends TestCase
             ->assertJsonPath('data.items.0.employee_id', $selfEmployee->id);
     }
 
-    public function test_portal_summary_exposes_shift_options_and_open_attendance(): void
+    public function test_portal_summary_does_not_show_yesterday_open_attendance_as_today(): void
     {
         $owner = User::factory()->create([
             'email_verified_at' => now(),
@@ -302,9 +302,138 @@ class MobileApiTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertJsonPath('data.shift_options.0.id', $shift->id)
+            ->assertJsonPath('data.quick_action.attendance', null)
+            ->assertJsonPath('data.quick_action.open_attendance', null)
+            ->assertJsonPath('data.quick_action.can_clock_in', true)
+            ->assertJsonPath('data.quick_action.can_clock_out', false);
+
+        $this->assertTrue(
+            collect($response->json('data.shift_options'))->contains('id', $shift->id),
+        );
+    }
+
+    public function test_portal_summary_exposes_today_open_attendance(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'email' => 'today-open@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'level' => '2',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'today-open@example.com',
+        ]);
+
+        $shift = WorkShift::query()->create([
+            'user_id' => $owner->id,
+            'code' => 'SHIFT-1',
+            'name' => 'Pagi',
+            'start_time' => '08:00:00',
+            'end_time' => '17:00:00',
+            'is_day_off' => false,
+        ]);
+
+        $attendance = EmployeeAttendance::query()->create([
+            'user_id' => $owner->id,
+            'employee_id' => $employee->id,
+            'shift_id' => $shift->id,
+            'attendance_date' => today()->toDateString(),
+            'status' => 'present',
+            'check_in_at' => today()->setTime(8, 5),
+            'check_in_latitude' => -6.2,
+            'check_in_longitude' => 106.8,
+        ]);
+
+        Sanctum::actingAs($subUser, ['mobile']);
+
+        $this->getJson('/api/mobile/v1/portal/summary')
+            ->assertOk()
             ->assertJsonPath('data.quick_action.can_clock_out', true)
-            ->assertJsonPath('data.quick_action.open_attendance.id', EmployeeAttendance::query()->first()->id);
+            ->assertJsonPath('data.quick_action.open_attendance.id', $attendance->id);
+    }
+
+    public function test_portal_summary_keeps_yesterday_open_attendance_for_active_overnight_shift(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-05-20 02:00:00', 'Asia/Makassar'));
+
+        try {
+            $owner = User::factory()->create([
+                'email_verified_at' => now(),
+            ]);
+
+            $subUser = User::factory()->create([
+                'email' => 'night-shift@example.com',
+                'parent_user_id' => $owner->id,
+                'role' => 'user',
+                'email_verified_at' => now(),
+            ]);
+
+            $division = Division::factory()->create([
+                'user_id' => $owner->id,
+            ]);
+
+            $position = Position::factory()->create([
+                'user_id' => $owner->id,
+                'division_id' => $division->id,
+                'level' => '2',
+            ]);
+
+            $employee = Employee::factory()->create([
+                'user_id' => $owner->id,
+                'division_id' => $division->id,
+                'position_id' => $position->id,
+                'email' => 'night-shift@example.com',
+            ]);
+
+            $shift = WorkShift::query()->create([
+                'user_id' => $owner->id,
+                'code' => '2103',
+                'name' => 'Malam',
+                'start_time' => '21:00:00',
+                'end_time' => '03:00:00',
+                'is_day_off' => false,
+            ]);
+
+            $attendance = EmployeeAttendance::query()->create([
+                'user_id' => $owner->id,
+                'employee_id' => $employee->id,
+                'shift_id' => $shift->id,
+                'attendance_date' => '2026-05-19',
+                'status' => 'present',
+                'check_in_at' => Carbon::parse('2026-05-19 21:00:00', 'Asia/Makassar')->utc(),
+                'check_out_at' => null,
+            ]);
+
+            Sanctum::actingAs($subUser, ['mobile']);
+
+            $this->withHeader('X-Timezone', 'Asia/Makassar')
+                ->getJson('/api/mobile/v1/portal/summary')
+                ->assertOk()
+                ->assertJsonPath('data.quick_action.can_clock_in', false)
+                ->assertJsonPath('data.quick_action.can_clock_out', true)
+                ->assertJsonPath('data.quick_action.open_attendance.id', $attendance->id)
+                ->assertJsonPath('data.quick_action.open_attendance.shift.code', '2103');
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_portal_summary_handles_scheduled_employee_full_name_accessor(): void
@@ -387,6 +516,8 @@ class MobileApiTest extends TestCase
             'email' => 'staff@example.com',
         ]);
 
+        WorkShift::query()->where('user_id', $owner->id)->delete();
+
         Sanctum::actingAs($subUser, ['mobile']);
 
         $this->postJson('/api/mobile/v1/attendances', [
@@ -407,6 +538,210 @@ class MobileApiTest extends TestCase
             ->firstOrFail();
 
         $this->assertNull($attendance->shift_id);
+    }
+
+    public function test_self_service_clock_in_detects_shift_when_today_schedule_is_missing(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'email' => 'auto-shift@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'level' => '2',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'auto-shift@example.com',
+        ]);
+
+        WorkShift::query()->where('user_id', $owner->id)->delete();
+
+        $morningShift = WorkShift::query()->create([
+            'user_id' => $owner->id,
+            'code' => '0817',
+            'name' => 'Pagi',
+            'start_time' => '08:00:00',
+            'end_time' => '17:00:00',
+            'is_day_off' => false,
+            'late_tolerance_minutes' => 15,
+        ]);
+
+        WorkShift::query()->create([
+            'user_id' => $owner->id,
+            'code' => '1322',
+            'name' => 'Siang',
+            'start_time' => '13:00:00',
+            'end_time' => '22:00:00',
+            'is_day_off' => false,
+            'late_tolerance_minutes' => 15,
+        ]);
+
+        Sanctum::actingAs($subUser, ['mobile']);
+
+        $this->withHeader('X-Timezone', 'Asia/Makassar')
+            ->postJson('/api/mobile/v1/attendances', [
+                'employee_id' => $employee->id,
+                'shift_id' => null,
+                'attendance_date' => '2026-05-19',
+                'status' => 'present',
+                'check_in_at' => '2026-05-19T09:30:00',
+                'check_in_latitude' => -6.20001,
+                'check_in_longitude' => 106.81667,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.shift.id', $morningShift->id)
+            ->assertJsonPath('data.shift.code', '0817');
+
+        $this->assertDatabaseHas('employee_attendances', [
+            'employee_id' => $employee->id,
+            'shift_id' => $morningShift->id,
+            'attendance_date' => '2026-05-19 00:00:00',
+        ]);
+    }
+
+    public function test_self_service_can_clock_in_today_when_yesterday_was_not_clocked_out(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-05-20 09:00:00', 'Asia/Makassar'));
+
+        try {
+            $owner = User::factory()->create([
+                'email_verified_at' => now(),
+            ]);
+
+            $subUser = User::factory()->create([
+                'email' => 'forgot-checkout@example.com',
+                'parent_user_id' => $owner->id,
+                'role' => 'user',
+                'email_verified_at' => now(),
+            ]);
+
+            $division = Division::factory()->create([
+                'user_id' => $owner->id,
+            ]);
+
+            $position = Position::factory()->create([
+                'user_id' => $owner->id,
+                'division_id' => $division->id,
+                'level' => '2',
+            ]);
+
+            $employee = Employee::factory()->create([
+                'user_id' => $owner->id,
+                'division_id' => $division->id,
+                'position_id' => $position->id,
+                'email' => 'forgot-checkout@example.com',
+            ]);
+
+            EmployeeAttendance::query()->create([
+                'user_id' => $owner->id,
+                'employee_id' => $employee->id,
+                'attendance_date' => '2026-05-19',
+                'status' => 'present',
+                'check_in_at' => Carbon::parse('2026-05-19 08:00:00', 'Asia/Makassar')->utc(),
+                'check_out_at' => null,
+            ]);
+
+            Sanctum::actingAs($subUser, ['mobile']);
+
+            $this->withHeader('X-Timezone', 'Asia/Makassar')
+                ->postJson('/api/mobile/v1/attendances', [
+                    'employee_id' => $employee->id,
+                    'attendance_date' => '2026-05-20',
+                    'status' => 'present',
+                    'check_in_at' => '2026-05-20T09:00:00',
+                    'check_in_latitude' => -6.20001,
+                    'check_in_longitude' => 106.81667,
+                ])
+                ->assertCreated()
+                ->assertJsonPath('data.attendance_date', '2026-05-20');
+
+            $this->assertDatabaseHas('employee_attendances', [
+                'employee_id' => $employee->id,
+                'attendance_date' => '2026-05-20 00:00:00',
+            ]);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_self_service_clock_in_is_blocked_when_yesterday_overnight_shift_is_still_active(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'email' => 'active-night-shift@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'level' => '2',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'active-night-shift@example.com',
+        ]);
+
+        $shift = WorkShift::query()->create([
+            'user_id' => $owner->id,
+            'code' => '2103',
+            'name' => 'Malam',
+            'start_time' => '21:00:00',
+            'end_time' => '03:00:00',
+            'is_day_off' => false,
+        ]);
+
+        EmployeeAttendance::query()->create([
+            'user_id' => $owner->id,
+            'employee_id' => $employee->id,
+            'shift_id' => $shift->id,
+            'attendance_date' => '2026-05-19',
+            'status' => 'present',
+            'check_in_at' => Carbon::parse('2026-05-19 21:00:00', 'Asia/Makassar')->utc(),
+            'check_out_at' => null,
+        ]);
+
+        Sanctum::actingAs($subUser, ['mobile']);
+
+        $this->withHeader('X-Timezone', 'Asia/Makassar')
+            ->postJson('/api/mobile/v1/attendances', [
+                'employee_id' => $employee->id,
+                'attendance_date' => '2026-05-20',
+                'status' => 'present',
+                'check_in_at' => '2026-05-20T02:00:00',
+                'check_in_latitude' => -6.20001,
+                'check_in_longitude' => 106.81667,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Masih ada absensi yang belum clock out.');
     }
 
     public function test_self_service_kasbon_returns_limit_and_stores_own_request(): void
@@ -620,6 +955,63 @@ class MobileApiTest extends TestCase
             'employee_id' => $employee->id,
             'shift_id' => $shift->id,
         ]);
+    }
+
+    public function test_self_service_attendance_uses_device_timezone_for_local_times(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'email' => 'timezone-staff@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'level' => '2',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'timezone-staff@example.com',
+        ]);
+
+        Sanctum::actingAs($subUser, ['mobile']);
+
+        $this->withHeader('X-Timezone', 'Asia/Makassar')
+            ->postJson('/api/mobile/v1/attendances', [
+                'employee_id' => $employee->id,
+                'attendance_date' => '2026-05-19',
+                'status' => 'present',
+                'check_in_at' => '2026-05-19T08:00:00',
+                'check_in_latitude' => -6.20001,
+                'check_in_longitude' => 106.81667,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.check_in_at', '2026-05-19T08:00:00+08:00');
+
+        $attendance = EmployeeAttendance::query()->firstOrFail();
+
+        $this->assertSame(
+            '2026-05-19 00:00:00',
+            $attendance->check_in_at?->copy()->utc()->format('Y-m-d H:i:s'),
+        );
+
+        $this->withHeader('X-Timezone', 'Asia/Jayapura')
+            ->getJson('/api/mobile/v1/attendances?date=2026-05-19')
+            ->assertOk()
+            ->assertJsonPath('data.items.0.check_in_at', '2026-05-19T09:00:00+09:00');
     }
 
     public function test_clock_out_is_blocked_after_three_days(): void

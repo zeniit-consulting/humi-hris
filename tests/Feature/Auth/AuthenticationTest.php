@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
@@ -46,6 +48,61 @@ class AuthenticationTest extends TestCase
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('portal.index', absolute: false));
+    }
+
+    public function test_employee_can_login_to_portal_with_nik_and_registered_whatsapp_number(): void
+    {
+        $owner = User::factory()->create();
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'employee_code' => 'EMP001',
+            'first_name' => 'Portal',
+            'last_name' => 'User',
+            'email' => 'portal-user@example.test',
+            'phone' => '0812-3456-7890',
+        ]);
+
+        $response = $this->post(route('portal.login.password'), [
+            'employee_code' => 'emp001',
+            'password' => '6281234567890',
+        ]);
+
+        $response->assertRedirect(route('portal.index', absolute: false));
+        $this->assertAuthenticated();
+
+        $portalUser = User::query()
+            ->where('role', 'user')
+            ->where('email', $employee->email)
+            ->firstOrFail();
+
+        $this->assertTrue(auth()->user()->is($portalUser));
+        $this->assertSame($owner->id, $portalUser->parent_user_id);
+        $this->assertSame('6281234567890', $portalUser->phone);
+        $this->assertNotNull($portalUser->phone_verified_at);
+        $this->assertTrue(Hash::check('6281234567890', $portalUser->password));
+    }
+
+    public function test_employee_portal_password_login_rejects_unmatched_whatsapp_number(): void
+    {
+        $owner = User::factory()->create();
+
+        Employee::factory()->create([
+            'user_id' => $owner->id,
+            'employee_code' => 'EMP001',
+            'phone' => '081234567890',
+        ]);
+
+        $response = $this->from(route('portal.login'))->post(route('portal.login.password'), [
+            'employee_code' => 'EMP001',
+            'password' => '081299999999',
+        ]);
+
+        $response
+            ->assertRedirect(route('portal.login'))
+            ->assertSessionHasErrors(['employee_code']);
+
+        $this->assertGuest();
     }
 
     public function test_unactivated_users_are_redirected_to_activation_screen_after_login(): void

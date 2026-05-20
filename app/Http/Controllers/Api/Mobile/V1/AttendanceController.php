@@ -10,8 +10,10 @@ use App\Http\Requests\Hris\UpdateAttendanceRequest;
 use App\Models\CompanySetting;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeSchedule;
 use App\Models\SubCompanyAttendanceLocation;
 use App\Models\User;
+use App\Models\WorkShift;
 use App\Services\AttendanceStatusService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -88,7 +90,7 @@ class AttendanceController extends Controller
                 'on_leave' => (int) ($summary['on_leave'] ?? 0),
                 'absent' => (int) ($summary['absent'] ?? 0),
             ],
-            'items' => collect($paginator->items())->map(fn (EmployeeAttendance $attendance) => $this->payload($attendance))->values(),
+            'items' => collect($paginator->items())->map(fn (EmployeeAttendance $attendance) => $this->payload($attendance, $timezone))->values(),
             'pagination' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
@@ -104,6 +106,7 @@ class AttendanceController extends Controller
         /** @var User $user */
         $user = $request->user();
         $timezone = $this->deviceTimezone($request);
+        $this->normalizeAttendanceTimestamps($validated, $timezone);
 
         if ($this->isSelfServiceUser($user)) {
             $employee = $this->resolveRequiredSelfServiceEmployee($user);
@@ -118,10 +121,18 @@ class AttendanceController extends Controller
         }
 
         $openAttendance = EmployeeAttendance::query()
+            ->with('shift:id,code,name,start_time,end_time,is_day_off')
             ->where('employee_id', $validated['employee_id'])
             ->whereNull('check_out_at')
-            ->whereDate('attendance_date', '>=', Carbon::today($timezone)->subDays(3)->toDateString())
-            ->first();
+            ->whereDate('attendance_date', '>=', Carbon::parse($validated['attendance_date'])->subDay()->toDateString())
+            ->orderByDesc('attendance_date')
+            ->orderByDesc('id')
+            ->get()
+            ->first(fn (EmployeeAttendance $attendance): bool => $this->isCurrentOpenAttendance(
+                $attendance,
+                $this->attendanceReferenceTime($validated, $timezone),
+                $timezone,
+            ));
 
         if ($openAttendance) {
             return $this->error('Masih ada absensi yang belum clock out.');
@@ -135,6 +146,14 @@ class AttendanceController extends Controller
         if ($existingAttendance) {
             return $this->error('Absensi untuk tanggal ini sudah ada.');
         }
+
+        $validated['shift_id'] ??= $this->resolveAttendanceShiftId(
+            $validated['employee_id'],
+            $validated['attendance_date'],
+            $validated['check_in_at'] ?? null,
+            $user->accountOwnerId(),
+            $timezone,
+        );
 
         $payload = [
             'employee_id' => $validated['employee_id'],
@@ -156,7 +175,7 @@ class AttendanceController extends Controller
 
         $attendance->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes']);
 
-        return $this->success($this->payload($attendance), 'Absensi berhasil disimpan.', 201);
+        return $this->success($this->payload($attendance, $timezone), 'Absensi berhasil disimpan.', 201);
     }
 
     public function update(UpdateAttendanceRequest $request, EmployeeAttendance $employeeAttendance, AttendanceStatusService $statusService): JsonResponse
@@ -167,6 +186,7 @@ class AttendanceController extends Controller
 
         $validated = $request->validated();
         $timezone = $this->deviceTimezone($request);
+        $this->normalizeAttendanceTimestamps($validated, $timezone);
 
         if ($this->isSelfServiceUser($user)) {
             $employee = $this->resolveRequiredSelfServiceEmployee($user);
@@ -199,7 +219,7 @@ class AttendanceController extends Controller
         $employeeAttendance->update($validated);
         $employeeAttendance->refresh()->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes']);
 
-        return $this->success($this->payload($employeeAttendance), 'Absensi berhasil diperbarui.');
+        return $this->success($this->payload($employeeAttendance, $timezone), 'Absensi berhasil diperbarui.');
     }
 
     public function destroy(Request $request, EmployeeAttendance $employeeAttendance): JsonResponse
@@ -216,8 +236,10 @@ class AttendanceController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function payload(EmployeeAttendance $attendance): array
+    private function payload(EmployeeAttendance $attendance, ?string $timezone = null): array
     {
+        $timezone ??= config('app.timezone');
+
         return [
             'id' => $attendance->id,
             'employee_id' => $attendance->employee_id,
@@ -235,10 +257,10 @@ class AttendanceController extends Controller
                 'is_day_off' => $attendance->shift->is_day_off,
                 'late_tolerance_minutes' => $attendance->shift->late_tolerance_minutes,
             ] : null,
-            'check_in_at' => $attendance->check_in_at?->toIso8601String(),
+            'check_in_at' => $attendance->check_in_at?->copy()->setTimezone($timezone)->toIso8601String(),
             'check_in_latitude' => $attendance->check_in_latitude,
             'check_in_longitude' => $attendance->check_in_longitude,
-            'check_out_at' => $attendance->check_out_at?->toIso8601String(),
+            'check_out_at' => $attendance->check_out_at?->copy()->setTimezone($timezone)->toIso8601String(),
             'check_out_latitude' => $attendance->check_out_latitude,
             'check_out_longitude' => $attendance->check_out_longitude,
             'notes' => $attendance->notes,
@@ -252,6 +274,144 @@ class AttendanceController extends Controller
         return in_array($timezone, timezone_identifiers_list(), true)
             ? $timezone
             : config('app.timezone');
+    }
+
+    /**
+     * Normalize incoming device-local attendance times to one persisted instant.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function normalizeAttendanceTimestamps(array &$validated, string $timezone): void
+    {
+        foreach (['check_in_at', 'check_out_at'] as $key) {
+            if (! array_key_exists($key, $validated) || $validated[$key] === null || $validated[$key] === '') {
+                continue;
+            }
+
+            $validated[$key] = Carbon::parse((string) $validated[$key], $timezone)
+                ->utc()
+                ->toDateTimeString();
+        }
+    }
+
+    private function resolveAttendanceShiftId(
+        int $employeeId,
+        string $attendanceDate,
+        mixed $checkInAt,
+        int $ownerId,
+        string $timezone,
+    ): ?int {
+        $scheduledShiftCode = EmployeeSchedule::query()
+            ->where('user_id', $ownerId)
+            ->where('employee_id', $employeeId)
+            ->whereDate('work_date', Carbon::parse($attendanceDate)->toDateString())
+            ->value('shift_code');
+
+        if ($scheduledShiftCode) {
+            return WorkShift::query()
+                ->where('user_id', $ownerId)
+                ->where('code', $scheduledShiftCode)
+                ->value('id');
+        }
+
+        if ($checkInAt === null || $checkInAt === '') {
+            return null;
+        }
+
+        $checkIn = Carbon::parse((string) $checkInAt, 'UTC')->setTimezone($timezone);
+        $checkInMinute = ((int) $checkIn->format('H')) * 60 + (int) $checkIn->format('i');
+
+        return WorkShift::query()
+            ->where('user_id', $ownerId)
+            ->where('is_day_off', false)
+            ->whereNotNull('start_time')
+            ->whereNotNull('end_time')
+            ->get(['id', 'start_time', 'end_time'])
+            ->map(function (WorkShift $shift) use ($checkInMinute): array {
+                $startMinute = $this->timeToMinute((string) $shift->start_time);
+                $endMinute = $this->timeToMinute((string) $shift->end_time);
+                $withinShift = $this->minuteFallsWithinShift($checkInMinute, $startMinute, $endMinute);
+
+                return [
+                    'id' => (int) $shift->id,
+                    'within_shift' => $withinShift,
+                    'distance' => $this->minuteDistance($checkInMinute, $startMinute),
+                ];
+            })
+            ->sortBy([
+                ['within_shift', 'desc'],
+                ['distance', 'asc'],
+                ['id', 'asc'],
+            ])
+            ->first()['id'] ?? null;
+    }
+
+    private function timeToMinute(string $time): int
+    {
+        [$hour, $minute] = array_map('intval', explode(':', substr($time, 0, 5)));
+
+        return ($hour * 60) + $minute;
+    }
+
+    private function minuteFallsWithinShift(int $minute, int $startMinute, int $endMinute): bool
+    {
+        if ($startMinute === $endMinute) {
+            return false;
+        }
+
+        if ($startMinute < $endMinute) {
+            return $minute >= $startMinute && $minute <= $endMinute;
+        }
+
+        return $minute >= $startMinute || $minute <= $endMinute;
+    }
+
+    private function minuteDistance(int $left, int $right): int
+    {
+        $distance = abs($left - $right);
+
+        return min($distance, 1440 - $distance);
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function attendanceReferenceTime(array $validated, string $timezone): Carbon
+    {
+        if (! empty($validated['check_in_at'])) {
+            return Carbon::parse((string) $validated['check_in_at'], 'UTC')->setTimezone($timezone);
+        }
+
+        return Carbon::now($timezone);
+    }
+
+    private function isCurrentOpenAttendance(EmployeeAttendance $attendance, Carbon $referenceTime, string $timezone): bool
+    {
+        $attendanceDate = $attendance->attendance_date?->copy()->setTimezone($timezone)->toDateString();
+        $referenceDate = $referenceTime->copy()->setTimezone($timezone)->toDateString();
+
+        if ($attendanceDate === null) {
+            return false;
+        }
+
+        if ($attendanceDate === $referenceDate) {
+            return true;
+        }
+
+        $shift = $attendance->shift;
+
+        if (! $shift || $shift->is_day_off || $shift->start_time === null || $shift->end_time === null) {
+            return false;
+        }
+
+        $start = Carbon::parse($attendanceDate.' '.$shift->start_time, $timezone);
+        $end = Carbon::parse($attendanceDate.' '.$shift->end_time, $timezone);
+
+        if ($end->greaterThan($start)) {
+            return false;
+        }
+
+        return $referenceTime->copy()->setTimezone($timezone)->lte($end->addDay());
     }
 
     private function ensureWithinAttendanceRadius(User $user, Employee $employee, mixed $latitude, mixed $longitude): void

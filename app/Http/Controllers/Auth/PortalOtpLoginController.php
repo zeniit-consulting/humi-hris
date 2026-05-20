@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employee;
 use App\Models\User;
-use App\Services\WhatsAppOtpService;
 use App\Services\UserPortalAccountService;
+use App\Services\WhatsAppOtpService;
 use App\Support\RoleRedirect;
 use App\Support\WhatsAppPhone;
 use Illuminate\Http\RedirectResponse;
@@ -88,6 +89,56 @@ class PortalOtpLoginController extends Controller
                 'otp' => 'Kode OTP tidak valid atau sudah kedaluwarsa.',
             ]);
         }
+
+        $request->session()->forget([
+            'portal_login_user_id',
+            'portal_login_phone',
+        ]);
+
+        Auth::login($user, true);
+        $request->session()->regenerate();
+
+        return redirect()->route('portal.index');
+    }
+
+    public function loginWithPassword(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'employee_code' => ['required', 'string', 'max:30'],
+            'password' => ['required', 'string', 'max:30'],
+        ]);
+
+        $employeeCode = strtoupper(trim((string) $validated['employee_code']));
+        $normalizedPhone = WhatsAppPhone::normalize((string) $validated['password']);
+
+        if ($normalizedPhone === '') {
+            throw ValidationException::withMessages([
+                'password' => 'Password harus menggunakan nomor WhatsApp terdaftar.',
+            ]);
+        }
+
+        $employee = Employee::query()
+            ->where('employee_code', $employeeCode)
+            ->get()
+            ->first(fn (Employee $employee): bool => WhatsAppPhone::normalize((string) $employee->phone) === $normalizedPhone);
+
+        if (! $employee instanceof Employee) {
+            throw ValidationException::withMessages([
+                'employee_code' => 'NIK atau password tidak valid.',
+            ]);
+        }
+
+        $user = $this->portalAccounts->createOrSyncForPasswordLogin($employee);
+
+        if (! $user) {
+            throw ValidationException::withMessages([
+                'employee_code' => 'Akun portal karyawan tidak bisa dibuat dari data ini.',
+            ]);
+        }
+
+        $user->forceFill([
+            'phone_verified_at' => now(),
+        ])->save();
 
         $request->session()->forget([
             'portal_login_user_id',

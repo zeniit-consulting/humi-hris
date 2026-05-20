@@ -33,6 +33,10 @@ const isPwaStandalone = () =>
             .standalone === true);
 
 export default function PortalLogin({ status, otpSentTo }: Props) {
+    const passwordForm = useForm({
+        employee_code: '',
+        password: '',
+    });
     const sendForm = useForm({
         phone: otpSentTo ?? '',
     });
@@ -41,6 +45,9 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
     });
 
     const otpRequested = status === 'otp-sent' || Boolean(otpSentTo);
+    const [loginMode, setLoginMode] = useState<'password' | 'otp'>(
+        otpRequested ? 'otp' : 'password',
+    );
     const [installPrompt, setInstallPrompt] =
         useState<BeforeInstallPromptEvent | null>(null);
     const [showInstallPopup, setShowInstallPopup] = useState(false);
@@ -159,63 +166,178 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
                                 Portal Karyawan
                             </p>
                             <h1 className="max-w-sm text-4xl font-semibold text-white">
-                                Masuk cepat dengan OTP WhatsApp.
+                                Masuk ke portal karyawan.
                             </h1>
                             <p className="mt-4 max-w-sm text-sm leading-6 font-normal text-white/75">
-                                Gunakan nomor WhatsApp terdaftar untuk mengakses
-                                absensi, cuti, lembur, dan payroll karyawan.
+                                Gunakan NIK dan password nomor WhatsApp
+                                terdaftar untuk mengakses absensi, cuti, lembur,
+                                dan payroll karyawan.
                             </p>
                         </div>
 
                         <section className="rounded-[28px] border border-white/18 bg-white/[0.12] p-5 shadow-[0_28px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl">
-                            <form
-                                onSubmit={(event) => {
-                                    event.preventDefault();
-                                    sendForm.post('/portal/login/send-otp');
-                                }}
-                                className="space-y-4"
-                            >
-                                <div className="grid gap-2">
-                                    <Label
-                                        htmlFor="phone"
-                                        className="text-sm font-semibold text-white"
-                                    >
-                                        Nomor WhatsApp
-                                    </Label>
-                                    <Input
-                                        id="phone"
-                                        name="phone"
-                                        inputMode="tel"
-                                        autoFocus={!otpRequested}
-                                        value={sendForm.data.phone}
-                                        onChange={(event) =>
-                                            sendForm.setData(
-                                                'phone',
-                                                event.target.value,
-                                            )
-                                        }
-                                        placeholder="081234567890"
-                                        className="h-12 border-white/20 bg-white text-slate-950 placeholder:text-slate-400"
-                                    />
-                                    <InputError
-                                        className="text-red-100"
-                                        message={sendForm.errors.phone}
-                                    />
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    className="h-12 w-full rounded-xl bg-white font-bold text-[#006069] shadow-[0_16px_36px_rgba(0,0,0,0.18)] hover:bg-white/90"
-                                    disabled={sendForm.processing}
+                            <div className="mb-4 grid grid-cols-2 rounded-2xl bg-white/10 p-1 text-sm font-semibold">
+                                <button
+                                    type="button"
+                                    onClick={() => setLoginMode('password')}
+                                    className={`rounded-xl px-3 py-2 transition ${
+                                        loginMode === 'password'
+                                            ? 'bg-white text-[#006069]'
+                                            : 'text-white/75'
+                                    }`}
                                 >
-                                    {sendForm.processing && <Spinner />}
-                                    {otpRequested
-                                        ? 'Kirim ulang OTP'
-                                        : 'Kirim OTP'}
-                                </Button>
-                            </form>
+                                    NIK
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setLoginMode('otp')}
+                                    className={`rounded-xl px-3 py-2 transition ${
+                                        loginMode === 'otp'
+                                            ? 'bg-white text-[#006069]'
+                                            : 'text-white/75'
+                                    }`}
+                                >
+                                    OTP WA
+                                </button>
+                            </div>
 
-                            {otpRequested ? (
+                            {loginMode === 'password' ? (
+                                <form
+                                    onSubmit={(event) => {
+                                        event.preventDefault();
+                                        passwordForm.post(
+                                            '/portal/login/password',
+                                        );
+                                    }}
+                                    className="space-y-4"
+                                >
+                                    <div className="grid gap-2">
+                                        <Label
+                                            htmlFor="employee_code"
+                                            className="text-sm font-semibold text-white"
+                                        >
+                                            NIK / Kode Karyawan
+                                        </Label>
+                                        <Input
+                                            id="employee_code"
+                                            name="employee_code"
+                                            autoFocus={!otpRequested}
+                                            value={
+                                                passwordForm.data.employee_code
+                                            }
+                                            onChange={(event) =>
+                                                passwordForm.setData(
+                                                    'employee_code',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="EMP001"
+                                            className="h-12 border-white/20 bg-white text-slate-950 placeholder:text-slate-400"
+                                        />
+                                        <InputError
+                                            className="text-red-100"
+                                            message={
+                                                passwordForm.errors
+                                                    .employee_code
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="grid gap-2">
+                                        <Label
+                                            htmlFor="portal-password"
+                                            className="text-sm font-semibold text-white"
+                                        >
+                                            Password
+                                        </Label>
+                                        <Input
+                                            id="portal-password"
+                                            name="password"
+                                            type="password"
+                                            inputMode="tel"
+                                            autoComplete="current-password"
+                                            value={passwordForm.data.password}
+                                            onChange={(event) =>
+                                                passwordForm.setData(
+                                                    'password',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Nomor WhatsApp terdaftar"
+                                            className="h-12 border-white/20 bg-white text-slate-950 placeholder:text-slate-400"
+                                        />
+                                        <InputError
+                                            className="text-red-100"
+                                            message={
+                                                passwordForm.errors.password
+                                            }
+                                        />
+                                    </div>
+
+                                    <Button
+                                        type="submit"
+                                        className="h-12 w-full rounded-xl bg-white font-bold text-[#006069] shadow-[0_16px_36px_rgba(0,0,0,0.18)] hover:bg-white/90"
+                                        disabled={passwordForm.processing}
+                                    >
+                                        {passwordForm.processing && <Spinner />}
+                                        Masuk ke portal
+                                    </Button>
+                                    <p className="text-xs leading-5 text-white/65">
+                                        Password adalah nomor WhatsApp
+                                        terdaftar, contoh 081234567890 atau
+                                        6281234567890.
+                                    </p>
+                                </form>
+                            ) : (
+                                <form
+                                    onSubmit={(event) => {
+                                        event.preventDefault();
+                                        sendForm.post('/portal/login/send-otp');
+                                    }}
+                                    className="space-y-4"
+                                >
+                                    <div className="grid gap-2">
+                                        <Label
+                                            htmlFor="phone"
+                                            className="text-sm font-semibold text-white"
+                                        >
+                                            Nomor WhatsApp
+                                        </Label>
+                                        <Input
+                                            id="phone"
+                                            name="phone"
+                                            inputMode="tel"
+                                            autoFocus={otpRequested}
+                                            value={sendForm.data.phone}
+                                            onChange={(event) =>
+                                                sendForm.setData(
+                                                    'phone',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="081234567890"
+                                            className="h-12 border-white/20 bg-white text-slate-950 placeholder:text-slate-400"
+                                        />
+                                        <InputError
+                                            className="text-red-100"
+                                            message={sendForm.errors.phone}
+                                        />
+                                    </div>
+
+                                    <Button
+                                        type="submit"
+                                        className="h-12 w-full rounded-xl bg-white font-bold text-[#006069] shadow-[0_16px_36px_rgba(0,0,0,0.18)] hover:bg-white/90"
+                                        disabled={sendForm.processing}
+                                    >
+                                        {sendForm.processing && <Spinner />}
+                                        {otpRequested
+                                            ? 'Kirim ulang OTP'
+                                            : 'Kirim OTP'}
+                                    </Button>
+                                </form>
+                            )}
+
+                            {loginMode === 'otp' && otpRequested ? (
                                 <form
                                     onSubmit={(event) => {
                                         event.preventDefault();

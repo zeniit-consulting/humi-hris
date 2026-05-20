@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
     formatCurrency,
     formatDate,
+    localMonthString,
     notifyPortal,
     requestApi,
     translatePortalError,
@@ -48,7 +49,7 @@ type PayrollPayload = {
 export default function PortalPayrollPage({ pageTitle }: Props) {
     const [portal, setPortal] = useState<PortalSummary | null>(null);
     const [payroll, setPayroll] = useState<PayrollPayload | null>(null);
-    const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
+    const [period, setPeriod] = useState(localMonthString());
     const [currentPassword, setCurrentPassword] = useState('');
     const [isLoadingSlip, setIsLoadingSlip] = useState(false);
     const [isExporting, setIsExporting] = useState(false);

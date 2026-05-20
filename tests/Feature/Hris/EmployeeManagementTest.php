@@ -91,6 +91,110 @@ class EmployeeManagementTest extends TestCase
         $this->assertNull($portalUser);
     }
 
+    public function test_employee_code_can_be_filled_manually_when_creating_employee(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+            'code' => 'HR',
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'code' => 'CL',
+            'level' => '3',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('hris.employees.store'), [
+            'employee_code' => 'nik-001',
+            'full_name' => 'Dio Manuaba',
+            'email' => 'manual-code@example.com',
+            'phone' => '08123456789',
+            'gender' => 'male',
+            'birth_date' => '1998-05-20',
+            'hire_date' => '2026-03-01',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+            'pph21_method' => 'gross',
+            'pph21_rate' => '5',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'base_salary' => '5.000.000',
+            'is_active' => true,
+        ]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('employees', [
+            'user_id' => $user->id,
+            'employee_code' => 'NIK-001',
+            'email' => 'manual-code@example.com',
+        ]);
+    }
+
+    public function test_employee_code_can_be_updated_manually(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'level' => '3',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'employee_code' => 'EMP-001',
+            'first_name' => 'Dio Manuaba',
+            'last_name' => null,
+            'hire_date' => '2026-03-01',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+            'pph21_method' => 'gross',
+            'pph21_rate' => '5',
+        ]);
+
+        $response = $this->actingAs($user)->put(route('hris.employees.update', $employee), [
+            'employee_code' => 'nik-002',
+            'full_name' => 'Dio Manuaba',
+            'email' => $employee->email,
+            'phone' => $employee->phone,
+            'gender' => $employee->gender,
+            'birth_date' => $employee->birth_date?->format('Y-m-d'),
+            'last_education' => $employee->last_education,
+            'marital_status' => $employee->marital_status,
+            'children_count' => $employee->children_count,
+            'hire_date' => '2026-03-01',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+            'pph21_method' => 'gross',
+            'pph21_rate' => '5',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'base_salary' => $employee->base_salary,
+            'is_active' => true,
+        ]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('employees', [
+            'id' => $employee->id,
+            'employee_code' => 'NIK-002',
+        ]);
+    }
+
     public function test_sub_user_only_sees_employees_from_linked_sub_companies(): void
     {
         $this->withoutVite();

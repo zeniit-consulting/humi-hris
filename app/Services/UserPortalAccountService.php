@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Employee;
 use App\Models\User;
+use App\Support\UserPassword;
 use App\Support\WhatsAppPhone;
 use Illuminate\Support\Facades\Log;
 
@@ -41,6 +42,11 @@ class UserPortalAccountService
         return $this->upsertFromEmployee($employee, resetPasswordToDefault: true, sendCredentialMessage: true);
     }
 
+    public function createOrSyncForPasswordLogin(Employee $employee): ?User
+    {
+        return $this->upsertFromEmployee($employee, resetPasswordToDefault: true, sendCredentialMessage: false);
+    }
+
     private function upsertFromEmployee(
         Employee $employee,
         bool $resetPasswordToDefault,
@@ -74,7 +80,9 @@ class UserPortalAccountService
                 'name' => $employee->full_name,
                 'email' => $employee->email ?: $this->portalPlaceholderEmail($employee, $normalizedPhone),
                 'phone' => $normalizedPhone,
-                'password' => str()->random(32),
+                'password' => $resetPasswordToDefault
+                    ? UserPassword::defaultFromPhone($normalizedPhone)
+                    : str()->random(32),
                 'role' => 'user',
                 'parent_user_id' => $ownerId,
                 'email_verified_at' => now(),
@@ -106,6 +114,7 @@ class UserPortalAccountService
 
         if ($resetPasswordToDefault) {
             $user->forceFill([
+                'password' => UserPassword::defaultFromPhone($normalizedPhone),
                 'phone_verified_at' => null,
                 'requires_password_change' => false,
                 'password_changed_at' => null,
@@ -131,8 +140,8 @@ class UserPortalAccountService
 
         $message = implode("\n", [
             'Akun Portal User Anda sudah dibuat.',
-            'Masuk menggunakan nomor WhatsApp terdaftar Anda.',
-            'Kami akan mengirim OTP setiap kali Anda login.',
+            'Masuk menggunakan NIK/kode karyawan dan password nomor WhatsApp terdaftar Anda.',
+            'Jika OTP WhatsApp aktif, Anda juga bisa login lewat kode OTP.',
             'Halaman login portal: '.route('portal.login'),
         ]);
 

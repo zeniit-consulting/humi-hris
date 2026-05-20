@@ -9,6 +9,7 @@ use App\Models\AttendanceCorrectionRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
 class AttendanceCorrectionRequestController extends Controller
@@ -20,6 +21,7 @@ class AttendanceCorrectionRequestController extends Controller
         /** @var User $user */
         $user = $request->user();
         $employee = $this->resolveRequiredSelfServiceEmployee($user);
+        $timezone = $this->deviceTimezone($request);
 
         $requests = AttendanceCorrectionRequest::query()
             ->with('shift:id,code,name,start_time,end_time,is_day_off')
@@ -31,7 +33,7 @@ class AttendanceCorrectionRequestController extends Controller
             ->get();
 
         return $this->success([
-            'items' => $requests->map(fn (AttendanceCorrectionRequest $request) => $this->payload($request))->values(),
+            'items' => $requests->map(fn (AttendanceCorrectionRequest $request) => $this->payload($request, $timezone))->values(),
         ]);
     }
 
@@ -41,6 +43,7 @@ class AttendanceCorrectionRequestController extends Controller
         $user = $request->user();
         $ownerId = $user->accountOwnerId();
         $employee = $this->resolveRequiredSelfServiceEmployee($user);
+        $timezone = $this->deviceTimezone($request);
 
         $validated = $request->validate([
             'attendance_date' => ['required', 'date', 'before_or_equal:today'],
@@ -53,6 +56,8 @@ class AttendanceCorrectionRequestController extends Controller
         if (empty($validated['check_in_at']) && empty($validated['check_out_at'])) {
             return $this->error('Jam masuk atau jam pulang wajib diisi.');
         }
+
+        $this->normalizeAttendanceTimestamps($validated, $timezone);
 
         $attendanceRequest = AttendanceCorrectionRequest::query()->create([
             'user_id' => $ownerId,
@@ -67,14 +72,16 @@ class AttendanceCorrectionRequestController extends Controller
 
         $attendanceRequest->load('shift:id,code,name,start_time,end_time,is_day_off');
 
-        return $this->success($this->payload($attendanceRequest), 'Pengajuan absensi berhasil dikirim.', 201);
+        return $this->success($this->payload($attendanceRequest, $timezone), 'Pengajuan absensi berhasil dikirim.', 201);
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function payload(AttendanceCorrectionRequest $request): array
+    private function payload(AttendanceCorrectionRequest $request, ?string $timezone = null): array
     {
+        $timezone ??= config('app.timezone');
+
         return [
             'id' => $request->id,
             'attendance_date' => $request->attendance_date?->format('Y-m-d'),
@@ -86,11 +93,36 @@ class AttendanceCorrectionRequestController extends Controller
                 'end_time' => $request->shift->end_time,
                 'is_day_off' => $request->shift->is_day_off,
             ] : null,
-            'check_in_at' => $request->check_in_at?->toIso8601String(),
-            'check_out_at' => $request->check_out_at?->toIso8601String(),
+            'check_in_at' => $request->check_in_at?->copy()->setTimezone($timezone)->toIso8601String(),
+            'check_out_at' => $request->check_out_at?->copy()->setTimezone($timezone)->toIso8601String(),
             'reason' => $request->reason,
             'status' => $request->status,
             'rejection_reason' => $request->rejection_reason,
         ];
+    }
+
+    private function deviceTimezone(Request $request): string
+    {
+        $timezone = (string) $request->header('X-Timezone', config('app.timezone'));
+
+        return in_array($timezone, timezone_identifiers_list(), true)
+            ? $timezone
+            : config('app.timezone');
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function normalizeAttendanceTimestamps(array &$validated, string $timezone): void
+    {
+        foreach (['check_in_at', 'check_out_at'] as $key) {
+            if (! array_key_exists($key, $validated) || $validated[$key] === null || $validated[$key] === '') {
+                continue;
+            }
+
+            $validated[$key] = Carbon::parse((string) $validated[$key], $timezone)
+                ->utc()
+                ->toDateTimeString();
+        }
     }
 }

@@ -2163,17 +2163,30 @@ export default function EmployeesIndex() {
                             <div className="space-y-3">
                                 <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                     <Label htmlFor="employee_code">
-                                        Kode Karyawan
+                                        ID Karyawan
                                     </Label>
                                     <div className="space-y-1">
                                         <Input
                                             id="employee_code"
-                                            value={previewEmployeeCode}
-                                            readOnly
+                                            value={
+                                                employeeForm.data.employee_code
+                                            }
+                                            onChange={(event) =>
+                                                employeeForm.setData(
+                                                    'employee_code',
+                                                    event.target.value.toUpperCase(),
+                                                )
+                                            }
+                                            placeholder={
+                                                previewEmployeeCode ||
+                                                'ID karyawan'
+                                            }
                                         />
                                         <p className="text-xs text-muted-foreground">
-                                            Otomatis dari kode jabatan + urutan
-                                            divisi + bulan/tahun masuk kerja.
+                                            Isi manual atau kosongkan agar
+                                            dibuat otomatis dari kode jabatan +
+                                            urutan divisi + bulan/tahun masuk
+                                            kerja.
                                         </p>
                                         <InputError
                                             message={

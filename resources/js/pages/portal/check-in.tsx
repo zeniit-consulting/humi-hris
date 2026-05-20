@@ -4,6 +4,7 @@ import { MapboxLocationMap } from '@/components/mapbox-location-map';
 import {
     notifyPortal,
     notifyPortalAfterRedirect,
+    localDateString,
     requestApi,
     translatePortalError,
 } from './lib';
@@ -345,7 +346,7 @@ export function PortalAttendanceLocationPage({
                 await requestApi('/portal/api/attendances', 'POST', {
                     employee_id: portal.employee.id,
                     shift_id: attendanceShift?.id ?? null,
-                    attendance_date: portal.today.date,
+                    attendance_date: localDateString(),
                     status: 'present',
                     check_in_at: new Date().toISOString(),
                     check_in_latitude: coordinates.latitude,

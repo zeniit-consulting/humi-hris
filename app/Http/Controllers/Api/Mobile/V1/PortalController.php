@@ -66,10 +66,11 @@ class PortalController extends Controller
                 ->with(['shift:id,code,name,start_time,end_time,is_day_off'])
                 ->where('employee_id', $employee->id)
                 ->whereNull('check_out_at')
-                ->whereDate('attendance_date', '>=', $today->copy()->subDays(3)->toDateString())
+                ->whereDate('attendance_date', '>=', $today->copy()->subDay()->toDateString())
                 ->orderByDesc('attendance_date')
                 ->orderByDesc('id')
-                ->first();
+                ->get()
+                ->first(fn (EmployeeAttendance $attendance): bool => $this->isCurrentOpenAttendance($attendance, Carbon::now($timezone), $timezone));
 
             $todayShift = EmployeeSchedule::query()
                 ->with(['employee:id,employee_code,first_name,last_name'])
@@ -338,8 +339,8 @@ class PortalController extends Controller
                         'end_time' => $openAttendance->shift->end_time,
                         'is_day_off' => $openAttendance->shift->is_day_off,
                     ] : null,
-                    'check_in_at' => $openAttendance->check_in_at?->toIso8601String(),
-                    'check_out_at' => $openAttendance->check_out_at?->toIso8601String(),
+                    'check_in_at' => $openAttendance->check_in_at?->copy()->setTimezone($timezone)->toIso8601String(),
+                    'check_out_at' => $openAttendance->check_out_at?->copy()->setTimezone($timezone)->toIso8601String(),
                     'check_in_latitude' => $openAttendance->check_in_latitude,
                     'check_in_longitude' => $openAttendance->check_in_longitude,
                     'check_out_latitude' => $openAttendance->check_out_latitude,
@@ -452,6 +453,35 @@ class PortalController extends Controller
         return in_array($timezone, timezone_identifiers_list(), true)
             ? $timezone
             : config('app.timezone');
+    }
+
+    private function isCurrentOpenAttendance(EmployeeAttendance $attendance, Carbon $referenceTime, string $timezone): bool
+    {
+        $attendanceDate = $attendance->attendance_date?->copy()->setTimezone($timezone)->toDateString();
+        $referenceDate = $referenceTime->copy()->setTimezone($timezone)->toDateString();
+
+        if ($attendanceDate === null) {
+            return false;
+        }
+
+        if ($attendanceDate === $referenceDate) {
+            return true;
+        }
+
+        $shift = $attendance->shift;
+
+        if (! $shift || $shift->is_day_off || $shift->start_time === null || $shift->end_time === null) {
+            return false;
+        }
+
+        $start = Carbon::parse($attendanceDate.' '.$shift->start_time, $timezone);
+        $end = Carbon::parse($attendanceDate.' '.$shift->end_time, $timezone);
+
+        if ($end->greaterThan($start)) {
+            return false;
+        }
+
+        return $referenceTime->copy()->setTimezone($timezone)->lte($end->addDay());
     }
 
     private function attendanceLocationsForEmployee(?Employee $employee, ?CompanySetting $companySetting): \Illuminate\Support\Collection

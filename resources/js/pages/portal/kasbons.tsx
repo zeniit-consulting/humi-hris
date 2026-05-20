@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import {
     formatCurrency,
     formatDate,
+    localMonthString,
     notifyPortal,
     requestApi,
     translatePortalError,
@@ -40,7 +41,7 @@ type KasbonPayload = {
     }>;
 };
 
-const currentPeriod = () => new Date().toISOString().slice(0, 7);
+const currentPeriod = () => localMonthString();
 
 export default function PortalKasbonsPage({ pageTitle }: Props) {
     const [portal, setPortal] = useState<PortalSummary | null>(null);
@@ -291,7 +292,10 @@ export default function PortalKasbonsPage({ pageTitle }: Props) {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+                        <form
+                            onSubmit={handleSubmit}
+                            className="mt-5 space-y-4"
+                        >
                             <div>
                                 <label
                                     htmlFor="kasbon_amount"
@@ -323,8 +327,8 @@ export default function PortalKasbonsPage({ pageTitle }: Props) {
                                             : 'text-slate-500'
                                     }`}
                                 >
-                                    Sisa limit{' '}
-                                    {formatCurrency(availableAmount)}.
+                                    Sisa limit {formatCurrency(availableAmount)}
+                                    .
                                 </p>
                             </div>
 

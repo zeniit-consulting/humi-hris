@@ -828,7 +828,6 @@ class EmployeeController extends Controller
         $validated = $request->validated();
 
         $this->ensurePositionMatchesDivision($validated['position_id'] ?? null, $validated['division_id'] ?? null);
-        unset($validated['employee_code']);
 
         try {
             $employee = DB::transaction(function () use ($request, $validated): Employee {
@@ -840,11 +839,15 @@ class EmployeeController extends Controller
                     ->lockForUpdate()
                     ->findOrFail($validated['position_id']);
 
-                $employeeCode = $this->generateEmployeeCode(
-                    $division,
-                    $position,
-                    (string) $validated['hire_date'],
-                );
+                $employeeCode = trim((string) ($validated['employee_code'] ?? ''));
+
+                if ($employeeCode === '') {
+                    $employeeCode = $this->generateEmployeeCode(
+                        $division,
+                        $position,
+                        (string) $validated['hire_date'],
+                    );
+                }
 
                 return Employee::create([
                     ...$validated,
@@ -875,33 +878,8 @@ class EmployeeController extends Controller
 
         try {
             $employee = DB::transaction(function () use ($employee, $request, $validated): Employee {
-                $employeeCode = $employee->employee_code;
-
-                $shouldRegenerateCode =
-                    (int) $employee->division_id !== (int) $validated['division_id']
-                    || (int) $employee->position_id !== (int) $validated['position_id']
-                    || $employee->hire_date?->format('Y-m-d') !== $validated['hire_date'];
-
-                if ($shouldRegenerateCode) {
-                    $division = Division::query()
-                        ->lockForUpdate()
-                        ->findOrFail($validated['division_id']);
-
-                    $position = Position::query()
-                        ->lockForUpdate()
-                        ->findOrFail($validated['position_id']);
-
-                    $employeeCode = $this->generateEmployeeCode(
-                        $division,
-                        $position,
-                        (string) $validated['hire_date'],
-                        $employee->id,
-                    );
-                }
-
                 $employee->update([
                     ...$validated,
-                    'employee_code' => $employeeCode,
                     'is_active' => $request->boolean('is_active', true),
                 ]);
 

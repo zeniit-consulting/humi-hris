@@ -79,6 +79,9 @@ Route::middleware('guest')->group(function () {
     Route::post('portal/login/verify-otp', [PortalOtpLoginController::class, 'verifyOtp'])
         ->middleware('throttle:10,1')
         ->name('portal.login.verify-otp');
+    Route::post('portal/login/password', [PortalOtpLoginController::class, 'loginWithPassword'])
+        ->middleware('throttle:10,1')
+        ->name('portal.login.password');
 });
 
 Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access'])->group(function () {

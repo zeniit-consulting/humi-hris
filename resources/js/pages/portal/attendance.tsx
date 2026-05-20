@@ -9,6 +9,7 @@ import {
     chips,
     formatDate,
     formatTime,
+    localMonthString,
     notifyPortal,
     requestApi,
     statusLabels,
@@ -127,7 +128,7 @@ export default function PortalAttendancePage({ pageTitle }: Props) {
             const [portalResponse, attendanceResponse] = await Promise.all([
                 requestApi<PortalSummary>('/portal/api/summary'),
                 requestApi<AttendancePayload>(
-                    `/portal/api/attendances?period=${new Date().toISOString().slice(0, 7)}&per_page=31`,
+                    `/portal/api/attendances?period=${localMonthString()}&per_page=31`,
                 ),
             ]);
 

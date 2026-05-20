@@ -102,6 +102,8 @@ class StoreEmployeeRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:30',
+                'regex:/^[A-Z0-9_-]+$/',
+                Rule::unique('employees', 'employee_code')->where('user_id', $ownerId),
             ],
             'first_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['nullable', 'string', 'max:100'],
