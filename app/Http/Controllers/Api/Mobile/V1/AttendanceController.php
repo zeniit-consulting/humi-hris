@@ -257,10 +257,10 @@ class AttendanceController extends Controller
                 'is_day_off' => $attendance->shift->is_day_off,
                 'late_tolerance_minutes' => $attendance->shift->late_tolerance_minutes,
             ] : null,
-            'check_in_at' => $attendance->check_in_at?->copy()->setTimezone($timezone)->toIso8601String(),
+            'check_in_at' => $this->localTimestamp($attendance->check_in_at, $timezone),
             'check_in_latitude' => $attendance->check_in_latitude,
             'check_in_longitude' => $attendance->check_in_longitude,
-            'check_out_at' => $attendance->check_out_at?->copy()->setTimezone($timezone)->toIso8601String(),
+            'check_out_at' => $this->localTimestamp($attendance->check_out_at, $timezone),
             'check_out_latitude' => $attendance->check_out_latitude,
             'check_out_longitude' => $attendance->check_out_longitude,
             'notes' => $attendance->notes,
@@ -288,9 +288,7 @@ class AttendanceController extends Controller
                 continue;
             }
 
-            $validated[$key] = Carbon::parse((string) $validated[$key], $timezone)
-                ->utc()
-                ->toDateTimeString();
+            $validated[$key] = $this->deviceLocalDateTime((string) $validated[$key], $timezone);
         }
     }
 
@@ -318,7 +316,7 @@ class AttendanceController extends Controller
             return null;
         }
 
-        $checkIn = Carbon::parse((string) $checkInAt, 'UTC')->setTimezone($timezone);
+        $checkIn = Carbon::parse((string) $checkInAt, $timezone);
         $checkInMinute = ((int) $checkIn->format('H')) * 60 + (int) $checkIn->format('i');
 
         return WorkShift::query()
@@ -373,13 +371,32 @@ class AttendanceController extends Controller
         return min($distance, 1440 - $distance);
     }
 
+    private function deviceLocalDateTime(string $value, string $timezone): string
+    {
+        $hasTimezone = (bool) preg_match('/(?:Z|[+-]\d{2}:?\d{2})$/i', $value);
+        $date = $hasTimezone
+            ? Carbon::parse($value)->setTimezone($timezone)
+            : Carbon::parse($value, $timezone);
+
+        return $date->format('Y-m-d H:i:s');
+    }
+
+    private function localTimestamp(mixed $value, string $timezone): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return Carbon::parse($value->format('Y-m-d H:i:s'), $timezone)->toIso8601String();
+    }
+
     /**
      * @param  array<string, mixed>  $validated
      */
     private function attendanceReferenceTime(array $validated, string $timezone): Carbon
     {
         if (! empty($validated['check_in_at'])) {
-            return Carbon::parse((string) $validated['check_in_at'], 'UTC')->setTimezone($timezone);
+            return Carbon::parse((string) $validated['check_in_at'], $timezone);
         }
 
         return Carbon::now($timezone);

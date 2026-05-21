@@ -207,8 +207,8 @@ class PortalController extends Controller
                         default => 'Absensi tercatat',
                     },
                     'subtitle' => trim(implode(' • ', array_filter([
-                        $todayAttendance->check_in_at ? 'Masuk '.$todayAttendance->check_in_at->copy()->setTimezone($timezone)->format('H:i') : null,
-                        $todayAttendance->check_out_at ? 'Pulang '.$todayAttendance->check_out_at->copy()->setTimezone($timezone)->format('H:i') : 'Masih aktif',
+                        $todayAttendance->check_in_at ? 'Masuk '.$this->localTime($todayAttendance->check_in_at, $timezone) : null,
+                        $todayAttendance->check_out_at ? 'Pulang '.$this->localTime($todayAttendance->check_out_at, $timezone) : 'Masih aktif',
                     ]))),
                     'chip' => $todayAttendance->status,
                 ]);
@@ -323,8 +323,8 @@ class PortalController extends Controller
                         'end_time' => $todayAttendance->shift->end_time,
                         'is_day_off' => $todayAttendance->shift->is_day_off,
                     ] : null,
-                    'check_in_at' => $todayAttendance->check_in_at?->copy()->setTimezone($timezone)->toIso8601String(),
-                    'check_out_at' => $todayAttendance->check_out_at?->copy()->setTimezone($timezone)->toIso8601String(),
+                    'check_in_at' => $this->localTimestamp($todayAttendance->check_in_at, $timezone),
+                    'check_out_at' => $this->localTimestamp($todayAttendance->check_out_at, $timezone),
                     'notes' => $todayAttendance->notes,
                 ] : null,
                 'open_attendance' => $openAttendance ? [
@@ -339,8 +339,8 @@ class PortalController extends Controller
                         'end_time' => $openAttendance->shift->end_time,
                         'is_day_off' => $openAttendance->shift->is_day_off,
                     ] : null,
-                    'check_in_at' => $openAttendance->check_in_at?->copy()->setTimezone($timezone)->toIso8601String(),
-                    'check_out_at' => $openAttendance->check_out_at?->copy()->setTimezone($timezone)->toIso8601String(),
+                    'check_in_at' => $this->localTimestamp($openAttendance->check_in_at, $timezone),
+                    'check_out_at' => $this->localTimestamp($openAttendance->check_out_at, $timezone),
                     'check_in_latitude' => $openAttendance->check_in_latitude,
                     'check_in_longitude' => $openAttendance->check_in_longitude,
                     'check_out_latitude' => $openAttendance->check_out_latitude,
@@ -482,6 +482,20 @@ class PortalController extends Controller
         }
 
         return $referenceTime->copy()->setTimezone($timezone)->lte($end->addDay());
+    }
+
+    private function localTimestamp(mixed $value, string $timezone): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return Carbon::parse($value->format('Y-m-d H:i:s'), $timezone)->toIso8601String();
+    }
+
+    private function localTime(mixed $value, string $timezone): string
+    {
+        return Carbon::parse($value->format('Y-m-d H:i:s'), $timezone)->format('H:i');
     }
 
     private function attendanceLocationsForEmployee(?Employee $employee, ?CompanySetting $companySetting): \Illuminate\Support\Collection

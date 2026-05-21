@@ -93,8 +93,8 @@ class AttendanceCorrectionRequestController extends Controller
                 'end_time' => $request->shift->end_time,
                 'is_day_off' => $request->shift->is_day_off,
             ] : null,
-            'check_in_at' => $request->check_in_at?->copy()->setTimezone($timezone)->toIso8601String(),
-            'check_out_at' => $request->check_out_at?->copy()->setTimezone($timezone)->toIso8601String(),
+            'check_in_at' => $this->localTimestamp($request->check_in_at, $timezone),
+            'check_out_at' => $this->localTimestamp($request->check_out_at, $timezone),
             'reason' => $request->reason,
             'status' => $request->status,
             'rejection_reason' => $request->rejection_reason,
@@ -120,9 +120,26 @@ class AttendanceCorrectionRequestController extends Controller
                 continue;
             }
 
-            $validated[$key] = Carbon::parse((string) $validated[$key], $timezone)
-                ->utc()
-                ->toDateTimeString();
+            $validated[$key] = $this->deviceLocalDateTime((string) $validated[$key], $timezone);
         }
+    }
+
+    private function deviceLocalDateTime(string $value, string $timezone): string
+    {
+        $hasTimezone = (bool) preg_match('/(?:Z|[+-]\d{2}:?\d{2})$/i', $value);
+        $date = $hasTimezone
+            ? Carbon::parse($value)->setTimezone($timezone)
+            : Carbon::parse($value, $timezone);
+
+        return $date->format('Y-m-d H:i:s');
+    }
+
+    private function localTimestamp(mixed $value, string $timezone): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return Carbon::parse($value->format('Y-m-d H:i:s'), $timezone)->toIso8601String();
     }
 }

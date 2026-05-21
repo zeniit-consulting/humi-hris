@@ -196,8 +196,8 @@ class PortalPageTest extends TestCase
                 'employee_id' => $employee->id,
                 'attendance_date' => '2026-04-23',
                 'status' => 'present',
-                'check_in_at' => Carbon::parse('2026-04-23 03:51:00', 'UTC'),
-                'check_out_at' => Carbon::parse('2026-04-23 12:00:00', 'UTC'),
+                'check_in_at' => '2026-04-23 11:51:00',
+                'check_out_at' => '2026-04-23 20:00:00',
             ]);
 
             $response = $this->actingAs($user)
