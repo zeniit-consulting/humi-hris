@@ -41,6 +41,7 @@ return [
         'api_key' => env('WAHA_API_KEY'),
         'session' => env('WAHA_SESSION', 'ZeniConsulting'),
         'timeout' => env('WAHA_TIMEOUT', 15),
+        'otp_send_delay_seconds' => (int) env('WAHA_OTP_SEND_DELAY_SECONDS', 30),
         'registration_group_chat_id' => env('WAHA_REGISTRATION_GROUP_CHAT_ID', '120363407707938809@g.us'),
     ],
 

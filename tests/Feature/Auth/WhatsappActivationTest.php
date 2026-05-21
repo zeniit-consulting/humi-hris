@@ -2,8 +2,11 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Jobs\SendWhatsAppOtp;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class WhatsappActivationTest extends TestCase
@@ -73,5 +76,31 @@ class WhatsappActivationTest extends TestCase
         $this->assertNotNull($user->whatsapp_otp_code);
         $this->assertNotNull($user->whatsapp_otp_expires_at);
         $this->assertTrue($user->whatsapp_otp_sent_at->isAfter(now()->subMinute()));
+    }
+
+    public function test_whatsapp_otp_delivery_is_queued_with_thirty_second_delay(): void
+    {
+        Queue::fake();
+        config()->set('services.waha.enabled', true);
+        config()->set('services.waha.otp_send_delay_seconds', 30);
+        Carbon::setTestNow(Carbon::parse('2026-05-21 10:00:00'));
+
+        try {
+            $user = User::factory()->unactivated()->create([
+                'phone' => '6281234567890',
+                'whatsapp_otp_sent_at' => now()->subMinutes(2),
+            ]);
+
+            $this->actingAs($user)
+                ->post(route('activation.send'))
+                ->assertRedirect();
+
+            Queue::assertPushed(SendWhatsAppOtp::class, function (SendWhatsAppOtp $job): bool {
+                return $job->phone === '6281234567890'
+                    && $job->delay?->format('Y-m-d H:i:s') === now()->addSeconds(30)->format('Y-m-d H:i:s');
+            });
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 }

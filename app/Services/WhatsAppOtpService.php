@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
+use App\Jobs\SendWhatsAppOtp;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 class WhatsAppOtpService
 {
-    public function __construct(private readonly WahaClient $wahaClient) {}
-
     public function send(User $user, bool $strict = false, string $context = 'activation'): bool
     {
         $otp = $this->generateOtp();
@@ -20,7 +19,7 @@ class WhatsAppOtpService
             'whatsapp_otp_expires_at' => now()->addMinutes(10),
         ])->save();
 
-        if (app()->environment('testing')) {
+        if (app()->environment('testing') && ! config('services.waha.enabled')) {
             return true;
         }
 
@@ -35,7 +34,17 @@ class WhatsAppOtpService
         }
 
         try {
-            $this->wahaClient->sendTextToPhone($user->phone, $this->buildOtpMessage($otp, $context));
+            $delaySeconds = max(0, (int) config('services.waha.otp_send_delay_seconds', 30));
+
+            SendWhatsAppOtp::dispatch($user->phone, $this->buildOtpMessage($otp, $context))
+                ->delay(now()->addSeconds($delaySeconds));
+
+            Log::info('waha.otp.queued', [
+                'user_id' => $user->id,
+                'phone' => $user->phone,
+                'delay_seconds' => $delaySeconds,
+                'context' => $context,
+            ]);
 
             return true;
         } catch (\Throwable $exception) {

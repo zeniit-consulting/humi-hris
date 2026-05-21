@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -43,6 +44,15 @@ class RegistrationTest extends TestCase
         $this->assertDatabaseHas('company_settings', [
             'user_id' => $user->id,
             'name' => 'PT Test Company',
+        ]);
+
+        $this->assertDatabaseHas('subscriptions', [
+            'user_id' => $user->id,
+            'plan_slug' => 'free',
+            'status' => 'trial',
+            'current_period_start' => Carbon::today()->toDateTimeString(),
+            'current_period_end' => Carbon::today()->addDays(30)->toDateTimeString(),
+            'trial_ends_at' => Carbon::today()->addDays(30)->toDateTimeString(),
         ]);
 
         foreach (['OFF', '0817', '0918', '1701', '0008'] as $code) {

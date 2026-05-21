@@ -76,12 +76,20 @@ type ShiftOption = {
     late_tolerance_minutes: number;
 };
 
+type Holiday = {
+    id: number;
+    date: string;
+    name: string;
+    is_national_holiday: boolean;
+};
+
 type PageProps = {
     employees: EmployeeOption[];
     filters: Filters;
     shifts: ShiftOption[];
     scheduleDays: ScheduleDay[];
     shiftTemplates: Record<string, ShiftTemplate>;
+    holidays: Holiday[];
 };
 
 type RosterFormData = {
@@ -153,8 +161,14 @@ const formatShiftTime = (shift: {
 };
 
 export default function SchedulePage() {
-    const { employees, filters, shifts, scheduleDays, shiftTemplates } =
-        usePage<PageProps>().props;
+    const {
+        employees,
+        filters,
+        shifts,
+        scheduleDays,
+        shiftTemplates,
+        holidays,
+    } = usePage<PageProps>().props;
 
     const [filterState, setFilterState] = useState<Filters>(filters);
     const [quickDialogOpen, setQuickDialogOpen] = useState(false);
@@ -162,7 +176,9 @@ export default function SchedulePage() {
     const [shiftListDialogOpen, setShiftListDialogOpen] = useState(false);
     const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
     const [editingShift, setEditingShift] = useState<ShiftOption | null>(null);
-    const [deletingShift, setDeletingShift] = useState<ShiftOption | null>(null);
+    const [deletingShift, setDeletingShift] = useState<ShiftOption | null>(
+        null,
+    );
     const [deletingSchedule, setDeletingSchedule] =
         useState<ScheduleRow | null>(null);
     const [scheduleRows, setScheduleRows] = useState<ScheduleRow[]>([]);
@@ -185,13 +201,19 @@ export default function SchedulePage() {
     const employeeLookup = useMemo(
         () =>
             new Map(
-                employees.map((employee) => [String(employee.id), employee.label]),
+                employees.map((employee) => [
+                    String(employee.id),
+                    employee.label,
+                ]),
             ),
         [employees],
     );
 
     const defaultWorkingShiftCode = useMemo(
-        () => shifts.find((shift) => !shift.is_day_off)?.code ?? shifts[0]?.code ?? '',
+        () =>
+            shifts.find((shift) => !shift.is_day_off)?.code ??
+            shifts[0]?.code ??
+            '',
         [shifts],
     );
 
@@ -371,7 +393,9 @@ export default function SchedulePage() {
     };
 
     const saveQuickSchedule = () => {
-        const selectedShift = applyShiftSelection(quickScheduleForm.data.shift_code);
+        const selectedShift = applyShiftSelection(
+            quickScheduleForm.data.shift_code,
+        );
 
         quickScheduleForm.transform((data) => ({
             employee_id: data.employee_id,
@@ -467,6 +491,26 @@ export default function SchedulePage() {
         });
     };
 
+    const syncHolidays = () => {
+        router.post(
+            '/hris/schedules/holidays/sync',
+            {
+                month: filterState.month,
+                employee_id: filterState.employee_id,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.get(schedulesIndex.url(), filterState, {
+                        preserveState: true,
+                        preserveScroll: true,
+                        replace: true,
+                    });
+                },
+            },
+        );
+    };
+
     const quickShift = shiftLookup.get(quickScheduleForm.data.shift_code);
     const shiftPreviewCode = buildShiftCodeFromTimes(
         shiftForm.data.start_time,
@@ -484,7 +528,8 @@ export default function SchedulePage() {
                         <div>
                             <CardTitle>Filter Jadwal</CardTitle>
                             <CardDescription>
-                                Pilih karyawan dan bulan untuk melihat jadwal kerja.
+                                Pilih karyawan dan bulan untuk melihat jadwal
+                                kerja.
                             </CardDescription>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -496,11 +541,18 @@ export default function SchedulePage() {
                                 <Plus className="size-4" />
                                 Kelola Shift
                             </Button>
-                            <Button type="button" variant="outline" onClick={openRosterDialog}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={openRosterDialog}
+                            >
                                 <WandSparkles className="size-4" />
                                 Roster Shift Otomatis
                             </Button>
-                            <Button type="button" onClick={openQuickScheduleDialog}>
+                            <Button
+                                type="button"
+                                onClick={openQuickScheduleDialog}
+                            >
                                 <Plus className="size-4" />
                                 Tambah Jam Kerja
                             </Button>
@@ -527,7 +579,9 @@ export default function SchedulePage() {
                                 </div>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="filter_employee">Karyawan</Label>
+                                <Label htmlFor="filter_employee">
+                                    Karyawan
+                                </Label>
                                 <SearchableSelect
                                     id="filter_employee"
                                     value={
@@ -538,7 +592,8 @@ export default function SchedulePage() {
                                     onValueChange={(value) =>
                                         setFilterState((prev) => ({
                                             ...prev,
-                                            employee_id: value === '__none' ? '' : value,
+                                            employee_id:
+                                                value === '__none' ? '' : value,
                                         }))
                                     }
                                     placeholder="Pilih karyawan"
@@ -563,18 +618,24 @@ export default function SchedulePage() {
                                     variant="outline"
                                     onClick={() => {
                                         const reset = {
-                                            month: new Date().toISOString().slice(0, 7),
+                                            month: new Date()
+                                                .toISOString()
+                                                .slice(0, 7),
                                             employee_id: employees[0]
                                                 ? String(employees[0].id)
                                                 : '',
                                         };
 
                                         setFilterState(reset);
-                                        router.get(schedulesIndex.url(), reset, {
-                                            preserveState: true,
-                                            preserveScroll: true,
-                                            replace: true,
-                                        });
+                                        router.get(
+                                            schedulesIndex.url(),
+                                            reset,
+                                            {
+                                                preserveState: true,
+                                                preserveScroll: true,
+                                                replace: true,
+                                            },
+                                        );
                                     }}
                                 >
                                     <RefreshCcw className="size-4" />
@@ -590,28 +651,74 @@ export default function SchedulePage() {
                         <div>
                             <CardTitle>Schedule Bulanan</CardTitle>
                             <CardDescription>
-                                Karyawan: {employeeLookup.get(filterState.employee_id) ?? '-'} |
-                                {' '}Bulan: {filterState.month}
+                                Karyawan:{' '}
+                                {employeeLookup.get(filterState.employee_id) ??
+                                    '-'}{' '}
+                                | Bulan: {filterState.month}
                             </CardDescription>
                         </div>
-                        <Button
-                            type="button"
-                            onClick={saveSchedule}
-                            disabled={scheduleRows.length === 0 || filterState.employee_id === ''}
-                        >
-                            <Save className="size-4" />
-                            Simpan Jadwal
-                        </Button>
+                        <div className="flex flex-wrap justify-end gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={syncHolidays}
+                                disabled={
+                                    filterState.month === '' ||
+                                    filterState.employee_id === ''
+                                }
+                            >
+                                <RefreshCcw className="size-4" />
+                                Sync hari libur
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={saveSchedule}
+                                disabled={
+                                    scheduleRows.length === 0 ||
+                                    filterState.employee_id === ''
+                                }
+                            >
+                                <Save className="size-4" />
+                                Simpan Jadwal
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
+                        {holidays.length > 0 ? (
+                            <div className="mb-4 rounded-lg border bg-muted/30 p-3">
+                                <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                                    <CalendarDays className="size-4" />
+                                    Hari libur tersimpan bulan ini
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {holidays.map((holiday) => (
+                                        <span
+                                            key={holiday.id}
+                                            className="rounded-full border bg-background px-3 py-1 text-xs"
+                                            title={holiday.name}
+                                        >
+                                            {holiday.date.slice(8, 10)} -{' '}
+                                            {holiday.name}
+                                            {!holiday.is_national_holiday
+                                                ? ' (Cuti bersama)'
+                                                : ''}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : null}
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[980px] text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
                                         <th className="px-2 py-2">Tanggal</th>
-                                        <th className="px-2 py-2">Kode Shift</th>
+                                        <th className="px-2 py-2">
+                                            Kode Shift
+                                        </th>
                                         <th className="px-2 py-2">Jam Masuk</th>
-                                        <th className="px-2 py-2">Jam Pulang</th>
+                                        <th className="px-2 py-2">
+                                            Jam Pulang
+                                        </th>
                                         <th className="px-2 py-2">Status</th>
                                         <th className="px-2 py-2">Catatan</th>
                                         <th className="px-2 py-2">Aksi</th>
@@ -624,18 +731,24 @@ export default function SchedulePage() {
                                                 colSpan={7}
                                                 className="px-2 py-6 text-center text-muted-foreground"
                                             >
-                                                Tidak ada jadwal pada filter ini.
+                                                Tidak ada jadwal pada filter
+                                                ini.
                                             </td>
                                         </tr>
                                     )}
                                     {scheduleRows.map((row, index) => (
                                         <tr key={row.date} className="border-b">
-                                            <td className="px-2 py-2">{row.label}</td>
+                                            <td className="px-2 py-2">
+                                                {row.label}
+                                            </td>
                                             <td className="px-2 py-2">
                                                 <SearchableSelect
                                                     value={row.shift_code}
                                                     onValueChange={(value) =>
-                                                        updateRowShift(index, value)
+                                                        updateRowShift(
+                                                            index,
+                                                            value,
+                                                        )
                                                     }
                                                     placeholder="Pilih shift"
                                                     searchPlaceholder="Cari kode shift..."
@@ -644,27 +757,43 @@ export default function SchedulePage() {
                                                 />
                                             </td>
                                             <td className="px-2 py-2">
-                                                <Input value={row.start_time} readOnly />
+                                                <Input
+                                                    value={row.start_time}
+                                                    readOnly
+                                                />
                                             </td>
                                             <td className="px-2 py-2">
-                                                <Input value={row.end_time} readOnly />
+                                                <Input
+                                                    value={row.end_time}
+                                                    readOnly
+                                                />
                                             </td>
                                             <td className="px-2 py-2 text-center">
-                                                {row.is_day_off ? 'Day Off' : 'Kerja'}
+                                                {row.is_day_off
+                                                    ? 'Day Off'
+                                                    : 'Kerja'}
                                             </td>
                                             <td className="px-2 py-2">
                                                 <Input
                                                     value={row.notes}
                                                     onChange={(event) =>
-                                                        setScheduleRows((prev) =>
-                                                            prev.map((item, itemIndex) =>
-                                                                itemIndex === index
-                                                                    ? {
-                                                                          ...item,
-                                                                          notes: event.target.value,
-                                                                      }
-                                                                    : item,
-                                                            ),
+                                                        setScheduleRows(
+                                                            (prev) =>
+                                                                prev.map(
+                                                                    (
+                                                                        item,
+                                                                        itemIndex,
+                                                                    ) =>
+                                                                        itemIndex ===
+                                                                        index
+                                                                            ? {
+                                                                                  ...item,
+                                                                                  notes: event
+                                                                                      .target
+                                                                                      .value,
+                                                                              }
+                                                                            : item,
+                                                                ),
                                                         )
                                                     }
                                                     placeholder="Opsional"
@@ -677,7 +806,9 @@ export default function SchedulePage() {
                                                         icon={Trash2}
                                                         variant="destructive"
                                                         onClick={() =>
-                                                            setDeletingSchedule(row)
+                                                            setDeletingSchedule(
+                                                                row,
+                                                            )
                                                         }
                                                     />
                                                 ) : (
@@ -741,7 +872,11 @@ export default function SchedulePage() {
                                                 {formatShiftTime(shift)}
                                                 {!shift.is_day_off && (
                                                     <div className="text-xs text-muted-foreground">
-                                                        Toleransi telat {shift.late_tolerance_minutes} menit
+                                                        Toleransi telat{' '}
+                                                        {
+                                                            shift.late_tolerance_minutes
+                                                        }{' '}
+                                                        menit
                                                     </div>
                                                 )}
                                             </div>
@@ -818,9 +953,14 @@ export default function SchedulePage() {
                                 id="shift_name"
                                 value={shiftForm.data.name}
                                 onChange={(event) =>
-                                    shiftForm.setData('name', event.target.value)
+                                    shiftForm.setData(
+                                        'name',
+                                        event.target.value,
+                                    )
                                 }
-                                placeholder={editingShift?.code ?? shiftPreviewCode}
+                                placeholder={
+                                    editingShift?.code ?? shiftPreviewCode
+                                }
                             />
                             <InputError message={shiftForm.errors.name} />
                         </div>
@@ -832,7 +972,10 @@ export default function SchedulePage() {
                                 type="time"
                                 value={shiftForm.data.start_time}
                                 onChange={(event) =>
-                                    shiftForm.setData('start_time', event.target.value)
+                                    shiftForm.setData(
+                                        'start_time',
+                                        event.target.value,
+                                    )
                                 }
                             />
                             <InputError message={shiftForm.errors.start_time} />
@@ -845,7 +988,10 @@ export default function SchedulePage() {
                                 type="time"
                                 value={shiftForm.data.end_time}
                                 onChange={(event) =>
-                                    shiftForm.setData('end_time', event.target.value)
+                                    shiftForm.setData(
+                                        'end_time',
+                                        event.target.value,
+                                    )
                                 }
                             />
                             <InputError message={shiftForm.errors.end_time} />
@@ -869,7 +1015,9 @@ export default function SchedulePage() {
                                 }
                             />
                             <InputError
-                                message={shiftForm.errors.late_tolerance_minutes}
+                                message={
+                                    shiftForm.errors.late_tolerance_minutes
+                                }
                             />
                         </div>
 
@@ -979,7 +1127,9 @@ export default function SchedulePage() {
                                 : '-'}
                         </p>
                         <p className="mt-1 text-muted-foreground">
-                            {deletingShift ? formatShiftTime(deletingShift) : '-'}
+                            {deletingShift
+                                ? formatShiftTime(deletingShift)
+                                : '-'}
                         </p>
                     </div>
 
@@ -1016,8 +1166,8 @@ export default function SchedulePage() {
                     <DialogHeader>
                         <DialogTitle>Roster Shift Otomatis</DialogTitle>
                         <DialogDescription>
-                            Generate jadwal berdasarkan pola kode shift. Contoh:
-                            {' '}`{rosterPatternPlaceholder}`.
+                            Generate jadwal berdasarkan pola kode shift. Contoh:{' '}
+                            `{rosterPatternPlaceholder}`.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -1048,7 +1198,9 @@ export default function SchedulePage() {
                                 ]}
                                 className="w-full"
                             />
-                            <InputError message={rosterForm.errors.employee_id} />
+                            <InputError
+                                message={rosterForm.errors.employee_id}
+                            />
                         </div>
 
                         <div className="grid gap-2 md:col-span-2">
@@ -1057,11 +1209,15 @@ export default function SchedulePage() {
                                 id="pattern_text"
                                 value={rosterForm.data.pattern_text}
                                 onChange={(event) =>
-                                    rosterForm.setData('pattern_text', event.target.value)
+                                    rosterForm.setData(
+                                        'pattern_text',
+                                        event.target.value,
+                                    )
                                 }
                             />
                             <p className="text-xs text-muted-foreground">
-                                Shift tersedia: {shifts.map((shift) => shift.code).join(', ')}
+                                Shift tersedia:{' '}
+                                {shifts.map((shift) => shift.code).join(', ')}
                             </p>
                             <InputError message={rosterForm.errors.pattern} />
                         </div>
@@ -1073,10 +1229,15 @@ export default function SchedulePage() {
                                 type="date"
                                 value={rosterForm.data.start_date}
                                 onChange={(event) =>
-                                    rosterForm.setData('start_date', event.target.value)
+                                    rosterForm.setData(
+                                        'start_date',
+                                        event.target.value,
+                                    )
                                 }
                             />
-                            <InputError message={rosterForm.errors.start_date} />
+                            <InputError
+                                message={rosterForm.errors.start_date}
+                            />
                         </div>
 
                         <div className="grid gap-2">
@@ -1086,7 +1247,10 @@ export default function SchedulePage() {
                                 type="date"
                                 value={rosterForm.data.end_date}
                                 onChange={(event) =>
-                                    rosterForm.setData('end_date', event.target.value)
+                                    rosterForm.setData(
+                                        'end_date',
+                                        event.target.value,
+                                    )
                                 }
                             />
                             <InputError message={rosterForm.errors.end_date} />
@@ -1126,7 +1290,8 @@ export default function SchedulePage() {
                     <DialogHeader>
                         <DialogTitle>Tambah Jam Kerja</DialogTitle>
                         <DialogDescription>
-                            Tambahkan satu entri jadwal dengan memilih shift yang sudah tersedia.
+                            Tambahkan satu entri jadwal dengan memilih shift
+                            yang sudah tersedia.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -1157,7 +1322,9 @@ export default function SchedulePage() {
                                 ]}
                                 className="w-full"
                             />
-                            <InputError message={quickScheduleForm.errors.employee_id} />
+                            <InputError
+                                message={quickScheduleForm.errors.employee_id}
+                            />
                         </div>
 
                         <div className="grid gap-2">
@@ -1167,7 +1334,10 @@ export default function SchedulePage() {
                                 type="date"
                                 value={quickScheduleForm.data.work_date}
                                 onChange={(event) =>
-                                    quickScheduleForm.setData('work_date', event.target.value)
+                                    quickScheduleForm.setData(
+                                        'work_date',
+                                        event.target.value,
+                                    )
                                 }
                             />
                         </div>
@@ -1178,29 +1348,47 @@ export default function SchedulePage() {
                                 id="quick_shift_code"
                                 value={quickScheduleForm.data.shift_code}
                                 onValueChange={(value) =>
-                                    quickScheduleForm.setData('shift_code', value)
+                                    quickScheduleForm.setData(
+                                        'shift_code',
+                                        value,
+                                    )
                                 }
                                 placeholder="Pilih shift"
                                 searchPlaceholder="Cari shift..."
                                 options={shiftOptions}
                                 className="w-full"
                             />
-                            <InputError message={quickScheduleForm.errors.shift_code} />
+                            <InputError
+                                message={quickScheduleForm.errors.shift_code}
+                            />
                         </div>
 
                         <div className="grid gap-2">
                             <Label>Jam Masuk</Label>
-                            <Input value={quickShift?.start_time ?? ''} readOnly />
+                            <Input
+                                value={quickShift?.start_time ?? ''}
+                                readOnly
+                            />
                         </div>
 
                         <div className="grid gap-2">
                             <Label>Jam Pulang</Label>
-                            <Input value={quickShift?.end_time ?? ''} readOnly />
+                            <Input
+                                value={quickShift?.end_time ?? ''}
+                                readOnly
+                            />
                         </div>
 
                         <div className="grid gap-2 md:col-span-2">
                             <Label>Status Shift</Label>
-                            <Input value={quickShift?.is_day_off ? 'Day Off' : 'Hari Kerja'} readOnly />
+                            <Input
+                                value={
+                                    quickShift?.is_day_off
+                                        ? 'Day Off'
+                                        : 'Hari Kerja'
+                                }
+                                readOnly
+                            />
                         </div>
 
                         <div className="grid gap-2 md:col-span-2">
@@ -1209,7 +1397,10 @@ export default function SchedulePage() {
                                 id="quick_notes"
                                 value={quickScheduleForm.data.notes}
                                 onChange={(event) =>
-                                    quickScheduleForm.setData('notes', event.target.value)
+                                    quickScheduleForm.setData(
+                                        'notes',
+                                        event.target.value,
+                                    )
                                 }
                                 placeholder="Opsional"
                             />

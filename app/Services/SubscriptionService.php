@@ -14,7 +14,7 @@ class SubscriptionService
     public function initializeFreeSubscription(User $user): Subscription
     {
         $today = Carbon::today();
-        $trialEnd = $today->addMonths(2);
+        $trialEnd = $today->copy()->addDays(30);
 
         return Subscription::query()->create([
             'user_id' => $user->id,

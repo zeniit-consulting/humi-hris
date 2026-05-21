@@ -9,11 +9,13 @@ use App\Http\Requests\Hris\StoreWorkShiftRequest;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeSchedule;
+use App\Models\PublicHoliday;
 use App\Models\ShiftChangeRequest;
 use App\Models\WorkShift;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -56,6 +58,7 @@ class ScheduleController extends Controller
             'shifts' => $this->availableShifts($ownerId),
             'scheduleDays' => $this->buildScheduleDays($filters['month'], $filters['employee_id'], $shiftTemplates),
             'shiftTemplates' => $shiftTemplates,
+            'holidays' => $this->holidaysForMonth($ownerId, $filters['month']),
         ]);
     }
 
@@ -237,6 +240,96 @@ class ScheduleController extends Controller
         return back()->with('success', 'Data jam kerja berhasil dihapus.');
     }
 
+    public function syncHolidays(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'month' => ['required', 'date_format:Y-m'],
+            'employee_id' => ['required', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
+        ]);
+
+        $response = Http::timeout(15)->get('https://libur.deno.dev/api');
+
+        if (! $response->successful() || ! is_array($response->json())) {
+            return back()->with('error', 'Sinkronisasi hari libur gagal. API hari libur tidak bisa diakses.');
+        }
+
+        $now = now();
+        $holidayRows = collect($response->json())
+            ->filter(fn (mixed $holiday): bool => is_array($holiday)
+                && isset($holiday['date'], $holiday['name'], $holiday['is_national_holiday'])
+                && Carbon::hasFormat((string) $holiday['date'], 'Y-m-d'))
+            ->map(fn (array $holiday): array => [
+                'user_id' => $ownerId,
+                'date' => $holiday['date'],
+                'name' => (string) $holiday['name'],
+                'is_national_holiday' => (bool) $holiday['is_national_holiday'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])
+            ->values();
+
+        if ($holidayRows->isNotEmpty()) {
+            PublicHoliday::query()->upsert(
+                $holidayRows->all(),
+                ['user_id', 'date', 'name'],
+                ['is_national_holiday', 'updated_at'],
+            );
+        }
+
+        $monthStart = Carbon::createFromFormat('Y-m-d', $validated['month'].'-01')->startOfMonth();
+        $monthEnd = $monthStart->copy()->endOfMonth();
+        $offShift = WorkShift::query()->firstOrCreate(
+            [
+                'user_id' => $ownerId,
+                'code' => 'OFF',
+            ],
+            [
+                'name' => 'Day Off',
+                'start_time' => null,
+                'end_time' => null,
+                'is_day_off' => true,
+                'late_tolerance_minutes' => 0,
+            ],
+        );
+
+        $monthlyHolidays = PublicHoliday::query()
+            ->where('user_id', $ownerId)
+            ->whereBetween('date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->orderBy('date')
+            ->get();
+
+        $scheduleRows = $monthlyHolidays
+            ->map(fn (PublicHoliday $holiday): array => [
+                'user_id' => $ownerId,
+                'employee_id' => $validated['employee_id'],
+                'work_date' => $holiday->date->toDateString(),
+                'shift_code' => $offShift->code,
+                'start_time' => null,
+                'end_time' => null,
+                'is_day_off' => true,
+                'notes' => $holiday->name,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])
+            ->values();
+
+        if ($scheduleRows->isNotEmpty()) {
+            EmployeeSchedule::query()->upsert(
+                $scheduleRows->all(),
+                ['employee_id', 'work_date'],
+                ['shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at'],
+            );
+        }
+
+        return back()->with('success', sprintf(
+            '%d hari libur tersimpan, %d jadwal bulan %s diset OFF.',
+            $holidayRows->count(),
+            $scheduleRows->count(),
+            $validated['month'],
+        ));
+    }
+
     /**
      * Build month-day rows with existing schedule values.
      *
@@ -335,6 +428,29 @@ class ScheduleController extends Controller
                 'end_time' => $this->normalizeTime($shift->end_time),
                 'is_day_off' => $shift->is_day_off,
                 'late_tolerance_minutes' => $shift->late_tolerance_minutes,
+            ])
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function holidaysForMonth(int $ownerId, string $month): array
+    {
+        $start = Carbon::createFromFormat('Y-m-d', $month.'-01')->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+
+        return PublicHoliday::query()
+            ->where('user_id', $ownerId)
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->orderBy('date')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (PublicHoliday $holiday): array => [
+                'id' => $holiday->id,
+                'date' => $holiday->date->toDateString(),
+                'name' => $holiday->name,
+                'is_national_holiday' => $holiday->is_national_holiday,
             ])
             ->all();
     }

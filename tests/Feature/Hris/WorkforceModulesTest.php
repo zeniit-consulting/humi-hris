@@ -8,6 +8,7 @@ use App\Models\SubCompany;
 use App\Models\User;
 use App\Models\WorkShift;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -280,6 +281,84 @@ class WorkforceModulesTest extends TestCase
             'shift_code' => '0817',
             'is_day_off' => false,
         ]);
+    }
+
+    public function test_holiday_sync_stores_holidays_and_sets_selected_employee_schedule_to_off(): void
+    {
+        Http::fake([
+            'https://libur.deno.dev/api' => Http::response([
+                [
+                    'date' => '2026-03-18',
+                    'name' => 'Cuti Bersama Hari Suci Nyepi Tahun Baru Saka 1948',
+                    'is_national_holiday' => false,
+                ],
+                [
+                    'date' => '2026-03-19',
+                    'name' => 'Hari Suci Nyepi Tahun Baru Saka 1948',
+                    'is_national_holiday' => true,
+                ],
+                [
+                    'date' => '2026-04-03',
+                    'name' => 'Wafat Yesus Kristus / Jumat Agung',
+                    'is_national_holiday' => true,
+                ],
+            ]),
+        ]);
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $this->seedWorkShifts($user);
+
+        $this->actingAs($user)->post(route('hris.schedules.holidays.sync'), [
+            'month' => '2026-03',
+            'employee_id' => $employee->id,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('public_holidays', [
+            'user_id' => $user->id,
+            'date' => '2026-03-18',
+            'name' => 'Cuti Bersama Hari Suci Nyepi Tahun Baru Saka 1948',
+            'is_national_holiday' => false,
+        ]);
+
+        $this->assertDatabaseHas('public_holidays', [
+            'user_id' => $user->id,
+            'date' => '2026-03-19',
+            'name' => 'Hari Suci Nyepi Tahun Baru Saka 1948',
+            'is_national_holiday' => true,
+        ]);
+
+        $this->assertDatabaseHas('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-03-18',
+            'shift_code' => 'OFF',
+            'is_day_off' => true,
+            'notes' => 'Cuti Bersama Hari Suci Nyepi Tahun Baru Saka 1948',
+        ]);
+
+        $this->assertDatabaseHas('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-03-19',
+            'shift_code' => 'OFF',
+            'is_day_off' => true,
+            'notes' => 'Hari Suci Nyepi Tahun Baru Saka 1948',
+        ]);
+
+        $this->assertDatabaseMissing('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-04-03',
+        ]);
+
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://libur.deno.dev/api');
     }
 
     public function test_shift_master_can_be_created_from_schedule_popup()

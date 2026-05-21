@@ -106,6 +106,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
     Route::delete('schedules/{employeeSchedule}', [ScheduleController::class, 'destroySchedule'])->name('schedules.destroy');
+    Route::post('schedules/holidays/sync', [ScheduleController::class, 'syncHolidays'])->name('schedules.holidays.sync');
     Route::post('schedules/shifts', [ScheduleController::class, 'storeShift'])->name('schedules.shifts.store');
     Route::put('schedules/shifts/{workShift}', [ScheduleController::class, 'updateShift'])->name('schedules.shifts.update');
     Route::delete('schedules/shifts/{workShift}', [ScheduleController::class, 'destroyShift'])->name('schedules.shifts.destroy');
