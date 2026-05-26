@@ -4,8 +4,12 @@ import {
     Building2,
     CalendarDays,
     ChevronDown,
+    CheckCircle2,
+    Circle,
+    Clock3,
     Filter,
     ReceiptText,
+    UserX,
     UsersRound,
     WalletCards,
 } from 'lucide-react';
@@ -73,6 +77,63 @@ type ActionQueueItem = {
 type ActionQueue = {
     total: number;
     items: ActionQueueItem[];
+};
+
+type AttendanceFocusItem = {
+    id: number;
+    label: string;
+    time?: string;
+    href: string;
+};
+
+type AttendanceFocus = {
+    missing_clock_ins_count: number;
+    late_today_count: number;
+    missingClockIns: AttendanceFocusItem[];
+    lateToday: AttendanceFocusItem[];
+};
+
+type RecentRequest = {
+    id: string;
+    type: string;
+    employee_label: string;
+    date_label: string;
+    status: string;
+    href: string;
+    created_at: string | null;
+};
+
+type RecentRequests = {
+    items: RecentRequest[];
+};
+
+type PayrollReadinessCheck = {
+    key: string;
+    label: string;
+    complete: boolean;
+    description: string;
+    href: string;
+};
+
+type PayrollReadiness = {
+    period: string;
+    score: number;
+    status: 'saved' | 'generated' | 'not_generated';
+    checks: PayrollReadinessCheck[];
+};
+
+type OnboardingChecklistItem = {
+    key: string;
+    label: string;
+    complete: boolean;
+    href: string;
+};
+
+type OnboardingChecklist = {
+    completed: number;
+    total: number;
+    percent: number;
+    items: OnboardingChecklistItem[];
 };
 
 type DashboardFilters = {
@@ -159,12 +220,20 @@ export default function Dashboard({
     attendanceChart,
     filters,
     actionQueue,
+    attendanceFocus,
+    recentRequests,
+    payrollReadiness,
+    onboardingChecklist,
     outsourcing,
 }: {
     stats: DashboardStats;
     attendanceChart: AttendancePoint[];
     filters: DashboardFilters;
     actionQueue: ActionQueue;
+    attendanceFocus: AttendanceFocus;
+    recentRequests: RecentRequests;
+    payrollReadiness: PayrollReadiness;
+    onboardingChecklist: OnboardingChecklist;
     outsourcing: OutsourcingSummary;
 }) {
     const [outsourcingOpen, setOutsourcingOpen] = useState(true);
@@ -329,7 +398,200 @@ export default function Dashboard({
                             </p>
                         </CardContent>
                     </Card>
+                </div>
 
+                <div className="grid gap-4 xl:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <CardTitle>Absensi Hari Ini</CardTitle>
+                                    <CardDescription>
+                                        Nama karyawan yang perlu dicek admin.
+                                    </CardDescription>
+                                </div>
+                                <CalendarDays className="size-5 text-muted-foreground" />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="grid gap-4 md:grid-cols-2">
+                            <DashboardList
+                                icon={UserX}
+                                title="Belum Clock In"
+                                count={attendanceFocus.missing_clock_ins_count}
+                                empty="Semua karyawan aktif sudah memiliki data absensi."
+                                items={attendanceFocus.missingClockIns.map(
+                                    (item) => ({
+                                        key: String(item.id),
+                                        label: item.label,
+                                        description: 'Belum ada data hari ini',
+                                        href: item.href,
+                                    }),
+                                )}
+                            />
+                            <DashboardList
+                                icon={Clock3}
+                                title="Telat"
+                                count={attendanceFocus.late_today_count}
+                                empty="Belum ada karyawan telat hari ini."
+                                items={attendanceFocus.lateToday.map(
+                                    (item) => ({
+                                        key: String(item.id),
+                                        label: item.label,
+                                        description: `Clock in ${item.time ?? '-'}`,
+                                        href: item.href,
+                                    }),
+                                )}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <CardTitle>Request Terbaru</CardTitle>
+                                    <CardDescription>
+                                        Aktivitas terbaru dari karyawan dan
+                                        supervisor.
+                                    </CardDescription>
+                                </div>
+                                <AlertTriangle className="size-5 text-muted-foreground" />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {recentRequests.items.length === 0 ? (
+                                <div className="rounded-md border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                                    Belum ada request terbaru.
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {recentRequests.items.map((item) => (
+                                        <Link
+                                            key={item.id}
+                                            href={item.href}
+                                            className="flex items-start justify-between gap-3 rounded-md border p-3 transition-colors hover:bg-muted/40"
+                                        >
+                                            <div className="min-w-0">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <p className="text-sm font-medium">
+                                                        {item.type}
+                                                    </p>
+                                                    <StatusPill
+                                                        status={item.status}
+                                                    />
+                                                </div>
+                                                <p className="mt-1 truncate text-sm text-muted-foreground">
+                                                    {item.employee_label}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {item.date_label}
+                                                </p>
+                                            </div>
+                                            <p className="shrink-0 text-xs text-muted-foreground">
+                                                {item.created_at ?? ''}
+                                            </p>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="grid gap-4 xl:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <CardTitle>Payroll Readiness</CardTitle>
+                                    <CardDescription>
+                                        Kesiapan payroll periode{' '}
+                                        {payrollReadiness.period}.
+                                    </CardDescription>
+                                </div>
+                                <div className="rounded-md border px-3 py-2 text-sm font-semibold">
+                                    {payrollReadiness.score}%
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="mb-4 h-2 overflow-hidden rounded-full bg-muted">
+                                <div
+                                    className="h-full rounded-full bg-[#006069]"
+                                    style={{
+                                        width: `${payrollReadiness.score}%`,
+                                    }}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                {payrollReadiness.checks.map((check) => (
+                                    <Link
+                                        key={check.key}
+                                        href={check.href}
+                                        className="flex items-start gap-3 rounded-md border p-3 transition-colors hover:bg-muted/40"
+                                    >
+                                        {check.complete ? (
+                                            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                                        ) : (
+                                            <Circle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                                        )}
+                                        <div>
+                                            <p className="text-sm font-medium">
+                                                {check.label}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {check.description}
+                                            </p>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <CardTitle>Checklist Setup</CardTitle>
+                                    <CardDescription>
+                                        Langkah dasar agar tenant siap
+                                        beroperasi.
+                                    </CardDescription>
+                                </div>
+                                <div className="rounded-md border px-3 py-2 text-sm font-semibold">
+                                    {onboardingChecklist.completed}/
+                                    {onboardingChecklist.total}
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="mb-4 h-2 overflow-hidden rounded-full bg-muted">
+                                <div
+                                    className="h-full rounded-full bg-[#006069]"
+                                    style={{
+                                        width: `${onboardingChecklist.percent}%`,
+                                    }}
+                                />
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                                {onboardingChecklist.items.map((item) => (
+                                    <Link
+                                        key={item.key}
+                                        href={item.href}
+                                        className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted/40"
+                                    >
+                                        {item.complete ? (
+                                            <CheckCircle2 className="size-4 text-emerald-600" />
+                                        ) : (
+                                            <Circle className="size-4 text-muted-foreground" />
+                                        )}
+                                        <span>{item.label}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <Card>
@@ -696,9 +958,7 @@ export default function Dashboard({
                                                     </div>
                                                 </td>
                                                 <td className="px-3 py-3">
-                                                    {
-                                                        client.remaining_manpower
-                                                    }
+                                                    {client.remaining_manpower}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     {formatRupiahCompact(
@@ -736,6 +996,86 @@ export default function Dashboard({
                 </Collapsible>
             </div>
         </AppLayout>
+    );
+}
+
+function DashboardList({
+    icon: Icon,
+    title,
+    count,
+    empty,
+    items,
+}: {
+    icon: typeof Building2;
+    title: string;
+    count: number;
+    empty: string;
+    items: Array<{
+        key: string;
+        label: string;
+        description: string;
+        href: string;
+    }>;
+}) {
+    return (
+        <div className="rounded-md border p-3">
+            <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <Icon className="size-4 text-muted-foreground" />
+                    <p className="text-sm font-medium">{title}</p>
+                </div>
+                <span className="rounded-md bg-muted px-2 py-1 text-xs font-semibold">
+                    {count}
+                </span>
+            </div>
+            {items.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{empty}</p>
+            ) : (
+                <div className="space-y-2">
+                    {items.map((item) => (
+                        <Link
+                            key={item.key}
+                            href={item.href}
+                            className="block rounded border px-3 py-2 transition-colors hover:bg-muted/40"
+                        >
+                            <p className="truncate text-sm font-medium">
+                                {item.label}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                {item.description}
+                            </p>
+                        </Link>
+                    ))}
+                    {count > items.length && (
+                        <p className="text-xs text-muted-foreground">
+                            +{count - items.length} lainnya
+                        </p>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function StatusPill({ status }: { status: string }) {
+    const labelMap: Record<string, string> = {
+        pending: 'Pending',
+        approved: 'Disetujui',
+        rejected: 'Ditolak',
+        cancelled: 'Dibatalkan',
+    };
+
+    const color =
+        status === 'approved'
+            ? 'bg-emerald-50 text-emerald-700'
+            : status === 'rejected' || status === 'cancelled'
+              ? 'bg-rose-50 text-rose-700'
+              : 'bg-amber-50 text-amber-700';
+
+    return (
+        <span className={`rounded px-2 py-0.5 text-xs font-medium ${color}`}>
+            {labelMap[status] ?? status}
+        </span>
     );
 }
 

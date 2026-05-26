@@ -75,7 +75,7 @@ const fmt = new Intl.NumberFormat('id-ID', {
 const PRICE_CORE = 2900;
 const PRICE_PLUS = 7500;
 const WHATSAPP_CONTACT_URL =
-    'https://wa.me/628111111111?text=Halo%20Humi%2C%20saya%20ingin%20konsultasi%20tentang%20HRIS.';
+    'https://wa.me/6285710999144?text=Halo%20Humi%2C%20saya%20ingin%20konsultasi%20tentang%20HRIS.';
 
 const coreFeaturesIncluded = [
     'Manajemen Karyawan',

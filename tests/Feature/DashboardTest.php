@@ -4,14 +4,19 @@ namespace Tests\Feature;
 
 use App\Models\AttendanceCorrectionRequest;
 use App\Models\ClientInvoice;
+use App\Models\CompanySetting;
+use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeBankAccount;
 use App\Models\EmployeeDocument;
+use App\Models\EmployeeSchedule;
 use App\Models\JobVacancy;
 use App\Models\LeaveRequest;
 use App\Models\ManpowerRequest;
 use App\Models\OvertimeRequest;
 use App\Models\PayrollRun;
+use App\Models\Position;
 use App\Models\ShiftChangeRequest;
 use App\Models\SubCompany;
 use App\Models\User;
@@ -282,6 +287,112 @@ class DashboardTest extends TestCase
                 ->where('actionQueue.items.0.key', 'attendance_corrections')
                 ->where('actionQueue.items.0.count', 1)
                 ->where('actionQueue.items.1.key', 'leave_approvals')
+            );
+    }
+
+    public function test_dashboard_includes_daily_focus_recent_requests_payroll_and_onboarding(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        CompanySetting::query()->create([
+            'user_id' => $user->id,
+            'name' => 'PT Dashboard Test',
+            'location_latitude' => -5.147665,
+            'location_longitude' => 119.432732,
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+        ]);
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+        ]);
+
+        $lateEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'is_active' => true,
+        ]);
+        $missingEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'is_active' => true,
+        ]);
+
+        EmployeeBankAccount::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $lateEmployee->id,
+            'bank_name' => 'BCA',
+            'account_number' => '1234567890',
+            'account_holder_name' => $lateEmployee->full_name,
+            'is_primary' => true,
+        ]);
+
+        $shift = WorkShift::query()->create([
+            'user_id' => $user->id,
+            'code' => 'P',
+            'name' => 'Pagi',
+            'start_time' => '08:00',
+            'end_time' => '17:00',
+        ]);
+
+        EmployeeSchedule::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $lateEmployee->id,
+            'work_date' => now()->toDateString(),
+            'shift_code' => 'P',
+            'start_time' => '08:00',
+            'end_time' => '17:00',
+            'is_day_off' => false,
+        ]);
+
+        $lateAttendance = EmployeeAttendance::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $lateEmployee->id,
+            'attendance_date' => now()->toDateString(),
+            'status' => 'late',
+            'check_in_at' => now()->setTime(8, 30),
+        ]);
+
+        LeaveRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $lateEmployee->id,
+            'leave_type' => 'sick',
+            'start_date' => now()->addDay()->toDateString(),
+            'end_date' => now()->addDay()->toDateString(),
+            'total_days' => 1,
+            'reason' => 'Sakit',
+            'status' => 'pending',
+        ]);
+
+        PayrollRun::factory()->create([
+            'user_id' => $user->id,
+            'period' => now()->format('Y-m'),
+            'type' => 'regular',
+            'is_saved' => false,
+            'generated_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('dashboard')
+                ->where('attendanceFocus.missing_clock_ins_count', 1)
+                ->where('attendanceFocus.late_today_count', 1)
+                ->where('attendanceFocus.missingClockIns.0.id', $missingEmployee->id)
+                ->where('attendanceFocus.lateToday.0.id', $lateAttendance->id)
+                ->where('recentRequests.items.0.type', 'Cuti/Sakit')
+                ->where('payrollReadiness.period', now()->format('Y-m'))
+                ->where('payrollReadiness.score', 25)
+                ->where('payrollReadiness.status', 'generated')
+                ->where('onboardingChecklist.completed', 7)
+                ->where('onboardingChecklist.total', 7)
             );
     }
 }

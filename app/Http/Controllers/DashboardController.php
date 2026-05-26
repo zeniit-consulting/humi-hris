@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\AttendanceCorrectionRequest;
 use App\Models\ClientInvoice;
+use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeBankAccount;
 use App\Models\EmployeeDocument;
+use App\Models\EmployeeSchedule;
 use App\Models\JobVacancy;
 use App\Models\LeaveRequest;
 use App\Models\ManpowerRequest;
@@ -17,6 +20,7 @@ use App\Models\Position;
 use App\Models\ShiftChangeRequest;
 use App\Models\SubCompany;
 use App\Models\User;
+use App\Models\WorkShift;
 use App\Support\RoleRedirect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -169,6 +173,10 @@ class DashboardController extends Controller
             ],
             'attendanceChart' => $attendanceChart,
             'actionQueue' => $this->actionQueue($ownerId, $today),
+            'attendanceFocus' => $this->attendanceFocus($ownerId, $today),
+            'recentRequests' => $this->recentRequests($ownerId),
+            'payrollReadiness' => $this->payrollReadiness($ownerId, $today),
+            'onboardingChecklist' => $this->onboardingChecklist($ownerId),
             'outsourcing' => $this->outsourcingSummary(
                 $ownerId,
                 $outsourcingPeriod,
@@ -314,6 +322,292 @@ class DashboardController extends Controller
                 ];
             })->values(),
         ];
+    }
+
+    private function attendanceFocus(int $ownerId, Carbon $today): array
+    {
+        $todayDate = $today->toDateString();
+
+        $attendedEmployeeIds = EmployeeAttendance::query()
+            ->where('user_id', $ownerId)
+            ->whereDate('attendance_date', $todayDate)
+            ->pluck('employee_id');
+
+        $missingClockIns = Employee::query()
+            ->where('user_id', $ownerId)
+            ->where('is_active', true)
+            ->whereNotIn('id', $attendedEmployeeIds)
+            ->orderBy('first_name')
+            ->limit(6)
+            ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id'])
+            ->map(fn (Employee $employee): array => [
+                'id' => $employee->id,
+                'label' => $employee->employee_code.' - '.$employee->full_name,
+                'href' => route('hris.attendances.index', ['date' => $todayDate, 'employee_id' => $employee->id]),
+            ]);
+
+        $lateToday = EmployeeAttendance::query()
+            ->with('employee:id,employee_code,first_name,last_name')
+            ->where('user_id', $ownerId)
+            ->whereDate('attendance_date', $todayDate)
+            ->where('status', 'late')
+            ->orderBy('check_in_at')
+            ->limit(6)
+            ->get()
+            ->map(fn (EmployeeAttendance $attendance): array => [
+                'id' => $attendance->id,
+                'label' => $attendance->employee
+                    ? $attendance->employee->employee_code.' - '.$attendance->employee->full_name
+                    : 'Karyawan',
+                'time' => $attendance->check_in_at?->format('H:i') ?? '-',
+                'href' => route('hris.attendances.index', ['date' => $todayDate, 'employee_id' => $attendance->employee_id]),
+            ]);
+
+        return [
+            'missing_clock_ins_count' => Employee::query()
+                ->where('user_id', $ownerId)
+                ->where('is_active', true)
+                ->whereNotIn('id', $attendedEmployeeIds)
+                ->count(),
+            'late_today_count' => EmployeeAttendance::query()
+                ->where('user_id', $ownerId)
+                ->whereDate('attendance_date', $todayDate)
+                ->where('status', 'late')
+                ->count(),
+            'missingClockIns' => $missingClockIns,
+            'lateToday' => $lateToday,
+        ];
+    }
+
+    private function recentRequests(int $ownerId): array
+    {
+        $items = collect()
+            ->merge($this->recentAttendanceRequests($ownerId))
+            ->merge($this->recentLeaveRequests($ownerId))
+            ->merge($this->recentOvertimeRequests($ownerId))
+            ->merge($this->recentShiftChangeRequests($ownerId))
+            ->sortByDesc('created_at')
+            ->take(8)
+            ->values();
+
+        return [
+            'items' => $items->map(fn (array $item): array => [
+                ...$item,
+                'created_at' => $item['created_at']?->diffForHumans(),
+            ]),
+        ];
+    }
+
+    private function recentAttendanceRequests(int $ownerId): array
+    {
+        return AttendanceCorrectionRequest::query()
+            ->with('employee:id,employee_code,first_name,last_name')
+            ->where('user_id', $ownerId)
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(fn (AttendanceCorrectionRequest $request): array => [
+                'id' => 'attendance-'.$request->id,
+                'type' => 'Koreksi Absensi',
+                'employee_label' => $this->employeeLabel($request->employee),
+                'date_label' => $request->attendance_date?->format('d M Y') ?? '-',
+                'status' => $request->status,
+                'href' => route('hris.attendance-approvals.index'),
+                'created_at' => $request->created_at,
+            ])
+            ->all();
+    }
+
+    private function recentLeaveRequests(int $ownerId): array
+    {
+        return LeaveRequest::query()
+            ->with('employee:id,employee_code,first_name,last_name')
+            ->where('user_id', $ownerId)
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(fn (LeaveRequest $request): array => [
+                'id' => 'leave-'.$request->id,
+                'type' => 'Cuti/Sakit',
+                'employee_label' => $this->employeeLabel($request->employee),
+                'date_label' => ($request->start_date?->format('d M Y') ?? '-').' - '.($request->end_date?->format('d M Y') ?? '-'),
+                'status' => $request->status,
+                'href' => route('hris.leave-approvals.index'),
+                'created_at' => $request->created_at,
+            ])
+            ->all();
+    }
+
+    private function recentOvertimeRequests(int $ownerId): array
+    {
+        return OvertimeRequest::query()
+            ->with('employee:id,employee_code,first_name,last_name')
+            ->where('user_id', $ownerId)
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(fn (OvertimeRequest $request): array => [
+                'id' => 'overtime-'.$request->id,
+                'type' => 'Lembur',
+                'employee_label' => $this->employeeLabel($request->employee),
+                'date_label' => $request->work_date?->format('d M Y') ?? '-',
+                'status' => $request->status,
+                'href' => route('hris.overtime-approvals.index'),
+                'created_at' => $request->created_at,
+            ])
+            ->all();
+    }
+
+    private function recentShiftChangeRequests(int $ownerId): array
+    {
+        return ShiftChangeRequest::query()
+            ->with('employee:id,employee_code,first_name,last_name')
+            ->where('user_id', $ownerId)
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(fn (ShiftChangeRequest $request): array => [
+                'id' => 'shift-'.$request->id,
+                'type' => 'Perubahan Jadwal',
+                'employee_label' => $this->employeeLabel($request->employee),
+                'date_label' => $request->requested_date?->format('d M Y') ?? '-',
+                'status' => $request->status,
+                'href' => route('hris.shift-change-requests.index'),
+                'created_at' => $request->created_at,
+            ])
+            ->all();
+    }
+
+    private function payrollReadiness(int $ownerId, Carbon $today): array
+    {
+        $period = $today->format('Y-m');
+        $activeEmployees = Employee::query()
+            ->where('user_id', $ownerId)
+            ->where('is_active', true)
+            ->count();
+        $employeesWithBank = EmployeeBankAccount::query()
+            ->where('user_id', $ownerId)
+            ->where('is_primary', true)
+            ->whereHas('employee', fn ($query) => $query->where('is_active', true))
+            ->distinct('employee_id')
+            ->count('employee_id');
+        $missingBankAccounts = max($activeEmployees - $employeesWithBank, 0);
+        $pendingApprovals = AttendanceCorrectionRequest::query()->where('user_id', $ownerId)->where('status', 'pending')->count()
+            + LeaveRequest::query()->where('user_id', $ownerId)->where('status', 'pending')->count()
+            + OvertimeRequest::query()->where('user_id', $ownerId)->where('status', 'pending')->count()
+            + ShiftChangeRequest::query()->where('user_id', $ownerId)->where('status', 'pending')->count();
+        $run = PayrollRun::query()
+            ->where('user_id', $ownerId)
+            ->where('period', $period)
+            ->where('type', 'regular')
+            ->latest('generated_at')
+            ->first();
+
+        $checks = [
+            [
+                'key' => 'employees',
+                'label' => 'Karyawan aktif tersedia',
+                'complete' => $activeEmployees > 0,
+                'description' => $activeEmployees.' karyawan aktif',
+                'href' => route('hris.employees.index'),
+            ],
+            [
+                'key' => 'bank_accounts',
+                'label' => 'Rekening utama lengkap',
+                'complete' => $activeEmployees > 0 && $missingBankAccounts === 0,
+                'description' => $missingBankAccounts === 0 ? 'Semua karyawan aktif punya rekening utama' : $missingBankAccounts.' karyawan belum punya rekening utama',
+                'href' => route('hris.employees.index'),
+            ],
+            [
+                'key' => 'approvals',
+                'label' => 'Approval payroll bersih',
+                'complete' => $pendingApprovals === 0,
+                'description' => $pendingApprovals === 0 ? 'Tidak ada approval pending' : $pendingApprovals.' approval masih pending',
+                'href' => route('hris.attendance-approvals.index'),
+            ],
+            [
+                'key' => 'payroll_run',
+                'label' => 'Payroll bulan ini',
+                'complete' => (bool) $run?->is_saved,
+                'description' => $run ? ($run->is_saved ? 'Payroll sudah disimpan' : 'Payroll sudah digenerate, belum disimpan') : 'Payroll belum digenerate',
+                'href' => route('hris.payrolls.index'),
+            ],
+        ];
+
+        $completed = collect($checks)->where('complete', true)->count();
+
+        return [
+            'period' => $period,
+            'score' => (int) round(($completed / count($checks)) * 100),
+            'status' => $run?->is_saved ? 'saved' : ($run ? 'generated' : 'not_generated'),
+            'checks' => $checks,
+        ];
+    }
+
+    private function onboardingChecklist(int $ownerId): array
+    {
+        $company = CompanySetting::query()->where('user_id', $ownerId)->first();
+
+        $items = [
+            [
+                'key' => 'company_profile',
+                'label' => 'Profil perusahaan',
+                'complete' => (bool) ($company && $company->name && $company->name !== 'Perusahaan'),
+                'href' => route('profile.edit'),
+            ],
+            [
+                'key' => 'attendance_location',
+                'label' => 'Lokasi absensi',
+                'complete' => (bool) ($company?->location_latitude && $company?->location_longitude),
+                'href' => route('profile.edit'),
+            ],
+            [
+                'key' => 'divisions',
+                'label' => 'Divisi',
+                'complete' => Division::query()->where('user_id', $ownerId)->exists(),
+                'href' => route('hris.employees.master-data'),
+            ],
+            [
+                'key' => 'positions',
+                'label' => 'Jabatan',
+                'complete' => Position::query()->where('user_id', $ownerId)->exists(),
+                'href' => route('hris.employees.master-data'),
+            ],
+            [
+                'key' => 'employees',
+                'label' => 'Karyawan',
+                'complete' => Employee::query()->where('user_id', $ownerId)->exists(),
+                'href' => route('hris.employees.index'),
+            ],
+            [
+                'key' => 'work_shifts',
+                'label' => 'Shift kerja',
+                'complete' => WorkShift::query()->where('user_id', $ownerId)->exists(),
+                'href' => route('hris.schedules.index'),
+            ],
+            [
+                'key' => 'schedules',
+                'label' => 'Jadwal kerja',
+                'complete' => EmployeeSchedule::query()->where('user_id', $ownerId)->exists(),
+                'href' => route('hris.schedules.index'),
+            ],
+        ];
+
+        $completed = collect($items)->where('complete', true)->count();
+
+        return [
+            'completed' => $completed,
+            'total' => count($items),
+            'percent' => (int) round(($completed / count($items)) * 100),
+            'items' => $items,
+        ];
+    }
+
+    private function employeeLabel(?Employee $employee): string
+    {
+        return $employee
+            ? $employee->employee_code.' - '.$employee->full_name
+            : 'Karyawan';
     }
 
     private function actionQueue(int $ownerId, Carbon $today): array
