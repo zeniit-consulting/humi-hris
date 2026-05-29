@@ -157,7 +157,7 @@ class WhatsAppNotificationService
         }
 
         $planLabel = match ($subscription->plan_slug) {
-            'core' => 'Core',
+            'core' => 'Basic',
             'plus' => 'Plus',
             default => strtoupper($subscription->plan_slug),
         };
@@ -180,6 +180,71 @@ class WhatsAppNotificationService
             Log::warning('whatsapp.subscription_renewal_reminder.failed', [
                 'subscription_id' => $subscription->id,
                 'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function notifyBirthday(Employee $employee): void
+    {
+        if (! $employee->phone || ! WhatsAppPhone::isValid($employee->phone)) {
+            return;
+        }
+        if (! config('services.waha.enabled')) {
+            return;
+        }
+
+        $message = "🎂 *Selamat Ulang Tahun!*\n\nHai {$employee->full_name},\nSeluruh tim HRD mengucapkan selamat ulang tahun untuk Anda. Semoga panjang umur, sehat selalu, dan sukses dalam berkarya! 🎉🎊";
+
+        try {
+            $this->wahaClient->sendTextToPhone($employee->phone, $message);
+        } catch (\Throwable $e) {
+            Log::warning('whatsapp.birthday_notify.failed', [
+                'employee_id' => $employee->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function notifyKasbonReminder(Employee $employee, float $totalKasbon): void
+    {
+        if (! $employee->phone || ! WhatsAppPhone::isValid($employee->phone)) {
+            return;
+        }
+        if (! config('services.waha.enabled')) {
+            return;
+        }
+
+        $formatted = 'Rp '.number_format($totalKasbon, 0, ',', '.');
+
+        $message = "💰 *Pengingat Kasbon*\n\nHai {$employee->full_name},\nAnda memiliki sisa kasbon sebesar *{$formatted}* yang akan dipotong pada payroll berikutnya.\n\nMohon pastikan saldo kasbon Anda segera diselesaikan. Terima kasih. 🙏";
+
+        try {
+            $this->wahaClient->sendTextToPhone($employee->phone, $message);
+        } catch (\Throwable $e) {
+            Log::warning('whatsapp.kasbon_reminder.failed', [
+                'employee_id' => $employee->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function notifyProbation(Employee $employee, int $daysSinceHire): void
+    {
+        if (! $employee->phone || ! WhatsAppPhone::isValid($employee->phone)) {
+            return;
+        }
+        if (! config('services.waha.enabled')) {
+            return;
+        }
+
+        $message = "📋 *Pengingat Masa Percobaan*\n\nHai {$employee->full_name},\nAnda telah bergabung selama *{$daysSinceHire} hari* dengan status percobaan (probation).\n\nSilakan hubungi tim HRD untuk evaluasi kinerja dan status kepegawaian Anda. Terima kasih. 🙏";
+
+        try {
+            $this->wahaClient->sendTextToPhone($employee->phone, $message);
+        } catch (\Throwable $e) {
+            Log::warning('whatsapp.probation_notify.failed', [
+                'employee_id' => $employee->id,
                 'error' => $e->getMessage(),
             ]);
         }

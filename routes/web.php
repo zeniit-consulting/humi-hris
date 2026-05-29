@@ -20,8 +20,6 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocsManualController;
 use App\Http\Controllers\UserPortalController;
 use App\Http\Controllers\UserPortalSectionController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -36,30 +34,11 @@ if (config('docs.fallback_path')) {
     Route::get('docs', DocsManualController::class)->name('docs.manual.preview');
 }
 
-Route::get('/', function (Request $request) {
-    $allowedVariants = ['original', 'workable'];
-    $forcedVariant = $request->query('landing_variant');
-    $variant = in_array($forcedVariant, $allowedVariants, true)
-        ? $forcedVariant
-        : 'original';
-
-    Cookie::queue(
-        Cookie::make('landing_variant', $variant, 60 * 24 * 30, sameSite: 'Lax')
-    );
-
-    return Inertia::render(
-        $variant === 'workable' ? 'landing/workable' : 'welcome',
-        [
-            'canRegister' => Features::enabled(Features::registration()),
-            'landingVariant' => $variant,
-        ]
-    );
+Route::get('/', function () {
+    return Inertia::render('welcome', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
 })->name('home');
-
-Route::inertia('landing-workable', 'landing/workable', [
-    'canRegister' => Features::enabled(Features::registration()),
-    'landingVariant' => 'workable',
-])->name('landing.workable');
 
 Route::get('careers', [CareerController::class, 'index'])->name('careers.index');
 Route::get('careers/{slug}', [CareerController::class, 'show'])->name('careers.show');
@@ -85,12 +64,14 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access'])->group(function () {
-    Route::get('dashboard', DashboardController::class)->name('dashboard');
-
     Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
     Route::post('billing/invoices', [BillingController::class, 'createInvoice'])->name('billing.invoices.store');
     Route::post('billing/invoices/{invoice}/proof', [BillingController::class, 'uploadProof'])->name('billing.invoices.proof');
     Route::delete('billing/invoices/{invoice}', [BillingController::class, 'cancelInvoice'])->name('billing.invoices.cancel');
+});
+
+Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access', 'subscription.active'])->group(function () {
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
 });
 
 Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access'])->prefix('admin')->name('admin.')->group(function () {

@@ -94,3 +94,7 @@ Artisan::command('payroll:recalculate {runId? : Payroll run ID} {--period= : Pay
 Schedule::command('leave:accrue-monthly')->monthlyOn(1, '00:00');
 Schedule::command('employee:notify-contract-expiry')->dailyAt('08:00');
 Schedule::command('subscription:notify-renewal-reminder --days=7')->dailyAt('09:00');
+Schedule::command('employee:notify-birthday')->dailyAt('08:00');
+Schedule::command('employee:notify-probation --days=90')->dailyAt('08:30');
+Schedule::command('kasbon:remind-balance')->twiceMonthly(1, 15, '09:00');
+Schedule::command('attendance:auto-clock-out')->dailyAt('22:00');

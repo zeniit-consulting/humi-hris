@@ -4,8 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { useSidebar } from '@/components/ui/sidebar';
 
 const planLabels: Record<string, string> = {
-    free: 'Free',
-    core: 'Core',
+    free: 'Free Trial',
+    core: 'Basic',
     plus: 'Plus',
 };
 
@@ -55,7 +55,7 @@ export function SubscriptionStatusBar() {
             <CreditCard className="size-4 shrink-0 text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground" />
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium leading-none">
+                    <span className="text-xs leading-none font-medium">
                         Paket {planLabels[subscription.plan_slug]}
                     </span>
                     <Badge

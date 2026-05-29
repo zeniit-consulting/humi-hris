@@ -4,10 +4,10 @@ use App\Http\Middleware\CheckEmployeeLimit;
 use App\Http\Middleware\CheckSubscriptionFeature;
 use App\Http\Middleware\EnsureAccountActivated;
 use App\Http\Middleware\EnsureAccountNotSuspended;
+use App\Http\Middleware\EnsureActiveSubscription;
 use App\Http\Middleware\EnsureAdminAccess;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
-use App\Http\Middleware\RedirectMobileGuestsToPortalLogin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -27,12 +27,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.access' => EnsureAdminAccess::class,
             'account.activated' => EnsureAccountActivated::class,
             'account.not_suspended' => EnsureAccountNotSuspended::class,
+            'subscription.active' => EnsureActiveSubscription::class,
             'subscription.feature' => CheckSubscriptionFeature::class,
             'employee.limit' => CheckEmployeeLimit::class,
         ]);
 
         $middleware->web(append: [
-            RedirectMobileGuestsToPortalLogin::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,

@@ -31,11 +31,13 @@ class CheckSubscriptionFeature
 
         if (! $subscription) {
             $this->flashFeatureError($request, $feature);
+
             return redirect()->route('billing.index');
         }
 
         if ($subscription->isFeatureLocked($feature)) {
             $this->flashFeatureError($request, $feature, $subscription->plan_slug);
+
             return redirect()->route('billing.index');
         }
 
@@ -45,26 +47,25 @@ class CheckSubscriptionFeature
     protected function flashFeatureError(Request $request, string $feature, string $currentPlan = 'free'): void
     {
         $labels = [
-            'recruitment'   => 'Rekrutmen',
-            'payroll'       => 'Penggajian (Payroll)',
-            'kasbon'        => 'Kasbon',
-            'assets'        => 'Manajemen Aset',
-            'survey'        => 'Survey Karyawan',
+            'recruitment' => 'Rekrutmen',
+            'payroll' => 'Penggajian (Payroll)',
+            'kasbon' => 'Kasbon',
+            'assets' => 'Manajemen Aset',
+            'survey' => 'Survey Karyawan',
             'notifications' => 'Notifikasi & Pengumuman',
         ];
 
         $label = $labels[$feature] ?? ucfirst($feature);
 
         $planLabel = match ($currentPlan) {
-            'free'  => 'Free',
-            'core'  => 'Core',
-            'plus'  => 'Plus',
+            'free' => 'Free Trial',
+            'core' => 'Basic',
+            'plus' => 'Plus',
             default => ucfirst($currentPlan),
         };
 
-        // Fitur terkunci di Free → tersedia mulai Core
         $freeOnlyLocked = ['survey', 'notifications', 'payroll'];
-        $upgradeTarget = in_array($feature, $freeOnlyLocked, true) ? 'Core atau Plus' : 'Plus';
+        $upgradeTarget = in_array($feature, $freeOnlyLocked, true) ? 'Basic atau Plus' : 'Plus';
 
         $request->session()->flash(
             'error',

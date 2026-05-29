@@ -89,23 +89,19 @@ const coreFeaturesIncluded = [
     'Struktur Organisasi',
 ];
 
-const coreFeatureLocked = [
-    'Rekrutmen',
-    'Kasbon',
-    'Asset Management',
-];
+const coreFeatureLocked = ['Rekrutmen', 'Kasbon', 'Asset Management'];
 
 const plusFeatures = [...coreFeaturesIncluded, ...coreFeatureLocked];
 
 const pricingPlans = [
     {
-        name: 'Free',
+        name: 'Free Trial',
         price: 'Gratis',
         description:
-            'Cocok untuk uji coba awal sebelum tim Anda masuk ke workflow HR yang lebih lengkap.',
+            'Coba sistem maksimal 30 hari sebelum memilih paket berbayar untuk operasional harian.',
         highlight: false,
-        badge: 'GRATIS',
-        cta: 'Mulai Gratis',
+        badge: '30 HARI',
+        cta: 'Mulai Trial',
         features: [
             'Manajemen Karyawan',
             'Kehadiran & Absensi',
@@ -116,18 +112,18 @@ const pricingPlans = [
             'Survey',
             'Struktur Organisasi',
             'Maks. 10 karyawan',
-            'Maks. 2 bulan',
+            'Maks. 30 hari',
         ],
         lockedFeatures: coreFeatureLocked,
     },
     {
-        name: 'Core',
+        name: 'Basic',
         price: fmt.format(PRICE_CORE),
         period: '/karyawan/bulan',
         description:
-            'Paket inti untuk operasional HR harian dengan fitur dasar yang sudah siap dipakai.',
+            'Paket minimum setelah trial untuk operasional HR harian yang sudah siap dipakai.',
         highlight: false,
-        cta: 'Pilih Paket Core',
+        cta: 'Pilih Paket Basic',
         features: coreFeaturesIncluded,
         lockedFeatures: coreFeatureLocked,
     },
@@ -678,8 +674,8 @@ export default function Welcome({
                                     Siap mengelola HR dengan lebih baik?
                                 </h2>
                                 <p className="mx-auto mt-4 max-w-xl text-base opacity-90">
-                                    Mulai gratis hari ini. Tidak perlu kartu
-                                    kredit, setup dalam hitungan menit.
+                                    Mulai trial 30 hari hari ini. Setelah itu
+                                    lanjutkan dengan paket Basic atau Plus.
                                 </p>
 
                                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">

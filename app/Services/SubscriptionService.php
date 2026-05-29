@@ -11,10 +11,12 @@ use Illuminate\Support\Carbon;
 
 class SubscriptionService
 {
+    public const TRIAL_DAYS = 30;
+
     public function initializeFreeSubscription(User $user): Subscription
     {
         $today = Carbon::today();
-        $trialEnd = $today->copy()->addDays(30);
+        $trialEnd = $today->copy()->addDays(self::TRIAL_DAYS);
 
         return Subscription::query()->create([
             'user_id' => $user->id,
@@ -25,6 +27,14 @@ class SubscriptionService
             'current_period_end' => $trialEnd->toDateString(),
             'trial_ends_at' => $trialEnd->toDateString(),
         ]);
+    }
+
+    public function getLatestSubscription(User $user): ?Subscription
+    {
+        return Subscription::query()
+            ->where('user_id', $user->accountOwnerId())
+            ->latest()
+            ->first();
     }
 
     public function getActiveSubscription(User $user): ?Subscription

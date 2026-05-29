@@ -56,7 +56,7 @@ class SubscriptionRenewalReminderTest extends TestCase
                 && str_contains($payload['text'], 'Reminder Renewal Plan Humi')
                 && str_contains($payload['text'], 'Budi Santoso')
                 && str_contains($payload['text'], 'PT Test Company')
-                && str_contains($payload['text'], 'Core')
+                && str_contains($payload['text'], 'Basic')
                 && str_contains($payload['text'], '25 Mei 2026');
         });
 

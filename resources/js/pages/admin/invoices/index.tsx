@@ -184,8 +184,8 @@ export default function AdminInvoicesPage() {
                                     className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                                 >
                                     <option value="all">Semua plan</option>
-                                    <option value="free">Free</option>
-                                    <option value="core">Core</option>
+                                    <option value="free">Free Trial</option>
+                                    <option value="core">Basic</option>
                                     <option value="plus">Plus</option>
                                 </select>
                             </div>

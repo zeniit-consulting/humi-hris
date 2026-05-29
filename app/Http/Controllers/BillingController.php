@@ -25,8 +25,9 @@ class BillingController extends Controller
 
         $owner = $user->parent_user_id ? $user->parentUser : $user;
 
-        $subscription = $this->subscriptionService->getActiveSubscription($owner);
+        $subscription = $this->subscriptionService->getLatestSubscription($owner);
         $employeeCount = $this->subscriptionService->getEmployeeCount($owner);
+        $currentPlan = $subscription?->plan();
 
         $invoices = SubscriptionInvoice::query()
             ->where('user_id', $owner->id)
@@ -43,7 +44,8 @@ class BillingController extends Controller
                 'id' => $subscription->id,
                 'plan_slug' => $subscription->plan_slug,
                 'status' => $subscription->status,
-                'employee_count' => $subscription->employee_count,
+                'employee_count' => $employeeCount,
+                'max_employees' => $currentPlan?->max_employees,
                 'current_period_start' => $subscription->current_period_start?->toDateString(),
                 'current_period_end' => $subscription->current_period_end?->toDateString(),
                 'trial_ends_at' => $subscription->trial_ends_at?->toDateString(),

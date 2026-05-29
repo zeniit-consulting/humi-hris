@@ -28,7 +28,7 @@ use App\Http\Controllers\Hris\SubCompanyController;
 use App\Http\Controllers\Hris\SurveyController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access'])->prefix('hris')->name('hris.')->group(function () {
+Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access', 'subscription.active'])->prefix('hris')->name('hris.')->group(function () {
     Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
     Route::get('sub-companies', [SubCompanyController::class, 'index'])->name('sub-companies.index');
     Route::post('sub-companies', [SubCompanyController::class, 'store'])->name('sub-companies.store');

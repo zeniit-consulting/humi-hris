@@ -72,14 +72,17 @@ const PRICE_CORE = 2900;
 const PRICE_PLUS = 7500;
 
 const planLabels: Record<string, string> = {
-    free: 'Free',
-    core: 'Core',
+    free: 'Free Trial',
+    core: 'Basic',
     plus: 'Plus',
 };
 
 const statusConfig: Record<
     Invoice['status'],
-    { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+    {
+        label: string;
+        variant: 'default' | 'secondary' | 'destructive' | 'outline';
+    }
 > = {
     pending: { label: 'Menunggu Pembayaran', variant: 'secondary' },
     paid: { label: 'Lunas', variant: 'default' },
@@ -97,7 +100,9 @@ const fmt = new Intl.NumberFormat('id-ID', {
 
 function formatDate(iso: string | null) {
     if (!iso) return '-';
-    return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(new Date(iso));
+    return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(
+        new Date(iso),
+    );
 }
 
 // ── Banner Status ─────────────────────────────────────────────────────────────
@@ -112,7 +117,8 @@ function SubscriptionBanner({ sub }: { sub: SubscriptionInfo }) {
                         Langganan Anda telah kedaluwarsa
                     </p>
                     <p className="text-sm text-red-700 dark:text-red-400">
-                        Upgrade ke paket berbayar untuk melanjutkan akses penuh.
+                        Silakan berlangganan minimal paket Basic untuk
+                        melanjutkan akses sistem.
                     </p>
                 </div>
             </div>
@@ -128,9 +134,11 @@ function SubscriptionBanner({ sub }: { sub: SubscriptionInfo }) {
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                         <Clock className="size-5 text-muted-foreground" />
-                        <span className="font-medium">Paket Free (Trial)</span>
+                        <span className="font-medium">Free Trial 30 Hari</span>
                         {sub.days_remaining > 0 && (
-                            <Badge variant="secondary">{sub.days_remaining} hari tersisa</Badge>
+                            <Badge variant="secondary">
+                                {sub.days_remaining} hari tersisa
+                            </Badge>
                         )}
                     </div>
                     {sub.current_period_end && (
@@ -139,11 +147,18 @@ function SubscriptionBanner({ sub }: { sub: SubscriptionInfo }) {
                         </span>
                     )}
                 </div>
+                <p className="mb-3 text-sm text-muted-foreground">
+                    Setelah trial berakhir, akun wajib berlangganan minimal
+                    paket Basic.
+                </p>
                 <div className="space-y-1">
                     <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Penggunaan Karyawan</span>
+                        <span className="text-muted-foreground">
+                            Penggunaan Karyawan
+                        </span>
                         <span className="font-medium">
-                            {sub.employee_count} / {sub.max_employees ?? '∞'} karyawan
+                            {sub.employee_count} / {sub.max_employees ?? '∞'}{' '}
+                            karyawan
                         </span>
                     </div>
                     <Progress value={pct} className="h-2" />
@@ -156,11 +171,14 @@ function SubscriptionBanner({ sub }: { sub: SubscriptionInfo }) {
         <div className="flex items-center gap-3 rounded-lg border bg-card p-4">
             <CheckCircle2 className="size-5 shrink-0 text-green-600 dark:text-green-400" />
             <div className="flex-1">
-                <p className="font-medium">Paket {planLabels[sub.plan_slug]} — Aktif</p>
+                <p className="font-medium">
+                    Paket {planLabels[sub.plan_slug]} — Aktif
+                </p>
                 <p className="text-sm text-muted-foreground">
                     {sub.employee_count} karyawan aktif · Perpanjangan:{' '}
                     {formatDate(sub.current_period_end)}
-                    {sub.days_remaining > 0 && ` · ${sub.days_remaining} hari lagi`}
+                    {sub.days_remaining > 0 &&
+                        ` · ${sub.days_remaining} hari lagi`}
                 </p>
             </div>
         </div>
@@ -176,9 +194,14 @@ type UpgradeDialogProps = {
     defaultEmployees: number;
 };
 
-function UpgradeDialog({ open, onClose, planSlug, defaultEmployees }: UpgradeDialogProps) {
+function UpgradeDialog({
+    open,
+    onClose,
+    planSlug,
+    defaultEmployees,
+}: UpgradeDialogProps) {
     const price = planSlug === 'core' ? PRICE_CORE : PRICE_PLUS;
-    const planLabel = planSlug === 'core' ? 'Core' : 'Plus';
+    const planLabel = planSlug === 'core' ? 'Basic' : 'Plus';
 
     const { data, setData, post, processing, errors, reset } = useForm({
         plan_slug: planSlug,
@@ -189,17 +212,26 @@ function UpgradeDialog({ open, onClose, planSlug, defaultEmployees }: UpgradeDia
         e.preventDefault();
         post('/billing/invoices', {
             preserveScroll: true,
-            onSuccess: () => { reset(); onClose(); },
+            onSuccess: () => {
+                reset();
+                onClose();
+            },
         });
     };
 
     return (
-        <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+        <Dialog
+            open={open}
+            onOpenChange={(v) => {
+                if (!v) onClose();
+            }}
+        >
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Upgrade ke Paket {planLabel}</DialogTitle>
                     <DialogDescription>
-                        Konfirmasi jumlah karyawan untuk menghitung total tagihan bulanan Anda.
+                        Konfirmasi jumlah karyawan untuk menghitung total
+                        tagihan bulanan Anda.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -210,11 +242,17 @@ function UpgradeDialog({ open, onClose, planSlug, defaultEmployees }: UpgradeDia
                             <span className="font-medium">{planLabel}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Harga per karyawan</span>
-                            <span className="font-medium">{fmt.format(price)}/bulan</span>
+                            <span className="text-muted-foreground">
+                                Harga per karyawan
+                            </span>
+                            <span className="font-medium">
+                                {fmt.format(price)}/bulan
+                            </span>
                         </div>
                         <div className="flex justify-between border-t pt-1">
-                            <span className="text-muted-foreground">Estimasi Total</span>
+                            <span className="text-muted-foreground">
+                                Estimasi Total
+                            </span>
                             <span className="font-semibold text-primary">
                                 {fmt.format(data.employee_count * price)}/bulan
                             </span>
@@ -229,21 +267,32 @@ function UpgradeDialog({ open, onClose, planSlug, defaultEmployees }: UpgradeDia
                             min={1}
                             value={data.employee_count}
                             onChange={(e) =>
-                                setData('employee_count', Math.max(1, Number(e.target.value)))
+                                setData(
+                                    'employee_count',
+                                    Math.max(1, Number(e.target.value)),
+                                )
                             }
                         />
                         <InputError message={errors.employee_count} />
                         <p className="text-xs text-muted-foreground">
-                            Total: {fmt.format(data.employee_count * price)} / bulan
+                            Total: {fmt.format(data.employee_count * price)} /
+                            bulan
                         </p>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">
-                        <Button type="button" variant="outline" onClick={onClose} disabled={processing}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                            disabled={processing}
+                        >
                             Batal
                         </Button>
                         <Button type="submit" disabled={processing}>
-                            {processing ? 'Memproses…' : `Buat Invoice Paket ${planLabel}`}
+                            {processing
+                                ? 'Memproses…'
+                                : `Buat Invoice Paket ${planLabel}`}
                         </Button>
                     </div>
                 </form>
@@ -273,12 +322,23 @@ function UploadProofDialog({
         post(`/billing/invoices/${invoiceId}/proof`, {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => { reset(); onClose(); },
+            onSuccess: () => {
+                reset();
+                onClose();
+            },
         });
     };
 
     return (
-        <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onClose(); } }}>
+        <Dialog
+            open={open}
+            onOpenChange={(v) => {
+                if (!v) {
+                    reset();
+                    onClose();
+                }
+            }}
+        >
             <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle>Upload Bukti Pembayaran</DialogTitle>
@@ -302,11 +362,21 @@ function UploadProofDialog({
                             }
                         />
                         <InputError message={errors.payment_proof} />
-                        <p className="text-xs text-muted-foreground">Format: JPG, PNG, PDF. Maks 5 MB.</p>
+                        <p className="text-xs text-muted-foreground">
+                            Format: JPG, PNG, PDF. Maks 5 MB.
+                        </p>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">
-                        <Button type="button" variant="outline" onClick={() => { reset(); onClose(); }} disabled={processing}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                reset();
+                                onClose();
+                            }}
+                            disabled={processing}
+                        >
                             Batal
                         </Button>
                         <Button
@@ -357,24 +427,40 @@ type PlanCardProps = {
 };
 
 function PlanCard({
-    title, priceLabel, priceDetail, estimatedTotal,
-    badge, badgeVariant = 'secondary',
-    features, lockedFeatures,
-    isActive, onSelect, highlight,
+    title,
+    priceLabel,
+    priceDetail,
+    estimatedTotal,
+    badge,
+    badgeVariant = 'secondary',
+    features,
+    lockedFeatures,
+    isActive,
+    onSelect,
+    highlight,
 }: PlanCardProps) {
     return (
-        <Card className={`flex flex-col ${highlight ? 'border-primary shadow-md' : ''}`}>
+        <Card
+            className={`flex flex-col ${highlight ? 'border-primary shadow-md' : ''}`}
+        >
             <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-lg">{title}</CardTitle>
                     {badge && (
-                        <Badge variant={badgeVariant} className="shrink-0 text-xs">{badge}</Badge>
+                        <Badge
+                            variant={badgeVariant}
+                            className="shrink-0 text-xs"
+                        >
+                            {badge}
+                        </Badge>
                     )}
                 </div>
                 <div>
                     <span className="text-3xl font-bold">{priceLabel}</span>
                     {priceDetail && (
-                        <span className="ml-1 text-sm text-muted-foreground">{priceDetail}</span>
+                        <span className="ml-1 text-sm text-muted-foreground">
+                            {priceDetail}
+                        </span>
                     )}
                 </div>
                 {estimatedTotal && (
@@ -392,7 +478,10 @@ function PlanCard({
                     </div>
                 ))}
                 {lockedFeatures?.map((f) => (
-                    <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div
+                        key={f}
+                        className="flex items-center gap-2 text-sm text-muted-foreground"
+                    >
                         <Lock className="size-4 shrink-0" />
                         <span>{f}</span>
                     </div>
@@ -401,7 +490,9 @@ function PlanCard({
 
             <CardFooter>
                 {isActive ? (
-                    <Button className="w-full" disabled variant="outline">Paket Aktif</Button>
+                    <Button className="w-full" disabled variant="outline">
+                        Paket Aktif
+                    </Button>
                 ) : onSelect ? (
                     <Button
                         className="w-full"
@@ -444,7 +535,9 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                         <TableRow>
                             <TableHead>No. Invoice</TableHead>
                             <TableHead>Paket</TableHead>
-                            <TableHead className="text-right">Karyawan</TableHead>
+                            <TableHead className="text-right">
+                                Karyawan
+                            </TableHead>
                             <TableHead className="text-right">Total</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Tanggal</TableHead>
@@ -456,12 +549,23 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                             const sc = statusConfig[inv.status];
                             return (
                                 <TableRow key={inv.id}>
-                                    <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
-                                    <TableCell>{planLabels[inv.plan_slug] ?? inv.plan_slug}</TableCell>
-                                    <TableCell className="text-right">{inv.employee_count}</TableCell>
-                                    <TableCell className="text-right font-medium">{fmt.format(inv.amount)}</TableCell>
+                                    <TableCell className="font-mono text-xs">
+                                        {inv.invoice_number}
+                                    </TableCell>
                                     <TableCell>
-                                        <Badge variant={sc.variant}>{sc.label}</Badge>
+                                        {planLabels[inv.plan_slug] ??
+                                            inv.plan_slug}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        {inv.employee_count}
+                                    </TableCell>
+                                    <TableCell className="text-right font-medium">
+                                        {fmt.format(inv.amount)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={sc.variant}>
+                                            {sc.label}
+                                        </Badge>
                                     </TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
                                         {formatDate(inv.issued_at)}
@@ -469,23 +573,47 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                                     <TableCell className="text-right">
                                         {inv.status === 'pending' && (
                                             <div className="flex justify-end gap-2">
-                                                <Button size="sm" variant="outline" onClick={() => setUploadInvoiceId(inv.id)}>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        setUploadInvoiceId(
+                                                            inv.id,
+                                                        )
+                                                    }
+                                                >
                                                     <Upload className="mr-1 size-3" />
                                                     Upload Bukti
                                                 </Button>
-                                                <Button size="sm" variant="destructive" disabled={cancelling} onClick={() => handleCancel(inv.id)}>
+                                                <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    disabled={cancelling}
+                                                    onClick={() =>
+                                                        handleCancel(inv.id)
+                                                    }
+                                                >
                                                     <X className="mr-1 size-3" />
                                                     Batalkan
                                                 </Button>
                                             </div>
                                         )}
-                                        {inv.status === 'paid' && inv.payment_proof && (
-                                            <Button size="sm" variant="ghost" asChild>
-                                                <a href={inv.payment_proof} target="_blank" rel="noopener noreferrer">
-                                                    Lihat Bukti
-                                                </a>
-                                            </Button>
-                                        )}
+                                        {inv.status === 'paid' &&
+                                            inv.payment_proof && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    asChild
+                                                >
+                                                    <a
+                                                        href={inv.payment_proof}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        Lihat Bukti
+                                                    </a>
+                                                </Button>
+                                            )}
                                     </TableCell>
                                 </TableRow>
                             );
@@ -507,7 +635,9 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
 
 export default function BillingPage() {
     const { subscription, invoices } = usePage<PageProps>().props;
-    const [upgradeDialog, setUpgradeDialog] = useState<'core' | 'plus' | null>(null);
+    const [upgradeDialog, setUpgradeDialog] = useState<'core' | 'plus' | null>(
+        null,
+    );
 
     const employeeCount = subscription?.employee_count ?? 1;
     const currentPlan = subscription?.plan_slug ?? 'free';
@@ -520,30 +650,49 @@ export default function BillingPage() {
                 {subscription && <SubscriptionBanner sub={subscription} />}
 
                 <section>
-                    <h2 className="mb-3 text-base font-semibold">Paket Langganan</h2>
+                    <h2 className="mb-3 text-base font-semibold">
+                        Paket Langganan
+                    </h2>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         <PlanCard
-                            title="Free"
+                            title="Free Trial"
                             priceLabel="Gratis"
-                            badge="GRATIS"
+                            badge="30 HARI"
                             badgeVariant="secondary"
                             features={[
-                                'Manajemen Karyawan', 'Kehadiran & Absensi', 'Jadwal Kerja',
-                                'Cuti & Izin', 'Lembur', 'Notifikasi', 'Survey',
-                                'Struktur Organisasi', 'Maks. 10 karyawan', 'Maks. 2 bulan',
+                                'Manajemen Karyawan',
+                                'Kehadiran & Absensi',
+                                'Jadwal Kerja',
+                                'Cuti & Izin',
+                                'Lembur',
+                                'Notifikasi',
+                                'Survey',
+                                'Struktur Organisasi',
+                                'Maks. 10 karyawan',
+                                'Maks. 30 hari',
                             ]}
-                            lockedFeatures={['Rekrutmen', 'Penggajian', 'Kasbon', 'Asset Management']}
+                            lockedFeatures={[
+                                'Rekrutmen',
+                                'Penggajian',
+                                'Kasbon',
+                                'Asset Management',
+                            ]}
                             isActive={currentPlan === 'free'}
                         />
 
                         <PlanCard
-                            title="Core"
+                            title="Basic"
                             priceLabel={fmt.format(PRICE_CORE)}
                             priceDetail="/ karyawan / bulan"
-                            estimatedTotal={fmt.format(employeeCount * PRICE_CORE)}
+                            estimatedTotal={fmt.format(
+                                employeeCount * PRICE_CORE,
+                            )}
                             features={coreFeaturesIncluded}
                             lockedFeatures={coreFeatureLocked}
-                            isActive={currentPlan === 'core' && subscription?.status === 'active'}
+                            isActive={
+                                currentPlan === 'core' &&
+                                subscription?.status === 'active'
+                            }
                             onSelect={() => setUpgradeDialog('core')}
                         />
 
@@ -551,23 +700,31 @@ export default function BillingPage() {
                             title="Plus"
                             priceLabel={fmt.format(PRICE_PLUS)}
                             priceDetail="/ karyawan / bulan"
-                            estimatedTotal={fmt.format(employeeCount * PRICE_PLUS)}
+                            estimatedTotal={fmt.format(
+                                employeeCount * PRICE_PLUS,
+                            )}
                             badge="REKOMENDASI"
                             badgeVariant="default"
                             features={plusFeatures}
-                            isActive={currentPlan === 'plus' && subscription?.status === 'active'}
+                            isActive={
+                                currentPlan === 'plus' &&
+                                subscription?.status === 'active'
+                            }
                             onSelect={() => setUpgradeDialog('plus')}
                             highlight
                         />
                     </div>
                     <p className="mt-3 text-xs text-muted-foreground">
                         <Sparkles className="mr-1 inline size-3" />
-                        Harga belum termasuk PPN. Pembayaran via transfer bank. Invoice dibuat setelah konfirmasi.
+                        Harga belum termasuk PPN. Pembayaran via transfer bank.
+                        Invoice dibuat setelah konfirmasi.
                     </p>
                 </section>
 
                 <section>
-                    <h2 className="mb-3 text-base font-semibold">Riwayat Invoice</h2>
+                    <h2 className="mb-3 text-base font-semibold">
+                        Riwayat Invoice
+                    </h2>
                     <InvoiceTable invoices={invoices ?? []} />
                 </section>
             </div>
