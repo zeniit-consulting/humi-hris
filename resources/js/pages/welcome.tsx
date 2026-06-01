@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     CalendarClock,
@@ -12,6 +12,7 @@ import {
     Sparkles,
     Users,
 } from 'lucide-react';
+import SeoHead from '@/components/seo-head';
 import { dashboard, login, register } from '@/routes';
 
 const modules = [
@@ -76,6 +77,11 @@ const PRICE_CORE = 2900;
 const PRICE_PLUS = 7500;
 const WHATSAPP_CONTACT_URL =
     'https://wa.me/6285710999144?text=Halo%20Humi%2C%20saya%20ingin%20konsultasi%20tentang%20HRIS.';
+const SEO_TITLE = 'Humi HRIS - Software HRIS Indonesia';
+const SEO_DESCRIPTION =
+    'Humi adalah software HRIS Indonesia untuk mengelola data karyawan, absensi, cuti, lembur, payroll, approval, dan portal karyawan dalam satu platform.';
+const SEO_KEYWORDS =
+    'software HRIS Indonesia, aplikasi HRIS, HR management system, aplikasi absensi karyawan, software payroll Indonesia, manajemen karyawan, aplikasi cuti karyawan, portal karyawan';
 
 const coreFeaturesIncluded = [
     'Manajemen Karyawan',
@@ -145,35 +151,60 @@ export default function Welcome({
 }: {
     canRegister?: boolean;
 }) {
-    const { auth } = usePage().props;
+    const { auth, appUrl } = usePage().props as {
+        auth: { user?: unknown };
+        appUrl: string;
+    };
+    const siteUrl = appUrl.replace(/\/$/, '');
+    const structuredData = [
+        {
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Humi',
+            url: siteUrl,
+            logo: `${siteUrl}/logo.png`,
+            contactPoint: {
+                '@type': 'ContactPoint',
+                contactType: 'sales',
+                telephone: '+62-857-1099-9144',
+                availableLanguage: ['id'],
+            },
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'Humi HRIS',
+            url: siteUrl,
+            inLanguage: 'id-ID',
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'Humi HRIS',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            url: siteUrl,
+            image: `${siteUrl}/icons/icon-512.png`,
+            description: SEO_DESCRIPTION,
+            offers: {
+                '@type': 'Offer',
+                price: String(PRICE_CORE),
+                priceCurrency: 'IDR',
+                category: 'subscription',
+            },
+            featureList: modules.map((module) => module.title),
+        },
+    ];
 
     return (
         <>
-            <Head title="Humi - HR Information System">
-                <meta
-                    name="description"
-                    content="Humi adalah platform HRIS terpadu untuk kelola karyawan, absensi, cuti, dan payroll dengan workflow yang sederhana."
-                />
-                <meta property="og:type" content="website" />
-                <meta property="og:title" content="Humi - Easy HR Management" />
-                <meta
-                    property="og:description"
-                    content="Humi adalah platform HRIS terpadu untuk kelola karyawan, absensi, cuti, dan payroll dengan workflow yang sederhana."
-                />
-                <meta property="og:image" content="/icons/icon-512.png" />
-                <meta property="og:image:type" content="image/png" />
-                <meta property="og:image:width" content="512" />
-                <meta property="og:image:height" content="512" />
-                <meta name="twitter:card" content="summary" />
-                <meta
-                    name="twitter:title"
-                    content="Humi - Easy HR Management"
-                />
-                <meta
-                    name="twitter:description"
-                    content="Humi adalah platform HRIS terpadu untuk kelola karyawan, absensi, cuti, dan payroll dengan workflow yang sederhana."
-                />
-                <meta name="twitter:image" content="/icons/icon-512.png" />
+            <SeoHead
+                title={SEO_TITLE}
+                description={SEO_DESCRIPTION}
+                keywords={SEO_KEYWORDS}
+                canonicalPath="/"
+                structuredData={structuredData}
+            >
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link
                     rel="preconnect"
@@ -184,7 +215,7 @@ export default function Welcome({
                     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
                     rel="stylesheet"
                 />
-            </Head>
+            </SeoHead>
 
             <div
                 className="min-h-screen bg-white text-slate-900"

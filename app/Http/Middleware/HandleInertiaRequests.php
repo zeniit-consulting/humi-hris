@@ -42,6 +42,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'appUrl' => rtrim((string) config('app.url'), '/'),
             'companyLogoUrl' => function () use ($request) {
                 if (! $request->user()) {
                     return null;

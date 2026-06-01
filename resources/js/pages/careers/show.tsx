@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Briefcase,
@@ -8,6 +8,7 @@ import {
     Send,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
+import SeoHead from '@/components/seo-head';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -109,6 +110,16 @@ const formatCurrency = (value: string | null) => {
     }).format(Number(value));
 };
 
+const stripText = (value: string | null, maxLength = 155) => {
+    const fallback =
+        'Lowongan aktif Humi HRIS. Lihat detail posisi, kualifikasi, benefit, dan kirim lamaran secara online.';
+    const text = (value ?? fallback).replace(/\s+/g, ' ').trim();
+
+    return text.length > maxLength
+        ? `${text.slice(0, maxLength).trim()}...`
+        : text;
+};
+
 export default function CareerShowPage() {
     const { vacancy, flash, auth } = usePage<PageProps>().props;
     const form = useForm<ApplicationFormData>(defaultForm);
@@ -127,7 +138,13 @@ export default function CareerShowPage() {
 
     return (
         <>
-            <Head title={vacancy.title} />
+            <SeoHead
+                title={`${vacancy.title} - Karier Humi HRIS`}
+                description={stripText(vacancy.description)}
+                keywords={`${vacancy.title}, karier Humi, lowongan ${vacancy.position ?? vacancy.title}, ${vacancy.location ?? 'Indonesia'}, lowongan HRIS`}
+                canonicalPath={`/careers/${vacancy.slug}`}
+                type="article"
+            />
 
             <div className="min-h-screen bg-[#f5f7fb] text-slate-900">
                 <header className="border-b border-slate-200 bg-white/90 backdrop-blur">

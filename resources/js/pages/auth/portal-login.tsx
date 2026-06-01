@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import InputError from '@/components/input-error';
+import SeoHead from '@/components/seo-head';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -148,6 +149,12 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
                     href="/icons/apple-touch-icon.png"
                 />
             </Head>
+            <SeoHead
+                title="Portal Karyawan Humi HRIS"
+                description="Halaman login portal karyawan Humi untuk akses absensi, cuti, lembur, payroll, dan profil karyawan."
+                canonicalPath="/portal/login"
+                noIndex
+            />
 
             <main className="relative min-h-svh overflow-hidden bg-[#006069] text-white">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,255,255,0.22),transparent_28%),radial-gradient(circle_at_92%_8%,rgba(181,232,223,0.2),transparent_24%),linear-gradient(155deg,#006069_0%,#004951_52%,#002f36_100%)]" />

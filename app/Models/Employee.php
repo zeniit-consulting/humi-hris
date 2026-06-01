@@ -230,6 +230,16 @@ class Employee extends Model
         return $this->hasMany(EmployeeDocument::class);
     }
 
+    public function performanceReviews(): HasMany
+    {
+        return $this->hasMany(PerformanceReview::class);
+    }
+
+    public function managedPerformanceReviews(): HasMany
+    {
+        return $this->hasMany(PerformanceReview::class, 'manager_id');
+    }
+
     /**
      * Build a full name from first and last name.
      */

@@ -20,6 +20,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocsManualController;
 use App\Http\Controllers\UserPortalController;
 use App\Http\Controllers\UserPortalSectionController;
+use App\Models\JobVacancy;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -33,6 +34,98 @@ if (config('docs.domain')) {
 if (config('docs.fallback_path')) {
     Route::get('docs', DocsManualController::class)->name('docs.manual.preview');
 }
+
+Route::get('robots.txt', function () {
+    $baseUrl = rtrim((string) config('app.url'), '/');
+    $privatePaths = [
+        '/dashboard',
+        '/admin',
+        '/billing',
+        '/client',
+        '/hris',
+        '/portal',
+        '/settings',
+        '/login',
+        '/register',
+        '/forgot-password',
+        '/reset-password',
+        '/two-factor-challenge',
+    ];
+    $crawlerGroups = [
+        ['*'],
+        ['Googlebot'],
+        ['Googlebot-Image'],
+        ['GPTBot'],
+        ['OAI-SearchBot'],
+        ['ChatGPT-User'],
+        ['PerplexityBot'],
+        ['ClaudeBot'],
+        ['Claude-SearchBot'],
+        ['Applebot'],
+    ];
+    $lines = [];
+
+    foreach ($crawlerGroups as $agents) {
+        foreach ($agents as $agent) {
+            $lines[] = 'User-agent: '.$agent;
+        }
+
+        $lines[] = 'Allow: /';
+
+        foreach ($privatePaths as $path) {
+            $lines[] = 'Disallow: '.$path;
+        }
+
+        $lines[] = '';
+    }
+
+    $lines[] = 'Sitemap: '.$baseUrl.'/sitemap.xml';
+    $lines[] = '';
+
+    return response(implode("\n", $lines), 200, ['Content-Type' => 'text/plain']);
+})->name('robots');
+
+Route::get('sitemap.xml', function () {
+    $baseUrl = rtrim((string) config('app.url'), '/');
+    $urls = [
+        [
+            'loc' => $baseUrl,
+            'priority' => '1.0',
+            'changefreq' => 'weekly',
+            'lastmod' => now()->toAtomString(),
+        ],
+        [
+            'loc' => $baseUrl.'/careers',
+            'priority' => '0.6',
+            'changefreq' => 'daily',
+            'lastmod' => now()->toAtomString(),
+        ],
+    ];
+
+    JobVacancy::query()
+        ->select(['slug', 'updated_at'])
+        ->where('status', 'published')
+        ->where(function ($query): void {
+            $query
+                ->whereNull('closing_date')
+                ->orWhereDate('closing_date', '>=', now()->toDateString());
+        })
+        ->latest('updated_at')
+        ->limit(500)
+        ->get()
+        ->each(function (JobVacancy $vacancy) use (&$urls, $baseUrl): void {
+            $urls[] = [
+                'loc' => $baseUrl.'/careers/'.$vacancy->slug,
+                'priority' => '0.5',
+                'changefreq' => 'weekly',
+                'lastmod' => $vacancy->updated_at?->toAtomString() ?? now()->toAtomString(),
+            ];
+        });
+
+    $xml = view('sitemap', ['urls' => $urls])->render();
+
+    return response($xml, 200, ['Content-Type' => 'application/xml']);
+})->name('sitemap');
 
 Route::get('/', function () {
     return Inertia::render('welcome', [

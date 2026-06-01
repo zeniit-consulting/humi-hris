@@ -1,7 +1,8 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, ArrowRight, Briefcase, MapPin, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import SeoHead from '@/components/seo-head';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -107,6 +108,8 @@ const shortText = (value: string | null, maxLength = 180) => {
 export default function CareersIndexPage() {
     const { vacancies, filters, options, auth } = usePage<PageProps>().props;
     const [filterState, setFilterState] = useState(filters);
+    const hasActiveFilters =
+        filters.search !== '' || filters.employment_type !== '';
 
     useEffect(() => {
         setFilterState(filters);
@@ -124,7 +127,13 @@ export default function CareersIndexPage() {
 
     return (
         <>
-            <Head title="Karier" />
+            <SeoHead
+                title="Karier Humi HRIS - Lowongan Tim HR dan Operasional"
+                description="Lihat lowongan aktif Humi dan kirim lamaran untuk bergabung dengan tim yang membangun sistem HRIS, rekrutmen, dan operasional modern."
+                keywords="karier Humi, lowongan HRIS, lowongan HR tech, lowongan operasional HR, rekrutmen Humi"
+                canonicalPath="/careers"
+                noIndex={hasActiveFilters}
+            />
 
             <div className="min-h-screen bg-[#f5f7fb] text-slate-900">
                 <header className="border-b border-slate-200 bg-white/90 backdrop-blur">

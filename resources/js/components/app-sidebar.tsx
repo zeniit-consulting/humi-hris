@@ -17,6 +17,7 @@ import {
     ShieldCheck,
     ScrollText,
     Timer,
+    TrendingUp,
     UsersRound,
     WalletCards,
 } from 'lucide-react';
@@ -98,6 +99,11 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     title: 'Survey',
                     href: '/hris/surveys',
                     icon: ClipboardList,
+                },
+                {
+                    title: 'Performance',
+                    href: '/hris/performances',
+                    icon: TrendingUp,
                 },
             ],
         },
