@@ -134,12 +134,12 @@ class BillingController extends Controller
 
     public function invoiceFallback(Request $request): RedirectResponse
     {
-        if ($request->filled('plan_slug')) {
-            return $this->createInvoice($request);
-        }
+        $request->merge([
+            'plan_slug' => $request->input('plan_slug', 'core'),
+            'payment_method' => $request->input('payment_method', 'qris'),
+        ]);
 
-        return redirect()->route('billing.index')
-            ->with('error', 'URL invoice tidak dapat dibuka langsung. Silakan pilih paket lalu klik Buat Invoice.');
+        return $this->createInvoice($request);
     }
 
     public function uploadProof(Request $request, SubscriptionInvoice $invoice): RedirectResponse
