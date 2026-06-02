@@ -46,6 +46,10 @@ class PakasirWebhookController extends Controller
             return response()->json(['message' => 'Nominal invoice tidak sesuai.'], 422);
         }
 
+        if ($invoice->payment_gateway !== 'pakasir') {
+            return response()->json(['message' => 'Invoice bukan transaksi Pakasir.'], 422);
+        }
+
         $invoice->update([
             'payment_gateway' => 'pakasir',
             'payment_method' => $validated['payment_method'],

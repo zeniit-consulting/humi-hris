@@ -138,6 +138,51 @@ class PakasirPaymentGatewayTest extends TestCase
         ]);
     }
 
+    public function test_pakasir_webhook_rejects_non_pakasir_invoice(): void
+    {
+        config()->set('services.pakasir.project', 'depodomain');
+
+        $subscriber = User::factory()->create([
+            'role' => 'admin',
+            'parent_user_id' => null,
+        ]);
+
+        SubscriptionInvoice::query()->create([
+            'user_id' => $subscriber->id,
+            'subscription_id' => null,
+            'invoice_number' => 'INV-MANUAL-1',
+            'amount' => 22000,
+            'employee_count' => 8,
+            'plan_slug' => 'core',
+            'status' => 'pending',
+            'payment_gateway' => null,
+            'payment_method' => null,
+            'due_date' => now()->addDays(3)->toDateString(),
+            'paid_at' => null,
+            'payment_proof' => null,
+            'notes' => null,
+        ]);
+
+        $this
+            ->postJson(route('webhooks.pakasir'), [
+                'amount' => 22000,
+                'order_id' => 'INV-MANUAL-1',
+                'project' => 'depodomain',
+                'status' => 'completed',
+                'payment_method' => 'qris',
+                'completed_at' => now()->toIso8601String(),
+            ])
+            ->assertStatus(422)
+            ->assertJson([
+                'message' => 'Invoice bukan transaksi Pakasir.',
+            ]);
+
+        $this->assertDatabaseHas('subscription_invoices', [
+            'invoice_number' => 'INV-MANUAL-1',
+            'status' => 'pending',
+        ]);
+    }
+
     public function test_failed_pakasir_transaction_does_not_leave_pending_invoice(): void
     {
         config()->set('services.pakasir.project', 'depodomain');
@@ -177,6 +222,118 @@ class PakasirPaymentGatewayTest extends TestCase
             ])
             ->assertRedirect(route('billing.index'))
             ->assertSessionHas('error', 'API key tidak valid.');
+
+        $this->assertDatabaseCount('subscription_invoices', 0);
+    }
+
+    public function test_existing_pending_pakasir_invoice_is_reused_instead_of_creating_duplicate(): void
+    {
+        config()->set('services.pakasir.project', 'depodomain');
+        config()->set('services.pakasir.api_key', 'xxx123');
+
+        Http::fake([
+            'app.pakasir.com/api/transactioncreate/qris' => Http::response([
+                'payment' => [
+                    'project' => 'depodomain',
+                    'order_id' => 'INV-1',
+                    'amount' => 29000,
+                    'fee' => 1000,
+                    'total_payment' => 30000,
+                    'payment_method' => 'qris',
+                    'payment_number' => 'QRIS-CONTENT',
+                    'expired_at' => now()->addDay()->toIso8601String(),
+                ],
+            ]),
+        ]);
+
+        $user = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        Employee::factory()
+            ->count(10)
+            ->create(['user_id' => $user->id, 'employment_status' => 'active']);
+
+        SubscriptionPlan::query()->create([
+            'slug' => 'core',
+            'name' => 'Basic',
+            'price_per_employee' => 2900,
+            'max_employees' => null,
+            'max_months' => null,
+            'locked_features' => [],
+            'is_active' => true,
+        ]);
+
+        $payload = [
+            'plan_slug' => 'core',
+            'employee_count' => 10,
+            'payment_method' => 'qris',
+        ];
+
+        $this
+            ->actingAs($user)
+            ->post(route('billing.invoices.store'), $payload)
+            ->assertRedirect(route('billing.index'))
+            ->assertSessionHas('success');
+
+        $this
+            ->actingAs($user)
+            ->post(route('billing.invoices.store'), $payload)
+            ->assertRedirect(route('billing.index'))
+            ->assertSessionHas('success', 'Invoice pending masih tersedia. Silakan lanjutkan pembayaran.');
+
+        Http::assertSentCount(1);
+        $this->assertDatabaseCount('subscription_invoices', 1);
+    }
+
+    public function test_pakasir_response_without_payment_number_does_not_leave_pending_invoice(): void
+    {
+        config()->set('services.pakasir.project', 'depodomain');
+        config()->set('services.pakasir.api_key', 'xxx123');
+
+        Http::fake([
+            'app.pakasir.com/api/transactioncreate/qris' => Http::response([
+                'payment' => [
+                    'project' => 'depodomain',
+                    'order_id' => 'INV-1',
+                    'amount' => 29000,
+                    'fee' => 1000,
+                    'total_payment' => 30000,
+                    'payment_method' => 'qris',
+                    'expired_at' => now()->addDay()->toIso8601String(),
+                ],
+            ]),
+        ]);
+
+        $user = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        Employee::factory()
+            ->count(10)
+            ->create(['user_id' => $user->id, 'employment_status' => 'active']);
+
+        SubscriptionPlan::query()->create([
+            'slug' => 'core',
+            'name' => 'Basic',
+            'price_per_employee' => 2900,
+            'max_employees' => null,
+            'max_months' => null,
+            'locked_features' => [],
+            'is_active' => true,
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->post(route('billing.invoices.store'), [
+                'plan_slug' => 'core',
+                'employee_count' => 10,
+                'payment_method' => 'qris',
+            ])
+            ->assertRedirect(route('billing.index'))
+            ->assertSessionHas('error', 'Respons Pakasir tidak menyertakan QRIS/nomor pembayaran.');
 
         $this->assertDatabaseCount('subscription_invoices', 0);
     }

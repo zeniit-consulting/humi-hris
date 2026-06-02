@@ -110,6 +110,28 @@ class BillingController extends Controller
                 ->with('error', 'Invoice belum dapat dibuat karena belum ada karyawan berstatus aktif.');
         }
 
+        $ownerId = $user->accountOwnerId();
+        $existingInvoice = SubscriptionInvoice::query()
+            ->where('user_id', $ownerId)
+            ->where('plan_slug', $validated['plan_slug'])
+            ->where('employee_count', $activeEmployeeCount)
+            ->where('status', 'pending')
+            ->where('payment_gateway', 'pakasir')
+            ->where('payment_method', $paymentMethod)
+            ->whereNotNull('payment_number')
+            ->where(function ($query): void {
+                $query
+                    ->whereNull('payment_expires_at')
+                    ->orWhere('payment_expires_at', '>', now());
+            })
+            ->latest('created_at')
+            ->first();
+
+        if ($existingInvoice) {
+            return redirect()->route('billing.index')
+                ->with('success', 'Invoice pending masih tersedia. Silakan lanjutkan pembayaran.');
+        }
+
         $invoice = $this->subscriptionService->createInvoice(
             $user,
             $validated['plan_slug'],

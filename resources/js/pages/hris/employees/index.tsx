@@ -13,6 +13,7 @@ import {
     Trash2,
     Upload,
     UserRoundCheck,
+    UserRoundX,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -179,6 +180,9 @@ type Employee = {
     marital_status: string | null;
     children_count: number | null;
     hire_date: string;
+    offboarded_at: string | null;
+    offboarding_reason: string | null;
+    offboarding_notes: string | null;
     employment_status: string;
     employment_type: string;
     pph21_method: string;
@@ -233,6 +237,7 @@ type Employee = {
         email: string | null;
         phone: string | null;
         requires_password_change: boolean;
+        suspended_at: string | null;
     } | null;
 };
 
@@ -296,6 +301,12 @@ type AllowanceFormData = {
 
 type EmployeeImportFormData = {
     import_file: File | null;
+};
+
+type OffboardingFormData = {
+    offboarded_at: string;
+    offboarding_reason: string;
+    offboarding_notes: string;
 };
 
 type EmployeeDocumentFormData = {
@@ -434,6 +445,14 @@ const statusLabels: Record<string, string> = {
     probation: 'Probation',
     on_leave: 'Cuti',
     resigned: 'Resign',
+};
+
+const offboardingReasonLabels: Record<string, string> = {
+    resigned: 'Mengundurkan diri',
+    terminated: 'Diberhentikan',
+    contract_ended: 'Kontrak berakhir',
+    retired: 'Pensiun',
+    other: 'Lainnya',
 };
 
 const typeLabels: Record<string, string> = {
@@ -637,6 +656,8 @@ export default function EmployeesIndex() {
         null,
     );
     const [detailEmployee, setDetailEmployee] = useState<Employee | null>(null);
+    const [offboardingEmployee, setOffboardingEmployee] =
+        useState<Employee | null>(null);
 
     const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
         null,
@@ -654,6 +675,11 @@ export default function EmployeesIndex() {
     const documentForm = useForm<EmployeeDocumentFormData>(DOCUMENT_DEFAULT);
     const employeeImportForm = useForm<EmployeeImportFormData>({
         import_file: null,
+    });
+    const offboardingForm = useForm<OffboardingFormData>({
+        offboarded_at: todayDate(),
+        offboarding_reason: 'resigned',
+        offboarding_notes: '',
     });
 
     const employeeStepFields = useMemo<
@@ -1006,6 +1032,35 @@ export default function EmployeesIndex() {
         router.post(`/hris/employees/${employee.id}/activate-user`, undefined, {
             preserveScroll: true,
         });
+    };
+
+    const openOffboardingDialog = (employee: Employee) => {
+        setOffboardingEmployee(employee);
+        offboardingForm.clearErrors();
+        offboardingForm.setData({
+            offboarded_at: employee.offboarded_at ?? todayDate(),
+            offboarding_reason: employee.offboarding_reason ?? 'resigned',
+            offboarding_notes: employee.offboarding_notes ?? '',
+        });
+    };
+
+    const submitOffboardingForm = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!offboardingEmployee) {
+            return;
+        }
+
+        offboardingForm.post(
+            `/hris/employees/${offboardingEmployee.id}/offboard`,
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setOffboardingEmployee(null);
+                    offboardingForm.reset();
+                },
+            },
+        );
     };
 
     const submitEmployeeForm = (event: FormEvent<HTMLFormElement>) => {
@@ -1833,6 +1888,22 @@ export default function EmployeesIndex() {
                                                                     ? 'Kirim ulang aktivasi user'
                                                                     : 'Aktivasi user'}
                                                             </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                disabled={
+                                                                    employee.employment_status ===
+                                                                        'resigned' &&
+                                                                    employee.offboarded_at !==
+                                                                        null
+                                                                }
+                                                                onClick={() =>
+                                                                    openOffboardingDialog(
+                                                                        employee,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <UserRoundX className="size-4" />
+                                                                Offboarding
+                                                            </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </div>
@@ -2065,8 +2136,176 @@ export default function EmployeesIndex() {
                                         detailEmployee.employment_status
                                     ] ?? detailEmployee.employment_status}
                                 </p>
+                                <p>
+                                    Tanggal Offboarding:{' '}
+                                    {formatDateDisplay(
+                                        detailEmployee.offboarded_at,
+                                    )}
+                                </p>
+                                <p>
+                                    Alasan Offboarding:{' '}
+                                    {detailEmployee.offboarding_reason
+                                        ? (offboardingReasonLabels[
+                                              detailEmployee
+                                                  .offboarding_reason
+                                          ] ??
+                                          detailEmployee.offboarding_reason)
+                                        : '-'}
+                                </p>
+                                <p>
+                                    Catatan Offboarding:{' '}
+                                    {detailEmployee.offboarding_notes ?? '-'}
+                                </p>
                             </div>
                         </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={offboardingEmployee !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setOffboardingEmployee(null);
+                        offboardingForm.clearErrors();
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Offboarding Karyawan</DialogTitle>
+                        <DialogDescription>
+                            Proses ini akan mengubah status karyawan menjadi
+                            resign, menonaktifkan data aktif, suspend akun
+                            portal, dan melepas direct report dari karyawan ini.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {offboardingEmployee && (
+                        <form
+                            onSubmit={submitOffboardingForm}
+                            className="space-y-4"
+                        >
+                            <div className="rounded-md border p-3 text-sm">
+                                <p className="font-medium">
+                                    {offboardingEmployee.full_name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {offboardingEmployee.employee_code} -{' '}
+                                    {offboardingEmployee.position?.name ?? '-'}
+                                </p>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="offboarded_at">
+                                    Tanggal offboarding
+                                </Label>
+                                <Input
+                                    id="offboarded_at"
+                                    type="date"
+                                    min={offboardingEmployee.hire_date}
+                                    value={offboardingForm.data.offboarded_at}
+                                    onChange={(event) =>
+                                        offboardingForm.setData(
+                                            'offboarded_at',
+                                            event.target.value,
+                                        )
+                                    }
+                                    required
+                                />
+                                <InputError
+                                    message={
+                                        offboardingForm.errors.offboarded_at
+                                    }
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="offboarding_reason">
+                                    Alasan
+                                </Label>
+                                <Select
+                                    value={
+                                        offboardingForm.data
+                                            .offboarding_reason
+                                    }
+                                    onValueChange={(value) =>
+                                        offboardingForm.setData(
+                                            'offboarding_reason',
+                                            value,
+                                        )
+                                    }
+                                >
+                                    <SelectTrigger id="offboarding_reason">
+                                        <SelectValue placeholder="Pilih alasan" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(
+                                            offboardingReasonLabels,
+                                        ).map(([value, label]) => (
+                                            <SelectItem
+                                                key={value}
+                                                value={value}
+                                            >
+                                                {label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError
+                                    message={
+                                        offboardingForm.errors
+                                            .offboarding_reason
+                                    }
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="offboarding_notes">
+                                    Catatan
+                                </Label>
+                                <textarea
+                                    id="offboarding_notes"
+                                    value={
+                                        offboardingForm.data.offboarding_notes
+                                    }
+                                    onChange={(event) =>
+                                        offboardingForm.setData(
+                                            'offboarding_notes',
+                                            event.target.value,
+                                        )
+                                    }
+                                    className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm"
+                                    placeholder="Catatan serah terima, akses yang dicabut, atau informasi tambahan"
+                                />
+                                <InputError
+                                    message={
+                                        offboardingForm.errors
+                                            .offboarding_notes
+                                    }
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() =>
+                                        setOffboardingEmployee(null)
+                                    }
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    disabled={offboardingForm.processing}
+                                >
+                                    <UserRoundX className="size-4" />
+                                    Proses Offboarding
+                                </Button>
+                            </div>
+                        </form>
                     )}
                 </DialogContent>
             </Dialog>

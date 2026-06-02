@@ -109,6 +109,9 @@ class EmployeeController extends Controller
                 'marital_status' => $employee->marital_status,
                 'children_count' => $employee->children_count,
                 'hire_date' => $employee->hire_date?->format('Y-m-d'),
+                'offboarded_at' => $employee->offboarded_at?->format('Y-m-d'),
+                'offboarding_reason' => $employee->offboarding_reason,
+                'offboarding_notes' => $employee->offboarding_notes,
                 'employment_status' => $employee->employment_status,
                 'employment_type' => $employee->employment_type,
                 'pph21_method' => $employee->pph21_method,
@@ -207,24 +210,11 @@ class EmployeeController extends Controller
                         return null;
                     }
 
-                    return User::query()
-                        ->where('parent_user_id', $employee->user_id)
-                        ->where(function ($query) use ($employee): void {
-                            if ($employee->email) {
-                                $query->where('email', $employee->email);
-                            }
-
-                            if ($employee->phone) {
-                                $employee->email
-                                    ? $query->orWhere('phone', $employee->phone)
-                                    : $query->where('phone', $employee->phone);
-                            }
-                        })
-                        ->first(['id', 'email', 'phone', 'requires_password_change'])
+                    return $this->portalUserQuery($employee)
+                        ->first(['id', 'email', 'phone', 'requires_password_change', 'suspended_at'])
                         ?->toArray();
                 })(),
             ]);
-
         $divisions = Division::query()
             ->withCount(['employees', 'positions'])
             ->when($filters['division_search'] !== '', function ($query) use ($filters): void {
@@ -918,6 +908,51 @@ class EmployeeController extends Controller
         return back()->with('success', 'Akun portal berhasil diaktivasi dan kredensial dikirim ke WhatsApp.');
     }
 
+    public function offboard(Request $request, Employee $employee): RedirectResponse
+    {
+        $validated = $request->validate([
+            'offboarded_at' => ['required', 'date', 'after_or_equal:'.$employee->hire_date?->format('Y-m-d')],
+            'offboarding_reason' => ['required', Rule::in([
+                'resigned',
+                'terminated',
+                'contract_ended',
+                'retired',
+                'other',
+            ])],
+            'offboarding_notes' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'offboarded_at.after_or_equal' => 'Tanggal offboarding tidak boleh lebih awal dari tanggal masuk.',
+            'offboarding_reason.required' => 'Alasan offboarding wajib dipilih.',
+            'offboarding_reason.in' => 'Alasan offboarding tidak valid.',
+        ]);
+
+        if (! $employee->is_active && $employee->employment_status === 'resigned' && $employee->offboarded_at !== null) {
+            return back()->with('error', 'Karyawan ini sudah melalui proses offboarding.');
+        }
+
+        DB::transaction(function () use ($employee, $validated, $request): void {
+            $employee->forceFill([
+                'employment_status' => 'resigned',
+                'is_active' => false,
+                'offboarded_at' => $validated['offboarded_at'],
+                'offboarding_reason' => $validated['offboarding_reason'],
+                'offboarding_notes' => $validated['offboarding_notes'] ?? null,
+            ])->save();
+
+            $employee->directReports()->update(['manager_id' => null]);
+
+            $this->portalUserQuery($employee)
+                ->whereNull('suspended_at')
+                ->update([
+                    'suspended_at' => now(),
+                    'suspension_reason' => 'Employee offboarding: '.$this->offboardingReasonLabel($validated['offboarding_reason']),
+                    'suspended_by' => $request->user()?->id,
+                ]);
+        });
+
+        return back()->with('success', 'Offboarding karyawan berhasil diproses.');
+    }
+
     /**
      * Remove the specified employee from storage.
      */
@@ -1012,6 +1047,38 @@ class EmployeeController extends Controller
         }
 
         return 'Gagal menyimpan data karyawan: '.$exception->getMessage();
+    }
+
+    private function portalUserQuery(Employee $employee)
+    {
+        if (! $employee->email && ! $employee->phone) {
+            return User::query()->whereRaw('1 = 0');
+        }
+
+        return User::query()
+            ->where('parent_user_id', $employee->user_id)
+            ->where(function ($query) use ($employee): void {
+                if ($employee->email) {
+                    $query->where('email', $employee->email);
+                }
+
+                if ($employee->phone) {
+                    $employee->email
+                        ? $query->orWhere('phone', $employee->phone)
+                        : $query->where('phone', $employee->phone);
+                }
+            });
+    }
+
+    private function offboardingReasonLabel(string $reason): string
+    {
+        return match ($reason) {
+            'terminated' => 'Diberhentikan',
+            'contract_ended' => 'Kontrak berakhir',
+            'retired' => 'Pensiun',
+            'other' => 'Lainnya',
+            default => 'Mengundurkan diri',
+        };
     }
 
     /**

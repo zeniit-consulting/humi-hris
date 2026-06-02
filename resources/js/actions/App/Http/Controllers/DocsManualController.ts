@@ -2,74 +2,74 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
-const DocsManualControllerab4c3a249dfcc307944d0798786a05ef = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: DocsManualControllerab4c3a249dfcc307944d0798786a05ef.url(options),
+const DocsManualController78fc3d9be3433104edea929cd7562671 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: DocsManualController78fc3d9be3433104edea929cd7562671.url(options),
     method: 'get',
 })
 
-DocsManualControllerab4c3a249dfcc307944d0798786a05ef.definition = {
+DocsManualController78fc3d9be3433104edea929cd7562671.definition = {
     methods: ["get","head"],
-    url: '//docs.hris.test/',
+    url: '//docs.humi.my.id/',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
-DocsManualControllerab4c3a249dfcc307944d0798786a05ef.url = (options?: RouteQueryOptions) => {
-    return DocsManualControllerab4c3a249dfcc307944d0798786a05ef.definition.url + queryParams(options)
+DocsManualController78fc3d9be3433104edea929cd7562671.url = (options?: RouteQueryOptions) => {
+    return DocsManualController78fc3d9be3433104edea929cd7562671.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
-DocsManualControllerab4c3a249dfcc307944d0798786a05ef.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: DocsManualControllerab4c3a249dfcc307944d0798786a05ef.url(options),
+DocsManualController78fc3d9be3433104edea929cd7562671.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: DocsManualController78fc3d9be3433104edea929cd7562671.url(options),
     method: 'get',
 })
 
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
-DocsManualControllerab4c3a249dfcc307944d0798786a05ef.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: DocsManualControllerab4c3a249dfcc307944d0798786a05ef.url(options),
+DocsManualController78fc3d9be3433104edea929cd7562671.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: DocsManualController78fc3d9be3433104edea929cd7562671.url(options),
     method: 'head',
 })
 
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
-const DocsManualControllerab4c3a249dfcc307944d0798786a05efForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: DocsManualControllerab4c3a249dfcc307944d0798786a05ef.url(options),
+const DocsManualController78fc3d9be3433104edea929cd7562671Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: DocsManualController78fc3d9be3433104edea929cd7562671.url(options),
     method: 'get',
 })
 
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
-DocsManualControllerab4c3a249dfcc307944d0798786a05efForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: DocsManualControllerab4c3a249dfcc307944d0798786a05ef.url(options),
+DocsManualController78fc3d9be3433104edea929cd7562671Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: DocsManualController78fc3d9be3433104edea929cd7562671.url(options),
     method: 'get',
 })
 
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
-DocsManualControllerab4c3a249dfcc307944d0798786a05efForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: DocsManualControllerab4c3a249dfcc307944d0798786a05ef.url({
+DocsManualController78fc3d9be3433104edea929cd7562671Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: DocsManualController78fc3d9be3433104edea929cd7562671.url({
         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
             _method: 'HEAD',
             ...(options?.query ?? options?.mergeQuery ?? {}),
@@ -78,7 +78,7 @@ DocsManualControllerab4c3a249dfcc307944d0798786a05efForm.head = (options?: Route
     method: 'get',
 })
 
-DocsManualControllerab4c3a249dfcc307944d0798786a05ef.form = DocsManualControllerab4c3a249dfcc307944d0798786a05efForm
+DocsManualController78fc3d9be3433104edea929cd7562671.form = DocsManualController78fc3d9be3433104edea929cd7562671Form
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
@@ -161,7 +161,7 @@ DocsManualController09f19fee25de3507901aa68cef1f226aForm.head = (options?: Route
 DocsManualController09f19fee25de3507901aa68cef1f226a.form = DocsManualController09f19fee25de3507901aa68cef1f226aForm
 
 const DocsManualController = {
-    '//docs.hris.test/': DocsManualControllerab4c3a249dfcc307944d0798786a05ef,
+    '//docs.humi.my.id/': DocsManualController78fc3d9be3433104edea929cd7562671,
     '/docs': DocsManualController09f19fee25de3507901aa68cef1f226a,
 }
 

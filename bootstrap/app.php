@@ -23,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
         $middleware->statefulApi();
+        $middleware->validateCsrfTokens(except: [
+            'billing/invoices',
+        ]);
         $middleware->alias([
             'admin.access' => EnsureAdminAccess::class,
             'account.activated' => EnsureAccountActivated::class,

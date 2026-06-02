@@ -437,6 +437,142 @@ class EmployeeManagementTest extends TestCase
         $this->assertTrue(Hash::check('628123456789', $portalUser->password));
     }
 
+    public function test_admin_can_offboard_employee(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'level' => '3',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'offboarded@example.com',
+            'phone' => '628123456789',
+            'hire_date' => '2026-01-01',
+            'employment_status' => 'active',
+            'is_active' => true,
+        ]);
+
+        $directReport = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'manager_id' => $employee->id,
+        ]);
+
+        $portalUser = User::factory()->create([
+            'parent_user_id' => $user->id,
+            'role' => 'user',
+            'email' => 'offboarded@example.com',
+            'phone' => '628123456789',
+            'suspended_at' => null,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('hris.employees.index'))
+            ->post(route('hris.employees.offboard', $employee), [
+                'offboarded_at' => '2026-06-02',
+                'offboarding_reason' => 'contract_ended',
+                'offboarding_notes' => 'Serah terima aset selesai.',
+            ]);
+
+        $response
+            ->assertRedirect(route('hris.employees.index'))
+            ->assertSessionHas('success');
+
+        $employee->refresh();
+
+        $this->assertSame('resigned', $employee->employment_status);
+        $this->assertFalse($employee->is_active);
+        $this->assertSame('2026-06-02', $employee->offboarded_at?->format('Y-m-d'));
+        $this->assertSame('contract_ended', $employee->offboarding_reason);
+        $this->assertSame('Serah terima aset selesai.', $employee->offboarding_notes);
+
+        $this->assertDatabaseHas('employees', [
+            'id' => $directReport->id,
+            'manager_id' => null,
+        ]);
+
+        $this->assertNotNull($portalUser->fresh()->suspended_at);
+        $this->assertSame($user->id, $portalUser->fresh()->suspended_by);
+    }
+
+    public function test_offboarding_rejects_date_before_hire_date(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2026-05-01',
+            'employment_status' => 'active',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('hris.employees.index'))
+            ->post(route('hris.employees.offboard', $employee), [
+                'offboarded_at' => '2026-04-30',
+                'offboarding_reason' => 'resigned',
+            ]);
+
+        $response
+            ->assertRedirect(route('hris.employees.index'))
+            ->assertSessionHasErrors(['offboarded_at']);
+
+        $this->assertDatabaseHas('employees', [
+            'id' => $employee->id,
+            'employment_status' => 'active',
+            'is_active' => true,
+            'offboarded_at' => null,
+        ]);
+    }
+
+    public function test_offboarding_employee_without_contact_does_not_suspend_unrelated_portal_user(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'email' => null,
+            'phone' => null,
+            'hire_date' => '2026-01-01',
+            'employment_status' => 'active',
+            'is_active' => true,
+        ]);
+
+        $portalUser = User::factory()->create([
+            'parent_user_id' => $user->id,
+            'role' => 'user',
+            'suspended_at' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('hris.employees.index'))
+            ->post(route('hris.employees.offboard', $employee), [
+                'offboarded_at' => '2026-06-02',
+                'offboarding_reason' => 'other',
+            ])
+            ->assertRedirect(route('hris.employees.index'))
+            ->assertSessionHas('success');
+
+        $this->assertNull($portalUser->fresh()->suspended_at);
+    }
+
     public function test_division_cannot_be_deleted_when_it_has_related_data()
     {
         $user = User::factory()->create([

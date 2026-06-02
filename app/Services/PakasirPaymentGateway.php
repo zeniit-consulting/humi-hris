@@ -7,6 +7,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class PakasirPaymentGateway
@@ -89,11 +90,22 @@ class PakasirPaymentGateway
     public function applyTransactionResponse(SubscriptionInvoice $invoice, array $response): SubscriptionInvoice
     {
         $payment = Arr::get($response, 'payment', []);
+        $paymentNumber = Arr::get($payment, 'payment_number');
+
+        if (! is_string($paymentNumber) || Str::of($paymentNumber)->trim()->isEmpty()) {
+            Log::warning('pakasir.transaction_create.missing_payment_number', [
+                'invoice_id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+                'response' => $response,
+            ]);
+
+            throw new RuntimeException('Respons Pakasir tidak menyertakan QRIS/nomor pembayaran.');
+        }
 
         $invoice->update([
             'payment_gateway' => 'pakasir',
             'payment_method' => Arr::get($payment, 'payment_method'),
-            'payment_number' => Arr::get($payment, 'payment_number'),
+            'payment_number' => $paymentNumber,
             'payment_fee' => (int) Arr::get($payment, 'fee', 0),
             'total_payment' => Arr::has($payment, 'total_payment') ? (int) Arr::get($payment, 'total_payment') : null,
             'payment_expires_at' => filled(Arr::get($payment, 'expired_at'))

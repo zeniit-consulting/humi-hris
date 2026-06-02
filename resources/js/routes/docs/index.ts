@@ -3,7 +3,7 @@ import manual8a44cf from './manual'
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
 export const manual = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: manual.url(options),
@@ -12,13 +12,13 @@ export const manual = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
 
 manual.definition = {
     methods: ["get","head"],
-    url: '//docs.hris.test/',
+    url: '//docs.humi.my.id/',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
 manual.url = (options?: RouteQueryOptions) => {
     return manual.definition.url + queryParams(options)
@@ -27,7 +27,7 @@ manual.url = (options?: RouteQueryOptions) => {
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
 manual.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: manual.url(options),
@@ -37,7 +37,7 @@ manual.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
 manual.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: manual.url(options),
@@ -47,7 +47,7 @@ manual.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
 const manualForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: manual.url(options),
@@ -57,7 +57,7 @@ const manualForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
 manualForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: manual.url(options),
@@ -67,7 +67,7 @@ manualForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 /**
 * @see \App\Http\Controllers\DocsManualController::__invoke
 * @see app/Http/Controllers/DocsManualController.php:11
-* @route '//docs.hris.test/'
+* @route '//docs.humi.my.id/'
 */
 manualForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: manual.url({
