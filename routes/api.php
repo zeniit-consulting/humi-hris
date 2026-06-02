@@ -11,7 +11,10 @@ use App\Http\Controllers\Api\Mobile\V1\OvertimeController;
 use App\Http\Controllers\Api\Mobile\V1\PayrollController;
 use App\Http\Controllers\Api\Mobile\V1\PortalController;
 use App\Http\Controllers\Api\Mobile\V1\ProfileController;
+use App\Http\Controllers\Api\PakasirWebhookController;
 use Illuminate\Support\Facades\Route;
+
+Route::post('webhooks/pakasir', PakasirWebhookController::class)->name('webhooks.pakasir');
 
 Route::prefix('mobile/v1')->name('mobile.v1.')->group(function (): void {
     Route::post('auth/login', [AuthController::class, 'login'])->name('auth.login');

@@ -45,4 +45,11 @@ return [
         'registration_group_chat_id' => env('WAHA_REGISTRATION_GROUP_CHAT_ID', '120363407707938809@g.us'),
     ],
 
+    'pakasir' => [
+        'base_url' => env('PAKASIR_BASE_URL', 'https://app.pakasir.com'),
+        'project' => env('PAKASIR_PROJECT'),
+        'api_key' => env('PAKASIR_API_KEY'),
+        'timeout' => (int) env('PAKASIR_TIMEOUT', 15),
+    ],
+
 ];

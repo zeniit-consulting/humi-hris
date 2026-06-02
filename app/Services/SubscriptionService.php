@@ -7,6 +7,7 @@ use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
 class SubscriptionService
@@ -53,7 +54,7 @@ class SubscriptionService
         return null;
     }
 
-    public function createInvoice(User $user, string $planSlug, int $employeeCount): SubscriptionInvoice
+    public function createInvoice(User $user, string $planSlug, int $employeeCount, ?string $paymentMethod = null): SubscriptionInvoice
     {
         $ownerId = $user->accountOwnerId();
 
@@ -73,6 +74,8 @@ class SubscriptionService
             'employee_count' => $employeeCount,
             'plan_slug' => $planSlug,
             'status' => 'pending',
+            'payment_gateway' => $paymentMethod ? 'pakasir' : null,
+            'payment_method' => $paymentMethod,
             'due_date' => Carbon::today()->addDays(3)->toDateString(),
             'paid_at' => null,
             'payment_proof' => null,
@@ -80,11 +83,11 @@ class SubscriptionService
         ]);
     }
 
-    public function activateSubscription(SubscriptionInvoice $invoice): Subscription
+    public function activateSubscription(SubscriptionInvoice $invoice, ?CarbonInterface $paidAt = null): Subscription
     {
         $ownerId = $invoice->user_id;
         $today = Carbon::today();
-        $periodEnd = $today->addMonth();
+        $periodEnd = $today->copy()->addMonth();
 
         $subscription = Subscription::query()->updateOrCreate(
             ['user_id' => $ownerId],
@@ -101,7 +104,7 @@ class SubscriptionService
         $invoice->update([
             'subscription_id' => $subscription->id,
             'status' => 'paid',
-            'paid_at' => now(),
+            'paid_at' => $paidAt ?? now(),
         ]);
 
         return $subscription;

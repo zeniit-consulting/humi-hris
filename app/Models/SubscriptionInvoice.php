@@ -16,6 +16,13 @@ class SubscriptionInvoice extends Model
         'employee_count',
         'plan_slug',
         'status',
+        'payment_gateway',
+        'payment_method',
+        'payment_number',
+        'payment_fee',
+        'total_payment',
+        'payment_expires_at',
+        'payment_payload',
         'due_date',
         'paid_at',
         'payment_proof',
@@ -27,6 +34,10 @@ class SubscriptionInvoice extends Model
         return [
             'amount' => 'integer',
             'employee_count' => 'integer',
+            'payment_fee' => 'integer',
+            'total_payment' => 'integer',
+            'payment_expires_at' => 'datetime',
+            'payment_payload' => 'array',
             'due_date' => 'date',
             'paid_at' => 'datetime',
         ];
@@ -46,6 +57,7 @@ class SubscriptionInvoice extends Model
     {
         $date = Carbon::today()->format('Ymd');
         $random = str_pad((string) random_int(1000, 9999), 4, '0', STR_PAD_LEFT);
+
         return "INV-{$userId}-{$date}-{$random}";
     }
 }

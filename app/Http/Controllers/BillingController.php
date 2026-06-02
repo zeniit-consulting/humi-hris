@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Services\PakasirPaymentGateway;
 use App\Services\SubscriptionService;
 use App\Support\R2Storage;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +17,7 @@ class BillingController extends Controller
 {
     public function __construct(
         protected SubscriptionService $subscriptionService,
+        protected PakasirPaymentGateway $pakasir,
     ) {}
 
     public function index(Request $request): InertiaResponse
@@ -60,6 +62,12 @@ class BillingController extends Controller
                 'amount' => $invoice->amount,
                 'employee_count' => $invoice->employee_count,
                 'status' => $invoice->status,
+                'payment_gateway' => $invoice->payment_gateway,
+                'payment_method' => $invoice->payment_method,
+                'payment_number' => $invoice->payment_number,
+                'payment_fee' => $invoice->payment_fee,
+                'total_payment' => $invoice->total_payment,
+                'payment_expires_at' => $invoice->payment_expires_at?->toDateTimeString(),
                 'due_date' => $invoice->due_date?->toDateString(),
                 'paid_at' => $invoice->paid_at?->toDateTimeString(),
                 'payment_proof' => R2Storage::url($invoice->payment_proof),
@@ -82,20 +90,52 @@ class BillingController extends Controller
     {
         $validated = $request->validate([
             'plan_slug' => ['required', 'string', 'in:core,plus'],
-            'employee_count' => ['required', 'integer', 'min:1'],
+            'employee_count' => ['nullable', 'integer', 'min:0'],
+            'payment_method' => ['nullable', 'string', 'in:'.implode(',', PakasirPaymentGateway::METHODS)],
         ]);
+        $paymentMethod = $validated['payment_method'] ?? 'qris';
 
         /** @var User $user */
         $user = $request->user();
 
-        $this->subscriptionService->createInvoice(
+        if (! $this->pakasir->isConfigured()) {
+            return redirect()->route('billing.index')
+                ->with('error', 'Konfigurasi Pakasir belum lengkap. Isi PAKASIR_PROJECT dan PAKASIR_API_KEY.');
+        }
+
+        $activeEmployeeCount = $this->subscriptionService->getEmployeeCount($user);
+
+        if ($activeEmployeeCount < 1) {
+            return redirect()->route('billing.index')
+                ->with('error', 'Invoice belum dapat dibuat karena belum ada karyawan berstatus aktif.');
+        }
+
+        $invoice = $this->subscriptionService->createInvoice(
             $user,
             $validated['plan_slug'],
-            (int) $validated['employee_count'],
+            $activeEmployeeCount,
+            $paymentMethod,
         );
 
+        try {
+            $response = $this->pakasir->createTransaction($invoice, $paymentMethod);
+            $this->pakasir->applyTransactionResponse($invoice, $response);
+        } catch (\Throwable $exception) {
+            report($exception);
+            $invoice->delete();
+
+            return redirect()->route('billing.index')
+                ->with('error', $exception->getMessage() ?: 'Transaksi Pakasir gagal dibuat. Silakan coba lagi atau hubungi admin.');
+        }
+
         return redirect()->route('billing.index')
-            ->with('success', 'Invoice berhasil dibuat. Silakan lakukan pembayaran dan upload bukti transfer.');
+            ->with('success', 'Invoice Pakasir berhasil dibuat. Silakan lakukan pembayaran sesuai instruksi pada tabel invoice.');
+    }
+
+    public function invoiceFallback(): RedirectResponse
+    {
+        return redirect()->route('billing.index')
+            ->with('error', 'Pembuatan invoice harus dilakukan dari tombol upgrade paket.');
     }
 
     public function uploadProof(Request $request, SubscriptionInvoice $invoice): RedirectResponse

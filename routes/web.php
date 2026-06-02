@@ -158,6 +158,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access'])->group(function () {
     Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::get('billing/invoices', [BillingController::class, 'invoiceFallback'])->name('billing.invoices.index');
     Route::post('billing/invoices', [BillingController::class, 'createInvoice'])->name('billing.invoices.store');
     Route::post('billing/invoices/{invoice}/proof', [BillingController::class, 'uploadProof'])->name('billing.invoices.proof');
     Route::delete('billing/invoices/{invoice}', [BillingController::class, 'cancelInvoice'])->name('billing.invoices.cancel');

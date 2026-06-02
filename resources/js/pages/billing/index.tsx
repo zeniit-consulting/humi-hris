@@ -1,14 +1,18 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
+    Banknote,
     CheckCircle2,
     Clock,
+    Copy,
+    CreditCard,
     Lock,
     Receipt,
     Sparkles,
     Upload,
     X,
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
@@ -33,6 +37,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     Table,
     TableBody,
     TableCell,
@@ -52,14 +63,21 @@ type Invoice = {
     employee_count: number;
     amount: number;
     status: 'pending' | 'paid' | 'expired' | 'cancelled';
-    issued_at: string;
+    created_at: string;
     paid_at: string | null;
+    payment_gateway: string | null;
+    payment_method: PaymentMethod | null;
+    payment_number: string | null;
+    payment_fee: number;
+    total_payment: number | null;
+    payment_expires_at: string | null;
     payment_proof: string | null;
 };
 
 type PageProps = {
     subscription: SubscriptionInfo | null;
     invoices: Invoice[];
+    employee_count: number;
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -70,6 +88,31 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const PRICE_CORE = 2900;
 const PRICE_PLUS = 7500;
+
+type PaymentMethod =
+    | 'cimb_niaga_va'
+    | 'bni_va'
+    | 'qris'
+    | 'sampoerna_va'
+    | 'bnc_va'
+    | 'maybank_va'
+    | 'permata_va'
+    | 'atm_bersama_va'
+    | 'artha_graha_va'
+    | 'bri_va';
+
+const paymentMethods: Array<{ value: PaymentMethod; label: string }> = [
+    { value: 'qris', label: 'QRIS' },
+    { value: 'bni_va', label: 'BNI Virtual Account' },
+    { value: 'bri_va', label: 'BRI Virtual Account' },
+    { value: 'permata_va', label: 'Permata Virtual Account' },
+    { value: 'cimb_niaga_va', label: 'CIMB Niaga Virtual Account' },
+    { value: 'maybank_va', label: 'Maybank Virtual Account' },
+    { value: 'atm_bersama_va', label: 'ATM Bersama Virtual Account' },
+    { value: 'sampoerna_va', label: 'Sampoerna Virtual Account' },
+    { value: 'bnc_va', label: 'BNC Virtual Account' },
+    { value: 'artha_graha_va', label: 'Artha Graha Virtual Account' },
+];
 
 const planLabels: Record<string, string> = {
     free: 'Free Trial',
@@ -98,10 +141,29 @@ const fmt = new Intl.NumberFormat('id-ID', {
     maximumFractionDigits: 0,
 });
 
+function paymentMethodLabel(method: PaymentMethod | null) {
+    return (
+        paymentMethods.find((item) => item.value === method)?.label ??
+        method ??
+        '-'
+    );
+}
+
 function formatDate(iso: string | null) {
     if (!iso) return '-';
     return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(
         new Date(iso),
+    );
+}
+
+function csrfToken() {
+    if (typeof document === 'undefined') {
+        return '';
+    }
+
+    return (
+        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+            ?.content ?? ''
     );
 }
 
@@ -206,6 +268,7 @@ function UpgradeDialog({
     const { data, setData, post, processing, errors, reset } = useForm({
         plan_slug: planSlug,
         employee_count: defaultEmployees,
+        payment_method: 'qris' as PaymentMethod,
     });
 
     const handleSubmit = (e: FormEvent) => {
@@ -235,7 +298,23 @@ function UpgradeDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form
+                    action="/billing/invoices"
+                    method="post"
+                    onSubmit={handleSubmit}
+                    className="space-y-4"
+                >
+                    <input type="hidden" name="_token" value={csrfToken()} />
+                    <input
+                        type="hidden"
+                        name="plan_slug"
+                        value={data.plan_slug}
+                    />
+                    <input
+                        type="hidden"
+                        name="payment_method"
+                        value={data.payment_method}
+                    />
                     <div className="space-y-1 rounded-md bg-muted/50 p-3 text-sm">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Paket</span>
@@ -263,21 +342,47 @@ function UpgradeDialog({
                         <Label htmlFor="employee_count">Jumlah Karyawan</Label>
                         <Input
                             id="employee_count"
+                            name="employee_count"
                             type="number"
-                            min={1}
+                            min={0}
                             value={data.employee_count}
-                            onChange={(e) =>
-                                setData(
-                                    'employee_count',
-                                    Math.max(1, Number(e.target.value)),
-                                )
-                            }
+                            readOnly
+                            className="bg-muted/50"
                         />
                         <InputError message={errors.employee_count} />
                         <p className="text-xs text-muted-foreground">
-                            Total: {fmt.format(data.employee_count * price)} /
-                            bulan
+                            Jumlah ini otomatis mengikuti karyawan berstatus
+                            Aktif. Total:{' '}
+                            {fmt.format(data.employee_count * price)} / bulan
                         </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label>Metode Pembayaran</Label>
+                        <Select
+                            value={data.payment_method}
+                            onValueChange={(value) =>
+                                setData(
+                                    'payment_method',
+                                    value as PaymentMethod,
+                                )
+                            }
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {paymentMethods.map((method) => (
+                                    <SelectItem
+                                        key={method.value}
+                                        value={method.value}
+                                    >
+                                        {method.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <InputError message={errors.payment_method} />
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">
@@ -289,7 +394,10 @@ function UpgradeDialog({
                         >
                             Batal
                         </Button>
-                        <Button type="submit" disabled={processing}>
+                        <Button
+                            type="submit"
+                            disabled={processing || data.employee_count < 1}
+                        >
                             {processing
                                 ? 'Memproses…'
                                 : `Buat Invoice Paket ${planLabel}`}
@@ -388,6 +496,108 @@ function UploadProofDialog({
                         </Button>
                     </div>
                 </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function PayInvoiceDialog({
+    invoice,
+    onClose,
+}: {
+    invoice: Invoice | null;
+    onClose: () => void;
+}) {
+    const paymentNumber = invoice?.payment_number ?? '';
+
+    const handleCopy = async () => {
+        if (!paymentNumber) return;
+        await navigator.clipboard.writeText(paymentNumber);
+    };
+
+    return (
+        <Dialog open={invoice !== null} onOpenChange={(v) => !v && onClose()}>
+            <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                    <DialogTitle>Bayar Invoice</DialogTitle>
+                    <DialogDescription>
+                        Scan QR atau buka link pembayaran untuk menyelesaikan
+                        invoice ini.
+                    </DialogDescription>
+                </DialogHeader>
+
+                {invoice && (
+                    <div className="space-y-4">
+                        <div className="rounded-md bg-muted/50 p-3 text-sm">
+                            <div className="flex justify-between gap-3">
+                                <span className="text-muted-foreground">
+                                    Invoice
+                                </span>
+                                <span className="font-mono text-xs">
+                                    {invoice.invoice_number}
+                                </span>
+                            </div>
+                            <div className="mt-1 flex justify-between gap-3">
+                                <span className="text-muted-foreground">
+                                    Metode
+                                </span>
+                                <span className="font-medium">
+                                    {paymentMethodLabel(invoice.payment_method)}
+                                </span>
+                            </div>
+                            <div className="mt-1 flex justify-between gap-3">
+                                <span className="text-muted-foreground">
+                                    Total
+                                </span>
+                                <span className="font-semibold">
+                                    {fmt.format(
+                                        invoice.total_payment ?? invoice.amount,
+                                    )}
+                                </span>
+                            </div>
+                            {invoice.payment_expires_at && (
+                                <div className="mt-1 flex justify-between gap-3">
+                                    <span className="text-muted-foreground">
+                                        Exp
+                                    </span>
+                                    <span>
+                                        {formatDate(invoice.payment_expires_at)}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {paymentNumber ? (
+                            <>
+                                <div className="flex justify-center rounded-md border bg-white p-4">
+                                    <QRCodeSVG
+                                        value={paymentNumber}
+                                        size={220}
+                                        marginSize={2}
+                                        level="M"
+                                    />
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        className="w-full"
+                                        onClick={handleCopy}
+                                    >
+                                        <Copy className="mr-2 size-4" />
+                                        Salin QRIS
+                                    </Button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+                                Link pembayaran belum tersedia untuk invoice
+                                ini.
+                            </div>
+                        )}
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     );
@@ -511,6 +721,7 @@ function PlanCard({
 
 function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
     const [uploadInvoiceId, setUploadInvoiceId] = useState<number | null>(null);
+    const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
     const { delete: destroy, processing: cancelling } = useForm({});
 
     const handleCancel = (id: number) => {
@@ -539,6 +750,7 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                                 Karyawan
                             </TableHead>
                             <TableHead className="text-right">Total</TableHead>
+                            <TableHead>Pembayaran</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Tanggal</TableHead>
                             <TableHead className="text-right">Aksi</TableHead>
@@ -560,7 +772,36 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                                         {inv.employee_count}
                                     </TableCell>
                                     <TableCell className="text-right font-medium">
-                                        {fmt.format(inv.amount)}
+                                        {fmt.format(
+                                            inv.total_payment ?? inv.amount,
+                                        )}
+                                        {inv.payment_fee > 0 && (
+                                            <div className="text-xs font-normal text-muted-foreground">
+                                                Fee{' '}
+                                                {fmt.format(inv.payment_fee)}
+                                            </div>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="max-w-[18rem] text-sm">
+                                        <div className="flex items-center gap-1 font-medium">
+                                            <CreditCard className="size-3.5 text-muted-foreground" />
+                                            {paymentMethodLabel(
+                                                inv.payment_method,
+                                            )}
+                                        </div>
+                                        {inv.payment_number && (
+                                            <div className="mt-1 text-xs text-muted-foreground">
+                                                QRIS tersedia
+                                            </div>
+                                        )}
+                                        {inv.payment_expires_at && (
+                                            <div className="mt-1 text-xs text-muted-foreground">
+                                                Exp:{' '}
+                                                {formatDate(
+                                                    inv.payment_expires_at,
+                                                )}
+                                            </div>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant={sc.variant}>
@@ -568,33 +809,61 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
-                                        {formatDate(inv.issued_at)}
+                                        {formatDate(inv.created_at)}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         {inv.status === 'pending' && (
                                             <div className="flex justify-end gap-2">
                                                 <Button
+                                                    type="button"
                                                     size="sm"
                                                     variant="outline"
+                                                    className="h-8 w-8 p-0"
+                                                    disabled={
+                                                        !inv.payment_number
+                                                    }
+                                                    onClick={() =>
+                                                        setPaymentInvoice(inv)
+                                                    }
+                                                    title="Bayar invoice"
+                                                >
+                                                    <Banknote className="size-4" />
+                                                    <span className="sr-only">
+                                                        Bayar invoice
+                                                    </span>
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-8 w-8 p-0"
                                                     onClick={() =>
                                                         setUploadInvoiceId(
                                                             inv.id,
                                                         )
                                                     }
+                                                    title="Upload bukti pembayaran"
                                                 >
-                                                    <Upload className="mr-1 size-3" />
-                                                    Upload Bukti
+                                                    <Upload className="size-4" />
+                                                    <span className="sr-only">
+                                                        Upload bukti pembayaran
+                                                    </span>
                                                 </Button>
                                                 <Button
+                                                    type="button"
                                                     size="sm"
                                                     variant="destructive"
+                                                    className="h-8 w-8 p-0"
                                                     disabled={cancelling}
                                                     onClick={() =>
                                                         handleCancel(inv.id)
                                                     }
+                                                    title="Batalkan invoice"
                                                 >
-                                                    <X className="mr-1 size-3" />
-                                                    Batalkan
+                                                    <X className="size-4" />
+                                                    <span className="sr-only">
+                                                        Batalkan invoice
+                                                    </span>
                                                 </Button>
                                             </div>
                                         )}
@@ -627,6 +896,10 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                 invoiceId={uploadInvoiceId}
                 onClose={() => setUploadInvoiceId(null)}
             />
+            <PayInvoiceDialog
+                invoice={paymentInvoice}
+                onClose={() => setPaymentInvoice(null)}
+            />
         </>
     );
 }
@@ -634,12 +907,13 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function BillingPage() {
-    const { subscription, invoices } = usePage<PageProps>().props;
+    const { subscription, invoices, employee_count } =
+        usePage<PageProps>().props;
     const [upgradeDialog, setUpgradeDialog] = useState<'core' | 'plus' | null>(
         null,
     );
 
-    const employeeCount = subscription?.employee_count ?? 1;
+    const employeeCount = employee_count ?? subscription?.employee_count ?? 0;
     const currentPlan = subscription?.plan_slug ?? 'free';
 
     return (
