@@ -265,22 +265,11 @@ function UpgradeDialog({
     const price = planSlug === 'core' ? PRICE_CORE : PRICE_PLUS;
     const planLabel = planSlug === 'core' ? 'Basic' : 'Plus';
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, errors } = useForm({
         plan_slug: planSlug,
         employee_count: defaultEmployees,
         payment_method: 'qris' as PaymentMethod,
     });
-
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        post('/billing/invoices', {
-            preserveScroll: true,
-            onSuccess: () => {
-                reset();
-                onClose();
-            },
-        });
-    };
 
     return (
         <Dialog
@@ -301,7 +290,6 @@ function UpgradeDialog({
                 <form
                     action="/billing/invoices"
                     method="post"
-                    onSubmit={handleSubmit}
                     className="space-y-4"
                 >
                     <input type="hidden" name="_token" value={csrfToken()} />
@@ -390,17 +378,14 @@ function UpgradeDialog({
                             type="button"
                             variant="outline"
                             onClick={onClose}
-                            disabled={processing}
                         >
                             Batal
                         </Button>
                         <Button
                             type="submit"
-                            disabled={processing || data.employee_count < 1}
+                            disabled={data.employee_count < 1}
                         >
-                            {processing
-                                ? 'Memproses…'
-                                : `Buat Invoice Paket ${planLabel}`}
+                            Buat Invoice Paket {planLabel}
                         </Button>
                     </div>
                 </form>

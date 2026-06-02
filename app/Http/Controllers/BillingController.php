@@ -132,10 +132,14 @@ class BillingController extends Controller
             ->with('success', 'Invoice Pakasir berhasil dibuat. Silakan lakukan pembayaran sesuai instruksi pada tabel invoice.');
     }
 
-    public function invoiceFallback(): RedirectResponse
+    public function invoiceFallback(Request $request): RedirectResponse
     {
+        if ($request->filled('plan_slug')) {
+            return $this->createInvoice($request);
+        }
+
         return redirect()->route('billing.index')
-            ->with('error', 'Pembuatan invoice harus dilakukan dari tombol upgrade paket.');
+            ->with('error', 'URL invoice tidak dapat dibuka langsung. Silakan pilih paket lalu klik Buat Invoice.');
     }
 
     public function uploadProof(Request $request, SubscriptionInvoice $invoice): RedirectResponse
