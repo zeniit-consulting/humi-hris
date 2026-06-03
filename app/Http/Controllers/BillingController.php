@@ -45,12 +45,12 @@ class BillingController extends Controller
 
         return Inertia::render('billing/index', [
             'billing_urls' => [
-                'index' => $this->publicRouteUrl('billing.index'),
-                'invoice_store' => $this->publicRouteUrl('billing.invoices.store'),
-                'invoice_payment_template' => $this->publicRouteUrl('billing.invoices.payment', ['invoice' => '__INVOICE_ID__']),
-                'invoice_payment_check_template' => $this->publicRouteUrl('billing.invoices.payment.check', ['invoice' => '__INVOICE_ID__']),
-                'invoice_proof_template' => $this->publicRouteUrl('billing.invoices.proof', ['invoice' => '__INVOICE_ID__']),
-                'invoice_cancel_template' => $this->publicRouteUrl('billing.invoices.cancel', ['invoice' => '__INVOICE_ID__']),
+                'index' => $this->routePath('billing.index'),
+                'invoice_store' => $this->routePath('billing.invoices.store'),
+                'invoice_payment_template' => $this->routePath('billing.invoices.payment', ['invoice' => '__INVOICE_ID__']),
+                'invoice_payment_check_template' => $this->routePath('billing.invoices.payment.check', ['invoice' => '__INVOICE_ID__']),
+                'invoice_proof_template' => $this->routePath('billing.invoices.proof', ['invoice' => '__INVOICE_ID__']),
+                'invoice_cancel_template' => $this->routePath('billing.invoices.cancel', ['invoice' => '__INVOICE_ID__']),
             ],
             'subscription' => $subscription ? [
                 'id' => $subscription->id,
@@ -91,14 +91,14 @@ class BillingController extends Controller
         $user = $request->user();
 
         if (! $this->pakasir->isConfigured()) {
-            return redirect()->route('billing.index')
+            return redirect()->away($this->routePath('billing.index'))
                 ->with('error', 'Konfigurasi Pakasir belum lengkap. Isi PAKASIR_PROJECT dan PAKASIR_API_KEY.');
         }
 
         $activeEmployeeCount = $this->subscriptionService->getEmployeeCount($user);
 
         if ($activeEmployeeCount < 1) {
-            return redirect()->route('billing.index')
+            return redirect()->away($this->routePath('billing.index'))
                 ->with('error', 'Invoice belum dapat dibuat karena belum ada karyawan berstatus aktif.');
         }
 
@@ -120,7 +120,7 @@ class BillingController extends Controller
             ->first();
 
         if ($existingInvoice) {
-            return redirect()->route('billing.invoices.payment', $existingInvoice)
+            return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $existingInvoice->id]))
                 ->with('success', 'Invoice pending masih tersedia. Silakan lanjutkan pembayaran.');
         }
 
@@ -138,11 +138,11 @@ class BillingController extends Controller
             report($exception);
             $invoice->delete();
 
-            return redirect()->route('billing.index')
+            return redirect()->away($this->routePath('billing.index'))
                 ->with('error', $exception->getMessage() ?: 'Transaksi Pakasir gagal dibuat. Silakan coba lagi atau hubungi admin.');
         }
 
-        return redirect()->route('billing.invoices.payment', $invoice)
+        return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
             ->with('success', 'Invoice Pakasir berhasil dibuat. Silakan selesaikan pembayaran QRIS.');
     }
 
@@ -183,7 +183,7 @@ class BillingController extends Controller
             'notes' => $request->input('notes'),
         ]);
 
-        return redirect()->route('billing.index')
+        return redirect()->away($this->routePath('billing.index'))
             ->with('success', 'Bukti pembayaran berhasil diupload. Kami akan verifikasi segera.');
     }
 
@@ -197,8 +197,8 @@ class BillingController extends Controller
         return Inertia::render('billing/payment', [
             'invoice' => $this->serializeInvoice($invoice),
             'payment_url' => $this->pakasir->paymentUrl($invoice),
-            'billing_url' => $this->publicRouteUrl('billing.index'),
-            'payment_check_url' => $this->publicRouteUrl('billing.invoices.payment.check', ['invoice' => $invoice->id]),
+            'billing_url' => $this->routePath('billing.index'),
+            'payment_check_url' => $this->routePath('billing.invoices.payment.check', ['invoice' => $invoice->id]),
         ]);
     }
 
@@ -211,12 +211,12 @@ class BillingController extends Controller
         abort_if($invoice->payment_gateway !== 'pakasir', 422, 'Invoice ini bukan transaksi Pakasir.');
 
         if ($invoice->status === 'paid') {
-            return redirect()->route('dashboard')
+            return redirect()->away($this->routePath('dashboard'))
                 ->with('success', 'Pembayaran sudah terverifikasi. Akses sistem sudah aktif.');
         }
 
         if ($invoice->status !== 'pending') {
-            return redirect()->route('billing.index')
+            return redirect()->away($this->routePath('billing.index'))
                 ->with('error', 'Invoice tidak lagi dalam status menunggu pembayaran.');
         }
 
@@ -225,7 +225,7 @@ class BillingController extends Controller
         } catch (\Throwable $exception) {
             report($exception);
 
-            return redirect()->route('billing.invoices.payment', $invoice)
+            return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
                 ->with('error', $exception->getMessage() ?: 'Status pembayaran belum dapat dicek.');
         }
 
@@ -237,13 +237,13 @@ class BillingController extends Controller
         ]);
 
         if (Arr::get($transaction, 'status') !== 'completed') {
-            return redirect()->route('billing.invoices.payment', $invoice)
+            return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
                 ->with('error', 'Pembayaran belum terdeteksi selesai. Silakan tunggu beberapa saat lalu cek lagi.');
         }
 
         if ((int) Arr::get($transaction, 'amount') !== $invoice->amount
             || (string) Arr::get($transaction, 'order_id') !== $invoice->invoice_number) {
-            return redirect()->route('billing.invoices.payment', $invoice)
+            return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
                 ->with('error', 'Data pembayaran dari Pakasir tidak sesuai dengan invoice.');
         }
 
@@ -253,7 +253,7 @@ class BillingController extends Controller
 
         $this->subscriptionService->activateSubscription($invoice->refresh(), $completedAt);
 
-        return redirect()->route('dashboard')
+        return redirect()->away($this->routePath('dashboard'))
             ->with('success', 'Pembayaran berhasil diverifikasi. Akses sistem sudah aktif.');
     }
 
@@ -269,26 +269,13 @@ class BillingController extends Controller
 
         $invoice->update(['status' => 'cancelled']);
 
-        return redirect()->route('billing.index')
+        return redirect()->away($this->routePath('billing.index'))
             ->with('success', 'Invoice berhasil dibatalkan.');
     }
 
-    /**
-     * Build action URLs from APP_URL so deployments behind a public path prefix
-     * such as /api do not post forms to the domain root.
-     *
-     * @param  array<string, mixed>  $parameters
-     */
-    private function publicRouteUrl(string $name, array $parameters = []): string
+    private function routePath(string $name, array $parameters = []): string
     {
-        $path = route($name, $parameters, false);
-        $baseUrl = rtrim((string) config('app.url'), '/');
-
-        if ($baseUrl === '') {
-            return $path;
-        }
-
-        return $baseUrl.'/'.ltrim($path, '/');
+        return route($name, $parameters, false);
     }
 
     private function serializeInvoice(SubscriptionInvoice $invoice): array

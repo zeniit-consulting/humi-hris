@@ -69,7 +69,7 @@ class TrialSubscriptionGateTest extends TestCase
         Carbon::setTestNow();
     }
 
-    public function test_billing_page_uses_app_url_prefix_for_invoice_actions(): void
+    public function test_billing_page_uses_relative_invoice_actions_even_when_app_url_is_production(): void
     {
         config()->set('app.url', 'https://backoffice.zeniconsulting.com/api');
 
@@ -84,12 +84,12 @@ class TrialSubscriptionGateTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('billing/index')
-                ->where('billing_urls.index', 'https://backoffice.zeniconsulting.com/api/billing')
-                ->where('billing_urls.invoice_store', 'https://backoffice.zeniconsulting.com/api/billing/invoices')
-                ->where('billing_urls.invoice_payment_template', 'https://backoffice.zeniconsulting.com/api/billing/invoices/__INVOICE_ID__/payment')
-                ->where('billing_urls.invoice_payment_check_template', 'https://backoffice.zeniconsulting.com/api/billing/invoices/__INVOICE_ID__/payment/check')
-                ->where('billing_urls.invoice_proof_template', 'https://backoffice.zeniconsulting.com/api/billing/invoices/__INVOICE_ID__/proof')
-                ->where('billing_urls.invoice_cancel_template', 'https://backoffice.zeniconsulting.com/api/billing/invoices/__INVOICE_ID__')
+                ->where('billing_urls.index', '/billing')
+                ->where('billing_urls.invoice_store', '/billing/invoices')
+                ->where('billing_urls.invoice_payment_template', '/billing/invoices/__INVOICE_ID__/payment')
+                ->where('billing_urls.invoice_payment_check_template', '/billing/invoices/__INVOICE_ID__/payment/check')
+                ->where('billing_urls.invoice_proof_template', '/billing/invoices/__INVOICE_ID__/proof')
+                ->where('billing_urls.invoice_cancel_template', '/billing/invoices/__INVOICE_ID__')
             );
     }
 }
