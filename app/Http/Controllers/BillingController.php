@@ -10,6 +10,8 @@ use App\Services\SubscriptionService;
 use App\Support\R2Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -45,6 +47,8 @@ class BillingController extends Controller
             'billing_urls' => [
                 'index' => $this->publicRouteUrl('billing.index'),
                 'invoice_store' => $this->publicRouteUrl('billing.invoices.store'),
+                'invoice_payment_template' => $this->publicRouteUrl('billing.invoices.payment', ['invoice' => '__INVOICE_ID__']),
+                'invoice_payment_check_template' => $this->publicRouteUrl('billing.invoices.payment.check', ['invoice' => '__INVOICE_ID__']),
                 'invoice_proof_template' => $this->publicRouteUrl('billing.invoices.proof', ['invoice' => '__INVOICE_ID__']),
                 'invoice_cancel_template' => $this->publicRouteUrl('billing.invoices.cancel', ['invoice' => '__INVOICE_ID__']),
             ],
@@ -61,25 +65,7 @@ class BillingController extends Controller
                 'locked_features' => $subscription->lockedFeatures(),
                 'is_trial' => $subscription->status === 'trial',
             ] : null,
-            'invoices' => $invoices->map(fn (SubscriptionInvoice $invoice): array => [
-                'id' => $invoice->id,
-                'invoice_number' => $invoice->invoice_number,
-                'plan_slug' => $invoice->plan_slug,
-                'amount' => $invoice->amount,
-                'employee_count' => $invoice->employee_count,
-                'status' => $invoice->status,
-                'payment_gateway' => $invoice->payment_gateway,
-                'payment_method' => $invoice->payment_method,
-                'payment_number' => $invoice->payment_number,
-                'payment_fee' => $invoice->payment_fee,
-                'total_payment' => $invoice->total_payment,
-                'payment_expires_at' => $invoice->payment_expires_at?->toDateTimeString(),
-                'due_date' => $invoice->due_date?->toDateString(),
-                'paid_at' => $invoice->paid_at?->toDateTimeString(),
-                'payment_proof' => R2Storage::url($invoice->payment_proof),
-                'notes' => $invoice->notes,
-                'created_at' => $invoice->created_at?->toDateTimeString(),
-            ]),
+            'invoices' => $invoices->map(fn (SubscriptionInvoice $invoice): array => $this->serializeInvoice($invoice)),
             'plans' => $plans->map(fn (SubscriptionPlan $plan): array => [
                 'slug' => $plan->slug,
                 'name' => $plan->name,
@@ -134,7 +120,7 @@ class BillingController extends Controller
             ->first();
 
         if ($existingInvoice) {
-            return redirect()->route('billing.index')
+            return redirect()->route('billing.invoices.payment', $existingInvoice)
                 ->with('success', 'Invoice pending masih tersedia. Silakan lanjutkan pembayaran.');
         }
 
@@ -156,8 +142,8 @@ class BillingController extends Controller
                 ->with('error', $exception->getMessage() ?: 'Transaksi Pakasir gagal dibuat. Silakan coba lagi atau hubungi admin.');
         }
 
-        return redirect()->route('billing.index')
-            ->with('success', 'Invoice Pakasir berhasil dibuat. Silakan lakukan pembayaran sesuai instruksi pada tabel invoice.');
+        return redirect()->route('billing.invoices.payment', $invoice)
+            ->with('success', 'Invoice Pakasir berhasil dibuat. Silakan selesaikan pembayaran QRIS.');
     }
 
     public function invoiceFallback(Request $request): RedirectResponse
@@ -201,6 +187,76 @@ class BillingController extends Controller
             ->with('success', 'Bukti pembayaran berhasil diupload. Kami akan verifikasi segera.');
     }
 
+    public function payment(Request $request, SubscriptionInvoice $invoice): InertiaResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_if($invoice->user_id !== $user->accountOwnerId(), 403);
+
+        return Inertia::render('billing/payment', [
+            'invoice' => $this->serializeInvoice($invoice),
+            'payment_url' => $this->pakasir->paymentUrl($invoice),
+            'billing_url' => $this->publicRouteUrl('billing.index'),
+            'payment_check_url' => $this->publicRouteUrl('billing.invoices.payment.check', ['invoice' => $invoice->id]),
+        ]);
+    }
+
+    public function checkPayment(Request $request, SubscriptionInvoice $invoice): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_if($invoice->user_id !== $user->accountOwnerId(), 403);
+        abort_if($invoice->payment_gateway !== 'pakasir', 422, 'Invoice ini bukan transaksi Pakasir.');
+
+        if ($invoice->status === 'paid') {
+            return redirect()->route('dashboard')
+                ->with('success', 'Pembayaran sudah terverifikasi. Akses sistem sudah aktif.');
+        }
+
+        if ($invoice->status !== 'pending') {
+            return redirect()->route('billing.index')
+                ->with('error', 'Invoice tidak lagi dalam status menunggu pembayaran.');
+        }
+
+        try {
+            $payload = $this->pakasir->transactionDetail($invoice);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return redirect()->route('billing.invoices.payment', $invoice)
+                ->with('error', $exception->getMessage() ?: 'Status pembayaran belum dapat dicek.');
+        }
+
+        $transaction = Arr::get($payload, 'transaction', []);
+        $invoice->update([
+            'payment_payload' => array_merge($invoice->payment_payload ?? [], [
+                'transaction_detail' => $transaction,
+            ]),
+        ]);
+
+        if (Arr::get($transaction, 'status') !== 'completed') {
+            return redirect()->route('billing.invoices.payment', $invoice)
+                ->with('error', 'Pembayaran belum terdeteksi selesai. Silakan tunggu beberapa saat lalu cek lagi.');
+        }
+
+        if ((int) Arr::get($transaction, 'amount') !== $invoice->amount
+            || (string) Arr::get($transaction, 'order_id') !== $invoice->invoice_number) {
+            return redirect()->route('billing.invoices.payment', $invoice)
+                ->with('error', 'Data pembayaran dari Pakasir tidak sesuai dengan invoice.');
+        }
+
+        $completedAt = filled(Arr::get($transaction, 'completed_at'))
+            ? Carbon::parse((string) Arr::get($transaction, 'completed_at'))
+            : now();
+
+        $this->subscriptionService->activateSubscription($invoice->refresh(), $completedAt);
+
+        return redirect()->route('dashboard')
+            ->with('success', 'Pembayaran berhasil diverifikasi. Akses sistem sudah aktif.');
+    }
+
     public function cancelInvoice(Request $request, SubscriptionInvoice $invoice): RedirectResponse
     {
         /** @var User $user */
@@ -233,5 +289,29 @@ class BillingController extends Controller
         }
 
         return $baseUrl.'/'.ltrim($path, '/');
+    }
+
+    private function serializeInvoice(SubscriptionInvoice $invoice): array
+    {
+        return [
+            'id' => $invoice->id,
+            'invoice_number' => $invoice->invoice_number,
+            'plan_slug' => $invoice->plan_slug,
+            'amount' => $invoice->amount,
+            'employee_count' => $invoice->employee_count,
+            'status' => $invoice->status,
+            'payment_gateway' => $invoice->payment_gateway,
+            'payment_method' => $invoice->payment_method,
+            'payment_number' => $invoice->payment_number,
+            'payment_fee' => $invoice->payment_fee,
+            'total_payment' => $invoice->total_payment,
+            'payment_expires_at' => $invoice->payment_expires_at?->toDateTimeString(),
+            'due_date' => $invoice->due_date?->toDateString(),
+            'paid_at' => $invoice->paid_at?->toDateTimeString(),
+            'payment_proof' => R2Storage::url($invoice->payment_proof),
+            'payment_url' => $this->pakasir->paymentUrl($invoice),
+            'notes' => $invoice->notes,
+            'created_at' => $invoice->created_at?->toDateTimeString(),
+        ];
     }
 }

@@ -183,6 +183,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
     Route::get('billing/invoices', [BillingController::class, 'invoiceFallback'])->name('billing.invoices.index');
     Route::post('billing/invoices', [BillingController::class, 'createInvoice'])->name('billing.invoices.store');
+    Route::get('billing/invoices/{invoice}/payment', [BillingController::class, 'payment'])->name('billing.invoices.payment');
+    Route::post('billing/invoices/{invoice}/payment/check', [BillingController::class, 'checkPayment'])->name('billing.invoices.payment.check');
     Route::post('billing/invoices/{invoice}/proof', [BillingController::class, 'uploadProof'])->name('billing.invoices.proof');
     Route::delete('billing/invoices/{invoice}', [BillingController::class, 'cancelInvoice'])->name('billing.invoices.cancel');
 });

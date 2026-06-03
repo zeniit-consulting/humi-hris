@@ -8,6 +8,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class PakasirPaymentGatewayTest extends TestCase
@@ -53,17 +54,19 @@ class PakasirPaymentGatewayTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this
+        $response = $this
             ->actingAs($user)
             ->post(route('billing.invoices.store'), [
                 'plan_slug' => 'core',
                 'employee_count' => 10,
                 'payment_method' => 'bni_va',
             ])
-            ->assertRedirect(route('billing.index'))
+            ->assertRedirect()
             ->assertSessionHas('success');
 
         $invoice = SubscriptionInvoice::query()->firstOrFail();
+
+        $response->assertRedirect(route('billing.invoices.payment', $invoice));
 
         Http::assertSent(fn ($request): bool => $request->url() === 'https://app.pakasir.com/api/transactioncreate/bni_va'
             && $request['project'] === 'depodomain'
@@ -135,6 +138,157 @@ class PakasirPaymentGatewayTest extends TestCase
             'target_type' => SubscriptionInvoice::class,
             'target_id' => $invoice->id,
             'action' => 'invoice.pakasir_completed',
+        ]);
+    }
+
+    public function test_user_can_open_pakasir_payment_page_for_owned_invoice(): void
+    {
+        config()->set('services.pakasir.project', 'depodomain');
+
+        $subscriber = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        $invoice = SubscriptionInvoice::query()->create([
+            'user_id' => $subscriber->id,
+            'subscription_id' => null,
+            'invoice_number' => 'INV-PAYMENT-PAGE',
+            'amount' => 29000,
+            'employee_count' => 10,
+            'plan_slug' => 'core',
+            'status' => 'pending',
+            'payment_gateway' => 'pakasir',
+            'payment_method' => 'qris',
+            'payment_number' => 'QRIS-CONTENT',
+            'due_date' => now()->addDays(3)->toDateString(),
+            'paid_at' => null,
+            'payment_proof' => null,
+            'notes' => null,
+        ]);
+
+        $this
+            ->actingAs($subscriber)
+            ->get(route('billing.invoices.payment', $invoice))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('billing/payment')
+                ->where('invoice.invoice_number', 'INV-PAYMENT-PAGE')
+                ->where('invoice.payment_method', 'qris')
+                ->where('payment_url', 'https://app.pakasir.com/pay/depodomain/29000?order_id=INV-PAYMENT-PAGE')
+            );
+    }
+
+    public function test_manual_payment_check_marks_completed_pakasir_invoice_paid(): void
+    {
+        config()->set('services.pakasir.project', 'depodomain');
+        config()->set('services.pakasir.api_key', 'xxx123');
+
+        Http::fake([
+            'app.pakasir.com/api/transactiondetail*' => Http::response([
+                'transaction' => [
+                    'amount' => 22000,
+                    'order_id' => 'INV-MANUAL-CHECK',
+                    'project' => 'depodomain',
+                    'status' => 'completed',
+                    'payment_method' => 'qris',
+                    'completed_at' => '2024-09-10T08:07:02.819+07:00',
+                ],
+            ]),
+        ]);
+
+        $subscriber = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        $invoice = SubscriptionInvoice::query()->create([
+            'user_id' => $subscriber->id,
+            'subscription_id' => null,
+            'invoice_number' => 'INV-MANUAL-CHECK',
+            'amount' => 22000,
+            'employee_count' => 8,
+            'plan_slug' => 'core',
+            'status' => 'pending',
+            'payment_gateway' => 'pakasir',
+            'payment_method' => 'qris',
+            'payment_number' => 'QRIS-CONTENT',
+            'due_date' => now()->addDays(3)->toDateString(),
+            'paid_at' => null,
+            'payment_proof' => null,
+            'notes' => null,
+        ]);
+
+        $this
+            ->actingAs($subscriber)
+            ->post(route('billing.invoices.payment.check', $invoice))
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHas('success');
+
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://app.pakasir.com/api/transactiondetail?project=depodomain&amount=22000&order_id=INV-MANUAL-CHECK&api_key=xxx123');
+
+        $invoice->refresh();
+
+        $this->assertSame('paid', $invoice->status);
+        $this->assertNotNull($invoice->paid_at);
+
+        $this->assertDatabaseHas('subscriptions', [
+            'user_id' => $subscriber->id,
+            'plan_slug' => 'core',
+            'status' => 'active',
+            'employee_count' => 8,
+        ]);
+    }
+
+    public function test_manual_payment_check_keeps_invoice_pending_when_pakasir_is_not_completed(): void
+    {
+        config()->set('services.pakasir.project', 'depodomain');
+        config()->set('services.pakasir.api_key', 'xxx123');
+
+        Http::fake([
+            'app.pakasir.com/api/transactiondetail*' => Http::response([
+                'transaction' => [
+                    'amount' => 22000,
+                    'order_id' => 'INV-PENDING-CHECK',
+                    'project' => 'depodomain',
+                    'status' => 'pending',
+                    'payment_method' => 'qris',
+                ],
+            ]),
+        ]);
+
+        $subscriber = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        $invoice = SubscriptionInvoice::query()->create([
+            'user_id' => $subscriber->id,
+            'subscription_id' => null,
+            'invoice_number' => 'INV-PENDING-CHECK',
+            'amount' => 22000,
+            'employee_count' => 8,
+            'plan_slug' => 'core',
+            'status' => 'pending',
+            'payment_gateway' => 'pakasir',
+            'payment_method' => 'qris',
+            'payment_number' => 'QRIS-CONTENT',
+            'due_date' => now()->addDays(3)->toDateString(),
+            'paid_at' => null,
+            'payment_proof' => null,
+            'notes' => null,
+        ]);
+
+        $this
+            ->actingAs($subscriber)
+            ->post(route('billing.invoices.payment.check', $invoice))
+            ->assertRedirect(route('billing.invoices.payment', $invoice))
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('subscription_invoices', [
+            'id' => $invoice->id,
+            'status' => 'pending',
+            'subscription_id' => null,
         ]);
     }
 
@@ -271,16 +425,19 @@ class PakasirPaymentGatewayTest extends TestCase
             'payment_method' => 'qris',
         ];
 
-        $this
+        $firstResponse = $this
             ->actingAs($user)
             ->post(route('billing.invoices.store'), $payload)
-            ->assertRedirect(route('billing.index'))
+            ->assertRedirect()
             ->assertSessionHas('success');
+
+        $invoice = SubscriptionInvoice::query()->firstOrFail();
+        $firstResponse->assertRedirect(route('billing.invoices.payment', $invoice));
 
         $this
             ->actingAs($user)
             ->post(route('billing.invoices.store'), $payload)
-            ->assertRedirect(route('billing.index'))
+            ->assertRedirect(route('billing.invoices.payment', $invoice))
             ->assertSessionHas('success', 'Invoice pending masih tersedia. Silakan lanjutkan pembayaran.');
 
         Http::assertSentCount(1);

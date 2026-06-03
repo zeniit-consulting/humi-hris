@@ -117,6 +117,66 @@ class PakasirPaymentGateway
         return $invoice->refresh();
     }
 
+    public function transactionDetail(SubscriptionInvoice $invoice): array
+    {
+        if (! $this->isConfigured()) {
+            throw new RuntimeException('Konfigurasi Pakasir belum lengkap.');
+        }
+
+        $baseUrl = rtrim((string) config('services.pakasir.base_url'), '/');
+
+        $response = Http::timeout((int) config('services.pakasir.timeout', 15))
+            ->acceptJson()
+            ->get("{$baseUrl}/api/transactiondetail", [
+                'project' => (string) config('services.pakasir.project'),
+                'amount' => $invoice->amount,
+                'order_id' => $invoice->invoice_number,
+                'api_key' => (string) config('services.pakasir.api_key'),
+            ]);
+
+        if ($response->failed()) {
+            Log::warning('pakasir.transaction_detail.failed', [
+                'invoice_id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+                'status' => $response->status(),
+                'response' => $response->json() ?? $response->body(),
+            ]);
+
+            $message = Arr::get((array) $response->json(), 'message')
+                ?? Arr::get((array) $response->json(), 'error')
+                ?? 'Status pembayaran Pakasir belum dapat dicek.';
+
+            throw new RuntimeException((string) $message);
+        }
+
+        $payload = $response->json();
+
+        if (! is_array($payload) || ! is_array(Arr::get($payload, 'transaction'))) {
+            Log::warning('pakasir.transaction_detail.invalid_response', [
+                'invoice_id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+                'response' => $payload ?? $response->body(),
+            ]);
+
+            throw new RuntimeException('Respons status pembayaran Pakasir tidak valid.');
+        }
+
+        return $payload;
+    }
+
+    public function paymentUrl(SubscriptionInvoice $invoice): ?string
+    {
+        $project = $this->configuredProject();
+
+        if (! $project) {
+            return null;
+        }
+
+        $baseUrl = rtrim((string) config('services.pakasir.base_url'), '/');
+
+        return "{$baseUrl}/pay/{$project}/{$invoice->amount}?order_id=".urlencode($invoice->invoice_number);
+    }
+
     public function configuredProject(): ?string
     {
         return config('services.pakasir.project');

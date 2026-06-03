@@ -86,6 +86,8 @@ class TrialSubscriptionGateTest extends TestCase
                 ->component('billing/index')
                 ->where('billing_urls.index', 'https://backoffice.zeniconsulting.com/api/billing')
                 ->where('billing_urls.invoice_store', 'https://backoffice.zeniconsulting.com/api/billing/invoices')
+                ->where('billing_urls.invoice_payment_template', 'https://backoffice.zeniconsulting.com/api/billing/invoices/__INVOICE_ID__/payment')
+                ->where('billing_urls.invoice_payment_check_template', 'https://backoffice.zeniconsulting.com/api/billing/invoices/__INVOICE_ID__/payment/check')
                 ->where('billing_urls.invoice_proof_template', 'https://backoffice.zeniconsulting.com/api/billing/invoices/__INVOICE_ID__/proof')
                 ->where('billing_urls.invoice_cancel_template', 'https://backoffice.zeniconsulting.com/api/billing/invoices/__INVOICE_ID__')
             );

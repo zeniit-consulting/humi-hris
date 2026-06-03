@@ -57,16 +57,17 @@ class BillingInvoiceCreationTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this
+        $response = $this
             ->actingAs($user)
             ->post(route('billing.invoices.store'), [
                 'plan_slug' => 'core',
                 'employee_count' => 99,
             ])
-            ->assertRedirect(route('billing.index'))
+            ->assertRedirect()
             ->assertSessionHas('success');
 
         $invoice = SubscriptionInvoice::query()->firstOrFail();
+        $response->assertRedirect(route('billing.invoices.payment', $invoice));
 
         $this->assertSame($user->id, $invoice->user_id);
         $this->assertSame('core', $invoice->plan_slug);
@@ -117,13 +118,14 @@ class BillingInvoiceCreationTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this
+        $response = $this
             ->actingAs($user)
             ->get(route('billing.invoices.index'))
-            ->assertRedirect(route('billing.index'))
+            ->assertRedirect()
             ->assertSessionHas('success');
 
         $invoice = SubscriptionInvoice::query()->firstOrFail();
+        $response->assertRedirect(route('billing.invoices.payment', $invoice));
 
         $this->assertSame('core', $invoice->plan_slug);
         $this->assertSame(2, $invoice->employee_count);
@@ -169,17 +171,18 @@ class BillingInvoiceCreationTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this
+        $response = $this
             ->actingAs($user)
             ->get(route('billing.invoices.index', [
                 'plan_slug' => 'core',
                 'employee_count' => 2,
                 'payment_method' => 'qris',
             ]))
-            ->assertRedirect(route('billing.index'))
+            ->assertRedirect()
             ->assertSessionHas('success');
 
         $invoice = SubscriptionInvoice::query()->firstOrFail();
+        $response->assertRedirect(route('billing.invoices.payment', $invoice));
 
         $this->assertSame(2, $invoice->employee_count);
         $this->assertSame(5800, $invoice->amount);

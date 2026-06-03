@@ -1,7 +1,8 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import payment44796b from './payment'
 /**
 * @see \App\Http\Controllers\BillingController::index
-* @see app/Http/Controllers/BillingController.php:163
+* @see app/Http/Controllers/BillingController.php:149
 * @route '/billing/invoices'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +17,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\BillingController::index
-* @see app/Http/Controllers/BillingController.php:163
+* @see app/Http/Controllers/BillingController.php:149
 * @route '/billing/invoices'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +26,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BillingController::index
-* @see app/Http/Controllers/BillingController.php:163
+* @see app/Http/Controllers/BillingController.php:149
 * @route '/billing/invoices'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +36,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\BillingController::index
-* @see app/Http/Controllers/BillingController.php:163
+* @see app/Http/Controllers/BillingController.php:149
 * @route '/billing/invoices'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +46,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\BillingController::index
-* @see app/Http/Controllers/BillingController.php:163
+* @see app/Http/Controllers/BillingController.php:149
 * @route '/billing/invoices'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +56,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\BillingController::index
-* @see app/Http/Controllers/BillingController.php:163
+* @see app/Http/Controllers/BillingController.php:149
 * @route '/billing/invoices'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +66,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\BillingController::index
-* @see app/Http/Controllers/BillingController.php:163
+* @see app/Http/Controllers/BillingController.php:149
 * @route '/billing/invoices'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +83,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\BillingController::store
-* @see app/Http/Controllers/BillingController.php:95
+* @see app/Http/Controllers/BillingController.php:81
 * @route '/billing/invoices'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +98,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\BillingController::store
-* @see app/Http/Controllers/BillingController.php:95
+* @see app/Http/Controllers/BillingController.php:81
 * @route '/billing/invoices'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -106,7 +107,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BillingController::store
-* @see app/Http/Controllers/BillingController.php:95
+* @see app/Http/Controllers/BillingController.php:81
 * @route '/billing/invoices'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +117,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\BillingController::store
-* @see app/Http/Controllers/BillingController.php:95
+* @see app/Http/Controllers/BillingController.php:81
 * @route '/billing/invoices'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +127,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\BillingController::store
-* @see app/Http/Controllers/BillingController.php:95
+* @see app/Http/Controllers/BillingController.php:81
 * @route '/billing/invoices'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -137,8 +138,113 @@ storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => (
 store.form = storeForm
 
 /**
+* @see \App\Http\Controllers\BillingController::payment
+* @see app/Http/Controllers/BillingController.php:190
+* @route '/billing/invoices/{invoice}/payment'
+*/
+export const payment = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: payment.url(args, options),
+    method: 'get',
+})
+
+payment.definition = {
+    methods: ["get","head"],
+    url: '/billing/invoices/{invoice}/payment',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\BillingController::payment
+* @see app/Http/Controllers/BillingController.php:190
+* @route '/billing/invoices/{invoice}/payment'
+*/
+payment.url = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { invoice: args }
+    }
+
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { invoice: args.id }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            invoice: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        invoice: typeof args.invoice === 'object'
+        ? args.invoice.id
+        : args.invoice,
+    }
+
+    return payment.definition.url
+            .replace('{invoice}', parsedArgs.invoice.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\BillingController::payment
+* @see app/Http/Controllers/BillingController.php:190
+* @route '/billing/invoices/{invoice}/payment'
+*/
+payment.get = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: payment.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\BillingController::payment
+* @see app/Http/Controllers/BillingController.php:190
+* @route '/billing/invoices/{invoice}/payment'
+*/
+payment.head = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: payment.url(args, options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\BillingController::payment
+* @see app/Http/Controllers/BillingController.php:190
+* @route '/billing/invoices/{invoice}/payment'
+*/
+const paymentForm = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: payment.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\BillingController::payment
+* @see app/Http/Controllers/BillingController.php:190
+* @route '/billing/invoices/{invoice}/payment'
+*/
+paymentForm.get = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: payment.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\BillingController::payment
+* @see app/Http/Controllers/BillingController.php:190
+* @route '/billing/invoices/{invoice}/payment'
+*/
+paymentForm.head = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: payment.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+payment.form = paymentForm
+
+/**
 * @see \App\Http\Controllers\BillingController::proof
-* @see app/Http/Controllers/BillingController.php:173
+* @see app/Http/Controllers/BillingController.php:159
 * @route '/billing/invoices/{invoice}/proof'
 */
 export const proof = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -153,7 +259,7 @@ proof.definition = {
 
 /**
 * @see \App\Http\Controllers\BillingController::proof
-* @see app/Http/Controllers/BillingController.php:173
+* @see app/Http/Controllers/BillingController.php:159
 * @route '/billing/invoices/{invoice}/proof'
 */
 proof.url = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +292,7 @@ proof.url = (args: { invoice: number | { id: number } } | [invoice: number | { i
 
 /**
 * @see \App\Http\Controllers\BillingController::proof
-* @see app/Http/Controllers/BillingController.php:173
+* @see app/Http/Controllers/BillingController.php:159
 * @route '/billing/invoices/{invoice}/proof'
 */
 proof.post = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -196,7 +302,7 @@ proof.post = (args: { invoice: number | { id: number } } | [invoice: number | { 
 
 /**
 * @see \App\Http\Controllers\BillingController::proof
-* @see app/Http/Controllers/BillingController.php:173
+* @see app/Http/Controllers/BillingController.php:159
 * @route '/billing/invoices/{invoice}/proof'
 */
 const proofForm = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -206,7 +312,7 @@ const proofForm = (args: { invoice: number | { id: number } } | [invoice: number
 
 /**
 * @see \App\Http\Controllers\BillingController::proof
-* @see app/Http/Controllers/BillingController.php:173
+* @see app/Http/Controllers/BillingController.php:159
 * @route '/billing/invoices/{invoice}/proof'
 */
 proofForm.post = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -218,7 +324,7 @@ proof.form = proofForm
 
 /**
 * @see \App\Http\Controllers\BillingController::cancel
-* @see app/Http/Controllers/BillingController.php:204
+* @see app/Http/Controllers/BillingController.php:260
 * @route '/billing/invoices/{invoice}'
 */
 export const cancel = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -233,7 +339,7 @@ cancel.definition = {
 
 /**
 * @see \App\Http\Controllers\BillingController::cancel
-* @see app/Http/Controllers/BillingController.php:204
+* @see app/Http/Controllers/BillingController.php:260
 * @route '/billing/invoices/{invoice}'
 */
 cancel.url = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -266,7 +372,7 @@ cancel.url = (args: { invoice: number | { id: number } } | [invoice: number | { 
 
 /**
 * @see \App\Http\Controllers\BillingController::cancel
-* @see app/Http/Controllers/BillingController.php:204
+* @see app/Http/Controllers/BillingController.php:260
 * @route '/billing/invoices/{invoice}'
 */
 cancel.delete = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -276,7 +382,7 @@ cancel.delete = (args: { invoice: number | { id: number } } | [invoice: number |
 
 /**
 * @see \App\Http\Controllers\BillingController::cancel
-* @see app/Http/Controllers/BillingController.php:204
+* @see app/Http/Controllers/BillingController.php:260
 * @route '/billing/invoices/{invoice}'
 */
 const cancelForm = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -291,7 +397,7 @@ const cancelForm = (args: { invoice: number | { id: number } } | [invoice: numbe
 
 /**
 * @see \App\Http\Controllers\BillingController::cancel
-* @see app/Http/Controllers/BillingController.php:204
+* @see app/Http/Controllers/BillingController.php:260
 * @route '/billing/invoices/{invoice}'
 */
 cancelForm.delete = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -309,6 +415,7 @@ cancel.form = cancelForm
 const invoices = {
     index: Object.assign(index, index),
     store: Object.assign(store, store),
+    payment: Object.assign(payment, payment44796b),
     proof: Object.assign(proof, proof),
     cancel: Object.assign(cancel, cancel),
 }

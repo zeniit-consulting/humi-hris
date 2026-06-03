@@ -1,10 +1,9 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Banknote,
     CheckCircle2,
     Clock,
-    Copy,
     CreditCard,
     Lock,
     Receipt,
@@ -12,7 +11,6 @@ import {
     Upload,
     X,
 } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
@@ -36,13 +34,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     Table,
     TableBody,
@@ -72,6 +63,7 @@ type Invoice = {
     total_payment: number | null;
     payment_expires_at: string | null;
     payment_proof: string | null;
+    payment_url: string | null;
 };
 
 type PageProps = {
@@ -81,6 +73,8 @@ type PageProps = {
     billing_urls: {
         index: string;
         invoice_store: string;
+        invoice_payment_template: string;
+        invoice_payment_check_template: string;
         invoice_proof_template: string;
         invoice_cancel_template: string;
     };
@@ -273,7 +267,7 @@ function UpgradeDialog({
     const price = planSlug === 'core' ? PRICE_CORE : PRICE_PLUS;
     const planLabel = planSlug === 'core' ? 'Basic' : 'Plus';
 
-    const { data, setData, errors } = useForm({
+    const { data, errors } = useForm({
         plan_slug: planSlug,
         employee_count: defaultEmployees,
         payment_method: 'qris' as PaymentMethod,
@@ -355,29 +349,10 @@ function UpgradeDialog({
 
                     <div className="space-y-1.5">
                         <Label>Metode Pembayaran</Label>
-                        <Select
-                            value={data.payment_method}
-                            onValueChange={(value) =>
-                                setData(
-                                    'payment_method',
-                                    value as PaymentMethod,
-                                )
-                            }
-                        >
-                            <SelectTrigger className="w-full">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {paymentMethods.map((method) => (
-                                    <SelectItem
-                                        key={method.value}
-                                        value={method.value}
-                                    >
-                                        {method.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                            <span>{paymentMethodLabel(data.payment_method)}</span>
+                            <Badge variant="secondary">Default</Badge>
+                        </div>
                         <InputError message={errors.payment_method} />
                     </div>
 
@@ -393,7 +368,7 @@ function UpgradeDialog({
                             type="submit"
                             disabled={data.employee_count < 1}
                         >
-                            Buat Invoice Paket {planLabel}
+                            Lanjut ke Pembayaran
                         </Button>
                     </div>
                 </form>
@@ -491,108 +466,6 @@ function UploadProofDialog({
                         </Button>
                     </div>
                 </form>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-function PayInvoiceDialog({
-    invoice,
-    onClose,
-}: {
-    invoice: Invoice | null;
-    onClose: () => void;
-}) {
-    const paymentNumber = invoice?.payment_number ?? '';
-
-    const handleCopy = async () => {
-        if (!paymentNumber) return;
-        await navigator.clipboard.writeText(paymentNumber);
-    };
-
-    return (
-        <Dialog open={invoice !== null} onOpenChange={(v) => !v && onClose()}>
-            <DialogContent className="sm:max-w-sm">
-                <DialogHeader>
-                    <DialogTitle>Bayar Invoice</DialogTitle>
-                    <DialogDescription>
-                        Scan QR atau buka link pembayaran untuk menyelesaikan
-                        invoice ini.
-                    </DialogDescription>
-                </DialogHeader>
-
-                {invoice && (
-                    <div className="space-y-4">
-                        <div className="rounded-md bg-muted/50 p-3 text-sm">
-                            <div className="flex justify-between gap-3">
-                                <span className="text-muted-foreground">
-                                    Invoice
-                                </span>
-                                <span className="font-mono text-xs">
-                                    {invoice.invoice_number}
-                                </span>
-                            </div>
-                            <div className="mt-1 flex justify-between gap-3">
-                                <span className="text-muted-foreground">
-                                    Metode
-                                </span>
-                                <span className="font-medium">
-                                    {paymentMethodLabel(invoice.payment_method)}
-                                </span>
-                            </div>
-                            <div className="mt-1 flex justify-between gap-3">
-                                <span className="text-muted-foreground">
-                                    Total
-                                </span>
-                                <span className="font-semibold">
-                                    {fmt.format(
-                                        invoice.total_payment ?? invoice.amount,
-                                    )}
-                                </span>
-                            </div>
-                            {invoice.payment_expires_at && (
-                                <div className="mt-1 flex justify-between gap-3">
-                                    <span className="text-muted-foreground">
-                                        Exp
-                                    </span>
-                                    <span>
-                                        {formatDate(invoice.payment_expires_at)}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-
-                        {paymentNumber ? (
-                            <>
-                                <div className="flex justify-center rounded-md border bg-white p-4">
-                                    <QRCodeSVG
-                                        value={paymentNumber}
-                                        size={220}
-                                        marginSize={2}
-                                        level="M"
-                                    />
-                                </div>
-                                <div className="flex items-start gap-2">
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="outline"
-                                        className="w-full"
-                                        onClick={handleCopy}
-                                    >
-                                        <Copy className="mr-2 size-4" />
-                                        Salin QRIS
-                                    </Button>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
-                                Link pembayaran belum tersedia untuk invoice
-                                ini.
-                            </div>
-                        )}
-                    </div>
-                )}
             </DialogContent>
         </Dialog>
     );
@@ -718,13 +591,14 @@ function InvoiceTable({
     invoices,
     proofUrlTemplate,
     cancelUrlTemplate,
+    paymentUrlTemplate,
 }: {
     invoices: Invoice[];
     proofUrlTemplate: string;
     cancelUrlTemplate: string;
+    paymentUrlTemplate: string;
 }) {
     const [uploadInvoiceId, setUploadInvoiceId] = useState<number | null>(null);
-    const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
     const { delete: destroy, processing: cancelling } = useForm({});
 
     const handleCancel = (id: number) => {
@@ -824,18 +698,30 @@ function InvoiceTable({
                                                     size="sm"
                                                     variant="outline"
                                                     className="h-8 w-8 p-0"
-                                                    disabled={
-                                                        !inv.payment_number
-                                                    }
-                                                    onClick={() =>
-                                                        setPaymentInvoice(inv)
-                                                    }
+                                                    disabled={!inv.payment_number}
+                                                    asChild={!!inv.payment_number}
                                                     title="Bayar invoice"
                                                 >
-                                                    <Banknote className="size-4" />
-                                                    <span className="sr-only">
-                                                        Bayar invoice
-                                                    </span>
+                                                    {inv.payment_number ? (
+                                                        <Link
+                                                            href={paymentUrlTemplate.replace(
+                                                                '__INVOICE_ID__',
+                                                                String(inv.id),
+                                                            )}
+                                                        >
+                                                            <Banknote className="size-4" />
+                                                            <span className="sr-only">
+                                                                Bayar invoice
+                                                            </span>
+                                                        </Link>
+                                                    ) : (
+                                                        <>
+                                                            <Banknote className="size-4" />
+                                                            <span className="sr-only">
+                                                                Bayar invoice
+                                                            </span>
+                                                        </>
+                                                    )}
                                                 </Button>
                                                 <Button
                                                     type="button"
@@ -901,10 +787,6 @@ function InvoiceTable({
                 invoiceId={uploadInvoiceId}
                 onClose={() => setUploadInvoiceId(null)}
                 proofUrlTemplate={proofUrlTemplate}
-            />
-            <PayInvoiceDialog
-                invoice={paymentInvoice}
-                onClose={() => setPaymentInvoice(null)}
             />
         </>
     );
@@ -1009,6 +891,9 @@ export default function BillingPage() {
                         invoices={invoices ?? []}
                         proofUrlTemplate={billing_urls.invoice_proof_template}
                         cancelUrlTemplate={billing_urls.invoice_cancel_template}
+                        paymentUrlTemplate={
+                            billing_urls.invoice_payment_template
+                        }
                     />
                 </section>
             </div>
