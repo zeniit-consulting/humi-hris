@@ -292,7 +292,7 @@ robotsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 robots.form = robotsForm
 
 /**
-* @see routes/web.php:88
+* @see routes/web.php:91
 * @route '/sitemap.xml'
 */
 export const sitemap = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -306,7 +306,7 @@ sitemap.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:88
+* @see routes/web.php:91
 * @route '/sitemap.xml'
 */
 sitemap.url = (options?: RouteQueryOptions) => {
@@ -314,7 +314,7 @@ sitemap.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:88
+* @see routes/web.php:91
 * @route '/sitemap.xml'
 */
 sitemap.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -323,7 +323,7 @@ sitemap.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:88
+* @see routes/web.php:91
 * @route '/sitemap.xml'
 */
 sitemap.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -332,7 +332,7 @@ sitemap.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:88
+* @see routes/web.php:91
 * @route '/sitemap.xml'
 */
 const sitemapForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -341,7 +341,7 @@ const sitemapForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 })
 
 /**
-* @see routes/web.php:88
+* @see routes/web.php:91
 * @route '/sitemap.xml'
 */
 sitemapForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -350,7 +350,7 @@ sitemapForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 })
 
 /**
-* @see routes/web.php:88
+* @see routes/web.php:91
 * @route '/sitemap.xml'
 */
 sitemapForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -366,7 +366,7 @@ sitemapForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 sitemap.form = sitemapForm
 
 /**
-* @see routes/web.php:130
+* @see routes/web.php:145
 * @route '/'
 */
 export const home = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -380,7 +380,7 @@ home.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:130
+* @see routes/web.php:145
 * @route '/'
 */
 home.url = (options?: RouteQueryOptions) => {
@@ -388,7 +388,7 @@ home.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:130
+* @see routes/web.php:145
 * @route '/'
 */
 home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -397,7 +397,7 @@ home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:130
+* @see routes/web.php:145
 * @route '/'
 */
 home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -406,7 +406,7 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:130
+* @see routes/web.php:145
 * @route '/'
 */
 const homeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -415,7 +415,7 @@ const homeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:130
+* @see routes/web.php:145
 * @route '/'
 */
 homeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -424,7 +424,7 @@ homeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:130
+* @see routes/web.php:145
 * @route '/'
 */
 homeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -438,6 +438,154 @@ homeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 })
 
 home.form = homeForm
+
+/**
+* @see routes/web.php:151
+* @route '/features'
+*/
+export const features = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: features.url(options),
+    method: 'get',
+})
+
+features.definition = {
+    methods: ["get","head"],
+    url: '/features',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see routes/web.php:151
+* @route '/features'
+*/
+features.url = (options?: RouteQueryOptions) => {
+    return features.definition.url + queryParams(options)
+}
+
+/**
+* @see routes/web.php:151
+* @route '/features'
+*/
+features.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: features.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:151
+* @route '/features'
+*/
+features.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: features.url(options),
+    method: 'head',
+})
+
+/**
+* @see routes/web.php:151
+* @route '/features'
+*/
+const featuresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: features.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:151
+* @route '/features'
+*/
+featuresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: features.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:151
+* @route '/features'
+*/
+featuresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: features.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+features.form = featuresForm
+
+/**
+* @see routes/web.php:155
+* @route '/contact'
+*/
+export const contact = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: contact.url(options),
+    method: 'get',
+})
+
+contact.definition = {
+    methods: ["get","head"],
+    url: '/contact',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see routes/web.php:155
+* @route '/contact'
+*/
+contact.url = (options?: RouteQueryOptions) => {
+    return contact.definition.url + queryParams(options)
+}
+
+/**
+* @see routes/web.php:155
+* @route '/contact'
+*/
+contact.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: contact.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:155
+* @route '/contact'
+*/
+contact.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: contact.url(options),
+    method: 'head',
+})
+
+/**
+* @see routes/web.php:155
+* @route '/contact'
+*/
+const contactForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: contact.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:155
+* @route '/contact'
+*/
+contactForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: contact.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:155
+* @route '/contact'
+*/
+contactForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: contact.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+contact.form = contactForm
 
 /**
 * @see \App\Http\Controllers\DashboardController::__invoke

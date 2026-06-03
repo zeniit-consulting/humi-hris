@@ -71,6 +71,9 @@ Route::get('robots.txt', function () {
         }
 
         $lines[] = 'Allow: /';
+        $lines[] = 'Allow: /features';
+        $lines[] = 'Allow: /contact';
+        $lines[] = 'Allow: /careers';
 
         foreach ($privatePaths as $path) {
             $lines[] = 'Disallow: '.$path;
@@ -98,6 +101,18 @@ Route::get('sitemap.xml', function () {
             'loc' => $baseUrl.'/careers',
             'priority' => '0.6',
             'changefreq' => 'daily',
+            'lastmod' => now()->toAtomString(),
+        ],
+        [
+            'loc' => $baseUrl.'/features',
+            'priority' => '0.8',
+            'changefreq' => 'weekly',
+            'lastmod' => now()->toAtomString(),
+        ],
+        [
+            'loc' => $baseUrl.'/contact',
+            'priority' => '0.7',
+            'changefreq' => 'monthly',
             'lastmod' => now()->toAtomString(),
         ],
     ];
@@ -132,6 +147,14 @@ Route::get('/', function () {
         'canRegister' => Features::enabled(Features::registration()),
     ]);
 })->name('home');
+
+Route::get('features', function () {
+    return Inertia::render('features');
+})->name('features');
+
+Route::get('contact', function () {
+    return Inertia::render('contact');
+})->name('contact');
 
 Route::get('careers', [CareerController::class, 'index'])->name('careers.index');
 Route::get('careers/{slug}', [CareerController::class, 'show'])->name('careers.show');

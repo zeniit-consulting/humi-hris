@@ -236,12 +236,12 @@ export default function Welcome({
                         </Link>
 
                         <nav className="hidden items-center gap-1 md:flex">
-                            <a
-                                href="#features"
+                            <Link
+                                href="/features"
                                 className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
                             >
                                 Fitur
-                            </a>
+                            </Link>
                             <a
                                 href="#benefits"
                                 className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
@@ -254,6 +254,12 @@ export default function Welcome({
                             >
                                 Harga
                             </a>
+                            <Link
+                                href="/contact"
+                                className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
+                            >
+                                Kontak
+                            </Link>
                         </nav>
 
                         <div className="flex items-center gap-2">
@@ -757,24 +763,24 @@ export default function Welcome({
                             </p>
 
                             <div className="flex gap-4 text-xs text-slate-500">
-                                <a
-                                    href="#"
+                                <Link
+                                    href="/features"
                                     className="transition hover:text-slate-900"
                                 >
-                                    Privacy
-                                </a>
+                                    Fitur
+                                </Link>
                                 <a
-                                    href="#"
+                                    href="#pricing"
                                     className="transition hover:text-slate-900"
                                 >
-                                    Terms
+                                    Harga
                                 </a>
-                                <a
-                                    href="#"
+                                <Link
+                                    href="/contact"
                                     className="transition hover:text-slate-900"
                                 >
-                                    Contact
-                                </a>
+                                    Kontak
+                                </Link>
                             </div>
                         </div>
                     </div>

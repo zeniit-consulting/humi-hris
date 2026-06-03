@@ -27,6 +27,9 @@ class SeoInfrastructureTest extends TestCase
             ->assertSee('User-agent: PerplexityBot', false)
             ->assertSee('User-agent: ClaudeBot', false)
             ->assertSee('Allow: /', false)
+            ->assertSee('Allow: /features', false)
+            ->assertSee('Allow: /contact', false)
+            ->assertSee('Allow: /careers', false)
             ->assertSee('Disallow: /portal', false)
             ->assertSee('Disallow: /login', false)
             ->assertSee('Sitemap: https://humi.test/sitemap.xml', false);
@@ -69,6 +72,8 @@ class SeoInfrastructureTest extends TestCase
             ->assertOk()
             ->assertHeader('Content-Type', 'application/xml')
             ->assertSee('<loc>https://humi.test</loc>', false)
+            ->assertSee('<loc>https://humi.test/features</loc>', false)
+            ->assertSee('<loc>https://humi.test/contact</loc>', false)
             ->assertSee('<loc>https://humi.test/careers</loc>', false)
             ->assertSee(
                 '<loc>https://humi.test/careers/hr-operations-specialist</loc>',
