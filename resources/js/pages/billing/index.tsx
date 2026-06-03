@@ -78,6 +78,12 @@ type PageProps = {
     subscription: SubscriptionInfo | null;
     invoices: Invoice[];
     employee_count: number;
+    billing_urls: {
+        index: string;
+        invoice_store: string;
+        invoice_proof_template: string;
+        invoice_cancel_template: string;
+    };
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -254,6 +260,7 @@ type UpgradeDialogProps = {
     onClose: () => void;
     planSlug: 'core' | 'plus';
     defaultEmployees: number;
+    invoiceStoreUrl: string;
 };
 
 function UpgradeDialog({
@@ -261,6 +268,7 @@ function UpgradeDialog({
     onClose,
     planSlug,
     defaultEmployees,
+    invoiceStoreUrl,
 }: UpgradeDialogProps) {
     const price = planSlug === 'core' ? PRICE_CORE : PRICE_PLUS;
     const planLabel = planSlug === 'core' ? 'Basic' : 'Plus';
@@ -288,7 +296,7 @@ function UpgradeDialog({
                 </DialogHeader>
 
                 <form
-                    action="/billing/invoices"
+                    action={invoiceStoreUrl}
                     method="post"
                     className="space-y-4"
                 >
@@ -400,10 +408,12 @@ function UploadProofDialog({
     open,
     invoiceId,
     onClose,
+    proofUrlTemplate,
 }: {
     open: boolean;
     invoiceId: number | null;
     onClose: () => void;
+    proofUrlTemplate: string;
 }) {
     const { data, setData, post, processing, errors, reset } = useForm<{
         payment_proof: File | null;
@@ -412,7 +422,7 @@ function UploadProofDialog({
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         if (!invoiceId) return;
-        post(`/billing/invoices/${invoiceId}/proof`, {
+        post(proofUrlTemplate.replace('__INVOICE_ID__', String(invoiceId)), {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
@@ -704,14 +714,24 @@ function PlanCard({
 
 // ── Invoice Table ─────────────────────────────────────────────────────────────
 
-function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
+function InvoiceTable({
+    invoices,
+    proofUrlTemplate,
+    cancelUrlTemplate,
+}: {
+    invoices: Invoice[];
+    proofUrlTemplate: string;
+    cancelUrlTemplate: string;
+}) {
     const [uploadInvoiceId, setUploadInvoiceId] = useState<number | null>(null);
     const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
     const { delete: destroy, processing: cancelling } = useForm({});
 
     const handleCancel = (id: number) => {
         if (!confirm('Batalkan invoice ini?')) return;
-        destroy(`/billing/invoices/${id}`, { preserveScroll: true });
+        destroy(cancelUrlTemplate.replace('__INVOICE_ID__', String(id)), {
+            preserveScroll: true,
+        });
     };
 
     if (invoices.length === 0) {
@@ -880,6 +900,7 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                 open={uploadInvoiceId !== null}
                 invoiceId={uploadInvoiceId}
                 onClose={() => setUploadInvoiceId(null)}
+                proofUrlTemplate={proofUrlTemplate}
             />
             <PayInvoiceDialog
                 invoice={paymentInvoice}
@@ -892,7 +913,7 @@ function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function BillingPage() {
-    const { subscription, invoices, employee_count } =
+    const { subscription, invoices, employee_count, billing_urls } =
         usePage<PageProps>().props;
     const [upgradeDialog, setUpgradeDialog] = useState<'core' | 'plus' | null>(
         null,
@@ -984,7 +1005,11 @@ export default function BillingPage() {
                     <h2 className="mb-3 text-base font-semibold">
                         Riwayat Invoice
                     </h2>
-                    <InvoiceTable invoices={invoices ?? []} />
+                    <InvoiceTable
+                        invoices={invoices ?? []}
+                        proofUrlTemplate={billing_urls.invoice_proof_template}
+                        cancelUrlTemplate={billing_urls.invoice_cancel_template}
+                    />
                 </section>
             </div>
 
@@ -994,6 +1019,7 @@ export default function BillingPage() {
                     onClose={() => setUpgradeDialog(null)}
                     planSlug={upgradeDialog}
                     defaultEmployees={employeeCount}
+                    invoiceStoreUrl={billing_urls.invoice_store}
                 />
             )}
         </AppLayout>

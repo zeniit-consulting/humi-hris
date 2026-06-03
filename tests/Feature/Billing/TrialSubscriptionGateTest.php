@@ -5,6 +5,7 @@ namespace Tests\Feature\Billing;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class TrialSubscriptionGateTest extends TestCase
@@ -66,5 +67,27 @@ class TrialSubscriptionGateTest extends TestCase
             ->assertOk();
 
         Carbon::setTestNow();
+    }
+
+    public function test_billing_page_uses_app_url_prefix_for_invoice_actions(): void
+    {
+        config()->set('app.url', 'https://backoffice.zeniconsulting.com/api');
+
+        $user = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->get('/billing')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('billing/index')
+                ->where('billing_urls.index', 'https://backoffice.zeniconsulting.com/api/billing')
+                ->where('billing_urls.invoice_store', 'https://backoffice.zeniconsulting.com/api/billing/invoices')
+                ->where('billing_urls.invoice_proof_template', 'https://backoffice.zeniconsulting.com/api/billing/invoices/__INVOICE_ID__/proof')
+                ->where('billing_urls.invoice_cancel_template', 'https://backoffice.zeniconsulting.com/api/billing/invoices/__INVOICE_ID__')
+            );
     }
 }

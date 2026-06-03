@@ -42,6 +42,12 @@ class BillingController extends Controller
             ->get();
 
         return Inertia::render('billing/index', [
+            'billing_urls' => [
+                'index' => $this->publicRouteUrl('billing.index'),
+                'invoice_store' => $this->publicRouteUrl('billing.invoices.store'),
+                'invoice_proof_template' => $this->publicRouteUrl('billing.invoices.proof', ['invoice' => '__INVOICE_ID__']),
+                'invoice_cancel_template' => $this->publicRouteUrl('billing.invoices.cancel', ['invoice' => '__INVOICE_ID__']),
+            ],
             'subscription' => $subscription ? [
                 'id' => $subscription->id,
                 'plan_slug' => $subscription->plan_slug,
@@ -209,5 +215,23 @@ class BillingController extends Controller
 
         return redirect()->route('billing.index')
             ->with('success', 'Invoice berhasil dibatalkan.');
+    }
+
+    /**
+     * Build action URLs from APP_URL so deployments behind a public path prefix
+     * such as /api do not post forms to the domain root.
+     *
+     * @param  array<string, mixed>  $parameters
+     */
+    private function publicRouteUrl(string $name, array $parameters = []): string
+    {
+        $path = route($name, $parameters, false);
+        $baseUrl = rtrim((string) config('app.url'), '/');
+
+        if ($baseUrl === '') {
+            return $path;
+        }
+
+        return $baseUrl.'/'.ltrim($path, '/');
     }
 }
