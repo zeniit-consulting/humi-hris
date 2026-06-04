@@ -150,12 +150,28 @@ class BillingController extends Controller
                 ->with('success', 'Invoice pending masih tersedia. Silakan lanjutkan pembayaran.');
         }
 
-        $invoice = $this->subscriptionService->createInvoice(
-            $user,
-            $validated['plan_slug'],
-            $activeEmployeeCount,
-            $paymentMethod,
-        );
+        try {
+            $invoice = $this->subscriptionService->createInvoice(
+                $user,
+                $validated['plan_slug'],
+                $activeEmployeeCount,
+                $paymentMethod,
+            );
+        } catch (\Throwable $exception) {
+            Log::warning('billing.invoice.create.invoice_creation_failed', [
+                'user_id' => $user->id,
+                'owner_id' => $ownerId,
+                'plan_slug' => $validated['plan_slug'],
+                'active_employee_count' => $activeEmployeeCount,
+                'exception' => $exception::class,
+                'message' => $exception->getMessage(),
+            ]);
+
+            report($exception);
+
+            return redirect()->away($this->routePath('billing.index'))
+                ->with('error', 'Invoice belum dapat dibuat. Pastikan paket langganan sudah tersedia dan coba lagi.');
+        }
 
         try {
             $response = $this->pakasir->createTransaction($invoice, $paymentMethod);
