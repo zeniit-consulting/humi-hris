@@ -290,6 +290,20 @@ class PakasirPaymentGatewayTest extends TestCase
             );
     }
 
+    public function test_missing_payment_invoice_redirects_back_to_billing_instead_of_404(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->get(route('billing.invoices.payment', ['invoice' => 999999]))
+            ->assertRedirect(route('billing.index'))
+            ->assertSessionHas('error', 'Invoice pembayaran tidak ditemukan. Silakan buat invoice baru.');
+    }
+
     public function test_manual_payment_check_marks_completed_pakasir_invoice_paid(): void
     {
         config()->set('services.pakasir.project', 'depodomain');
@@ -555,7 +569,7 @@ class PakasirPaymentGatewayTest extends TestCase
         $this->assertDatabaseCount('subscription_invoices', 1);
     }
 
-    public function test_pakasir_response_without_payment_number_does_not_leave_pending_invoice(): void
+    public function test_pakasir_response_without_payment_number_uses_payment_url_fallback(): void
     {
         config()->set('services.pakasir.project', 'depodomain');
         config()->set('services.pakasir.api_key', 'xxx123');
@@ -600,9 +614,14 @@ class PakasirPaymentGatewayTest extends TestCase
                 'employee_count' => 10,
                 'payment_method' => 'qris',
             ])
-            ->assertRedirect(route('billing.index'))
-            ->assertSessionHas('error', 'Respons Pakasir tidak menyertakan QRIS/nomor pembayaran.');
+            ->assertRedirect()
+            ->assertSessionHas('success');
 
-        $this->assertDatabaseCount('subscription_invoices', 0);
+        $invoice = SubscriptionInvoice::query()->firstOrFail();
+
+        $this->assertSame(
+            "https://app.pakasir.com/pay/depodomain/29000?order_id={$invoice->invoice_number}",
+            $invoice->payment_number,
+        );
     }
 }

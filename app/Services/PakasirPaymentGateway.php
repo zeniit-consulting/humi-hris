@@ -100,7 +100,7 @@ class PakasirPaymentGateway
                 'response' => $response,
             ]);
 
-            throw new RuntimeException('Respons Pakasir tidak menyertakan QRIS/nomor pembayaran.');
+            $paymentNumber = $this->paymentUrl($invoice);
         }
 
         $invoice->update([

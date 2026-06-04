@@ -187,12 +187,21 @@ class BillingController extends Controller
             ->with('success', 'Bukti pembayaran berhasil diupload. Kami akan verifikasi segera.');
     }
 
-    public function payment(Request $request, SubscriptionInvoice $invoice): InertiaResponse
+    public function payment(Request $request, int|string $invoice): InertiaResponse|RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
+        $ownerId = $user->accountOwnerId();
 
-        abort_if($invoice->user_id !== $user->accountOwnerId(), 403);
+        $invoice = SubscriptionInvoice::query()
+            ->whereKey($invoice)
+            ->where('user_id', $ownerId)
+            ->first();
+
+        if (! $invoice) {
+            return redirect()->away($this->routePath('billing.index'))
+                ->with('error', 'Invoice pembayaran tidak ditemukan. Silakan buat invoice baru.');
+        }
 
         return Inertia::render('billing/payment', [
             'invoice' => $this->serializeInvoice($invoice),
