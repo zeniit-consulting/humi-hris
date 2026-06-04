@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -89,8 +90,21 @@ class BillingController extends Controller
 
         /** @var User $user */
         $user = $request->user();
+        $ownerId = $user->accountOwnerId();
+
+        Log::info('billing.invoice.create.started', [
+            'user_id' => $user->id,
+            'owner_id' => $ownerId,
+            'plan_slug' => $validated['plan_slug'],
+            'payment_method' => $paymentMethod,
+        ]);
 
         if (! $this->pakasir->isConfigured()) {
+            Log::warning('billing.invoice.create.pakasir_not_configured', [
+                'user_id' => $user->id,
+                'owner_id' => $ownerId,
+            ]);
+
             return redirect()->away($this->routePath('billing.index'))
                 ->with('error', 'Konfigurasi Pakasir belum lengkap. Isi PAKASIR_PROJECT dan PAKASIR_API_KEY.');
         }
@@ -98,11 +112,16 @@ class BillingController extends Controller
         $activeEmployeeCount = $this->subscriptionService->getEmployeeCount($user);
 
         if ($activeEmployeeCount < 1) {
+            Log::warning('billing.invoice.create.no_active_employees', [
+                'user_id' => $user->id,
+                'owner_id' => $ownerId,
+                'active_employee_count' => $activeEmployeeCount,
+            ]);
+
             return redirect()->away($this->routePath('billing.index'))
                 ->with('error', 'Invoice belum dapat dibuat karena belum ada karyawan berstatus aktif.');
         }
 
-        $ownerId = $user->accountOwnerId();
         $existingInvoice = SubscriptionInvoice::query()
             ->where('user_id', $ownerId)
             ->where('plan_slug', $validated['plan_slug'])
@@ -120,6 +139,13 @@ class BillingController extends Controller
             ->first();
 
         if ($existingInvoice) {
+            Log::info('billing.invoice.create.reusing_pending_invoice', [
+                'user_id' => $user->id,
+                'owner_id' => $ownerId,
+                'invoice_id' => $existingInvoice->id,
+                'invoice_number' => $existingInvoice->invoice_number,
+            ]);
+
             return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $existingInvoice->id]))
                 ->with('success', 'Invoice pending masih tersedia. Silakan lanjutkan pembayaran.');
         }
@@ -135,12 +161,29 @@ class BillingController extends Controller
             $response = $this->pakasir->createTransaction($invoice, $paymentMethod);
             $this->pakasir->applyTransactionResponse($invoice, $response);
         } catch (\Throwable $exception) {
+            Log::warning('billing.invoice.create.failed', [
+                'user_id' => $user->id,
+                'owner_id' => $ownerId,
+                'invoice_id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+                'exception' => $exception::class,
+                'message' => $exception->getMessage(),
+            ]);
+
             report($exception);
             $invoice->delete();
 
             return redirect()->away($this->routePath('billing.index'))
                 ->with('error', $exception->getMessage() ?: 'Transaksi Pakasir gagal dibuat. Silakan coba lagi atau hubungi admin.');
         }
+
+        Log::info('billing.invoice.create.completed', [
+            'user_id' => $user->id,
+            'owner_id' => $ownerId,
+            'invoice_id' => $invoice->id,
+            'invoice_number' => $invoice->invoice_number,
+            'payment_method' => $paymentMethod,
+        ]);
 
         return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
             ->with('success', 'Invoice Pakasir berhasil dibuat. Silakan selesaikan pembayaran QRIS.');
