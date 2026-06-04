@@ -169,7 +169,7 @@ class AttendanceController extends Controller
             'notes' => $validated['notes'] ?? null,
         ];
 
-        $payload['status'] = $statusService->resolveStatus($payload, $user->accountOwnerId());
+        $payload['status'] = $statusService->resolveStatus($payload, $user->accountOwnerId(), $timezone);
 
         $attendance = EmployeeAttendance::query()->create($payload);
 
@@ -214,7 +214,7 @@ class AttendanceController extends Controller
             return $this->error('Clock out hanya bisa dilakukan maksimal 3 hari dari tanggal absensi.');
         }
 
-        $validated['status'] = $statusService->resolveStatus($validated, $user->accountOwnerId());
+        $validated['status'] = $statusService->resolveStatus($validated, $user->accountOwnerId(), $timezone);
 
         $employeeAttendance->update($validated);
         $employeeAttendance->refresh()->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes']);
@@ -316,7 +316,7 @@ class AttendanceController extends Controller
             return null;
         }
 
-        $checkIn = Carbon::parse((string) $checkInAt, $timezone);
+        $checkIn = Carbon::parse((string) $checkInAt, config('app.timezone'))->setTimezone($timezone);
         $checkInMinute = ((int) $checkIn->format('H')) * 60 + (int) $checkIn->format('i');
 
         return WorkShift::query()
@@ -375,10 +375,10 @@ class AttendanceController extends Controller
     {
         $hasTimezone = (bool) preg_match('/(?:Z|[+-]\d{2}:?\d{2})$/i', $value);
         $date = $hasTimezone
-            ? Carbon::parse($value)->setTimezone($timezone)
+            ? Carbon::parse($value)
             : Carbon::parse($value, $timezone);
 
-        return $date->format('Y-m-d H:i:s');
+        return $date->utc()->format('Y-m-d H:i:s');
     }
 
     private function localTimestamp(mixed $value, string $timezone): ?string
@@ -387,7 +387,7 @@ class AttendanceController extends Controller
             return null;
         }
 
-        return Carbon::parse($value->format('Y-m-d H:i:s'), $timezone)->toIso8601String();
+        return Carbon::parse($value, config('app.timezone'))->setTimezone($timezone)->toIso8601String();
     }
 
     /**
@@ -396,7 +396,7 @@ class AttendanceController extends Controller
     private function attendanceReferenceTime(array $validated, string $timezone): Carbon
     {
         if (! empty($validated['check_in_at'])) {
-            return Carbon::parse((string) $validated['check_in_at'], $timezone);
+            return Carbon::parse((string) $validated['check_in_at'], config('app.timezone'))->setTimezone($timezone);
         }
 
         return Carbon::now($timezone);

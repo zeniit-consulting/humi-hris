@@ -90,12 +90,13 @@ class PakasirPaymentGateway
     public function applyTransactionResponse(SubscriptionInvoice $invoice, array $response): SubscriptionInvoice
     {
         $payment = Arr::get($response, 'payment', []);
-        $paymentNumber = Arr::get($payment, 'payment_number');
+        $paymentNumber = $this->paymentNumberFrom($payment);
 
         if (! is_string($paymentNumber) || Str::of($paymentNumber)->trim()->isEmpty()) {
             Log::warning('pakasir.transaction_create.missing_payment_number', [
                 'invoice_id' => $invoice->id,
                 'invoice_number' => $invoice->invoice_number,
+                'payment_keys' => array_keys($payment),
                 'response' => $response,
             ]);
 
@@ -115,6 +116,38 @@ class PakasirPaymentGateway
         ]);
 
         return $invoice->refresh();
+    }
+
+    /**
+     * Pakasir can return QRIS/VA data under different keys depending on method.
+     *
+     * @param  array<string, mixed>  $payment
+     */
+    private function paymentNumberFrom(array $payment): ?string
+    {
+        foreach ([
+            'payment_number',
+            'payment_code',
+            'account_number',
+            'va_number',
+            'qris',
+            'qris_string',
+            'qris_content',
+            'qr_string',
+            'qr_content',
+            'qr_code',
+            'qr_url',
+            'payment_url',
+            'checkout_url',
+        ] as $key) {
+            $value = Arr::get($payment, $key);
+
+            if (is_string($value) && Str::of($value)->trim()->isNotEmpty()) {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     public function transactionDetail(SubscriptionInvoice $invoice): array

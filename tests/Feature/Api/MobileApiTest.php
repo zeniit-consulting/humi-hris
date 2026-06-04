@@ -1004,14 +1004,14 @@ class MobileApiTest extends TestCase
         $attendance = EmployeeAttendance::query()->firstOrFail();
 
         $this->assertSame(
-            '2026-05-19 08:00:00',
+            '2026-05-19 00:00:00',
             $attendance->check_in_at?->format('Y-m-d H:i:s'),
         );
 
         $this->withHeader('X-Timezone', 'Asia/Jayapura')
             ->getJson('/api/mobile/v1/attendances?date=2026-05-19')
             ->assertOk()
-            ->assertJsonPath('data.items.0.check_in_at', '2026-05-19T08:00:00+09:00');
+            ->assertJsonPath('data.items.0.check_in_at', '2026-05-19T09:00:00+09:00');
     }
 
     public function test_clock_out_is_blocked_after_three_days(): void

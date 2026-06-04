@@ -10,15 +10,9 @@ import {
     Wallet,
 } from 'lucide-react';
 import { startTransition, useEffect, useMemo, useState } from 'react';
-import { notifyPortal, translatePortalError } from './lib';
+import { notifyPortal, requestApi, translatePortalError } from './lib';
 import { PortalNavbar } from './navbar';
 import { PortalToastViewport } from './toast';
-
-type MobileResponse<T> = {
-    success: boolean;
-    message: string;
-    data: T;
-};
 
 type ShiftPayload = {
     id: number;
@@ -129,8 +123,6 @@ type PortalSummary = {
     };
 };
 
-type RequestMethod = 'GET' | 'POST' | 'PUT';
-
 const quickLinks = [
     {
         key: 'attendance',
@@ -199,39 +191,6 @@ const formatDateParts = (value: string | null) => {
         }).format(date),
     };
 };
-
-async function requestApi<T>(
-    url: string,
-    method: RequestMethod = 'GET',
-    body?: Record<string, unknown>,
-): Promise<MobileResponse<T>> {
-    const xsrfCookie = document.cookie
-        .split('; ')
-        .find((row) => row.startsWith('XSRF-TOKEN='))
-        ?.split('=')[1];
-
-    const response = await fetch(url, {
-        method,
-        credentials: 'include',
-        headers: {
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            ...(xsrfCookie
-                ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfCookie) }
-                : {}),
-            ...(body ? { 'Content-Type': 'application/json' } : {}),
-        },
-        body: body ? JSON.stringify(body) : undefined,
-    });
-
-    const payload = (await response.json()) as MobileResponse<T>;
-
-    if (!response.ok || payload.success === false) {
-        throw new Error(payload.message || 'Request failed.');
-    }
-
-    return payload;
-}
 
 export default function PortalPage() {
     const [summary, setSummary] = useState<PortalSummary | null>(null);

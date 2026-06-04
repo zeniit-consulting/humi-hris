@@ -128,10 +128,10 @@ class AttendanceCorrectionRequestController extends Controller
     {
         $hasTimezone = (bool) preg_match('/(?:Z|[+-]\d{2}:?\d{2})$/i', $value);
         $date = $hasTimezone
-            ? Carbon::parse($value)->setTimezone($timezone)
+            ? Carbon::parse($value)
             : Carbon::parse($value, $timezone);
 
-        return $date->format('Y-m-d H:i:s');
+        return $date->utc()->format('Y-m-d H:i:s');
     }
 
     private function localTimestamp(mixed $value, string $timezone): ?string
@@ -140,6 +140,6 @@ class AttendanceCorrectionRequestController extends Controller
             return null;
         }
 
-        return Carbon::parse($value->format('Y-m-d H:i:s'), $timezone)->toIso8601String();
+        return Carbon::parse($value, config('app.timezone'))->setTimezone($timezone)->toIso8601String();
     }
 }

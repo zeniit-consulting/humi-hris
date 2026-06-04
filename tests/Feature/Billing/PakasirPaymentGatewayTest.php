@@ -137,6 +137,60 @@ class PakasirPaymentGatewayTest extends TestCase
         );
     }
 
+    public function test_invoice_creation_accepts_qris_content_without_payment_number_key(): void
+    {
+        config()->set('services.pakasir.project', 'depodomain');
+        config()->set('services.pakasir.api_key', 'xxx123');
+
+        Http::fake([
+            'app.pakasir.com/api/transactioncreate/qris' => Http::response([
+                'payment' => [
+                    'project' => 'depodomain',
+                    'order_id' => 'INV-1',
+                    'amount' => 29000,
+                    'fee' => 1000,
+                    'total_payment' => 30000,
+                    'payment_method' => 'qris',
+                    'qris_content' => '00020101021226670016COM.NOBUBANK.WWW01189360050300000879140214581231905463450303UMI51440014ID.CO.QRIS.WWW0215ID10232547741230303UMI5204541153033605802ID5909HUMI HRIS6007JAKARTA6105123406304ABCD',
+                    'expired_at' => now()->addDay()->toIso8601String(),
+                ],
+            ]),
+        ]);
+
+        $user = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        Employee::factory()
+            ->count(10)
+            ->create(['user_id' => $user->id, 'employment_status' => 'active']);
+
+        SubscriptionPlan::query()->create([
+            'slug' => 'core',
+            'name' => 'Basic',
+            'price_per_employee' => 2900,
+            'max_employees' => null,
+            'max_months' => null,
+            'locked_features' => [],
+            'is_active' => true,
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->post(route('billing.invoices.store'), [
+                'plan_slug' => 'core',
+                'payment_method' => 'qris',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $invoice = SubscriptionInvoice::query()->firstOrFail();
+
+        $this->assertSame('qris', $invoice->payment_method);
+        $this->assertStringStartsWith('000201010212', (string) $invoice->payment_number);
+    }
+
 
     public function test_pakasir_completed_webhook_marks_invoice_paid_and_activates_subscription(): void
     {

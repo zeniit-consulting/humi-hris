@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AttendanceCorrectionRequest;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
@@ -206,11 +207,62 @@ class PortalPageTest extends TestCase
 
             $response
                 ->assertOk()
-                ->assertJsonPath('data.quick_action.attendance.check_in_at', '2026-04-23T11:51:00+08:00')
-                ->assertJsonPath('data.quick_action.attendance.check_out_at', '2026-04-23T20:00:00+08:00');
+                ->assertJsonPath('data.quick_action.attendance.check_in_at', '2026-04-23T19:51:00+08:00')
+                ->assertJsonPath('data.quick_action.attendance.check_out_at', '2026-04-24T04:00:00+08:00');
         } finally {
             Carbon::setTestNow();
         }
+    }
+
+    public function test_attendance_correction_request_stores_utc_and_returns_device_local_times(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'email' => 'correction@example.com',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => $user->email,
+            'employment_status' => 'active',
+            'employment_type' => 'permanent',
+        ]);
+
+        $this->actingAs($user)
+            ->withHeader('X-Timezone', 'Asia/Makassar')
+            ->postJson(route('portal.api.attendance-requests.store'), [
+                'attendance_date' => '2026-05-19',
+                'check_in_at' => '2026-05-19T09:30:00',
+                'check_out_at' => '2026-05-19T18:00:00',
+                'reason' => 'Lupa clock in dari portal.',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.check_in_at', '2026-05-19T09:30:00+08:00')
+            ->assertJsonPath('data.check_out_at', '2026-05-19T18:00:00+08:00');
+
+        $attendanceRequest = AttendanceCorrectionRequest::query()->firstOrFail();
+
+        $this->assertSame('2026-05-19 01:30:00', $attendanceRequest->check_in_at?->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-05-19 10:00:00', $attendanceRequest->check_out_at?->format('Y-m-d H:i:s'));
+
+        $this->actingAs($user)
+            ->withHeader('X-Timezone', 'Asia/Jayapura')
+            ->getJson(route('portal.api.attendance-requests.index'))
+            ->assertOk()
+            ->assertJsonPath('data.items.0.check_in_at', '2026-05-19T10:30:00+09:00')
+            ->assertJsonPath('data.items.0.check_out_at', '2026-05-19T19:00:00+09:00');
     }
 
     public function test_user_can_export_own_payslip_pdf(): void

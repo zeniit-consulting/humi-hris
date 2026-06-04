@@ -490,12 +490,12 @@ class PortalController extends Controller
             return null;
         }
 
-        return Carbon::parse($value->format('Y-m-d H:i:s'), $timezone)->toIso8601String();
+        return Carbon::parse($value, config('app.timezone'))->setTimezone($timezone)->toIso8601String();
     }
 
     private function localTime(mixed $value, string $timezone): string
     {
-        return Carbon::parse($value->format('Y-m-d H:i:s'), $timezone)->format('H:i');
+        return Carbon::parse($value, config('app.timezone'))->setTimezone($timezone)->format('H:i');
     }
 
     private function attendanceLocationsForEmployee(?Employee $employee, ?CompanySetting $companySetting): \Illuminate\Support\Collection

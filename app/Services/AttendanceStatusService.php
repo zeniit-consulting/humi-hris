@@ -9,8 +9,9 @@ use Illuminate\Support\Carbon;
 
 class AttendanceStatusService
 {
-    public function resolveStatus(array $data, int $ownerId): string
+    public function resolveStatus(array $data, int $ownerId, ?string $timezone = null): string
     {
+        $timezone ??= config('app.timezone');
         $status = (string) ($data['status'] ?? 'present');
 
         if (! in_array($status, ['present', 'late'], true) || empty($data['check_in_at'])) {
@@ -24,9 +25,9 @@ class AttendanceStatusService
         }
 
         $attendanceDate = Carbon::parse($data['attendance_date'])->toDateString();
-        $shiftStart = Carbon::parse($attendanceDate.' '.$shift->start_time);
+        $shiftStart = Carbon::parse($attendanceDate.' '.$shift->start_time, $timezone);
         $latestAllowed = $shiftStart->copy()->addMinutes((int) $shift->late_tolerance_minutes);
-        $checkIn = Carbon::parse($data['check_in_at']);
+        $checkIn = Carbon::parse($data['check_in_at'], config('app.timezone'))->setTimezone($timezone);
 
         return $checkIn->gt($latestAllowed) ? 'late' : 'present';
     }
