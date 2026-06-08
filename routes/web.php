@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Mobile\V1\PayrollController;
 use App\Http\Controllers\Api\Mobile\V1\PortalController;
 use App\Http\Controllers\Api\Mobile\V1\ProfileController as MobileProfileController;
 use App\Http\Controllers\Api\Mobile\V1\ShiftChangeRequestController;
+use App\Http\Controllers\Api\PortalPerformanceController;
 use App\Http\Controllers\Api\PortalResourceController;
 use App\Http\Controllers\Auth\PortalOtpLoginController;
 use App\Http\Controllers\Auth\WhatsappActivationController;
@@ -179,7 +180,7 @@ Route::middleware('guest')->group(function () {
         ->name('portal.login.password');
 });
 
-Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access'])->group(function () {
+Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access', 'billing.owner'])->group(function () {
     Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
     Route::get('billing/invoices', [BillingController::class, 'invoiceFallback'])->name('billing.invoices.index');
     Route::post('billing/invoices', [BillingController::class, 'createInvoice'])->name('billing.invoices.store');
@@ -248,6 +249,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/api/surveys', [PortalResourceController::class, 'surveys'])->name('portal.api.surveys.index');
     Route::post('portal/api/surveys/{survey}/responses', [PortalResourceController::class, 'submitSurvey'])->name('portal.api.surveys.responses.store');
     Route::get('portal/api/assets', [PortalResourceController::class, 'assets'])->name('portal.api.assets.index');
+    Route::get('portal/api/performances', [PortalPerformanceController::class, 'index'])->name('portal.api.performances.index');
+    Route::post('portal/api/performances/{review}/check-ins', [PortalPerformanceController::class, 'storeCheckIn'])->name('portal.api.performances.check-ins.store');
     Route::get('portal/attendance', [UserPortalSectionController::class, 'attendance'])->name('portal.attendance');
     Route::get('portal/check-in', [UserPortalSectionController::class, 'checkIn'])->name('portal.check-in');
     Route::get('portal/check-out', [UserPortalSectionController::class, 'checkOut'])->name('portal.check-out');
@@ -257,6 +260,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/overtimes', [UserPortalSectionController::class, 'overtimes'])->name('portal.overtimes');
     Route::get('portal/kasbons', [UserPortalSectionController::class, 'kasbons'])->name('portal.kasbons');
     Route::get('portal/payroll', [UserPortalSectionController::class, 'payroll'])->name('portal.payroll');
+    Route::get('portal/activity', [UserPortalSectionController::class, 'activity'])->name('portal.activity');
     Route::get('portal/profile', [UserPortalSectionController::class, 'profile'])->name('portal.profile');
     Route::get('portal/announcements', [UserPortalSectionController::class, 'announcements'])->name('portal.announcements');
     Route::get('portal/surveys', [UserPortalSectionController::class, 'surveys'])->name('portal.surveys');

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\BillingController::check
-* @see app/Http/Controllers/BillingController.php:205
+* @see app/Http/Controllers/BillingController.php:273
 * @route '/billing/invoices/{invoice}/payment/check'
 */
 export const check = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ check.definition = {
 
 /**
 * @see \App\Http\Controllers\BillingController::check
-* @see app/Http/Controllers/BillingController.php:205
+* @see app/Http/Controllers/BillingController.php:273
 * @route '/billing/invoices/{invoice}/payment/check'
 */
 check.url = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ check.url = (args: { invoice: number | { id: number } } | [invoice: number | { i
 
 /**
 * @see \App\Http\Controllers\BillingController::check
-* @see app/Http/Controllers/BillingController.php:205
+* @see app/Http/Controllers/BillingController.php:273
 * @route '/billing/invoices/{invoice}/payment/check'
 */
 check.post = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ check.post = (args: { invoice: number | { id: number } } | [invoice: number | { 
 
 /**
 * @see \App\Http\Controllers\BillingController::check
-* @see app/Http/Controllers/BillingController.php:205
+* @see app/Http/Controllers/BillingController.php:273
 * @route '/billing/invoices/{invoice}/payment/check'
 */
 const checkForm = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ const checkForm = (args: { invoice: number | { id: number } } | [invoice: number
 
 /**
 * @see \App\Http\Controllers\BillingController::check
-* @see app/Http/Controllers/BillingController.php:205
+* @see app/Http/Controllers/BillingController.php:273
 * @route '/billing/invoices/{invoice}/payment/check'
 */
 checkForm.post = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

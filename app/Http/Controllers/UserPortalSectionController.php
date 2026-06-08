@@ -63,6 +63,11 @@ class UserPortalSectionController extends Controller
         return $this->renderForUser($request, 'portal/payroll', 'Payroll');
     }
 
+    public function activity(Request $request): Response|RedirectResponse
+    {
+        return $this->renderForUser($request, 'portal/activity', 'Aktivitas');
+    }
+
     public function profile(Request $request): Response|RedirectResponse
     {
         return $this->renderForUser($request, 'portal/profile', 'Profile');

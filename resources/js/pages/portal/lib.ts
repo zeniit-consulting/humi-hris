@@ -10,6 +10,7 @@ export type PortalLinkMap = {
     overtimes: string;
     kasbons?: string;
     payroll: string;
+    activity?: string;
     profile?: string;
     dashboard?: string;
 };
@@ -117,6 +118,13 @@ export const chips: Record<string, string> = {
     cancelled: 'bg-stone-200 text-stone-800',
     saved: 'bg-zinc-900 text-white',
     draft: 'bg-stone-200 text-stone-800',
+    not_started: 'bg-stone-200 text-stone-800',
+    in_progress: 'portal-primary-soft',
+    pending_manager_review: 'bg-amber-100 text-amber-900',
+    completed: 'bg-zinc-900 text-white',
+    locked: 'bg-zinc-900 text-white',
+    open: 'portal-primary-soft',
+    done: 'bg-zinc-900 text-white',
 };
 
 export const statusLabels: Record<string, string> = {
@@ -130,6 +138,13 @@ export const statusLabels: Record<string, string> = {
     cancelled: 'Dibatalkan',
     saved: 'Tersimpan',
     draft: 'Draf',
+    not_started: 'Belum mulai',
+    in_progress: 'Berjalan',
+    pending_manager_review: 'Menunggu review',
+    completed: 'Selesai',
+    locked: 'Dikunci',
+    open: 'Terbuka',
+    done: 'Selesai',
 };
 
 export const leaveTypeLabels: Record<string, string> = {

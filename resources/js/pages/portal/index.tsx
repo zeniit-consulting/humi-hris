@@ -118,6 +118,7 @@ type PortalSummary = {
         overtimes: string;
         kasbons?: string;
         payroll: string;
+        activity?: string;
         profile?: string;
         dashboard: string;
     };
@@ -707,6 +708,7 @@ export default function PortalPage() {
                                 leaves: '/portal/leaves',
                                 overtimes: '/portal/overtimes',
                                 payroll: '/portal/payroll',
+                                activity: '/portal/activity',
                                 profile: '/portal/profile',
                             }
                         }

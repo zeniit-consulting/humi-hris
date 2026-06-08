@@ -1,15 +1,15 @@
-import { Clock3, House, User, Wallet } from 'lucide-react';
+import { Activity, Clock3, House, User } from 'lucide-react';
 import type { PortalLinkMap } from './lib';
 
 type PortalNavbarProps = {
-    active: 'home' | 'attendance' | 'payroll' | 'profile';
+    active: 'home' | 'attendance' | 'activity' | 'payroll' | 'profile';
     links: PortalLinkMap;
 };
 
 const navItems = [
     { key: 'home', label: 'Beranda', icon: House, href: '/portal' },
     { key: 'attendance', label: 'Jadwal', icon: Clock3 },
-    { key: 'payroll', label: 'Payroll', icon: Wallet },
+    { key: 'activity', label: 'Aktivitas', icon: Activity },
     { key: 'profile', label: 'Profil', icon: User },
 ] as const;
 
@@ -21,6 +21,8 @@ const getNavItemHref = (key: string, links: PortalLinkMap): string => {
             return '/portal/profile';
         case 'attendance':
             return links.attendance ?? '#';
+        case 'activity':
+            return links.activity ?? '/portal/activity';
         case 'payroll':
             return links.payroll ?? '#';
         default:

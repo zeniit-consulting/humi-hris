@@ -10,6 +10,7 @@ import profile from './profile'
 import announcements from './announcements'
 import surveys from './surveys'
 import assets from './assets'
+import performances from './performances'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
 * @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
@@ -104,6 +105,7 @@ const api = {
     announcements: Object.assign(announcements, announcements),
     surveys: Object.assign(surveys, surveys),
     assets: Object.assign(assets, assets),
+    performances: Object.assign(performances, performances),
 }
 
 export default api

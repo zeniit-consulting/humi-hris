@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeSchedule;
+use App\Models\PerformanceKeyResult;
 use App\Models\PerformanceKpiResult;
 use App\Models\PerformanceKpiTemplate;
 use App\Models\PerformanceObjective;
@@ -65,29 +67,23 @@ class PerformanceScoringService
 
     public function syncAttendanceKpis(PerformanceReview $review): void
     {
-        $review->loadMissing('period', 'kpiResults');
+        $review->load('period');
 
         if (! $review->period) {
             return;
         }
 
-        $attendanceResults = $review->kpiResults
+        $attendanceResults = PerformanceKpiResult::query()
+            ->where('performance_review_id', $review->id)
             ->where('input_type', 'attendance')
-            ->filter(fn (PerformanceKpiResult $result): bool => $result->attendance_metric !== null);
+            ->whereNotNull('attendance_metric')
+            ->get();
 
         if ($attendanceResults->isEmpty()) {
             return;
         }
 
-        $attendances = EmployeeAttendance::query()
-            ->where('employee_id', $review->employee_id)
-            ->whereBetween('attendance_date', [
-                $review->period->starts_at->toDateString(),
-                $review->period->ends_at->toDateString(),
-            ])
-            ->get();
-
-        $actuals = $this->attendanceActuals($attendances, $review->user_id);
+        $actuals = $this->attendanceActualsForReview($review);
 
         foreach ($attendanceResults as $result) {
             $result->actual_value = $actuals[$result->attendance_metric] ?? 0;
@@ -98,9 +94,14 @@ class PerformanceScoringService
 
     public function recalculateReview(PerformanceReview $review): PerformanceReview
     {
-        $review->loadMissing('objectives.keyResults', 'kpiResults');
+        $review->load('objectives.keyResults', 'kpiResults');
 
         foreach ($review->objectives as $objective) {
+            foreach ($objective->keyResults as $keyResult) {
+                $keyResult->score = $this->scoreKeyResult($keyResult);
+                $keyResult->save();
+            }
+
             $objective->score = $this->scoreObjective($objective);
             $objective->save();
         }
@@ -123,6 +124,14 @@ class PerformanceScoringService
         ])->save();
 
         return $review->refresh();
+    }
+
+    public function scoreKeyResult(PerformanceKeyResult $keyResult): float
+    {
+        return $this->scoreProgress(
+            (float) $keyResult->target_value,
+            (float) $keyResult->actual_value,
+        );
     }
 
     /**
@@ -161,6 +170,77 @@ class PerformanceScoringService
         ];
     }
 
+    /**
+     * @return array<string, float>
+     */
+    private function attendanceActualsForReview(PerformanceReview $review): array
+    {
+        $review->loadMissing('period');
+
+        if (! $review->period) {
+            return [
+                'attendance_rate' => 0,
+                'on_time_rate' => 0,
+                'late_count' => 0,
+                'absent_count' => 0,
+            ];
+        }
+
+        $attendances = EmployeeAttendance::query()
+            ->where('employee_id', $review->employee_id)
+            ->whereDate('attendance_date', '>=', $review->period->starts_at->toDateString())
+            ->whereDate('attendance_date', '<=', $review->period->ends_at->toDateString())
+            ->get();
+
+        $schedules = EmployeeSchedule::query()
+            ->where('employee_id', $review->employee_id)
+            ->where('is_day_off', 0)
+            ->whereDate('work_date', '>=', $review->period->starts_at->toDateString())
+            ->whereDate('work_date', '<=', $review->period->ends_at->toDateString())
+            ->get();
+
+        if ($schedules->isEmpty()) {
+            return $this->attendanceActuals($attendances, $review->user_id);
+        }
+
+        $attendancesByDate = $attendances->keyBy(fn (EmployeeAttendance $attendance): string => $attendance->attendance_date->toDateString());
+        $present = 0;
+        $late = 0;
+        $absent = 0;
+
+        foreach ($schedules as $schedule) {
+            $attendance = $attendancesByDate->get($schedule->work_date->toDateString());
+
+            if (! $attendance) {
+                $absent++;
+
+                continue;
+            }
+
+            $status = in_array($attendance->status, ['present', 'late'], true)
+                ? $this->attendanceStatusService->resolveStatusForAttendance($attendance, $review->user_id)
+                : $attendance->status;
+
+            if ($status === 'present') {
+                $present++;
+            } elseif ($status === 'late') {
+                $late++;
+            } elseif ($status === 'absent') {
+                $absent++;
+            }
+        }
+
+        $workingRows = max($schedules->count(), 1);
+        $checkInRows = max($present + $late, 1);
+
+        return [
+            'attendance_rate' => round((($present + $late) / $workingRows) * 100, 2),
+            'on_time_rate' => round(($present / $checkInRows) * 100, 2),
+            'late_count' => $late,
+            'absent_count' => $absent,
+        ];
+    }
+
     private function scoreObjective(PerformanceObjective $objective): float
     {
         if ($objective->keyResults->isEmpty()) {
@@ -184,6 +264,15 @@ class PerformanceScoringService
         }
 
         return round(max(0, min($score, 120)), 2);
+    }
+
+    private function scoreProgress(float $target, float $actual): float
+    {
+        if ($target <= 0) {
+            return $actual <= 0 ? 100 : 0;
+        }
+
+        return round(max(0, min(($actual / $target) * 100, 120)), 2);
     }
 
     /**

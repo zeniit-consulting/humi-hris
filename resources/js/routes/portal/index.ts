@@ -894,8 +894,89 @@ payrollForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 payroll.form = payrollForm
 
 /**
-* @see \App\Http\Controllers\UserPortalSectionController::profile
+* @see \App\Http\Controllers\UserPortalSectionController::activity
 * @see app/Http/Controllers/UserPortalSectionController.php:66
+* @route '/portal/activity'
+*/
+export const activity = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: activity.url(options),
+    method: 'get',
+})
+
+activity.definition = {
+    methods: ["get","head"],
+    url: '/portal/activity',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::activity
+* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @route '/portal/activity'
+*/
+activity.url = (options?: RouteQueryOptions) => {
+    return activity.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::activity
+* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @route '/portal/activity'
+*/
+activity.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: activity.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::activity
+* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @route '/portal/activity'
+*/
+activity.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: activity.url(options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::activity
+* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @route '/portal/activity'
+*/
+const activityForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: activity.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::activity
+* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @route '/portal/activity'
+*/
+activityForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: activity.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::activity
+* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @route '/portal/activity'
+*/
+activityForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: activity.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+activity.form = activityForm
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::profile
+* @see app/Http/Controllers/UserPortalSectionController.php:71
 * @route '/portal/profile'
 */
 export const profile = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -910,7 +991,7 @@ profile.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::profile
-* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @see app/Http/Controllers/UserPortalSectionController.php:71
 * @route '/portal/profile'
 */
 profile.url = (options?: RouteQueryOptions) => {
@@ -919,7 +1000,7 @@ profile.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::profile
-* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @see app/Http/Controllers/UserPortalSectionController.php:71
 * @route '/portal/profile'
 */
 profile.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -929,7 +1010,7 @@ profile.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::profile
-* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @see app/Http/Controllers/UserPortalSectionController.php:71
 * @route '/portal/profile'
 */
 profile.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -939,7 +1020,7 @@ profile.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::profile
-* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @see app/Http/Controllers/UserPortalSectionController.php:71
 * @route '/portal/profile'
 */
 const profileForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -949,7 +1030,7 @@ const profileForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::profile
-* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @see app/Http/Controllers/UserPortalSectionController.php:71
 * @route '/portal/profile'
 */
 profileForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -959,7 +1040,7 @@ profileForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::profile
-* @see app/Http/Controllers/UserPortalSectionController.php:66
+* @see app/Http/Controllers/UserPortalSectionController.php:71
 * @route '/portal/profile'
 */
 profileForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -976,7 +1057,7 @@ profile.form = profileForm
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::announcements
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/announcements'
 */
 export const announcements = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -991,7 +1072,7 @@ announcements.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::announcements
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/announcements'
 */
 announcements.url = (options?: RouteQueryOptions) => {
@@ -1000,7 +1081,7 @@ announcements.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::announcements
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/announcements'
 */
 announcements.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1010,7 +1091,7 @@ announcements.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::announcements
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/announcements'
 */
 announcements.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -1020,7 +1101,7 @@ announcements.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::announcements
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/announcements'
 */
 const announcementsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1030,7 +1111,7 @@ const announcementsForm = (options?: RouteQueryOptions): RouteFormDefinition<'ge
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::announcements
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/announcements'
 */
 announcementsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1040,7 +1121,7 @@ announcementsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::announcements
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/announcements'
 */
 announcementsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1057,7 +1138,7 @@ announcements.form = announcementsForm
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::surveys
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/surveys'
 */
 export const surveys = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1072,7 +1153,7 @@ surveys.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::surveys
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/surveys'
 */
 surveys.url = (options?: RouteQueryOptions) => {
@@ -1081,7 +1162,7 @@ surveys.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::surveys
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/surveys'
 */
 surveys.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1091,7 +1172,7 @@ surveys.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::surveys
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/surveys'
 */
 surveys.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -1101,7 +1182,7 @@ surveys.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::surveys
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/surveys'
 */
 const surveysForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1111,7 +1192,7 @@ const surveysForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::surveys
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/surveys'
 */
 surveysForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1121,7 +1202,7 @@ surveysForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::surveys
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/surveys'
 */
 surveysForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1138,7 +1219,7 @@ surveys.form = surveysForm
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::assets
-* @see app/Http/Controllers/UserPortalSectionController.php:81
+* @see app/Http/Controllers/UserPortalSectionController.php:86
 * @route '/portal/assets'
 */
 export const assets = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1153,7 +1234,7 @@ assets.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::assets
-* @see app/Http/Controllers/UserPortalSectionController.php:81
+* @see app/Http/Controllers/UserPortalSectionController.php:86
 * @route '/portal/assets'
 */
 assets.url = (options?: RouteQueryOptions) => {
@@ -1162,7 +1243,7 @@ assets.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::assets
-* @see app/Http/Controllers/UserPortalSectionController.php:81
+* @see app/Http/Controllers/UserPortalSectionController.php:86
 * @route '/portal/assets'
 */
 assets.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1172,7 +1253,7 @@ assets.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::assets
-* @see app/Http/Controllers/UserPortalSectionController.php:81
+* @see app/Http/Controllers/UserPortalSectionController.php:86
 * @route '/portal/assets'
 */
 assets.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -1182,7 +1263,7 @@ assets.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::assets
-* @see app/Http/Controllers/UserPortalSectionController.php:81
+* @see app/Http/Controllers/UserPortalSectionController.php:86
 * @route '/portal/assets'
 */
 const assetsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1192,7 +1273,7 @@ const assetsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::assets
-* @see app/Http/Controllers/UserPortalSectionController.php:81
+* @see app/Http/Controllers/UserPortalSectionController.php:86
 * @route '/portal/assets'
 */
 assetsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1202,7 +1283,7 @@ assetsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::assets
-* @see app/Http/Controllers/UserPortalSectionController.php:81
+* @see app/Http/Controllers/UserPortalSectionController.php:86
 * @route '/portal/assets'
 */
 assetsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1230,6 +1311,7 @@ const portal = {
     overtimes: Object.assign(overtimes, overtimes),
     kasbons: Object.assign(kasbons, kasbons),
     payroll: Object.assign(payroll, payrollCe309f),
+    activity: Object.assign(activity, activity),
     profile: Object.assign(profile, profile),
     announcements: Object.assign(announcements, announcements),
     surveys: Object.assign(surveys, surveys),

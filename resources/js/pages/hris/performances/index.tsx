@@ -240,7 +240,6 @@ type KeyResultForm = {
     target_value: string;
     actual_value: string;
     unit: string;
-    score: string;
     status: string;
 };
 
@@ -320,7 +319,6 @@ const keyResultDefaults: KeyResultForm = {
     target_value: '100',
     actual_value: '0',
     unit: '',
-    score: '0',
     status: 'not_started',
 };
 
@@ -350,23 +348,34 @@ export default function PerformanceIndex() {
         permissions,
     } = usePage<PageProps>().props;
 
-    const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Dashboard');
+    const [activeTab, setActiveTab] =
+        useState<(typeof tabs)[number]>('Dashboard');
     const [selectedReviewId, setSelectedReviewId] = useState<number | null>(
         reviews.data[0]?.id ?? null,
     );
     const [periodDialogOpen, setPeriodDialogOpen] = useState(false);
-    const [editingPeriod, setEditingPeriod] = useState<PerformancePeriod | null>(null);
+    const [editingPeriod, setEditingPeriod] =
+        useState<PerformancePeriod | null>(null);
     const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-    const [editingTemplate, setEditingTemplate] = useState<KpiTemplate | null>(null);
+    const [editingTemplate, setEditingTemplate] = useState<KpiTemplate | null>(
+        null,
+    );
     const [metricDialogOpen, setMetricDialogOpen] = useState(false);
-    const [metricTemplate, setMetricTemplate] = useState<KpiTemplate | null>(null);
+    const [metricTemplate, setMetricTemplate] = useState<KpiTemplate | null>(
+        null,
+    );
     const [editingMetric, setEditingMetric] = useState<KpiMetric | null>(null);
     const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
     const [objectiveDialogOpen, setObjectiveDialogOpen] = useState(false);
-    const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
+    const [editingObjective, setEditingObjective] = useState<Objective | null>(
+        null,
+    );
     const [keyResultDialogOpen, setKeyResultDialogOpen] = useState(false);
-    const [keyResultObjective, setKeyResultObjective] = useState<Objective | null>(null);
-    const [editingKeyResult, setEditingKeyResult] = useState<KeyResult | null>(null);
+    const [keyResultObjective, setKeyResultObjective] =
+        useState<Objective | null>(null);
+    const [editingKeyResult, setEditingKeyResult] = useState<KeyResult | null>(
+        null,
+    );
     const [editingKpi, setEditingKpi] = useState<KpiResult | null>(null);
     const [filterState, setFilterState] = useState(filters);
 
@@ -441,7 +450,9 @@ export default function PerformanceIndex() {
         [periods],
     );
 
-    const locked = selectedReview?.status === 'locked' || selectedReview?.locked_at !== null;
+    const locked =
+        selectedReview?.status === 'locked' ||
+        selectedReview?.locked_at !== null;
 
     const submitFilters = () => {
         router.get('/hris/performances', filterState, {
@@ -478,7 +489,10 @@ export default function PerformanceIndex() {
         };
 
         if (editingPeriod) {
-            periodForm.put(`/hris/performances/periods/${editingPeriod.id}`, options);
+            periodForm.put(
+                `/hris/performances/periods/${editingPeriod.id}`,
+                options,
+            );
             return;
         }
 
@@ -497,8 +511,12 @@ export default function PerformanceIndex() {
         templateForm.setData({
             name: template.name,
             description: template.description ?? '',
-            division_id: template.division_id ? String(template.division_id) : '',
-            position_id: template.position_id ? String(template.position_id) : '',
+            division_id: template.division_id
+                ? String(template.division_id)
+                : '',
+            position_id: template.position_id
+                ? String(template.position_id)
+                : '',
             is_active: template.is_active,
         });
         templateForm.clearErrors();
@@ -514,7 +532,10 @@ export default function PerformanceIndex() {
         };
 
         if (editingTemplate) {
-            templateForm.put(`/hris/performances/templates/${editingTemplate.id}`, options);
+            templateForm.put(
+                `/hris/performances/templates/${editingTemplate.id}`,
+                options,
+            );
             return;
         }
 
@@ -555,12 +576,18 @@ export default function PerformanceIndex() {
         };
 
         if (editingMetric) {
-            metricForm.put(`/hris/performances/metrics/${editingMetric.id}`, options);
+            metricForm.put(
+                `/hris/performances/metrics/${editingMetric.id}`,
+                options,
+            );
             return;
         }
 
         if (metricTemplate) {
-            metricForm.post(`/hris/performances/templates/${metricTemplate.id}/metrics`, options);
+            metricForm.post(
+                `/hris/performances/templates/${metricTemplate.id}/metrics`,
+                options,
+            );
         }
     };
 
@@ -568,7 +595,9 @@ export default function PerformanceIndex() {
         reviewForm.setData({
             ...reviewDefaults,
             performance_period_id:
-                periods.find((period) => period.status === 'active')?.id.toString() ??
+                periods
+                    .find((period) => period.status === 'active')
+                    ?.id.toString() ??
                 periods[0]?.id.toString() ??
                 '',
         });
@@ -616,11 +645,17 @@ export default function PerformanceIndex() {
         };
 
         if (editingObjective) {
-            objectiveForm.put(`/hris/performances/objectives/${editingObjective.id}`, options);
+            objectiveForm.put(
+                `/hris/performances/objectives/${editingObjective.id}`,
+                options,
+            );
             return;
         }
 
-        objectiveForm.post(`/hris/performances/reviews/${selectedReview.id}/objectives`, options);
+        objectiveForm.post(
+            `/hris/performances/reviews/${selectedReview.id}/objectives`,
+            options,
+        );
     };
 
     const openCreateKeyResult = (objective: Objective) => {
@@ -639,7 +674,6 @@ export default function PerformanceIndex() {
             target_value: String(keyResult.target_value),
             actual_value: String(keyResult.actual_value),
             unit: keyResult.unit ?? '',
-            score: String(keyResult.score),
             status: keyResult.status,
         });
         keyResultForm.clearErrors();
@@ -659,7 +693,10 @@ export default function PerformanceIndex() {
         };
 
         if (editingKeyResult) {
-            keyResultForm.put(`/hris/performances/key-results/${editingKeyResult.id}`, options);
+            keyResultForm.put(
+                `/hris/performances/key-results/${editingKeyResult.id}`,
+                options,
+            );
             return;
         }
 
@@ -709,7 +746,9 @@ export default function PerformanceIndex() {
         }
 
         managerReviewForm.setData({
-            manager_id: selectedReview.manager ? String(selectedReview.manager.id) : '',
+            manager_id: selectedReview.manager
+                ? String(selectedReview.manager.id)
+                : '',
             status: selectedReview.status,
             manager_score:
                 selectedReview.manager_score !== null
@@ -730,9 +769,12 @@ export default function PerformanceIndex() {
             return;
         }
 
-        managerReviewForm.put(`/hris/performances/reviews/${selectedReview.id}`, {
-            preserveScroll: true,
-        });
+        managerReviewForm.put(
+            `/hris/performances/reviews/${selectedReview.id}`,
+            {
+                preserveScroll: true,
+            },
+        );
     };
 
     const submitCheckIn = (event: FormEvent) => {
@@ -742,10 +784,13 @@ export default function PerformanceIndex() {
             return;
         }
 
-        checkInForm.post(`/hris/performances/reviews/${selectedReview.id}/check-ins`, {
-            preserveScroll: true,
-            onSuccess: () => checkInForm.setData(checkInDefaults),
-        });
+        checkInForm.post(
+            `/hris/performances/reviews/${selectedReview.id}/check-ins`,
+            {
+                preserveScroll: true,
+                onSuccess: () => checkInForm.setData(checkInDefaults),
+            },
+        );
     };
 
     return (
@@ -754,7 +799,9 @@ export default function PerformanceIndex() {
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">HRIS</p>
+                        <p className="text-sm font-medium text-muted-foreground">
+                            HRIS
+                        </p>
                         <h1 className="text-2xl font-semibold tracking-tight">
                             Employee Performance
                         </h1>
@@ -762,15 +809,26 @@ export default function PerformanceIndex() {
                     <div className="flex flex-wrap gap-2">
                         {permissions.can_manage_all ? (
                             <>
-                                <Button type="button" variant="outline" onClick={openCreatePeriod}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={openCreatePeriod}
+                                >
                                     <CalendarDays className="size-4" />
                                     Periode
                                 </Button>
-                                <Button type="button" variant="outline" onClick={openCreateTemplate}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={openCreateTemplate}
+                                >
                                     <ListChecks className="size-4" />
                                     Template KPI
                                 </Button>
-                                <Button type="button" onClick={openCreateReview}>
+                                <Button
+                                    type="button"
+                                    onClick={openCreateReview}
+                                >
                                     <Plus className="size-4" />
                                     Review
                                 </Button>
@@ -813,7 +871,8 @@ export default function PerformanceIndex() {
                                     Review Karyawan
                                 </CardTitle>
                                 <CardDescription>
-                                    {reviews.from ?? 0}-{reviews.to ?? 0} dari {reviews.total} review.
+                                    {reviews.from ?? 0}-{reviews.to ?? 0} dari{' '}
+                                    {reviews.total} review.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-4">
@@ -821,9 +880,15 @@ export default function PerformanceIndex() {
                                     <FieldSelect
                                         label="Periode"
                                         value={filterState.period_id}
-                                        options={[{ value: '', label: 'Semua' }, ...periodOptions]}
+                                        options={[
+                                            { value: '', label: 'Semua' },
+                                            ...periodOptions,
+                                        ]}
                                         onChange={(value) =>
-                                            setFilterState({ ...filterState, period_id: value })
+                                            setFilterState({
+                                                ...filterState,
+                                                period_id: value,
+                                            })
                                         }
                                     />
                                     <FieldSelect
@@ -837,30 +902,48 @@ export default function PerformanceIndex() {
                                             })),
                                         ]}
                                         onChange={(value) =>
-                                            setFilterState({ ...filterState, status: value })
+                                            setFilterState({
+                                                ...filterState,
+                                                status: value,
+                                            })
                                         }
                                     />
                                     <SearchField
                                         label="Cari"
                                         value={filterState.search}
                                         onChange={(value) =>
-                                            setFilterState({ ...filterState, search: value })
+                                            setFilterState({
+                                                ...filterState,
+                                                search: value,
+                                            })
                                         }
                                     />
                                     <FieldSelect
                                         label="Divisi"
                                         value={filterState.division_id}
-                                        options={[{ value: '', label: 'Semua' }, ...divisionOptions]}
+                                        options={[
+                                            { value: '', label: 'Semua' },
+                                            ...divisionOptions,
+                                        ]}
                                         onChange={(value) =>
-                                            setFilterState({ ...filterState, division_id: value })
+                                            setFilterState({
+                                                ...filterState,
+                                                division_id: value,
+                                            })
                                         }
                                     />
                                     <FieldSelect
                                         label="Posisi"
                                         value={filterState.position_id}
-                                        options={[{ value: '', label: 'Semua' }, ...positionOptions]}
+                                        options={[
+                                            { value: '', label: 'Semua' },
+                                            ...positionOptions,
+                                        ]}
                                         onChange={(value) =>
-                                            setFilterState({ ...filterState, position_id: value })
+                                            setFilterState({
+                                                ...filterState,
+                                                position_id: value,
+                                            })
                                         }
                                     />
                                     <Button
@@ -878,13 +961,27 @@ export default function PerformanceIndex() {
                                     <table className="w-full text-left text-sm">
                                         <thead className="bg-muted/50 text-xs text-muted-foreground uppercase">
                                             <tr>
-                                                <th className="px-3 py-2">Karyawan</th>
-                                                <th className="px-3 py-2">Periode</th>
-                                                <th className="px-3 py-2">Status</th>
-                                                <th className="px-3 py-2 text-right">OKR</th>
-                                                <th className="px-3 py-2 text-right">KPI</th>
-                                                <th className="px-3 py-2 text-right">Final</th>
-                                                <th className="px-3 py-2 text-right">Aksi</th>
+                                                <th className="px-3 py-2">
+                                                    Karyawan
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Periode
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Status
+                                                </th>
+                                                <th className="px-3 py-2 text-right">
+                                                    OKR
+                                                </th>
+                                                <th className="px-3 py-2 text-right">
+                                                    KPI
+                                                </th>
+                                                <th className="px-3 py-2 text-right">
+                                                    Final
+                                                </th>
+                                                <th className="px-3 py-2 text-right">
+                                                    Aksi
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -896,28 +993,50 @@ export default function PerformanceIndex() {
                                                     >
                                                         <td className="px-3 py-3">
                                                             <p className="font-medium">
-                                                                {review.employee?.full_name}
+                                                                {
+                                                                    review
+                                                                        .employee
+                                                                        ?.full_name
+                                                                }
                                                             </p>
                                                             <p className="text-xs text-muted-foreground">
-                                                                {review.employee?.division?.name ?? '-'} /{' '}
-                                                                {review.employee?.position?.name ?? '-'}
+                                                                {review.employee
+                                                                    ?.division
+                                                                    ?.name ??
+                                                                    '-'}{' '}
+                                                                /{' '}
+                                                                {review.employee
+                                                                    ?.position
+                                                                    ?.name ??
+                                                                    '-'}
                                                             </p>
                                                         </td>
                                                         <td className="px-3 py-3">
-                                                            {review.period?.name ?? '-'}
+                                                            {review.period
+                                                                ?.name ?? '-'}
                                                         </td>
                                                         <td className="px-3 py-3">
-                                                            <StatusBadge status={review.status} />
+                                                            <StatusBadge
+                                                                status={
+                                                                    review.status
+                                                                }
+                                                            />
                                                         </td>
                                                         <td className="px-3 py-3 text-right tabular-nums">
-                                                            {formatScore(review.okr_score)}
+                                                            {formatScore(
+                                                                review.okr_score,
+                                                            )}
                                                         </td>
                                                         <td className="px-3 py-3 text-right tabular-nums">
-                                                            {formatScore(review.kpi_score)}
+                                                            {formatScore(
+                                                                review.kpi_score,
+                                                            )}
                                                         </td>
                                                         <td className="px-3 py-3 text-right tabular-nums">
                                                             <span className="font-semibold">
-                                                                {formatScore(review.final_score)}
+                                                                {formatScore(
+                                                                    review.final_score,
+                                                                )}
                                                             </span>
                                                         </td>
                                                         <td className="px-3 py-3 text-right">
@@ -925,12 +1044,15 @@ export default function PerformanceIndex() {
                                                                 type="button"
                                                                 size="sm"
                                                                 variant={
-                                                                    selectedReview?.id === review.id
+                                                                    selectedReview?.id ===
+                                                                    review.id
                                                                         ? 'default'
                                                                         : 'outline'
                                                                 }
                                                                 onClick={() =>
-                                                                    setSelectedReviewId(review.id)
+                                                                    setSelectedReviewId(
+                                                                        review.id,
+                                                                    )
                                                                 }
                                                             >
                                                                 Kelola
@@ -944,7 +1066,8 @@ export default function PerformanceIndex() {
                                                         colSpan={7}
                                                         className="px-3 py-8 text-center text-muted-foreground"
                                                     >
-                                                        Belum ada review performance.
+                                                        Belum ada review
+                                                        performance.
                                                     </td>
                                                 </tr>
                                             )}
@@ -962,7 +1085,8 @@ export default function PerformanceIndex() {
                                     Detail Review
                                 </CardTitle>
                                 <CardDescription>
-                                    {selectedReview?.employee?.label ?? 'Pilih review'}
+                                    {selectedReview?.employee?.label ??
+                                        'Pilih review'}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -973,11 +1097,15 @@ export default function PerformanceIndex() {
                                         permissions={permissions}
                                         managerOptions={managerSelectOptions}
                                         statusOptions={statusOptions}
-                                        checkInStatusOptions={checkInStatusOptions}
+                                        checkInStatusOptions={
+                                            checkInStatusOptions
+                                        }
                                         managerReviewForm={managerReviewForm}
                                         checkInForm={checkInForm}
                                         onLoadManagerReview={loadManagerReview}
-                                        onSubmitManagerReview={submitManagerReview}
+                                        onSubmitManagerReview={
+                                            submitManagerReview
+                                        }
                                         onSubmitCheckIn={submitCheckIn}
                                         onCreateObjective={openCreateObjective}
                                         onEditObjective={openEditObjective}
@@ -1015,16 +1143,22 @@ export default function PerformanceIndex() {
                         onCreate={openCreateTemplate}
                         onEdit={openEditTemplate}
                         onDelete={(template) =>
-                            router.delete(`/hris/performances/templates/${template.id}`, {
-                                preserveScroll: true,
-                            })
+                            router.delete(
+                                `/hris/performances/templates/${template.id}`,
+                                {
+                                    preserveScroll: true,
+                                },
+                            )
                         }
                         onCreateMetric={openCreateMetric}
                         onEditMetric={openEditMetric}
                         onDeleteMetric={(metric) =>
-                            router.delete(`/hris/performances/metrics/${metric.id}`, {
-                                preserveScroll: true,
-                            })
+                            router.delete(
+                                `/hris/performances/metrics/${metric.id}`,
+                                {
+                                    preserveScroll: true,
+                                },
+                            )
                         }
                         onAddAttendanceDefaults={(template) =>
                             router.post(
@@ -1056,11 +1190,16 @@ export default function PerformanceIndex() {
                             Periode bulanan untuk siklus performance review.
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={submitPeriod} className="flex flex-col gap-4">
+                    <form
+                        onSubmit={submitPeriod}
+                        className="flex flex-col gap-4"
+                    >
                         <TextField
                             label="Nama"
                             value={periodForm.data.name}
-                            onChange={(value) => periodForm.setData('name', value)}
+                            onChange={(value) =>
+                                periodForm.setData('name', value)
+                            }
                             error={periodForm.errors.name}
                         />
                         <div className="grid gap-3 md:grid-cols-2">
@@ -1068,14 +1207,18 @@ export default function PerformanceIndex() {
                                 label="Mulai"
                                 type="date"
                                 value={periodForm.data.starts_at}
-                                onChange={(value) => periodForm.setData('starts_at', value)}
+                                onChange={(value) =>
+                                    periodForm.setData('starts_at', value)
+                                }
                                 error={periodForm.errors.starts_at}
                             />
                             <TextField
                                 label="Selesai"
                                 type="date"
                                 value={periodForm.data.ends_at}
-                                onChange={(value) => periodForm.setData('ends_at', value)}
+                                onChange={(value) =>
+                                    periodForm.setData('ends_at', value)
+                                }
                                 error={periodForm.errors.ends_at}
                             />
                         </div>
@@ -1086,7 +1229,9 @@ export default function PerformanceIndex() {
                                 value: status,
                                 label: statusLabel(status),
                             }))}
-                            onChange={(value) => periodForm.setData('status', value)}
+                            onChange={(value) =>
+                                periodForm.setData('status', value)
+                            }
                             error={periodForm.errors.status}
                         />
                         <div className="flex justify-end gap-2">
@@ -1097,7 +1242,10 @@ export default function PerformanceIndex() {
                             >
                                 Batal
                             </Button>
-                            <Button type="submit" disabled={periodForm.processing}>
+                            <Button
+                                type="submit"
+                                disabled={periodForm.processing}
+                            >
                                 <Save className="size-4" />
                                 Simpan
                             </Button>
@@ -1106,27 +1254,40 @@ export default function PerformanceIndex() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+            <Dialog
+                open={templateDialogOpen}
+                onOpenChange={setTemplateDialogOpen}
+            >
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>
-                            {editingTemplate ? 'Edit Template KPI' : 'Buat Template KPI'}
+                            {editingTemplate
+                                ? 'Edit Template KPI'
+                                : 'Buat Template KPI'}
                         </DialogTitle>
                         <DialogDescription>
-                            Template dapat dikaitkan ke divisi atau posisi tertentu.
+                            Template dapat dikaitkan ke divisi atau posisi
+                            tertentu.
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={submitTemplate} className="flex flex-col gap-4">
+                    <form
+                        onSubmit={submitTemplate}
+                        className="flex flex-col gap-4"
+                    >
                         <TextField
                             label="Nama"
                             value={templateForm.data.name}
-                            onChange={(value) => templateForm.setData('name', value)}
+                            onChange={(value) =>
+                                templateForm.setData('name', value)
+                            }
                             error={templateForm.errors.name}
                         />
                         <TextAreaField
                             label="Deskripsi"
                             value={templateForm.data.description}
-                            onChange={(value) => templateForm.setData('description', value)}
+                            onChange={(value) =>
+                                templateForm.setData('description', value)
+                            }
                             error={templateForm.errors.description}
                         />
                         <div className="grid gap-3 md:grid-cols-2">
@@ -1134,14 +1295,18 @@ export default function PerformanceIndex() {
                                 label="Divisi"
                                 value={templateForm.data.division_id}
                                 options={divisionOptions}
-                                onChange={(value) => templateForm.setData('division_id', value)}
+                                onChange={(value) =>
+                                    templateForm.setData('division_id', value)
+                                }
                                 error={templateForm.errors.division_id}
                             />
                             <SearchSelectField
                                 label="Posisi"
                                 value={templateForm.data.position_id}
                                 options={positionOptions}
-                                onChange={(value) => templateForm.setData('position_id', value)}
+                                onChange={(value) =>
+                                    templateForm.setData('position_id', value)
+                                }
                                 error={templateForm.errors.position_id}
                             />
                         </div>
@@ -1150,7 +1315,10 @@ export default function PerformanceIndex() {
                                 type="checkbox"
                                 checked={templateForm.data.is_active}
                                 onChange={(event) =>
-                                    templateForm.setData('is_active', event.target.checked)
+                                    templateForm.setData(
+                                        'is_active',
+                                        event.target.checked,
+                                    )
                                 }
                             />
                             Aktif
@@ -1163,7 +1331,10 @@ export default function PerformanceIndex() {
                             >
                                 Batal
                             </Button>
-                            <Button type="submit" disabled={templateForm.processing}>
+                            <Button
+                                type="submit"
+                                disabled={templateForm.processing}
+                            >
                                 <Save className="size-4" />
                                 Simpan
                             </Button>
@@ -1176,17 +1347,24 @@ export default function PerformanceIndex() {
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>
-                            {editingMetric ? 'Edit Metric KPI' : 'Tambah Metric KPI'}
+                            {editingMetric
+                                ? 'Edit Metric KPI'
+                                : 'Tambah Metric KPI'}
                         </DialogTitle>
                         <DialogDescription>
                             {metricTemplate?.name ?? 'Template KPI'}
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={submitMetric} className="flex flex-col gap-4">
+                    <form
+                        onSubmit={submitMetric}
+                        className="flex flex-col gap-4"
+                    >
                         <TextField
                             label="Nama"
                             value={metricForm.data.name}
-                            onChange={(value) => metricForm.setData('name', value)}
+                            onChange={(value) =>
+                                metricForm.setData('name', value)
+                            }
                             error={metricForm.errors.name}
                         />
                         <div className="grid gap-3 md:grid-cols-3">
@@ -1194,20 +1372,26 @@ export default function PerformanceIndex() {
                                 label="Target"
                                 type="number"
                                 value={metricForm.data.target_value}
-                                onChange={(value) => metricForm.setData('target_value', value)}
+                                onChange={(value) =>
+                                    metricForm.setData('target_value', value)
+                                }
                                 error={metricForm.errors.target_value}
                             />
                             <TextField
                                 label="Unit"
                                 value={metricForm.data.unit}
-                                onChange={(value) => metricForm.setData('unit', value)}
+                                onChange={(value) =>
+                                    metricForm.setData('unit', value)
+                                }
                                 error={metricForm.errors.unit}
                             />
                             <TextField
                                 label="Bobot"
                                 type="number"
                                 value={metricForm.data.weight}
-                                onChange={(value) => metricForm.setData('weight', value)}
+                                onChange={(value) =>
+                                    metricForm.setData('weight', value)
+                                }
                                 error={metricForm.errors.weight}
                             />
                         </div>
@@ -1217,10 +1401,16 @@ export default function PerformanceIndex() {
                                 value={metricForm.data.input_type}
                                 options={[
                                     { value: 'manual', label: 'Manual' },
-                                    { value: 'attendance', label: 'Attendance' },
+                                    {
+                                        value: 'attendance',
+                                        label: 'Attendance',
+                                    },
                                 ]}
                                 onChange={(value) =>
-                                    metricForm.setData('input_type', value as 'manual' | 'attendance')
+                                    metricForm.setData(
+                                        'input_type',
+                                        value as 'manual' | 'attendance',
+                                    )
                                 }
                                 error={metricForm.errors.input_type}
                             />
@@ -1229,15 +1419,24 @@ export default function PerformanceIndex() {
                                 value={metricForm.data.attendance_metric}
                                 options={[
                                     { value: '', label: '-' },
-                                    ...attendanceMetricOptions.map((metric) => ({
-                                        value: metric,
-                                        label: attendanceMetricLabel(metric),
-                                    })),
+                                    ...attendanceMetricOptions.map(
+                                        (metric) => ({
+                                            value: metric,
+                                            label: attendanceMetricLabel(
+                                                metric,
+                                            ),
+                                        }),
+                                    ),
                                 ]}
                                 onChange={(value) =>
-                                    metricForm.setData('attendance_metric', value)
+                                    metricForm.setData(
+                                        'attendance_metric',
+                                        value,
+                                    )
                                 }
-                                disabled={metricForm.data.input_type === 'manual'}
+                                disabled={
+                                    metricForm.data.input_type === 'manual'
+                                }
                                 error={metricForm.errors.attendance_metric}
                             />
                             <FieldSelect
@@ -1256,7 +1455,9 @@ export default function PerformanceIndex() {
                                 onChange={(value) =>
                                     metricForm.setData(
                                         'direction',
-                                        value as 'higher_is_better' | 'lower_is_better',
+                                        value as
+                                            | 'higher_is_better'
+                                            | 'lower_is_better',
                                     )
                                 }
                                 error={metricForm.errors.direction}
@@ -1265,7 +1466,9 @@ export default function PerformanceIndex() {
                         <TextAreaField
                             label="Deskripsi"
                             value={metricForm.data.description}
-                            onChange={(value) => metricForm.setData('description', value)}
+                            onChange={(value) =>
+                                metricForm.setData('description', value)
+                            }
                             error={metricForm.errors.description}
                         />
                         <div className="flex justify-end gap-2">
@@ -1276,7 +1479,10 @@ export default function PerformanceIndex() {
                             >
                                 Batal
                             </Button>
-                            <Button type="submit" disabled={metricForm.processing}>
+                            <Button
+                                type="submit"
+                                disabled={metricForm.processing}
+                            >
                                 <Save className="size-4" />
                                 Simpan
                             </Button>
@@ -1290,16 +1496,23 @@ export default function PerformanceIndex() {
                     <DialogHeader>
                         <DialogTitle>Buat Review</DialogTitle>
                         <DialogDescription>
-                            KPI akan otomatis diisi dari template divisi/posisi karyawan.
+                            KPI akan otomatis diisi dari template divisi/posisi
+                            karyawan.
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={submitReview} className="flex flex-col gap-4">
+                    <form
+                        onSubmit={submitReview}
+                        className="flex flex-col gap-4"
+                    >
                         <SearchSelectField
                             label="Periode"
                             value={reviewForm.data.performance_period_id}
                             options={periodOptions}
                             onChange={(value) =>
-                                reviewForm.setData('performance_period_id', value)
+                                reviewForm.setData(
+                                    'performance_period_id',
+                                    value,
+                                )
                             }
                             error={reviewForm.errors.performance_period_id}
                         />
@@ -1307,14 +1520,18 @@ export default function PerformanceIndex() {
                             label="Karyawan"
                             value={reviewForm.data.employee_id}
                             options={employeeOptions}
-                            onChange={(value) => reviewForm.setData('employee_id', value)}
+                            onChange={(value) =>
+                                reviewForm.setData('employee_id', value)
+                            }
                             error={reviewForm.errors.employee_id}
                         />
                         <SearchSelectField
                             label="Manager"
                             value={reviewForm.data.manager_id}
                             options={managerSelectOptions}
-                            onChange={(value) => reviewForm.setData('manager_id', value)}
+                            onChange={(value) =>
+                                reviewForm.setData('manager_id', value)
+                            }
                             error={reviewForm.errors.manager_id}
                         />
                         <div className="flex justify-end gap-2">
@@ -1325,7 +1542,10 @@ export default function PerformanceIndex() {
                             >
                                 Batal
                             </Button>
-                            <Button type="submit" disabled={reviewForm.processing}>
+                            <Button
+                                type="submit"
+                                disabled={reviewForm.processing}
+                            >
                                 <Plus className="size-4" />
                                 Buat
                             </Button>
@@ -1334,19 +1554,31 @@ export default function PerformanceIndex() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={objectiveDialogOpen} onOpenChange={setObjectiveDialogOpen}>
+            <Dialog
+                open={objectiveDialogOpen}
+                onOpenChange={setObjectiveDialogOpen}
+            >
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>
-                            {editingObjective ? 'Edit Objective' : 'Tambah Objective'}
+                            {editingObjective
+                                ? 'Edit Objective'
+                                : 'Tambah Objective'}
                         </DialogTitle>
-                        <DialogDescription>Objective OKR untuk review terpilih.</DialogDescription>
+                        <DialogDescription>
+                            Objective OKR untuk review terpilih.
+                        </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={submitObjective} className="flex flex-col gap-4">
+                    <form
+                        onSubmit={submitObjective}
+                        className="flex flex-col gap-4"
+                    >
                         <TextField
                             label="Objective"
                             value={objectiveForm.data.title}
-                            onChange={(value) => objectiveForm.setData('title', value)}
+                            onChange={(value) =>
+                                objectiveForm.setData('title', value)
+                            }
                             error={objectiveForm.errors.title}
                         />
                         <div className="grid gap-3 md:grid-cols-2">
@@ -1354,24 +1586,32 @@ export default function PerformanceIndex() {
                                 label="Bobot"
                                 type="number"
                                 value={objectiveForm.data.weight}
-                                onChange={(value) => objectiveForm.setData('weight', value)}
+                                onChange={(value) =>
+                                    objectiveForm.setData('weight', value)
+                                }
                                 error={objectiveForm.errors.weight}
                             />
                             <FieldSelect
                                 label="Status"
                                 value={objectiveForm.data.status}
-                                options={objectiveStatusOptions.map((status) => ({
-                                    value: status,
-                                    label: statusLabel(status),
-                                }))}
-                                onChange={(value) => objectiveForm.setData('status', value)}
+                                options={objectiveStatusOptions.map(
+                                    (status) => ({
+                                        value: status,
+                                        label: statusLabel(status),
+                                    }),
+                                )}
+                                onChange={(value) =>
+                                    objectiveForm.setData('status', value)
+                                }
                                 error={objectiveForm.errors.status}
                             />
                         </div>
                         <TextAreaField
                             label="Deskripsi"
                             value={objectiveForm.data.description}
-                            onChange={(value) => objectiveForm.setData('description', value)}
+                            onChange={(value) =>
+                                objectiveForm.setData('description', value)
+                            }
                             error={objectiveForm.errors.description}
                         />
                         <div className="flex justify-end gap-2">
@@ -1382,7 +1622,10 @@ export default function PerformanceIndex() {
                             >
                                 Batal
                             </Button>
-                            <Button type="submit" disabled={objectiveForm.processing}>
+                            <Button
+                                type="submit"
+                                disabled={objectiveForm.processing}
+                            >
                                 <Save className="size-4" />
                                 Simpan
                             </Button>
@@ -1391,21 +1634,31 @@ export default function PerformanceIndex() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={keyResultDialogOpen} onOpenChange={setKeyResultDialogOpen}>
+            <Dialog
+                open={keyResultDialogOpen}
+                onOpenChange={setKeyResultDialogOpen}
+            >
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>
-                            {editingKeyResult ? 'Edit Key Result' : 'Tambah Key Result'}
+                            {editingKeyResult
+                                ? 'Edit Key Result'
+                                : 'Tambah Key Result'}
                         </DialogTitle>
                         <DialogDescription>
                             {keyResultObjective?.title ?? 'Objective'}
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={submitKeyResult} className="flex flex-col gap-4">
+                    <form
+                        onSubmit={submitKeyResult}
+                        className="flex flex-col gap-4"
+                    >
                         <TextField
                             label="Key Result"
                             value={keyResultForm.data.title}
-                            onChange={(value) => keyResultForm.setData('title', value)}
+                            onChange={(value) =>
+                                keyResultForm.setData('title', value)
+                            }
                             error={keyResultForm.errors.title}
                         />
                         <div className="grid gap-3 md:grid-cols-3">
@@ -1413,39 +1666,42 @@ export default function PerformanceIndex() {
                                 label="Target"
                                 type="number"
                                 value={keyResultForm.data.target_value}
-                                onChange={(value) => keyResultForm.setData('target_value', value)}
+                                onChange={(value) =>
+                                    keyResultForm.setData('target_value', value)
+                                }
                                 error={keyResultForm.errors.target_value}
                             />
                             <TextField
                                 label="Actual"
                                 type="number"
                                 value={keyResultForm.data.actual_value}
-                                onChange={(value) => keyResultForm.setData('actual_value', value)}
+                                onChange={(value) =>
+                                    keyResultForm.setData('actual_value', value)
+                                }
                                 error={keyResultForm.errors.actual_value}
                             />
                             <TextField
                                 label="Unit"
                                 value={keyResultForm.data.unit}
-                                onChange={(value) => keyResultForm.setData('unit', value)}
+                                onChange={(value) =>
+                                    keyResultForm.setData('unit', value)
+                                }
                                 error={keyResultForm.errors.unit}
                             />
                         </div>
-                        <div className="grid gap-3 md:grid-cols-2">
-                            <TextField
-                                label="Score 0-120"
-                                type="number"
-                                value={keyResultForm.data.score}
-                                onChange={(value) => keyResultForm.setData('score', value)}
-                                error={keyResultForm.errors.score}
-                            />
+                        <div className="grid gap-3">
                             <FieldSelect
                                 label="Status"
                                 value={keyResultForm.data.status}
-                                options={objectiveStatusOptions.map((status) => ({
-                                    value: status,
-                                    label: statusLabel(status),
-                                }))}
-                                onChange={(value) => keyResultForm.setData('status', value)}
+                                options={objectiveStatusOptions.map(
+                                    (status) => ({
+                                        value: status,
+                                        label: statusLabel(status),
+                                    }),
+                                )}
+                                onChange={(value) =>
+                                    keyResultForm.setData('status', value)
+                                }
                                 error={keyResultForm.errors.status}
                             />
                         </div>
@@ -1457,7 +1713,10 @@ export default function PerformanceIndex() {
                             >
                                 Batal
                             </Button>
-                            <Button type="submit" disabled={keyResultForm.processing}>
+                            <Button
+                                type="submit"
+                                disabled={keyResultForm.processing}
+                            >
                                 <Save className="size-4" />
                                 Simpan
                             </Button>
@@ -1466,28 +1725,41 @@ export default function PerformanceIndex() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={editingKpi !== null} onOpenChange={(open) => !open && setEditingKpi(null)}>
+            <Dialog
+                open={editingKpi !== null}
+                onOpenChange={(open) => !open && setEditingKpi(null)}
+            >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Update KPI</DialogTitle>
-                        <DialogDescription>{editingKpi?.name}</DialogDescription>
+                        <DialogDescription>
+                            {editingKpi?.name}
+                        </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submitKpi} className="flex flex-col gap-4">
                         <TextField
                             label="Actual"
                             type="number"
                             value={kpiForm.data.actual_value}
-                            onChange={(value) => kpiForm.setData('actual_value', value)}
+                            onChange={(value) =>
+                                kpiForm.setData('actual_value', value)
+                            }
                             error={kpiForm.errors.actual_value}
                         />
                         <TextAreaField
                             label="Catatan"
                             value={kpiForm.data.notes}
-                            onChange={(value) => kpiForm.setData('notes', value)}
+                            onChange={(value) =>
+                                kpiForm.setData('notes', value)
+                            }
                             error={kpiForm.errors.notes}
                         />
                         <div className="flex justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => setEditingKpi(null)}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setEditingKpi(null)}
+                            >
                                 Batal
                             </Button>
                             <Button type="submit" disabled={kpiForm.processing}>
@@ -1513,10 +1785,10 @@ function DashboardPanel({
 }) {
     const atRisk = reviews.filter(
         (review) =>
-            review.final_score < 60 ||
-            review.okr_score < 60 ||
-            review.kpi_score < 60 ||
-            review.status === 'not_started',
+            review.status !== 'not_started' &&
+            (review.final_score < 60 ||
+                review.okr_score < 60 ||
+                review.kpi_score < 60),
     );
     const topPerformers = [...reviews]
         .sort((first, second) => second.final_score - first.final_score)
@@ -1530,7 +1802,11 @@ function DashboardPanel({
                     value={formatScore(stats.average_final_score)}
                     icon={LineChart}
                 />
-                <StatCard title="At Risk" value={stats.at_risk} icon={TrendingDown} />
+                <StatCard
+                    title="At Risk"
+                    value={stats.at_risk}
+                    icon={TrendingDown}
+                />
                 <StatCard
                     title="Pending Review"
                     value={stats.pending_reviews}
@@ -1546,17 +1822,21 @@ function DashboardPanel({
                 <Card>
                     <CardHeader>
                         <CardTitle>Needs Action</CardTitle>
-                        <CardDescription>Review yang perlu ditangani manager.</CardDescription>
+                        <CardDescription>
+                            Review yang perlu ditangani manager.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-3">
                         {atRisk.length ? (
-                            atRisk.slice(0, 6).map((review) => (
-                                <ActionRow
-                                    key={review.id}
-                                    review={review}
-                                    onClick={() => onSelectReview(review)}
-                                />
-                            ))
+                            atRisk
+                                .slice(0, 6)
+                                .map((review) => (
+                                    <ActionRow
+                                        key={review.id}
+                                        review={review}
+                                        onClick={() => onSelectReview(review)}
+                                    />
+                                ))
                         ) : (
                             <p className="text-sm text-muted-foreground">
                                 Tidak ada review berisiko pada filter saat ini.
@@ -1567,7 +1847,9 @@ function DashboardPanel({
                 <Card>
                     <CardHeader>
                         <CardTitle>Top Performers</CardTitle>
-                        <CardDescription>Final score tertinggi pada filter saat ini.</CardDescription>
+                        <CardDescription>
+                            Final score tertinggi pada filter saat ini.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-3">
                         {topPerformers.length ? (
@@ -1636,7 +1918,10 @@ function ReviewDetail({
             <div className="grid grid-cols-2 gap-3 text-sm">
                 <ScoreBox label="OKR 50%" value={review.okr_score} />
                 <ScoreBox label="KPI 40%" value={review.kpi_score} />
-                <ScoreBox label="Review 10%" value={review.manager_score ?? 0} />
+                <ScoreBox
+                    label="Review 10%"
+                    value={review.manager_score ?? 0}
+                />
                 <ScoreBox label="Final" value={review.final_score} strong />
             </div>
 
@@ -1656,12 +1941,18 @@ function ReviewDetail({
                 </div>
                 {review.objectives.length ? (
                     review.objectives.map((objective) => (
-                        <div key={objective.id} className="rounded-lg border p-3">
+                        <div
+                            key={objective.id}
+                            className="rounded-lg border p-3"
+                        >
                             <div className="flex items-start justify-between gap-3">
                                 <div>
-                                    <p className="font-medium">{objective.title}</p>
+                                    <p className="font-medium">
+                                        {objective.title}
+                                    </p>
                                     <p className="text-xs text-muted-foreground">
-                                        Bobot {objective.weight} / Score {formatScore(objective.score)}
+                                        Bobot {objective.weight} / Score{' '}
+                                        {formatScore(objective.score)}
                                     </p>
                                 </div>
                                 <div className="flex shrink-0 gap-1">
@@ -1669,7 +1960,9 @@ function ReviewDetail({
                                         type="button"
                                         size="icon"
                                         variant="ghost"
-                                        onClick={() => onCreateKeyResult(objective)}
+                                        onClick={() =>
+                                            onCreateKeyResult(objective)
+                                        }
                                         disabled={locked}
                                     >
                                         <Plus className="size-4" />
@@ -1678,7 +1971,9 @@ function ReviewDetail({
                                         type="button"
                                         size="icon"
                                         variant="ghost"
-                                        onClick={() => onEditObjective(objective)}
+                                        onClick={() =>
+                                            onEditObjective(objective)
+                                        }
                                         disabled={locked}
                                     >
                                         <Pencil className="size-4" />
@@ -1687,7 +1982,9 @@ function ReviewDetail({
                                         type="button"
                                         size="icon"
                                         variant="ghost"
-                                        onClick={() => onDeleteObjective(objective)}
+                                        onClick={() =>
+                                            onDeleteObjective(objective)
+                                        }
                                         disabled={locked}
                                     >
                                         <Trash2 className="size-4" />
@@ -1703,7 +2000,8 @@ function ReviewDetail({
                                         <div>
                                             <p>{keyResult.title}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {keyResult.actual_value}/{keyResult.target_value}{' '}
+                                                {keyResult.actual_value}/
+                                                {keyResult.target_value}{' '}
                                                 {keyResult.unit ?? ''} / Score{' '}
                                                 {formatScore(keyResult.score)}
                                             </p>
@@ -1714,7 +2012,10 @@ function ReviewDetail({
                                                 size="icon"
                                                 variant="ghost"
                                                 onClick={() =>
-                                                    onEditKeyResult(objective, keyResult)
+                                                    onEditKeyResult(
+                                                        objective,
+                                                        keyResult,
+                                                    )
                                                 }
                                                 disabled={locked}
                                             >
@@ -1724,7 +2025,9 @@ function ReviewDetail({
                                                 type="button"
                                                 size="icon"
                                                 variant="ghost"
-                                                onClick={() => onDeleteKeyResult(keyResult)}
+                                                onClick={() =>
+                                                    onDeleteKeyResult(keyResult)
+                                                }
                                                 disabled={locked}
                                             >
                                                 <Trash2 className="size-4" />
@@ -1736,7 +2039,9 @@ function ReviewDetail({
                         </div>
                     ))
                 ) : (
-                    <p className="text-sm text-muted-foreground">Belum ada objective.</p>
+                    <p className="text-sm text-muted-foreground">
+                        Belum ada objective.
+                    </p>
                 )}
             </section>
 
@@ -1760,14 +2065,23 @@ function ReviewDetail({
                             <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <p className="font-medium">{kpi.name}</p>
-                                        <Badge variant={kpi.input_type === 'attendance' ? 'secondary' : 'outline'}>
+                                        <p className="font-medium">
+                                            {kpi.name}
+                                        </p>
+                                        <Badge
+                                            variant={
+                                                kpi.input_type === 'attendance'
+                                                    ? 'secondary'
+                                                    : 'outline'
+                                            }
+                                        >
                                             {kpi.input_type}
                                         </Badge>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        Actual {kpi.actual_value} / Target {kpi.target_value}{' '}
-                                        {kpi.unit ?? ''} / Bobot {kpi.weight}
+                                        Actual {kpi.actual_value} / Target{' '}
+                                        {kpi.target_value} {kpi.unit ?? ''} /
+                                        Bobot {kpi.weight}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -1787,11 +2101,16 @@ function ReviewDetail({
                                     ) : null}
                                 </div>
                             </div>
-                            <Progress value={Math.min(kpi.score, 100)} className="mt-3" />
+                            <Progress
+                                value={Math.min(kpi.score, 100)}
+                                className="mt-3"
+                            />
                         </div>
                     ))
                 ) : (
-                    <p className="text-sm text-muted-foreground">Belum ada KPI result.</p>
+                    <p className="text-sm text-muted-foreground">
+                        Belum ada KPI result.
+                    </p>
                 )}
             </section>
 
@@ -1809,13 +2128,18 @@ function ReviewDetail({
                         Muat Data
                     </Button>
                 </div>
-                <form onSubmit={onSubmitManagerReview} className="flex flex-col gap-3">
+                <form
+                    onSubmit={onSubmitManagerReview}
+                    className="flex flex-col gap-3"
+                >
                     {permissions.can_manage_all ? (
                         <SearchSelectField
                             label="Manager"
                             value={managerReviewForm.data.manager_id}
                             options={managerOptions}
-                            onChange={(value) => managerReviewForm.setData('manager_id', value)}
+                            onChange={(value) =>
+                                managerReviewForm.setData('manager_id', value)
+                            }
                             error={managerReviewForm.errors.manager_id}
                             disabled={locked}
                         />
@@ -1828,7 +2152,9 @@ function ReviewDetail({
                                 value: status,
                                 label: statusLabel(status),
                             }))}
-                            onChange={(value) => managerReviewForm.setData('status', value)}
+                            onChange={(value) =>
+                                managerReviewForm.setData('status', value)
+                            }
                             error={managerReviewForm.errors.status}
                             disabled={locked}
                         />
@@ -1837,7 +2163,10 @@ function ReviewDetail({
                             type="number"
                             value={managerReviewForm.data.manager_score}
                             onChange={(value) =>
-                                managerReviewForm.setData('manager_score', value)
+                                managerReviewForm.setData(
+                                    'manager_score',
+                                    value,
+                                )
                             }
                             error={managerReviewForm.errors.manager_score}
                             disabled={locked}
@@ -1855,7 +2184,9 @@ function ReviewDetail({
                     <TextAreaField
                         label="Strengths"
                         value={managerReviewForm.data.strengths}
-                        onChange={(value) => managerReviewForm.setData('strengths', value)}
+                        onChange={(value) =>
+                            managerReviewForm.setData('strengths', value)
+                        }
                         error={managerReviewForm.errors.strengths}
                         disabled={locked}
                     />
@@ -1863,7 +2194,10 @@ function ReviewDetail({
                         label="Improvement Areas"
                         value={managerReviewForm.data.improvement_areas}
                         onChange={(value) =>
-                            managerReviewForm.setData('improvement_areas', value)
+                            managerReviewForm.setData(
+                                'improvement_areas',
+                                value,
+                            )
                         }
                         error={managerReviewForm.errors.improvement_areas}
                         disabled={locked}
@@ -1871,7 +2205,9 @@ function ReviewDetail({
                     <TextAreaField
                         label="Next Action"
                         value={managerReviewForm.data.next_action}
-                        onChange={(value) => managerReviewForm.setData('next_action', value)}
+                        onChange={(value) =>
+                            managerReviewForm.setData('next_action', value)
+                        }
                         error={managerReviewForm.errors.next_action}
                         disabled={locked}
                     />
@@ -1888,13 +2224,18 @@ function ReviewDetail({
 
             <section className="flex flex-col gap-3">
                 <h3 className="text-sm font-semibold">Check-ins</h3>
-                <form onSubmit={onSubmitCheckIn} className="flex flex-col gap-3">
+                <form
+                    onSubmit={onSubmitCheckIn}
+                    className="flex flex-col gap-3"
+                >
                     <div className="grid gap-3 md:grid-cols-2">
                         <TextField
                             label="Tanggal"
                             type="date"
                             value={checkInForm.data.check_in_date}
-                            onChange={(value) => checkInForm.setData('check_in_date', value)}
+                            onChange={(value) =>
+                                checkInForm.setData('check_in_date', value)
+                            }
                             error={checkInForm.errors.check_in_date}
                             disabled={locked}
                         />
@@ -1905,7 +2246,9 @@ function ReviewDetail({
                                 value: status,
                                 label: statusLabel(status),
                             }))}
-                            onChange={(value) => checkInForm.setData('status', value)}
+                            onChange={(value) =>
+                                checkInForm.setData('status', value)
+                            }
                             error={checkInForm.errors.status}
                             disabled={locked}
                         />
@@ -1913,14 +2256,18 @@ function ReviewDetail({
                     <TextAreaField
                         label="Summary"
                         value={checkInForm.data.summary}
-                        onChange={(value) => checkInForm.setData('summary', value)}
+                        onChange={(value) =>
+                            checkInForm.setData('summary', value)
+                        }
                         error={checkInForm.errors.summary}
                         disabled={locked}
                     />
                     <TextAreaField
                         label="Action Items"
                         value={checkInForm.data.action_items}
-                        onChange={(value) => checkInForm.setData('action_items', value)}
+                        onChange={(value) =>
+                            checkInForm.setData('action_items', value)
+                        }
                         error={checkInForm.errors.action_items}
                         disabled={locked}
                     />
@@ -1934,14 +2281,23 @@ function ReviewDetail({
                     </Button>
                 </form>
                 {review.check_ins.map((checkIn) => (
-                    <div key={checkIn.id} className="rounded-lg border px-3 py-2 text-sm">
+                    <div
+                        key={checkIn.id}
+                        className="rounded-lg border px-3 py-2 text-sm"
+                    >
                         <div className="flex items-center justify-between gap-2">
-                            <p className="font-medium">{checkIn.check_in_date}</p>
+                            <p className="font-medium">
+                                {checkIn.check_in_date}
+                            </p>
                             <StatusBadge status={checkIn.status} />
                         </div>
-                        <p className="mt-1 text-muted-foreground">{checkIn.summary}</p>
+                        <p className="mt-1 text-muted-foreground">
+                            {checkIn.summary}
+                        </p>
                         {checkIn.action_items ? (
-                            <p className="mt-1 text-muted-foreground">{checkIn.action_items}</p>
+                            <p className="mt-1 text-muted-foreground">
+                                {checkIn.action_items}
+                            </p>
                         ) : null}
                     </div>
                 ))}
@@ -1976,7 +2332,9 @@ function TemplatePanel({
             <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                     <CardTitle>KPI Templates</CardTitle>
-                    <CardDescription>Template KPI per divisi atau posisi.</CardDescription>
+                    <CardDescription>
+                        Template KPI per divisi atau posisi.
+                    </CardDescription>
                 </div>
                 {canManage ? (
                     <Button type="button" onClick={onCreate}>
@@ -1988,18 +2346,34 @@ function TemplatePanel({
             <CardContent className="grid gap-4">
                 {templates.length ? (
                     templates.map((template) => (
-                        <div key={template.id} className="rounded-lg border p-4">
+                        <div
+                            key={template.id}
+                            className="rounded-lg border p-4"
+                        >
                             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="font-semibold">{template.name}</h3>
-                                        <Badge variant={template.is_active ? 'default' : 'secondary'}>
-                                            {template.is_active ? 'active' : 'inactive'}
+                                        <h3 className="font-semibold">
+                                            {template.name}
+                                        </h3>
+                                        <Badge
+                                            variant={
+                                                template.is_active
+                                                    ? 'default'
+                                                    : 'secondary'
+                                            }
+                                        >
+                                            {template.is_active
+                                                ? 'active'
+                                                : 'inactive'}
                                         </Badge>
                                     </div>
                                     <p className="text-sm text-muted-foreground">
-                                        {template.division?.name ?? 'Semua divisi'} /{' '}
-                                        {template.position?.name ?? 'Semua posisi'}
+                                        {template.division?.name ??
+                                            'Semua divisi'}{' '}
+                                        /{' '}
+                                        {template.position?.name ??
+                                            'Semua posisi'}
                                     </p>
                                 </div>
                                 {canManage ? (
@@ -2008,7 +2382,11 @@ function TemplatePanel({
                                             type="button"
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => onAddAttendanceDefaults(template)}
+                                            onClick={() =>
+                                                onAddAttendanceDefaults(
+                                                    template,
+                                                )
+                                            }
                                         >
                                             <RefreshCw className="size-4" />
                                             KPI Attendance
@@ -2017,7 +2395,9 @@ function TemplatePanel({
                                             type="button"
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => onCreateMetric(template)}
+                                            onClick={() =>
+                                                onCreateMetric(template)
+                                            }
                                         >
                                             <Plus className="size-4" />
                                             Metric
@@ -2045,31 +2425,50 @@ function TemplatePanel({
                                 <table className="w-full text-left text-sm">
                                     <thead className="bg-muted/50 text-xs text-muted-foreground uppercase">
                                         <tr>
-                                            <th className="px-3 py-2">Metric</th>
+                                            <th className="px-3 py-2">
+                                                Metric
+                                            </th>
                                             <th className="px-3 py-2">Input</th>
-                                            <th className="px-3 py-2 text-right">Target</th>
-                                            <th className="px-3 py-2 text-right">Bobot</th>
+                                            <th className="px-3 py-2 text-right">
+                                                Target
+                                            </th>
+                                            <th className="px-3 py-2 text-right">
+                                                Bobot
+                                            </th>
                                             {canManage ? (
-                                                <th className="px-3 py-2 text-right">Aksi</th>
+                                                <th className="px-3 py-2 text-right">
+                                                    Aksi
+                                                </th>
                                             ) : null}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {template.metrics.map((metric) => (
-                                            <tr key={metric.id} className="border-t">
+                                            <tr
+                                                key={metric.id}
+                                                className="border-t"
+                                            >
                                                 <td className="px-3 py-3">
-                                                    <p className="font-medium">{metric.name}</p>
+                                                    <p className="font-medium">
+                                                        {metric.name}
+                                                    </p>
                                                     <p className="text-xs text-muted-foreground">
                                                         {metric.attendance_metric
-                                                            ? attendanceMetricLabel(metric.attendance_metric)
-                                                            : metric.direction === 'lower_is_better'
+                                                            ? attendanceMetricLabel(
+                                                                  metric.attendance_metric,
+                                                              )
+                                                            : metric.direction ===
+                                                                'lower_is_better'
                                                               ? 'Lebih rendah lebih baik'
                                                               : 'Lebih tinggi lebih baik'}
                                                     </p>
                                                 </td>
-                                                <td className="px-3 py-3">{metric.input_type}</td>
+                                                <td className="px-3 py-3">
+                                                    {metric.input_type}
+                                                </td>
                                                 <td className="px-3 py-3 text-right tabular-nums">
-                                                    {metric.target_value} {metric.unit ?? ''}
+                                                    {metric.target_value}{' '}
+                                                    {metric.unit ?? ''}
                                                 </td>
                                                 <td className="px-3 py-3 text-right tabular-nums">
                                                     {metric.weight}
@@ -2080,7 +2479,12 @@ function TemplatePanel({
                                                             type="button"
                                                             size="icon"
                                                             variant="ghost"
-                                                            onClick={() => onEditMetric(template, metric)}
+                                                            onClick={() =>
+                                                                onEditMetric(
+                                                                    template,
+                                                                    metric,
+                                                                )
+                                                            }
                                                         >
                                                             <Pencil className="size-4" />
                                                         </Button>
@@ -2088,7 +2492,11 @@ function TemplatePanel({
                                                             type="button"
                                                             size="icon"
                                                             variant="ghost"
-                                                            onClick={() => onDeleteMetric(metric)}
+                                                            onClick={() =>
+                                                                onDeleteMetric(
+                                                                    metric,
+                                                                )
+                                                            }
                                                         >
                                                             <Trash2 className="size-4" />
                                                         </Button>
@@ -2102,7 +2510,9 @@ function TemplatePanel({
                         </div>
                     ))
                 ) : (
-                    <p className="text-sm text-muted-foreground">Belum ada template KPI.</p>
+                    <p className="text-sm text-muted-foreground">
+                        Belum ada template KPI.
+                    </p>
                 )}
             </CardContent>
         </Card>
@@ -2125,7 +2535,9 @@ function PeriodPanel({
             <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                     <CardTitle>Periods</CardTitle>
-                    <CardDescription>Siklus bulanan performance review.</CardDescription>
+                    <CardDescription>
+                        Siklus bulanan performance review.
+                    </CardDescription>
                 </div>
                 {canManage ? (
                     <Button type="button" onClick={onCreate}>
@@ -2143,13 +2555,19 @@ function PeriodPanel({
                                 <th className="px-3 py-2">Tanggal</th>
                                 <th className="px-3 py-2">Status</th>
                                 <th className="px-3 py-2 text-right">Review</th>
-                                {canManage ? <th className="px-3 py-2 text-right">Aksi</th> : null}
+                                {canManage ? (
+                                    <th className="px-3 py-2 text-right">
+                                        Aksi
+                                    </th>
+                                ) : null}
                             </tr>
                         </thead>
                         <tbody>
                             {periods.map((period) => (
                                 <tr key={period.id} className="border-t">
-                                    <td className="px-3 py-3 font-medium">{period.name}</td>
+                                    <td className="px-3 py-3 font-medium">
+                                        {period.name}
+                                    </td>
                                     <td className="px-3 py-3 text-muted-foreground">
                                         {period.starts_at} - {period.ends_at}
                                     </td>
@@ -2203,7 +2621,13 @@ function StatCard({
     );
 }
 
-function ActionRow({ review, onClick }: { review: Review; onClick: () => void }) {
+function ActionRow({
+    review,
+    onClick,
+}: {
+    review: Review;
+    onClick: () => void;
+}) {
     return (
         <button
             type="button"
@@ -2237,7 +2661,11 @@ function ScoreBox({
     return (
         <div className="rounded-lg border px-3 py-2">
             <p className="text-xs text-muted-foreground">{label}</p>
-            <p className={strong ? 'text-xl font-semibold' : 'text-lg font-semibold'}>
+            <p
+                className={
+                    strong ? 'text-xl font-semibold' : 'text-lg font-semibold'
+                }
+            >
                 {formatScore(value)}
             </p>
         </div>
@@ -2296,7 +2724,10 @@ function SearchField({
     return (
         <div className="flex flex-col gap-2">
             <Label>{label}</Label>
-            <Input value={value} onChange={(event) => onChange(event.target.value)} />
+            <Input
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+            />
         </div>
     );
 }
@@ -2321,7 +2752,7 @@ function TextAreaField({
                 value={value}
                 disabled={disabled}
                 onChange={(event) => onChange(event.target.value)}
-                className="border-input bg-background placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-24 w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
             />
             <InputError message={error} />
         </div>
@@ -2379,7 +2810,7 @@ function FieldSelect({
                 value={value}
                 disabled={disabled}
                 onChange={(event) => onChange(event.target.value)}
-                className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-9 rounded-md border px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
             >
                 {options.map((option) => (
                     <option key={option.value} value={option.value}>

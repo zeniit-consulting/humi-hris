@@ -5,6 +5,7 @@ namespace Tests\Feature\Hris;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeSchedule;
 use App\Models\PerformanceKpiResult;
 use App\Models\PerformanceKpiTemplate;
 use App\Models\PerformanceObjective;
@@ -65,7 +66,7 @@ class PerformanceModuleTest extends TestCase
             'performance_period_id' => $period->id,
             'employee_id' => $employee->id,
             'manager_id' => $manager->id,
-        ])->assertRedirect();
+        ])->assertRedirect()->assertSessionHasNoErrors();
 
         $review = PerformanceReview::query()->firstOrFail();
         $kpi = PerformanceKpiResult::query()->where('performance_review_id', $review->id)->firstOrFail();
@@ -110,6 +111,53 @@ class PerformanceModuleTest extends TestCase
         $this->assertSame('100.00', (string) $review->okr_score);
         $this->assertSame('80.00', (string) $review->kpi_score);
         $this->assertSame('91.00', (string) $review->final_score);
+    }
+
+    public function test_key_result_score_is_calculated_from_actual_and_target_values(): void
+    {
+        $user = User::factory()->create();
+        [$employee, $manager] = $this->employeePair($user);
+
+        $period = PerformancePeriod::query()->create([
+            'user_id' => $user->id,
+            'name' => 'June 2026',
+            'starts_at' => '2026-06-01',
+            'ends_at' => '2026-06-30',
+            'status' => 'active',
+        ]);
+
+        $review = PerformanceReview::query()->create([
+            'user_id' => $user->id,
+            'performance_period_id' => $period->id,
+            'employee_id' => $employee->id,
+            'manager_id' => $manager->id,
+            'status' => 'in_progress',
+        ]);
+
+        $this->actingAs($user)->post(route('hris.performances.reviews.objectives.store', $review), [
+            'title' => 'Improve output',
+            'description' => null,
+            'weight' => 1,
+            'status' => 'on_track',
+        ])->assertRedirect();
+
+        $objective = PerformanceObjective::query()->firstOrFail();
+
+        $this->actingAs($user)->post(route('hris.performances.objectives.key-results.store', $objective), [
+            'title' => 'Complete project milestones',
+            'target_value' => 100,
+            'actual_value' => 50,
+            'unit' => '%',
+            'score' => 120,
+            'status' => 'on_track',
+        ])->assertRedirect();
+
+        $objective->refresh();
+        $review->refresh();
+
+        $this->assertSame('50.00', (string) $objective->keyResults()->firstOrFail()->score);
+        $this->assertSame('50.00', (string) $objective->score);
+        $this->assertSame('50.00', (string) $review->okr_score);
     }
 
     public function test_attendance_kpi_reads_attendance_records_for_the_review_period(): void
@@ -160,12 +208,81 @@ class PerformanceModuleTest extends TestCase
             'performance_period_id' => $period->id,
             'employee_id' => $employee->id,
             'manager_id' => $manager->id,
-        ])->assertRedirect();
+        ])->assertRedirect()->assertSessionHasNoErrors();
 
         $result = PerformanceKpiResult::query()->firstOrFail();
 
         $this->assertSame('66.67', (string) $result->actual_value);
         $this->assertSame('83.34', (string) $result->score);
+    }
+
+    public function test_attendance_kpi_counts_scheduled_workdays_without_attendance_as_absent(): void
+    {
+        $user = User::factory()->create();
+        [$employee, $manager] = $this->employeePair($user);
+
+        $period = PerformancePeriod::query()->create([
+            'user_id' => $user->id,
+            'name' => 'June 2026',
+            'starts_at' => '2026-06-01',
+            'ends_at' => '2026-06-03',
+            'status' => 'active',
+        ]);
+
+        $template = PerformanceKpiTemplate::query()->create([
+            'user_id' => $user->id,
+            'division_id' => $employee->division_id,
+            'name' => 'Attendance KPI',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)->post(route('hris.performances.templates.metrics.store', $template), [
+            'name' => 'Absent Count',
+            'target_value' => 0,
+            'unit' => 'hari',
+            'weight' => 1,
+            'input_type' => 'attendance',
+            'attendance_metric' => 'absent_count',
+            'direction' => 'lower_is_better',
+        ])->assertRedirect();
+
+        foreach (['2026-06-01', '2026-06-02', '2026-06-03'] as $date) {
+            EmployeeSchedule::query()->create([
+                'user_id' => $user->id,
+                'employee_id' => $employee->id,
+                'work_date' => $date,
+                'shift_code' => 'SHIFT_A',
+                'start_time' => '08:00',
+                'end_time' => '17:00',
+                'is_day_off' => false,
+            ]);
+        }
+
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-06-01',
+            'status' => 'present',
+            'check_in_at' => '2026-06-01 08:00:00',
+        ]);
+
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-06-02',
+            'status' => 'present',
+            'check_in_at' => '2026-06-02 08:00:00',
+        ]);
+
+        $this->actingAs($user)->post(route('hris.performances.reviews.store'), [
+            'performance_period_id' => $period->id,
+            'employee_id' => $employee->id,
+            'manager_id' => $manager->id,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $result = PerformanceKpiResult::query()->firstOrFail();
+
+        $this->assertSame('1.00', (string) $result->actual_value);
     }
 
     public function test_manager_cannot_update_review_outside_their_scope(): void

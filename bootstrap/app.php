@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureAccountActivated;
 use App\Http\Middleware\EnsureAccountNotSuspended;
 use App\Http\Middleware\EnsureActiveSubscription;
 use App\Http\Middleware\EnsureAdminAccess;
+use App\Http\Middleware\EnsureBillingOwnerAccess;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'account.not_suspended' => EnsureAccountNotSuspended::class,
             'subscription.active' => EnsureActiveSubscription::class,
             'subscription.feature' => CheckSubscriptionFeature::class,
+            'billing.owner' => EnsureBillingOwnerAccess::class,
             'employee.limit' => CheckEmployeeLimit::class,
         ]);
 

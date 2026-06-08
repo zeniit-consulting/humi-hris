@@ -195,6 +195,20 @@ class PakasirPaymentGatewayTest extends TestCase
     public function test_pakasir_completed_webhook_marks_invoice_paid_and_activates_subscription(): void
     {
         config()->set('services.pakasir.project', 'depodomain');
+        config()->set('services.pakasir.api_key', 'xxx123');
+
+        Http::fake([
+            'app.pakasir.com/api/transactiondetail*' => Http::response([
+                'transaction' => [
+                    'amount' => 22000,
+                    'order_id' => '240910HDE7C9',
+                    'project' => 'depodomain',
+                    'status' => 'completed',
+                    'payment_method' => 'qris',
+                    'completed_at' => '2024-09-10T08:07:02.819+07:00',
+                ],
+            ]),
+        ]);
 
         $subscriber = User::factory()->create([
             'role' => 'admin',
@@ -250,6 +264,66 @@ class PakasirPaymentGatewayTest extends TestCase
             'target_id' => $invoice->id,
             'action' => 'invoice.pakasir_completed',
         ]);
+    }
+
+    public function test_pakasir_completed_webhook_does_not_activate_when_transaction_detail_is_not_completed(): void
+    {
+        config()->set('services.pakasir.project', 'depodomain');
+        config()->set('services.pakasir.api_key', 'xxx123');
+
+        Http::fake([
+            'app.pakasir.com/api/transactiondetail*' => Http::response([
+                'transaction' => [
+                    'amount' => 22000,
+                    'order_id' => 'INV-FORGED-WEBHOOK',
+                    'project' => 'depodomain',
+                    'status' => 'pending',
+                    'payment_method' => 'qris',
+                ],
+            ]),
+        ]);
+
+        $subscriber = User::factory()->create([
+            'role' => 'admin',
+            'parent_user_id' => null,
+        ]);
+
+        $invoice = SubscriptionInvoice::query()->create([
+            'user_id' => $subscriber->id,
+            'subscription_id' => null,
+            'invoice_number' => 'INV-FORGED-WEBHOOK',
+            'amount' => 22000,
+            'employee_count' => 8,
+            'plan_slug' => 'core',
+            'status' => 'pending',
+            'payment_gateway' => 'pakasir',
+            'payment_method' => 'qris',
+            'due_date' => now()->addDays(3)->toDateString(),
+            'paid_at' => null,
+            'payment_proof' => null,
+            'notes' => null,
+        ]);
+
+        $this
+            ->postJson(route('webhooks.pakasir'), [
+                'amount' => 22000,
+                'order_id' => 'INV-FORGED-WEBHOOK',
+                'project' => 'depodomain',
+                'status' => 'completed',
+                'payment_method' => 'qris',
+                'completed_at' => now()->toIso8601String(),
+            ])
+            ->assertStatus(422)
+            ->assertJson([
+                'message' => 'Status pembayaran Pakasir belum completed.',
+                'invoice_status' => 'pending',
+            ]);
+
+        $invoice->refresh();
+
+        $this->assertSame('pending', $invoice->status);
+        $this->assertNull($invoice->subscription_id);
+        $this->assertNull($invoice->paid_at);
     }
 
     public function test_user_can_open_pakasir_payment_page_for_owned_invoice(): void

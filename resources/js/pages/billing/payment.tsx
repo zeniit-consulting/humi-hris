@@ -120,12 +120,7 @@ export default function BillingPaymentPage() {
                 <div className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Scan QRIS</CardTitle>
-                            <CardDescription>
-                                Sistem membuat transaksi Pakasir di background.
-                                Scan QRIS berikut atau buka link pembayaran untuk
-                                menyelesaikan transaksi.
-                            </CardDescription>
+                            <CardTitle>Bayar via QRIS</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {qrisValue ? (
@@ -155,7 +150,7 @@ export default function BillingPaymentPage() {
                                                     rel="noopener noreferrer"
                                                 >
                                                     <ExternalLink className="mr-2 size-4" />
-                                                    Buka Link Pakasir
+                                                    Buka Link Payment
                                                 </a>
                                             </Button>
                                         )}
@@ -167,17 +162,6 @@ export default function BillingPaymentPage() {
                                     billing dan buat ulang invoice.
                                 </div>
                             )}
-
-                            <div className="rounded-md border bg-muted/40 p-4 text-sm">
-                                <p className="font-medium">
-                                    Setelah pembayaran selesai, Pakasir akan
-                                    mengirim webhook untuk verifikasi otomatis.
-                                </p>
-                                <p className="mt-1 text-muted-foreground">
-                                    Tombol di bawah bisa dipakai untuk cek status
-                                    manual jika webhook belum masuk.
-                                </p>
-                            </div>
 
                             <Button
                                 type="button"
@@ -195,7 +179,7 @@ export default function BillingPaymentPage() {
                                         <RefreshCw className="mr-2 size-4" />
                                         {processing
                                             ? 'Mengecek pembayaran...'
-                                            : 'Saya sudah selesai bayar'}
+                                            : 'Saya sudah bayar'}
                                     </>
                                 )}
                             </Button>

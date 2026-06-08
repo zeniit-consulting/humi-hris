@@ -423,6 +423,7 @@ class PortalController extends Controller
                 'overtimes' => route('portal.overtimes'),
                 'kasbons' => route('portal.kasbons'),
                 'payroll' => route('portal.payroll'),
+                'activity' => route('portal.activity'),
                 'profile' => route('portal.profile'),
                 'dashboard' => route('portal.index'),
             ],

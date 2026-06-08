@@ -9,7 +9,9 @@ use App\Services\PakasirPaymentGateway;
 use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class PakasirWebhookController extends Controller
 {
@@ -50,15 +52,13 @@ class PakasirWebhookController extends Controller
             return response()->json(['message' => 'Invoice bukan transaksi Pakasir.'], 422);
         }
 
-        $invoice->update([
-            'payment_gateway' => 'pakasir',
-            'payment_method' => $validated['payment_method'],
-            'payment_payload' => array_merge($invoice->payment_payload ?? [], [
-                'webhook' => $validated,
-            ]),
-        ]);
-
         if ($validated['status'] !== 'completed') {
+            $invoice->update([
+                'payment_payload' => array_merge($invoice->payment_payload ?? [], [
+                    'webhook' => $validated,
+                ]),
+            ]);
+
             return response()->json([
                 'message' => 'Webhook diterima, status belum completed.',
                 'invoice_status' => $invoice->status,
@@ -78,6 +78,50 @@ class PakasirWebhookController extends Controller
                 'invoice_status' => $invoice->status,
             ], 422);
         }
+
+        try {
+            $payload = $this->pakasir->transactionDetail($invoice);
+        } catch (\Throwable $exception) {
+            Log::warning('pakasir.webhook.transaction_detail_failed', [
+                'invoice_id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+                'exception' => $exception::class,
+                'message' => $exception->getMessage(),
+            ]);
+
+            report($exception);
+
+            return response()->json([
+                'message' => 'Status pembayaran Pakasir belum dapat diverifikasi.',
+                'invoice_status' => $invoice->status,
+            ], 422);
+        }
+
+        $transaction = Arr::get($payload, 'transaction', []);
+
+        if (Arr::get($transaction, 'status') !== 'completed') {
+            return response()->json([
+                'message' => 'Status pembayaran Pakasir belum completed.',
+                'invoice_status' => $invoice->status,
+            ], 422);
+        }
+
+        if ((int) Arr::get($transaction, 'amount') !== $invoice->amount
+            || (string) Arr::get($transaction, 'order_id') !== $invoice->invoice_number
+            || (string) Arr::get($transaction, 'project') !== (string) $configuredProject) {
+            return response()->json([
+                'message' => 'Data pembayaran Pakasir tidak sesuai dengan invoice.',
+                'invoice_status' => $invoice->status,
+            ], 422);
+        }
+
+        $invoice->update([
+            'payment_method' => $validated['payment_method'],
+            'payment_payload' => array_merge($invoice->payment_payload ?? [], [
+                'webhook' => $validated,
+                'webhook_transaction_detail' => $transaction,
+            ]),
+        ]);
 
         $completedAt = filled($validated['completed_at'] ?? null)
             ? Carbon::parse($validated['completed_at'])

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PakasirWebhookController::__invoke
-* @see app/Http/Controllers/Api/PakasirWebhookController.php:21
+* @see app/Http/Controllers/Api/PakasirWebhookController.php:23
 * @route '/api/webhooks/pakasir'
 */
 const PakasirWebhookController = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ PakasirWebhookController.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PakasirWebhookController::__invoke
-* @see app/Http/Controllers/Api/PakasirWebhookController.php:21
+* @see app/Http/Controllers/Api/PakasirWebhookController.php:23
 * @route '/api/webhooks/pakasir'
 */
 PakasirWebhookController.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ PakasirWebhookController.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PakasirWebhookController::__invoke
-* @see app/Http/Controllers/Api/PakasirWebhookController.php:21
+* @see app/Http/Controllers/Api/PakasirWebhookController.php:23
 * @route '/api/webhooks/pakasir'
 */
 PakasirWebhookController.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ PakasirWebhookController.post = (options?: RouteQueryOptions): RouteDefinition<'
 
 /**
 * @see \App\Http\Controllers\Api\PakasirWebhookController::__invoke
-* @see app/Http/Controllers/Api/PakasirWebhookController.php:21
+* @see app/Http/Controllers/Api/PakasirWebhookController.php:23
 * @route '/api/webhooks/pakasir'
 */
 const PakasirWebhookControllerForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ const PakasirWebhookControllerForm = (options?: RouteQueryOptions): RouteFormDef
 
 /**
 * @see \App\Http\Controllers\Api\PakasirWebhookController::__invoke
-* @see app/Http/Controllers/Api/PakasirWebhookController.php:21
+* @see app/Http/Controllers/Api/PakasirWebhookController.php:23
 * @route '/api/webhooks/pakasir'
 */
 PakasirWebhookControllerForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

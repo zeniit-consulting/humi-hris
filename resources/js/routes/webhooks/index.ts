@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PakasirWebhookController::__invoke
-* @see app/Http/Controllers/Api/PakasirWebhookController.php:21
+* @see app/Http/Controllers/Api/PakasirWebhookController.php:23
 * @route '/api/webhooks/pakasir'
 */
 export const pakasir = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ pakasir.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PakasirWebhookController::__invoke
-* @see app/Http/Controllers/Api/PakasirWebhookController.php:21
+* @see app/Http/Controllers/Api/PakasirWebhookController.php:23
 * @route '/api/webhooks/pakasir'
 */
 pakasir.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ pakasir.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PakasirWebhookController::__invoke
-* @see app/Http/Controllers/Api/PakasirWebhookController.php:21
+* @see app/Http/Controllers/Api/PakasirWebhookController.php:23
 * @route '/api/webhooks/pakasir'
 */
 pakasir.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ pakasir.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PakasirWebhookController::__invoke
-* @see app/Http/Controllers/Api/PakasirWebhookController.php:21
+* @see app/Http/Controllers/Api/PakasirWebhookController.php:23
 * @route '/api/webhooks/pakasir'
 */
 const pakasirForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ const pakasirForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =
 
 /**
 * @see \App\Http\Controllers\Api\PakasirWebhookController::__invoke
-* @see app/Http/Controllers/Api/PakasirWebhookController.php:21
+* @see app/Http/Controllers/Api/PakasirWebhookController.php:23
 * @route '/api/webhooks/pakasir'
 */
 pakasirForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

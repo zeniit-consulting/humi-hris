@@ -135,7 +135,7 @@ class PerformanceController extends Controller
             'attendanceMetricOptions' => PerformanceKpiMetric::ATTENDANCE_METRICS,
             'stats' => [
                 'average_final_score' => round((float) $statsSource->avg('final_score'), 2),
-                'at_risk' => $statsSource->filter(fn (PerformanceReview $review): bool => (float) $review->final_score < 60 || (float) $review->okr_score < 60 || (float) $review->kpi_score < 60)->count(),
+                'at_risk' => $statsSource->filter(fn (PerformanceReview $review): bool => $review->status !== 'not_started' && ((float) $review->final_score < 60 || (float) $review->okr_score < 60 || (float) $review->kpi_score < 60))->count(),
                 'pending_reviews' => $statsSource->whereNotIn('status', ['completed', 'locked'])->count(),
                 'completed_reviews' => $statsSource->whereIn('status', ['completed', 'locked'])->count(),
             ],
@@ -540,14 +540,21 @@ class PerformanceController extends Controller
 
     private function keyResultPayloadFromRequest(Request $request): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'target_value' => ['required', 'numeric', 'min:0', 'max:999999999'],
             'actual_value' => ['required', 'numeric', 'min:0', 'max:999999999'],
             'unit' => ['nullable', 'string', 'max:40'],
-            'score' => ['required', 'numeric', 'min:0', 'max:120'],
             'status' => ['required', Rule::in(PerformanceKeyResult::STATUSES)],
         ]);
+
+        $target = (float) $validated['target_value'];
+        $actual = (float) $validated['actual_value'];
+        $validated['score'] = $target <= 0
+            ? ($actual <= 0 ? 100 : 0)
+            : round(max(0, min(($actual / $target) * 100, 120)), 2);
+
+        return $validated;
     }
 
     private function authorizeMasterData(Request $request): void

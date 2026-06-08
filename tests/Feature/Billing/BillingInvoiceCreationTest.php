@@ -79,6 +79,50 @@ class BillingInvoiceCreationTest extends TestCase
         $this->assertSame('QRIS-CONTENT', $invoice->payment_number);
     }
 
+    public function test_admin_staff_cannot_create_billing_invoice_for_owner_account(): void
+    {
+        config()->set('services.pakasir.project', 'depodomain');
+        config()->set('services.pakasir.api_key', 'xxx123');
+
+        Http::fake();
+
+        $owner = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        $staff = User::factory()->create([
+            'role' => 'admin_staff',
+            'parent_user_id' => $owner->id,
+            'phone_verified_at' => now(),
+        ]);
+
+        Employee::factory()
+            ->count(10)
+            ->create(['user_id' => $owner->id, 'employment_status' => 'active']);
+
+        SubscriptionPlan::query()->create([
+            'slug' => 'core',
+            'name' => 'Basic',
+            'price_per_employee' => 2900,
+            'max_employees' => null,
+            'max_months' => null,
+            'locked_features' => [],
+            'is_active' => true,
+        ]);
+
+        $this
+            ->actingAs($staff)
+            ->post(route('billing.invoices.store'), [
+                'plan_slug' => 'core',
+                'payment_method' => 'qris',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('subscription_invoices', 0);
+        Http::assertNothingSent();
+    }
+
     public function test_get_billing_invoices_without_query_creates_basic_invoice_for_legacy_form(): void
     {
         config()->set('services.pakasir.project', 'depodomain');
