@@ -99,6 +99,32 @@ class BillingController extends Controller
             'payment_method' => $paymentMethod,
         ]);
 
+        $activeEmployeeCount = $this->subscriptionService->getEmployeeCount($user);
+
+        if ($this->subscriptionService->isDowngrade($user, $validated['plan_slug'])) {
+            $this->subscriptionService->changePlanImmediately(
+                $user,
+                $validated['plan_slug'],
+                $activeEmployeeCount,
+            );
+
+            SubscriptionInvoice::query()
+                ->where('user_id', $ownerId)
+                ->where('status', 'pending')
+                ->where('plan_slug', '!=', $validated['plan_slug'])
+                ->update(['status' => 'cancelled']);
+
+            Log::info('billing.subscription.downgraded', [
+                'user_id' => $user->id,
+                'owner_id' => $ownerId,
+                'plan_slug' => $validated['plan_slug'],
+                'active_employee_count' => $activeEmployeeCount,
+            ]);
+
+            return redirect()->away($this->routePath('billing.index'))
+                ->with('success', 'Paket berhasil diturunkan. Fitur di luar paket baru otomatis dikunci.');
+        }
+
         if (! $this->pakasir->isConfigured()) {
             Log::warning('billing.invoice.create.pakasir_not_configured', [
                 'user_id' => $user->id,
@@ -108,8 +134,6 @@ class BillingController extends Controller
             return redirect()->away($this->routePath('billing.index'))
                 ->with('error', 'Konfigurasi Pakasir belum lengkap. Isi PAKASIR_PROJECT dan PAKASIR_API_KEY.');
         }
-
-        $activeEmployeeCount = $this->subscriptionService->getEmployeeCount($user);
 
         if ($activeEmployeeCount < 1) {
             Log::warning('billing.invoice.create.no_active_employees', [
@@ -360,13 +384,13 @@ class BillingController extends Controller
             'payment_number' => $invoice->payment_number,
             'payment_fee' => $invoice->payment_fee,
             'total_payment' => $invoice->total_payment,
-            'payment_expires_at' => $invoice->payment_expires_at?->toDateTimeString(),
+            'payment_expires_at' => $invoice->payment_expires_at?->toIso8601String(),
             'due_date' => $invoice->due_date?->toDateString(),
-            'paid_at' => $invoice->paid_at?->toDateTimeString(),
+            'paid_at' => $invoice->paid_at?->toIso8601String(),
             'payment_proof' => R2Storage::url($invoice->payment_proof),
             'payment_url' => $this->pakasir->paymentUrl($invoice),
             'notes' => $invoice->notes,
-            'created_at' => $invoice->created_at?->toDateTimeString(),
+            'created_at' => $invoice->created_at?->toIso8601String(),
         ];
     }
 }

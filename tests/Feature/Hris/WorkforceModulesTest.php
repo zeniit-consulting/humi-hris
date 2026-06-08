@@ -3,6 +3,7 @@
 namespace Tests\Feature\Hris;
 
 use App\Models\Employee;
+use App\Models\EmployeeAttendance;
 use App\Models\EmployeeLeaveBalance;
 use App\Models\SubCompany;
 use App\Models\User;
@@ -28,6 +29,64 @@ class WorkforceModulesTest extends TestCase
         $this->actingAs($user)->get(route('hris.schedules.index'))->assertOk();
         $this->actingAs($user)->get(route('hris.leaves.index'))->assertOk();
         $this->actingAs($user)->get(route('hris.overtimes.index'))->assertOk();
+    }
+
+    public function test_attendance_page_returns_iso_timestamps_for_device_timezone_display(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $attendance = EmployeeAttendance::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-06-08',
+            'check_in_at' => '2026-06-08 01:30:00',
+            'check_out_at' => '2026-06-08 10:00:00',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.attendances.index', ['date' => '2026-06-08']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hris/attendances/index')
+                ->where('attendances.data.0.id', $attendance->id)
+                ->where('attendances.data.0.check_in_at', '2026-06-08T01:30:00+00:00')
+                ->where('attendances.data.0.check_out_at', '2026-06-08T10:00:00+00:00')
+            );
+    }
+
+    public function test_attendance_input_from_device_timezone_is_stored_as_utc(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.attendances.store'), [
+                'employee_id' => $employee->id,
+                'attendance_date' => '2026-06-08',
+                'status' => 'present',
+                'check_in_at' => '2026-06-08T09:30',
+                'check_out_at' => '2026-06-08T18:00',
+                'timezone' => 'Asia/Makassar',
+            ])
+            ->assertRedirect();
+
+        $attendance = EmployeeAttendance::query()->firstOrFail();
+
+        $this->assertSame('2026-06-08 01:30:00', $attendance->check_in_at?->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-06-08 10:00:00', $attendance->check_out_at?->format('Y-m-d H:i:s'));
     }
 
     public function test_leave_balances_page_can_be_opened()

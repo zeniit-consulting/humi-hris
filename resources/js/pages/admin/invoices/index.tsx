@@ -27,6 +27,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { formatDeviceDateTime } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 type Invoice = {
@@ -254,7 +255,9 @@ export default function AdminInvoicesPage() {
                                                     {invoice.invoice_number}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {invoice.created_at ?? '-'}
+                                                    {formatDeviceDateTime(
+                                                        invoice.created_at,
+                                                    )}
                                                 </p>
                                             </TableCell>
                                             <TableCell>
@@ -298,7 +301,9 @@ export default function AdminInvoicesPage() {
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
                                                     Paid:{' '}
-                                                    {invoice.paid_at ?? '-'}
+                                                    {formatDeviceDateTime(
+                                                        invoice.paid_at,
+                                                    )}
                                                 </p>
                                             </TableCell>
                                             <TableCell>

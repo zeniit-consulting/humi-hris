@@ -79,7 +79,7 @@ class RecruitmentController extends Controller
                 'requirements' => $vacancy->requirements,
                 'benefits' => $vacancy->benefits,
                 'status' => $vacancy->status,
-                'published_at' => $vacancy->published_at?->toDateTimeString(),
+                'published_at' => $vacancy->published_at?->toIso8601String(),
                 'closing_date' => $vacancy->closing_date?->format('Y-m-d'),
                 'applications_count' => $vacancy->applications_count,
                 'public_url' => route('careers.show', $vacancy->slug),
@@ -144,7 +144,7 @@ class RecruitmentController extends Controller
                 'offered_salary' => $application->offered_salary,
                 'proposed_start_date' => $application->proposed_start_date?->format('Y-m-d'),
                 'employment_type' => $application->employment_type,
-                'created_at' => $application->created_at?->toDateTimeString(),
+                'created_at' => $application->created_at?->toIso8601String(),
                 'offer_letter_url' => route('hris.recruitment.applications.offer-letter', $application),
                 'initial_contract_url' => route('hris.recruitment.applications.initial-contract', $application),
                 'job_vacancy' => $application->jobVacancy ? [

@@ -661,8 +661,8 @@ class PerformanceController extends Controller
             'strengths' => $review->strengths,
             'improvement_areas' => $review->improvement_areas,
             'next_action' => $review->next_action,
-            'reviewed_at' => $review->reviewed_at?->toDateTimeString(),
-            'locked_at' => $review->locked_at?->toDateTimeString(),
+            'reviewed_at' => $review->reviewed_at?->toIso8601String(),
+            'locked_at' => $review->locked_at?->toIso8601String(),
             'period' => $review->period ? $this->periodPayload($review->period) : null,
             'employee' => $review->employee ? $this->employeeOption($review->employee) : null,
             'manager' => $review->manager ? [

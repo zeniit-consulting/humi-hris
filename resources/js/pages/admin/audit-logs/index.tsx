@@ -21,6 +21,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { formatDeviceDateTime } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 type AuditLog = {
@@ -180,7 +181,9 @@ export default function AuditLogsPage() {
                                     {logs.data.map((log) => (
                                         <TableRow key={log.id}>
                                             <TableCell className="text-xs">
-                                                {log.created_at ?? '-'}
+                                                {formatDeviceDateTime(
+                                                    log.created_at,
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline">

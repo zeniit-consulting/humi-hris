@@ -12,6 +12,8 @@ use App\Models\PerformanceObjective;
 use App\Models\PerformancePeriod;
 use App\Models\PerformanceReview;
 use App\Models\Position;
+use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -25,15 +27,37 @@ class PerformanceModuleTest extends TestCase
         $this->withoutVite();
 
         $user = User::factory()->create();
+        $this->activatePlan($user, 'plus');
 
         $this->actingAs($user)
             ->get(route('hris.performances.index'))
             ->assertOk();
     }
 
+    public function test_basic_plan_cannot_open_performance_page(): void
+    {
+        $user = User::factory()->create();
+        $this->activatePlan($user, 'core', ['performance']);
+
+        $this->actingAs($user)
+            ->get(route('hris.performances.index'))
+            ->assertRedirect(route('billing.index'));
+    }
+
+    public function test_free_plan_cannot_open_performance_page(): void
+    {
+        $user = User::factory()->create();
+        $this->activatePlan($user, 'free', ['performance']);
+
+        $this->actingAs($user)
+            ->get(route('hris.performances.index'))
+            ->assertRedirect(route('billing.index'));
+    }
+
     public function test_review_prefills_template_kpis_and_calculates_final_score_with_50_40_10_ratio(): void
     {
         $user = User::factory()->create();
+        $this->activatePlan($user, 'plus');
         [$employee, $manager] = $this->employeePair($user);
 
         $period = PerformancePeriod::query()->create([
@@ -116,6 +140,7 @@ class PerformanceModuleTest extends TestCase
     public function test_key_result_score_is_calculated_from_actual_and_target_values(): void
     {
         $user = User::factory()->create();
+        $this->activatePlan($user, 'plus');
         [$employee, $manager] = $this->employeePair($user);
 
         $period = PerformancePeriod::query()->create([
@@ -163,6 +188,7 @@ class PerformanceModuleTest extends TestCase
     public function test_attendance_kpi_reads_attendance_records_for_the_review_period(): void
     {
         $user = User::factory()->create();
+        $this->activatePlan($user, 'plus');
         [$employee, $manager] = $this->employeePair($user);
 
         $period = PerformancePeriod::query()->create([
@@ -219,6 +245,7 @@ class PerformanceModuleTest extends TestCase
     public function test_attendance_kpi_counts_scheduled_workdays_without_attendance_as_absent(): void
     {
         $user = User::factory()->create();
+        $this->activatePlan($user, 'plus');
         [$employee, $manager] = $this->employeePair($user);
 
         $period = PerformancePeriod::query()->create([
@@ -288,6 +315,7 @@ class PerformanceModuleTest extends TestCase
     public function test_manager_cannot_update_review_outside_their_scope(): void
     {
         $owner = User::factory()->create();
+        $this->activatePlan($owner, 'plus');
         [$employee, $manager] = $this->employeePair($owner);
         $otherManager = Employee::factory()->create([
             'user_id' => $owner->id,
@@ -330,6 +358,7 @@ class PerformanceModuleTest extends TestCase
     public function test_closed_period_locks_reviews_from_score_edits(): void
     {
         $user = User::factory()->create();
+        $this->activatePlan($user, 'plus');
         [$employee, $manager] = $this->employeePair($user);
 
         $period = PerformancePeriod::query()->create([
@@ -406,5 +435,43 @@ class PerformanceModuleTest extends TestCase
         ]);
 
         return [$employee, $manager];
+    }
+
+    /**
+     * @param list<string> $lockedFeatures
+     */
+    private function activatePlan(User $user, string $planSlug, array $lockedFeatures = []): void
+    {
+        SubscriptionPlan::query()->updateOrCreate(
+            ['slug' => $planSlug],
+            [
+                'name' => match ($planSlug) {
+                    'free' => 'Free',
+                    'core' => 'Basic',
+                    default => 'Plus',
+                },
+                'price_per_employee' => match ($planSlug) {
+                    'free' => 0,
+                    'core' => 2900,
+                    default => 7500,
+                },
+                'max_employees' => $planSlug === 'free' ? 10 : null,
+                'max_months' => $planSlug === 'free' ? 1 : null,
+                'locked_features' => $lockedFeatures,
+                'is_active' => true,
+            ],
+        );
+
+        Subscription::query()->updateOrCreate(
+            ['user_id' => $user->accountOwnerId()],
+            [
+                'plan_slug' => $planSlug,
+                'status' => 'active',
+                'employee_count' => 0,
+                'current_period_start' => now()->toDateString(),
+                'current_period_end' => now()->addMonth()->toDateString(),
+                'trial_ends_at' => null,
+            ],
+        );
     }
 }

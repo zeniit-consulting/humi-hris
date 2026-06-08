@@ -43,6 +43,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { formatDeviceDateTime } from '@/lib/utils';
 import type { BreadcrumbItem, SubscriptionInfo } from '@/types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -485,7 +486,12 @@ const coreFeaturesIncluded = [
     'Struktur Organisasi',
 ];
 
-const coreFeatureLocked = ['Rekrutmen', 'Kasbon', 'Asset Management'];
+const coreFeatureLocked = [
+    'Rekrutmen',
+    'Performance',
+    'Kasbon',
+    'Asset Management',
+];
 const plusFeatures = [...coreFeaturesIncluded, ...coreFeatureLocked];
 
 // ── Plan Card ─────────────────────────────────────────────────────────────────
@@ -676,7 +682,7 @@ function InvoiceTable({
                                         {inv.payment_expires_at && (
                                             <div className="mt-1 text-xs text-muted-foreground">
                                                 Exp:{' '}
-                                                {formatDate(
+                                                {formatDeviceDateTime(
                                                     inv.payment_expires_at,
                                                 )}
                                             </div>
@@ -688,7 +694,7 @@ function InvoiceTable({
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
-                                        {formatDate(inv.created_at)}
+                                        {formatDeviceDateTime(inv.created_at)}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         {inv.status === 'pending' && (
@@ -835,6 +841,7 @@ export default function BillingPage() {
                             ]}
                             lockedFeatures={[
                                 'Rekrutmen',
+                                'Performance',
                                 'Penggajian',
                                 'Kasbon',
                                 'Asset Management',

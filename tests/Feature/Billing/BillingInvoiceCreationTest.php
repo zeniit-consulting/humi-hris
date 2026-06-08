@@ -3,6 +3,7 @@
 namespace Tests\Feature\Billing;
 
 use App\Models\Employee;
+use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
@@ -231,5 +232,90 @@ class BillingInvoiceCreationTest extends TestCase
         $this->assertSame(2, $invoice->employee_count);
         $this->assertSame(5800, $invoice->amount);
         $this->assertSame('qris', $invoice->payment_method);
+    }
+
+    public function test_active_plus_subscription_can_downgrade_to_basic_without_invoice(): void
+    {
+        config()->set('services.pakasir.project', null);
+        config()->set('services.pakasir.api_key', null);
+
+        Http::fake();
+
+        $user = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        Employee::factory()
+            ->count(3)
+            ->create(['user_id' => $user->id, 'employment_status' => 'active']);
+
+        SubscriptionPlan::query()->create([
+            'slug' => 'core',
+            'name' => 'Basic',
+            'price_per_employee' => 2900,
+            'max_employees' => null,
+            'max_months' => null,
+            'locked_features' => ['performance'],
+            'is_active' => true,
+        ]);
+
+        SubscriptionPlan::query()->create([
+            'slug' => 'plus',
+            'name' => 'Plus',
+            'price_per_employee' => 7500,
+            'max_employees' => null,
+            'max_months' => null,
+            'locked_features' => [],
+            'is_active' => true,
+        ]);
+
+        Subscription::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'plan_slug' => 'plus',
+                'status' => 'active',
+                'employee_count' => 3,
+                'current_period_start' => now()->toDateString(),
+                'current_period_end' => now()->addMonth()->toDateString(),
+                'trial_ends_at' => null,
+            ],
+        );
+
+        SubscriptionInvoice::query()->create([
+            'user_id' => $user->id,
+            'subscription_id' => null,
+            'invoice_number' => 'INV-PENDING-PLUS',
+            'amount' => 22500,
+            'employee_count' => 3,
+            'plan_slug' => 'plus',
+            'status' => 'pending',
+            'payment_gateway' => 'pakasir',
+            'payment_method' => 'qris',
+            'payment_number' => 'QRIS-OLD',
+            'due_date' => now()->addDays(3)->toDateString(),
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->post(route('billing.invoices.store'), [
+                'plan_slug' => 'core',
+                'payment_method' => 'qris',
+            ])
+            ->assertRedirect(route('billing.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('subscriptions', [
+            'user_id' => $user->id,
+            'plan_slug' => 'core',
+            'status' => 'active',
+            'employee_count' => 3,
+        ]);
+        $this->assertDatabaseHas('subscription_invoices', [
+            'invoice_number' => 'INV-PENDING-PLUS',
+            'status' => 'cancelled',
+        ]);
+        $this->assertSame(1, SubscriptionInvoice::query()->count());
+        Http::assertNothingSent();
     }
 }

@@ -10,6 +10,7 @@ use App\Models\PerformanceKpiResult;
 use App\Models\PerformanceObjective;
 use App\Models\PerformanceReview;
 use App\Models\User;
+use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -18,10 +19,16 @@ class PortalPerformanceController extends Controller
 {
     use InteractsWithSelfService;
 
+    public function __construct(
+        private readonly SubscriptionService $subscriptionService,
+    ) {}
+
     public function index(Request $request): JsonResponse
     {
         /** @var User $user */
         $user = $request->user();
+        $this->abortIfPerformanceLocked($user);
+
         $employee = $this->resolveRequiredSelfServiceEmployee($user);
 
         $reviews = PerformanceReview::query()
@@ -51,6 +58,8 @@ class PortalPerformanceController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
+        $this->abortIfPerformanceLocked($user);
+
         $employee = $this->resolveRequiredSelfServiceEmployee($user);
 
         abort_unless($review->employee_id === $employee->id, 404);
@@ -147,5 +156,16 @@ class PortalPerformanceController extends Controller
             'action_items' => $checkIn->action_items,
             'status' => $checkIn->status,
         ];
+    }
+
+    private function abortIfPerformanceLocked(User $user): void
+    {
+        $subscription = $this->subscriptionService->getActiveSubscription($user);
+
+        abort_if(
+            ! $subscription || $subscription->isFeatureLocked('performance'),
+            403,
+            'Modul Performance hanya tersedia pada paket Plus.'
+        );
     }
 }

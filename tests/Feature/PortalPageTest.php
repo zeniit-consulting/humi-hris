@@ -12,6 +12,8 @@ use App\Models\PayrollRun;
 use App\Models\PerformancePeriod;
 use App\Models\PerformanceReview;
 use App\Models\Position;
+use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -173,6 +175,7 @@ class PortalPageTest extends TestCase
             'email' => 'portal@example.com',
             'email_verified_at' => now(),
         ]);
+        $this->activatePlan($user, 'plus');
 
         $division = Division::factory()->create([
             'user_id' => $user->id,
@@ -242,6 +245,21 @@ class PortalPageTest extends TestCase
             'performance_review_id' => $review->id,
             'summary' => 'Progress OKR minggu ini sudah diupdate.',
         ]);
+    }
+
+    public function test_basic_plan_cannot_open_portal_performance_activity_api(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'email' => 'portal-basic@example.com',
+            'email_verified_at' => now(),
+        ]);
+        $this->activatePlan($user, 'core', ['performance']);
+
+        $this->actingAs($user)
+            ->getJson(route('portal.api.performances.index'))
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Modul Performance hanya tersedia pada paket Plus.');
     }
 
     public function test_portal_summary_uses_browser_timezone_for_attendance_times(): void
@@ -517,5 +535,35 @@ class PortalPageTest extends TestCase
             ]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['birth_date']);
+    }
+
+    /**
+     * @param list<string> $lockedFeatures
+     */
+    private function activatePlan(User $user, string $planSlug, array $lockedFeatures = []): void
+    {
+        SubscriptionPlan::query()->updateOrCreate(
+            ['slug' => $planSlug],
+            [
+                'name' => $planSlug === 'core' ? 'Basic' : 'Plus',
+                'price_per_employee' => $planSlug === 'core' ? 2900 : 7500,
+                'max_employees' => null,
+                'max_months' => null,
+                'locked_features' => $lockedFeatures,
+                'is_active' => true,
+            ],
+        );
+
+        Subscription::query()->updateOrCreate(
+            ['user_id' => $user->accountOwnerId()],
+            [
+                'plan_slug' => $planSlug,
+                'status' => 'active',
+                'employee_count' => 0,
+                'current_period_start' => now()->toDateString(),
+                'current_period_end' => now()->addMonth()->toDateString(),
+                'trial_ends_at' => null,
+            ],
+        );
     }
 }

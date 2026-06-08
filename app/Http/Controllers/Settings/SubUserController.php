@@ -56,7 +56,7 @@ class SubUserController extends Controller
                     'client_sub_company_label' => $subCompanyLabels
                         ->map(fn (SubCompany $company) => $company->code.' - '.$company->name)
                         ->implode(', ') ?: null,
-                    'created_at' => $user->created_at?->toDateTimeString(),
+                    'created_at' => $user->created_at?->toIso8601String(),
                 ];
             }),
             'subCompanies' => $subCompanies->map(fn (SubCompany $company) => [

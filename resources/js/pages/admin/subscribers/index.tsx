@@ -23,6 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
+import { formatDeviceDateTime } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 type Plan = {
@@ -473,6 +474,12 @@ export default function SubscriberManagementPage() {
                                                     Subscriber suspended
                                                 </p>
                                                 <p className="mt-1">
+                                                    Sejak:{' '}
+                                                    {formatDeviceDateTime(
+                                                        selectedSubscriber.suspended_at,
+                                                    )}
+                                                </p>
+                                                <p className="mt-1">
                                                     {selectedSubscriber.suspension_reason ||
                                                         'Tidak ada alasan tercatat.'}
                                                 </p>
@@ -785,6 +792,12 @@ export default function SubscriberManagementPage() {
                                             <p className="text-sm text-muted-foreground">
                                                 Due date:{' '}
                                                 {invoice.due_date ?? '-'}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Dibuat:{' '}
+                                                {formatDeviceDateTime(
+                                                    invoice.created_at,
+                                                )}
                                             </p>
                                         </div>
                                         <div className="flex flex-wrap gap-2">

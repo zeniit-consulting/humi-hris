@@ -12,6 +12,7 @@ use App\Models\EmployeeSchedule;
 use App\Services\AttendanceStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -92,10 +93,8 @@ class AttendanceController extends Controller
             'attendance_date' => $attendance->attendance_date->format('Y-m-d'),
             'shift_name' => (string) ($shiftByEmployee->get($attendance->employee_id) ?? 'OFF'),
             'status' => $attendance->status,
-            'check_in_at' => $attendance->check_in_at?->format('Y-m-d\\TH:i'),
-            'check_out_at' => $attendance->check_out_at?->format('Y-m-d\\TH:i'),
-            'check_in_time' => $attendance->check_in_at?->format('H:i'),
-            'check_out_time' => $attendance->check_out_at?->format('H:i'),
+            'check_in_at' => $attendance->check_in_at?->toIso8601String(),
+            'check_out_at' => $attendance->check_out_at?->toIso8601String(),
             'notes' => $attendance->notes,
         ]);
 
@@ -129,7 +128,9 @@ class AttendanceController extends Controller
     {
         $validated = $request->validated();
         $ownerId = $request->user()->accountOwnerId();
-        $validated['status'] = $statusService->resolveStatus($validated, $ownerId);
+        $timezone = $this->deviceTimezone($request);
+        $this->normalizeAttendanceTimestamps($validated, $timezone);
+        $validated['status'] = $statusService->resolveStatus($validated, $ownerId, $timezone);
 
         EmployeeAttendance::updateOrCreate(
             [
@@ -153,7 +154,9 @@ class AttendanceController extends Controller
     public function update(UpdateAttendanceRequest $request, EmployeeAttendance $employeeAttendance, AttendanceStatusService $statusService): RedirectResponse
     {
         $validated = $request->validated();
-        $validated['status'] = $statusService->resolveStatus($validated, $request->user()->accountOwnerId());
+        $timezone = $this->deviceTimezone($request);
+        $this->normalizeAttendanceTimestamps($validated, $timezone);
+        $validated['status'] = $statusService->resolveStatus($validated, $request->user()->accountOwnerId(), $timezone);
 
         $employeeAttendance->update($validated);
 
@@ -277,5 +280,33 @@ class AttendanceController extends Controller
         }, $fileName, [
             'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
         ]);
+    }
+
+    private function deviceTimezone(Request $request): string
+    {
+        $timezone = (string) $request->input('timezone', $request->header('X-Timezone', config('app.timezone')));
+
+        return in_array($timezone, timezone_identifiers_list(), true)
+            ? $timezone
+            : config('app.timezone');
+    }
+
+    /**
+     * @param array<string, mixed> $validated
+     */
+    private function normalizeAttendanceTimestamps(array &$validated, string $timezone): void
+    {
+        foreach (['check_in_at', 'check_out_at'] as $key) {
+            if (blank($validated[$key] ?? null)) {
+                $validated[$key] = null;
+                continue;
+            }
+
+            $value = (string) $validated[$key];
+
+            $validated[$key] = preg_match('/(?:Z|[+-]\d{2}:?\d{2})$/', $value) === 1
+                ? Carbon::parse($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s')
+                : Carbon::parse($value, $timezone)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
+        }
     }
 }

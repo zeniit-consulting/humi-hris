@@ -83,6 +83,45 @@ class SubscriptionService
         ]);
     }
 
+    public function isDowngrade(User $user, string $targetPlanSlug): bool
+    {
+        $subscription = $this->getActiveSubscription($user);
+
+        if (! $subscription || $subscription->plan_slug === $targetPlanSlug) {
+            return false;
+        }
+
+        $currentPlan = $subscription->plan();
+        $targetPlan = SubscriptionPlan::query()->where('slug', $targetPlanSlug)->first();
+
+        if (! $currentPlan || ! $targetPlan) {
+            return false;
+        }
+
+        return $targetPlan->price_per_employee < $currentPlan->price_per_employee;
+    }
+
+    public function changePlanImmediately(User $user, string $planSlug, int $employeeCount): Subscription
+    {
+        $ownerId = $user->accountOwnerId();
+
+        SubscriptionPlan::query()->where('slug', $planSlug)->firstOrFail();
+
+        $subscription = $this->getActiveSubscription($user);
+
+        if (! $subscription) {
+            throw new \RuntimeException('Tidak ada langganan aktif untuk diubah.');
+        }
+
+        $subscription->update([
+            'user_id' => $ownerId,
+            'plan_slug' => $planSlug,
+            'employee_count' => $employeeCount,
+        ]);
+
+        return $subscription->refresh();
+    }
+
     public function activateSubscription(SubscriptionInvoice $invoice, ?CarbonInterface $paidAt = null): Subscription
     {
         $ownerId = $invoice->user_id;

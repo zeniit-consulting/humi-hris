@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PortalPerformanceController::store
-* @see app/Http/Controllers/Api/PortalPerformanceController.php:50
+* @see app/Http/Controllers/Api/PortalPerformanceController.php:57
 * @route '/portal/api/performances/{review}/check-ins'
 */
 export const store = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PortalPerformanceController::store
-* @see app/Http/Controllers/Api/PortalPerformanceController.php:50
+* @see app/Http/Controllers/Api/PortalPerformanceController.php:57
 * @route '/portal/api/performances/{review}/check-ins'
 */
 store.url = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ store.url = (args: { review: number | { id: number } } | [review: number | { id:
 
 /**
 * @see \App\Http\Controllers\Api\PortalPerformanceController::store
-* @see app/Http/Controllers/Api/PortalPerformanceController.php:50
+* @see app/Http/Controllers/Api/PortalPerformanceController.php:57
 * @route '/portal/api/performances/{review}/check-ins'
 */
 store.post = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ store.post = (args: { review: number | { id: number } } | [review: number | { id
 
 /**
 * @see \App\Http\Controllers\Api\PortalPerformanceController::store
-* @see app/Http/Controllers/Api/PortalPerformanceController.php:50
+* @see app/Http/Controllers/Api/PortalPerformanceController.php:57
 * @route '/portal/api/performances/{review}/check-ins'
 */
 const storeForm = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ const storeForm = (args: { review: number | { id: number } } | [review: number |
 
 /**
 * @see \App\Http\Controllers\Api\PortalPerformanceController::store
-* @see app/Http/Controllers/Api/PortalPerformanceController.php:50
+* @see app/Http/Controllers/Api/PortalPerformanceController.php:57
 * @route '/portal/api/performances/{review}/check-ins'
 */
 storeForm.post = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

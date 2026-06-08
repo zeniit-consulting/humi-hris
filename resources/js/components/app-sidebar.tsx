@@ -104,6 +104,7 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     title: 'Performance',
                     href: '/hris/performances',
                     icon: TrendingUp,
+                    ...locked('performance'),
                 },
             ],
         },

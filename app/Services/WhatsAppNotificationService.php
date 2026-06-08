@@ -148,15 +148,16 @@ class WhatsAppNotificationService
     {
         $user = $subscription->user;
 
-        if (! $user?->phone || ! WhatsAppPhone::isValid($user->phone)) {
-            return;
-        }
-
         if (! config('services.waha.enabled')) {
             return;
         }
 
+        if (! $user) {
+            return;
+        }
+
         $planLabel = match ($subscription->plan_slug) {
+            'free' => 'Free Trial',
             'core' => 'Basic',
             'plus' => 'Plus',
             default => strtoupper($subscription->plan_slug),
@@ -174,12 +175,49 @@ class WhatsAppNotificationService
             'Buka menu Billing di dashboard Humi untuk membuat invoice renewal.',
         ]);
 
+        if ($user->phone && WhatsAppPhone::isValid($user->phone)) {
+            try {
+                $this->wahaClient->sendTextToPhone($user->phone, $message);
+            } catch (\Throwable $e) {
+                Log::warning('whatsapp.subscription_renewal_reminder.failed', [
+                    'subscription_id' => $subscription->id,
+                    'user_id' => $user->id,
+                    'target' => 'user',
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $groupChatId = (string) config('services.waha.subscription_renewal_group_chat_id');
+
+        if ($groupChatId === '') {
+            return;
+        }
+
+        $groupMessage = implode("\n", [
+            '⏰ *Reminder Expired Berlangganan H-7*',
+            '',
+            '*Perusahaan:* '.($user->company_name ?: '-'),
+            '*Nama Owner:* '.$user->name,
+            '*Email:* '.($user->email ?: '-'),
+            '*WhatsApp:* '.($user->phone ?: '-'),
+            '*Paket:* '.$planLabel,
+            '*Karyawan Aktif:* '.$subscription->employee_count,
+            '*Berakhir:* '.$endDate,
+            '*User ID:* '.$user->id,
+            '*Subscription ID:* '.$subscription->id,
+            '',
+            'Mohon follow up renewal agar akses HRIS tidak expired.',
+        ]);
+
         try {
-            $this->wahaClient->sendTextToPhone($user->phone, $message);
+            $this->wahaClient->sendText($groupChatId, $groupMessage);
         } catch (\Throwable $e) {
-            Log::warning('whatsapp.subscription_renewal_reminder.failed', [
+            Log::warning('whatsapp.subscription_renewal_group_reminder.failed', [
                 'subscription_id' => $subscription->id,
                 'user_id' => $user->id,
+                'target' => 'group',
+                'chat_id' => $groupChatId,
                 'error' => $e->getMessage(),
             ]);
         }

@@ -72,8 +72,6 @@ type AttendanceRecord = {
     status: string;
     check_in_at: string | null;
     check_out_at: string | null;
-    check_in_time: string | null;
-    check_out_time: string | null;
     notes: string | null;
 };
 
@@ -83,6 +81,7 @@ type AttendanceFormData = {
     status: string;
     check_in_at: string;
     check_out_at: string;
+    timezone: string;
     notes: string;
 };
 
@@ -127,8 +126,51 @@ const defaultAttendanceForm: AttendanceFormData = {
     status: 'present',
     check_in_at: '',
     check_out_at: '',
+    timezone: browserTimezone(),
     notes: '',
 };
+
+function browserTimezone() {
+    if (typeof Intl === 'undefined') {
+        return 'UTC';
+    }
+
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+}
+
+function formatDeviceTime(value: string | null) {
+    if (!value) {
+        return '-';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return '-';
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    }).format(date);
+}
+
+function toDeviceDateTimeInput(value: string | null) {
+    if (!value) {
+        return '';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    const offsetMs = date.getTimezoneOffset() * 60_000;
+
+    return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
 
 export default function AttendancePage() {
     const { attendances, employees, filters, todaySummary, statusOptions } =
@@ -149,10 +191,18 @@ export default function AttendancePage() {
         setFilterState(filters);
     }, [filters]);
 
+    useEffect(() => {
+        attendanceForm.setData('timezone', browserTimezone());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const openCreateDialog = () => {
         setEditingRecord(null);
         attendanceForm.clearErrors();
-        attendanceForm.setData(defaultAttendanceForm);
+        attendanceForm.setData({
+            ...defaultAttendanceForm,
+            timezone: browserTimezone(),
+        });
         setDialogOpen(true);
     };
 
@@ -163,8 +213,9 @@ export default function AttendancePage() {
             employee_id: String(record.employee_id),
             attendance_date: record.attendance_date,
             status: record.status,
-            check_in_at: record.check_in_at ?? '',
-            check_out_at: record.check_out_at ?? '',
+            check_in_at: toDeviceDateTimeInput(record.check_in_at),
+            check_out_at: toDeviceDateTimeInput(record.check_out_at),
+            timezone: browserTimezone(),
             notes: record.notes ?? '',
         });
         setDialogOpen(true);
@@ -519,10 +570,14 @@ export default function AttendancePage() {
                                                 </Badge>
                                             </td>
                                             <td className="px-3 py-3">
-                                                {row.check_in_time ?? '-'}
+                                                {formatDeviceTime(
+                                                    row.check_in_at,
+                                                )}
                                             </td>
                                             <td className="px-3 py-3">
-                                                {row.check_out_time ?? '-'}
+                                                {formatDeviceTime(
+                                                    row.check_out_at,
+                                                )}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <div className="flex gap-1.5">
@@ -610,9 +665,13 @@ export default function AttendancePage() {
                                 {statusLabelMap[detailRecord.status] ??
                                     detailRecord.status}
                             </p>
-                            <p>Check-in: {detailRecord.check_in_time ?? '-'}</p>
                             <p>
-                                Check-out: {detailRecord.check_out_time ?? '-'}
+                                Check-in:{' '}
+                                {formatDeviceTime(detailRecord.check_in_at)}
+                            </p>
+                            <p>
+                                Check-out:{' '}
+                                {formatDeviceTime(detailRecord.check_out_at)}
                             </p>
                             <p>Catatan: {detailRecord.notes ?? '-'}</p>
                         </div>
@@ -760,6 +819,12 @@ export default function AttendancePage() {
                                 message={attendanceForm.errors.check_out_at}
                             />
                         </div>
+
+                        <input
+                            type="hidden"
+                            name="timezone"
+                            value={attendanceForm.data.timezone}
+                        />
 
                         <div className="grid gap-2 md:col-span-2">
                             <Label htmlFor="notes">Catatan</Label>

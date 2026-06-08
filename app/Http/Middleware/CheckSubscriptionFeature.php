@@ -53,6 +53,7 @@ class CheckSubscriptionFeature
             'assets' => 'Manajemen Aset',
             'survey' => 'Survey Karyawan',
             'notifications' => 'Notifikasi & Pengumuman',
+            'performance' => 'Performance',
         ];
 
         $label = $labels[$feature] ?? ucfirst($feature);

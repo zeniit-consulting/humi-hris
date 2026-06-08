@@ -36,6 +36,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { formatDeviceDateTime } from '@/lib/utils';
 import {
     generate as generatePayroll,
     index as payrollsIndex,
@@ -547,8 +548,8 @@ export default function PayrollPage() {
                         <CardDescription>
                             {run?.generated_at
                                 ? run.is_saved
-                                    ? `Generated ${run.generated_at} • Disimpan ${run.saved_at ?? '-'}`
-                                    : `Generated pada ${run.generated_at} • Belum disimpan`
+                                    ? `Generated ${formatDeviceDateTime(run.generated_at)} • Disimpan ${formatDeviceDateTime(run.saved_at)}`
+                                    : `Generated pada ${formatDeviceDateTime(run.generated_at)} • Belum disimpan`
                                 : type === 'thr'
                                   ? 'Belum ada data THR untuk periode ini. Klik "Generate THR".'
                                   : 'Belum ada data payroll untuk periode ini. Klik "Generate Payroll".'}
