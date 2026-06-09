@@ -16,11 +16,18 @@ export type MapCoordinates = {
     longitude: number;
 };
 
+export type MapRouteLine = {
+    id: string;
+    color?: string;
+    coordinates: MapCoordinates[];
+};
+
 type MapboxLocationMapProps = {
     center: MapCoordinates;
     zoom?: number;
     className?: string;
     locations?: MapLocation[];
+    routeLines?: MapRouteLine[];
     userLocation?: MapCoordinates | null;
     selectedLocation?: MapCoordinates | null;
     isUserPulsing?: boolean;
@@ -124,6 +131,7 @@ export function MapboxLocationMap({
     zoom = 16,
     className = 'h-full w-full',
     locations = [],
+    routeLines = [],
     userLocation = null,
     selectedLocation = null,
     isUserPulsing = false,
@@ -169,6 +177,28 @@ export function MapboxLocationMap({
         };
     }, [locations]);
     const initialCircleDataRef = useRef(circleData);
+    const routeLineData = useMemo<GeoJSON.FeatureCollection>(() => {
+        return {
+            type: 'FeatureCollection',
+            features: routeLines
+                .filter((line) => line.coordinates.length >= 2)
+                .map((line) => ({
+                    type: 'Feature',
+                    properties: {
+                        id: line.id,
+                        color: line.color ?? '#006069',
+                    },
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: line.coordinates.map((coordinate) => [
+                            coordinate.longitude,
+                            coordinate.latitude,
+                        ]),
+                    },
+                })),
+        };
+    }, [routeLines]);
+    const initialRouteLineDataRef = useRef(routeLineData);
 
     useEffect(() => {
         onSelectRef.current = onSelect;
@@ -243,6 +273,20 @@ export function MapboxLocationMap({
                     'line-opacity': 0.86,
                 },
             });
+            map.addSource('visit-route-lines', {
+                type: 'geojson',
+                data: initialRouteLineDataRef.current,
+            });
+            map.addLayer({
+                id: 'visit-route-lines',
+                type: 'line',
+                source: 'visit-route-lines',
+                paint: {
+                    'line-color': ['get', 'color'],
+                    'line-width': 4,
+                    'line-opacity': 0.9,
+                },
+            });
         });
 
         map.on('click', (event) => {
@@ -279,6 +323,27 @@ export function MapboxLocationMap({
             map.once('load', updateSource);
         }
     }, [circleData]);
+
+    useEffect(() => {
+        const map = mapRef.current;
+
+        if (!map) {
+            return;
+        }
+
+        const updateSource = () => {
+            const source = map.getSource(
+                'visit-route-lines',
+            ) as mapboxgl.GeoJSONSource | null;
+            source?.setData(routeLineData);
+        };
+
+        if (map.isStyleLoaded()) {
+            updateSource();
+        } else {
+            map.once('load', updateSource);
+        }
+    }, [routeLineData]);
 
     useEffect(() => {
         const map = mapRef.current;

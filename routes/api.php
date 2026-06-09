@@ -12,9 +12,32 @@ use App\Http\Controllers\Api\Mobile\V1\PayrollController;
 use App\Http\Controllers\Api\Mobile\V1\PortalController;
 use App\Http\Controllers\Api\Mobile\V1\ProfileController;
 use App\Http\Controllers\Api\PakasirWebhookController;
+use App\Http\Controllers\Api\ThirdParty\V1\AttendanceController as ThirdPartyAttendanceController;
+use App\Http\Controllers\Api\ThirdParty\V1\AuthController as ThirdPartyAuthController;
+use App\Http\Controllers\Api\ThirdParty\V1\CompanyController as ThirdPartyCompanyController;
+use App\Http\Controllers\Api\ThirdParty\V1\EmployeeController as ThirdPartyEmployeeController;
+use App\Http\Controllers\Api\ThirdParty\V1\LeaveController as ThirdPartyLeaveController;
+use App\Http\Controllers\Api\ThirdParty\V1\OvertimeController as ThirdPartyOvertimeController;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
 Route::post('webhooks/pakasir', PakasirWebhookController::class)->name('webhooks.pakasir');
+
+Route::prefix('third-party/v1')->name('third-party.v1.')->group(function (): void {
+    Route::post('auth/token', [ThirdPartyAuthController::class, 'issueToken'])
+        ->middleware('throttle:10,1')
+        ->name('auth.token');
+
+    Route::middleware(['auth:sanctum', CheckAbilities::class.':third-party'])->group(function (): void {
+        Route::delete('auth/token', [ThirdPartyAuthController::class, 'revokeCurrentToken'])->name('auth.token.revoke');
+        Route::get('company', [ThirdPartyCompanyController::class, 'show'])->name('company.show');
+        Route::get('employees', [ThirdPartyEmployeeController::class, 'index'])->name('employees.index');
+        Route::get('employees/{employee}', [ThirdPartyEmployeeController::class, 'show'])->name('employees.show');
+        Route::get('attendances', [ThirdPartyAttendanceController::class, 'index'])->name('attendances.index');
+        Route::get('leaves', [ThirdPartyLeaveController::class, 'index'])->name('leaves.index');
+        Route::get('overtimes', [ThirdPartyOvertimeController::class, 'index'])->name('overtimes.index');
+    });
+});
 
 Route::prefix('mobile/v1')->name('mobile.v1.')->group(function (): void {
     Route::post('auth/login', [AuthController::class, 'login'])->name('auth.login');

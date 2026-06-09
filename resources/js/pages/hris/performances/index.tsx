@@ -138,6 +138,15 @@ type KpiResult = {
 type CheckIn = {
     id: number;
     check_in_date: string;
+    performance_kpi_result_id: number | null;
+    kpi_result: {
+        id: number;
+        name: string;
+        unit: string | null;
+        target_value: number;
+        actual_value: number;
+        score: number;
+    } | null;
     summary: string;
     action_items: string | null;
     status: string;
@@ -253,13 +262,6 @@ type ManagerReviewForm = {
     next_action: string;
 };
 
-type CheckInForm = {
-    check_in_date: string;
-    summary: string;
-    action_items: string;
-    status: string;
-};
-
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Performance', href: '/hris/performances' },
 ];
@@ -322,13 +324,6 @@ const keyResultDefaults: KeyResultForm = {
     status: 'not_started',
 };
 
-const checkInDefaults: CheckInForm = {
-    check_in_date: new Date().toISOString().slice(0, 10),
-    summary: '',
-    action_items: '',
-    status: 'open',
-};
-
 export default function PerformanceIndex() {
     const {
         reviews,
@@ -342,7 +337,6 @@ export default function PerformanceIndex() {
         statusOptions,
         periodStatusOptions,
         objectiveStatusOptions,
-        checkInStatusOptions,
         attendanceMetricOptions,
         stats,
         permissions,
@@ -403,7 +397,6 @@ export default function PerformanceIndex() {
         improvement_areas: '',
         next_action: '',
     });
-    const checkInForm = useForm<CheckInForm>(checkInDefaults);
 
     const employeeOptions = useMemo(
         () =>
@@ -777,22 +770,6 @@ export default function PerformanceIndex() {
         );
     };
 
-    const submitCheckIn = (event: FormEvent) => {
-        event.preventDefault();
-
-        if (!selectedReview) {
-            return;
-        }
-
-        checkInForm.post(
-            `/hris/performances/reviews/${selectedReview.id}/check-ins`,
-            {
-                preserveScroll: true,
-                onSuccess: () => checkInForm.setData(checkInDefaults),
-            },
-        );
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Performance" />
@@ -1097,16 +1074,11 @@ export default function PerformanceIndex() {
                                         permissions={permissions}
                                         managerOptions={managerSelectOptions}
                                         statusOptions={statusOptions}
-                                        checkInStatusOptions={
-                                            checkInStatusOptions
-                                        }
                                         managerReviewForm={managerReviewForm}
-                                        checkInForm={checkInForm}
                                         onLoadManagerReview={loadManagerReview}
                                         onSubmitManagerReview={
                                             submitManagerReview
                                         }
-                                        onSubmitCheckIn={submitCheckIn}
                                         onCreateObjective={openCreateObjective}
                                         onEditObjective={openEditObjective}
                                         onDeleteObjective={(objective) =>
@@ -1878,12 +1850,9 @@ function ReviewDetail({
     permissions,
     managerOptions,
     statusOptions,
-    checkInStatusOptions,
     managerReviewForm,
-    checkInForm,
     onLoadManagerReview,
     onSubmitManagerReview,
-    onSubmitCheckIn,
     onCreateObjective,
     onEditObjective,
     onDeleteObjective,
@@ -1898,12 +1867,9 @@ function ReviewDetail({
     permissions: PageProps['permissions'];
     managerOptions: Array<{ value: string; label: string }>;
     statusOptions: string[];
-    checkInStatusOptions: string[];
     managerReviewForm: ReturnType<typeof useForm<ManagerReviewForm>>;
-    checkInForm: ReturnType<typeof useForm<CheckInForm>>;
     onLoadManagerReview: () => void;
     onSubmitManagerReview: (event: FormEvent) => void;
-    onSubmitCheckIn: (event: FormEvent) => void;
     onCreateObjective: () => void;
     onEditObjective: (objective: Objective) => void;
     onDeleteObjective: (objective: Objective) => void;
@@ -2223,84 +2189,45 @@ function ReviewDetail({
             </section>
 
             <section className="flex flex-col gap-3">
-                <h3 className="text-sm font-semibold">Check-ins</h3>
-                <form
-                    onSubmit={onSubmitCheckIn}
-                    className="flex flex-col gap-3"
-                >
-                    <div className="grid gap-3 md:grid-cols-2">
-                        <TextField
-                            label="Tanggal"
-                            type="date"
-                            value={checkInForm.data.check_in_date}
-                            onChange={(value) =>
-                                checkInForm.setData('check_in_date', value)
-                            }
-                            error={checkInForm.errors.check_in_date}
-                            disabled={locked}
-                        />
-                        <FieldSelect
-                            label="Status"
-                            value={checkInForm.data.status}
-                            options={checkInStatusOptions.map((status) => ({
-                                value: status,
-                                label: statusLabel(status),
-                            }))}
-                            onChange={(value) =>
-                                checkInForm.setData('status', value)
-                            }
-                            error={checkInForm.errors.status}
-                            disabled={locked}
-                        />
-                    </div>
-                    <TextAreaField
-                        label="Summary"
-                        value={checkInForm.data.summary}
-                        onChange={(value) =>
-                            checkInForm.setData('summary', value)
-                        }
-                        error={checkInForm.errors.summary}
-                        disabled={locked}
-                    />
-                    <TextAreaField
-                        label="Action Items"
-                        value={checkInForm.data.action_items}
-                        onChange={(value) =>
-                            checkInForm.setData('action_items', value)
-                        }
-                        error={checkInForm.errors.action_items}
-                        disabled={locked}
-                    />
-                    <Button
-                        type="submit"
-                        disabled={locked || checkInForm.processing}
-                        className="self-end"
-                    >
-                        <Plus className="size-4" />
-                        Tambah Check-in
-                    </Button>
-                </form>
-                {review.check_ins.map((checkIn) => (
-                    <div
-                        key={checkIn.id}
-                        className="rounded-lg border px-3 py-2 text-sm"
-                    >
-                        <div className="flex items-center justify-between gap-2">
-                            <p className="font-medium">
-                                {checkIn.check_in_date}
-                            </p>
-                            <StatusBadge status={checkIn.status} />
-                        </div>
-                        <p className="mt-1 text-muted-foreground">
-                            {checkIn.summary}
-                        </p>
-                        {checkIn.action_items ? (
+                <div>
+                    <h3 className="text-sm font-semibold">Aktivitas User</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Admin hanya melihat aktivitas yang ditambahkan user dari
+                        portal.
+                    </p>
+                </div>
+                {review.check_ins.length ? (
+                    review.check_ins.map((checkIn) => (
+                        <div
+                            key={checkIn.id}
+                            className="rounded-lg border px-3 py-2 text-sm"
+                        >
+                            <div className="flex items-center justify-between gap-2">
+                                <p className="font-medium">
+                                    {checkIn.check_in_date}
+                                </p>
+                                <StatusBadge status={checkIn.status} />
+                            </div>
+                            {checkIn.kpi_result ? (
+                                <p className="mt-1 text-xs font-medium text-muted-foreground">
+                                    KPI acuan: {checkIn.kpi_result.name}
+                                </p>
+                            ) : null}
                             <p className="mt-1 text-muted-foreground">
-                                {checkIn.action_items}
+                                {checkIn.summary}
                             </p>
-                        ) : null}
-                    </div>
-                ))}
+                            {checkIn.action_items ? (
+                                <p className="mt-1 text-muted-foreground">
+                                    {checkIn.action_items}
+                                </p>
+                            ) : null}
+                        </div>
+                    ))
+                ) : (
+                    <p className="rounded-lg border border-dashed px-3 py-4 text-sm text-muted-foreground">
+                        Belum ada aktivitas dari user.
+                    </p>
+                )}
             </section>
         </div>
     );

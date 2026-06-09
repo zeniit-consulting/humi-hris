@@ -62,7 +62,10 @@ class PerformanceController extends Controller
                 'manager:id,employee_code,first_name,last_name',
                 'objectives.keyResults',
                 'kpiResults',
-                'checkIns' => fn ($query) => $query->latest('check_in_date')->latest(),
+                'checkIns' => fn ($query) => $query
+                    ->with('kpiResult:id,performance_review_id,name,unit,target_value,actual_value,score')
+                    ->latest('check_in_date')
+                    ->latest(),
             ])
             ->when(! $canManageAll, fn ($query) => $query->where('manager_id', $managerEmployeeId ?: 0))
             ->when($filters['period_id'] !== '', fn ($query) => $query->where('performance_period_id', $filters['period_id']))
@@ -453,23 +456,10 @@ class PerformanceController extends Controller
     public function storeCheckIn(Request $request, PerformanceReview $review): RedirectResponse
     {
         $this->authorizeReview($request, $review);
-        $this->ensureEditable($review);
 
-        $validated = $request->validate([
-            'check_in_date' => ['required', 'date'],
-            'summary' => ['required', 'string', 'max:5000'],
-            'action_items' => ['nullable', 'string', 'max:5000'],
-            'status' => ['required', Rule::in(PerformanceCheckIn::STATUSES)],
+        throw ValidationException::withMessages([
+            'check_ins' => 'Aktivitas Performance hanya dapat ditambahkan oleh user melalui portal.',
         ]);
-
-        $review->checkIns()->create([
-            ...$validated,
-            'user_id' => $request->user()->accountOwnerId(),
-        ]);
-
-        $review->update(['status' => $review->status === 'not_started' ? 'in_progress' : $review->status]);
-
-        return back();
     }
 
     private function periodPayloadFromRequest(Request $request, ?PerformancePeriod $period = null): array
@@ -702,6 +692,15 @@ class PerformanceController extends Controller
             'check_ins' => $review->checkIns->map(fn (PerformanceCheckIn $checkIn) => [
                 'id' => $checkIn->id,
                 'check_in_date' => $checkIn->check_in_date?->format('Y-m-d'),
+                'performance_kpi_result_id' => $checkIn->performance_kpi_result_id,
+                'kpi_result' => $checkIn->kpiResult ? [
+                    'id' => $checkIn->kpiResult->id,
+                    'name' => $checkIn->kpiResult->name,
+                    'unit' => $checkIn->kpiResult->unit,
+                    'target_value' => (float) $checkIn->kpiResult->target_value,
+                    'actual_value' => (float) $checkIn->kpiResult->actual_value,
+                    'score' => (float) $checkIn->kpiResult->score,
+                ] : null,
                 'summary' => $checkIn->summary,
                 'action_items' => $checkIn->action_items,
                 'status' => $checkIn->status,

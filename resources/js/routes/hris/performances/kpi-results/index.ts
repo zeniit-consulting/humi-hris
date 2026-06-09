@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:421
+* @see app/Http/Controllers/Hris/PerformanceController.php:424
 * @route '/hris/performances/kpi-results/{kpiResult}'
 */
 export const update = (args: { kpiResult: number | { id: number } } | [kpiResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -16,7 +16,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:421
+* @see app/Http/Controllers/Hris/PerformanceController.php:424
 * @route '/hris/performances/kpi-results/{kpiResult}'
 */
 update.url = (args: { kpiResult: number | { id: number } } | [kpiResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ update.url = (args: { kpiResult: number | { id: number } } | [kpiResult: number 
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:421
+* @see app/Http/Controllers/Hris/PerformanceController.php:424
 * @route '/hris/performances/kpi-results/{kpiResult}'
 */
 update.put = (args: { kpiResult: number | { id: number } } | [kpiResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -59,7 +59,7 @@ update.put = (args: { kpiResult: number | { id: number } } | [kpiResult: number 
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:421
+* @see app/Http/Controllers/Hris/PerformanceController.php:424
 * @route '/hris/performances/kpi-results/{kpiResult}'
 */
 const updateForm = (args: { kpiResult: number | { id: number } } | [kpiResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -74,7 +74,7 @@ const updateForm = (args: { kpiResult: number | { id: number } } | [kpiResult: n
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:421
+* @see app/Http/Controllers/Hris/PerformanceController.php:424
 * @route '/hris/performances/kpi-results/{kpiResult}'
 */
 updateForm.put = (args: { kpiResult: number | { id: number } } | [kpiResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

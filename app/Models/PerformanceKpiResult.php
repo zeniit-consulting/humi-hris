@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToAccount;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PerformanceKpiResult extends Model
 {
@@ -44,5 +45,10 @@ class PerformanceKpiResult extends Model
     public function metric(): BelongsTo
     {
         return $this->belongsTo(PerformanceKpiMetric::class, 'performance_kpi_metric_id');
+    }
+
+    public function checkIns(): HasMany
+    {
+        return $this->hasMany(PerformanceCheckIn::class, 'performance_kpi_result_id');
     }
 }

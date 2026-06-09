@@ -13,6 +13,7 @@ import {
     HandCoins,
     ReceiptText,
     LayoutGrid,
+    MapPinned,
     PackageCheck,
     ShieldCheck,
     ScrollText,
@@ -115,6 +116,11 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     title: 'Kehadiran',
                     href: attendancesIndex(),
                     icon: CalendarDays,
+                },
+                {
+                    title: 'Kunjungan Client',
+                    href: '/hris/client-visits',
+                    icon: MapPinned,
                 },
                 {
                     title: 'Jadwal Kerja',

@@ -4,6 +4,7 @@ use App\Http\Controllers\Hris\AttendanceController;
 use App\Http\Controllers\Hris\AttendanceCorrectionApprovalController;
 use App\Http\Controllers\Hris\AttendanceScheduleController;
 use App\Http\Controllers\Hris\ClientBillingController;
+use App\Http\Controllers\Hris\ClientVisitController;
 use App\Http\Controllers\Hris\CompanyAssetController;
 use App\Http\Controllers\Hris\DivisionController;
 use App\Http\Controllers\Hris\EmployeeAllowanceController;
@@ -122,6 +123,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         ->name('employees.allowances.destroy');
 
     Route::get('attendances', [AttendanceController::class, 'index'])->name('attendances.index');
+    Route::get('client-visits', [ClientVisitController::class, 'index'])->name('client-visits.index');
     Route::get('attendances/export', [AttendanceController::class, 'export'])->name('attendances.export');
     Route::post('attendances', [AttendanceController::class, 'store'])->name('attendances.store');
     Route::put('attendances/{employeeAttendance}', [AttendanceController::class, 'update'])->name('attendances.update');

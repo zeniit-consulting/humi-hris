@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:380
+* @see app/Http/Controllers/Hris/PerformanceController.php:383
 * @route '/hris/performances/objectives/{objective}/key-results'
 */
 export const store = (args: { objective: number | { id: number } } | [objective: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:380
+* @see app/Http/Controllers/Hris/PerformanceController.php:383
 * @route '/hris/performances/objectives/{objective}/key-results'
 */
 store.url = (args: { objective: number | { id: number } } | [objective: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ store.url = (args: { objective: number | { id: number } } | [objective: number |
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:380
+* @see app/Http/Controllers/Hris/PerformanceController.php:383
 * @route '/hris/performances/objectives/{objective}/key-results'
 */
 store.post = (args: { objective: number | { id: number } } | [objective: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ store.post = (args: { objective: number | { id: number } } | [objective: number 
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:380
+* @see app/Http/Controllers/Hris/PerformanceController.php:383
 * @route '/hris/performances/objectives/{objective}/key-results'
 */
 const storeForm = (args: { objective: number | { id: number } } | [objective: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ const storeForm = (args: { objective: number | { id: number } } | [objective: nu
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:380
+* @see app/Http/Controllers/Hris/PerformanceController.php:383
 * @route '/hris/performances/objectives/{objective}/key-results'
 */
 storeForm.post = (args: { objective: number | { id: number } } | [objective: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -37,7 +37,10 @@ class PortalPerformanceController extends Controller
                 'manager:id,employee_code,first_name,last_name',
                 'objectives.keyResults',
                 'kpiResults',
-                'checkIns' => fn ($query) => $query->latest('check_in_date')->latest('id'),
+                'checkIns' => fn ($query) => $query
+                    ->with('kpiResult:id,performance_review_id,name,unit,target_value,actual_value,score')
+                    ->latest('check_in_date')
+                    ->latest('id'),
             ])
             ->where('employee_id', $employee->id)
             ->whereNotIn('status', ['completed', 'locked'])
@@ -67,6 +70,13 @@ class PortalPerformanceController extends Controller
 
         $validated = $request->validate([
             'check_in_date' => ['required', 'date'],
+            'performance_kpi_result_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('performance_kpi_results', 'id')
+                    ->where('user_id', $user->accountOwnerId())
+                    ->where('performance_review_id', $review->id),
+            ],
             'summary' => ['required', 'string', 'max:5000'],
             'action_items' => ['nullable', 'string', 'max:5000'],
             'status' => ['required', Rule::in(PerformanceCheckIn::STATUSES)],
@@ -85,7 +95,7 @@ class PortalPerformanceController extends Controller
             'success' => true,
             'message' => 'Aktivitas performance berhasil disimpan.',
             'data' => [
-                'check_in' => $this->checkInPayload($checkIn),
+                'check_in' => $this->checkInPayload($checkIn->load('kpiResult')),
             ],
         ], 201);
     }
@@ -152,6 +162,15 @@ class PortalPerformanceController extends Controller
         return [
             'id' => $checkIn->id,
             'check_in_date' => $checkIn->check_in_date?->format('Y-m-d'),
+            'performance_kpi_result_id' => $checkIn->performance_kpi_result_id,
+            'kpi_result' => $checkIn->kpiResult ? [
+                'id' => $checkIn->kpiResult->id,
+                'name' => $checkIn->kpiResult->name,
+                'unit' => $checkIn->kpiResult->unit,
+                'target_value' => (float) $checkIn->kpiResult->target_value,
+                'actual_value' => (float) $checkIn->kpiResult->actual_value,
+                'score' => (float) $checkIn->kpiResult->score,
+            ] : null,
             'summary' => $checkIn->summary,
             'action_items' => $checkIn->action_items,
             'status' => $checkIn->status,

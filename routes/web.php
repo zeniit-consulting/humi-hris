@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Mobile\V1\PayrollController;
 use App\Http\Controllers\Api\Mobile\V1\PortalController;
 use App\Http\Controllers\Api\Mobile\V1\ProfileController as MobileProfileController;
 use App\Http\Controllers\Api\Mobile\V1\ShiftChangeRequestController;
+use App\Http\Controllers\Api\PortalClientVisitController;
 use App\Http\Controllers\Api\PortalPerformanceController;
 use App\Http\Controllers\Api\PortalResourceController;
 use App\Http\Controllers\Auth\PortalOtpLoginController;
@@ -75,6 +76,9 @@ Route::get('robots.txt', function () {
         $lines[] = 'Allow: /features';
         $lines[] = 'Allow: /contact';
         $lines[] = 'Allow: /careers';
+        $lines[] = 'Allow: /hris-outsourcing';
+        $lines[] = 'Allow: /hris-retail-fnb';
+        $lines[] = 'Allow: /hris-manufaktur-shift';
 
         foreach ($privatePaths as $path) {
             $lines[] = 'Disallow: '.$path;
@@ -116,6 +120,24 @@ Route::get('sitemap.xml', function () {
             'changefreq' => 'monthly',
             'lastmod' => now()->toAtomString(),
         ],
+        [
+            'loc' => $baseUrl.'/hris-outsourcing',
+            'priority' => '0.9',
+            'changefreq' => 'weekly',
+            'lastmod' => now()->toAtomString(),
+        ],
+        [
+            'loc' => $baseUrl.'/hris-retail-fnb',
+            'priority' => '0.9',
+            'changefreq' => 'weekly',
+            'lastmod' => now()->toAtomString(),
+        ],
+        [
+            'loc' => $baseUrl.'/hris-manufaktur-shift',
+            'priority' => '0.9',
+            'changefreq' => 'weekly',
+            'lastmod' => now()->toAtomString(),
+        ],
     ];
 
     JobVacancy::query()
@@ -148,6 +170,33 @@ Route::get('/', function () {
         'canRegister' => Features::enabled(Features::registration()),
     ]);
 })->name('home');
+
+Route::get('landing-v2', function () {
+    return Inertia::render('landing/mintlify', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('landing-v2');
+
+Route::get('hris-outsourcing', function () {
+    return Inertia::render('landing/industry', [
+        'industrySlug' => 'outsourcing',
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('landing.outsourcing');
+
+Route::get('hris-retail-fnb', function () {
+    return Inertia::render('landing/industry', [
+        'industrySlug' => 'retail-fnb',
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('landing.retail-fnb');
+
+Route::get('hris-manufaktur-shift', function () {
+    return Inertia::render('landing/industry', [
+        'industrySlug' => 'manufaktur-shift',
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('landing.manufaktur-shift');
 
 Route::get('features', function () {
     return Inertia::render('features');
@@ -251,6 +300,9 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/api/assets', [PortalResourceController::class, 'assets'])->name('portal.api.assets.index');
     Route::get('portal/api/performances', [PortalPerformanceController::class, 'index'])->name('portal.api.performances.index');
     Route::post('portal/api/performances/{review}/check-ins', [PortalPerformanceController::class, 'storeCheckIn'])->name('portal.api.performances.check-ins.store');
+    Route::get('portal/api/client-visits', [PortalClientVisitController::class, 'index'])->name('portal.api.client-visits.index');
+    Route::post('portal/api/client-visits', [PortalClientVisitController::class, 'store'])->name('portal.api.client-visits.store');
+    Route::put('portal/api/client-visits/{visit}/clock-out', [PortalClientVisitController::class, 'clockOut'])->name('portal.api.client-visits.clock-out');
     Route::get('portal/attendance', [UserPortalSectionController::class, 'attendance'])->name('portal.attendance');
     Route::get('portal/check-in', [UserPortalSectionController::class, 'checkIn'])->name('portal.check-in');
     Route::get('portal/check-out', [UserPortalSectionController::class, 'checkOut'])->name('portal.check-out');

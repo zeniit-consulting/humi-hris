@@ -3,7 +3,7 @@ import objectives from './objectives'
 import checkIns from './check-ins'
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:267
+* @see app/Http/Controllers/Hris/PerformanceController.php:270
 * @route '/hris/performances/reviews'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -18,7 +18,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:267
+* @see app/Http/Controllers/Hris/PerformanceController.php:270
 * @route '/hris/performances/reviews'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -27,7 +27,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:267
+* @see app/Http/Controllers/Hris/PerformanceController.php:270
 * @route '/hris/performances/reviews'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -37,7 +37,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:267
+* @see app/Http/Controllers/Hris/PerformanceController.php:270
 * @route '/hris/performances/reviews'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -47,7 +47,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:267
+* @see app/Http/Controllers/Hris/PerformanceController.php:270
 * @route '/hris/performances/reviews'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -59,7 +59,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:309
+* @see app/Http/Controllers/Hris/PerformanceController.php:312
 * @route '/hris/performances/reviews/{review}'
 */
 export const update = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -74,7 +74,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:309
+* @see app/Http/Controllers/Hris/PerformanceController.php:312
 * @route '/hris/performances/reviews/{review}'
 */
 update.url = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -107,7 +107,7 @@ update.url = (args: { review: number | { id: number } } | [review: number | { id
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:309
+* @see app/Http/Controllers/Hris/PerformanceController.php:312
 * @route '/hris/performances/reviews/{review}'
 */
 update.put = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -117,7 +117,7 @@ update.put = (args: { review: number | { id: number } } | [review: number | { id
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:309
+* @see app/Http/Controllers/Hris/PerformanceController.php:312
 * @route '/hris/performances/reviews/{review}'
 */
 const updateForm = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -132,7 +132,7 @@ const updateForm = (args: { review: number | { id: number } } | [review: number 
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:309
+* @see app/Http/Controllers/Hris/PerformanceController.php:312
 * @route '/hris/performances/reviews/{review}'
 */
 updateForm.put = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -149,7 +149,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::syncAttendance
-* @see app/Http/Controllers/Hris/PerformanceController.php:442
+* @see app/Http/Controllers/Hris/PerformanceController.php:445
 * @route '/hris/performances/reviews/{review}/sync-attendance'
 */
 export const syncAttendance = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -164,7 +164,7 @@ syncAttendance.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::syncAttendance
-* @see app/Http/Controllers/Hris/PerformanceController.php:442
+* @see app/Http/Controllers/Hris/PerformanceController.php:445
 * @route '/hris/performances/reviews/{review}/sync-attendance'
 */
 syncAttendance.url = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -197,7 +197,7 @@ syncAttendance.url = (args: { review: number | { id: number } } | [review: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::syncAttendance
-* @see app/Http/Controllers/Hris/PerformanceController.php:442
+* @see app/Http/Controllers/Hris/PerformanceController.php:445
 * @route '/hris/performances/reviews/{review}/sync-attendance'
 */
 syncAttendance.post = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -207,7 +207,7 @@ syncAttendance.post = (args: { review: number | { id: number } } | [review: numb
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::syncAttendance
-* @see app/Http/Controllers/Hris/PerformanceController.php:442
+* @see app/Http/Controllers/Hris/PerformanceController.php:445
 * @route '/hris/performances/reviews/{review}/sync-attendance'
 */
 const syncAttendanceForm = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -217,7 +217,7 @@ const syncAttendanceForm = (args: { review: number | { id: number } } | [review:
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::syncAttendance
-* @see app/Http/Controllers/Hris/PerformanceController.php:442
+* @see app/Http/Controllers/Hris/PerformanceController.php:445
 * @route '/hris/performances/reviews/{review}/sync-attendance'
 */
 syncAttendanceForm.post = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

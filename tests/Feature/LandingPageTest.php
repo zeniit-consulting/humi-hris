@@ -19,4 +19,37 @@ class LandingPageTest extends TestCase
                 ->missing('landingVariant')
             );
     }
+
+    public function test_landing_v2_variant_is_available(): void
+    {
+        $this->withoutVite();
+
+        $this->get('/landing-v2')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('landing/mintlify')
+                ->where('canRegister', true)
+            );
+    }
+
+    public function test_industry_landing_pages_are_available(): void
+    {
+        $this->withoutVite();
+
+        $pages = [
+            '/hris-outsourcing' => 'outsourcing',
+            '/hris-retail-fnb' => 'retail-fnb',
+            '/hris-manufaktur-shift' => 'manufaktur-shift',
+        ];
+
+        foreach ($pages as $path => $slug) {
+            $this->get($path)
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->component('landing/industry')
+                    ->where('industrySlug', $slug)
+                    ->where('canRegister', true)
+                );
+        }
+    }
 }

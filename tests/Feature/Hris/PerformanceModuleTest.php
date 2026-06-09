@@ -44,6 +44,45 @@ class PerformanceModuleTest extends TestCase
             ->assertRedirect(route('billing.index'));
     }
 
+    public function test_admin_cannot_add_performance_activity_from_hris_page(): void
+    {
+        $user = User::factory()->create();
+        $this->activatePlan($user, 'plus');
+        [$employee, $manager] = $this->employeePair($user);
+
+        $period = PerformancePeriod::query()->create([
+            'user_id' => $user->id,
+            'name' => 'June 2026',
+            'starts_at' => '2026-06-01',
+            'ends_at' => '2026-06-30',
+            'status' => 'active',
+        ]);
+
+        $review = PerformanceReview::query()->create([
+            'user_id' => $user->id,
+            'performance_period_id' => $period->id,
+            'employee_id' => $employee->id,
+            'manager_id' => $manager->id,
+            'status' => 'not_started',
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('hris.performances.index'))
+            ->post(route('hris.performances.reviews.check-ins.store', $review), [
+                'check_in_date' => '2026-06-10',
+                'summary' => 'Aktivitas dari admin.',
+                'action_items' => null,
+                'status' => 'open',
+            ])
+            ->assertRedirect(route('hris.performances.index'))
+            ->assertSessionHasErrors('check_ins');
+
+        $this->assertDatabaseMissing('performance_check_ins', [
+            'performance_review_id' => $review->id,
+            'summary' => 'Aktivitas dari admin.',
+        ]);
+    }
+
     public function test_free_plan_cannot_open_performance_page(): void
     {
         $user = User::factory()->create();
@@ -438,7 +477,7 @@ class PerformanceModuleTest extends TestCase
     }
 
     /**
-     * @param list<string> $lockedFeatures
+     * @param  list<string>  $lockedFeatures
      */
     private function activatePlan(User $user, string $planSlug, array $lockedFeatures = []): void
     {

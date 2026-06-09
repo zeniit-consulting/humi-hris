@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:149
+* @see app/Http/Controllers/Hris/PerformanceController.php:152
 * @route '/hris/performances/periods'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:149
+* @see app/Http/Controllers/Hris/PerformanceController.php:152
 * @route '/hris/performances/periods'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:149
+* @see app/Http/Controllers/Hris/PerformanceController.php:152
 * @route '/hris/performances/periods'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:149
+* @see app/Http/Controllers/Hris/PerformanceController.php:152
 * @route '/hris/performances/periods'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:149
+* @see app/Http/Controllers/Hris/PerformanceController.php:152
 * @route '/hris/performances/periods'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -57,7 +57,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:158
+* @see app/Http/Controllers/Hris/PerformanceController.php:161
 * @route '/hris/performances/periods/{period}'
 */
 export const update = (args: { period: number | { id: number } } | [period: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -72,7 +72,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:158
+* @see app/Http/Controllers/Hris/PerformanceController.php:161
 * @route '/hris/performances/periods/{period}'
 */
 update.url = (args: { period: number | { id: number } } | [period: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -105,7 +105,7 @@ update.url = (args: { period: number | { id: number } } | [period: number | { id
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:158
+* @see app/Http/Controllers/Hris/PerformanceController.php:161
 * @route '/hris/performances/periods/{period}'
 */
 update.put = (args: { period: number | { id: number } } | [period: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -115,7 +115,7 @@ update.put = (args: { period: number | { id: number } } | [period: number | { id
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:158
+* @see app/Http/Controllers/Hris/PerformanceController.php:161
 * @route '/hris/performances/periods/{period}'
 */
 const updateForm = (args: { period: number | { id: number } } | [period: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -130,7 +130,7 @@ const updateForm = (args: { period: number | { id: number } } | [period: number 
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:158
+* @see app/Http/Controllers/Hris/PerformanceController.php:161
 * @route '/hris/performances/periods/{period}'
 */
 updateForm.put = (args: { period: number | { id: number } } | [period: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

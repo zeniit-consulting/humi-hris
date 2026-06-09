@@ -15,6 +15,7 @@ class PerformanceCheckIn extends Model
     protected $fillable = [
         'user_id',
         'performance_review_id',
+        'performance_kpi_result_id',
         'check_in_date',
         'summary',
         'action_items',
@@ -31,5 +32,10 @@ class PerformanceCheckIn extends Model
     public function review(): BelongsTo
     {
         return $this->belongsTo(PerformanceReview::class, 'performance_review_id');
+    }
+
+    public function kpiResult(): BelongsTo
+    {
+        return $this->belongsTo(PerformanceKpiResult::class, 'performance_kpi_result_id');
     }
 }

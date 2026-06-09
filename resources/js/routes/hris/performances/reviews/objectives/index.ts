@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:339
+* @see app/Http/Controllers/Hris/PerformanceController.php:342
 * @route '/hris/performances/reviews/{review}/objectives'
 */
 export const store = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:339
+* @see app/Http/Controllers/Hris/PerformanceController.php:342
 * @route '/hris/performances/reviews/{review}/objectives'
 */
 store.url = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ store.url = (args: { review: number | { id: number } } | [review: number | { id:
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:339
+* @see app/Http/Controllers/Hris/PerformanceController.php:342
 * @route '/hris/performances/reviews/{review}/objectives'
 */
 store.post = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ store.post = (args: { review: number | { id: number } } | [review: number | { id
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:339
+* @see app/Http/Controllers/Hris/PerformanceController.php:342
 * @route '/hris/performances/reviews/{review}/objectives'
 */
 const storeForm = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ const storeForm = (args: { review: number | { id: number } } | [review: number |
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:339
+* @see app/Http/Controllers/Hris/PerformanceController.php:342
 * @route '/hris/performances/reviews/{review}/objectives'
 */
 storeForm.post = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

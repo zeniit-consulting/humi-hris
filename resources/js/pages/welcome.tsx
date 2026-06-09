@@ -1,15 +1,19 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
+    Building2,
     CalendarClock,
     ChartColumn,
     CheckCircle2,
     CircleDollarSign,
     Clock,
+    Factory,
     Fingerprint,
+    FileSpreadsheet,
     NotebookPen,
     Shield,
     Sparkles,
+    Store,
     Users,
 } from 'lucide-react';
 import SeoHead from '@/components/seo-head';
@@ -65,6 +69,40 @@ const benefits = [
     'Mendukung struktur multi divisi dan jabatan bertingkat',
     'Mengurangi kesalahan manual pada perhitungan payroll',
     'Akses berbasis role dengan audit log lengkap',
+];
+
+const segmentCards = [
+    {
+        icon: Building2,
+        title: 'Outsourcing',
+        description:
+            'Kontrol sub-company, lokasi klien, manpower request, absensi lapangan, payroll, dan billing klien.',
+        href: '/hris-outsourcing',
+        cta: 'Lihat solusi outsourcing',
+    },
+    {
+        icon: Store,
+        title: 'Retail & F&B',
+        description:
+            'Atur shift outlet, absensi, cuti, lembur, kasbon, dan payroll tim cabang dengan alur sederhana.',
+        href: '/hris-retail-fnb',
+        cta: 'Lihat solusi retail',
+    },
+    {
+        icon: Factory,
+        title: 'Manufaktur Shift',
+        description:
+            'Pantau roster, koreksi absensi, lembur, payroll, dan performance untuk tim produksi.',
+        href: '/hris-manufaktur-shift',
+        cta: 'Lihat solusi manufaktur',
+    },
+];
+
+const gtmOffers = [
+    'Gratis setup 30 karyawan pertama',
+    'Import data karyawan dari Excel',
+    'Payroll pertama didampingi',
+    'Demo WhatsApp 15 menit',
 ];
 
 const fmt = new Intl.NumberFormat('id-ID', {
@@ -243,10 +281,10 @@ export default function Welcome({
                                 Fitur
                             </Link>
                             <a
-                                href="#benefits"
+                                href="#segments"
                                 className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
                             >
-                                Keunggulan
+                                Solusi
                             </a>
                             <a
                                 href="#pricing"
@@ -332,10 +370,10 @@ export default function Welcome({
                                     <ArrowRight className="h-4 w-4" />
                                 </Link>
                                 <a
-                                    href="#features"
+                                    href="#segments"
                                     className="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 sm:w-auto"
                                 >
-                                    Lihat Fitur
+                                    Lihat Solusi
                                 </a>
                             </div>
 
@@ -354,6 +392,73 @@ export default function Welcome({
                                         </p>
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    <section
+                        id="segments"
+                        className="border-t border-slate-100 py-20"
+                    >
+                        <div className="mx-auto max-w-6xl px-6">
+                            <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+                                <div>
+                                    <p className="text-xs font-semibold tracking-[0.12em] text-[#14a8b0] uppercase">
+                                        Solusi per industri
+                                    </p>
+                                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+                                        Mulai dari segmen yang paling butuh
+                                        kontrol operasional.
+                                    </h2>
+                                    <p className="mt-4 text-base leading-7 text-slate-600">
+                                        Humi paling kuat untuk perusahaan lokal
+                                        yang punya shift, lokasi kerja,
+                                        approval, dan payroll rutin. Pilih
+                                        solusi sesuai tipe operasional
+                                        perusahaan.
+                                    </p>
+                                    <div className="mt-6 grid gap-3">
+                                        {gtmOffers.map((offer) => (
+                                            <div
+                                                key={offer}
+                                                className="flex items-start gap-3"
+                                            >
+                                                <FileSpreadsheet className="mt-0.5 h-5 w-5 shrink-0 text-[#14a8b0]" />
+                                                <span className="text-sm font-medium text-slate-700">
+                                                    {offer}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4">
+                                    {segmentCards.map((segment) => (
+                                        <Link
+                                            key={segment.href}
+                                            href={segment.href}
+                                            className="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-[#14a8b0]/50 hover:shadow-[0_18px_46px_rgba(15,23,42,0.08)]"
+                                        >
+                                            <div className="flex items-start gap-4">
+                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#14a8b0]/10 text-[#0d4d52]">
+                                                    <segment.icon className="h-5 w-5" />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <h3 className="font-semibold text-slate-950">
+                                                        {segment.title}
+                                                    </h3>
+                                                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                                                        {segment.description}
+                                                    </p>
+                                                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#0d4d52]">
+                                                        {segment.cta}
+                                                        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </section>

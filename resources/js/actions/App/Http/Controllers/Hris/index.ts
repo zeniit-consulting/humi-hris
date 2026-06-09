@@ -12,6 +12,7 @@ import EmployeeBankAccountController from './EmployeeBankAccountController'
 import EmployeeDocumentController from './EmployeeDocumentController'
 import EmployeeAllowanceController from './EmployeeAllowanceController'
 import AttendanceController from './AttendanceController'
+import ClientVisitController from './ClientVisitController'
 import AttendanceScheduleController from './AttendanceScheduleController'
 import ScheduleController from './ScheduleController'
 import ShiftChangeApprovalController from './ShiftChangeApprovalController'
@@ -41,6 +42,7 @@ const Hris = {
     EmployeeDocumentController: Object.assign(EmployeeDocumentController, EmployeeDocumentController),
     EmployeeAllowanceController: Object.assign(EmployeeAllowanceController, EmployeeAllowanceController),
     AttendanceController: Object.assign(AttendanceController, AttendanceController),
+    ClientVisitController: Object.assign(ClientVisitController, ClientVisitController),
     AttendanceScheduleController: Object.assign(AttendanceScheduleController, AttendanceScheduleController),
     ScheduleController: Object.assign(ScheduleController, ScheduleController),
     ShiftChangeApprovalController: Object.assign(ShiftChangeApprovalController, ShiftChangeApprovalController),

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:396
+* @see app/Http/Controllers/Hris/PerformanceController.php:399
 * @route '/hris/performances/key-results/{keyResult}'
 */
 export const update = (args: { keyResult: number | { id: number } } | [keyResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -16,7 +16,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:396
+* @see app/Http/Controllers/Hris/PerformanceController.php:399
 * @route '/hris/performances/key-results/{keyResult}'
 */
 update.url = (args: { keyResult: number | { id: number } } | [keyResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ update.url = (args: { keyResult: number | { id: number } } | [keyResult: number 
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:396
+* @see app/Http/Controllers/Hris/PerformanceController.php:399
 * @route '/hris/performances/key-results/{keyResult}'
 */
 update.put = (args: { keyResult: number | { id: number } } | [keyResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -59,7 +59,7 @@ update.put = (args: { keyResult: number | { id: number } } | [keyResult: number 
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:396
+* @see app/Http/Controllers/Hris/PerformanceController.php:399
 * @route '/hris/performances/key-results/{keyResult}'
 */
 const updateForm = (args: { keyResult: number | { id: number } } | [keyResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -74,7 +74,7 @@ const updateForm = (args: { keyResult: number | { id: number } } | [keyResult: n
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::update
-* @see app/Http/Controllers/Hris/PerformanceController.php:396
+* @see app/Http/Controllers/Hris/PerformanceController.php:399
 * @route '/hris/performances/key-results/{keyResult}'
 */
 updateForm.put = (args: { keyResult: number | { id: number } } | [keyResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -91,7 +91,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::destroy
-* @see app/Http/Controllers/Hris/PerformanceController.php:408
+* @see app/Http/Controllers/Hris/PerformanceController.php:411
 * @route '/hris/performances/key-results/{keyResult}'
 */
 export const destroy = (args: { keyResult: number | { id: number } } | [keyResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -106,7 +106,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::destroy
-* @see app/Http/Controllers/Hris/PerformanceController.php:408
+* @see app/Http/Controllers/Hris/PerformanceController.php:411
 * @route '/hris/performances/key-results/{keyResult}'
 */
 destroy.url = (args: { keyResult: number | { id: number } } | [keyResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -139,7 +139,7 @@ destroy.url = (args: { keyResult: number | { id: number } } | [keyResult: number
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::destroy
-* @see app/Http/Controllers/Hris/PerformanceController.php:408
+* @see app/Http/Controllers/Hris/PerformanceController.php:411
 * @route '/hris/performances/key-results/{keyResult}'
 */
 destroy.delete = (args: { keyResult: number | { id: number } } | [keyResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -149,7 +149,7 @@ destroy.delete = (args: { keyResult: number | { id: number } } | [keyResult: num
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::destroy
-* @see app/Http/Controllers/Hris/PerformanceController.php:408
+* @see app/Http/Controllers/Hris/PerformanceController.php:411
 * @route '/hris/performances/key-results/{keyResult}'
 */
 const destroyForm = (args: { keyResult: number | { id: number } } | [keyResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -164,7 +164,7 @@ const destroyForm = (args: { keyResult: number | { id: number } } | [keyResult: 
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::destroy
-* @see app/Http/Controllers/Hris/PerformanceController.php:408
+* @see app/Http/Controllers/Hris/PerformanceController.php:411
 * @route '/hris/performances/key-results/{keyResult}'
 */
 destroyForm.delete = (args: { keyResult: number | { id: number } } | [keyResult: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

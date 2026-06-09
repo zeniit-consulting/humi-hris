@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -33,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureApiDocumentationAccess();
         User::observe(UserObserver::class);
     }
 
@@ -63,6 +65,17 @@ class AppServiceProvider extends ServiceProvider
             $key = method_exists($job, 'rateLimitKey') ? $job->rateLimitKey() : 'whatsapp-otp';
 
             return Limit::perSecond(1, $delaySeconds)->by($key);
+        });
+    }
+
+    protected function configureApiDocumentationAccess(): void
+    {
+        Gate::define('viewApiDocs', function (?User $user = null): bool {
+            if ((bool) config('scramble.docs_public', false)) {
+                return true;
+            }
+
+            return $user !== null && ($user->isSuperAdmin() || ($user->role === 'admin' && $user->parent_user_id === null));
         });
     }
 }

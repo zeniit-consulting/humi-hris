@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:242
+* @see app/Http/Controllers/Hris/PerformanceController.php:245
 * @route '/hris/performances/templates/{template}/attendance-defaults'
 */
 export const store = (args: { template: number | { id: number } } | [template: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:242
+* @see app/Http/Controllers/Hris/PerformanceController.php:245
 * @route '/hris/performances/templates/{template}/attendance-defaults'
 */
 store.url = (args: { template: number | { id: number } } | [template: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ store.url = (args: { template: number | { id: number } } | [template: number | {
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:242
+* @see app/Http/Controllers/Hris/PerformanceController.php:245
 * @route '/hris/performances/templates/{template}/attendance-defaults'
 */
 store.post = (args: { template: number | { id: number } } | [template: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ store.post = (args: { template: number | { id: number } } | [template: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:242
+* @see app/Http/Controllers/Hris/PerformanceController.php:245
 * @route '/hris/performances/templates/{template}/attendance-defaults'
 */
 const storeForm = (args: { template: number | { id: number } } | [template: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ const storeForm = (args: { template: number | { id: number } } | [template: numb
 
 /**
 * @see \App\Http\Controllers\Hris\PerformanceController::store
-* @see app/Http/Controllers/Hris/PerformanceController.php:242
+* @see app/Http/Controllers/Hris/PerformanceController.php:245
 * @route '/hris/performances/templates/{template}/attendance-defaults'
 */
 storeForm.post = (args: { template: number | { id: number } } | [template: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

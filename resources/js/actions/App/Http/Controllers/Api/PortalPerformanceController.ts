@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Api\PortalPerformanceController::storeCheckIn
-* @see app/Http/Controllers/Api/PortalPerformanceController.php:57
+* @see app/Http/Controllers/Api/PortalPerformanceController.php:60
 * @route '/portal/api/performances/{review}/check-ins'
 */
 export const storeCheckIn = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ storeCheckIn.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PortalPerformanceController::storeCheckIn
-* @see app/Http/Controllers/Api/PortalPerformanceController.php:57
+* @see app/Http/Controllers/Api/PortalPerformanceController.php:60
 * @route '/portal/api/performances/{review}/check-ins'
 */
 storeCheckIn.url = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -130,7 +130,7 @@ storeCheckIn.url = (args: { review: number | { id: number } } | [review: number 
 
 /**
 * @see \App\Http\Controllers\Api\PortalPerformanceController::storeCheckIn
-* @see app/Http/Controllers/Api/PortalPerformanceController.php:57
+* @see app/Http/Controllers/Api/PortalPerformanceController.php:60
 * @route '/portal/api/performances/{review}/check-ins'
 */
 storeCheckIn.post = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -140,7 +140,7 @@ storeCheckIn.post = (args: { review: number | { id: number } } | [review: number
 
 /**
 * @see \App\Http\Controllers\Api\PortalPerformanceController::storeCheckIn
-* @see app/Http/Controllers/Api/PortalPerformanceController.php:57
+* @see app/Http/Controllers/Api/PortalPerformanceController.php:60
 * @route '/portal/api/performances/{review}/check-ins'
 */
 const storeCheckInForm = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -150,7 +150,7 @@ const storeCheckInForm = (args: { review: number | { id: number } } | [review: n
 
 /**
 * @see \App\Http\Controllers\Api\PortalPerformanceController::storeCheckIn
-* @see app/Http/Controllers/Api/PortalPerformanceController.php:57
+* @see app/Http/Controllers/Api/PortalPerformanceController.php:60
 * @route '/portal/api/performances/{review}/check-ins'
 */
 storeCheckInForm.post = (args: { review: number | { id: number } } | [review: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

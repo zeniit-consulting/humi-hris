@@ -9,6 +9,7 @@ use App\Models\EmployeeAttendance;
 use App\Models\LeaveRequest;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
+use App\Models\PerformanceKpiResult;
 use App\Models\PerformancePeriod;
 use App\Models\PerformanceReview;
 use App\Models\Position;
@@ -222,28 +223,123 @@ class PortalPageTest extends TestCase
             'final_score' => 57,
         ]);
 
+        $kpi = PerformanceKpiResult::query()->create([
+            'user_id' => $user->id,
+            'performance_review_id' => $review->id,
+            'name' => 'Follow up customer',
+            'unit' => 'task',
+            'target_value' => 10,
+            'actual_value' => 6,
+            'weight' => 1,
+            'input_type' => 'manual',
+            'direction' => 'higher_is_better',
+            'score' => 60,
+        ]);
+
         $this->actingAs($user)
             ->getJson(route('portal.api.performances.index'))
             ->assertOk()
             ->assertJsonPath('data.items.0.id', $review->id)
-            ->assertJsonPath('data.items.0.period.name', 'June 2026');
+            ->assertJsonPath('data.items.0.period.name', 'June 2026')
+            ->assertJsonPath('data.items.0.kpi_results.0.name', 'Follow up customer');
 
         $this->actingAs($user)
             ->postJson(route('portal.api.performances.check-ins.store', $review), [
                 'check_in_date' => '2026-06-10',
+                'performance_kpi_result_id' => $kpi->id,
                 'summary' => 'Progress OKR minggu ini sudah diupdate.',
                 'action_items' => 'Lanjut follow up target KPI.',
                 'status' => 'open',
             ])
             ->assertCreated()
-            ->assertJsonPath('data.check_in.summary', 'Progress OKR minggu ini sudah diupdate.');
+            ->assertJsonPath('data.check_in.summary', 'Progress OKR minggu ini sudah diupdate.')
+            ->assertJsonPath('data.check_in.kpi_result.name', 'Follow up customer');
 
         $review->refresh();
 
         $this->assertSame('in_progress', $review->status);
         $this->assertDatabaseHas('performance_check_ins', [
             'performance_review_id' => $review->id,
+            'performance_kpi_result_id' => $kpi->id,
             'summary' => 'Progress OKR minggu ini sudah diupdate.',
+        ]);
+    }
+
+    public function test_portal_user_cannot_attach_kpi_from_another_review_to_activity(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'email' => 'portal-kpi-scope@example.com',
+            'email_verified_at' => now(),
+        ]);
+        $this->activatePlan($user, 'plus');
+
+        $division = Division::factory()->create(['user_id' => $user->id]);
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+        ]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => $user->email,
+            'phone' => $user->phone,
+        ]);
+        $otherEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+        ]);
+        $manager = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+        ]);
+        $period = PerformancePeriod::query()->create([
+            'user_id' => $user->id,
+            'name' => 'June 2026',
+            'starts_at' => '2026-06-01',
+            'ends_at' => '2026-06-30',
+            'status' => 'active',
+        ]);
+        $review = PerformanceReview::query()->create([
+            'user_id' => $user->id,
+            'performance_period_id' => $period->id,
+            'employee_id' => $employee->id,
+            'manager_id' => $manager->id,
+            'status' => 'not_started',
+        ]);
+        $otherReview = PerformanceReview::query()->create([
+            'user_id' => $user->id,
+            'performance_period_id' => $period->id,
+            'employee_id' => $otherEmployee->id,
+            'manager_id' => $manager->id,
+            'status' => 'not_started',
+        ]);
+        $otherKpi = PerformanceKpiResult::query()->create([
+            'user_id' => $user->id,
+            'performance_review_id' => $otherReview->id,
+            'name' => 'KPI review lain',
+            'target_value' => 100,
+            'actual_value' => 10,
+            'weight' => 1,
+            'input_type' => 'manual',
+            'direction' => 'higher_is_better',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('portal.api.performances.check-ins.store', $review), [
+                'check_in_date' => '2026-06-10',
+                'performance_kpi_result_id' => $otherKpi->id,
+                'summary' => 'Aktivitas dengan KPI salah.',
+                'status' => 'open',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['performance_kpi_result_id']);
+
+        $this->assertDatabaseMissing('performance_check_ins', [
+            'summary' => 'Aktivitas dengan KPI salah.',
         ]);
     }
 
@@ -538,7 +634,7 @@ class PortalPageTest extends TestCase
     }
 
     /**
-     * @param list<string> $lockedFeatures
+     * @param  list<string>  $lockedFeatures
      */
     private function activatePlan(User $user, string $planSlug, array $lockedFeatures = []): void
     {

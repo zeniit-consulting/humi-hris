@@ -3,14 +3,17 @@ import {
     ArrowRight,
     BarChart3,
     BriefcaseBusiness,
+    Building2,
     CalendarClock,
     CheckCircle2,
     CircleDollarSign,
     ClipboardCheck,
+    Factory,
     FileText,
     Fingerprint,
     FolderKanban,
     ShieldCheck,
+    Store,
     Users,
 } from 'lucide-react';
 import SeoHead from '@/components/seo-head';
@@ -79,7 +82,29 @@ const workflow = [
     },
 ];
 
-const SEO_TITLE = 'Fitur Humi HRIS - Absensi, Payroll, Rekrutmen, dan Portal Karyawan';
+const industrySolutions = [
+    {
+        icon: Building2,
+        title: 'Outsourcing',
+        text: 'Sub-company, lokasi klien, manpower request, absensi lapangan, payroll, dan billing klien.',
+        href: '/hris-outsourcing',
+    },
+    {
+        icon: Store,
+        title: 'Retail & F&B',
+        text: 'Shift outlet, absensi, cuti, lembur, kasbon, dan payroll untuk tim cabang.',
+        href: '/hris-retail-fnb',
+    },
+    {
+        icon: Factory,
+        title: 'Manufaktur Shift',
+        text: 'Roster, koreksi absensi, lembur, payroll, dan KPI untuk tim produksi.',
+        href: '/hris-manufaktur-shift',
+    },
+];
+
+const SEO_TITLE =
+    'Fitur Humi HRIS - Absensi, Payroll, Rekrutmen, dan Portal Karyawan';
 const SEO_DESCRIPTION =
     'Lihat fitur Humi HRIS untuk manajemen karyawan, absensi, cuti, lembur, payroll, rekrutmen, asset management, performance tracker, dan portal karyawan.';
 
@@ -108,13 +133,20 @@ export default function Features() {
                 <header className="border-b border-slate-100 bg-white">
                     <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
                         <Link href="/" className="flex items-center gap-2">
-                            <img src="/logo.png" alt="Humi" className="h-8 w-auto" />
+                            <img
+                                src="/logo.png"
+                                alt="Humi"
+                                className="h-8 w-auto"
+                            />
                         </Link>
                         <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
                             <Link href="/features" className="text-[#0d4d52]">
                                 Fitur
                             </Link>
-                            <Link href="/contact" className="transition hover:text-slate-900">
+                            <Link
+                                href="/contact"
+                                className="transition hover:text-slate-900"
+                            >
                                 Kontak
                             </Link>
                         </nav>
@@ -135,12 +167,14 @@ export default function Features() {
                                     Fitur Humi HRIS
                                 </p>
                                 <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
-                                    Satu sistem untuk menjalankan operasional HR dari awal sampai evaluasi.
+                                    Satu sistem untuk menjalankan operasional HR
+                                    dari awal sampai evaluasi.
                                 </h1>
                                 <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
-                                    Humi menyatukan data karyawan, absensi, cuti, lembur, payroll, rekrutmen,
-                                    aset, dan performa dalam alur kerja yang mudah dipakai oleh HR, manajer,
-                                    dan karyawan.
+                                    Humi menyatukan data karyawan, absensi,
+                                    cuti, lembur, payroll, rekrutmen, aset, dan
+                                    performa dalam alur kerja yang mudah dipakai
+                                    oleh HR, manajer, dan karyawan.
                                 </p>
                                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                                     <Link
@@ -161,17 +195,36 @@ export default function Features() {
 
                             <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                 {[
-                                    ['Database Karyawan', 'Dokumen dan struktur organisasi'],
-                                    ['Absensi Real-time', 'Cuti, lembur, shift, dan approval'],
-                                    ['Payroll', 'Slip gaji dan komponen payroll'],
-                                    ['Performance', 'KPI, OKR, dan review manajer'],
+                                    [
+                                        'Database Karyawan',
+                                        'Dokumen dan struktur organisasi',
+                                    ],
+                                    [
+                                        'Absensi Real-time',
+                                        'Cuti, lembur, shift, dan approval',
+                                    ],
+                                    [
+                                        'Payroll',
+                                        'Slip gaji dan komponen payroll',
+                                    ],
+                                    [
+                                        'Performance',
+                                        'KPI, OKR, dan review manajer',
+                                    ],
                                 ].map(([title, text]) => (
-                                    <div key={title} className="rounded-xl bg-white p-4 shadow-sm">
+                                    <div
+                                        key={title}
+                                        className="rounded-xl bg-white p-4 shadow-sm"
+                                    >
                                         <div className="flex items-start gap-3">
                                             <CheckCircle2 className="mt-0.5 h-5 w-5 text-[#14a8b0]" />
                                             <div>
-                                                <p className="font-semibold text-slate-950">{title}</p>
-                                                <p className="mt-1 text-sm text-slate-600">{text}</p>
+                                                <p className="font-semibold text-slate-950">
+                                                    {title}
+                                                </p>
+                                                <p className="mt-1 text-sm text-slate-600">
+                                                    {text}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
@@ -184,7 +237,10 @@ export default function Features() {
                         <div className="mx-auto max-w-6xl px-6">
                             <div className="grid gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 sm:grid-cols-2 lg:grid-cols-3">
                                 {featureGroups.map((feature) => (
-                                    <article key={feature.title} className="bg-white p-7">
+                                    <article
+                                        key={feature.title}
+                                        className="bg-white p-7"
+                                    >
                                         <feature.icon className="h-7 w-7 text-[#0d4d52]" />
                                         <h2 className="mt-5 text-lg font-semibold text-slate-950">
                                             {feature.title}
@@ -194,7 +250,10 @@ export default function Features() {
                                         </p>
                                         <ul className="mt-5 space-y-2">
                                             {feature.items.map((item) => (
-                                                <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
+                                                <li
+                                                    key={item}
+                                                    className="flex items-center gap-2 text-sm text-slate-700"
+                                                >
                                                     <ClipboardCheck className="h-4 w-4 text-[#14a8b0]" />
                                                     {item}
                                                 </li>
@@ -219,13 +278,61 @@ export default function Features() {
                                 </div>
                                 <div className="grid gap-4 md:grid-cols-3">
                                     {workflow.map((step, index) => (
-                                        <article key={step.title} className="rounded-2xl border border-slate-200 p-5">
+                                        <article
+                                            key={step.title}
+                                            className="rounded-2xl border border-slate-200 p-5"
+                                        >
                                             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#14a8b0]/10 text-sm font-bold text-[#0d4d52]">
                                                 {index + 1}
                                             </div>
-                                            <h3 className="mt-4 font-semibold text-slate-950">{step.title}</h3>
-                                            <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
+                                            <h3 className="mt-4 font-semibold text-slate-950">
+                                                {step.title}
+                                            </h3>
+                                            <p className="mt-2 text-sm leading-6 text-slate-600">
+                                                {step.description}
+                                            </p>
                                         </article>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="border-t border-slate-100 bg-slate-50/60 py-16">
+                        <div className="mx-auto max-w-6xl px-6">
+                            <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+                                <div>
+                                    <p className="text-xs font-semibold tracking-[0.12em] text-[#14a8b0] uppercase">
+                                        Solusi per industri
+                                    </p>
+                                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+                                        Halaman demo sesuai segmen perusahaan.
+                                    </h2>
+                                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                                        Pilih halaman yang sesuai agar demo dan
+                                        diskusi kebutuhan berjalan lebih
+                                        terarah.
+                                    </p>
+                                </div>
+                                <div className="grid gap-4 md:grid-cols-3">
+                                    {industrySolutions.map((solution) => (
+                                        <Link
+                                            key={solution.href}
+                                            href={solution.href}
+                                            className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-[#14a8b0]/60"
+                                        >
+                                            <solution.icon className="h-7 w-7 text-[#0d4d52]" />
+                                            <h3 className="mt-4 font-semibold text-slate-950">
+                                                {solution.title}
+                                            </h3>
+                                            <p className="mt-2 text-sm leading-6 text-slate-600">
+                                                {solution.text}
+                                            </p>
+                                            <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#0d4d52]">
+                                                Buka halaman
+                                                <ArrowRight className="h-4 w-4" />
+                                            </span>
+                                        </Link>
                                     ))}
                                 </div>
                             </div>
@@ -236,9 +343,13 @@ export default function Features() {
                         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <FileText className="h-6 w-6 text-[#7ae5e0]" />
-                                <h2 className="mt-4 text-2xl font-bold">Butuh demo fitur yang sesuai kebutuhan perusahaan?</h2>
+                                <h2 className="mt-4 text-2xl font-bold">
+                                    Butuh demo fitur yang sesuai kebutuhan
+                                    perusahaan?
+                                </h2>
                                 <p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">
-                                    Ceritakan jumlah karyawan, alur approval, dan modul prioritas Anda.
+                                    Ceritakan jumlah karyawan, alur approval,
+                                    dan modul prioritas Anda.
                                 </p>
                             </div>
                             <Link

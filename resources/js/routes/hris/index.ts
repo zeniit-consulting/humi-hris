@@ -8,6 +8,7 @@ import recruitment from './recruitment'
 import divisions from './divisions'
 import positions from './positions'
 import attendances from './attendances'
+import clientVisits from './client-visits'
 import schedules from './schedules'
 import shiftChangeRequests from './shift-change-requests'
 import attendanceApprovals from './attendance-approvals'
@@ -32,6 +33,7 @@ const hris = {
     divisions: Object.assign(divisions, divisions),
     positions: Object.assign(positions, positions),
     attendances: Object.assign(attendances, attendances),
+    clientVisits: Object.assign(clientVisits, clientVisits),
     schedules: Object.assign(schedules, schedules),
     shiftChangeRequests: Object.assign(shiftChangeRequests, shiftChangeRequests),
     attendanceApprovals: Object.assign(attendanceApprovals, attendanceApprovals),
