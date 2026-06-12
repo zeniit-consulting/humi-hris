@@ -378,7 +378,7 @@ export default function EmployeeMasterDataPage() {
                     </Card>
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-2">
+                <div className="space-y-4">
                     <Card>
                         <CardHeader className="flex flex-row items-start justify-between gap-4">
                             <div>
