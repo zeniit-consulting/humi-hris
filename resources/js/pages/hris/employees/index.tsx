@@ -1427,7 +1427,9 @@ export default function EmployeesIndex() {
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-8">
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
-                            <CardDescription>Total Karyawan</CardDescription>
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Total Karyawan
+                            </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.employees_total}
                             </CardTitle>
@@ -1435,7 +1437,9 @@ export default function EmployeesIndex() {
                     </Card>
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
-                            <CardDescription>Karyawan Aktif</CardDescription>
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Karyawan Aktif
+                            </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.employees_active}
                             </CardTitle>
@@ -1443,7 +1447,9 @@ export default function EmployeesIndex() {
                     </Card>
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
-                            <CardDescription>FL</CardDescription>
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                FL
+                            </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.employees_by_type.FL ?? 0}
                             </CardTitle>
@@ -1451,7 +1457,9 @@ export default function EmployeesIndex() {
                     </Card>
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
-                            <CardDescription>PKWT</CardDescription>
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                PKWT
+                            </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.employees_by_type.PKWT ?? 0}
                             </CardTitle>
@@ -1459,7 +1467,9 @@ export default function EmployeesIndex() {
                     </Card>
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
-                            <CardDescription>PKWTT</CardDescription>
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                PKWTT
+                            </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.employees_by_type.PKWTT ?? 0}
                             </CardTitle>
@@ -1467,7 +1477,9 @@ export default function EmployeesIndex() {
                     </Card>
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
-                            <CardDescription>OS</CardDescription>
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                OS
+                            </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.employees_by_type.OS ?? 0}
                             </CardTitle>
@@ -1475,7 +1487,9 @@ export default function EmployeesIndex() {
                     </Card>
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
-                            <CardDescription>Total Divisi</CardDescription>
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Total Divisi
+                            </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.divisions_total}
                             </CardTitle>
@@ -1483,7 +1497,9 @@ export default function EmployeesIndex() {
                     </Card>
                     <Card className="gap-2 py-3">
                         <CardHeader className="px-4 pb-0">
-                            <CardDescription>Total Jabatan</CardDescription>
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Total Jabatan
+                            </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.positions_total}
                             </CardTitle>

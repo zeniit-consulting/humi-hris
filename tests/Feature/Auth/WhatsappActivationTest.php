@@ -63,6 +63,8 @@ class WhatsappActivationTest extends TestCase
 
     public function test_user_can_resend_whatsapp_otp(): void
     {
+        config()->set('services.kirimdev.enabled', false);
+
         $user = User::factory()->unactivated()->create([
             'whatsapp_otp_sent_at' => now()->subMinutes(2),
         ]);
@@ -81,8 +83,8 @@ class WhatsappActivationTest extends TestCase
     public function test_whatsapp_otp_delivery_is_queued_with_thirty_second_delay(): void
     {
         Queue::fake();
-        config()->set('services.waha.enabled', true);
-        config()->set('services.waha.otp_send_delay_seconds', 30);
+        config()->set('services.kirimdev.enabled', true);
+        config()->set('services.kirimdev.otp_send_delay_seconds', 30);
         Carbon::setTestNow(Carbon::parse('2026-05-21 10:00:00'));
 
         try {

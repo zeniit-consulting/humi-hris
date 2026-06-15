@@ -19,11 +19,11 @@ class WhatsAppOtpService
             'whatsapp_otp_expires_at' => now()->addMinutes(10),
         ])->save();
 
-        if (app()->environment('testing') && ! config('services.waha.enabled')) {
+        if (app()->environment('testing') && ! config('services.kirimdev.enabled')) {
             return true;
         }
 
-        if (! config('services.waha.enabled')) {
+        if (! config('services.kirimdev.enabled')) {
             Log::info('WhatsApp activation OTP generated without provider delivery', [
                 'user_id' => $user->id,
                 'phone' => $user->phone,
@@ -34,12 +34,12 @@ class WhatsAppOtpService
         }
 
         try {
-            $delaySeconds = max(0, (int) config('services.waha.otp_send_delay_seconds', 30));
+            $delaySeconds = max(0, (int) config('services.kirimdev.otp_send_delay_seconds', 30));
 
             SendWhatsAppOtp::dispatch($user->phone, $this->buildOtpMessage($otp, $context))
                 ->delay(now()->addSeconds($delaySeconds));
 
-            Log::info('waha.otp.queued', [
+            Log::info('kirimdev.otp.queued', [
                 'user_id' => $user->id,
                 'phone' => $user->phone,
                 'delay_seconds' => $delaySeconds,

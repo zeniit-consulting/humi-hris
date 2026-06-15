@@ -2536,13 +2536,13 @@ function StatCard({
     icon: typeof LineChart;
 }) {
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-3">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Card className="gap-1 py-3">
+            <CardHeader className="flex flex-row items-center justify-between gap-3 px-4 pb-0">
+                <CardTitle className="text-xs font-medium">{title}</CardTitle>
                 <Icon className="size-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-                <p className="text-2xl font-semibold">{value}</p>
+            <CardContent className="px-4 pt-0">
+                <p className="text-xl font-semibold">{value}</p>
             </CardContent>
         </Card>
     );

@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\WahaClient;
+use App\Services\KirimdevClient;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -25,16 +25,16 @@ class SendWhatsAppOtp implements ShouldBeEncrypted, ShouldQueue
      */
     public function middleware(): array
     {
-        $delaySeconds = max(1, (int) config('services.waha.otp_send_delay_seconds', 30));
+        $delaySeconds = max(1, (int) config('services.kirimdev.otp_send_delay_seconds', 30));
 
         return [(new RateLimited('whatsapp-otp'))->releaseAfter($delaySeconds)];
     }
 
-    public function handle(WahaClient $wahaClient): void
+    public function handle(KirimdevClient $kirimdevClient): void
     {
-        $wahaClient->sendTextToPhone($this->phone, $this->message);
+        $kirimdevClient->sendTextToPhone($this->phone, $this->message);
 
-        Log::info('waha.otp.sent', [
+        Log::info('kirimdev.otp.sent', [
             'phone' => $this->phone,
         ]);
     }

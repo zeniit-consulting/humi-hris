@@ -10,12 +10,9 @@ import { edit } from '@/routes/profile';
 import type { BreadcrumbItem } from '@/types';
 
 type SessionSnapshot = {
-    name?: string;
+    provider?: string;
     status?: string;
-    me?: {
-        id?: string;
-        pushName?: string;
-    };
+    base_url?: string;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -53,19 +50,19 @@ export default function WhatsappSettingsPage({
                     <Heading
                         variant="small"
                         title="Uji WhatsApp"
-                        description="Kirim pesan percobaan langsung dari aplikasi menggunakan session WAHA aktif."
+                        description="Kirim pesan percobaan langsung dari aplikasi menggunakan API Kirimdev."
                     />
 
                     <div className="rounded-lg border p-4 text-sm">
-                        <p className="font-medium text-slate-900">Session aktif</p>
+                        <p className="font-medium text-slate-900">Provider aktif</p>
                         <p className="mt-2 text-slate-600">
-                            Nama session: <span className="font-medium">{sessionSnapshot?.name ?? 'ZeniConsulting'}</span>
+                            Provider: <span className="font-medium">{sessionSnapshot?.provider ?? 'kirimdev'}</span>
                         </p>
                         <p className="text-slate-600">
                             Status: <span className="font-medium">{sessionSnapshot?.status ?? 'Tidak diketahui'}</span>
                         </p>
                         <p className="text-slate-600">
-                            Nomor pengirim: <span className="font-medium">{sessionSnapshot?.me?.id ?? '-'}</span>
+                            Base URL: <span className="font-medium">{sessionSnapshot?.base_url ?? '-'}</span>
                         </p>
                     </div>
 

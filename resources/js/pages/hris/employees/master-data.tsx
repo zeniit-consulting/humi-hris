@@ -118,6 +118,8 @@ type Filters = {
     position_search: string;
 };
 
+type MasterDataTab = 'divisions' | 'positions';
+
 type PageProps = {
     divisions: Paginator<Division>;
     positions: Paginator<Position>;
@@ -180,9 +182,14 @@ export default function EmployeeMasterDataPage() {
 
     const [filterState, setFilterState] = useState<Filters>(filters);
     const [divisionDialogOpen, setDivisionDialogOpen] = useState(false);
-    const [editingDivision, setEditingDivision] = useState<Division | null>(null);
+    const [editingDivision, setEditingDivision] = useState<Division | null>(
+        null,
+    );
     const [positionDialogOpen, setPositionDialogOpen] = useState(false);
-    const [editingPosition, setEditingPosition] = useState<Position | null>(null);
+    const [editingPosition, setEditingPosition] = useState<Position | null>(
+        null,
+    );
+    const [activeTab, setActiveTab] = useState<MasterDataTab>('divisions');
 
     const divisionForm = useForm<DivisionFormData>(DIVISION_DEFAULT);
     const positionForm = useForm<PositionFormData>(POSITION_DEFAULT);
@@ -271,7 +278,9 @@ export default function EmployeeMasterDataPage() {
         setEditingPosition(position);
         positionForm.clearErrors();
         positionForm.setData({
-            division_id: position.division_id ? String(position.division_id) : '',
+            division_id: position.division_id
+                ? String(position.division_id)
+                : '',
             parent_position_id: position.parent_position_id
                 ? String(position.parent_position_id)
                 : '',
@@ -313,7 +322,10 @@ export default function EmployeeMasterDataPage() {
         });
     };
 
-    const goToMasterData = (pageKey: 'division_page' | 'position_page', value: string) => {
+    const goToMasterData = (
+        pageKey: 'division_page' | 'position_page',
+        value: string,
+    ) => {
         router.get(
             '/hris/employees/master-data',
             {
@@ -338,7 +350,9 @@ export default function EmployeeMasterDataPage() {
                     variant="outline"
                     className="border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-800"
                 >
-                    <Link href={employeeRoutes.index()}>Kembali ke Karyawan</Link>
+                    <Link href={employeeRoutes.index()}>
+                        Kembali ke Karyawan
+                    </Link>
                 </Button>
             }
         >
@@ -379,265 +393,358 @@ export default function EmployeeMasterDataPage() {
                 </div>
 
                 <div className="space-y-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-start justify-between gap-4">
-                            <div>
-                                <CardTitle>Divisi</CardTitle>
-                                <CardDescription>
-                                    Kelola struktur divisi organisasi.
-                                </CardDescription>
-                            </div>
-                            <Button size="sm" onClick={openCreateDivisionDialog}>
-                                <Plus className="size-4" />
-                                Tambah Divisi
-                            </Button>
-                        </CardHeader>
-                        <CardContent>
-                            <form
-                                onSubmit={(event) => {
-                                    event.preventDefault();
-                                    goToMasterData('division_page', '1');
-                                }}
-                                className="mb-3"
-                            >
-                                <div className="relative">
-                                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        value={filterState.division_search}
-                                        onChange={(event) =>
-                                            setFilterState((current) => ({
-                                                ...current,
-                                                division_search: event.target.value,
-                                            }))
-                                        }
-                                        className="pl-9"
-                                        placeholder="Cari kode / nama divisi"
-                                    />
+                    <div className="flex flex-wrap gap-2 rounded-lg border bg-card p-1">
+                        <Button
+                            type="button"
+                            variant={
+                                activeTab === 'divisions' ? 'default' : 'ghost'
+                            }
+                            size="sm"
+                            onClick={() => setActiveTab('divisions')}
+                        >
+                            Divisi
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={
+                                activeTab === 'positions' ? 'default' : 'ghost'
+                            }
+                            size="sm"
+                            onClick={() => setActiveTab('positions')}
+                        >
+                            Jabatan
+                        </Button>
+                    </div>
+
+                    {activeTab === 'divisions' ? (
+                        <Card>
+                            <CardHeader className="flex flex-row items-start justify-between gap-4">
+                                <div>
+                                    <CardTitle>Divisi</CardTitle>
+                                    <CardDescription>
+                                        Kelola struktur divisi organisasi.
+                                    </CardDescription>
                                 </div>
-                            </form>
+                                <Button
+                                    size="sm"
+                                    onClick={openCreateDivisionDialog}
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Divisi
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <form
+                                    onSubmit={(event) => {
+                                        event.preventDefault();
+                                        goToMasterData('division_page', '1');
+                                    }}
+                                    className="mb-3"
+                                >
+                                    <div className="relative">
+                                        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                        <Input
+                                            value={filterState.division_search}
+                                            onChange={(event) =>
+                                                setFilterState((current) => ({
+                                                    ...current,
+                                                    division_search:
+                                                        event.target.value,
+                                                }))
+                                            }
+                                            className="pl-9"
+                                            placeholder="Cari kode / nama divisi"
+                                        />
+                                    </div>
+                                </form>
 
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[520px] text-sm">
-                                    <thead>
-                                        <tr className="border-b text-left">
-                                            <th className="px-3 py-2">Kode</th>
-                                            <th className="px-3 py-2">Nama</th>
-                                            <th className="px-3 py-2">Karyawan</th>
-                                            <th className="px-3 py-2">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {divisions.data.length === 0 && (
-                                            <tr>
-                                                <td
-                                                    colSpan={4}
-                                                    className="px-3 py-6 text-center text-muted-foreground"
+                                <div className="overflow-x-auto">
+                                    <table className="w-full min-w-[520px] text-sm">
+                                        <thead>
+                                            <tr className="border-b text-left">
+                                                <th className="px-3 py-2">
+                                                    Kode
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Nama
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Karyawan
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Aksi
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {divisions.data.length === 0 && (
+                                                <tr>
+                                                    <td
+                                                        colSpan={4}
+                                                        className="px-3 py-6 text-center text-muted-foreground"
+                                                    >
+                                                        Belum ada data divisi.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            {divisions.data.map((division) => (
+                                                <tr
+                                                    key={division.id}
+                                                    className="border-b"
                                                 >
-                                                    Belum ada data divisi.
-                                                </td>
-                                            </tr>
-                                        )}
-                                        {divisions.data.map((division) => (
-                                            <tr key={division.id} className="border-b">
-                                                <td className="px-3 py-3">{division.code}</td>
-                                                <td className="px-3 py-3">
-                                                    <p className="font-medium">{division.name}</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {division.description ?? '-'}
-                                                    </p>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {division.employees_count}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <div className="flex gap-1.5">
-                                                        <ActionIconButton
-                                                            label="Edit divisi"
-                                                            icon={Pencil}
-                                                            variant="outline"
-                                                            onClick={() =>
-                                                                openEditDivisionDialog(
-                                                                    division,
-                                                                )
-                                                            }
-                                                        />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                    <td className="px-3 py-3">
+                                                        {division.code}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        <p className="font-medium">
+                                                            {division.name}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {division.description ??
+                                                                '-'}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {
+                                                            division.employees_count
+                                                        }
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        <div className="flex gap-1.5">
+                                                            <ActionIconButton
+                                                                label="Edit divisi"
+                                                                icon={Pencil}
+                                                                variant="outline"
+                                                                onClick={() =>
+                                                                    openEditDivisionDialog(
+                                                                        division,
+                                                                    )
+                                                                }
+                                                            />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                {divisions.links.map((link, index) => (
-                                    <Button
-                                        key={`${link.label}-${index}`}
-                                        asChild={link.url !== null}
-                                        size="sm"
-                                        variant={link.active ? 'default' : 'outline'}
-                                        disabled={link.url === null}
-                                    >
-                                        {link.url ? (
-                                            <Link href={link.url} preserveScroll preserveState>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {divisions.links.map((link, index) => (
+                                        <Button
+                                            key={`${link.label}-${index}`}
+                                            asChild={link.url !== null}
+                                            size="sm"
+                                            variant={
+                                                link.active
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
+                                            disabled={link.url === null}
+                                        >
+                                            {link.url ? (
+                                                <Link
+                                                    href={link.url}
+                                                    preserveScroll
+                                                    preserveState
+                                                >
+                                                    <span
+                                                        dangerouslySetInnerHTML={{
+                                                            __html: link.label,
+                                                        }}
+                                                    />
+                                                </Link>
+                                            ) : (
                                                 <span
                                                     dangerouslySetInnerHTML={{
                                                         __html: link.label,
                                                     }}
                                                 />
-                                            </Link>
-                                        ) : (
-                                            <span
-                                                dangerouslySetInnerHTML={{
-                                                    __html: link.label,
-                                                }}
-                                            />
-                                        )}
-                                    </Button>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="flex flex-row items-start justify-between gap-4">
-                            <div>
-                                <CardTitle>Jabatan</CardTitle>
-                                <CardDescription>
-                                    Kelola master jabatan tiap divisi.
-                                </CardDescription>
-                            </div>
-                            <Button size="sm" onClick={openCreatePositionDialog}>
-                                <Plus className="size-4" />
-                                Tambah Jabatan
-                            </Button>
-                        </CardHeader>
-                        <CardContent>
-                            <form
-                                onSubmit={(event) => {
-                                    event.preventDefault();
-                                    goToMasterData('position_page', '1');
-                                }}
-                                className="mb-3"
-                            >
-                                <div className="relative">
-                                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        value={filterState.position_search}
-                                        onChange={(event) =>
-                                            setFilterState((current) => ({
-                                                ...current,
-                                                position_search: event.target.value,
-                                            }))
-                                        }
-                                        className="pl-9"
-                                        placeholder="Cari kode / nama jabatan"
-                                    />
+                                            )}
+                                        </Button>
+                                    ))}
                                 </div>
-                            </form>
+                            </CardContent>
+                        </Card>
+                    ) : null}
 
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[620px] text-sm">
-                                    <thead>
-                                        <tr className="border-b text-left">
-                                            <th className="px-3 py-2">Kode</th>
-                                            <th className="px-3 py-2">Nama</th>
-                                            <th className="px-3 py-2">Parent</th>
-                                            <th className="px-3 py-2">Divisi</th>
-                                            <th className="px-3 py-2">Dipakai</th>
-                                            <th className="px-3 py-2">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {positions.data.length === 0 && (
-                                            <tr>
-                                                <td
-                                                    colSpan={6}
-                                                    className="px-3 py-6 text-center text-muted-foreground"
+                    {activeTab === 'positions' ? (
+                        <Card>
+                            <CardHeader className="flex flex-row items-start justify-between gap-4">
+                                <div>
+                                    <CardTitle>Jabatan</CardTitle>
+                                    <CardDescription>
+                                        Kelola master jabatan tiap divisi.
+                                    </CardDescription>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    onClick={openCreatePositionDialog}
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah Jabatan
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <form
+                                    onSubmit={(event) => {
+                                        event.preventDefault();
+                                        goToMasterData('position_page', '1');
+                                    }}
+                                    className="mb-3"
+                                >
+                                    <div className="relative">
+                                        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                        <Input
+                                            value={filterState.position_search}
+                                            onChange={(event) =>
+                                                setFilterState((current) => ({
+                                                    ...current,
+                                                    position_search:
+                                                        event.target.value,
+                                                }))
+                                            }
+                                            className="pl-9"
+                                            placeholder="Cari kode / nama jabatan"
+                                        />
+                                    </div>
+                                </form>
+
+                                <div className="overflow-x-auto">
+                                    <table className="w-full min-w-[620px] text-sm">
+                                        <thead>
+                                            <tr className="border-b text-left">
+                                                <th className="px-3 py-2">
+                                                    Kode
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Nama
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Parent
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Divisi
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Dipakai
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Aksi
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {positions.data.length === 0 && (
+                                                <tr>
+                                                    <td
+                                                        colSpan={6}
+                                                        className="px-3 py-6 text-center text-muted-foreground"
+                                                    >
+                                                        Belum ada data jabatan.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            {positions.data.map((position) => (
+                                                <tr
+                                                    key={position.id}
+                                                    className="border-b"
                                                 >
-                                                    Belum ada data jabatan.
-                                                </td>
-                                            </tr>
-                                        )}
-                                        {positions.data.map((position) => (
-                                            <tr key={position.id} className="border-b">
-                                                <td className="px-3 py-3">{position.code}</td>
-                                                <td className="px-3 py-3">
-                                                    <p className="font-medium">{position.name}</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {position.level_label ??
-                                                            position.level ??
-                                                            '-'}
-                                                    </p>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {position.parent_position?.name ?? '-'}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {position.division?.name ?? '-'}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {position.employees_count}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <div className="flex gap-1.5">
-                                                        <ActionIconButton
-                                                            label="Tambah sub-jabatan"
-                                                            icon={Plus}
-                                                            variant="outline"
-                                                            onClick={() =>
-                                                                openCreateSubPositionDialog(
-                                                                    position,
-                                                                )
-                                                            }
-                                                        />
-                                                        <ActionIconButton
-                                                            label="Edit jabatan"
-                                                            icon={Pencil}
-                                                            variant="outline"
-                                                            onClick={() =>
-                                                                openEditPositionDialog(
-                                                                    position,
-                                                                )
-                                                            }
-                                                        />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                    <td className="px-3 py-3">
+                                                        {position.code}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        <p className="font-medium">
+                                                            {position.name}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {position.level_label ??
+                                                                position.level ??
+                                                                '-'}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {position
+                                                            .parent_position
+                                                            ?.name ?? '-'}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {position.division
+                                                            ?.name ?? '-'}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {
+                                                            position.employees_count
+                                                        }
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        <div className="flex gap-1.5">
+                                                            <ActionIconButton
+                                                                label="Tambah sub-jabatan"
+                                                                icon={Plus}
+                                                                variant="outline"
+                                                                onClick={() =>
+                                                                    openCreateSubPositionDialog(
+                                                                        position,
+                                                                    )
+                                                                }
+                                                            />
+                                                            <ActionIconButton
+                                                                label="Edit jabatan"
+                                                                icon={Pencil}
+                                                                variant="outline"
+                                                                onClick={() =>
+                                                                    openEditPositionDialog(
+                                                                        position,
+                                                                    )
+                                                                }
+                                                            />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                {positions.links.map((link, index) => (
-                                    <Button
-                                        key={`${link.label}-${index}`}
-                                        asChild={link.url !== null}
-                                        size="sm"
-                                        variant={link.active ? 'default' : 'outline'}
-                                        disabled={link.url === null}
-                                    >
-                                        {link.url ? (
-                                            <Link href={link.url} preserveScroll preserveState>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {positions.links.map((link, index) => (
+                                        <Button
+                                            key={`${link.label}-${index}`}
+                                            asChild={link.url !== null}
+                                            size="sm"
+                                            variant={
+                                                link.active
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
+                                            disabled={link.url === null}
+                                        >
+                                            {link.url ? (
+                                                <Link
+                                                    href={link.url}
+                                                    preserveScroll
+                                                    preserveState
+                                                >
+                                                    <span
+                                                        dangerouslySetInnerHTML={{
+                                                            __html: link.label,
+                                                        }}
+                                                    />
+                                                </Link>
+                                            ) : (
                                                 <span
                                                     dangerouslySetInnerHTML={{
                                                         __html: link.label,
                                                     }}
                                                 />
-                                            </Link>
-                                        ) : (
-                                            <span
-                                                dangerouslySetInnerHTML={{
-                                                    __html: link.label,
-                                                }}
-                                            />
-                                        )}
-                                    </Button>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
+                                            )}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ) : null}
                 </div>
             </div>
 
@@ -693,7 +800,10 @@ export default function EmployeeMasterDataPage() {
                                 id="division_name"
                                 value={divisionForm.data.name}
                                 onChange={(event) =>
-                                    divisionForm.setData('name', event.target.value)
+                                    divisionForm.setData(
+                                        'name',
+                                        event.target.value,
+                                    )
                                 }
                                 placeholder="Human Resources"
                                 required
@@ -701,7 +811,9 @@ export default function EmployeeMasterDataPage() {
                             <InputError message={divisionForm.errors.name} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="division_description">Deskripsi</Label>
+                            <Label htmlFor="division_description">
+                                Deskripsi
+                            </Label>
                             <Input
                                 id="division_description"
                                 value={divisionForm.data.description}
@@ -712,7 +824,9 @@ export default function EmployeeMasterDataPage() {
                                     )
                                 }
                             />
-                            <InputError message={divisionForm.errors.description} />
+                            <InputError
+                                message={divisionForm.errors.description}
+                            />
                         </div>
                         <div className="flex items-center gap-2">
                             <Checkbox
@@ -735,7 +849,10 @@ export default function EmployeeMasterDataPage() {
                             >
                                 Batal
                             </Button>
-                            <Button type="submit" disabled={divisionForm.processing}>
+                            <Button
+                                type="submit"
+                                disabled={divisionForm.processing}
+                            >
                                 {editingDivision ? 'Simpan' : 'Tambah'}
                             </Button>
                         </div>
@@ -757,7 +874,9 @@ export default function EmployeeMasterDataPage() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            {editingPosition ? 'Edit Jabatan' : 'Tambah Jabatan'}
+                            {editingPosition
+                                ? 'Edit Jabatan'
+                                : 'Tambah Jabatan'}
                         </DialogTitle>
                         <DialogDescription>
                             Atur jabatan, divisi, dan struktur sub-jabatan.
@@ -775,23 +894,31 @@ export default function EmployeeMasterDataPage() {
                                         : positionForm.data.division_id
                                 }
                                 onValueChange={(value) => {
-                                    const divisionId = value === '__none' ? '' : value;
+                                    const divisionId =
+                                        value === '__none' ? '' : value;
 
-                                    positionForm.setData('division_id', divisionId);
+                                    positionForm.setData(
+                                        'division_id',
+                                        divisionId,
+                                    );
 
                                     if (
                                         divisionId !== '' &&
-                                        positionForm.data.parent_position_id !== ''
+                                        positionForm.data.parent_position_id !==
+                                            ''
                                     ) {
-                                        const selectedParent = positionOptions.find(
-                                            (position) =>
-                                                String(position.id) ===
-                                                positionForm.data.parent_position_id,
-                                        );
+                                        const selectedParent =
+                                            positionOptions.find(
+                                                (position) =>
+                                                    String(position.id) ===
+                                                    positionForm.data
+                                                        .parent_position_id,
+                                            );
 
                                         if (
                                             selectedParent &&
-                                            selectedParent.division_id !== Number(divisionId)
+                                            selectedParent.division_id !==
+                                                Number(divisionId)
                                         ) {
                                             positionForm.setData(
                                                 'parent_position_id',
@@ -811,10 +938,14 @@ export default function EmployeeMasterDataPage() {
                                 ]}
                                 className="w-full"
                             />
-                            <InputError message={positionForm.errors.division_id} />
+                            <InputError
+                                message={positionForm.errors.division_id}
+                            />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="position_parent">Jabatan Induk</Label>
+                            <Label htmlFor="position_parent">
+                                Jabatan Induk
+                            </Label>
                             <SearchableSelect
                                 id="position_parent"
                                 value={
@@ -832,14 +963,16 @@ export default function EmployeeMasterDataPage() {
                                 searchPlaceholder="Cari jabatan..."
                                 options={[
                                     { value: '__none', label: '-' },
-                                    ...availableParentPositions.map((position) => ({
-                                        value: String(position.id),
-                                        label: `${position.name}${
-                                            position.division_name
-                                                ? ` (${position.division_name})`
-                                                : ''
-                                        }`,
-                                    })),
+                                    ...availableParentPositions.map(
+                                        (position) => ({
+                                            value: String(position.id),
+                                            label: `${position.name}${
+                                                position.division_name
+                                                    ? ` (${position.division_name})`
+                                                    : ''
+                                            }`,
+                                        }),
+                                    ),
                                 ]}
                                 className="w-full"
                             />
@@ -877,7 +1010,10 @@ export default function EmployeeMasterDataPage() {
                                 id="position_name"
                                 value={positionForm.data.name}
                                 onChange={(event) =>
-                                    positionForm.setData('name', event.target.value)
+                                    positionForm.setData(
+                                        'name',
+                                        event.target.value,
+                                    )
                                 }
                                 placeholder="Cleaner"
                                 required
@@ -885,14 +1021,19 @@ export default function EmployeeMasterDataPage() {
                             <InputError message={positionForm.errors.name} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="position_level">Level Jabatan</Label>
+                            <Label htmlFor="position_level">
+                                Level Jabatan
+                            </Label>
                             <Select
                                 value={positionForm.data.level}
                                 onValueChange={(value) =>
                                     positionForm.setData('level', value)
                                 }
                             >
-                                <SelectTrigger id="position_level" className="w-full">
+                                <SelectTrigger
+                                    id="position_level"
+                                    className="w-full"
+                                >
                                     <SelectValue placeholder="Pilih level jabatan" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -909,7 +1050,9 @@ export default function EmployeeMasterDataPage() {
                             <InputError message={positionForm.errors.level} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="position_description">Deskripsi</Label>
+                            <Label htmlFor="position_description">
+                                Deskripsi
+                            </Label>
                             <Input
                                 id="position_description"
                                 value={positionForm.data.description}
@@ -945,7 +1088,10 @@ export default function EmployeeMasterDataPage() {
                             >
                                 Batal
                             </Button>
-                            <Button type="submit" disabled={positionForm.processing}>
+                            <Button
+                                type="submit"
+                                disabled={positionForm.processing}
+                            >
                                 {editingPosition ? 'Simpan' : 'Tambah'}
                             </Button>
                         </div>

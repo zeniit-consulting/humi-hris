@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:293
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:301
 * @route '/docs/api'
 */
 export const ui = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ ui.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:293
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:301
 * @route '/docs/api'
 */
 ui.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ ui.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:293
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:301
 * @route '/docs/api'
 */
 ui.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -31,7 +31,7 @@ ui.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:293
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:301
 * @route '/docs/api'
 */
 ui.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -40,7 +40,7 @@ ui.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:293
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:301
 * @route '/docs/api'
 */
 const uiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -49,7 +49,7 @@ const uiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 })
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:293
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:301
 * @route '/docs/api'
 */
 uiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -58,7 +58,7 @@ uiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 })
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:293
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:301
 * @route '/docs/api'
 */
 uiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -74,7 +74,7 @@ uiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 ui.form = uiForm
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:308
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:316
 * @route '/docs/api.json'
 */
 export const document = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -88,7 +88,7 @@ document.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:308
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:316
 * @route '/docs/api.json'
 */
 document.url = (options?: RouteQueryOptions) => {
@@ -96,7 +96,7 @@ document.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:308
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:316
 * @route '/docs/api.json'
 */
 document.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -105,7 +105,7 @@ document.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:308
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:316
 * @route '/docs/api.json'
 */
 document.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -114,7 +114,7 @@ document.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:308
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:316
 * @route '/docs/api.json'
 */
 const documentForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -123,7 +123,7 @@ const documentForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 })
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:308
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:316
 * @route '/docs/api.json'
 */
 documentForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ documentForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 })
 
 /**
-* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:308
+* @see vendor/dedoc/scramble/src/ScrambleServiceProvider.php:316
 * @route '/docs/api.json'
 */
 documentForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

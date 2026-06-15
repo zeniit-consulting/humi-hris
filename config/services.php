@@ -35,15 +35,14 @@ return [
         ],
     ],
 
-    'waha' => [
-        'enabled' => env('WAHA_ENABLED', false),
-        'base_url' => env('WAHA_BASE_URL'),
-        'api_key' => env('WAHA_API_KEY'),
-        'session' => env('WAHA_SESSION', 'ZeniConsulting'),
-        'timeout' => env('WAHA_TIMEOUT', 15),
-        'otp_send_delay_seconds' => (int) env('WAHA_OTP_SEND_DELAY_SECONDS', 30),
-        'registration_group_chat_id' => env('WAHA_REGISTRATION_GROUP_CHAT_ID', '120363407707938809@g.us'),
-        'subscription_renewal_group_chat_id' => env('WAHA_SUBSCRIPTION_RENEWAL_GROUP_CHAT_ID', env('WAHA_REGISTRATION_GROUP_CHAT_ID', '120363407707938809@g.us')),
+    'kirimdev' => [
+        'enabled' => (bool) env('KIRIMDEV_ENABLED', env('KIRIMDEV_API_KEY') || env('kirimdev_api_key')),
+        'base_url' => env('KIRIMDEV_BASE_URL', 'https://api.kirimdev.com/v1'),
+        'api_key' => env('KIRIMDEV_API_KEY', env('kirimdev_api_key')),
+        'timeout' => (int) env('KIRIMDEV_TIMEOUT', 15),
+        'otp_send_delay_seconds' => (int) env('KIRIMDEV_OTP_SEND_DELAY_SECONDS', 30),
+        'registration_notification_phone' => env('KIRIMDEV_REGISTRATION_NOTIFICATION_PHONE'),
+        'subscription_renewal_notification_phone' => env('KIRIMDEV_SUBSCRIPTION_RENEWAL_NOTIFICATION_PHONE', env('KIRIMDEV_REGISTRATION_NOTIFICATION_PHONE')),
     ],
 
     'pakasir' => [
