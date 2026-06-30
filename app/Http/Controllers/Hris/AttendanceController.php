@@ -215,12 +215,13 @@ class AttendanceController extends Controller
             ->where('user_id', $ownerId)
             ->first();
         $fileName = 'attendances_'.now()->format('Ymd_His').'.xls';
+        $timezone = $this->deviceTimezone($request);
 
-        return response()->streamDownload(function () use ($rows, $company, $filters): void {
+        return response()->streamDownload(function () use ($rows, $company, $filters, $timezone): void {
             $escape = fn (mixed $value): string => e((string) ($value ?? ''));
             $companyName = $company?->name ?: 'Perusahaan';
             $companyDetails = $company?->details ?: '-';
-            $generatedAt = now()->format('Y-m-d H:i:s');
+            $generatedAt = now()->setTimezone($timezone)->format('Y-m-d H:i:s');
             $statusLabels = [
                 'present' => 'Hadir',
                 'late' => 'Terlambat',
@@ -248,6 +249,7 @@ class AttendanceController extends Controller
             echo '<tr><td class="title" colspan="7">Laporan Kehadiran</td></tr>';
             echo '<tr><td class="meta" colspan="7">Tanggal laporan: '.$escape($filters['date']).'</td></tr>';
             echo '<tr><td class="meta" colspan="7">Status: '.$escape($filters['status'] !== '' ? ($statusLabels[$filters['status']] ?? $filters['status']) : 'Semua').'</td></tr>';
+            echo '<tr><td class="meta" colspan="7">Timezone: '.$escape($timezone).'</td></tr>';
             echo '<tr><td class="meta" colspan="7">Generated at: '.$escape($generatedAt).'</td></tr>';
             echo '<tr><td colspan="7">&nbsp;</td></tr>';
             echo '</table>';
@@ -268,8 +270,8 @@ class AttendanceController extends Controller
                 echo '<td>'.$escape($row->employee?->employee_code).'</td>';
                 echo '<td>'.$escape($row->employee?->full_name).'</td>';
                 echo '<td>'.$escape($statusLabels[$row->status] ?? $row->status).'</td>';
-                echo '<td>'.$escape($row->check_in_at?->format('H:i')).'</td>';
-                echo '<td>'.$escape($row->check_out_at?->format('H:i')).'</td>';
+                echo '<td>'.$escape($this->localExportTime($row->check_in_at, $timezone)).'</td>';
+                echo '<td>'.$escape($this->localExportTime($row->check_out_at, $timezone)).'</td>';
                 echo '<td>'.$escape($row->notes).'</td>';
                 echo '</tr>';
             }
@@ -282,6 +284,15 @@ class AttendanceController extends Controller
         ]);
     }
 
+    private function localExportTime(mixed $value, string $timezone): ?string
+    {
+        if (blank($value)) {
+            return null;
+        }
+
+        return Carbon::parse($value, config('app.timezone'))->setTimezone($timezone)->format('H:i');
+    }
+
     private function deviceTimezone(Request $request): string
     {
         $timezone = (string) $request->input('timezone', $request->header('X-Timezone', config('app.timezone')));
@@ -292,13 +303,14 @@ class AttendanceController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $validated
+     * @param  array<string, mixed>  $validated
      */
     private function normalizeAttendanceTimestamps(array &$validated, string $timezone): void
     {
         foreach (['check_in_at', 'check_out_at'] as $key) {
             if (blank($validated[$key] ?? null)) {
                 $validated[$key] = null;
+
                 continue;
             }
 

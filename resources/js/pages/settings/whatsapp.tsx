@@ -50,13 +50,13 @@ export default function WhatsappSettingsPage({
                     <Heading
                         variant="small"
                         title="Uji WhatsApp"
-                        description="Kirim pesan percobaan langsung dari aplikasi menggunakan API Kirimdev."
+                        description="Kirim pesan percobaan langsung dari aplikasi menggunakan WAHA."
                     />
 
                     <div className="rounded-lg border p-4 text-sm">
                         <p className="font-medium text-slate-900">Provider aktif</p>
                         <p className="mt-2 text-slate-600">
-                            Provider: <span className="font-medium">{sessionSnapshot?.provider ?? 'kirimdev'}</span>
+                            Provider: <span className="font-medium">{sessionSnapshot?.provider ?? 'waha'}</span>
                         </p>
                         <p className="text-slate-600">
                             Status: <span className="font-medium">{sessionSnapshot?.status ?? 'Tidak diketahui'}</span>

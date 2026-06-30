@@ -62,4 +62,40 @@ class AttendanceExportTest extends TestCase
         $this->assertStringContainsString('08:00', $content);
         $this->assertStringContainsString('17:00', $content);
     }
+
+    public function test_attendance_export_formats_times_in_requested_timezone(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-TZ',
+            'first_name' => 'Sinta',
+            'last_name' => 'Rahma',
+        ]);
+
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-05-21',
+            'status' => 'present',
+            'check_in_at' => '2026-05-21 00:00:00',
+            'check_out_at' => '2026-05-21 09:00:00',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->withHeader('X-Timezone', 'Asia/Makassar')
+            ->get(route('hris.attendances.export', ['date' => '2026-05-21']));
+
+        $response->assertOk();
+
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('08:00', $content);
+        $this->assertStringContainsString('17:00', $content);
+        $this->assertStringNotContainsString('>00:00<', $content);
+        $this->assertStringNotContainsString('>09:00<', $content);
+    }
 }

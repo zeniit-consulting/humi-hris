@@ -17,10 +17,10 @@ class SubscriptionRenewalReminderTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-05-18 09:00:00'));
 
-        config()->set('services.kirimdev.enabled', true);
-        config()->set('services.kirimdev.base_url', 'https://api.kirimdev.test/v1');
-        config()->set('services.kirimdev.api_key', 'secret');
-        config()->set('services.kirimdev.subscription_renewal_notification_phone', '6281111111111');
+        config()->set('services.waha.enabled', true);
+        config()->set('services.waha.base_url', 'https://waha.example.test');
+        config()->set('services.waha.session', 'ZeniConsulting');
+        config()->set('services.waha.subscription_renewal_group_chat_id', '120363407707938809@g.us');
 
         $user = User::factory()->create([
             'name' => 'Budi Santoso',
@@ -38,9 +38,9 @@ class SubscriptionRenewalReminderTest extends TestCase
         ]);
 
         Http::fake([
-            'https://api.kirimdev.test/v1/messages' => Http::response([
-                'id' => 'renewal-reminder-id',
-                'status' => 'queued',
+            'https://waha.example.test/api/sendText' => Http::response([
+                'key' => ['id' => 'renewal-reminder-id'],
+                'status' => 'PENDING',
             ]),
         ]);
 
@@ -53,25 +53,27 @@ class SubscriptionRenewalReminderTest extends TestCase
         Http::assertSent(function ($request): bool {
             $payload = $request->data();
 
-            return $request->url() === 'https://api.kirimdev.test/v1/messages'
-                && $payload['to'] === '+6281234567890'
-                && str_contains($payload['text']['body'], 'Reminder Renewal Plan Humi')
-                && str_contains($payload['text']['body'], 'Budi Santoso')
-                && str_contains($payload['text']['body'], 'PT Test Company')
-                && str_contains($payload['text']['body'], 'Basic')
-                && str_contains($payload['text']['body'], '25 Mei 2026');
+            return $request->url() === 'https://waha.example.test/api/sendText'
+                && $payload['session'] === 'ZeniConsulting'
+                && $payload['chatId'] === '6281234567890@c.us'
+                && str_contains($payload['text'], 'Reminder Renewal Plan Humi')
+                && str_contains($payload['text'], 'Budi Santoso')
+                && str_contains($payload['text'], 'PT Test Company')
+                && str_contains($payload['text'], 'Basic')
+                && str_contains($payload['text'], '25 Mei 2026');
         });
 
         Http::assertSent(function ($request): bool {
             $payload = $request->data();
 
-            return $request->url() === 'https://api.kirimdev.test/v1/messages'
-                && $payload['to'] === '+6281111111111'
-                && str_contains($payload['text']['body'], 'Reminder Expired Berlangganan H-7')
-                && str_contains($payload['text']['body'], 'PT Test Company')
-                && str_contains($payload['text']['body'], 'Budi Santoso')
-                && str_contains($payload['text']['body'], 'Basic')
-                && str_contains($payload['text']['body'], '25 Mei 2026');
+            return $request->url() === 'https://waha.example.test/api/sendText'
+                && $payload['session'] === 'ZeniConsulting'
+                && $payload['chatId'] === '120363407707938809@g.us'
+                && str_contains($payload['text'], 'Reminder Expired Berlangganan H-7')
+                && str_contains($payload['text'], 'PT Test Company')
+                && str_contains($payload['text'], 'Budi Santoso')
+                && str_contains($payload['text'], 'Basic')
+                && str_contains($payload['text'], '25 Mei 2026');
         });
 
         Carbon::setTestNow();
@@ -81,10 +83,10 @@ class SubscriptionRenewalReminderTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-05-18 09:00:00'));
 
-        config()->set('services.kirimdev.enabled', true);
-        config()->set('services.kirimdev.base_url', 'https://api.kirimdev.test/v1');
-        config()->set('services.kirimdev.api_key', 'secret');
-        config()->set('services.kirimdev.subscription_renewal_notification_phone', '6281111111111');
+        config()->set('services.waha.enabled', true);
+        config()->set('services.waha.base_url', 'https://waha.example.test');
+        config()->set('services.waha.session', 'ZeniConsulting');
+        config()->set('services.waha.subscription_renewal_group_chat_id', '120363407707938809@g.us');
 
         $user = User::factory()->create([
             'name' => 'Invalid Phone Owner',
@@ -102,8 +104,8 @@ class SubscriptionRenewalReminderTest extends TestCase
         ]);
 
         Http::fake([
-            'https://api.kirimdev.test/v1/messages' => Http::response([
-                'status' => 'queued',
+            'https://waha.example.test/api/sendText' => Http::response([
+                'status' => 'PENDING',
             ]),
         ]);
 
@@ -115,9 +117,9 @@ class SubscriptionRenewalReminderTest extends TestCase
         Http::assertSent(function ($request): bool {
             $payload = $request->data();
 
-            return $payload['to'] === '+6281111111111'
-                && str_contains($payload['text']['body'], 'PT Grup Saja')
-                && str_contains($payload['text']['body'], 'Plus');
+            return $payload['chatId'] === '120363407707938809@g.us'
+                && str_contains($payload['text'], 'PT Grup Saja')
+                && str_contains($payload['text'], 'Plus');
         });
 
         Carbon::setTestNow();
@@ -127,9 +129,8 @@ class SubscriptionRenewalReminderTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-05-18 09:00:00'));
 
-        config()->set('services.kirimdev.enabled', true);
-        config()->set('services.kirimdev.base_url', 'https://api.kirimdev.test/v1');
-        config()->set('services.kirimdev.api_key', 'secret');
+        config()->set('services.waha.enabled', true);
+        config()->set('services.waha.base_url', 'https://waha.example.test');
 
         $user = User::factory()->create([
             'phone' => '6281234567890',
@@ -145,8 +146,8 @@ class SubscriptionRenewalReminderTest extends TestCase
         ]);
 
         Http::fake([
-            'https://api.kirimdev.test/v1/messages' => Http::response([
-                'status' => 'queued',
+            'https://waha.example.test/api/sendText' => Http::response([
+                'status' => 'PENDING',
             ]),
         ]);
 

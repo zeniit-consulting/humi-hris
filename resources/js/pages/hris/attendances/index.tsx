@@ -283,6 +283,7 @@ export default function AttendancePage() {
             employee_id: filterState.employee_id,
             sort_by: filterState.sort_by,
             sort_dir: filterState.sort_dir,
+            timezone: browserTimezone(),
         }).filter(([, value]) => value !== ''),
     ).toString();
 

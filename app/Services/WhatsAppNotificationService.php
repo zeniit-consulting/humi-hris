@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppNotificationService
 {
-    public function __construct(private readonly KirimdevClient $kirimdevClient) {}
+    public function __construct(private readonly WahaClient $wahaClient) {}
 
     public function notifyLeaveStatus(LeaveRequest $leave): void
     {
@@ -20,7 +20,7 @@ class WhatsAppNotificationService
         if (! $employee?->phone || ! WhatsAppPhone::isValid($employee->phone)) {
             return;
         }
-        if (! config('services.kirimdev.enabled')) {
+        if (! config('services.waha.enabled')) {
             return;
         }
 
@@ -45,7 +45,7 @@ class WhatsAppNotificationService
         }
 
         try {
-            $this->kirimdevClient->sendTextToPhone($employee->phone, $message);
+            $this->wahaClient->sendTextToPhone($employee->phone, $message);
         } catch (\Throwable $e) {
             Log::warning('whatsapp.leave_notify.failed', [
                 'leave_id' => $leave->id,
@@ -60,7 +60,7 @@ class WhatsAppNotificationService
         if (! $employee?->phone || ! WhatsAppPhone::isValid($employee->phone)) {
             return;
         }
-        if (! config('services.kirimdev.enabled')) {
+        if (! config('services.waha.enabled')) {
             return;
         }
 
@@ -78,7 +78,7 @@ class WhatsAppNotificationService
         }
 
         try {
-            $this->kirimdevClient->sendTextToPhone($employee->phone, $message);
+            $this->wahaClient->sendTextToPhone($employee->phone, $message);
         } catch (\Throwable $e) {
             Log::warning('whatsapp.overtime_notify.failed', [
                 'overtime_id' => $overtime->id,
@@ -92,14 +92,14 @@ class WhatsAppNotificationService
         if (! $employee->phone || ! WhatsAppPhone::isValid($employee->phone)) {
             return;
         }
-        if (! config('services.kirimdev.enabled')) {
+        if (! config('services.waha.enabled')) {
             return;
         }
 
         $message = "⚠️ *Pengingat Kontrak Kerja*\n\nHai {$employee->full_name},\nKontrak kerja Anda akan berakhir dalam *{$daysLeft} hari*.\n\nSilakan hubungi tim HRD untuk informasi perpanjangan kontrak.\n\nTerima kasih. 🙏";
 
         try {
-            $this->kirimdevClient->sendTextToPhone($employee->phone, $message);
+            $this->wahaClient->sendTextToPhone($employee->phone, $message);
         } catch (\Throwable $e) {
             Log::warning('whatsapp.contract_expiry.failed', [
                 'employee_id' => $employee->id,
@@ -110,13 +110,13 @@ class WhatsAppNotificationService
 
     public function notifyNewRegistration(User $user): void
     {
-        if (! config('services.kirimdev.enabled')) {
+        if (! config('services.waha.enabled')) {
             return;
         }
 
-        $notificationPhone = (string) config('services.kirimdev.registration_notification_phone');
+        $notificationChatId = (string) config('services.waha.registration_group_chat_id');
 
-        if ($notificationPhone === '' || ! WhatsAppPhone::isValid($notificationPhone)) {
+        if ($notificationChatId === '') {
             return;
         }
 
@@ -134,11 +134,11 @@ class WhatsAppNotificationService
         ]);
 
         try {
-            $this->kirimdevClient->sendTextToPhone($notificationPhone, $message);
+            $this->wahaClient->sendText($notificationChatId, $message);
         } catch (\Throwable $e) {
             Log::warning('whatsapp.registration_notify.failed', [
                 'user_id' => $user->id,
-                'phone' => $notificationPhone,
+                'chat_id' => $notificationChatId,
                 'error' => $e->getMessage(),
             ]);
         }
@@ -148,7 +148,7 @@ class WhatsAppNotificationService
     {
         $user = $subscription->user;
 
-        if (! config('services.kirimdev.enabled')) {
+        if (! config('services.waha.enabled')) {
             return;
         }
 
@@ -177,7 +177,7 @@ class WhatsAppNotificationService
 
         if ($user->phone && WhatsAppPhone::isValid($user->phone)) {
             try {
-                $this->kirimdevClient->sendTextToPhone($user->phone, $message);
+                $this->wahaClient->sendTextToPhone($user->phone, $message);
             } catch (\Throwable $e) {
                 Log::warning('whatsapp.subscription_renewal_reminder.failed', [
                     'subscription_id' => $subscription->id,
@@ -188,9 +188,9 @@ class WhatsAppNotificationService
             }
         }
 
-        $notificationPhone = (string) config('services.kirimdev.subscription_renewal_notification_phone');
+        $notificationChatId = (string) config('services.waha.subscription_renewal_group_chat_id');
 
-        if ($notificationPhone === '' || ! WhatsAppPhone::isValid($notificationPhone)) {
+        if ($notificationChatId === '') {
             return;
         }
 
@@ -211,13 +211,13 @@ class WhatsAppNotificationService
         ]);
 
         try {
-            $this->kirimdevClient->sendTextToPhone($notificationPhone, $groupMessage);
+            $this->wahaClient->sendText($notificationChatId, $groupMessage);
         } catch (\Throwable $e) {
             Log::warning('whatsapp.subscription_renewal_group_reminder.failed', [
                 'subscription_id' => $subscription->id,
                 'user_id' => $user->id,
-                'target' => 'notification_phone',
-                'phone' => $notificationPhone,
+                'target' => 'notification_group',
+                'chat_id' => $notificationChatId,
                 'error' => $e->getMessage(),
             ]);
         }
@@ -228,14 +228,14 @@ class WhatsAppNotificationService
         if (! $employee->phone || ! WhatsAppPhone::isValid($employee->phone)) {
             return;
         }
-        if (! config('services.kirimdev.enabled')) {
+        if (! config('services.waha.enabled')) {
             return;
         }
 
         $message = "🎂 *Selamat Ulang Tahun!*\n\nHai {$employee->full_name},\nSeluruh tim HRD mengucapkan selamat ulang tahun untuk Anda. Semoga panjang umur, sehat selalu, dan sukses dalam berkarya! 🎉🎊";
 
         try {
-            $this->kirimdevClient->sendTextToPhone($employee->phone, $message);
+            $this->wahaClient->sendTextToPhone($employee->phone, $message);
         } catch (\Throwable $e) {
             Log::warning('whatsapp.birthday_notify.failed', [
                 'employee_id' => $employee->id,
@@ -249,7 +249,7 @@ class WhatsAppNotificationService
         if (! $employee->phone || ! WhatsAppPhone::isValid($employee->phone)) {
             return;
         }
-        if (! config('services.kirimdev.enabled')) {
+        if (! config('services.waha.enabled')) {
             return;
         }
 
@@ -258,7 +258,7 @@ class WhatsAppNotificationService
         $message = "💰 *Pengingat Kasbon*\n\nHai {$employee->full_name},\nAnda memiliki sisa kasbon sebesar *{$formatted}* yang akan dipotong pada payroll berikutnya.\n\nMohon pastikan saldo kasbon Anda segera diselesaikan. Terima kasih. 🙏";
 
         try {
-            $this->kirimdevClient->sendTextToPhone($employee->phone, $message);
+            $this->wahaClient->sendTextToPhone($employee->phone, $message);
         } catch (\Throwable $e) {
             Log::warning('whatsapp.kasbon_reminder.failed', [
                 'employee_id' => $employee->id,
@@ -272,14 +272,14 @@ class WhatsAppNotificationService
         if (! $employee->phone || ! WhatsAppPhone::isValid($employee->phone)) {
             return;
         }
-        if (! config('services.kirimdev.enabled')) {
+        if (! config('services.waha.enabled')) {
             return;
         }
 
         $message = "📋 *Pengingat Masa Percobaan*\n\nHai {$employee->full_name},\nAnda telah bergabung selama *{$daysSinceHire} hari* dengan status percobaan (probation).\n\nSilakan hubungi tim HRD untuk evaluasi kinerja dan status kepegawaian Anda. Terima kasih. 🙏";
 
         try {
-            $this->kirimdevClient->sendTextToPhone($employee->phone, $message);
+            $this->wahaClient->sendTextToPhone($employee->phone, $message);
         } catch (\Throwable $e) {
             Log::warning('whatsapp.probation_notify.failed', [
                 'employee_id' => $employee->id,

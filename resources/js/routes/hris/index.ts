@@ -19,6 +19,7 @@ import leaves from './leaves'
 import leaveApprovals from './leave-approvals'
 import overtimes from './overtimes'
 import overtimeApprovals from './overtime-approvals'
+import reports from './reports'
 import notifications from './notifications'
 import surveys from './surveys'
 
@@ -44,6 +45,7 @@ const hris = {
     leaveApprovals: Object.assign(leaveApprovals, leaveApprovals),
     overtimes: Object.assign(overtimes, overtimes),
     overtimeApprovals: Object.assign(overtimeApprovals, overtimeApprovals),
+    reports: Object.assign(reports, reports),
     notifications: Object.assign(notifications, notifications),
     surveys: Object.assign(surveys, surveys),
 }

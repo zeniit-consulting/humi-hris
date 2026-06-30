@@ -24,14 +24,15 @@ class WhatsappTestPageTest extends TestCase
 
     public function test_admin_can_send_whatsapp_test_message(): void
     {
-        config()->set('services.kirimdev.enabled', true);
-        config()->set('services.kirimdev.base_url', 'https://api.kirimdev.test/v1');
-        config()->set('services.kirimdev.api_key', 'secret');
+        config()->set('services.waha.enabled', true);
+        config()->set('services.waha.base_url', 'https://waha.example.test');
+        config()->set('services.waha.api_key', 'secret');
+        config()->set('services.waha.session', 'ZeniConsulting');
 
         Http::fake([
-            'https://api.kirimdev.test/v1/messages' => Http::response([
-                'id' => 'abc123',
-                'status' => 'queued',
+            'https://waha.example.test/api/sendText' => Http::response([
+                'key' => ['id' => 'abc123'],
+                'status' => 'PENDING',
             ], 200),
         ]);
 
@@ -45,11 +46,12 @@ class WhatsappTestPageTest extends TestCase
             ->assertRedirect();
 
         Http::assertSent(function ($request) {
-            return $request->url() === 'https://api.kirimdev.test/v1/messages'
-                && $request->hasHeader('Authorization', 'Bearer secret')
-                && $request['to'] === '+6281234567890'
-                && $request['type'] === 'text'
-                && $request['text']['body'] === 'Halo dari halaman admin.';
+            $payload = $request->data();
+
+            return $request->url() === 'https://waha.example.test/api/sendText'
+                && $payload['chatId'] === '6281234567890@c.us'
+                && $payload['session'] === 'ZeniConsulting'
+                && $payload['text'] === 'Halo dari halaman admin.';
         });
     }
 }

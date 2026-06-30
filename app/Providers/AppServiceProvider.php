@@ -61,7 +61,7 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('payslip-whatsapp', fn (): Limit => Limit::perMinute(10)->by('payslip-whatsapp'));
         RateLimiter::for('whatsapp-otp', function (object $job): Limit {
-            $delaySeconds = max(1, (int) config('services.kirimdev.otp_send_delay_seconds', 30));
+            $delaySeconds = max(1, (int) config('services.waha.otp_send_delay_seconds', 30));
             $key = method_exists($job, 'rateLimitKey') ? $job->rateLimitKey() : 'whatsapp-otp';
 
             return Limit::perSecond(1, $delaySeconds)->by($key);

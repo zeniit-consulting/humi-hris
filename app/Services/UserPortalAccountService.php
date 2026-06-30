@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class UserPortalAccountService
 {
-    public function __construct(private readonly KirimdevClient $kirimdevClient) {}
+    public function __construct(private readonly WahaClient $wahaClient) {}
 
     public function createOrSyncFromPhone(string $phone): ?User
     {
@@ -134,7 +134,7 @@ class UserPortalAccountService
 
     private function sendCredentialMessage(User $user): void
     {
-        if (! config('services.kirimdev.enabled')) {
+        if (! config('services.waha.enabled')) {
             return;
         }
 
@@ -146,7 +146,7 @@ class UserPortalAccountService
         ]);
 
         try {
-            $this->kirimdevClient->sendTextToPhone((string) $user->phone, $message);
+            $this->wahaClient->sendTextToPhone((string) $user->phone, $message);
         } catch (\Throwable $exception) {
             report($exception);
 

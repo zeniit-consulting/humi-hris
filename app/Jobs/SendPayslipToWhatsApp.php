@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 use App\Models\CompanySetting;
 use App\Models\PayrollItem;
-use App\Services\KirimdevClient;
 use App\Services\PayslipPdfService;
+use App\Services\WahaClient;
 use App\Support\WhatsAppPhone;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -32,7 +32,7 @@ class SendPayslipToWhatsApp implements ShouldQueue
         return [(new RateLimited('payslip-whatsapp'))->releaseAfter(60)];
     }
 
-    public function handle(PayslipPdfService $payslipPdfService, KirimdevClient $kirimdevClient): void
+    public function handle(PayslipPdfService $payslipPdfService, WahaClient $wahaClient): void
     {
         $item = PayrollItem::query()
             ->withoutGlobalScopes()
@@ -62,7 +62,7 @@ class SendPayslipToWhatsApp implements ShouldQueue
             ->first();
 
         $filename = $payslipPdfService->documentTitle($employee, $run->period);
-        $kirimdevClient->sendFileToPhone(
+        $wahaClient->sendFileToPhone(
             $employee->phone,
             $filename,
             $payslipPdfService->output($run, $item, $this->ownerId),

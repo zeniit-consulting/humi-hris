@@ -24,6 +24,7 @@ use App\Http\Controllers\Hris\PayrollController;
 use App\Http\Controllers\Hris\PerformanceController;
 use App\Http\Controllers\Hris\PositionController;
 use App\Http\Controllers\Hris\RecruitmentController;
+use App\Http\Controllers\Hris\ReportController;
 use App\Http\Controllers\Hris\ScheduleController;
 use App\Http\Controllers\Hris\ShiftChangeApprovalController;
 use App\Http\Controllers\Hris\SubCompanyController;
@@ -196,6 +197,9 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::post('overtimes', [OvertimeController::class, 'store'])->name('overtimes.store');
     Route::put('overtimes/{overtime}', [OvertimeController::class, 'update'])->name('overtimes.update');
     Route::delete('overtimes/{overtime}', [OvertimeController::class, 'destroy'])->name('overtimes.destroy');
+
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
 
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications', [NotificationController::class, 'store'])->name('notifications.store');

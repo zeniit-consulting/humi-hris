@@ -82,15 +82,15 @@ class RegistrationTest extends TestCase
 
     public function test_registration_sends_whatsapp_message_to_registration_group(): void
     {
-        config()->set('services.kirimdev.enabled', true);
-        config()->set('services.kirimdev.base_url', 'https://api.kirimdev.test/v1');
-        config()->set('services.kirimdev.api_key', 'secret');
-        config()->set('services.kirimdev.registration_notification_phone', '6281111111111');
+        config()->set('services.waha.enabled', true);
+        config()->set('services.waha.base_url', 'https://waha.example.test');
+        config()->set('services.waha.session', 'ZeniConsulting');
+        config()->set('services.waha.registration_group_chat_id', '120363407707938809@g.us');
 
         Http::fake([
-            'https://api.kirimdev.test/v1/messages' => Http::response([
-                'id' => 'message-id',
-                'status' => 'queued',
+            'https://waha.example.test/api/sendText' => Http::response([
+                'key' => ['id' => 'message-id'],
+                'status' => 'PENDING',
             ]),
         ]);
 
@@ -106,12 +106,12 @@ class RegistrationTest extends TestCase
         Http::assertSent(function ($request): bool {
             $payload = $request->data();
 
-            return $request->url() === 'https://api.kirimdev.test/v1/messages'
-                && $payload['to'] === '+6281111111111'
-                && str_contains($payload['text']['body'], 'Registrasi Akun Baru')
-                && str_contains($payload['text']['body'], 'PT Test Company')
-                && str_contains($payload['text']['body'], 'test-group@example.com')
-                && str_contains($payload['text']['body'], '6281234567890');
+            return $request->url() === 'https://waha.example.test/api/sendText'
+                && $payload['chatId'] === '120363407707938809@g.us'
+                && str_contains($payload['text'], 'Registrasi Akun Baru')
+                && str_contains($payload['text'], 'PT Test Company')
+                && str_contains($payload['text'], 'test-group@example.com')
+                && str_contains($payload['text'], '6281234567890');
         });
     }
 }

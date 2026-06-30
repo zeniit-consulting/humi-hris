@@ -43,6 +43,7 @@ import { index as kasbonsIndex } from '@/routes/hris/kasbons';
 import { index as leavesIndex } from '@/routes/hris/leaves';
 import { index as overtimesIndex } from '@/routes/hris/overtimes';
 import { index as payrollsIndex } from '@/routes/hris/payrolls';
+import { index as reportsIndex } from '@/routes/hris/reports';
 import { index as schedulesIndex } from '@/routes/hris/schedules';
 import type { NavGroup, NavItem } from '@/types';
 
@@ -189,6 +190,11 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     href: '/hris/assets',
                     icon: PackageCheck,
                     ...locked('assets'),
+                },
+                {
+                    title: 'Laporan',
+                    href: reportsIndex(),
+                    icon: FileText,
                 },
             ],
         },
