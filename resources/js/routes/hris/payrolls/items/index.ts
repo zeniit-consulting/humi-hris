@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslip
-* @see app/Http/Controllers/Hris/PayrollController.php:311
+* @see app/Http/Controllers/Hris/PayrollController.php:336
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/send-payslip'
 */
 export const sendPayslip = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ sendPayslip.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslip
-* @see app/Http/Controllers/Hris/PayrollController.php:311
+* @see app/Http/Controllers/Hris/PayrollController.php:336
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/send-payslip'
 */
 sendPayslip.url = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions) => {
@@ -46,7 +46,7 @@ sendPayslip.url = (args: { payrollRun: number | { id: number }, payrollItem: num
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslip
-* @see app/Http/Controllers/Hris/PayrollController.php:311
+* @see app/Http/Controllers/Hris/PayrollController.php:336
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/send-payslip'
 */
 sendPayslip.post = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -56,7 +56,7 @@ sendPayslip.post = (args: { payrollRun: number | { id: number }, payrollItem: nu
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslip
-* @see app/Http/Controllers/Hris/PayrollController.php:311
+* @see app/Http/Controllers/Hris/PayrollController.php:336
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/send-payslip'
 */
 const sendPayslipForm = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -66,7 +66,7 @@ const sendPayslipForm = (args: { payrollRun: number | { id: number }, payrollIte
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslip
-* @see app/Http/Controllers/Hris/PayrollController.php:311
+* @see app/Http/Controllers/Hris/PayrollController.php:336
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/send-payslip'
 */
 sendPayslipForm.post = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

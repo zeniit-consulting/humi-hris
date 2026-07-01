@@ -9,6 +9,7 @@ use App\Models\EmployeeAttendance;
 use App\Models\EmployeeDeduction;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
+use App\Models\SubCompany;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -136,6 +137,113 @@ class PayrollGenerationTest extends TestCase
             'pph21_allowance' => 5.00,
             'pph21_deduction' => 5.00,
             'net_salary' => 4000000.00,
+        ]);
+    }
+
+    public function test_payroll_can_be_generated_for_parent_company_employees_only(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subCompany = SubCompany::query()->create([
+            'user_id' => $user->id,
+            'code' => 'CLIENT-A',
+            'name' => 'Client A',
+            'is_active' => true,
+        ]);
+
+        $parentEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'sub_company_id' => null,
+            'base_salary' => 5_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $subCompanyEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'sub_company_id' => $subCompany->id,
+            'base_salary' => 4_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), [
+                'period' => '2026-02',
+                'employee_scope' => 'parent_only',
+            ])
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+
+        $this->assertDatabaseHas('payroll_runs', [
+            'period' => '2026-02',
+            'employees_count' => 1,
+            'total_base_salary' => 5000000.00,
+            'total_net_salary' => 5000000.00,
+        ]);
+
+        $this->assertDatabaseHas('payroll_items', [
+            'employee_id' => $parentEmployee->id,
+            'base_salary' => 5000000.00,
+            'net_salary' => 5000000.00,
+        ]);
+
+        $this->assertDatabaseMissing('payroll_items', [
+            'employee_id' => $subCompanyEmployee->id,
+        ]);
+    }
+
+    public function test_payroll_generate_can_exclude_specific_employees(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $includedEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 5_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $excludedEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 4_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), [
+                'period' => '2026-02',
+                'excluded_employee_ids' => [$excludedEmployee->id],
+            ])
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+
+        $this->assertDatabaseHas('payroll_runs', [
+            'period' => '2026-02',
+            'employees_count' => 1,
+            'total_base_salary' => 5000000.00,
+            'total_net_salary' => 5000000.00,
+        ]);
+
+        $this->assertDatabaseHas('payroll_items', [
+            'employee_id' => $includedEmployee->id,
+            'base_salary' => 5000000.00,
+            'net_salary' => 5000000.00,
+        ]);
+
+        $this->assertDatabaseMissing('payroll_items', [
+            'employee_id' => $excludedEmployee->id,
         ]);
     }
 

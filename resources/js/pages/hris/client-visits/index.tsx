@@ -281,133 +281,127 @@ export default function ClientVisitsIndex() {
                     </CardContent>
                 </Card>
 
-                <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Riwayat Harian</CardTitle>
-                            <CardDescription>
-                                {visits.total} kunjungan pada {filters.date}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="overflow-x-auto">
-                            <table className="w-full min-w-[900px] text-sm">
-                                <thead>
-                                    <tr className="border-b text-left text-muted-foreground">
-                                        <th className="px-3 py-2">Karyawan</th>
-                                        <th className="px-3 py-2">Klien</th>
-                                        <th className="px-3 py-2">Clock in</th>
-                                        <th className="px-3 py-2">Clock out</th>
-                                        <th className="px-3 py-2">Durasi</th>
-                                        <th className="px-3 py-2">Status</th>
-                                        <th className="px-3 py-2">
-                                            Keterangan
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {visits.data.length ? (
-                                        visits.data.map((visit) => (
-                                            <tr
-                                                key={visit.id}
-                                                className="border-b align-top"
-                                            >
-                                                <td className="px-3 py-3">
-                                                    <p className="font-medium">
-                                                        {visit.employee_label}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {visit.division ?? '-'} ·{' '}
-                                                        {visit.position ?? '-'}
-                                                    </p>
-                                                </td>
-                                                <td className="px-3 py-3 font-medium">
-                                                    {visit.client_name}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {formatDeviceDateTime(
-                                                        visit.clock_in_at,
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {formatDeviceDateTime(
-                                                        visit.clock_out_at,
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {visit.duration_label}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <Badge
-                                                        variant={
-                                                            visit.status ===
-                                                            'completed'
-                                                                ? 'default'
-                                                                : 'secondary'
-                                                        }
-                                                    >
-                                                        {statusLabel(
-                                                            visit.status,
-                                                        )}
-                                                    </Badge>
-                                                </td>
-                                                <td className="max-w-sm px-3 py-3 text-muted-foreground">
-                                                    {visit.work_description}
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td
-                                                colSpan={7}
-                                                className="px-3 py-8 text-center text-muted-foreground"
-                                            >
-                                                Belum ada kunjungan client.
+                <Card className="w-full">
+                    <CardHeader>
+                        <CardTitle>Riwayat Harian</CardTitle>
+                        <CardDescription>
+                            {visits.total} kunjungan pada {filters.date}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="overflow-x-auto">
+                        <table className="w-full min-w-[900px] text-sm">
+                            <thead>
+                                <tr className="border-b text-left text-muted-foreground">
+                                    <th className="px-3 py-2">Karyawan</th>
+                                    <th className="px-3 py-2">Klien</th>
+                                    <th className="px-3 py-2">Clock in</th>
+                                    <th className="px-3 py-2">Clock out</th>
+                                    <th className="px-3 py-2">Durasi</th>
+                                    <th className="px-3 py-2">Status</th>
+                                    <th className="px-3 py-2">Keterangan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {visits.data.length ? (
+                                    visits.data.map((visit) => (
+                                        <tr
+                                            key={visit.id}
+                                            className="border-b align-top"
+                                        >
+                                            <td className="px-3 py-3">
+                                                <p className="font-medium">
+                                                    {visit.employee_label}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {visit.division ?? '-'} ·{' '}
+                                                    {visit.position ?? '-'}
+                                                </p>
+                                            </td>
+                                            <td className="px-3 py-3 font-medium">
+                                                {visit.client_name}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {formatDeviceDateTime(
+                                                    visit.clock_in_at,
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {formatDeviceDateTime(
+                                                    visit.clock_out_at,
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {visit.duration_label}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <Badge
+                                                    variant={
+                                                        visit.status ===
+                                                        'completed'
+                                                            ? 'default'
+                                                            : 'secondary'
+                                                    }
+                                                >
+                                                    {statusLabel(visit.status)}
+                                                </Badge>
+                                            </td>
+                                            <td className="max-w-sm px-3 py-3 text-muted-foreground">
+                                                {visit.work_description}
                                             </td>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </CardContent>
-                    </Card>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td
+                                            colSpan={7}
+                                            className="px-3 py-8 text-center text-muted-foreground"
+                                        >
+                                            Belum ada kunjungan client.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </CardContent>
+                </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Route className="size-4" />
-                                Rute Kunjungan
-                            </CardTitle>
-                            <CardDescription>
-                                Garis dari titik clock-in ke clock-out.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-[360px] overflow-hidden rounded-lg border">
-                                <MapboxLocationMap
-                                    center={mapCenter}
-                                    zoom={12}
-                                    locations={mapLocations}
-                                    routeLines={routeLines}
-                                />
-                            </div>
-                            <div className="mt-4 space-y-2">
-                                {summary.employees.map((employee) => (
-                                    <div
-                                        key={employee.employee_id}
-                                        className="rounded-lg bg-muted/50 px-3 py-2 text-sm"
-                                    >
-                                        <p className="font-medium">
-                                            {employee.employee_label}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {employee.total_visits} kunjungan ·{' '}
-                                            {employee.total_duration_label}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                <Card className="w-full">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Route className="size-4" />
+                            Rute Kunjungan
+                        </CardTitle>
+                        <CardDescription>
+                            Garis dari titik clock-in ke clock-out.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[360px] overflow-hidden rounded-lg border">
+                            <MapboxLocationMap
+                                center={mapCenter}
+                                zoom={12}
+                                locations={mapLocations}
+                                routeLines={routeLines}
+                            />
+                        </div>
+                        <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                            {summary.employees.map((employee) => (
+                                <div
+                                    key={employee.employee_id}
+                                    className="rounded-lg bg-muted/50 px-3 py-2 text-sm"
+                                >
+                                    <p className="font-medium">
+                                        {employee.employee_label}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {employee.total_visits} kunjungan ·{' '}
+                                        {employee.total_duration_label}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </AppLayout>
     );

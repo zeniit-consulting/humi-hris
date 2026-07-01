@@ -17,11 +17,13 @@ class PayrollGenerationService
         string $period,
         ?int $generatedBy = null,
         bool $markAsDraft = true,
+        bool $includeSubCompanyEmployees = true,
+        array $excludedEmployeeIds = [],
     ): PayrollRun {
         $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth();
         $end = $start->copy()->endOfMonth();
 
-        return DB::transaction(function () use ($ownerId, $period, $start, $end, $generatedBy, $markAsDraft): PayrollRun {
+        return DB::transaction(function () use ($ownerId, $period, $start, $end, $generatedBy, $markAsDraft, $includeSubCompanyEmployees, $excludedEmployeeIds): PayrollRun {
             $run = PayrollRun::query()->updateOrCreate(
                 [
                     'user_id' => $ownerId,
@@ -41,7 +43,7 @@ class PayrollGenerationService
                 ]
             );
 
-            return $this->recalculateRun($run, $generatedBy, $markAsDraft);
+            return $this->recalculateRun($run, $generatedBy, $markAsDraft, $includeSubCompanyEmployees, $excludedEmployeeIds);
         });
     }
 
@@ -49,14 +51,16 @@ class PayrollGenerationService
         PayrollRun $run,
         ?int $generatedBy = null,
         bool $markAsDraft = false,
+        bool $includeSubCompanyEmployees = true,
+        array $excludedEmployeeIds = [],
     ): PayrollRun {
         $period = $run->period;
         $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth();
         $end = $start->copy()->endOfMonth();
         $ownerId = (int) $run->user_id;
 
-        return DB::transaction(function () use ($run, $ownerId, $start, $end, $generatedBy, $markAsDraft): PayrollRun {
-            $items = $this->payrollItems($ownerId, $run, $start, $end);
+        return DB::transaction(function () use ($run, $ownerId, $start, $end, $generatedBy, $markAsDraft, $includeSubCompanyEmployees, $excludedEmployeeIds): PayrollRun {
+            $items = $this->payrollItems($ownerId, $run, $start, $end, $includeSubCompanyEmployees, $excludedEmployeeIds);
 
             $run->items()->delete();
 
@@ -95,7 +99,7 @@ class PayrollGenerationService
                 ['user_id' => $ownerId, 'period' => $period, 'type' => 'thr'],
                 [
                     'period_start' => $ref->copy()->startOfMonth()->toDateString(),
-                    'period_end'   => $ref->copy()->endOfMonth()->toDateString(),
+                    'period_end' => $ref->copy()->endOfMonth()->toDateString(),
                     'thr_reference_date' => $ref->toDateString(),
                     'generated_at' => now(),
                     'is_saved' => false,
@@ -125,14 +129,14 @@ class PayrollGenerationService
     /**
      * @return Collection<int, array<string, mixed>>
      */
-    private function payrollItems(int $ownerId, PayrollRun $run, Carbon $start, Carbon $end): Collection
+    private function payrollItems(int $ownerId, PayrollRun $run, Carbon $start, Carbon $end, bool $includeSubCompanyEmployees = true, array $excludedEmployeeIds = []): Collection
     {
         $setting = CompanySetting::query()
             ->withoutGlobalScopes()
             ->where('user_id', $ownerId)
             ->first();
 
-        return $this->employees($ownerId, $start, $end)
+        return $this->employees($ownerId, $start, $end, $includeSubCompanyEmployees, $excludedEmployeeIds)
             ->map(fn (Employee $employee): array => $this->payrollItem($ownerId, $run, $employee, $start, $end, $setting))
             ->values();
     }
@@ -140,13 +144,15 @@ class PayrollGenerationService
     /**
      * @return Collection<int, Employee>
      */
-    private function employees(int $ownerId, Carbon $start, Carbon $end): Collection
+    private function employees(int $ownerId, Carbon $start, Carbon $end, bool $includeSubCompanyEmployees = true, array $excludedEmployeeIds = []): Collection
     {
         return Employee::query()
             ->withoutGlobalScopes()
             ->where('user_id', $ownerId)
             ->where('is_active', true)
             ->whereIn('employment_status', ['active', 'probation', 'on_leave'])
+            ->when(! $includeSubCompanyEmployees, fn ($query) => $query->whereNull('sub_company_id'))
+            ->when($excludedEmployeeIds !== [], fn ($query) => $query->whereNotIn('id', $excludedEmployeeIds))
             ->with([
                 'allowances' => function ($query) use ($ownerId, $start, $end): void {
                     $query
@@ -269,27 +275,27 @@ class PayrollGenerationService
                 : round(($monthsOfService / 12) * $baseSalary, 2);
 
             return [
-                'user_id'               => $ownerId,
-                'payroll_run_id'        => $run->id,
-                'employee_id'           => $employee->id,
-                'base_salary'           => $baseSalary,
-                'allowances_total'      => 0,
-                'overtime_hours'        => 0,
-                'overtime_pay'          => 0,
-                'pph21_method'          => null,
-                'pph21_rate'            => 0,
-                'pph21_allowance'       => 0,
-                'pph21_deduction'       => 0,
-                'pph21_company_borne'   => 0,
-                'kasbon_deduction'      => 0,
-                'denda_deduction'       => 0,
-                'deductions_total'      => 0,
-                'net_salary'            => $thrAmount,
+                'user_id' => $ownerId,
+                'payroll_run_id' => $run->id,
+                'employee_id' => $employee->id,
+                'base_salary' => $baseSalary,
+                'allowances_total' => 0,
+                'overtime_hours' => 0,
+                'overtime_pay' => 0,
+                'pph21_method' => null,
+                'pph21_rate' => 0,
+                'pph21_allowance' => 0,
+                'pph21_deduction' => 0,
+                'pph21_company_borne' => 0,
+                'kasbon_deduction' => 0,
+                'denda_deduction' => 0,
+                'deductions_total' => 0,
+                'net_salary' => $thrAmount,
                 'thr_months_of_service' => min($monthsOfService, 12),
-                'thr_amount'            => $thrAmount,
-                'allowance_breakdown'   => [],
-                'created_at'            => now(),
-                'updated_at'            => now(),
+                'thr_amount' => $thrAmount,
+                'allowance_breakdown' => [],
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
         })->values();
     }

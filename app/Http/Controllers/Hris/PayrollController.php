@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Hris;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Hris\GeneratePayrollRequest;
 use App\Jobs\SendPayslipToWhatsApp;
+use App\Models\Employee;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\SubCompany;
@@ -29,7 +30,7 @@ class PayrollController extends Controller
 
         $validated = $request->validate([
             'period' => ['nullable', 'date_format:Y-m'],
-            'type'   => ['nullable', 'in:regular,thr'],
+            'type' => ['nullable', 'in:regular,thr'],
             'sub_company_id' => ['nullable', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $ownerId)],
         ]);
 
@@ -67,6 +68,21 @@ class PayrollController extends Controller
             'period' => $period,
             'type' => $type,
             'sub_company_id' => $subCompanyId ? (string) $subCompanyId : '',
+            'employeeOptions' => Employee::query()
+                ->with('subCompany:id,code,name')
+                ->where('user_id', $ownerId)
+                ->where('is_active', true)
+                ->whereIn('employment_status', ['active', 'probation', 'on_leave'])
+                ->orderBy('first_name')
+                ->orderBy('last_name')
+                ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id'])
+                ->map(fn (Employee $employee): array => [
+                    'id' => $employee->id,
+                    'label' => $employee->employee_code.' - '.$employee->full_name,
+                    'sub_company_label' => $employee->subCompany
+                        ? $employee->subCompany->code.' - '.$employee->subCompany->name
+                        : 'Internal',
+                ]),
             'subCompanies' => SubCompany::query()
                 ->where('user_id', $ownerId)
                 ->orderBy('name')
@@ -122,7 +138,7 @@ class PayrollController extends Controller
                     'allowance_breakdown' => $item->allowance_breakdown ?? [],
                     'thr_months_of_service' => $item->thr_months_of_service,
                     'thr_amount' => $item->thr_amount,
-                ])->values()
+                ])->values(),
         ]);
     }
 
@@ -133,8 +149,17 @@ class PayrollController extends Controller
     {
         $ownerId = $request->user()->accountOwnerId();
         $period = $request->validated('period');
+        $employeeScope = $request->validated('employee_scope') ?? 'all';
+        $excludedEmployeeIds = $request->validated('excluded_employee_ids') ?? [];
 
-        $payrolls->generateForPeriod($ownerId, $period, $request->user()?->id);
+        $payrolls->generateForPeriod(
+            $ownerId,
+            $period,
+            $request->user()?->id,
+            markAsDraft: true,
+            includeSubCompanyEmployees: $employeeScope === 'all',
+            excludedEmployeeIds: $excludedEmployeeIds,
+        );
 
         return to_route('hris.payrolls.index', ['period' => $period, 'type' => 'regular']);
     }

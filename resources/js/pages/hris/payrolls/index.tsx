@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react';
 import { LockedFeatureBanner } from '@/components/locked-feature-banner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Card,
     CardContent,
@@ -94,6 +95,11 @@ type PageProps = {
     items: PayrollItem[];
     type: string;
     sub_company_id: string;
+    employeeOptions: Array<{
+        id: number;
+        label: string;
+        sub_company_label: string;
+    }>;
     subCompanies: Array<{ id: number; label: string }>;
 };
 
@@ -141,7 +147,15 @@ const pph21Label = (method: string | null) => {
 };
 
 export default function PayrollPage() {
-    const { period, run, items, type, sub_company_id, subCompanies } =
+    const {
+        period,
+        run,
+        items,
+        type,
+        sub_company_id,
+        employeeOptions,
+        subCompanies,
+    } =
         usePage<PageProps>().props;
     const { subscription } = usePage().props;
     const isLocked =
@@ -158,6 +172,8 @@ export default function PayrollPage() {
     >([]);
     const generateForm = useForm({
         period,
+        employee_scope: 'all',
+        excluded_employee_ids: [] as number[],
     });
     const thrForm = useForm({ reference_date: '' });
 
@@ -232,6 +248,16 @@ export default function PayrollPage() {
             preserveScroll: true,
             onSuccess: () => setGenerateDialogOpen(false),
         });
+    };
+
+    const toggleExcludedEmployee = (employeeId: number, checked: boolean) => {
+        const nextIds = checked
+            ? [...generateForm.data.excluded_employee_ids, employeeId]
+            : generateForm.data.excluded_employee_ids.filter(
+                  (id) => id !== employeeId,
+              );
+
+        generateForm.setData('excluded_employee_ids', [...new Set(nextIds)]);
     };
 
     const handleGenerateTHR = () => {
@@ -962,6 +988,109 @@ export default function PayrollPage() {
                                 <p className="text-xs text-muted-foreground">
                                     Tanggal ini digunakan menghitung masa kerja
                                     karyawan.
+                                </p>
+                            </div>
+                        ) : null}
+
+                        {type === 'regular' ? (
+                            <div className="grid gap-2">
+                                <Label>Cakupan Generate</Label>
+                                <Select
+                                    value={generateForm.data.employee_scope}
+                                    onValueChange={(value) =>
+                                        generateForm.setData(
+                                            'employee_scope',
+                                            value,
+                                        )
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">
+                                            Semua karyawan
+                                        </SelectItem>
+                                        <SelectItem value="parent_only">
+                                            Perusahaan parent saja
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground">
+                                    Pilihan parent saja hanya membuat payroll
+                                    untuk karyawan internal, tanpa karyawan yang
+                                    berada di sub-company.
+                                </p>
+                            </div>
+                        ) : null}
+
+                        {type === 'regular' ? (
+                            <div className="grid gap-2">
+                                <div className="flex items-center justify-between gap-3">
+                                    <Label>Karyawan Dikecualikan</Label>
+                                    {generateForm.data.excluded_employee_ids
+                                        .length > 0 ? (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() =>
+                                                generateForm.setData(
+                                                    'excluded_employee_ids',
+                                                    [],
+                                                )
+                                            }
+                                        >
+                                            Reset
+                                        </Button>
+                                    ) : null}
+                                </div>
+                                <div className="max-h-56 overflow-y-auto rounded-md border">
+                                    {employeeOptions.length === 0 ? (
+                                        <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                                            Belum ada karyawan aktif.
+                                        </p>
+                                    ) : (
+                                        employeeOptions.map((employee) => {
+                                            const checked =
+                                                generateForm.data.excluded_employee_ids.includes(
+                                                    employee.id,
+                                                );
+
+                                            return (
+                                                <label
+                                                    key={employee.id}
+                                                    className="flex cursor-pointer items-start gap-3 border-b px-3 py-2 text-sm last:border-b-0 hover:bg-muted/50"
+                                                >
+                                                    <Checkbox
+                                                        checked={checked}
+                                                        onCheckedChange={(
+                                                            value,
+                                                        ) =>
+                                                            toggleExcludedEmployee(
+                                                                employee.id,
+                                                                value === true,
+                                                            )
+                                                        }
+                                                    />
+                                                    <span>
+                                                        <span className="block font-medium">
+                                                            {employee.label}
+                                                        </span>
+                                                        <span className="block text-xs text-muted-foreground">
+                                                            {
+                                                                employee.sub_company_label
+                                                            }
+                                                        </span>
+                                                    </span>
+                                                </label>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Centang karyawan yang tidak ingin
+                                    diikutkan pada payroll periode ini.
                                 </p>
                             </div>
                         ) : null}

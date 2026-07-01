@@ -141,7 +141,7 @@ store.form = storeForm
 * @see app/Http/Controllers/Api/PortalClientVisitController.php:77
 * @route '/portal/api/client-visits/{visit}/clock-out'
 */
-export const clockOut = (args: { visit: string | number | { id: string | number } } | [visit: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+export const clockOut = (args: { visit: number | { id: number } } | [visit: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: clockOut.url(args, options),
     method: 'put',
 })
@@ -156,7 +156,7 @@ clockOut.definition = {
 * @see app/Http/Controllers/Api/PortalClientVisitController.php:77
 * @route '/portal/api/client-visits/{visit}/clock-out'
 */
-clockOut.url = (args: { visit: string | number | { id: string | number } } | [visit: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+clockOut.url = (args: { visit: number | { id: number } } | [visit: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { visit: args }
     }
@@ -189,7 +189,7 @@ clockOut.url = (args: { visit: string | number | { id: string | number } } | [vi
 * @see app/Http/Controllers/Api/PortalClientVisitController.php:77
 * @route '/portal/api/client-visits/{visit}/clock-out'
 */
-clockOut.put = (args: { visit: string | number | { id: string | number } } | [visit: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+clockOut.put = (args: { visit: number | { id: number } } | [visit: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: clockOut.url(args, options),
     method: 'put',
 })
@@ -199,7 +199,7 @@ clockOut.put = (args: { visit: string | number | { id: string | number } } | [vi
 * @see app/Http/Controllers/Api/PortalClientVisitController.php:77
 * @route '/portal/api/client-visits/{visit}/clock-out'
 */
-const clockOutForm = (args: { visit: string | number | { id: string | number } } | [visit: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+const clockOutForm = (args: { visit: number | { id: number } } | [visit: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: clockOut.url(args, {
         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
             _method: 'PUT',
@@ -214,7 +214,7 @@ const clockOutForm = (args: { visit: string | number | { id: string | number } }
 * @see app/Http/Controllers/Api/PortalClientVisitController.php:77
 * @route '/portal/api/client-visits/{visit}/clock-out'
 */
-clockOutForm.put = (args: { visit: string | number | { id: string | number } } | [visit: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+clockOutForm.put = (args: { visit: number | { id: number } } | [visit: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: clockOut.url(args, {
         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
             _method: 'PUT',

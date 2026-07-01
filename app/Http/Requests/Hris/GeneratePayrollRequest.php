@@ -4,6 +4,7 @@ namespace App\Http\Requests\Hris;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class GeneratePayrollRequest extends FormRequest
 {
@@ -22,9 +23,16 @@ class GeneratePayrollRequest extends FormRequest
      */
     public function rules(): array
     {
+        $ownerId = $this->user()?->accountOwnerId();
+
         return [
             'period' => ['required', 'date_format:Y-m'],
+            'employee_scope' => ['nullable', 'in:all,parent_only'],
+            'excluded_employee_ids' => ['nullable', 'array'],
+            'excluded_employee_ids.*' => [
+                'integer',
+                Rule::exists('employees', 'id')->where('user_id', $ownerId),
+            ],
         ];
     }
 }
-
