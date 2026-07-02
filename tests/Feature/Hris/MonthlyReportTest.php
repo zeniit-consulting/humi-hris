@@ -495,10 +495,18 @@ class MonthlyReportTest extends TestCase
                 ->where('recruitmentDetails.vacancies.0.applications_count', 2)
                 ->where('analytics.cards.0.key', 'headcount')
                 ->where('analytics.cards.0.value', 1)
+                ->where('analytics.cards.0.format', 'integer')
+                ->where('analytics.cards.1.key', 'attendance_present')
+                ->where('analytics.cards.1.value', 50)
+                ->where('analytics.cards.1.format', 'percent')
+                ->where('analytics.cards.2.key', 'leave_days')
+                ->where('analytics.cards.2.value', 100)
+                ->where('analytics.cards.2.format', 'percent')
                 ->where('analytics.cards.4.key', 'performance_score')
                 ->where('analytics.cards.4.value', 90)
                 ->where('analytics.cards.5.key', 'recruitment_hires')
                 ->where('analytics.cards.5.value', 1)
+                ->where('analytics.cards.5.format', 'integer')
             );
     }
 

@@ -195,6 +195,7 @@ type Employee = {
     base_salary: string | null;
     address: string | null;
     family_card_number: string | null;
+    ktp_number: string | null;
     bpjs_kesehatan_number: string | null;
     bpjs_ketenagakerjaan_number: string | null;
     sim_a_number: string | null;
@@ -269,6 +270,7 @@ type EmployeeFormData = {
     base_salary: string;
     address: string;
     family_card_number: string;
+    ktp_number: string;
     bpjs_kesehatan_number: string;
     bpjs_ketenagakerjaan_number: string;
     sim_a_number: string;
@@ -399,6 +401,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     base_salary: '',
     address: '',
     family_card_number: '',
+    ktp_number: '',
     bpjs_kesehatan_number: '',
     bpjs_ketenagakerjaan_number: '',
     sim_a_number: '',
@@ -511,6 +514,7 @@ const employeeFieldLabels: Record<string, string> = {
     children_count: 'Jumlah anak',
     biological_mother_name: 'Nama ibu kandung',
     address: 'Alamat',
+    ktp_number: 'No. KTP',
     ptkp_category: 'Kategori PTKP',
     hire_date: 'Tanggal masuk',
     employment_status: 'Status karyawan',
@@ -715,6 +719,7 @@ export default function EmployeesIndex() {
             ],
             3: [
                 'family_card_number',
+                'ktp_number',
                 'bpjs_kesehatan_number',
                 'bpjs_ketenagakerjaan_number',
                 'sim_a_number',
@@ -882,6 +887,7 @@ export default function EmployeesIndex() {
                 : '',
             address: employee.address ?? '',
             family_card_number: employee.family_card_number ?? '',
+            ktp_number: employee.ktp_number ?? '',
             bpjs_kesehatan_number: employee.bpjs_kesehatan_number ?? '',
             bpjs_ketenagakerjaan_number:
                 employee.bpjs_ketenagakerjaan_number ?? '',
@@ -1691,40 +1697,40 @@ export default function EmployeesIndex() {
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1600px] text-sm">
+                            <table className="w-full min-w-[1320px] text-xs">
                                 <thead>
-                                    <tr className="border-b text-left">
-                                        <th className="sticky left-0 z-20 min-w-[260px] bg-background px-3 py-2 font-medium shadow-[6px_0_8px_-8px_rgba(15,23,42,0.25)]">
+                                    <tr className="border-b text-center">
+                                        <th className="sticky left-0 z-20 min-w-[220px] bg-background px-2 py-1.5 text-center font-medium shadow-[6px_0_8px_-8px_rgba(15,23,42,0.25)]">
                                             Nama
                                         </th>
-                                        <th className="min-w-[130px] px-3 py-2 font-medium">
+                                        <th className="min-w-[110px] px-2 py-1.5 text-center font-medium">
                                             Kode
                                         </th>
-                                        <th className="min-w-[220px] px-3 py-2 font-medium">
+                                        <th className="min-w-[190px] px-2 py-1.5 text-center font-medium">
                                             Kontak
                                         </th>
-                                        <th className="px-3 py-2 font-medium">
+                                        <th className="px-2 py-1.5 text-center font-medium">
                                             Divisi
                                         </th>
-                                        <th className="min-w-[180px] px-3 py-2 font-medium">
+                                        <th className="min-w-[160px] px-2 py-1.5 text-center font-medium">
                                             Perusahaan
                                         </th>
-                                        <th className="px-3 py-2 font-medium">
+                                        <th className="px-2 py-1.5 text-center font-medium">
                                             Jabatan
                                         </th>
-                                        <th className="min-w-[130px] px-3 py-2 font-medium">
+                                        <th className="min-w-[110px] px-2 py-1.5 text-center font-medium">
                                             Tgl Masuk
                                         </th>
-                                        <th className="min-w-[140px] px-3 py-2 font-medium">
-                                            Tipe Karyawan
+                                        <th className="min-w-[110px] px-2 py-1.5 text-center font-medium">
+                                            Tipe
                                         </th>
-                                        <th className="min-w-[170px] px-3 py-2 font-medium">
-                                            Gaji Pokok
+                                        <th className="min-w-[135px] px-2 py-1.5 text-center font-medium">
+                                            Gaji
                                         </th>
-                                        <th className="px-3 py-2 font-medium">
+                                        <th className="px-2 py-1.5 text-center font-medium">
                                             Status
                                         </th>
-                                        <th className="sticky right-0 z-20 min-w-[220px] bg-background px-3 py-2 font-medium shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.25)]">
+                                        <th className="sticky right-0 z-20 min-w-[72px] bg-background px-2 py-1.5 text-center font-medium shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.25)]">
                                             Aksi
                                         </th>
                                     </tr>
@@ -1740,192 +1746,225 @@ export default function EmployeesIndex() {
                                             </td>
                                         </tr>
                                     )}
-                                    {employees.data.map((employee) => (
-                                        <tr
-                                            key={employee.id}
-                                            className="border-b align-top"
-                                        >
-                                            <td className="sticky left-0 z-10 bg-background px-3 py-3 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.25)]">
-                                                <div className="flex items-center gap-3">
-                                                    <Avatar className="size-8">
-                                                        <AvatarFallback>
-                                                            {getInitials(
-                                                                employee.full_name,
-                                                            )}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <div>
-                                                        <p className="font-medium">
-                                                            {employee.full_name}
+                                    {employees.data.map((employee) => {
+                                        const isResigned =
+                                            employee.employment_status ===
+                                            'resigned';
+
+                                        return (
+                                            <tr
+                                                key={employee.id}
+                                                className="border-b align-top"
+                                            >
+                                                <td className="sticky left-0 z-10 bg-background px-2 py-2 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.25)]">
+                                                    <div className="flex items-center gap-2">
+                                                        <Avatar className="size-7">
+                                                            <AvatarFallback>
+                                                                {getInitials(
+                                                                    employee.full_name,
+                                                                )}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <p
+                                                                className={
+                                                                    isResigned
+                                                                        ? 'text-xs font-semibold text-red-900'
+                                                                        : 'text-xs font-medium'
+                                                                }
+                                                            >
+                                                                {
+                                                                    employee.full_name
+                                                                }
+                                                            </p>
+                                                            <p className="max-w-[150px] truncate text-[11px] text-muted-foreground">
+                                                                {employee
+                                                                    .position
+                                                                    ?.name ??
+                                                                    '-'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-2 py-2 font-mono text-[11px] uppercase">
+                                                    {employee.employee_code}
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    <div className="space-y-0.5">
+                                                        <p className="max-w-[170px] truncate">
+                                                            {employee.email ??
+                                                                '-'}
                                                         </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {employee.position
-                                                                ?.name ?? '-'}
+                                                        <p className="text-[11px] text-muted-foreground">
+                                                            {employee.phone ??
+                                                                '-'}
                                                         </p>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-3 py-3 font-mono text-xs uppercase">
-                                                {employee.employee_code}
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                <div className="space-y-1">
-                                                    <p>
-                                                        {employee.email ?? '-'}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {employee.phone ?? '-'}
-                                                    </p>
-                                                </div>
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                {employee.division?.name ?? '-'}
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                {employee.sub_company ? (
-                                                    <div>
-                                                        <p>
-                                                            {
-                                                                employee
-                                                                    .sub_company
-                                                                    .name
-                                                            }
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Sub Company
-                                                        </p>
-                                                    </div>
-                                                ) : (
-                                                    <Badge variant="outline">
-                                                        -
-                                                    </Badge>
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                {employee.position?.name ?? '-'}
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                {formatDateDisplay(
-                                                    employee.hire_date,
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                {typeLabels[
-                                                    employee.employment_type
-                                                ] ?? employee.employment_type}
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                {formatCurrencyDisplay(
-                                                    employee.base_salary,
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-3">
-                                                <Badge
-                                                    variant={
-                                                        employee.employment_status ===
-                                                        'active'
-                                                            ? 'default'
-                                                            : 'secondary'
-                                                    }
-                                                >
-                                                    {statusLabels[
-                                                        employee
-                                                            .employment_status
-                                                    ] ??
-                                                        employee.employment_status}
-                                                </Badge>
-                                            </td>
-                                            <td className="sticky right-0 z-10 bg-background px-3 py-3 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.25)]">
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <ActionIconButton
-                                                        label="Detail karyawan"
-                                                        icon={Eye}
-                                                        variant="outline"
-                                                        onClick={() =>
-                                                            openDetailEmployeeDialog(
-                                                                employee,
-                                                            )
-                                                        }
-                                                    />
-                                                    <ActionIconButton
-                                                        label="Edit karyawan"
-                                                        icon={Pencil}
-                                                        variant="outline"
-                                                        onClick={() =>
-                                                            openEditEmployeeDialog(
-                                                                employee,
-                                                            )
-                                                        }
-                                                    />
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            asChild
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    {employee.division?.name ??
+                                                        '-'}
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    {employee.sub_company ? (
+                                                        <div>
+                                                            <p className="max-w-[140px] truncate">
+                                                                {
+                                                                    employee
+                                                                        .sub_company
+                                                                        .name
+                                                                }
+                                                            </p>
+                                                            <p className="text-[11px] text-muted-foreground">
+                                                                Sub Company
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="h-5 px-1.5 text-[10px]"
                                                         >
-                                                            <Button
-                                                                type="button"
-                                                                size="icon"
-                                                                variant="outline"
-                                                                className="size-9"
-                                                                aria-label="Aksi lainnya"
+                                                            -
+                                                        </Badge>
+                                                    )}
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    {employee.position?.name ??
+                                                        '-'}
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    {formatDateDisplay(
+                                                        employee.hire_date,
+                                                    )}
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    {typeLabels[
+                                                        employee.employment_type
+                                                    ] ??
+                                                        employee.employment_type}
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    {formatCurrencyDisplay(
+                                                        employee.base_salary,
+                                                    )}
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    <Badge
+                                                        className={
+                                                            isResigned
+                                                                ? 'h-5 border-red-900 bg-red-950 px-1.5 text-[10px] text-white hover:bg-red-950'
+                                                                : 'h-5 px-1.5 text-[10px]'
+                                                        }
+                                                        variant={
+                                                            isResigned
+                                                                ? 'outline'
+                                                                : employee.employment_status ===
+                                                                    'active'
+                                                                  ? 'default'
+                                                                  : 'secondary'
+                                                        }
+                                                    >
+                                                        {statusLabels[
+                                                            employee
+                                                                .employment_status
+                                                        ] ??
+                                                            employee.employment_status}
+                                                    </Badge>
+                                                </td>
+                                                <td className="sticky right-0 z-10 bg-background px-2 py-2 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.25)]">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <ActionIconButton
+                                                            label="Detail karyawan"
+                                                            icon={Eye}
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                openDetailEmployeeDialog(
+                                                                    employee,
+                                                                )
+                                                            }
+                                                        />
+                                                        <ActionIconButton
+                                                            label="Edit karyawan"
+                                                            icon={Pencil}
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                openEditEmployeeDialog(
+                                                                    employee,
+                                                                )
+                                                            }
+                                                        />
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                asChild
                                                             >
-                                                                <MoreHorizontal className="size-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem
-                                                                onClick={() =>
-                                                                    setSelectedEmployeeId(
-                                                                        employee.id,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Landmark className="size-4" />
-                                                                Kelola rekening
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onClick={() =>
-                                                                    openEmployeeContract(
-                                                                        employee.id,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Download className="size-4" />
-                                                                Generate kontrak
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onClick={() =>
-                                                                    activatePortalUser(
-                                                                        employee,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <UserRoundCheck className="size-4" />
-                                                                {employee.portal_user
-                                                                    ? 'Kirim ulang aktivasi user'
-                                                                    : 'Aktivasi user'}
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                disabled={
-                                                                    employee.employment_status ===
-                                                                        'resigned' &&
-                                                                    employee.offboarded_at !==
-                                                                        null
-                                                                }
-                                                                onClick={() =>
-                                                                    openOffboardingDialog(
-                                                                        employee,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <UserRoundX className="size-4" />
-                                                                Offboarding
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                                <Button
+                                                                    type="button"
+                                                                    size="icon"
+                                                                    variant="outline"
+                                                                    className="size-7"
+                                                                    aria-label="Aksi lainnya"
+                                                                >
+                                                                    <MoreHorizontal className="size-3.5" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuItem
+                                                                    onClick={() =>
+                                                                        setSelectedEmployeeId(
+                                                                            employee.id,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Landmark className="size-4" />
+                                                                    Kelola
+                                                                    rekening
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={() =>
+                                                                        openEmployeeContract(
+                                                                            employee.id,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Download className="size-4" />
+                                                                    Generate
+                                                                    kontrak
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={() =>
+                                                                        activatePortalUser(
+                                                                            employee,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <UserRoundCheck className="size-4" />
+                                                                    {employee.portal_user
+                                                                        ? 'Kirim ulang aktivasi user'
+                                                                        : 'Aktivasi user'}
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    disabled={
+                                                                        employee.employment_status ===
+                                                                            'resigned' &&
+                                                                        employee.offboarded_at !==
+                                                                            null
+                                                                    }
+                                                                    onClick={() =>
+                                                                        openOffboardingDialog(
+                                                                            employee,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <UserRoundX className="size-4" />
+                                                                    Offboarding
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
@@ -2124,6 +2163,9 @@ export default function EmployeesIndex() {
                                     {detailEmployee.family_card_number ?? '-'}
                                 </p>
                                 <p>
+                                    No. KTP: {detailEmployee.ktp_number ?? '-'}
+                                </p>
+                                <p>
                                     Nama Ibu Kandung:{' '}
                                     {detailEmployee.biological_mother_name ??
                                         '-'}
@@ -2162,8 +2204,7 @@ export default function EmployeesIndex() {
                                     Alasan Offboarding:{' '}
                                     {detailEmployee.offboarding_reason
                                         ? (offboardingReasonLabels[
-                                              detailEmployee
-                                                  .offboarding_reason
+                                              detailEmployee.offboarding_reason
                                           ] ??
                                           detailEmployee.offboarding_reason)
                                         : '-'}
@@ -2242,8 +2283,7 @@ export default function EmployeesIndex() {
                                 </Label>
                                 <Select
                                     value={
-                                        offboardingForm.data
-                                            .offboarding_reason
+                                        offboardingForm.data.offboarding_reason
                                     }
                                     onValueChange={(value) =>
                                         offboardingForm.setData(
@@ -2296,8 +2336,7 @@ export default function EmployeesIndex() {
                                 />
                                 <InputError
                                     message={
-                                        offboardingForm.errors
-                                            .offboarding_notes
+                                        offboardingForm.errors.offboarding_notes
                                     }
                                 />
                             </div>
@@ -2306,9 +2345,7 @@ export default function EmployeesIndex() {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() =>
-                                        setOffboardingEmployee(null)
-                                    }
+                                    onClick={() => setOffboardingEmployee(null)}
                                 >
                                     Batal
                                 </Button>
@@ -3445,6 +3482,33 @@ export default function EmployeesIndex() {
                                                 message={
                                                     employeeForm.errors
                                                         .family_card_number
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="ktp_number">
+                                            No. KTP
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <Input
+                                                id="ktp_number"
+                                                value={
+                                                    employeeForm.data.ktp_number
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'ktp_number',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Opsional"
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .ktp_number
                                                 }
                                             />
                                         </div>

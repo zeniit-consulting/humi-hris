@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/api/mobile/v1/profile'
 */
 const showe24a9090cf1b3a6ad58f290f9fc46d9b = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ showe24a9090cf1b3a6ad58f290f9fc46d9b.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/api/mobile/v1/profile'
 */
 showe24a9090cf1b3a6ad58f290f9fc46d9b.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ showe24a9090cf1b3a6ad58f290f9fc46d9b.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/api/mobile/v1/profile'
 */
 showe24a9090cf1b3a6ad58f290f9fc46d9b.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ showe24a9090cf1b3a6ad58f290f9fc46d9b.get = (options?: RouteQueryOptions): RouteD
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/api/mobile/v1/profile'
 */
 showe24a9090cf1b3a6ad58f290f9fc46d9b.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ showe24a9090cf1b3a6ad58f290f9fc46d9b.head = (options?: RouteQueryOptions): Route
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/api/mobile/v1/profile'
 */
 const showe24a9090cf1b3a6ad58f290f9fc46d9bForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const showe24a9090cf1b3a6ad58f290f9fc46d9bForm = (options?: RouteQueryOptions): 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/api/mobile/v1/profile'
 */
 showe24a9090cf1b3a6ad58f290f9fc46d9bForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ showe24a9090cf1b3a6ad58f290f9fc46d9bForm.get = (options?: RouteQueryOptions): Ro
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/api/mobile/v1/profile'
 */
 showe24a9090cf1b3a6ad58f290f9fc46d9bForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -81,7 +81,7 @@ showe24a9090cf1b3a6ad58f290f9fc46d9bForm.head = (options?: RouteQueryOptions): R
 showe24a9090cf1b3a6ad58f290f9fc46d9b.form = showe24a9090cf1b3a6ad58f290f9fc46d9bForm
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 const showf4c1cc18896d027630f70f450a028c3a = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -96,7 +96,7 @@ showf4c1cc18896d027630f70f450a028c3a.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 showf4c1cc18896d027630f70f450a028c3a.url = (options?: RouteQueryOptions) => {
@@ -105,7 +105,7 @@ showf4c1cc18896d027630f70f450a028c3a.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 showf4c1cc18896d027630f70f450a028c3a.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -115,7 +115,7 @@ showf4c1cc18896d027630f70f450a028c3a.get = (options?: RouteQueryOptions): RouteD
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 showf4c1cc18896d027630f70f450a028c3a.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -125,7 +125,7 @@ showf4c1cc18896d027630f70f450a028c3a.head = (options?: RouteQueryOptions): Route
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 const showf4c1cc18896d027630f70f450a028c3aForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -135,7 +135,7 @@ const showf4c1cc18896d027630f70f450a028c3aForm = (options?: RouteQueryOptions): 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 showf4c1cc18896d027630f70f450a028c3aForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -145,7 +145,7 @@ showf4c1cc18896d027630f70f450a028c3aForm.get = (options?: RouteQueryOptions): Ro
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 showf4c1cc18896d027630f70f450a028c3aForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -167,7 +167,7 @@ export const show = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateProfile
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/api/mobile/v1/profile'
 */
 const updateProfilee24a9090cf1b3a6ad58f290f9fc46d9b = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -182,7 +182,7 @@ updateProfilee24a9090cf1b3a6ad58f290f9fc46d9b.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateProfile
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/api/mobile/v1/profile'
 */
 updateProfilee24a9090cf1b3a6ad58f290f9fc46d9b.url = (options?: RouteQueryOptions) => {
@@ -191,7 +191,7 @@ updateProfilee24a9090cf1b3a6ad58f290f9fc46d9b.url = (options?: RouteQueryOptions
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateProfile
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/api/mobile/v1/profile'
 */
 updateProfilee24a9090cf1b3a6ad58f290f9fc46d9b.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -201,7 +201,7 @@ updateProfilee24a9090cf1b3a6ad58f290f9fc46d9b.put = (options?: RouteQueryOptions
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateProfile
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/api/mobile/v1/profile'
 */
 const updateProfilee24a9090cf1b3a6ad58f290f9fc46d9bForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -216,7 +216,7 @@ const updateProfilee24a9090cf1b3a6ad58f290f9fc46d9bForm = (options?: RouteQueryO
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateProfile
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/api/mobile/v1/profile'
 */
 updateProfilee24a9090cf1b3a6ad58f290f9fc46d9bForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -232,7 +232,7 @@ updateProfilee24a9090cf1b3a6ad58f290f9fc46d9bForm.put = (options?: RouteQueryOpt
 updateProfilee24a9090cf1b3a6ad58f290f9fc46d9b.form = updateProfilee24a9090cf1b3a6ad58f290f9fc46d9bForm
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateProfile
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/portal/api/profile'
 */
 const updateProfilef4c1cc18896d027630f70f450a028c3a = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -247,7 +247,7 @@ updateProfilef4c1cc18896d027630f70f450a028c3a.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateProfile
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/portal/api/profile'
 */
 updateProfilef4c1cc18896d027630f70f450a028c3a.url = (options?: RouteQueryOptions) => {
@@ -256,7 +256,7 @@ updateProfilef4c1cc18896d027630f70f450a028c3a.url = (options?: RouteQueryOptions
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateProfile
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/portal/api/profile'
 */
 updateProfilef4c1cc18896d027630f70f450a028c3a.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -266,7 +266,7 @@ updateProfilef4c1cc18896d027630f70f450a028c3a.put = (options?: RouteQueryOptions
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateProfile
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/portal/api/profile'
 */
 const updateProfilef4c1cc18896d027630f70f450a028c3aForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -281,7 +281,7 @@ const updateProfilef4c1cc18896d027630f70f450a028c3aForm = (options?: RouteQueryO
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateProfile
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/portal/api/profile'
 */
 updateProfilef4c1cc18896d027630f70f450a028c3aForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -303,7 +303,7 @@ export const updateProfile = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateBankAccount
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/api/mobile/v1/profile/bank-account'
 */
 const updateBankAccount271f2a0fe48648485a2b2691b19bf566 = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -318,7 +318,7 @@ updateBankAccount271f2a0fe48648485a2b2691b19bf566.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateBankAccount
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/api/mobile/v1/profile/bank-account'
 */
 updateBankAccount271f2a0fe48648485a2b2691b19bf566.url = (options?: RouteQueryOptions) => {
@@ -327,7 +327,7 @@ updateBankAccount271f2a0fe48648485a2b2691b19bf566.url = (options?: RouteQueryOpt
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateBankAccount
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/api/mobile/v1/profile/bank-account'
 */
 updateBankAccount271f2a0fe48648485a2b2691b19bf566.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -337,7 +337,7 @@ updateBankAccount271f2a0fe48648485a2b2691b19bf566.put = (options?: RouteQueryOpt
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateBankAccount
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/api/mobile/v1/profile/bank-account'
 */
 const updateBankAccount271f2a0fe48648485a2b2691b19bf566Form = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -352,7 +352,7 @@ const updateBankAccount271f2a0fe48648485a2b2691b19bf566Form = (options?: RouteQu
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateBankAccount
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/api/mobile/v1/profile/bank-account'
 */
 updateBankAccount271f2a0fe48648485a2b2691b19bf566Form.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -368,7 +368,7 @@ updateBankAccount271f2a0fe48648485a2b2691b19bf566Form.put = (options?: RouteQuer
 updateBankAccount271f2a0fe48648485a2b2691b19bf566.form = updateBankAccount271f2a0fe48648485a2b2691b19bf566Form
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateBankAccount
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/portal/api/profile/bank-account'
 */
 const updateBankAccount1142c48fa0ecdc8753623a9fdc346dc0 = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -383,7 +383,7 @@ updateBankAccount1142c48fa0ecdc8753623a9fdc346dc0.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateBankAccount
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/portal/api/profile/bank-account'
 */
 updateBankAccount1142c48fa0ecdc8753623a9fdc346dc0.url = (options?: RouteQueryOptions) => {
@@ -392,7 +392,7 @@ updateBankAccount1142c48fa0ecdc8753623a9fdc346dc0.url = (options?: RouteQueryOpt
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateBankAccount
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/portal/api/profile/bank-account'
 */
 updateBankAccount1142c48fa0ecdc8753623a9fdc346dc0.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -402,7 +402,7 @@ updateBankAccount1142c48fa0ecdc8753623a9fdc346dc0.put = (options?: RouteQueryOpt
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateBankAccount
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/portal/api/profile/bank-account'
 */
 const updateBankAccount1142c48fa0ecdc8753623a9fdc346dc0Form = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -417,7 +417,7 @@ const updateBankAccount1142c48fa0ecdc8753623a9fdc346dc0Form = (options?: RouteQu
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::updateBankAccount
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/portal/api/profile/bank-account'
 */
 updateBankAccount1142c48fa0ecdc8753623a9fdc346dc0Form.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

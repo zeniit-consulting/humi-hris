@@ -30,11 +30,14 @@ import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
+    SidebarGroup,
+    SidebarGroupContent,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useCurrentUrl } from '@/hooks/use-current-url';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as attendancesIndex } from '@/routes/hris/attendances';
@@ -53,16 +56,6 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
     });
 
     return [
-        {
-            title: 'Umum',
-            items: [
-                {
-                    title: 'Dashboard',
-                    href: dashboard(),
-                    icon: LayoutGrid,
-                },
-            ],
-        },
         {
             title: 'SDM',
             items: [
@@ -202,22 +195,30 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
 }
 
 export function AppSidebar() {
+    const { isCurrentUrl } = useCurrentUrl();
     const { subscription, permissions } = usePage().props as {
         auth?: { user?: { role?: string } | null };
         subscription?: { locked_features?: string[] };
         permissions?: { can_manage_subscribers?: boolean };
     };
-    const { auth } = usePage().props as { auth?: { user?: { role?: string } | null } };
-    const mainNavGroups = auth?.user?.role === 'client_supervisor'
-        ? [{
-            title: 'Klien',
-            items: [{
-                title: 'Approval',
-                href: '/client/approvals',
-                icon: ShieldCheck,
-            }],
-        }]
-        : buildNavGroups(subscription?.locked_features ?? []);
+    const { auth } = usePage().props as {
+        auth?: { user?: { role?: string } | null };
+    };
+    const mainNavGroups =
+        auth?.user?.role === 'client_supervisor'
+            ? [
+                  {
+                      title: 'Klien',
+                      items: [
+                          {
+                              title: 'Approval',
+                              href: '/client/approvals',
+                              icon: ShieldCheck,
+                          },
+                      ],
+                  },
+              ]
+            : buildNavGroups(subscription?.locked_features ?? []);
 
     if (permissions?.can_manage_subscribers) {
         mainNavGroups.push({
@@ -257,6 +258,28 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
+                <SidebarGroup className="px-2 py-0">
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isCurrentUrl(dashboard())}
+                                    tooltip={{
+                                        children: 'Dashboard',
+                                    }}
+                                >
+                                    <Link href={toUrl(dashboard())} prefetch>
+                                        <LayoutGrid />
+                                        <span className="flex-1">
+                                            Dashboard
+                                        </span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
                 <NavMain groups={mainNavGroups} />
             </SidebarContent>
 

@@ -127,6 +127,10 @@
                     <div class="value">
                         @if (($card['format'] ?? null) === 'currency')
                             Rp {{ number_format((float) $card['value'], 0, ',', '.') }}
+                        @elseif (($card['format'] ?? null) === 'integer')
+                            {{ number_format((float) $card['value'], 0, ',', '.') }}{{ isset($card['suffix']) ? ' '.$card['suffix'] : '' }}
+                        @elseif (($card['format'] ?? null) === 'percent')
+                            {{ number_format((float) $card['value'], 1, ',', '.') }}%
                         @else
                             {{ number_format((float) $card['value'], 2, ',', '.') }}{{ isset($card['suffix']) ? ' '.$card['suffix'] : '' }}
                         @endif

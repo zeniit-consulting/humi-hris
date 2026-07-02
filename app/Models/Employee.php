@@ -54,6 +54,7 @@ class Employee extends Model
         'base_salary',
         'address',
         'family_card_number',
+        'ktp_number',
         'bpjs_kesehatan_number',
         'bpjs_ketenagakerjaan_number',
         'sim_a_number',

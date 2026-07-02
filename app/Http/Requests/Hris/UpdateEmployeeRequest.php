@@ -181,6 +181,7 @@ class UpdateEmployeeRequest extends FormRequest
             'base_salary' => ['nullable', 'numeric', 'min:0'],
             'address' => ['nullable', 'string', 'max:500'],
             'family_card_number' => ['nullable', 'string', 'max:32'],
+            'ktp_number' => ['nullable', 'string', 'max:32'],
             'bpjs_kesehatan_number' => ['nullable', 'string', 'max:32'],
             'bpjs_ketenagakerjaan_number' => ['nullable', 'string', 'max:32'],
             'sim_a_number' => ['nullable', 'string', 'max:32'],

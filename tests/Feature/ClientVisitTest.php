@@ -17,6 +17,43 @@ class ClientVisitTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_portal_activity_menu_and_dedicated_activity_pages_can_be_opened(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'role' => 'user',
+            'email' => 'activity-menu@example.com',
+            'email_verified_at' => now(),
+        ]);
+        $this->activatePlan($user);
+        $this->employeeForUser($user);
+
+        $this->actingAs($user)
+            ->get(route('portal.activity'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('portal/activity')
+                ->where('pageTitle', 'Aktivitas')
+            );
+
+        $this->actingAs($user)
+            ->get(route('portal.activity.client-visits'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('portal/client-visits')
+                ->where('pageTitle', 'Client Visit')
+            );
+
+        $this->actingAs($user)
+            ->get(route('portal.activity.performance'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('portal/performance-activity')
+                ->where('pageTitle', 'Performance')
+            );
+    }
+
     public function test_portal_user_can_start_and_clock_out_client_visit_with_device_timezone(): void
     {
         $user = User::factory()->create([

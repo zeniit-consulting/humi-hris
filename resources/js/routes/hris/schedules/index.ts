@@ -140,7 +140,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroy
-* @see app/Http/Controllers/Hris/ScheduleController.php:233
+* @see app/Http/Controllers/Hris/ScheduleController.php:267
 * @route '/hris/schedules/{employeeSchedule}'
 */
 export const destroy = (args: { employeeSchedule: number | { id: number } } | [employeeSchedule: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -155,7 +155,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroy
-* @see app/Http/Controllers/Hris/ScheduleController.php:233
+* @see app/Http/Controllers/Hris/ScheduleController.php:267
 * @route '/hris/schedules/{employeeSchedule}'
 */
 destroy.url = (args: { employeeSchedule: number | { id: number } } | [employeeSchedule: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -188,7 +188,7 @@ destroy.url = (args: { employeeSchedule: number | { id: number } } | [employeeSc
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroy
-* @see app/Http/Controllers/Hris/ScheduleController.php:233
+* @see app/Http/Controllers/Hris/ScheduleController.php:267
 * @route '/hris/schedules/{employeeSchedule}'
 */
 destroy.delete = (args: { employeeSchedule: number | { id: number } } | [employeeSchedule: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -198,7 +198,7 @@ destroy.delete = (args: { employeeSchedule: number | { id: number } } | [employe
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroy
-* @see app/Http/Controllers/Hris/ScheduleController.php:233
+* @see app/Http/Controllers/Hris/ScheduleController.php:267
 * @route '/hris/schedules/{employeeSchedule}'
 */
 const destroyForm = (args: { employeeSchedule: number | { id: number } } | [employeeSchedule: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -213,7 +213,7 @@ const destroyForm = (args: { employeeSchedule: number | { id: number } } | [empl
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroy
-* @see app/Http/Controllers/Hris/ScheduleController.php:233
+* @see app/Http/Controllers/Hris/ScheduleController.php:267
 * @route '/hris/schedules/{employeeSchedule}'
 */
 destroyForm.delete = (args: { employeeSchedule: number | { id: number } } | [employeeSchedule: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

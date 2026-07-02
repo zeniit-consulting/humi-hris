@@ -11,6 +11,8 @@ export type PortalLinkMap = {
     kasbons?: string;
     payroll: string;
     activity?: string;
+    client_visits?: string;
+    performance_activity?: string;
     profile?: string;
     dashboard?: string;
 };

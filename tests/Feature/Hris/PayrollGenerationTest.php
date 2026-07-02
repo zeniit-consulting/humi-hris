@@ -6,13 +6,16 @@ use App\Jobs\SendPayslipToWhatsApp;
 use App\Models\Employee;
 use App\Models\EmployeeAllowance;
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeBankAccount;
 use App\Models\EmployeeDeduction;
+use App\Models\LeaveRequest;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\SubCompany;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class PayrollGenerationTest extends TestCase
@@ -452,6 +455,101 @@ class PayrollGenerationTest extends TestCase
         ]);
     }
 
+    public function test_generated_payroll_item_can_be_edited_before_saved(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 5_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), [
+                'period' => '2026-02',
+            ]);
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-02')->firstOrFail();
+        $item = PayrollItem::query()->where('payroll_run_id', $run->id)->where('employee_id', $employee->id)->firstOrFail();
+
+        $this->actingAs($user)
+            ->put(route('hris.payrolls.items.update', [$run, $item]), [
+                'base_salary' => '4.500.000',
+                'allowances_total' => '750.000',
+                'overtime_pay' => '250.000',
+                'pph21_deduction' => '100.000',
+                'kasbon_deduction' => '200.000',
+                'denda_deduction' => '50.000',
+            ])
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+
+        $this->assertDatabaseHas('payroll_items', [
+            'id' => $item->id,
+            'base_salary' => 4500000.00,
+            'allowances_total' => 750000.00,
+            'overtime_pay' => 250000.00,
+            'pph21_deduction' => 100000.00,
+            'kasbon_deduction' => 200000.00,
+            'denda_deduction' => 50000.00,
+            'deductions_total' => 350000.00,
+            'net_salary' => 5150000.00,
+        ]);
+
+        $this->assertDatabaseHas('payroll_runs', [
+            'id' => $run->id,
+            'employees_count' => 1,
+            'total_base_salary' => 4500000.00,
+            'total_allowances' => 750000.00,
+            'total_deductions' => 350000.00,
+            'total_net_salary' => 5150000.00,
+        ]);
+    }
+
+    public function test_saved_payroll_item_cannot_be_edited(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $run = PayrollRun::factory()->create([
+            'user_id' => $user->id,
+            'period' => '2026-02',
+            'is_saved' => true,
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $item = PayrollItem::query()->create([
+            'user_id' => $user->id,
+            'payroll_run_id' => $run->id,
+            'employee_id' => $employee->id,
+            'base_salary' => 5_000_000,
+            'allowances_total' => 0,
+            'deductions_total' => 0,
+            'net_salary' => 5_000_000,
+            'allowance_breakdown' => [],
+        ]);
+
+        $this->actingAs($user)
+            ->put(route('hris.payrolls.items.update', [$run, $item]), [
+                'base_salary' => '4.000.000',
+            ])
+            ->assertSessionHas('error', 'Payroll yang sudah disimpan tidak bisa diedit.');
+
+        $this->assertDatabaseHas('payroll_items', [
+            'id' => $item->id,
+            'base_salary' => 5000000.00,
+        ]);
+    }
+
     public function test_saved_payroll_can_be_recalculated_from_artisan_command(): void
     {
         $user = User::factory()->create([
@@ -694,5 +792,111 @@ class PayrollGenerationTest extends TestCase
             'employees_count' => 1,
             'total_base_salary' => 4500000.00,
         ]);
+    }
+
+    public function test_payroll_page_exposes_readiness_checklist_for_draft_run(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $completeEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 5_000_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        EmployeeBankAccount::factory()->create([
+            'employee_id' => $completeEmployee->id,
+            'is_primary' => true,
+        ]);
+
+        $missingBankEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 4_000_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        LeaveRequest::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $missingBankEmployee->id,
+            'status' => 'pending',
+        ]);
+
+        $run = PayrollRun::factory()->create([
+            'user_id' => $user->id,
+            'period' => '2026-02',
+            'type' => 'regular',
+            'is_saved' => false,
+            'employees_count' => 1,
+        ]);
+
+        PayrollItem::query()->create([
+            'user_id' => $user->id,
+            'payroll_run_id' => $run->id,
+            'employee_id' => $completeEmployee->id,
+            'base_salary' => 5000000,
+            'allowances_total' => 0,
+            'deductions_total' => 0,
+            'net_salary' => 5000000,
+            'allowance_breakdown' => [],
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.payrolls.index', ['period' => '2026-02']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('payrollReadiness.period', '2026-02')
+                ->where('payrollReadiness.status', 'warning')
+                ->where('payrollReadiness.warning_count', 3)
+                ->where('payrollReadiness.checks.0.key', 'active_employees_included')
+                ->where('payrollReadiness.checks.0.complete', false)
+                ->where('payrollReadiness.checks.1.key', 'bank_accounts')
+                ->where('payrollReadiness.checks.1.complete', false)
+                ->where('payrollReadiness.checks.2.key', 'pending_approvals')
+                ->where('payrollReadiness.checks.2.complete', false)
+            );
+    }
+
+    public function test_saving_payroll_with_readiness_warnings_is_allowed_but_flashes_warning(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $run = PayrollRun::factory()->create([
+            'user_id' => $user->id,
+            'period' => '2026-02',
+            'type' => 'regular',
+            'is_saved' => false,
+        ]);
+
+        PayrollItem::query()->create([
+            'user_id' => $user->id,
+            'payroll_run_id' => $run->id,
+            'employee_id' => $employee->id,
+            'base_salary' => 5000000,
+            'allowances_total' => 0,
+            'deductions_total' => 0,
+            'net_salary' => 5000000,
+            'allowance_breakdown' => [],
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.save', $run))
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']))
+            ->assertSessionHas('warning', fn (mixed $message) => is_string($message) && str_contains($message, 'Payroll disimpan dengan'));
+
+        $this->assertTrue($run->refresh()->is_saved);
     }
 }

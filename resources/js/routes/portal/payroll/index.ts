@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportMethod
-* @see app/Http/Controllers/UserPortalSectionController.php:117
+* @see app/Http/Controllers/UserPortalSectionController.php:127
 * @route '/portal/payroll/export'
 */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportMethod
-* @see app/Http/Controllers/UserPortalSectionController.php:117
+* @see app/Http/Controllers/UserPortalSectionController.php:127
 * @route '/portal/payroll/export'
 */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportMethod
-* @see app/Http/Controllers/UserPortalSectionController.php:117
+* @see app/Http/Controllers/UserPortalSectionController.php:127
 * @route '/portal/payroll/export'
 */
 exportMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ exportMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportMethod
-* @see app/Http/Controllers/UserPortalSectionController.php:117
+* @see app/Http/Controllers/UserPortalSectionController.php:127
 * @route '/portal/payroll/export'
 */
 const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'pos
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportMethod
-* @see app/Http/Controllers/UserPortalSectionController.php:117
+* @see app/Http/Controllers/UserPortalSectionController.php:127
 * @route '/portal/payroll/export'
 */
 exportMethodForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

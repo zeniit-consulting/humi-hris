@@ -342,6 +342,105 @@ class WorkforceModulesTest extends TestCase
         ]);
     }
 
+    public function test_roster_shift_can_be_generated_for_selected_employees(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $firstEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+        $secondEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+        $unselectedEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $this->seedWorkShifts($user);
+
+        $this->actingAs($user)->post(route('hris.schedules.roster'), [
+            'employee_id' => $firstEmployee->id,
+            'apply_scope' => 'selected',
+            'target_employee_ids' => [$firstEmployee->id, $secondEmployee->id],
+            'start_date' => '2026-02-01',
+            'end_date' => '2026-02-02',
+            'pattern' => ['0817', 'OFF'],
+        ])->assertRedirect();
+
+        foreach ([$firstEmployee, $secondEmployee] as $employee) {
+            $this->assertDatabaseHas('employee_schedules', [
+                'user_id' => $user->id,
+                'employee_id' => $employee->id,
+                'work_date' => '2026-02-01',
+                'shift_code' => '0817',
+                'is_day_off' => false,
+            ]);
+
+            $this->assertDatabaseHas('employee_schedules', [
+                'user_id' => $user->id,
+                'employee_id' => $employee->id,
+                'work_date' => '2026-02-02',
+                'shift_code' => 'OFF',
+                'is_day_off' => true,
+            ]);
+        }
+
+        $this->assertDatabaseMissing('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $unselectedEmployee->id,
+            'work_date' => '2026-02-01',
+        ]);
+    }
+
+    public function test_roster_shift_can_be_generated_for_all_account_employees_only(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+        $otherUser = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $firstEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+        $secondEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+        $otherEmployee = Employee::factory()->create([
+            'user_id' => $otherUser->id,
+        ]);
+
+        $this->seedWorkShifts($user);
+        $this->seedWorkShifts($otherUser);
+
+        $this->actingAs($user)->post(route('hris.schedules.roster'), [
+            'employee_id' => $firstEmployee->id,
+            'apply_scope' => 'all',
+            'start_date' => '2026-02-01',
+            'end_date' => '2026-02-01',
+            'pattern' => ['0918'],
+        ])->assertRedirect();
+
+        foreach ([$firstEmployee, $secondEmployee] as $employee) {
+            $this->assertDatabaseHas('employee_schedules', [
+                'user_id' => $user->id,
+                'employee_id' => $employee->id,
+                'work_date' => '2026-02-01',
+                'shift_code' => '0918',
+                'is_day_off' => false,
+            ]);
+        }
+
+        $this->assertDatabaseMissing('employee_schedules', [
+            'user_id' => $otherUser->id,
+            'employee_id' => $otherEmployee->id,
+            'work_date' => '2026-02-01',
+        ]);
+    }
+
     public function test_holiday_sync_stores_holidays_and_sets_selected_employee_schedule_to_off(): void
     {
         Http::fake([

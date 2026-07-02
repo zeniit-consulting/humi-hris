@@ -93,6 +93,8 @@ class MonthlyReportService
             'attendance' => $this->attendanceSummary($attendanceRows),
             'leave' => [
                 'approved_days' => round((float) $leaveRows->where('status', 'approved')->sum(fn (LeaveRequest $leave) => (float) $leave->total_days), 2),
+                'pending_days' => round((float) $leaveRows->where('status', 'pending')->sum(fn (LeaveRequest $leave) => (float) $leave->total_days), 2),
+                'rejected_days' => round((float) $leaveRows->where('status', 'rejected')->sum(fn (LeaveRequest $leave) => (float) $leave->total_days), 2),
             ],
             'overtime' => [
                 'approved_hours' => round((float) $overtimeRows->where('status', 'approved')->sum(fn (OvertimeRequest $overtime) => (float) $overtime->total_hours), 2),
@@ -573,19 +575,26 @@ class MonthlyReportService
                     'key' => 'headcount',
                     'label' => 'Headcount Aktif',
                     'value' => $summary['active_employees'],
+                    'format' => 'integer',
                     'suffix' => 'orang',
                 ],
                 [
                     'key' => 'attendance_present',
                     'label' => 'Kehadiran',
-                    'value' => $summary['attendance']['present'],
-                    'suffix' => 'hari',
+                    'value' => $this->percentage(
+                        (float) $summary['attendance']['present'],
+                        (float) array_sum($summary['attendance']),
+                    ),
+                    'format' => 'percent',
                 ],
                 [
                     'key' => 'leave_days',
                     'label' => 'Cuti Disetujui',
-                    'value' => $summary['leave']['approved_days'],
-                    'suffix' => 'hari',
+                    'value' => $this->percentage(
+                        (float) $summary['leave']['approved_days'],
+                        (float) array_sum($summary['leave']),
+                    ),
+                    'format' => 'percent',
                 ],
                 [
                     'key' => 'payroll_net',
@@ -603,10 +612,20 @@ class MonthlyReportService
                     'key' => 'recruitment_hires',
                     'label' => 'Kandidat Diterima',
                     'value' => $recruitmentDetails['summary']['hired'],
+                    'format' => 'integer',
                     'suffix' => 'orang',
                 ],
             ],
         ];
+    }
+
+    private function percentage(float $value, float $total): float
+    {
+        if ($total <= 0) {
+            return 0.0;
+        }
+
+        return round(($value / $total) * 100, 2);
     }
 
     private function performanceGrade(float $score): string

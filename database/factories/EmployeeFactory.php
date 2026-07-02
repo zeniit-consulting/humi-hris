@@ -38,6 +38,7 @@ class EmployeeFactory extends Factory
             'base_salary' => $this->faker->numberBetween(4_000_000, 15_000_000),
             'address' => $this->faker->address(),
             'family_card_number' => $this->faker->numerify('################'),
+            'ktp_number' => $this->faker->numerify('################'),
             'biological_mother_name' => $this->faker->name(),
             'emergency_contact_name' => $this->faker->name(),
             'emergency_contact_phone' => $this->faker->phoneNumber(),

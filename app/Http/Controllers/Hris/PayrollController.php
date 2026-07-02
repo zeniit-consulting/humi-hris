@@ -10,6 +10,7 @@ use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\SubCompany;
 use App\Services\PayrollGenerationService;
+use App\Services\PayrollReadinessService;
 use App\Support\WhatsAppPhone;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +25,7 @@ class PayrollController extends Controller
     /**
      * Display payroll generation and preview page.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, PayrollReadinessService $readiness): Response
     {
         $ownerId = $request->user()->accountOwnerId();
 
@@ -40,8 +41,9 @@ class PayrollController extends Controller
 
         $run = PayrollRun::query()
             ->with([
-                'items.employee:id,employee_code,first_name,last_name,phone,sub_company_id',
+                'items.employee:id,employee_code,first_name,last_name,phone,sub_company_id,is_active,employment_status',
                 'items.employee.subCompany:id,code,name',
+                'items.employee.bankAccounts:id,employee_id,is_primary',
             ])
             ->where('user_id', $ownerId)
             ->where('period', $period)
@@ -139,6 +141,7 @@ class PayrollController extends Controller
                     'thr_months_of_service' => $item->thr_months_of_service,
                     'thr_amount' => $item->thr_amount,
                 ])->values(),
+            'payrollReadiness' => $readiness->summarize($ownerId, $period, $run),
         ]);
     }
 
@@ -183,10 +186,12 @@ class PayrollController extends Controller
     /**
      * Save/finalize generated payroll.
      */
-    public function save(PayrollRun $payrollRun, Request $request): RedirectResponse
+    public function save(PayrollRun $payrollRun, Request $request, PayrollReadinessService $readiness): RedirectResponse
     {
         $ownerId = $request->user()->accountOwnerId();
         abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+
+        $summary = $readiness->summarize($ownerId, $payrollRun->period, $payrollRun);
 
         $payrollRun->update([
             'is_saved' => true,
@@ -194,7 +199,69 @@ class PayrollController extends Controller
             'saved_by' => $request->user()?->id,
         ]);
 
-        return to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular']);
+        $redirect = to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular']);
+
+        if (($summary['warning_count'] ?? 0) > 0 || ($summary['error_count'] ?? 0) > 0) {
+            return $redirect->with(
+                'warning',
+                'Payroll disimpan dengan '.($summary['warning_count'] ?? 0).' warning dan '.($summary['error_count'] ?? 0).' error checklist. Mohon review catatan readiness.'
+            );
+        }
+
+        return $redirect->with('success', 'Payroll berhasil disimpan.');
+    }
+
+    public function updateItem(PayrollRun $payrollRun, PayrollItem $payrollItem, Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+        abort_unless((int) $payrollItem->payroll_run_id === (int) $payrollRun->id, 404);
+
+        if ($payrollRun->is_saved) {
+            return back()->with('error', 'Payroll yang sudah disimpan tidak bisa diedit.');
+        }
+
+        $this->normalizePayrollItemInput($request);
+
+        $validated = $request->validate([
+            'base_salary' => ['nullable', 'numeric', 'min:0'],
+            'allowances_total' => ['nullable', 'numeric', 'min:0'],
+            'overtime_hours' => ['nullable', 'numeric', 'min:0'],
+            'overtime_pay' => ['nullable', 'numeric', 'min:0'],
+            'pph21_rate' => ['nullable', 'numeric', 'min:0'],
+            'pph21_allowance' => ['nullable', 'numeric', 'min:0'],
+            'pph21_deduction' => ['nullable', 'numeric', 'min:0'],
+            'pph21_company_borne' => ['nullable', 'numeric', 'min:0'],
+            'kasbon_deduction' => ['nullable', 'numeric', 'min:0'],
+            'denda_deduction' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $payrollItem->fill($validated);
+
+        $deductionsTotal = round(
+            (float) $payrollItem->pph21_deduction
+            + (float) $payrollItem->kasbon_deduction
+            + (float) $payrollItem->denda_deduction,
+            2
+        );
+        $netSalary = round(max(
+            ((float) $payrollItem->base_salary
+                + (float) $payrollItem->allowances_total
+                + (float) $payrollItem->overtime_pay
+                + (float) $payrollItem->pph21_allowance)
+            - $deductionsTotal,
+            0
+        ), 2);
+
+        $payrollItem->forceFill([
+            'deductions_total' => $deductionsTotal,
+            'net_salary' => $netSalary,
+        ])->save();
+
+        $this->refreshPayrollRunTotals($payrollRun);
+
+        return to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular'])
+            ->with('success', 'Item payroll berhasil diperbarui.');
     }
 
     /**
@@ -243,6 +310,60 @@ class PayrollController extends Controller
             }
             fclose($out);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function normalizePayrollItemInput(Request $request): void
+    {
+        $currencyFields = [
+            'base_salary',
+            'allowances_total',
+            'overtime_hours',
+            'overtime_pay',
+            'pph21_rate',
+            'pph21_allowance',
+            'pph21_deduction',
+            'pph21_company_borne',
+            'kasbon_deduction',
+            'denda_deduction',
+        ];
+
+        $normalized = [];
+
+        foreach ($currencyFields as $field) {
+            if (! $request->has($field)) {
+                continue;
+            }
+
+            $normalized[$field] = $this->normalizeAmount($request->input($field), $field === 'overtime_hours');
+        }
+
+        $request->merge($normalized);
+    }
+
+    private function normalizeAmount(mixed $value, bool $allowDecimal = false): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $normalized = $allowDecimal
+            ? preg_replace('/[^\d.]/', '', str_replace(',', '.', (string) $value))
+            : preg_replace('/[^\d]/', '', (string) $value);
+
+        return $normalized === '' ? null : $normalized;
+    }
+
+    private function refreshPayrollRunTotals(PayrollRun $payrollRun): void
+    {
+        $payrollRun->load('items');
+
+        $payrollRun->update([
+            'employees_count' => $payrollRun->items->count(),
+            'total_base_salary' => round((float) $payrollRun->items->sum('base_salary'), 2),
+            'total_allowances' => round((float) $payrollRun->items->sum('allowances_total'), 2),
+            'total_deductions' => round((float) $payrollRun->items->sum('deductions_total'), 2),
+            'total_net_salary' => round((float) $payrollRun->items->sum('net_salary'), 2),
+        ]);
     }
 
     /**

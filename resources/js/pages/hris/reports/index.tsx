@@ -52,6 +52,8 @@ type Summary = {
     };
     leave: {
         approved_days: number;
+        pending_days?: number;
+        rejected_days?: number;
     };
     overtime: {
         approved_hours: number;
@@ -222,7 +224,7 @@ type Analytics = {
         label: string;
         value: number | string;
         suffix?: string;
-        format?: 'currency';
+        format?: 'currency' | 'integer' | 'percent';
     }>;
 };
 
@@ -279,6 +281,28 @@ const formatCurrency = (value: number | string) =>
         currency: 'IDR',
         maximumFractionDigits: 0,
     }).format(Number(value ?? 0));
+
+const formatAnalyticsValue = (card: Analytics['cards'][number]) => {
+    if (card.format === 'currency') {
+        return formatCurrency(card.value);
+    }
+
+    if (card.format === 'integer') {
+        return `${new Intl.NumberFormat('id-ID', {
+            maximumFractionDigits: 0,
+        }).format(
+            Number(card.value ?? 0),
+        )}${card.suffix ? ` ${card.suffix}` : ''}`;
+    }
+
+    if (card.format === 'percent') {
+        return `${new Intl.NumberFormat('id-ID', {
+            maximumFractionDigits: 1,
+        }).format(Number(card.value ?? 0))}%`;
+    }
+
+    return `${formatNumber(card.value)}${card.suffix ? ` ${card.suffix}` : ''}`;
+};
 
 export default function ReportPage() {
     const {
@@ -444,16 +468,13 @@ export default function ReportPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-                            {analytics.cards.map((card) => (
-                                <MetricCard
+                        <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
+                            {analytics.cards.map((card, index) => (
+                                <AnalyticsMetricCard
                                     key={card.key}
                                     label={card.label}
-                                    value={
-                                        card.format === 'currency'
-                                            ? formatCurrency(card.value)
-                                            : `${formatNumber(card.value)}${card.suffix ? ` ${card.suffix}` : ''}`
-                                    }
+                                    value={formatAnalyticsValue(card)}
+                                    tone={index}
                                 />
                             ))}
                         </div>
@@ -641,9 +662,7 @@ export default function ReportPage() {
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                {formatNumber(
-                                                    row.pending_days,
-                                                )}
+                                                {formatNumber(row.pending_days)}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 {formatNumber(
@@ -1048,9 +1067,7 @@ export default function ReportPage() {
                                                         {row.openings}
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        {
-                                                            row.applications_count
-                                                        }
+                                                        {row.applications_count}
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         {row.hired_count}
@@ -1254,19 +1271,70 @@ function MovementTable({
     );
 }
 
-function MetricCard({ label, value }: { label: string; value: number | string }) {
+function MetricCard({
+    label,
+    value,
+}: {
+    label: string;
+    value: number | string;
+}) {
     return (
         <Card>
-            <CardHeader className="px-4 pb-1 pt-3">
+            <CardHeader className="px-4 pt-3 pb-1">
                 <CardDescription className="truncate text-xs">
                     {label}
                 </CardDescription>
             </CardHeader>
-            <CardContent className="px-4 pb-3 pt-0">
+            <CardContent className="px-4 pt-0 pb-3">
                 <div className="text-lg font-semibold tracking-normal">
                     {value}
                 </div>
             </CardContent>
         </Card>
+    );
+}
+
+function AnalyticsMetricCard({
+    label,
+    value,
+    tone,
+}: {
+    label: string;
+    value: number | string;
+    tone: number;
+}) {
+    const tones = [
+        'border-sky-200 bg-sky-50/70 text-sky-950',
+        'border-emerald-200 bg-emerald-50/70 text-emerald-950',
+        'border-amber-200 bg-amber-50/70 text-amber-950',
+        'border-rose-200 bg-rose-50/70 text-rose-950',
+        'border-indigo-200 bg-indigo-50/70 text-indigo-950',
+        'border-teal-200 bg-teal-50/70 text-teal-950',
+    ];
+    const dotTones = [
+        'bg-sky-500',
+        'bg-emerald-500',
+        'bg-amber-500',
+        'bg-rose-500',
+        'bg-indigo-500',
+        'bg-teal-500',
+    ];
+
+    return (
+        <div
+            className={`rounded-lg border px-3 py-2 shadow-sm ${tones[tone % tones.length]}`}
+        >
+            <div className="flex items-center gap-1.5">
+                <span
+                    className={`size-1.5 shrink-0 rounded-full ${dotTones[tone % dotTones.length]}`}
+                />
+                <p className="min-w-0 truncate text-[11px] font-medium opacity-75">
+                    {label}
+                </p>
+            </div>
+            <p className="mt-1 text-lg leading-tight font-semibold tracking-normal">
+                {value}
+            </p>
+        </div>
     );
 }

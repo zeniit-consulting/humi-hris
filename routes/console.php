@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Schedule;
 use App\Models\PayrollRun;
 use App\Services\PayrollGenerationService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -96,5 +96,16 @@ Schedule::command('employee:notify-contract-expiry')->dailyAt('08:00');
 Schedule::command('subscription:notify-renewal-reminder --days=7')->dailyAt('09:00');
 Schedule::command('employee:notify-birthday')->dailyAt('08:00');
 Schedule::command('employee:notify-probation --days=90')->dailyAt('08:30');
+Schedule::command('approval:remind-pending --hours=24')->dailyAt('09:15');
+Schedule::command('employee:remind-incomplete-profile')->dailyAt('09:30');
 Schedule::command('kasbon:remind-balance')->twiceMonthly(1, 15, '09:00');
 Schedule::command('attendance:auto-clock-out')->dailyAt('22:00');
+
+// Automation: expire subscriptions past their active period
+Schedule::command('subscription:expire')->dailyAt('00:30');
+
+// Automation: auto-generate draft payroll on the 1st of each month
+Schedule::command('payroll:auto-generate')->monthlyOn(1, '01:00');
+
+// Automation: mark absent employees who had a work schedule but no attendance record
+Schedule::command('attendance:auto-absent')->dailyAt('23:00');

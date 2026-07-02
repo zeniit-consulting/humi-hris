@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/api/mobile/v1/profile/bank-account'
 */
 export const update = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -16,7 +16,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/api/mobile/v1/profile/bank-account'
 */
 update.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ update.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/api/mobile/v1/profile/bank-account'
 */
 update.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -35,7 +35,7 @@ update.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/api/mobile/v1/profile/bank-account'
 */
 const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -50,7 +50,7 @@ const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:96
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:137
 * @route '/api/mobile/v1/profile/bank-account'
 */
 updateForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

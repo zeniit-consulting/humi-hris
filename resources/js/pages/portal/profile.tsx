@@ -1,4 +1,4 @@
-import { CreditCard, Mail, Phone, Save } from 'lucide-react';
+import { CheckCircle2, CreditCard, Mail, Phone, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
@@ -34,6 +34,7 @@ type ProfileData = {
         employment_type: string | null;
         ptkp_category: string | null;
         family_card_number: string | null;
+        ktp_number: string | null;
         bpjs_kesehatan_number: string | null;
         bpjs_ketenagakerjaan_number: string | null;
         sim_a_number: string | null;
@@ -52,6 +53,19 @@ type ProfileData = {
         account_holder_name: string;
         is_primary: boolean;
     }>;
+    profile_completion: {
+        completed: number;
+        total: number;
+        missing_count: number;
+        percent: number;
+        is_complete: boolean;
+        items: Array<{
+            key: string;
+            label: string;
+            complete: boolean;
+            description: string;
+        }>;
+    };
 };
 
 type PortalSummary = {
@@ -97,6 +111,21 @@ export default function PortalProfilePage({ pageTitle }: Props) {
     const [formProfile, setFormProfile] = useState({
         phone: '',
         address: '',
+        gender: '',
+        birth_date: '',
+        last_education: '',
+        marital_status: '',
+        children_count: '',
+        family_card_number: '',
+        ktp_number: '',
+        bpjs_kesehatan_number: '',
+        bpjs_ketenagakerjaan_number: '',
+        sim_a_number: '',
+        sim_b_number: '',
+        sim_c_number: '',
+        biological_mother_name: '',
+        emergency_contact_name: '',
+        emergency_contact_phone: '',
     });
 
     const [formBank, setFormBank] = useState({
@@ -116,9 +145,33 @@ export default function PortalProfilePage({ pageTitle }: Props) {
             setProfile(profileResponse.data);
 
             if (profileResponse.data.employee) {
+                const employee = profileResponse.data.employee;
+
                 setFormProfile({
-                    phone: profileResponse.data.employee.phone || '',
-                    address: profileResponse.data.employee.address || '',
+                    phone: employee.phone || '',
+                    address: employee.address || '',
+                    gender: employee.gender || '',
+                    birth_date: employee.birth_date || '',
+                    last_education: employee.last_education || '',
+                    marital_status: employee.marital_status || '',
+                    children_count:
+                        employee.children_count === null
+                            ? ''
+                            : String(employee.children_count),
+                    family_card_number: employee.family_card_number || '',
+                    ktp_number: employee.ktp_number || '',
+                    bpjs_kesehatan_number: employee.bpjs_kesehatan_number || '',
+                    bpjs_ketenagakerjaan_number:
+                        employee.bpjs_ketenagakerjaan_number || '',
+                    sim_a_number: employee.sim_a_number || '',
+                    sim_b_number: employee.sim_b_number || '',
+                    sim_c_number: employee.sim_c_number || '',
+                    biological_mother_name:
+                        employee.biological_mother_name || '',
+                    emergency_contact_name:
+                        employee.emergency_contact_name || '',
+                    emergency_contact_phone:
+                        employee.emergency_contact_phone || '',
                 });
             }
 
@@ -162,7 +215,13 @@ export default function PortalProfilePage({ pageTitle }: Props) {
         try {
             setIsSaving(true);
 
-            await requestApi('/portal/api/profile', 'PUT', formProfile);
+            await requestApi('/portal/api/profile', 'PUT', {
+                ...formProfile,
+                children_count:
+                    formProfile.children_count === ''
+                        ? null
+                        : Number(formProfile.children_count),
+            });
             notifyPortal('success', 'Profil berhasil diperbarui.');
 
             await loadData();
@@ -209,6 +268,16 @@ export default function PortalProfilePage({ pageTitle }: Props) {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const updateProfileField = (
+        field: keyof typeof formProfile,
+        value: string,
+    ) => {
+        setFormProfile((cur) => ({
+            ...cur,
+            [field]: value,
+        }));
     };
 
     const bankAccounts = profile?.bank_accounts || [];
@@ -280,6 +349,10 @@ export default function PortalProfilePage({ pageTitle }: Props) {
               {
                   label: 'No. KK',
                   value: profile.employee.family_card_number,
+              },
+              {
+                  label: 'No. KTP',
+                  value: profile.employee.ktp_number,
               },
               {
                   label: 'BPJS Kesehatan',
@@ -367,6 +440,68 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                 </div>
             </section>
 
+            {profile?.profile_completion && (
+                <section className="mb-5 rounded-[16px] border border-stone-200 bg-white px-5 py-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]">
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
+                                Kelengkapan profil
+                            </p>
+                            <h2 className="mt-1 text-xl font-bold tracking-[-0.04em] text-slate-950">
+                                {profile.profile_completion.percent}% lengkap
+                            </h2>
+                        </div>
+                        <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                profile.profile_completion.is_complete
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-amber-100 text-amber-900'
+                            }`}
+                        >
+                            {profile.profile_completion.is_complete
+                                ? 'Lengkap'
+                                : `${profile.profile_completion.missing_count} belum lengkap`}
+                        </span>
+                    </div>
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-stone-100">
+                        <div
+                            className={`h-full rounded-full ${
+                                profile.profile_completion.is_complete
+                                    ? 'bg-emerald-500'
+                                    : 'bg-amber-500'
+                            }`}
+                            style={{
+                                width: `${profile.profile_completion.percent}%`,
+                            }}
+                        />
+                    </div>
+                    <div className="mt-4 grid gap-2 md:grid-cols-2">
+                        {profile.profile_completion.items.map((item) => (
+                            <div
+                                key={item.key}
+                                className="flex items-start gap-2 rounded-[10px] border border-stone-200 bg-stone-50 px-3 py-2.5"
+                            >
+                                <CheckCircle2
+                                    className={`mt-0.5 size-4 shrink-0 ${
+                                        item.complete
+                                            ? 'text-emerald-600'
+                                            : 'text-stone-300'
+                                    }`}
+                                />
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-slate-900">
+                                        {item.label}
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                        {item.description}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
             <section className="rounded-[16px] bg-white px-5 py-5 shadow-[0_16px_42px_rgba(15,23,42,0.07)]">
                 <div className="flex items-center gap-3">
                     <span className="portal-primary-soft inline-flex size-11 items-center justify-center rounded-lg">
@@ -377,7 +512,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                             Informasi Pribadi
                         </p>
                         <h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">
-                            Data Kontak
+                            Data Diri & Identitas
                         </h2>
                     </div>
                 </div>
@@ -399,22 +534,120 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                 </div>
 
                 <form onSubmit={handleSaveProfile} className="mt-5 space-y-4">
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-900">
-                            Nomor Telepon
-                        </label>
-                        <input
-                            type="tel"
-                            value={formProfile.phone}
-                            onChange={(e) =>
-                                setFormProfile((cur) => ({
-                                    ...cur,
-                                    phone: e.target.value,
-                                }))
-                            }
-                            placeholder="+62812345678 atau 081234567890"
-                            className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
-                        />
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-900">
+                                Gender
+                            </label>
+                            <select
+                                value={formProfile.gender}
+                                onChange={(e) =>
+                                    updateProfileField('gender', e.target.value)
+                                }
+                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                            >
+                                <option value="">Pilih gender</option>
+                                <option value="male">Laki-laki</option>
+                                <option value="female">Perempuan</option>
+                                <option value="other">Lainnya</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-900">
+                                Tanggal Lahir
+                            </label>
+                            <input
+                                type="date"
+                                value={formProfile.birth_date}
+                                onChange={(e) =>
+                                    updateProfileField(
+                                        'birth_date',
+                                        e.target.value,
+                                    )
+                                }
+                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-900">
+                                Pendidikan Terakhir
+                            </label>
+                            <input
+                                type="text"
+                                value={formProfile.last_education}
+                                onChange={(e) =>
+                                    updateProfileField(
+                                        'last_education',
+                                        e.target.value.slice(0, 100),
+                                    )
+                                }
+                                placeholder="Contoh: S1"
+                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-900">
+                                Status Pernikahan
+                            </label>
+                            <select
+                                value={formProfile.marital_status}
+                                onChange={(e) =>
+                                    updateProfileField(
+                                        'marital_status',
+                                        e.target.value,
+                                    )
+                                }
+                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                            >
+                                <option value="">Pilih status</option>
+                                <option value="single">Belum menikah</option>
+                                <option value="married">Menikah</option>
+                                <option value="divorced">Cerai hidup</option>
+                                <option value="widowed">Cerai mati</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-900">
+                                Jumlah Anak
+                            </label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="99"
+                                value={formProfile.children_count}
+                                onChange={(e) =>
+                                    updateProfileField(
+                                        'children_count',
+                                        e.target.value,
+                                    )
+                                }
+                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-900">
+                                Nomor Telepon
+                            </label>
+                            <input
+                                type="tel"
+                                value={formProfile.phone}
+                                onChange={(e) =>
+                                    updateProfileField('phone', e.target.value)
+                                }
+                                placeholder="+62812345678 atau 081234567890"
+                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                                required
+                            />
+                        </div>
                     </div>
 
                     <div>
@@ -424,18 +657,87 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                         <textarea
                             value={formProfile.address}
                             onChange={(e) =>
-                                setFormProfile((cur) => ({
-                                    ...cur,
-                                    address: e.target.value.slice(0, 500),
-                                }))
+                                updateProfileField(
+                                    'address',
+                                    e.target.value.slice(0, 500),
+                                )
                             }
                             placeholder="Masukkan alamat lengkap Anda"
                             maxLength={500}
                             className="mt-2 min-h-24 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none focus:border-stone-400"
+                            required
                         />
                         <p className="mt-1 text-xs text-slate-500">
                             {formProfile.address.length}/500 karakter
                         </p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {[
+                            ['family_card_number', 'No. KK'],
+                            ['ktp_number', 'No. KTP'],
+                            ['bpjs_kesehatan_number', 'BPJS Kesehatan'],
+                            [
+                                'bpjs_ketenagakerjaan_number',
+                                'BPJS Ketenagakerjaan',
+                            ],
+                            ['sim_a_number', 'SIM A'],
+                            ['sim_b_number', 'SIM B'],
+                            ['sim_c_number', 'SIM C'],
+                        ].map(([field, label]) => (
+                            <div key={field}>
+                                <label className="block text-sm font-semibold text-slate-900">
+                                    {label}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={
+                                        formProfile[
+                                            field as keyof typeof formProfile
+                                        ]
+                                    }
+                                    onChange={(e) =>
+                                        updateProfileField(
+                                            field as keyof typeof formProfile,
+                                            e.target.value.slice(0, 32),
+                                        )
+                                    }
+                                    className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {[
+                            ['biological_mother_name', 'Nama Ibu Kandung'],
+                            ['emergency_contact_name', 'Kontak Darurat'],
+                            [
+                                'emergency_contact_phone',
+                                'No. Telepon Kontak Darurat',
+                            ],
+                        ].map(([field, label]) => (
+                            <div key={field}>
+                                <label className="block text-sm font-semibold text-slate-900">
+                                    {label}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={
+                                        formProfile[
+                                            field as keyof typeof formProfile
+                                        ]
+                                    }
+                                    onChange={(e) =>
+                                        updateProfileField(
+                                            field as keyof typeof formProfile,
+                                            e.target.value.slice(0, 100),
+                                        )
+                                    }
+                                    className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                                />
+                            </div>
+                        ))}
                     </div>
 
                     <button

@@ -119,33 +119,37 @@ class ScheduleController extends Controller
         $ownerId = $request->user()->accountOwnerId();
         $templates = $this->shiftTemplates($ownerId);
         $pattern = array_values($validated['pattern']);
+        $employeeIds = $this->rosterEmployeeIds($validated, $ownerId);
 
         $start = Carbon::parse($validated['start_date'])->startOfDay();
         $end = Carbon::parse($validated['end_date'])->startOfDay();
-        $cursor = $start->copy();
 
         $rows = [];
-        $index = 0;
 
-        while ($cursor->lte($end)) {
-            $shiftCode = $pattern[$index % count($pattern)];
-            $template = $templates[$shiftCode] ?? $templates['OFF'];
+        foreach ($employeeIds as $employeeId) {
+            $cursor = $start->copy();
+            $index = 0;
 
-            $rows[] = [
-                'user_id' => $ownerId,
-                'employee_id' => $validated['employee_id'],
-                'work_date' => $cursor->toDateString(),
-                'shift_code' => $shiftCode,
-                'start_time' => $template['start_time'],
-                'end_time' => $template['end_time'],
-                'is_day_off' => $template['is_day_off'],
-                'notes' => 'Auto roster',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            while ($cursor->lte($end)) {
+                $shiftCode = $pattern[$index % count($pattern)];
+                $template = $templates[$shiftCode] ?? $templates['OFF'];
 
-            $index++;
-            $cursor->addDay();
+                $rows[] = [
+                    'user_id' => $ownerId,
+                    'employee_id' => $employeeId,
+                    'work_date' => $cursor->toDateString(),
+                    'shift_code' => $shiftCode,
+                    'start_time' => $template['start_time'],
+                    'end_time' => $template['end_time'],
+                    'is_day_off' => $template['is_day_off'],
+                    'notes' => 'Auto roster',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                $index++;
+                $cursor->addDay();
+            }
         }
 
         EmployeeSchedule::query()->upsert(
@@ -155,6 +159,36 @@ class ScheduleController extends Controller
         );
 
         return back();
+    }
+
+    /**
+     * Resolve which employees should receive an auto-generated roster.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array<int, int>
+     */
+    private function rosterEmployeeIds(array $validated, int $ownerId): array
+    {
+        $scope = $validated['apply_scope'] ?? 'single';
+
+        if ($scope === 'all') {
+            return Employee::query()
+                ->where('user_id', $ownerId)
+                ->orderBy('id')
+                ->pluck('id')
+                ->map(fn (int $id): int => $id)
+                ->all();
+        }
+
+        if ($scope === 'selected') {
+            return collect($validated['target_employee_ids'] ?? [])
+                ->map(fn (mixed $id): int => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+        }
+
+        return [(int) $validated['employee_id']];
     }
 
     /**

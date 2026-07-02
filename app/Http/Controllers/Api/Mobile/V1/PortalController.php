@@ -424,6 +424,8 @@ class PortalController extends Controller
                 'kasbons' => route('portal.kasbons'),
                 'payroll' => route('portal.payroll'),
                 'activity' => route('portal.activity'),
+                'client_visits' => route('portal.activity.client-visits'),
+                'performance_activity' => route('portal.activity.performance'),
                 'profile' => route('portal.profile'),
                 'dashboard' => route('portal.index'),
             ],

@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import bankAccount from './bank-account'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 export const show = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -17,7 +17,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 show.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ show.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 show.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -36,7 +36,7 @@ show.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 show.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -46,7 +46,7 @@ show.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 const showForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -56,7 +56,7 @@ const showForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 showForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -66,7 +66,7 @@ showForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::show
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:21
 * @route '/portal/api/profile'
 */
 showForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -83,7 +83,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/portal/api/profile'
 */
 export const update = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -98,7 +98,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/portal/api/profile'
 */
 update.url = (options?: RouteQueryOptions) => {
@@ -107,7 +107,7 @@ update.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/portal/api/profile'
 */
 update.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -117,7 +117,7 @@ update.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/portal/api/profile'
 */
 const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -132,7 +132,7 @@ const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:77
 * @route '/portal/api/profile'
 */
 updateForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

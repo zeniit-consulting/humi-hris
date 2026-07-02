@@ -152,6 +152,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         Route::post('payrolls/thr/generate', [PayrollController::class, 'generateThr'])->name('payrolls.thr.generate');
         Route::post('payrolls/{payrollRun}/save', [PayrollController::class, 'save'])->name('payrolls.save');
         Route::post('payrolls/{payrollRun}/send-payslips', [PayrollController::class, 'sendPayslips'])->name('payrolls.send-payslips');
+        Route::put('payrolls/{payrollRun}/items/{payrollItem}', [PayrollController::class, 'updateItem'])->name('payrolls.items.update');
         Route::post('payrolls/{payrollRun}/items/{payrollItem}/send-payslip', [PayrollController::class, 'sendPayslip'])->name('payrolls.items.send-payslip');
         Route::get('payrolls/{payrollRun}/export/mandiri', [PayrollController::class, 'exportMandiri'])->name('payrolls.export.mandiri');
         Route::get('payrolls/{payrollRun}/export/bca', [PayrollController::class, 'exportBca'])->name('payrolls.export.bca');

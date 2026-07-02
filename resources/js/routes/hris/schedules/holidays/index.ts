@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::sync
-* @see app/Http/Controllers/Hris/ScheduleController.php:243
+* @see app/Http/Controllers/Hris/ScheduleController.php:277
 * @route '/hris/schedules/holidays/sync'
 */
 export const sync = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ sync.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::sync
-* @see app/Http/Controllers/Hris/ScheduleController.php:243
+* @see app/Http/Controllers/Hris/ScheduleController.php:277
 * @route '/hris/schedules/holidays/sync'
 */
 sync.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ sync.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::sync
-* @see app/Http/Controllers/Hris/ScheduleController.php:243
+* @see app/Http/Controllers/Hris/ScheduleController.php:277
 * @route '/hris/schedules/holidays/sync'
 */
 sync.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ sync.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::sync
-* @see app/Http/Controllers/Hris/ScheduleController.php:243
+* @see app/Http/Controllers/Hris/ScheduleController.php:277
 * @route '/hris/schedules/holidays/sync'
 */
 const syncForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ const syncForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::sync
-* @see app/Http/Controllers/Hris/ScheduleController.php:243
+* @see app/Http/Controllers/Hris/ScheduleController.php:277
 * @route '/hris/schedules/holidays/sync'
 */
 syncForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

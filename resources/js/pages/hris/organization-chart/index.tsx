@@ -104,7 +104,9 @@ const getDisplayChildren = (node: OrgNode): OrgNode[] => {
     }
 
     if (node.position_level === 1) {
-        const hasManagerLayer = node.children.some((child) => child.position_level === 2);
+        const hasManagerLayer = node.children.some(
+            (child) => child.position_level === 2,
+        );
 
         if (!hasManagerLayer) {
             const flattened = collectLevelThreeAndFour(node.children);
@@ -155,37 +157,42 @@ function OrgPersonCard({ node }: { node: OrgNode }) {
                   : 'border-slate-300 bg-white shadow-slate-300/35';
 
     const mainEmployee = employees[0];
+    const cardSizeClass = isExecutiveLevel
+        ? hasMoreEmployees
+            ? 'w-[220px] min-w-[220px] max-w-[220px] rounded-[16px] px-2.5 py-2'
+            : 'w-[190px] min-w-[190px] max-w-[190px] rounded-[16px] px-2.5 py-2'
+        : hasMoreEmployees
+          ? 'w-[150px] min-w-[150px] max-w-[150px] rounded-[12px] px-2 py-1.5'
+          : 'w-[119px] min-w-[119px] max-w-[119px] rounded-[12px] px-2 py-1.5';
+    const cardTextClass = isLightCard ? 'text-slate-900' : 'text-white';
+    const secondaryTextClass = isLightCard ? 'text-slate-600' : 'text-white/90';
+    const avatarClass = isLightCard
+        ? 'border-slate-400/70 bg-white'
+        : 'border-white/70 bg-white/20';
+    const avatarFallbackClass = isLightCard
+        ? 'bg-white text-slate-700'
+        : 'bg-white/20 text-white';
 
     const MainCard = (
         <div
-            className={`border shadow-md ${
-                isExecutiveLevel
-                    ? 'w-[190px] min-w-[190px] max-w-[190px] rounded-[16px] px-2.5 py-2'
-                    : 'w-[119px] min-w-[119px] max-w-[119px] rounded-[12px] px-2 py-1.5'
-            } ${cardToneClass} ${
-                isLightCard ? 'text-slate-900' : 'text-white'
-            }`}
+            className={`border shadow-md ${cardSizeClass} ${cardToneClass} ${cardTextClass}`}
         >
-            <div className={`flex items-center ${isExecutiveLevel ? 'gap-2' : 'gap-1.5'}`}>
+            <div
+                className={`flex items-center ${isExecutiveLevel ? 'gap-2' : 'gap-1.5'}`}
+            >
                 <Avatar
-                    className={`${
-                        isLightCard
-                            ? 'border-slate-400/70 bg-white'
-                            : 'border-white/70 bg-white/20'
-                    } border ${
+                    className={`${avatarClass} border ${
                         isExecutiveLevel ? 'size-7' : 'size-5'
                     }`}
                 >
                     <AvatarFallback
-                        className={`font-semibold ${
-                            isLightCard
-                                ? 'bg-white text-slate-700'
-                                : 'bg-white/20 text-white'
-                        } ${
+                        className={`font-semibold ${avatarFallbackClass} ${
                             isExecutiveLevel ? 'text-[9px]' : 'text-[7px]'
                         }`}
                     >
-                        {isVacant ? 'VC' : initials(mainEmployee?.full_name ?? '')}
+                        {isVacant
+                            ? 'VC'
+                            : initials(mainEmployee?.full_name ?? '')}
                     </AvatarFallback>
                 </Avatar>
 
@@ -199,10 +206,8 @@ function OrgPersonCard({ node }: { node: OrgNode }) {
                     </p>
                     <p
                         className={`truncate font-medium uppercase ${
-                            isLightCard ? 'text-slate-600' : 'text-white/90'
-                        } ${
-                            isExecutiveLevel ? 'text-[8px]' : 'text-[7px]'
-                        }`}
+                            secondaryTextClass
+                        } ${isExecutiveLevel ? 'text-[8px]' : 'text-[7px]'}`}
                     >
                         {node.position_name ?? node.position_level_label}
                     </p>
@@ -216,52 +221,61 @@ function OrgPersonCard({ node }: { node: OrgNode }) {
     }
 
     return (
-        <div className="relative flex flex-col">
-            {MainCard}
-
-            {/* Show additional employees with connecting lines */}
-            <div className="relative pt-2">
-                <div
-                    aria-hidden
-                    className="absolute top-0 left-1/2 h-2 w-px bg-slate-400"
-                />
-
-                <ul className="relative left-1/2 w-fit flex flex-col gap-0.5">
-                    {employees.slice(1).map((emp, index) => {
-                        const isLast = index === employees.length - 2;
-                        const verticalLineClass = isLast
-                            ? 'top-0 bottom-1/2'
-                            : 'top-0 bottom-0';
-
-                        return (
-                            <li
-                                key={emp.id}
-                                className={`relative pl-5 ${isLast ? '' : 'pb-2'}`}
-                            >
-                                <div
-                                    aria-hidden
-                                    className={`absolute left-0 w-px bg-slate-400 ${verticalLineClass}`}
-                                />
-                                <div
-                                    aria-hidden
-                                    className="absolute top-1/2 left-0 h-px w-5 -translate-y-1/2 bg-slate-400"
-                                />
-                                <div
-                                    className={`border shadow-sm rounded-[12px] px-2 py-1 text-[8px] ${cardToneClass} ${
-                                        isLightCard
-                                            ? 'text-slate-900'
-                                            : 'text-white'
-                                    }`}
-                                >
-                                    <p className="truncate font-semibold uppercase">
-                                        {emp.full_name}
-                                    </p>
-                                </div>
-                            </li>
-                        );
-                    })}
-                </ul>
+        <div
+            className={`border shadow-md ${cardSizeClass} ${cardToneClass} ${cardTextClass}`}
+        >
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+                <p
+                    className={`min-w-0 flex-1 truncate font-medium uppercase ${secondaryTextClass} ${
+                        isExecutiveLevel ? 'text-[8px]' : 'text-[7px]'
+                    }`}
+                >
+                    {node.position_name ?? node.position_level_label}
+                </p>
+                <span
+                    className={`shrink-0 rounded-full px-1.5 py-0.5 font-semibold ${
+                        isLightCard
+                            ? 'bg-slate-200 text-slate-700'
+                            : 'bg-white/20 text-white'
+                    } ${isExecutiveLevel ? 'text-[8px]' : 'text-[7px]'}`}
+                >
+                    {employeeCount}
+                </span>
             </div>
+
+            <ul className="space-y-1">
+                {employees.map((emp) => (
+                    <li
+                        key={emp.id}
+                        className={`flex min-w-0 items-center ${
+                            isExecutiveLevel ? 'gap-2' : 'gap-1.5'
+                        }`}
+                    >
+                        <Avatar
+                            className={`${avatarClass} shrink-0 border ${
+                                isExecutiveLevel ? 'size-7' : 'size-5'
+                            }`}
+                        >
+                            <AvatarFallback
+                                className={`font-semibold ${avatarFallbackClass} ${
+                                    isExecutiveLevel
+                                        ? 'text-[9px]'
+                                        : 'text-[7px]'
+                                }`}
+                            >
+                                {initials(emp.full_name)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <p
+                            className={`min-w-0 flex-1 truncate font-semibold tracking-wide uppercase ${
+                                isExecutiveLevel ? 'text-[10px]' : 'text-[9px]'
+                            }`}
+                        >
+                            {emp.full_name}
+                        </p>
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 }
@@ -282,7 +296,10 @@ function VerticalTier({ nodes }: { nodes: OrgNode[] }) {
                         : 'top-0 bottom-0';
 
                     return (
-                        <li key={child.id} className={`relative pl-5 ${isLast ? '' : 'pb-4'}`}>
+                        <li
+                            key={child.id}
+                            className={`relative pl-5 ${isLast ? '' : 'pb-4'}`}
+                        >
                             <div
                                 aria-hidden
                                 className={`absolute left-0 w-px bg-slate-400 ${verticalLineClass}`}
@@ -320,9 +337,9 @@ function EmployeeNode({
             className={`relative flex flex-col ${
                 isHorizontalConnection
                     ? `items-center ${horizontalSpacing} ${
-                isRoot
-                    ? 'pt-0'
-                    : "pt-6 before:absolute before:top-0 before:left-0 before:h-px before:w-1/2 before:bg-slate-400 before:content-[''] after:absolute after:top-0 after:right-0 after:h-px after:w-1/2 after:bg-slate-400 after:content-[''] first:before:hidden last:after:hidden"
+                          isRoot
+                              ? 'pt-0'
+                              : "pt-6 before:absolute before:top-0 before:left-0 before:h-px before:w-1/2 before:bg-slate-400 before:content-[''] after:absolute after:top-0 after:right-0 after:h-px after:w-1/2 after:bg-slate-400 after:content-[''] first:before:hidden last:after:hidden"
                       }`
                     : 'items-start'
             }`}
@@ -457,7 +474,8 @@ export default function OrganizationChartPage({ chart }: PageProps) {
 
                         {filteredChart.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
-                                Belum ada data jabatan untuk membentuk struktur organisasi.
+                                Belum ada data jabatan untuk membentuk struktur
+                                organisasi.
                             </p>
                         ) : (
                             <div className="min-w-max px-4 py-2">

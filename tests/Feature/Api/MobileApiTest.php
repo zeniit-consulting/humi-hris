@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeBankAccount;
 use App\Models\EmployeeDeduction;
 use App\Models\EmployeeSchedule;
 use App\Models\PayrollItem;
@@ -244,6 +245,143 @@ class MobileApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data.items')
             ->assertJsonPath('data.items.0.employee_id', $selfEmployee->id);
+    }
+
+    public function test_self_service_user_can_update_personal_identity_profile(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $portalUser = User::factory()->create([
+            'email' => 'portal+employee-self@local.portal',
+            'phone' => '081234567890',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'email' => null,
+            'phone' => '081234567890',
+            'address' => 'Alamat lama',
+        ]);
+
+        Sanctum::actingAs($portalUser, ['mobile']);
+
+        $response = $this->putJson('/api/mobile/v1/profile', [
+            'phone' => '081234567891',
+            'address' => 'Jl. Mandiri No. 10',
+            'gender' => 'female',
+            'birth_date' => '1996-08-17',
+            'last_education' => 'S1',
+            'marital_status' => 'married',
+            'children_count' => 2,
+            'family_card_number' => '3174091708960001',
+            'ktp_number' => '3174095708960001',
+            'bpjs_kesehatan_number' => '0001234567890',
+            'bpjs_ketenagakerjaan_number' => '19001234567',
+            'sim_a_number' => 'SIM-A-001',
+            'sim_b_number' => 'SIM-B-001',
+            'sim_c_number' => 'SIM-C-001',
+            'biological_mother_name' => 'Siti Aminah',
+            'emergency_contact_name' => 'Budi Santoso',
+            'emergency_contact_phone' => '081298765432',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.phone', '081234567891')
+            ->assertJsonPath('data.address', 'Jl. Mandiri No. 10')
+            ->assertJsonPath('data.gender', 'female')
+            ->assertJsonPath('data.ktp_number', '3174095708960001')
+            ->assertJsonPath('data.bpjs_kesehatan_number', '0001234567890')
+            ->assertJsonPath('data.sim_c_number', 'SIM-C-001');
+
+        $employee->refresh();
+
+        $this->assertSame('female', $employee->gender);
+        $this->assertSame('1996-08-17', $employee->birth_date?->format('Y-m-d'));
+        $this->assertSame('S1', $employee->last_education);
+        $this->assertSame('married', $employee->marital_status);
+        $this->assertSame(2, $employee->children_count);
+        $this->assertSame('3174091708960001', $employee->family_card_number);
+        $this->assertSame('3174095708960001', $employee->ktp_number);
+        $this->assertSame('0001234567890', $employee->bpjs_kesehatan_number);
+        $this->assertSame('19001234567', $employee->bpjs_ketenagakerjaan_number);
+        $this->assertSame('SIM-A-001', $employee->sim_a_number);
+        $this->assertSame('SIM-B-001', $employee->sim_b_number);
+        $this->assertSame('SIM-C-001', $employee->sim_c_number);
+        $this->assertSame('Siti Aminah', $employee->biological_mother_name);
+        $this->assertSame('Budi Santoso', $employee->emergency_contact_name);
+        $this->assertSame('081298765432', $employee->emergency_contact_phone);
+
+        $this->assertSame('081234567891', $portalUser->refresh()->phone);
+
+        $this->getJson('/api/mobile/v1/profile')
+            ->assertOk()
+            ->assertJsonPath('data.employee.id', $employee->id)
+            ->assertJsonPath('data.employee.phone', '081234567891');
+    }
+
+    public function test_profile_show_includes_self_service_completion_checklist(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $portalUser = User::factory()->create([
+            'email' => 'portal+incomplete@local.portal',
+            'phone' => '081234567890',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'email' => null,
+            'phone' => '081234567890',
+            'address' => null,
+            'ktp_number' => null,
+            'bpjs_kesehatan_number' => null,
+            'bpjs_ketenagakerjaan_number' => null,
+            'emergency_contact_name' => null,
+            'emergency_contact_phone' => null,
+        ]);
+
+        Sanctum::actingAs($portalUser, ['mobile']);
+
+        $this->getJson('/api/mobile/v1/profile')
+            ->assertOk()
+            ->assertJsonPath('data.profile_completion.total', 5)
+            ->assertJsonPath('data.profile_completion.completed', 1)
+            ->assertJsonPath('data.profile_completion.missing_count', 4)
+            ->assertJsonPath('data.profile_completion.items.0.key', 'personal_identity')
+            ->assertJsonPath('data.profile_completion.items.0.complete', false)
+            ->assertJsonPath('data.profile_completion.items.4.key', 'bank_account')
+            ->assertJsonPath('data.profile_completion.items.4.complete', false);
+
+        EmployeeBankAccount::factory()->create([
+            'employee_id' => $employee->id,
+            'is_primary' => true,
+        ]);
+
+        $employee->update([
+            'address' => 'Jl. Lengkap No. 1',
+            'ktp_number' => '3174095708960001',
+            'bpjs_kesehatan_number' => '0001234567890',
+            'bpjs_ketenagakerjaan_number' => '19001234567',
+            'emergency_contact_name' => 'Budi Santoso',
+            'emergency_contact_phone' => '081298765432',
+        ]);
+
+        $this->getJson('/api/mobile/v1/profile')
+            ->assertOk()
+            ->assertJsonPath('data.profile_completion.completed', 5)
+            ->assertJsonPath('data.profile_completion.missing_count', 0)
+            ->assertJsonPath('data.profile_completion.percent', 100);
     }
 
     public function test_portal_summary_does_not_show_yesterday_open_attendance_as_today(): void

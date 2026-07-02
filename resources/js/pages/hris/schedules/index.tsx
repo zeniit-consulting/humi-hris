@@ -20,6 +20,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -30,6 +31,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SearchableSelect from '@/components/ui/searchable-select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import {
     index as schedulesIndex,
@@ -94,6 +102,8 @@ type PageProps = {
 
 type RosterFormData = {
     employee_id: string;
+    apply_scope: 'single' | 'selected' | 'all';
+    target_employee_ids: string[];
     start_date: string;
     end_date: string;
     pattern_text: string;
@@ -228,6 +238,8 @@ export default function SchedulePage() {
 
     const rosterForm = useForm<RosterFormData>({
         employee_id: filters.employee_id,
+        apply_scope: 'single',
+        target_employee_ids: [],
         start_date: `${filters.month}-01`,
         end_date: `${filters.month}-07`,
         pattern_text: rosterPatternPlaceholder,
@@ -300,6 +312,8 @@ export default function SchedulePage() {
         rosterForm.clearErrors();
         rosterForm.setData({
             employee_id: filterState.employee_id,
+            apply_scope: 'single',
+            target_employee_ids: [],
             start_date: `${filterState.month}-01`,
             end_date: `${filterState.month}-07`,
             pattern_text: rosterPatternPlaceholder,
@@ -350,6 +364,31 @@ export default function SchedulePage() {
         );
     };
 
+    const updateRosterScope = (scope: RosterFormData['apply_scope']) => {
+        rosterForm.setData({
+            ...rosterForm.data,
+            apply_scope: scope,
+            target_employee_ids:
+                scope === 'selected' &&
+                rosterForm.data.target_employee_ids.length === 0
+                    ? [rosterForm.data.employee_id].filter(Boolean)
+                    : rosterForm.data.target_employee_ids,
+        });
+    };
+
+    const toggleRosterTargetEmployee = (employeeId: string) => {
+        rosterForm.setData({
+            ...rosterForm.data,
+            target_employee_ids: rosterForm.data.target_employee_ids.includes(
+                employeeId,
+            )
+                ? rosterForm.data.target_employee_ids.filter(
+                      (id) => id !== employeeId,
+                  )
+                : [...rosterForm.data.target_employee_ids, employeeId],
+        });
+    };
+
     const saveSchedule = () => {
         router.post(
             scheduleStore.url(),
@@ -379,6 +418,9 @@ export default function SchedulePage() {
 
         rosterForm.transform((data) => ({
             employee_id: data.employee_id,
+            apply_scope: data.apply_scope,
+            target_employee_ids:
+                data.apply_scope === 'selected' ? data.target_employee_ids : [],
             start_date: data.start_date,
             end_date: data.end_date,
             pattern,
@@ -1173,6 +1215,41 @@ export default function SchedulePage() {
 
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="grid gap-2 md:col-span-2">
+                            <Label htmlFor="roster_apply_scope">
+                                Terapkan Jadwal
+                            </Label>
+                            <Select
+                                value={rosterForm.data.apply_scope}
+                                onValueChange={(value) =>
+                                    updateRosterScope(
+                                        value as RosterFormData['apply_scope'],
+                                    )
+                                }
+                            >
+                                <SelectTrigger
+                                    id="roster_apply_scope"
+                                    className="w-full"
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="single">
+                                        Ke karyawan ini
+                                    </SelectItem>
+                                    <SelectItem value="selected">
+                                        Ke karyawan lain
+                                    </SelectItem>
+                                    <SelectItem value="all">
+                                        Ke seluruh karyawan
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError
+                                message={rosterForm.errors.apply_scope}
+                            />
+                        </div>
+
+                        <div className="grid gap-2 md:col-span-2">
                             <Label htmlFor="roster_employee">Karyawan</Label>
                             <SearchableSelect
                                 id="roster_employee"
@@ -1202,6 +1279,54 @@ export default function SchedulePage() {
                                 message={rosterForm.errors.employee_id}
                             />
                         </div>
+
+                        {rosterForm.data.apply_scope === 'selected' ? (
+                            <div className="grid gap-2 md:col-span-2">
+                                <Label>Karyawan Tujuan</Label>
+                                <div className="max-h-56 overflow-y-auto rounded-md border p-2">
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        {employees.map((employee) => {
+                                            const employeeId = String(
+                                                employee.id,
+                                            );
+
+                                            return (
+                                                <label
+                                                    key={employee.id}
+                                                    className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/60"
+                                                >
+                                                    <Checkbox
+                                                        checked={rosterForm.data.target_employee_ids.includes(
+                                                            employeeId,
+                                                        )}
+                                                        onCheckedChange={() =>
+                                                            toggleRosterTargetEmployee(
+                                                                employeeId,
+                                                            )
+                                                        }
+                                                    />
+                                                    <span className="truncate">
+                                                        {employee.label}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <InputError
+                                    message={
+                                        rosterForm.errors.target_employee_ids
+                                    }
+                                />
+                            </div>
+                        ) : null}
+
+                        {rosterForm.data.apply_scope === 'all' ? (
+                            <div className="rounded-md border bg-muted/30 p-3 text-sm md:col-span-2">
+                                Roster akan diterapkan ke {employees.length}{' '}
+                                karyawan.
+                            </div>
+                        ) : null}
 
                         <div className="grid gap-2 md:col-span-2">
                             <Label htmlFor="pattern_text">Pola Shift</Label>

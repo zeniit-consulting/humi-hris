@@ -2,9 +2,12 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     CalendarDays,
     Calculator,
+    AlertTriangle,
+    CheckCircle2,
     Coins,
     Download,
     Filter,
+    Pencil,
     Send,
     Sparkles,
 } from 'lucide-react';
@@ -12,7 +15,6 @@ import { useMemo, useState } from 'react';
 import { LockedFeatureBanner } from '@/components/locked-feature-banner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Card,
     CardContent,
@@ -20,6 +22,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -101,6 +104,19 @@ type PageProps = {
         sub_company_label: string;
     }>;
     subCompanies: Array<{ id: number; label: string }>;
+    payrollReadiness: {
+        period: string;
+        status: 'ready' | 'warning' | 'error';
+        warning_count: number;
+        error_count: number;
+        checks: Array<{
+            key: string;
+            label: string;
+            complete: boolean;
+            severity: 'warning' | 'error';
+            description: string;
+        }>;
+    };
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -117,6 +133,9 @@ const formatCurrency = (value: null | number | string) => {
         maximumFractionDigits: 0,
     }).format(Number(value ?? 0));
 };
+
+const formNumber = (value: null | number | string | undefined) =>
+    value == null ? '' : String(Math.round(Number(value)));
 
 const parseEmployeeLabel = (label: string) => {
     const [code, ...nameParts] = label.split(' - ');
@@ -155,8 +174,8 @@ export default function PayrollPage() {
         sub_company_id,
         employeeOptions,
         subCompanies,
-    } =
-        usePage<PageProps>().props;
+        payrollReadiness,
+    } = usePage<PageProps>().props;
     const { subscription } = usePage().props;
     const isLocked =
         subscription?.locked_features?.includes('payroll') ?? false;
@@ -174,6 +193,19 @@ export default function PayrollPage() {
         period,
         employee_scope: 'all',
         excluded_employee_ids: [] as number[],
+    });
+    const [editingItem, setEditingItem] = useState<PayrollItem | null>(null);
+    const editItemForm = useForm({
+        base_salary: '',
+        allowances_total: '',
+        overtime_hours: '',
+        overtime_pay: '',
+        pph21_rate: '',
+        pph21_allowance: '',
+        pph21_deduction: '',
+        pph21_company_borne: '',
+        kasbon_deduction: '',
+        denda_deduction: '',
     });
     const thrForm = useForm({ reference_date: '' });
 
@@ -264,6 +296,39 @@ export default function PayrollPage() {
         thrForm.post('/hris/payrolls/thr/generate', {
             preserveScroll: true,
             onSuccess: () => setGenerateDialogOpen(false),
+        });
+    };
+
+    const startEditItem = (item: PayrollItem) => {
+        setEditingItem(item);
+        editItemForm.setData({
+            base_salary: formNumber(item.base_salary),
+            allowances_total: formNumber(item.allowances_total),
+            overtime_hours: String(Number(item.overtime_hours ?? 0)),
+            overtime_pay: formNumber(item.overtime_pay),
+            pph21_rate: formNumber(item.pph21_rate),
+            pph21_allowance: formNumber(item.pph21_allowance),
+            pph21_deduction: formNumber(item.pph21_deduction),
+            pph21_company_borne: formNumber(item.pph21_company_borne),
+            kasbon_deduction: formNumber(item.kasbon_deduction),
+            denda_deduction: formNumber(item.denda_deduction),
+        });
+    };
+
+    const closeEditItem = () => {
+        setEditingItem(null);
+        editItemForm.clearErrors();
+        editItemForm.reset();
+    };
+
+    const submitEditItem = () => {
+        if (!run || !editingItem) {
+            return;
+        }
+
+        editItemForm.put(`/hris/payrolls/${run.id}/items/${editingItem.id}`, {
+            preserveScroll: true,
+            onSuccess: closeEditItem,
         });
     };
 
@@ -491,6 +556,65 @@ export default function PayrollPage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                {type === 'regular' && run && !run.is_saved && (
+                    <Card
+                        className={
+                            payrollReadiness.status === 'ready'
+                                ? 'border-emerald-200 bg-emerald-50/60'
+                                : payrollReadiness.status === 'error'
+                                  ? 'border-red-200 bg-red-50/60'
+                                  : 'border-amber-200 bg-amber-50/60'
+                        }
+                    >
+                        <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                {payrollReadiness.status === 'ready' ? (
+                                    <CheckCircle2 className="size-4 text-emerald-700" />
+                                ) : (
+                                    <AlertTriangle className="size-4 text-amber-700" />
+                                )}
+                                Checklist sebelum payroll disimpan
+                            </CardTitle>
+                            <CardDescription>
+                                {payrollReadiness.warning_count === 0 &&
+                                payrollReadiness.error_count === 0
+                                    ? 'Payroll siap disimpan.'
+                                    : `${payrollReadiness.warning_count} warning dan ${payrollReadiness.error_count} error ditemukan. Warning tidak memblokir penyimpanan.`}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-2 md:grid-cols-2">
+                                {payrollReadiness.checks.map((check) => (
+                                    <div
+                                        key={check.key}
+                                        className="flex items-start gap-2 rounded-md border border-white/70 bg-white/70 px-3 py-2"
+                                    >
+                                        {check.complete ? (
+                                            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" />
+                                        ) : (
+                                            <AlertTriangle
+                                                className={`mt-0.5 size-4 shrink-0 ${
+                                                    check.severity === 'error'
+                                                        ? 'text-red-700'
+                                                        : 'text-amber-700'
+                                                }`}
+                                            />
+                                        )}
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-slate-950">
+                                                {check.label}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {check.description}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {type === 'thr' ? (
                     <div className="grid gap-4 md:grid-cols-2">
@@ -873,31 +997,50 @@ export default function PayrollPage() {
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-3 text-right">
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() =>
-                                                            handleSendPayslip(
-                                                                item,
-                                                            )
-                                                        }
-                                                        disabled={
-                                                            !run?.is_saved ||
-                                                            !item.can_send_payslip ||
-                                                            sendingPayslipItemIds.includes(
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                startEditItem(
+                                                                    item,
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                run?.is_saved
+                                                            }
+                                                            className="whitespace-nowrap"
+                                                        >
+                                                            <Pencil className="size-4" />
+                                                            Edit
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                handleSendPayslip(
+                                                                    item,
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                !run?.is_saved ||
+                                                                !item.can_send_payslip ||
+                                                                sendingPayslipItemIds.includes(
+                                                                    item.id,
+                                                                )
+                                                            }
+                                                            className="whitespace-nowrap"
+                                                        >
+                                                            <Send className="size-4" />
+                                                            {sendingPayslipItemIds.includes(
                                                                 item.id,
                                                             )
-                                                        }
-                                                        className="whitespace-nowrap"
-                                                    >
-                                                        <Send className="size-4" />
-                                                        {sendingPayslipItemIds.includes(
-                                                            item.id,
-                                                        )
-                                                            ? 'Queue...'
-                                                            : 'Kirim WA'}
-                                                    </Button>
+                                                                ? 'Queue...'
+                                                                : 'Kirim WA'}
+                                                        </Button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -1089,8 +1232,8 @@ export default function PayrollPage() {
                                     )}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Centang karyawan yang tidak ingin
-                                    diikutkan pada payroll periode ini.
+                                    Centang karyawan yang tidak ingin diikutkan
+                                    pada payroll periode ini.
                                 </p>
                             </div>
                         ) : null}
@@ -1132,6 +1275,212 @@ export default function PayrollPage() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <Dialog
+                open={editingItem !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        closeEditItem();
+                    }
+                }}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Item Payroll</DialogTitle>
+                        <DialogDescription>
+                            Ubah nominal payroll karyawan sebelum payroll
+                            disimpan. Total potongan dan take home pay dihitung
+                            ulang otomatis.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {editingItem ? (
+                        <div className="grid gap-4">
+                            <div className="rounded-md bg-muted/50 px-3 py-2 text-sm">
+                                <p className="font-medium">
+                                    {editingItem.employee_label}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {editingItem.sub_company_label}
+                                </p>
+                            </div>
+
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <PayrollEditField
+                                    id="edit_base_salary"
+                                    label="Gaji Pokok"
+                                    value={editItemForm.data.base_salary}
+                                    error={editItemForm.errors.base_salary}
+                                    onChange={(value) =>
+                                        editItemForm.setData(
+                                            'base_salary',
+                                            value,
+                                        )
+                                    }
+                                />
+                                <PayrollEditField
+                                    id="edit_allowances_total"
+                                    label="Tunjangan"
+                                    value={editItemForm.data.allowances_total}
+                                    error={editItemForm.errors.allowances_total}
+                                    onChange={(value) =>
+                                        editItemForm.setData(
+                                            'allowances_total',
+                                            value,
+                                        )
+                                    }
+                                />
+                                <PayrollEditField
+                                    id="edit_overtime_hours"
+                                    label="Jam Lembur"
+                                    value={editItemForm.data.overtime_hours}
+                                    error={editItemForm.errors.overtime_hours}
+                                    onChange={(value) =>
+                                        editItemForm.setData(
+                                            'overtime_hours',
+                                            value,
+                                        )
+                                    }
+                                />
+                                <PayrollEditField
+                                    id="edit_overtime_pay"
+                                    label="Upah Lembur"
+                                    value={editItemForm.data.overtime_pay}
+                                    error={editItemForm.errors.overtime_pay}
+                                    onChange={(value) =>
+                                        editItemForm.setData(
+                                            'overtime_pay',
+                                            value,
+                                        )
+                                    }
+                                />
+                                <PayrollEditField
+                                    id="edit_pph21_rate"
+                                    label="Nominal PPh21"
+                                    value={editItemForm.data.pph21_rate}
+                                    error={editItemForm.errors.pph21_rate}
+                                    onChange={(value) =>
+                                        editItemForm.setData(
+                                            'pph21_rate',
+                                            value,
+                                        )
+                                    }
+                                />
+                                <PayrollEditField
+                                    id="edit_pph21_allowance"
+                                    label="Tunjangan PPh21"
+                                    value={editItemForm.data.pph21_allowance}
+                                    error={editItemForm.errors.pph21_allowance}
+                                    onChange={(value) =>
+                                        editItemForm.setData(
+                                            'pph21_allowance',
+                                            value,
+                                        )
+                                    }
+                                />
+                                <PayrollEditField
+                                    id="edit_pph21_deduction"
+                                    label="Potongan PPh21"
+                                    value={editItemForm.data.pph21_deduction}
+                                    error={editItemForm.errors.pph21_deduction}
+                                    onChange={(value) =>
+                                        editItemForm.setData(
+                                            'pph21_deduction',
+                                            value,
+                                        )
+                                    }
+                                />
+                                <PayrollEditField
+                                    id="edit_pph21_company_borne"
+                                    label="PPh21 Ditanggung Perusahaan"
+                                    value={
+                                        editItemForm.data.pph21_company_borne
+                                    }
+                                    error={
+                                        editItemForm.errors.pph21_company_borne
+                                    }
+                                    onChange={(value) =>
+                                        editItemForm.setData(
+                                            'pph21_company_borne',
+                                            value,
+                                        )
+                                    }
+                                />
+                                <PayrollEditField
+                                    id="edit_kasbon_deduction"
+                                    label="Kasbon"
+                                    value={editItemForm.data.kasbon_deduction}
+                                    error={editItemForm.errors.kasbon_deduction}
+                                    onChange={(value) =>
+                                        editItemForm.setData(
+                                            'kasbon_deduction',
+                                            value,
+                                        )
+                                    }
+                                />
+                                <PayrollEditField
+                                    id="edit_denda_deduction"
+                                    label="Denda"
+                                    value={editItemForm.data.denda_deduction}
+                                    error={editItemForm.errors.denda_deduction}
+                                    onChange={(value) =>
+                                        editItemForm.setData(
+                                            'denda_deduction',
+                                            value,
+                                        )
+                                    }
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-2 border-t pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={closeEditItem}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={submitEditItem}
+                                    disabled={editItemForm.processing}
+                                >
+                                    {editItemForm.processing
+                                        ? 'Menyimpan...'
+                                        : 'Simpan Perubahan'}
+                                </Button>
+                            </div>
+                        </div>
+                    ) : null}
+                </DialogContent>
+            </Dialog>
         </AppLayout>
+    );
+}
+
+function PayrollEditField({
+    id,
+    label,
+    value,
+    error,
+    onChange,
+}: {
+    id: string;
+    label: string;
+    value: string;
+    error?: string;
+    onChange: (value: string) => void;
+}) {
+    return (
+        <div className="grid gap-2">
+            <Label htmlFor={id}>{label}</Label>
+            <Input
+                id={id}
+                inputMode="decimal"
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+            />
+            {error ? <p className="text-xs text-destructive">{error}</p> : null}
+        </div>
     );
 }

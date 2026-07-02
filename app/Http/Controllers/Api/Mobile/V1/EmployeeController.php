@@ -100,6 +100,7 @@ class EmployeeController extends Controller
             'base_salary' => $employee->base_salary,
             'address' => $employee->address,
             'family_card_number' => $employee->family_card_number,
+            'ktp_number' => $employee->ktp_number,
             'bpjs_kesehatan_number' => $employee->bpjs_kesehatan_number,
             'bpjs_ketenagakerjaan_number' => $employee->bpjs_ketenagakerjaan_number,
             'sim_a_number' => $employee->sim_a_number,

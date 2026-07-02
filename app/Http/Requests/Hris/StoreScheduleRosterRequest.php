@@ -27,6 +27,9 @@ class StoreScheduleRosterRequest extends FormRequest
 
         return [
             'employee_id' => ['required', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
+            'apply_scope' => ['nullable', 'string', Rule::in(['single', 'selected', 'all'])],
+            'target_employee_ids' => ['required_if:apply_scope,selected', 'array', 'min:1'],
+            'target_employee_ids.*' => ['integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'pattern' => ['required', 'array', 'min:1'],

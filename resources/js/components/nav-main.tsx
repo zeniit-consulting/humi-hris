@@ -24,7 +24,9 @@ export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
         () =>
             groups.find((group) =>
                 group.items.some((item) => isCurrentUrl(item.href)),
-            )?.title ?? groups[0]?.title ?? null,
+            )?.title ??
+            groups[0]?.title ??
+            null,
         [groups, isCurrentUrl],
     );
     const [openGroupTitle, setOpenGroupTitle] = useState<string | null>(
@@ -47,7 +49,7 @@ export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
                 >
                     <SidebarGroup className="px-2 py-0">
                         <CollapsibleTrigger asChild>
-                            <SidebarGroupLabel className="cursor-pointer justify-between hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground">
+                            <SidebarGroupLabel className="cursor-pointer justify-between text-sidebar-foreground/50 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/70">
                                 <span>{group.title}</span>
                                 <ChevronDown
                                     className={`size-4 transition-transform ${

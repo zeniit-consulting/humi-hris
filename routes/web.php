@@ -313,6 +313,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/kasbons', [UserPortalSectionController::class, 'kasbons'])->name('portal.kasbons');
     Route::get('portal/payroll', [UserPortalSectionController::class, 'payroll'])->name('portal.payroll');
     Route::get('portal/activity', [UserPortalSectionController::class, 'activity'])->name('portal.activity');
+    Route::get('portal/activity/client-visits', [UserPortalSectionController::class, 'clientVisits'])->name('portal.activity.client-visits');
+    Route::get('portal/activity/performance', [UserPortalSectionController::class, 'performanceActivity'])->name('portal.activity.performance');
     Route::get('portal/profile', [UserPortalSectionController::class, 'profile'])->name('portal.profile');
     Route::get('portal/announcements', [UserPortalSectionController::class, 'announcements'])->name('portal.announcements');
     Route::get('portal/surveys', [UserPortalSectionController::class, 'surveys'])->name('portal.surveys');
