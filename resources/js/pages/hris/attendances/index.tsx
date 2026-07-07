@@ -2,6 +2,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowDownWideNarrow,
     CalendarDays,
+    CalendarRange,
     Download,
     Eye,
     Filter,
@@ -170,6 +171,10 @@ function toDeviceDateTimeInput(value: string | null) {
     const offsetMs = date.getTimezoneOffset() * 60_000;
 
     return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function monthlyAttendanceUrl(employeeId: number, period: string) {
+    return `/hris/attendances/employees/${employeeId}/monthly?period=${period}`;
 }
 
 export default function AttendancePage() {
@@ -598,6 +603,22 @@ export default function AttendancePage() {
                                                             openEditDialog(row)
                                                         }
                                                     />
+                                                    <ActionIconButton
+                                                        label="Kehadiran bulanan"
+                                                        icon={CalendarRange}
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            router.get(
+                                                                monthlyAttendanceUrl(
+                                                                    row.employee_id,
+                                                                    row.attendance_date.slice(
+                                                                        0,
+                                                                        7,
+                                                                    ),
+                                                                ),
+                                                            )
+                                                        }
+                                                    />
                                                 </div>
                                             </td>
                                         </tr>
@@ -675,6 +696,22 @@ export default function AttendancePage() {
                                 {formatDeviceTime(detailRecord.check_out_at)}
                             </p>
                             <p>Catatan: {detailRecord.notes ?? '-'}</p>
+                            <div className="pt-2">
+                                <Button asChild size="sm" variant="outline">
+                                    <Link
+                                        href={monthlyAttendanceUrl(
+                                            detailRecord.employee_id,
+                                            detailRecord.attendance_date.slice(
+                                                0,
+                                                7,
+                                            ),
+                                        )}
+                                    >
+                                        <CalendarRange className="size-4" />
+                                        Lihat bulan ini
+                                    </Link>
+                                </Button>
+                            </div>
                         </div>
                     )}
                 </DialogContent>

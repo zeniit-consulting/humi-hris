@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToAccount;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
@@ -16,6 +17,7 @@ class CompanyAsset extends Model
 
     protected $fillable = [
         'user_id',
+        'procurement_request_id',
         'asset_code',
         'name',
         'category',
@@ -46,6 +48,11 @@ class CompanyAsset extends Model
     public function assignments(): HasMany
     {
         return $this->hasMany(CompanyAssetAssignment::class);
+    }
+
+    public function procurementRequest(): BelongsTo
+    {
+        return $this->belongsTo(CompanyAssetProcurementRequest::class, 'procurement_request_id');
     }
 
     public function activeAssignment(): HasOne

@@ -1,10 +1,11 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     FileText,
     Filter,
     PackageCheck,
     Pencil,
     Plus,
+    ShoppingCart,
     Trash2,
     UserPlus,
 } from 'lucide-react';
@@ -43,6 +44,7 @@ import type { BreadcrumbItem } from '@/types';
 import {
     destroy as assetsDestroy,
     index as assetsIndex,
+    procurementRequests,
     store as assetsStore,
     update as assetsUpdate,
 } from './routes';
@@ -456,6 +458,12 @@ export default function AssetsPage() {
                             >
                                 <Plus className="size-4" />
                                 Tambah Asset
+                            </Button>
+                            <Button asChild type="button" variant="outline">
+                                <Link href={procurementRequests.url()}>
+                                    <ShoppingCart className="size-4" />
+                                    Request Pengadaan
+                                </Link>
                             </Button>
                         </div>
 

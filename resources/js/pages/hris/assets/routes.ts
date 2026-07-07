@@ -15,3 +15,15 @@ export const update = {
 export const destroy = {
     url: (assetId: number) => `${baseUrl}/${assetId}`,
 };
+
+export const procurementRequests = {
+    url: () => `${baseUrl}/procurement-requests`,
+};
+
+export const storeProcurementRequest = {
+    url: () => `${baseUrl}/procurement-requests`,
+};
+
+export const updateProcurementRequestStatus = {
+    url: (requestId: number) => `${baseUrl}/procurement-requests/${requestId}/status`,
+};

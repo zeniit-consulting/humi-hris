@@ -62,6 +62,77 @@ class WorkforceModulesTest extends TestCase
             );
     }
 
+    public function test_admin_can_view_monthly_attendance_for_one_employee(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-001',
+            'first_name' => 'Ayu',
+            'last_name' => 'Lestari',
+        ]);
+
+        $otherEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $present = EmployeeAttendance::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-06-08',
+            'status' => 'present',
+            'check_in_at' => '2026-06-08 01:00:00',
+            'check_out_at' => '2026-06-08 09:00:00',
+        ]);
+
+        $late = EmployeeAttendance::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-06-09',
+            'status' => 'late',
+            'check_in_at' => '2026-06-09 01:30:00',
+            'check_out_at' => '2026-06-09 09:00:00',
+        ]);
+
+        EmployeeAttendance::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-07-01',
+            'status' => 'absent',
+        ]);
+
+        EmployeeAttendance::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $otherEmployee->id,
+            'attendance_date' => '2026-06-08',
+            'status' => 'absent',
+        ]);
+
+        $this->actingAs($user)
+            ->get("/hris/attendances/employees/{$employee->id}/monthly?period=2026-06")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hris/attendances/monthly')
+                ->where('employee.id', $employee->id)
+                ->where('employee.label', 'EMP-001 - Ayu Lestari')
+                ->where('filters.period', '2026-06')
+                ->where('summary.total', 2)
+                ->where('summary.present', 1)
+                ->where('summary.late', 1)
+                ->where('summary.on_leave', 0)
+                ->where('summary.absent', 0)
+                ->has('attendances', 2)
+                ->where('attendances.0.id', $present->id)
+                ->where('attendances.0.check_in_at', '2026-06-08T01:00:00+00:00')
+                ->where('attendances.1.id', $late->id)
+            );
+    }
+
     public function test_attendance_input_from_device_timezone_is_stored_as_utc(): void
     {
         $user = User::factory()->create([

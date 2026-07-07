@@ -122,6 +122,69 @@ class AttendanceController extends Controller
     }
 
     /**
+     * Display a monthly attendance history for one employee.
+     */
+    public function showMonthly(Request $request, Employee $employee): Response
+    {
+        abort_unless($employee->user_id === $request->user()->accountOwnerId(), 404);
+
+        $validated = $request->validate([
+            'period' => ['nullable', 'date_format:Y-m'],
+        ]);
+
+        $period = $validated['period'] ?? today()->format('Y-m');
+        $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+
+        $rows = EmployeeAttendance::query()
+            ->with('shift:id,code,name,start_time,end_time,is_day_off')
+            ->where('employee_id', $employee->id)
+            ->whereBetween('attendance_date', [$start->toDateString(), $end->toDateString()])
+            ->orderBy('attendance_date')
+            ->orderBy('id')
+            ->get();
+
+        $summary = $rows
+            ->countBy('status');
+
+        return Inertia::render('hris/attendances/monthly', [
+            'employee' => [
+                'id' => $employee->id,
+                'employee_code' => $employee->employee_code,
+                'full_name' => $employee->full_name,
+                'label' => $employee->employee_code.' - '.$employee->full_name,
+            ],
+            'filters' => [
+                'period' => $period,
+            ],
+            'period' => [
+                'key' => $period,
+                'label' => $start->translatedFormat('F Y'),
+                'start_date' => $start->toDateString(),
+                'end_date' => $end->toDateString(),
+            ],
+            'summary' => [
+                'total' => $rows->count(),
+                'present' => (int) ($summary['present'] ?? 0),
+                'late' => (int) ($summary['late'] ?? 0),
+                'on_leave' => (int) ($summary['on_leave'] ?? 0),
+                'absent' => (int) ($summary['absent'] ?? 0),
+            ],
+            'attendances' => $rows->map(fn (EmployeeAttendance $attendance) => [
+                'id' => $attendance->id,
+                'attendance_date' => $attendance->attendance_date->format('Y-m-d'),
+                'shift_name' => $attendance->shift?->name
+                    ?? $attendance->shift?->code
+                    ?? 'OFF',
+                'status' => $attendance->status,
+                'check_in_at' => $attendance->check_in_at?->toIso8601String(),
+                'check_out_at' => $attendance->check_out_at?->toIso8601String(),
+                'notes' => $attendance->notes,
+            ])->values(),
+        ]);
+    }
+
+    /**
      * Store new attendance record.
      */
     public function store(StoreAttendanceRequest $request, AttendanceStatusService $statusService): RedirectResponse

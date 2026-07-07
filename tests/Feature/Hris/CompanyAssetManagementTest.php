@@ -3,6 +3,7 @@
 namespace Tests\Feature\Hris;
 
 use App\Models\CompanyAsset;
+use App\Models\CompanyAssetProcurementRequest;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,6 +24,91 @@ class CompanyAssetManagementTest extends TestCase
         ]);
 
         $this->actingAs($user)->get(route('hris.assets.index'))->assertOk();
+    }
+
+    public function test_admin_can_request_and_receive_asset_procurement(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-REQ',
+            'first_name' => 'Rani',
+            'last_name' => 'Pertiwi',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('hris.assets.procurement-requests.store'), [
+            'requested_by_employee_id' => $employee->id,
+            'item_name' => 'Laptop Design',
+            'category' => 'IT',
+            'quantity' => 2,
+            'estimated_unit_price' => 15000000,
+            'needed_by' => '2026-08-15',
+            'priority' => 'high',
+            'reason' => 'Tim desain butuh perangkat baru.',
+            'notes' => 'Minimal RAM 32GB.',
+        ]);
+
+        $response->assertRedirect(route('hris.assets.procurement-requests.index'));
+
+        $this->assertDatabaseHas('company_asset_procurement_requests', [
+            'user_id' => $user->id,
+            'requested_by_employee_id' => $employee->id,
+            'item_name' => 'Laptop Design',
+            'category' => 'IT',
+            'quantity' => 2,
+            'estimated_unit_price' => '15000000.00',
+            'status' => 'pending',
+            'priority' => 'high',
+        ]);
+
+        $request = CompanyAssetProcurementRequest::query()->firstOrFail();
+
+        $this->actingAs($user)
+            ->get(route('hris.assets.procurement-requests.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('hris/assets/procurement-requests')
+                ->where('requests.data.0.id', $request->id)
+                ->where('requests.data.0.item_name', 'Laptop Design')
+                ->where('requests.data.0.requested_by_employee_label', 'EMP-REQ - Rani Pertiwi')
+                ->where('summary.pending', 1)
+            );
+
+        $this->actingAs($user)
+            ->post(route('hris.assets.procurement-requests.status', $request), [
+                'status' => 'received',
+                'asset_code_prefix' => 'LPT-DES',
+                'purchase_date' => '2026-08-01',
+                'actual_unit_price' => 14500000,
+                'notes' => 'Sudah diterima procurement.',
+            ])
+            ->assertRedirect(route('hris.assets.procurement-requests.index'));
+
+        $this->assertDatabaseHas('company_asset_procurement_requests', [
+            'id' => $request->id,
+            'status' => 'received',
+            'actual_unit_price' => '14500000.00',
+            'notes' => 'Sudah diterima procurement.',
+        ]);
+
+        $this->assertDatabaseHas('company_assets', [
+            'user_id' => $user->id,
+            'asset_code' => 'LPT-DES-001',
+            'name' => 'Laptop Design',
+            'category' => 'IT',
+            'purchase_price' => '14500000.00',
+            'purchase_date' => '2026-08-01 00:00:00',
+            'status' => 'available',
+        ]);
+        $this->assertDatabaseHas('company_assets', [
+            'user_id' => $user->id,
+            'asset_code' => 'LPT-DES-002',
+            'name' => 'Laptop Design',
+        ]);
     }
 
     public function test_admin_can_store_asset_with_assignment_purchase_proof_and_depreciation(): void

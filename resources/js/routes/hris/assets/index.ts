@@ -1,4 +1,5 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
+import procurementRequests from './procurement-requests'
 /**
 * @see \App\Http\Controllers\Hris\CompanyAssetController::index
 * @see app/Http/Controllers/Hris/CompanyAssetController.php:20
@@ -318,6 +319,7 @@ destroy.form = destroyForm
 
 const assets = {
     index: Object.assign(index, index),
+    procurementRequests: Object.assign(procurementRequests, procurementRequests),
     store: Object.assign(store, store),
     update: Object.assign(update, update),
     destroy: Object.assign(destroy, destroy),

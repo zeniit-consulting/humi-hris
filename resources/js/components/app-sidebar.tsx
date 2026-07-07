@@ -16,6 +16,7 @@ import {
     MapPinned,
     PackageCheck,
     ShieldCheck,
+    ShoppingCart,
     ScrollText,
     Timer,
     TrendingUp,
@@ -182,6 +183,12 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     title: 'Asset Management',
                     href: '/hris/assets',
                     icon: PackageCheck,
+                    ...locked('assets'),
+                },
+                {
+                    title: 'Request Pengadaan Aset',
+                    href: '/hris/assets/procurement-requests',
+                    icon: ShoppingCart,
                     ...locked('assets'),
                 },
                 {

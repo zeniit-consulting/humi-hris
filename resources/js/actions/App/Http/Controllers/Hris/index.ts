@@ -20,6 +20,7 @@ import AttendanceCorrectionApprovalController from './AttendanceCorrectionApprov
 import PayrollController from './PayrollController'
 import KasbonController from './KasbonController'
 import CompanyAssetController from './CompanyAssetController'
+import CompanyAssetProcurementRequestController from './CompanyAssetProcurementRequestController'
 import LeaveController from './LeaveController'
 import LeavePolicyController from './LeavePolicyController'
 import LeaveBalanceController from './LeaveBalanceController'
@@ -51,6 +52,7 @@ const Hris = {
     PayrollController: Object.assign(PayrollController, PayrollController),
     KasbonController: Object.assign(KasbonController, KasbonController),
     CompanyAssetController: Object.assign(CompanyAssetController, CompanyAssetController),
+    CompanyAssetProcurementRequestController: Object.assign(CompanyAssetProcurementRequestController, CompanyAssetProcurementRequestController),
     LeaveController: Object.assign(LeaveController, LeaveController),
     LeavePolicyController: Object.assign(LeavePolicyController, LeavePolicyController),
     LeaveBalanceController: Object.assign(LeaveBalanceController, LeaveBalanceController),
