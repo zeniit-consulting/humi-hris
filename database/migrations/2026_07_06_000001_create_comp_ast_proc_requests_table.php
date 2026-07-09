@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('company_asset_procurement_requests', function (Blueprint $table) {
+        Schema::create('comp_ast_proc_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->foreignId('requested_by_employee_id')->nullable()->constrained('employees')->nullOnDelete();
@@ -38,7 +38,7 @@ return new class extends Migration
                 ->foreignId('procurement_request_id')
                 ->nullable()
                 ->after('user_id')
-                ->constrained('company_asset_procurement_requests')
+                ->constrained('comp_ast_proc_requests')
                 ->nullOnDelete();
         });
     }
@@ -49,6 +49,6 @@ return new class extends Migration
             $table->dropConstrainedForeignId('procurement_request_id');
         });
 
-        Schema::dropIfExists('company_asset_procurement_requests');
+        Schema::dropIfExists('comp_ast_proc_requests');
     }
 };

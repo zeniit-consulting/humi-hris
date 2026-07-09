@@ -76,6 +76,11 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     icon: ClipboardList,
                 },
                 {
+                    title: 'Reprimand',
+                    href: '/hris/reprimands',
+                    icon: ScrollText,
+                },
+                {
                     title: 'Rekrutmen',
                     href: '/hris/recruitment',
                     icon: Briefcase,

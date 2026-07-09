@@ -6,6 +6,7 @@ use App\Models\AttendanceCorrectionRequest;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeReprimand;
 use App\Models\LeaveRequest;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
@@ -67,6 +68,74 @@ class PortalPageTest extends TestCase
         $this->get(route('portal.kasbons'))->assertOk();
         $this->get(route('portal.payroll'))->assertOk();
         $this->get(route('portal.activity'))->assertOk();
+        $this->get(route('portal.reprimands'))->assertOk();
+    }
+
+    public function test_portal_user_can_view_own_reprimands_only(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'role' => 'user',
+            'email' => 'portal-reprimand@example.com',
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'employee_code' => 'EMP-001',
+            'first_name' => 'Ayu',
+            'last_name' => 'Lestari',
+        ]);
+
+        $otherEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-002',
+            'first_name' => 'Budi',
+            'last_name' => 'Santoso',
+        ]);
+
+        EmployeeReprimand::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'reprimand_number' => 'SP-202607-0001',
+            'level' => 'sp1',
+            'issued_date' => '2026-07-07',
+            'incident_date' => '2026-07-06',
+            'subject' => 'Terlambat tanpa konfirmasi',
+            'description' => 'Karyawan terlambat berulang tanpa pemberitahuan.',
+            'action_plan' => 'Wajib check-in tepat waktu selama 30 hari.',
+            'status' => 'active',
+        ]);
+
+        EmployeeReprimand::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $otherEmployee->id,
+            'reprimand_number' => 'SP-202607-0002',
+            'level' => 'sp3',
+            'issued_date' => '2026-07-07',
+            'incident_date' => '2026-07-06',
+            'subject' => 'Bukan milik portal user',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('portal.reprimands'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('portal/reprimands')
+                ->where('pageTitle', 'Reprimand')
+            );
+
+        $this->actingAs($user)
+            ->getJson(route('portal.api.reprimands.index'))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.items.0.reprimand_number', 'SP-202607-0001')
+            ->assertJsonPath('data.items.0.level', 'sp1')
+            ->assertJsonPath('data.items.0.subject', 'Terlambat tanpa konfirmasi')
+            ->assertJsonMissingPath('data.items.1');
     }
 
     public function test_user_cannot_access_admin_routes(): void

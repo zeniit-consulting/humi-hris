@@ -11,6 +11,8 @@ class CompanyAssetProcurementRequest extends Model
 {
     use BelongsToAccount;
 
+    protected $table = 'comp_ast_proc_requests';
+
     public const STATUSES = ['pending', 'approved', 'rejected', 'ordered', 'received', 'cancelled'];
 
     public const PRIORITIES = ['low', 'normal', 'high', 'urgent'];

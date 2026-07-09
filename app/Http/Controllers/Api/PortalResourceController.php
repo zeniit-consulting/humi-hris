@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Concerns\InteractsWithMobileApiResponse;
 use App\Http\Controllers\Api\Mobile\V1\Concerns\InteractsWithSelfService;
 use App\Http\Controllers\Controller;
 use App\Models\CompanyAssetAssignment;
+use App\Models\EmployeeReprimand;
 use App\Models\EmployeeSurvey;
 use App\Models\EmployeeSurveyResponse;
 use App\Models\NotificationAnnouncement;
@@ -174,6 +175,36 @@ class PortalResourceController extends Controller
                 'condition_in' => $assignment->condition_in,
                 'notes' => $assignment->notes,
                 'is_active' => $assignment->returned_at === null,
+            ])
+            ->values();
+
+        return $this->success([
+            'items' => $items,
+        ]);
+    }
+
+    public function reprimands(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $employee = $this->resolveRequiredSelfServiceEmployee($user);
+
+        $items = EmployeeReprimand::query()
+            ->where('employee_id', $employee->id)
+            ->latest('issued_date')
+            ->latest('id')
+            ->get()
+            ->map(fn (EmployeeReprimand $reprimand) => [
+                'id' => $reprimand->id,
+                'reprimand_number' => $reprimand->reprimand_number,
+                'level' => $reprimand->level,
+                'issued_date' => $reprimand->issued_date?->format('Y-m-d'),
+                'incident_date' => $reprimand->incident_date?->format('Y-m-d'),
+                'subject' => $reprimand->subject,
+                'description' => $reprimand->description,
+                'action_plan' => $reprimand->action_plan,
+                'status' => $reprimand->status,
+                'resolution_notes' => $reprimand->resolution_notes,
             ])
             ->values();
 

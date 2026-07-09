@@ -3,6 +3,7 @@ import {
     ChevronRight,
     ClipboardList,
     MapPinned,
+    ScrollText,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -26,6 +27,7 @@ const fallbackLinks: PortalLinkMap = {
     activity: '/portal/activity',
     client_visits: '/portal/activity/client-visits',
     performance_activity: '/portal/activity/performance',
+    reprimands: '/portal/reprimands',
     profile: '/portal/profile',
 };
 
@@ -56,6 +58,13 @@ const menuItems: Array<{
         hrefKey: 'performance_activity',
         fallbackHref: '/portal/activity/performance',
         icon: ClipboardList,
+    },
+    {
+        title: 'Reprimand',
+        description: 'Riwayat teguran dan surat peringatan.',
+        hrefKey: 'reprimands',
+        fallbackHref: '/portal/reprimands',
+        icon: ScrollText,
     },
 ];
 

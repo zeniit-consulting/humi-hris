@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::store
-* @see app/Http/Controllers/Api/PortalResourceController.php:119
+* @see app/Http/Controllers/Api/PortalResourceController.php:120
 * @route '/portal/api/surveys/{survey}/responses'
 */
 export const store = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::store
-* @see app/Http/Controllers/Api/PortalResourceController.php:119
+* @see app/Http/Controllers/Api/PortalResourceController.php:120
 * @route '/portal/api/surveys/{survey}/responses'
 */
 store.url = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ store.url = (args: { survey: number | { id: number } } | [survey: number | { id:
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::store
-* @see app/Http/Controllers/Api/PortalResourceController.php:119
+* @see app/Http/Controllers/Api/PortalResourceController.php:120
 * @route '/portal/api/surveys/{survey}/responses'
 */
 store.post = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ store.post = (args: { survey: number | { id: number } } | [survey: number | { id
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::store
-* @see app/Http/Controllers/Api/PortalResourceController.php:119
+* @see app/Http/Controllers/Api/PortalResourceController.php:120
 * @route '/portal/api/surveys/{survey}/responses'
 */
 const storeForm = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ const storeForm = (args: { survey: number | { id: number } } | [survey: number |
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::store
-* @see app/Http/Controllers/Api/PortalResourceController.php:119
+* @see app/Http/Controllers/Api/PortalResourceController.php:120
 * @route '/portal/api/surveys/{survey}/responses'
 */
 storeForm.post = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

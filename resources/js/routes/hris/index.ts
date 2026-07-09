@@ -2,6 +2,7 @@ import employees from './employees'
 import subCompanies from './sub-companies'
 import clientBillings from './client-billings'
 import manpowerRequests from './manpower-requests'
+import reprimands from './reprimands'
 import organizationChart from './organization-chart'
 import performances from './performances'
 import recruitment from './recruitment'
@@ -28,6 +29,7 @@ const hris = {
     subCompanies: Object.assign(subCompanies, subCompanies),
     clientBillings: Object.assign(clientBillings, clientBillings),
     manpowerRequests: Object.assign(manpowerRequests, manpowerRequests),
+    reprimands: Object.assign(reprimands, reprimands),
     organizationChart: Object.assign(organizationChart, organizationChart),
     performances: Object.assign(performances, performances),
     recruitment: Object.assign(recruitment, recruitment),

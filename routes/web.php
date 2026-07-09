@@ -298,6 +298,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/api/surveys', [PortalResourceController::class, 'surveys'])->name('portal.api.surveys.index');
     Route::post('portal/api/surveys/{survey}/responses', [PortalResourceController::class, 'submitSurvey'])->name('portal.api.surveys.responses.store');
     Route::get('portal/api/assets', [PortalResourceController::class, 'assets'])->name('portal.api.assets.index');
+    Route::get('portal/api/reprimands', [PortalResourceController::class, 'reprimands'])->name('portal.api.reprimands.index');
     Route::get('portal/api/performances', [PortalPerformanceController::class, 'index'])->name('portal.api.performances.index');
     Route::post('portal/api/performances/{review}/check-ins', [PortalPerformanceController::class, 'storeCheckIn'])->name('portal.api.performances.check-ins.store');
     Route::get('portal/api/client-visits', [PortalClientVisitController::class, 'index'])->name('portal.api.client-visits.index');
@@ -319,6 +320,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/announcements', [UserPortalSectionController::class, 'announcements'])->name('portal.announcements');
     Route::get('portal/surveys', [UserPortalSectionController::class, 'surveys'])->name('portal.surveys');
     Route::get('portal/assets', [UserPortalSectionController::class, 'assets'])->name('portal.assets');
+    Route::get('portal/reprimands', [UserPortalSectionController::class, 'reprimands'])->name('portal.reprimands');
     Route::post('portal/api/payrolls/preview-secure', [UserPortalSectionController::class, 'previewPayslip'])->name('portal.api.payrolls.preview-secure');
     Route::post('portal/payroll/export', [UserPortalSectionController::class, 'exportPayslip'])->name('portal.payroll.export');
 });

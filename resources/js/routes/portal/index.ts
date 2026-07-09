@@ -1299,6 +1299,87 @@ assetsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 assets.form = assetsForm
 
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::reprimands
+* @see app/Http/Controllers/UserPortalSectionController.php:101
+* @route '/portal/reprimands'
+*/
+export const reprimands = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: reprimands.url(options),
+    method: 'get',
+})
+
+reprimands.definition = {
+    methods: ["get","head"],
+    url: '/portal/reprimands',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::reprimands
+* @see app/Http/Controllers/UserPortalSectionController.php:101
+* @route '/portal/reprimands'
+*/
+reprimands.url = (options?: RouteQueryOptions) => {
+    return reprimands.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::reprimands
+* @see app/Http/Controllers/UserPortalSectionController.php:101
+* @route '/portal/reprimands'
+*/
+reprimands.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: reprimands.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::reprimands
+* @see app/Http/Controllers/UserPortalSectionController.php:101
+* @route '/portal/reprimands'
+*/
+reprimands.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: reprimands.url(options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::reprimands
+* @see app/Http/Controllers/UserPortalSectionController.php:101
+* @route '/portal/reprimands'
+*/
+const reprimandsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: reprimands.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::reprimands
+* @see app/Http/Controllers/UserPortalSectionController.php:101
+* @route '/portal/reprimands'
+*/
+reprimandsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: reprimands.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::reprimands
+* @see app/Http/Controllers/UserPortalSectionController.php:101
+* @route '/portal/reprimands'
+*/
+reprimandsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: reprimands.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+reprimands.form = reprimandsForm
+
 const portal = {
     login: Object.assign(login, loginDf2c2a),
     index: Object.assign(index, index),
@@ -1317,6 +1398,7 @@ const portal = {
     announcements: Object.assign(announcements, announcements),
     surveys: Object.assign(surveys, surveys),
     assets: Object.assign(assets, assets),
+    reprimands: Object.assign(reprimands, reprimands),
 }
 
 export default portal

@@ -13,6 +13,7 @@ use App\Http\Controllers\Hris\EmployeeBankAccountController;
 use App\Http\Controllers\Hris\EmployeeController;
 use App\Http\Controllers\Hris\EmployeeDocumentController;
 use App\Http\Controllers\Hris\EmployeeMasterController;
+use App\Http\Controllers\Hris\EmployeeReprimandController;
 use App\Http\Controllers\Hris\KasbonController;
 use App\Http\Controllers\Hris\LeaveBalanceController;
 use App\Http\Controllers\Hris\LeaveController;
@@ -49,6 +50,10 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::post('manpower-requests', [ManpowerRequestController::class, 'store'])->name('manpower-requests.store');
     Route::put('manpower-requests/{manpowerRequest}', [ManpowerRequestController::class, 'update'])->name('manpower-requests.update');
     Route::delete('manpower-requests/{manpowerRequest}', [ManpowerRequestController::class, 'destroy'])->name('manpower-requests.destroy');
+    Route::get('reprimands', [EmployeeReprimandController::class, 'index'])->name('reprimands.index');
+    Route::post('reprimands', [EmployeeReprimandController::class, 'store'])->name('reprimands.store');
+    Route::put('reprimands/{reprimand}', [EmployeeReprimandController::class, 'update'])->name('reprimands.update');
+    Route::delete('reprimands/{reprimand}', [EmployeeReprimandController::class, 'destroy'])->name('reprimands.destroy');
     Route::get('employees/master-data', [EmployeeMasterController::class, 'index'])->name('employees.master-data');
     Route::get('employees/import-template', [EmployeeController::class, 'downloadImportTemplate'])->name('employees.import-template');
     Route::post('employees/import', [EmployeeController::class, 'import'])->name('employees.import');

@@ -214,6 +214,11 @@ class Employee extends Model
         return $this->hasMany(EmployeeDeduction::class);
     }
 
+    public function reprimands(): HasMany
+    {
+        return $this->hasMany(EmployeeReprimand::class);
+    }
+
     /**
      * Get payroll items of this employee.
      */

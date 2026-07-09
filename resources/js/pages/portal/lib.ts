@@ -13,6 +13,7 @@ export type PortalLinkMap = {
     activity?: string;
     client_visits?: string;
     performance_activity?: string;
+    reprimands?: string;
     profile?: string;
     dashboard?: string;
 };
@@ -127,6 +128,9 @@ export const chips: Record<string, string> = {
     locked: 'bg-zinc-900 text-white',
     open: 'portal-primary-soft',
     done: 'bg-zinc-900 text-white',
+    active: 'portal-primary-soft',
+    resolved: 'bg-zinc-900 text-white',
+    void: 'bg-stone-200 text-stone-800',
 };
 
 export const statusLabels: Record<string, string> = {
@@ -147,6 +151,9 @@ export const statusLabels: Record<string, string> = {
     locked: 'Dikunci',
     open: 'Terbuka',
     done: 'Selesai',
+    active: 'Aktif',
+    resolved: 'Selesai',
+    void: 'Dibatalkan',
 };
 
 export const leaveTypeLabels: Record<string, string> = {

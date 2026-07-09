@@ -98,6 +98,11 @@ class UserPortalSectionController extends Controller
         return $this->renderForUser($request, 'portal/assets', 'Assets');
     }
 
+    public function reprimands(Request $request): Response|RedirectResponse
+    {
+        return $this->renderForUser($request, 'portal/reprimands', 'Reprimand');
+    }
+
     public function previewPayslip(Request $request): JsonResponse|RedirectResponse
     {
         /** @var User $user */

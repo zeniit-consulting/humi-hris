@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::announcements
-* @see app/Http/Controllers/Api/PortalResourceController.php:20
+* @see app/Http/Controllers/Api/PortalResourceController.php:21
 * @route '/portal/api/announcements'
 */
 export const announcements = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ announcements.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::announcements
-* @see app/Http/Controllers/Api/PortalResourceController.php:20
+* @see app/Http/Controllers/Api/PortalResourceController.php:21
 * @route '/portal/api/announcements'
 */
 announcements.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ announcements.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::announcements
-* @see app/Http/Controllers/Api/PortalResourceController.php:20
+* @see app/Http/Controllers/Api/PortalResourceController.php:21
 * @route '/portal/api/announcements'
 */
 announcements.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ announcements.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::announcements
-* @see app/Http/Controllers/Api/PortalResourceController.php:20
+* @see app/Http/Controllers/Api/PortalResourceController.php:21
 * @route '/portal/api/announcements'
 */
 announcements.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ announcements.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::announcements
-* @see app/Http/Controllers/Api/PortalResourceController.php:20
+* @see app/Http/Controllers/Api/PortalResourceController.php:21
 * @route '/portal/api/announcements'
 */
 const announcementsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const announcementsForm = (options?: RouteQueryOptions): RouteFormDefinition<'ge
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::announcements
-* @see app/Http/Controllers/Api/PortalResourceController.php:20
+* @see app/Http/Controllers/Api/PortalResourceController.php:21
 * @route '/portal/api/announcements'
 */
 announcementsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ announcementsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::announcements
-* @see app/Http/Controllers/Api/PortalResourceController.php:20
+* @see app/Http/Controllers/Api/PortalResourceController.php:21
 * @route '/portal/api/announcements'
 */
 announcementsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ announcements.form = announcementsForm
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::surveys
-* @see app/Http/Controllers/Api/PortalResourceController.php:64
+* @see app/Http/Controllers/Api/PortalResourceController.php:65
 * @route '/portal/api/surveys'
 */
 export const surveys = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ surveys.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::surveys
-* @see app/Http/Controllers/Api/PortalResourceController.php:64
+* @see app/Http/Controllers/Api/PortalResourceController.php:65
 * @route '/portal/api/surveys'
 */
 surveys.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ surveys.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::surveys
-* @see app/Http/Controllers/Api/PortalResourceController.php:64
+* @see app/Http/Controllers/Api/PortalResourceController.php:65
 * @route '/portal/api/surveys'
 */
 surveys.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ surveys.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::surveys
-* @see app/Http/Controllers/Api/PortalResourceController.php:64
+* @see app/Http/Controllers/Api/PortalResourceController.php:65
 * @route '/portal/api/surveys'
 */
 surveys.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ surveys.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::surveys
-* @see app/Http/Controllers/Api/PortalResourceController.php:64
+* @see app/Http/Controllers/Api/PortalResourceController.php:65
 * @route '/portal/api/surveys'
 */
 const surveysForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const surveysForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::surveys
-* @see app/Http/Controllers/Api/PortalResourceController.php:64
+* @see app/Http/Controllers/Api/PortalResourceController.php:65
 * @route '/portal/api/surveys'
 */
 surveysForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ surveysForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::surveys
-* @see app/Http/Controllers/Api/PortalResourceController.php:64
+* @see app/Http/Controllers/Api/PortalResourceController.php:65
 * @route '/portal/api/surveys'
 */
 surveysForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -163,7 +163,7 @@ surveys.form = surveysForm
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::submitSurvey
-* @see app/Http/Controllers/Api/PortalResourceController.php:119
+* @see app/Http/Controllers/Api/PortalResourceController.php:120
 * @route '/portal/api/surveys/{survey}/responses'
 */
 export const submitSurvey = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -178,7 +178,7 @@ submitSurvey.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::submitSurvey
-* @see app/Http/Controllers/Api/PortalResourceController.php:119
+* @see app/Http/Controllers/Api/PortalResourceController.php:120
 * @route '/portal/api/surveys/{survey}/responses'
 */
 submitSurvey.url = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -211,7 +211,7 @@ submitSurvey.url = (args: { survey: number | { id: number } } | [survey: number 
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::submitSurvey
-* @see app/Http/Controllers/Api/PortalResourceController.php:119
+* @see app/Http/Controllers/Api/PortalResourceController.php:120
 * @route '/portal/api/surveys/{survey}/responses'
 */
 submitSurvey.post = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -221,7 +221,7 @@ submitSurvey.post = (args: { survey: number | { id: number } } | [survey: number
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::submitSurvey
-* @see app/Http/Controllers/Api/PortalResourceController.php:119
+* @see app/Http/Controllers/Api/PortalResourceController.php:120
 * @route '/portal/api/surveys/{survey}/responses'
 */
 const submitSurveyForm = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -231,7 +231,7 @@ const submitSurveyForm = (args: { survey: number | { id: number } } | [survey: n
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::submitSurvey
-* @see app/Http/Controllers/Api/PortalResourceController.php:119
+* @see app/Http/Controllers/Api/PortalResourceController.php:120
 * @route '/portal/api/surveys/{survey}/responses'
 */
 submitSurveyForm.post = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -243,7 +243,7 @@ submitSurvey.form = submitSurveyForm
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::assets
-* @see app/Http/Controllers/Api/PortalResourceController.php:147
+* @see app/Http/Controllers/Api/PortalResourceController.php:148
 * @route '/portal/api/assets'
 */
 export const assets = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -258,7 +258,7 @@ assets.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::assets
-* @see app/Http/Controllers/Api/PortalResourceController.php:147
+* @see app/Http/Controllers/Api/PortalResourceController.php:148
 * @route '/portal/api/assets'
 */
 assets.url = (options?: RouteQueryOptions) => {
@@ -267,7 +267,7 @@ assets.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::assets
-* @see app/Http/Controllers/Api/PortalResourceController.php:147
+* @see app/Http/Controllers/Api/PortalResourceController.php:148
 * @route '/portal/api/assets'
 */
 assets.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -277,7 +277,7 @@ assets.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::assets
-* @see app/Http/Controllers/Api/PortalResourceController.php:147
+* @see app/Http/Controllers/Api/PortalResourceController.php:148
 * @route '/portal/api/assets'
 */
 assets.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -287,7 +287,7 @@ assets.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::assets
-* @see app/Http/Controllers/Api/PortalResourceController.php:147
+* @see app/Http/Controllers/Api/PortalResourceController.php:148
 * @route '/portal/api/assets'
 */
 const assetsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -297,7 +297,7 @@ const assetsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::assets
-* @see app/Http/Controllers/Api/PortalResourceController.php:147
+* @see app/Http/Controllers/Api/PortalResourceController.php:148
 * @route '/portal/api/assets'
 */
 assetsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -307,7 +307,7 @@ assetsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PortalResourceController::assets
-* @see app/Http/Controllers/Api/PortalResourceController.php:147
+* @see app/Http/Controllers/Api/PortalResourceController.php:148
 * @route '/portal/api/assets'
 */
 assetsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -322,6 +322,87 @@ assetsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 assets.form = assetsForm
 
-const PortalResourceController = { announcements, surveys, submitSurvey, assets }
+/**
+* @see \App\Http\Controllers\Api\PortalResourceController::reprimands
+* @see app/Http/Controllers/Api/PortalResourceController.php:186
+* @route '/portal/api/reprimands'
+*/
+export const reprimands = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: reprimands.url(options),
+    method: 'get',
+})
+
+reprimands.definition = {
+    methods: ["get","head"],
+    url: '/portal/api/reprimands',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\PortalResourceController::reprimands
+* @see app/Http/Controllers/Api/PortalResourceController.php:186
+* @route '/portal/api/reprimands'
+*/
+reprimands.url = (options?: RouteQueryOptions) => {
+    return reprimands.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\PortalResourceController::reprimands
+* @see app/Http/Controllers/Api/PortalResourceController.php:186
+* @route '/portal/api/reprimands'
+*/
+reprimands.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: reprimands.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Api\PortalResourceController::reprimands
+* @see app/Http/Controllers/Api/PortalResourceController.php:186
+* @route '/portal/api/reprimands'
+*/
+reprimands.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: reprimands.url(options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\Api\PortalResourceController::reprimands
+* @see app/Http/Controllers/Api/PortalResourceController.php:186
+* @route '/portal/api/reprimands'
+*/
+const reprimandsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: reprimands.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Api\PortalResourceController::reprimands
+* @see app/Http/Controllers/Api/PortalResourceController.php:186
+* @route '/portal/api/reprimands'
+*/
+reprimandsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: reprimands.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Api\PortalResourceController::reprimands
+* @see app/Http/Controllers/Api/PortalResourceController.php:186
+* @route '/portal/api/reprimands'
+*/
+reprimandsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: reprimands.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+reprimands.form = reprimandsForm
+
+const PortalResourceController = { announcements, surveys, submitSurvey, assets, reprimands }
 
 export default PortalResourceController

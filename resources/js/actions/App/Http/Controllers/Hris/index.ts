@@ -2,6 +2,7 @@ import EmployeeController from './EmployeeController'
 import SubCompanyController from './SubCompanyController'
 import ClientBillingController from './ClientBillingController'
 import ManpowerRequestController from './ManpowerRequestController'
+import EmployeeReprimandController from './EmployeeReprimandController'
 import EmployeeMasterController from './EmployeeMasterController'
 import OrganizationChartController from './OrganizationChartController'
 import PerformanceController from './PerformanceController'
@@ -34,6 +35,7 @@ const Hris = {
     SubCompanyController: Object.assign(SubCompanyController, SubCompanyController),
     ClientBillingController: Object.assign(ClientBillingController, ClientBillingController),
     ManpowerRequestController: Object.assign(ManpowerRequestController, ManpowerRequestController),
+    EmployeeReprimandController: Object.assign(EmployeeReprimandController, EmployeeReprimandController),
     EmployeeMasterController: Object.assign(EmployeeMasterController, EmployeeMasterController),
     OrganizationChartController: Object.assign(OrganizationChartController, OrganizationChartController),
     PerformanceController: Object.assign(PerformanceController, PerformanceController),

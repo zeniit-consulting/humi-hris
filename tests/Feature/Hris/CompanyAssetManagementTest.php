@@ -54,7 +54,7 @@ class CompanyAssetManagementTest extends TestCase
 
         $response->assertRedirect(route('hris.assets.procurement-requests.index'));
 
-        $this->assertDatabaseHas('company_asset_procurement_requests', [
+        $this->assertDatabaseHas('comp_ast_proc_requests', [
             'user_id' => $user->id,
             'requested_by_employee_id' => $employee->id,
             'item_name' => 'Laptop Design',
@@ -88,7 +88,7 @@ class CompanyAssetManagementTest extends TestCase
             ])
             ->assertRedirect(route('hris.assets.procurement-requests.index'));
 
-        $this->assertDatabaseHas('company_asset_procurement_requests', [
+        $this->assertDatabaseHas('comp_ast_proc_requests', [
             'id' => $request->id,
             'status' => 'received',
             'actual_unit_price' => '14500000.00',
