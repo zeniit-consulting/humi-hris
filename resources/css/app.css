@@ -1,3 +1,5 @@
+@import '../../tokens.css';
+
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
@@ -216,6 +218,11 @@
 }
 
 @layer base {
+    html,
+    body {
+        overflow-x: clip;
+    }
+
     * {
         @apply border-border;
     }
@@ -227,27 +234,76 @@
 
 @layer utilities {
     .portal-primary-bg {
-        background-color: #006069;
-        color: #ffffff;
+        background-color: var(--portal-color-accent-strong);
+        color: var(--portal-color-accent-ink);
     }
 
     .portal-primary-text {
-        color: #006069;
+        color: var(--portal-color-accent-strong);
     }
 
     .portal-primary-border {
-        border-color: #006069;
+        border-color: var(--portal-color-accent);
     }
 
     .portal-primary-soft {
-        background-color: #e6f3f3;
-        color: #006069;
+        background-color: var(--portal-color-accent-soft);
+        color: var(--portal-color-accent-strong);
     }
 
     .portal-primary-soft-border {
-        background-color: #f3fbfb;
-        border-color: #b9dfe0;
-        color: #006069;
+        background-color: var(--portal-color-surface);
+        border-color: var(--portal-color-rule);
+        color: var(--portal-color-accent-strong);
+    }
+
+    .portal-page {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        background-color: var(--portal-color-paper);
+        color: var(--portal-color-ink);
+        font-family: var(--portal-font-body);
+    }
+
+    .portal-display {
+        font-family: var(--portal-font-display);
+        font-optical-sizing: auto;
+        letter-spacing: -0.035em;
+    }
+
+    .portal-tabular {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .portal-pressable {
+        touch-action: manipulation;
+        transition:
+            transform var(--portal-duration-press) var(--portal-ease-out),
+            opacity var(--portal-duration-press) var(--portal-ease-out),
+            background-color var(--portal-duration-state) var(--portal-ease-out);
+    }
+
+    .portal-pressable:active {
+        transform: scale(0.975);
+        opacity: 0.92;
+    }
+
+    .portal-focus-ring:focus-visible {
+        outline: 3px solid var(--portal-color-accent);
+        outline-offset: 3px;
+    }
+
+    .portal-material {
+        background-color: var(--portal-color-material);
+        border-color: var(--portal-color-rule);
+        box-shadow: var(--portal-shadow-material);
+        backdrop-filter: blur(18px) saturate(145%);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+        .portal-pressable:hover {
+            transform: translateY(-1px);
+        }
     }
 
     .mapboxgl-map {
@@ -387,7 +443,19 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .portal-pressable {
+        transform: none !important;
+        transition: opacity 120ms linear !important;
+    }
+
     .logo-marquee-track {
         animation: none;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .portal-material {
+        background-color: var(--portal-color-surface);
+        backdrop-filter: none;
     }
 }

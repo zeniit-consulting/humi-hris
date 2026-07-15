@@ -1,0 +1,56 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Workbench · theme: Quiet · enrichment: none · nav: N5-mobile · footer: none
+ * Hallmark · pre-emit critique: P4 H5 E4 S5 R5 V4
+ */
+
+:root {
+    --portal-color-paper: oklch(0.985 0.006 195);
+    --portal-color-surface: oklch(0.997 0.003 195);
+    --portal-color-surface-raised: oklch(0.955 0.014 195);
+    --portal-color-ink: oklch(0.22 0.025 205);
+    --portal-color-ink-soft: oklch(0.34 0.026 205);
+    --portal-color-muted: oklch(0.48 0.024 205);
+    --portal-color-rule: oklch(0.86 0.018 195);
+    --portal-color-accent: oklch(0.46 0.09 195);
+    --portal-color-accent-strong: oklch(0.37 0.083 195);
+    --portal-color-accent-soft: oklch(0.93 0.035 195);
+    --portal-color-accent-ink: oklch(0.985 0.006 195);
+    --portal-color-danger: oklch(0.54 0.19 27);
+    --portal-color-danger-soft: oklch(0.95 0.035 27);
+    --portal-color-warning: oklch(0.58 0.12 78);
+    --portal-color-warning-soft: oklch(0.95 0.038 78);
+    --portal-color-success: oklch(0.45 0.1 160);
+    --portal-color-success-soft: oklch(0.94 0.035 160);
+    --portal-color-scrim: oklch(0.15 0.02 205 / 0.48);
+    --portal-color-material: oklch(0.997 0.003 195 / 0.82);
+    --portal-font-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    --portal-font-body:
+        'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --portal-space-3xs: 0.125rem;
+    --portal-space-2xs: 0.25rem;
+    --portal-space-xs: 0.5rem;
+    --portal-space-sm: 0.75rem;
+    --portal-space-md: 1rem;
+    --portal-space-lg: 1.5rem;
+    --portal-space-xl: 2.5rem;
+    --portal-text-xs: 0.75rem;
+    --portal-text-sm: 0.875rem;
+    --portal-text-base: 1rem;
+    --portal-text-md: 1.25rem;
+    --portal-text-lg: 1.5625rem;
+    --portal-text-display: clamp(1.75rem, 6vw, 2.25rem);
+    --portal-radius-control: 0.875rem;
+    --portal-radius-surface: 1.25rem;
+    --portal-radius-pill: 999px;
+    --portal-rule-width: 1px;
+    --portal-shadow-raised: 0 1px 2px oklch(0.22 0.025 205 / 0.06);
+    --portal-shadow-material: 0 12px 32px oklch(0.22 0.025 205 / 0.12);
+    --portal-duration-press: 100ms;
+    --portal-duration-state: 220ms;
+    --portal-duration-sheet: 300ms;
+    --portal-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --portal-ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+    --portal-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --portal-z-sticky: 200;
+    --portal-z-modal: 400;
+    --portal-z-toast: 500;
+}

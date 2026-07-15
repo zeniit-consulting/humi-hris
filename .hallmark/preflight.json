@@ -1,0 +1,9 @@
+{
+    "scanned_at": "2026-07-15",
+    "framework": "React 19 + Inertia 2 + Tailwind CSS 4 + Vite 7",
+    "fonts": ["Manrope", "Plus Jakarta Sans", "Geist (global fallback)"],
+    "palette": "Humi teal with existing OKLCH and legacy light/dark variables",
+    "motion": "Lenis installed; portal uses restrained CSS transform and opacity feedback",
+    "spacing": "Tailwind spacing with a portal-specific 4pt semantic scale",
+    "preserve": ["Humi teal", "portal font pairing", "mobile-first shell"]
+}
