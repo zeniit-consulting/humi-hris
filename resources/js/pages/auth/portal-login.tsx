@@ -176,8 +176,8 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
                                 Masuk ke portal karyawan.
                             </h1>
                             <p className="mt-4 max-w-sm text-sm leading-6 font-normal text-white/75">
-                                Gunakan NIK dan password nomor WhatsApp
-                                terdaftar untuk mengakses absensi, cuti, lembur,
+                                Gunakan NIK/kode karyawan dan password yang
+                                dikirim melalui email untuk mengakses absensi, cuti, lembur,
                                 dan payroll karyawan.
                             </p>
                         </div>
@@ -270,7 +270,7 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder="Nomor WhatsApp terdaftar"
+                                            placeholder="Password dari email undangan"
                                             className="h-12 border-white/20 bg-white text-slate-950 placeholder:text-slate-400"
                                         />
                                         <InputError
@@ -290,9 +290,8 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
                                         Masuk ke portal
                                     </Button>
                                     <p className="text-xs leading-5 text-white/65">
-                                        Password adalah nomor WhatsApp
-                                        terdaftar, contoh 081234567890 atau
-                                        6281234567890.
+                                        Gunakan password sementara dari email
+                                        undangan login Anda.
                                     </p>
                                 </form>
                             ) : (

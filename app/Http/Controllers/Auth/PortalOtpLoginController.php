@@ -8,10 +8,10 @@ use App\Models\User;
 use App\Services\EmailOtpService;
 use App\Services\UserPortalAccountService;
 use App\Support\RoleRedirect;
-use App\Support\WhatsAppPhone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -105,30 +105,18 @@ class PortalOtpLoginController extends Controller
         ]);
 
         $employeeCode = strtoupper(trim((string) $validated['employee_code']));
-        $normalizedPhone = WhatsAppPhone::normalize((string) $validated['password']);
-
-        if ($normalizedPhone === '') {
-            throw ValidationException::withMessages([
-                'password' => 'Password harus menggunakan nomor WhatsApp terdaftar.',
-            ]);
-        }
 
         $employee = Employee::query()
             ->where('employee_code', $employeeCode)
-            ->get()
-            ->first(fn (Employee $employee): bool => WhatsAppPhone::normalize((string) $employee->phone) === $normalizedPhone);
+            ->first();
 
-        if (! $employee instanceof Employee) {
+        $user = $employee instanceof Employee
+            ? $this->portalAccounts->createOrSyncFromEmployee($employee)
+            : null;
+
+        if (! $user || ! Hash::check((string) $validated['password'], (string) $user->password)) {
             throw ValidationException::withMessages([
                 'employee_code' => 'NIK atau password tidak valid.',
-            ]);
-        }
-
-        $user = $this->portalAccounts->createOrSyncForPasswordLogin($employee);
-
-        if (! $user) {
-            throw ValidationException::withMessages([
-                'employee_code' => 'Akun portal karyawan tidak bisa dibuat dari data ini.',
             ]);
         }
 

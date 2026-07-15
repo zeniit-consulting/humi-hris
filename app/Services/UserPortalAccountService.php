@@ -61,6 +61,33 @@ class UserPortalAccountService
         return $this->upsertFromEmployee($employee, resetPasswordToDefault: true, sendCredentialMessage: false);
     }
 
+    /**
+     * Create or reset a portal account and return the temporary password for invitation delivery.
+     *
+     * @return array{user: User, password: string}|null
+     */
+    public function inviteFromEmployee(Employee $employee): ?array
+    {
+        if (! $employee->email) {
+            return null;
+        }
+
+        $normalizedPhone = $employee->phone
+            ? WhatsAppPhone::normalize($employee->phone)
+            : '';
+        $password = $normalizedPhone !== ''
+            ? UserPassword::defaultFromPhone($normalizedPhone)
+            : str()->random(16);
+        $user = $this->upsertFromEmployee(
+            $employee,
+            resetPasswordToDefault: true,
+            sendCredentialMessage: false,
+            invitationPassword: $password,
+        );
+
+        return $user ? ['user' => $user, 'password' => $password] : null;
+    }
+
     public function createOrSyncForPasswordLogin(Employee $employee): ?User
     {
         return $this->upsertFromEmployee($employee, resetPasswordToDefault: true, sendCredentialMessage: false);
@@ -70,6 +97,7 @@ class UserPortalAccountService
         Employee $employee,
         bool $resetPasswordToDefault,
         bool $sendCredentialMessage,
+        ?string $invitationPassword = null,
     ): ?User {
         if (! $employee->email && ! $employee->phone) {
             return null;
@@ -105,9 +133,11 @@ class UserPortalAccountService
                 'name' => $employee->full_name,
                 'email' => $employee->email ?: $this->portalPlaceholderEmail($employee, (string) $normalizedPhone),
                 'phone' => $normalizedPhone,
-                'password' => $resetPasswordToDefault && $normalizedPhone
-                    ? UserPassword::defaultFromPhone($normalizedPhone)
-                    : str()->random(32),
+                'password' => $resetPasswordToDefault && $invitationPassword
+                    ? $invitationPassword
+                    : ($resetPasswordToDefault && $normalizedPhone
+                        ? UserPassword::defaultFromPhone($normalizedPhone)
+                        : str()->random(32)),
                 'role' => 'user',
                 'parent_user_id' => $ownerId,
                 'email_verified_at' => null,
@@ -139,9 +169,8 @@ class UserPortalAccountService
 
         if ($resetPasswordToDefault) {
             $user->forceFill([
-                'password' => $normalizedPhone
-                    ? UserPassword::defaultFromPhone($normalizedPhone)
-                    : str()->random(32),
+                'password' => $invitationPassword
+                    ?? ($normalizedPhone ? UserPassword::defaultFromPhone($normalizedPhone) : str()->random(32)),
                 'email_verified_at' => null,
                 'requires_password_change' => true,
                 'password_changed_at' => null,

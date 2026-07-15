@@ -12,7 +12,7 @@ use App\Models\EmployeeDocument;
 use App\Models\Position;
 use App\Models\SubCompany;
 use App\Models\User;
-use App\Services\EmailOtpService;
+use App\Mail\EmployeePortalInvitationMail;
 use App\Services\EmployeeEmploymentHistoryService;
 use App\Services\UserPortalAccountService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -22,6 +22,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -977,28 +978,32 @@ class EmployeeController extends Controller
     public function activatePortalUser(
         Employee $employee,
         UserPortalAccountService $portalAccountService,
-        EmailOtpService $otpService,
     ): RedirectResponse {
-        return $this->invitePortalUser($employee, $portalAccountService, $otpService);
+        return $this->invitePortalUser($employee, $portalAccountService);
     }
 
     public function invitePortalUser(
         Employee $employee,
         UserPortalAccountService $portalAccountService,
-        EmailOtpService $otpService,
     ): RedirectResponse {
         if (! $employee->email) {
             return back()->with('error', 'Undangan gagal: email karyawan wajib diisi.');
         }
 
         try {
-            $portalUser = $portalAccountService->activateFromEmployee($employee);
+            $invitation = $portalAccountService->inviteFromEmployee($employee);
 
-            if (! $portalUser) {
+            if (! $invitation) {
                 return back()->with('error', 'Undangan gagal: data kontak karyawan tidak valid.');
             }
 
-            $otpService->send($portalUser, strict: true, context: 'login');
+            $portalUser = $invitation['user'];
+            Mail::to($portalUser->email)->send(new EmployeePortalInvitationMail(
+                employeeName: $employee->full_name,
+                username: $employee->employee_code,
+                temporaryPassword: $invitation['password'],
+                loginUrl: route('portal.login'),
+            ));
         } catch (Throwable $exception) {
             report($exception);
 
