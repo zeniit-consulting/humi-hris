@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToAccount;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -20,6 +21,7 @@ class CompanySetting extends Model
         'user_id',
         'name',
         'details',
+        'portal_kasbon_enabled',
         'location_name',
         'location_address',
         'location_latitude',
@@ -42,9 +44,19 @@ class CompanySetting extends Model
             'location_longitude' => 'decimal:7',
             'attendance_radius_meters' => 'integer',
             'attendance_locations' => 'array',
+            'portal_kasbon_enabled' => 'boolean',
             'overtime_hour_divisor' => 'float',
             'overtime_multiplier_hour1' => 'float',
             'overtime_multiplier_subsequent' => 'float',
         ];
+    }
+
+    public static function portalKasbonEnabledFor(User $user): bool
+    {
+        $value = static::query()
+            ->where('user_id', $user->accountOwnerId())
+            ->value('portal_kasbon_enabled');
+
+        return $value === null ? true : (bool) $value;
     }
 }

@@ -416,12 +416,17 @@ class PortalController extends Controller
                 ->sortBy('date')
                 ->take(6)
                 ->values(),
-            'links' => [
+            'features' => [
+                'kasbon' => CompanySetting::portalKasbonEnabledFor($user),
+            ],
+            'links' => array_filter([
                 'attendance' => route('portal.attendance'),
                 'schedules' => route('portal.attendance'),
                 'leaves' => route('portal.leaves'),
                 'overtimes' => route('portal.overtimes'),
-                'kasbons' => route('portal.kasbons'),
+                'kasbons' => CompanySetting::portalKasbonEnabledFor($user)
+                    ? route('portal.kasbons')
+                    : null,
                 'reimbursements' => route('portal.reimbursements'),
                 'payroll' => route('portal.payroll'),
                 'activity' => route('portal.activity'),
@@ -430,7 +435,7 @@ class PortalController extends Controller
                 'reprimands' => route('portal.reprimands'),
                 'profile' => route('portal.profile'),
                 'dashboard' => route('portal.index'),
-            ],
+            ]),
         ]);
     }
 

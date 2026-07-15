@@ -17,6 +17,7 @@ type Props = {
 
 type PortalSummary = {
     links: PortalLinkMap;
+    features?: { kasbon?: boolean };
 };
 
 type PayrollPayload = {
@@ -392,14 +393,16 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                                 )}
                                             </span>
                                         </div>
-                                        <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                            <span>Kasbon</span>
-                                            <span className="font-semibold">
-                                                {formatCurrency(
-                                                    slip.kasbon_deduction,
-                                                )}
-                                            </span>
-                                        </div>
+                                        {portal?.features?.kasbon !== false && (
+                                            <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                <span>Kasbon</span>
+                                                <span className="font-semibold">
+                                                    {formatCurrency(
+                                                        slip.kasbon_deduction,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
                                         <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
                                             <span>Denda</span>
                                             <span className="font-semibold">

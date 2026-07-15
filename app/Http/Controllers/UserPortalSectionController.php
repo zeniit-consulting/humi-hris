@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\CompanySetting;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\User;
@@ -55,6 +56,8 @@ class UserPortalSectionController extends Controller
 
     public function kasbons(Request $request): Response|RedirectResponse
     {
+        abort_unless(CompanySetting::portalKasbonEnabledFor($request->user()), 404);
+
         return $this->renderForUser($request, 'portal/kasbons', 'Kasbon');
     }
 

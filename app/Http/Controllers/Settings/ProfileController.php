@@ -31,6 +31,7 @@ class ProfileController extends Controller
             [
                 'name' => 'Perusahaan',
                 'details' => null,
+                'portal_kasbon_enabled' => true,
                 'location_name' => null,
                 'location_address' => null,
                 'location_latitude' => null,
@@ -49,6 +50,7 @@ class ProfileController extends Controller
             'company' => [
                 'name' => $companySetting->name,
                 'details' => $companySetting->details,
+                'portal_kasbon_enabled' => (bool) ($companySetting->portal_kasbon_enabled ?? true),
                 'location_name' => $companySetting->location_name,
                 'location_address' => $companySetting->location_address,
                 'location_latitude' => $companySetting->location_latitude,

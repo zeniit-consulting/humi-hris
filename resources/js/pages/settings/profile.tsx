@@ -88,6 +88,7 @@ export default function Profile({
     company: {
         name: string;
         details: string | null;
+        portal_kasbon_enabled: boolean;
         logo_url: string | null;
         location_name: string | null;
         location_address: string | null;
@@ -385,6 +386,25 @@ export default function Profile({
                                         className="mt-2"
                                         message={errors.name}
                                     />
+                                </div>
+
+                                <div className="flex items-start gap-3 rounded-lg border bg-slate-50/60 p-4">
+                                    <input
+                                        id="portal_kasbon_enabled"
+                                        name="portal_kasbon_enabled"
+                                        type="checkbox"
+                                        value="1"
+                                        defaultChecked={company.portal_kasbon_enabled}
+                                        className="mt-1 size-4 rounded border-input accent-primary"
+                                    />
+                                    <div>
+                                        <Label htmlFor="portal_kasbon_enabled">
+                                            Tampilkan Kasbon di Portal Karyawan
+                                        </Label>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            Jika dimatikan, menu, halaman, dan API Kasbon tidak dapat diakses karyawan.
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <div className="grid gap-2">

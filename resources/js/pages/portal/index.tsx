@@ -124,6 +124,9 @@ type PortalSummary = {
         profile?: string;
         dashboard: string;
     };
+    features?: {
+        kasbon?: boolean;
+    };
 };
 
 type AttendanceFocusState = {
@@ -304,6 +307,15 @@ export default function PortalPage() {
         summary?.employee?.full_name ?? summary?.user.name ?? 'Pengguna';
     const firstName = headlineName.split(' ')[0] ?? headlineName;
     const links = summary?.links ?? fallbackLinks;
+    const visibleQuickLinks = useMemo(
+        () =>
+            quickLinks.filter(
+                (item) =>
+                    item.key !== 'kasbons' ||
+                    summary?.features?.kasbon !== false,
+            ),
+        [summary],
+    );
     const attendanceFocus = useMemo(
         () => resolveAttendanceFocus(summary),
         [summary],
@@ -549,7 +561,7 @@ export default function PortalPage() {
                                             aria-label="Menu akses cepat"
                                             className="flex w-max touch-pan-x snap-x snap-mandatory gap-3"
                                         >
-                                            {quickLinks.map((item) => {
+                                            {visibleQuickLinks.map((item) => {
                                                 const href =
                                                     links[
                                                         item.key as keyof PortalSummary['links']

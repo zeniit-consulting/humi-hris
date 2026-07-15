@@ -9,6 +9,7 @@ use App\Http\Requests\Hris\StorePayrollKasbonRequest;
 use App\Http\Requests\Hris\UpdatePayrollKasbonRequest;
 use App\Models\Employee;
 use App\Models\EmployeeDeduction;
+use App\Models\CompanySetting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ class KasbonController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $this->guardPortalKasbon($request);
         /** @var User $user */
         $user = $request->user();
         $validated = $request->validate([
@@ -68,6 +70,7 @@ class KasbonController extends Controller
 
     public function store(StorePayrollKasbonRequest $request): JsonResponse
     {
+        $this->guardPortalKasbon($request);
         $validated = $request->validated();
         /** @var User $user */
         $user = $request->user();
@@ -169,5 +172,12 @@ class KasbonController extends Controller
             'used_amount' => round($usedAmount, 2),
             'available_amount' => round(max($maxAmount - $usedAmount, 0), 2),
         ];
+    }
+
+    private function guardPortalKasbon(Request $request): void
+    {
+        if ($request->is('portal/api/kasbons')) {
+            abort_unless(CompanySetting::portalKasbonEnabledFor($request->user()), 404);
+        }
     }
 }
