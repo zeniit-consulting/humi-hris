@@ -5,7 +5,7 @@ import {
     History,
     RefreshCw,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     chips,
     formatDate,
@@ -104,7 +104,7 @@ export default function PortalAttendancePage({ pageTitle }: Props) {
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setIsLoading(true);
         setLoadError(null);
 
@@ -132,11 +132,11 @@ export default function PortalAttendancePage({ pageTitle }: Props) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [period]);
 
     useEffect(() => {
         void loadData();
-    }, [period]);
+    }, [loadData]);
 
     const todayShift =
         portal?.quick_action.shift ??
