@@ -231,16 +231,24 @@ export default function PortalReimbursementsPage({ pageTitle }: Props) {
                 )}
             </section>
             {open ? (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 p-0 sm:items-center sm:p-4">
-                    <div className="w-full max-w-md rounded-t-[22px] bg-white p-5 shadow-xl sm:rounded-[18px]">
+                <div className="portal-sheet-backdrop fixed inset-0 z-[var(--portal-z-modal)] flex items-end justify-center bg-slate-950/30 p-0 sm:items-center sm:p-4">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="reimbursement-sheet-title"
+                        className="portal-sheet-panel max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-[22px] bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-xl sm:rounded-[18px]"
+                    >
                         <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-extrabold text-slate-950">
+                            <h2
+                                id="reimbursement-sheet-title"
+                                className="text-lg font-extrabold text-slate-950"
+                            >
                                 Ajukan reimbursement
                             </h2>
                             <button
                                 type="button"
                                 onClick={() => setOpen(false)}
-                                className="inline-flex size-9 items-center justify-center rounded-full bg-slate-100"
+                                className="portal-pressable portal-focus-ring inline-flex size-9 items-center justify-center rounded-full bg-slate-100"
                                 aria-label="Tutup"
                             >
                                 <X className="size-4" />
