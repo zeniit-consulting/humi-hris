@@ -10,6 +10,9 @@ import {
 import type { PortalLinkMap } from './lib';
 import { PortalShell } from './shell';
 
+// Hallmark · genre: modern-minimal · macrostructure: Long Document · theme: Quiet · enrichment: none
+// Hallmark · compact profile ledger · pre-emit critique: P5 H5 E5 S5 R5 V5
+
 type Props = {
     pageTitle: string;
 };
@@ -404,536 +407,572 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                 }
             }
         >
-            <section className="mb-5 rounded-[16px] border border-slate-200 bg-white px-5 py-5">
-                <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
-                    Ringkasan karyawan
-                </p>
-                <h2 className="mt-2 text-2xl font-bold tracking-[-0.05em] text-slate-950">
-                    {portal?.employee?.full_name ?? 'Profil karyawan'}
-                </h2>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-[10px] border border-stone-200 bg-stone-50 px-4 py-3">
-                        <p className="text-xs text-slate-500">Kode</p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                            {portal?.employee?.employee_code ?? '-'}
-                        </p>
-                    </div>
-                    <div className="rounded-[10px] border border-stone-200 bg-stone-50 px-4 py-3">
-                        <p className="text-xs text-slate-500">Status</p>
-                        <p className="mt-1 font-semibold text-slate-900">
+            <div className="min-w-0 space-y-3">
+                <section className="rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-ink)] px-4 py-4 text-[var(--portal-color-paper)] shadow-[var(--portal-shadow-material)]">
+                    <p className="font-semibold tracking-[0.16em] text-[var(--portal-color-accent-soft)] text-[var(--portal-text-label)] uppercase">
+                        Profil karyawan
+                    </p>
+                    <h2 className="mt-2 min-w-0 font-bold tracking-[-0.04em] [overflow-wrap:anywhere] text-[var(--portal-text-lg)]">
+                        {portal?.employee?.full_name ?? 'Profil karyawan'}
+                    </h2>
+                    <p className="mt-1 text-[var(--portal-color-accent-soft)] text-[var(--portal-text-sm)]">
+                        {portal?.employee?.position?.name ??
+                            'Posisi belum diisi'}
+                        {' · '}
+                        {portal?.employee?.division?.name ??
+                            'Divisi belum diisi'}
+                    </p>
+                    <div className="mt-3 flex min-w-0 items-center justify-between gap-4 border-t border-[var(--portal-color-accent)] pt-3">
+                        <span className="min-w-0">
+                            <span className="block text-[var(--portal-color-accent-soft)] text-[var(--portal-text-xs)]">
+                                Kode karyawan
+                            </span>
+                            <span className="mt-1 block truncate font-semibold text-[var(--portal-text-sm)]">
+                                {portal?.employee?.employee_code ?? '-'}
+                            </span>
+                        </span>
+                        <span className="shrink-0 rounded-[var(--portal-radius-pill)] bg-[var(--portal-color-accent)] px-3 py-1.5 font-semibold text-[var(--portal-color-accent-ink)] text-[var(--portal-text-xs)]">
                             {portal?.employee?.employment_status ?? '-'}
-                        </p>
-                    </div>
-                    <div className="rounded-[10px] border border-stone-200 bg-stone-50 px-4 py-3">
-                        <p className="text-xs text-slate-500">Divisi</p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                            {portal?.employee?.division?.name ?? '-'}
-                        </p>
-                    </div>
-                    <div className="rounded-[10px] border border-stone-200 bg-stone-50 px-4 py-3">
-                        <p className="text-xs text-slate-500">Posisi</p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                            {portal?.employee?.position?.name ?? '-'}
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            {profile?.profile_completion && (
-                <section className="mb-5 rounded-[16px] border border-stone-200 bg-white px-5 py-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]">
-                    <div className="flex items-start justify-between gap-4">
-                        <div>
-                            <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
-                                Kelengkapan profil
-                            </p>
-                            <h2 className="mt-1 text-xl font-bold tracking-[-0.04em] text-slate-950">
-                                {profile.profile_completion.percent}% lengkap
-                            </h2>
-                        </div>
-                        <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                profile.profile_completion.is_complete
-                                    ? 'bg-emerald-100 text-emerald-800'
-                                    : 'bg-amber-100 text-amber-900'
-                            }`}
-                        >
-                            {profile.profile_completion.is_complete
-                                ? 'Lengkap'
-                                : `${profile.profile_completion.missing_count} belum lengkap`}
                         </span>
                     </div>
-                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-stone-100">
-                        <div
-                            className={`h-full rounded-full ${
-                                profile.profile_completion.is_complete
-                                    ? 'bg-emerald-500'
-                                    : 'bg-amber-500'
-                            }`}
-                            style={{
-                                width: `${profile.profile_completion.percent}%`,
-                            }}
-                        />
-                    </div>
-                    <div className="mt-4 grid gap-2 md:grid-cols-2">
-                        {profile.profile_completion.items.map((item) => (
-                            <div
-                                key={item.key}
-                                className="flex items-start gap-2 rounded-[10px] border border-stone-200 bg-stone-50 px-3 py-2.5"
-                            >
-                                <CheckCircle2
-                                    className={`mt-0.5 size-4 shrink-0 ${
-                                        item.complete
-                                            ? 'text-emerald-600'
-                                            : 'text-stone-300'
-                                    }`}
-                                />
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-slate-900">
-                                        {item.label}
-                                    </p>
-                                    <p className="text-xs text-slate-500">
-                                        {item.description}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
                 </section>
-            )}
 
-            <section className="rounded-[16px] bg-white px-5 py-5 shadow-[0_16px_42px_rgba(15,23,42,0.07)]">
-                <div className="flex items-center gap-3">
-                    <span className="portal-primary-soft inline-flex size-11 items-center justify-center rounded-lg">
-                        <Phone className="size-5" />
-                    </span>
-                    <div>
-                        <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
-                            Informasi Pribadi
-                        </p>
-                        <h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">
-                            Data Diri & Identitas
-                        </h2>
-                    </div>
-                </div>
-
-                <div className="mt-5 grid grid-cols-2 gap-2">
-                    {personalDetails.map((item) => (
-                        <div
-                            key={item.label}
-                            className="rounded-[10px] border border-stone-200 bg-stone-50 px-3 py-2.5"
-                        >
-                            <p className="text-[11px] font-medium text-slate-500">
-                                {item.label}
-                            </p>
-                            <p className="mt-1 truncate text-sm font-semibold text-slate-900">
-                                {formatProfileValue(item.value)}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-
-                <form onSubmit={handleSaveProfile} className="mt-5 space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-900">
-                                Gender
-                            </label>
-                            <select
-                                value={formProfile.gender}
-                                onChange={(e) =>
-                                    updateProfileField('gender', e.target.value)
-                                }
-                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                {profile?.profile_completion && (
+                    <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-4 py-4 shadow-[var(--portal-shadow-raised)]">
+                        <div className="flex min-w-0 items-start justify-between gap-4">
+                            <div className="min-w-0">
+                                <p className="font-semibold tracking-[0.14em] text-[var(--portal-color-muted)] text-[var(--portal-text-label)] uppercase">
+                                    Kelengkapan profil
+                                </p>
+                                <h2 className="mt-1 font-bold tracking-[-0.04em] text-[var(--portal-color-ink)] text-[var(--portal-text-md)]">
+                                    {profile.profile_completion.percent}%
+                                    lengkap
+                                </h2>
+                            </div>
+                            <span
+                                className={`shrink-0 rounded-[var(--portal-radius-pill)] px-3 py-1.5 font-semibold text-[var(--portal-text-xs)] ${
+                                    profile.profile_completion.is_complete
+                                        ? 'bg-[var(--portal-color-success-soft)] text-[var(--portal-color-success)]'
+                                        : 'bg-[var(--portal-color-warning-soft)] text-[var(--portal-color-warning)]'
+                                }`}
                             >
-                                <option value="">Pilih gender</option>
-                                <option value="male">Laki-laki</option>
-                                <option value="female">Perempuan</option>
-                                <option value="other">Lainnya</option>
-                            </select>
+                                {profile.profile_completion.is_complete
+                                    ? 'Lengkap'
+                                    : `${profile.profile_completion.missing_count} perlu diisi`}
+                            </span>
                         </div>
-
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-900">
-                                Tanggal Lahir
-                            </label>
-                            <input
-                                type="date"
-                                value={formProfile.birth_date}
-                                onChange={(e) =>
-                                    updateProfileField(
-                                        'birth_date',
-                                        e.target.value,
-                                    )
-                                }
-                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                        <div className="mt-3 h-2 overflow-hidden rounded-[var(--portal-radius-pill)] bg-[var(--portal-color-surface-raised)]">
+                            <div
+                                className={`h-full rounded-[var(--portal-radius-pill)] ${
+                                    profile.profile_completion.is_complete
+                                        ? 'bg-[var(--portal-color-success)]'
+                                        : 'bg-[var(--portal-color-warning)]'
+                                }`}
+                                style={{
+                                    width: `${profile.profile_completion.percent}%`,
+                                }}
                             />
+                        </div>
+                        <details className="mt-3 rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface-raised)] px-3 py-2.5">
+                            <summary className="cursor-pointer font-semibold text-[var(--portal-color-ink)] text-[var(--portal-text-sm)]">
+                                Lihat detail kelengkapan
+                            </summary>
+                            <div className="mt-2 space-y-1.5">
+                                {profile.profile_completion.items.map(
+                                    (item) => (
+                                        <div
+                                            key={item.key}
+                                            className="flex min-w-0 items-start gap-2"
+                                        >
+                                            <CheckCircle2
+                                                className={`mt-0.5 size-4 shrink-0 ${
+                                                    item.complete
+                                                        ? 'text-[var(--portal-color-success)]'
+                                                        : 'text-[var(--portal-color-muted)]'
+                                                }`}
+                                                aria-hidden="true"
+                                            />
+                                            <div className="min-w-0">
+                                                <p className="font-semibold text-[var(--portal-color-ink)] text-[var(--portal-text-sm)]">
+                                                    {item.label}
+                                                </p>
+                                                <p className="text-[var(--portal-color-muted)] text-[var(--portal-text-xs)]">
+                                                    {item.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ),
+                                )}
+                            </div>
+                        </details>
+                    </section>
+                )}
+
+                <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-4 py-4 shadow-[var(--portal-shadow-raised)]">
+                    <div className="flex items-center gap-3">
+                        <span className="portal-primary-soft inline-flex size-9 items-center justify-center rounded-lg">
+                            <Phone className="size-4" />
+                        </span>
+                        <div>
+                            <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
+                                Informasi Pribadi
+                            </p>
+                            <h2 className="mt-1 text-lg font-bold tracking-[-0.04em]">
+                                Data Diri & Identitas
+                            </h2>
                         </div>
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-900">
-                                Pendidikan Terakhir
-                            </label>
-                            <input
-                                type="text"
-                                value={formProfile.last_education}
-                                onChange={(e) =>
-                                    updateProfileField(
-                                        'last_education',
-                                        e.target.value.slice(0, 100),
-                                    )
-                                }
-                                placeholder="Contoh: S1"
-                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
-                            />
+                    <details className="mt-3 rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface-raised)] px-3 py-2.5">
+                        <summary className="cursor-pointer font-semibold text-[var(--portal-color-ink)] text-[var(--portal-text-sm)]">
+                            Lihat data tersimpan
+                        </summary>
+                        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+                            {personalDetails.map((item) => (
+                                <div key={item.label} className="min-w-0">
+                                    <dt className="text-[var(--portal-color-muted)] text-[var(--portal-text-xs)]">
+                                        {item.label}
+                                    </dt>
+                                    <dd className="mt-0.5 truncate font-semibold text-[var(--portal-color-ink)] text-[var(--portal-text-sm)]">
+                                        {formatProfileValue(item.value)}
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+                    </details>
+
+                    <form
+                        onSubmit={handleSaveProfile}
+                        className="mt-4 space-y-3"
+                    >
+                        <div className="border-t border-[var(--portal-color-rule)] pt-4">
+                            <p className="font-semibold tracking-[0.14em] text-[var(--portal-color-muted)] text-[var(--portal-text-label)] uppercase">
+                                Perbarui data
+                            </p>
+                            <p className="mt-1 text-[var(--portal-color-muted)] text-[var(--portal-text-sm)]">
+                                Isi informasi yang diperlukan agar profil tetap
+                                akurat.
+                            </p>
                         </div>
-
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-900">
-                                Status Pernikahan
-                            </label>
-                            <select
-                                value={formProfile.marital_status}
-                                onChange={(e) =>
-                                    updateProfileField(
-                                        'marital_status',
-                                        e.target.value,
-                                    )
-                                }
-                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
-                            >
-                                <option value="">Pilih status</option>
-                                <option value="single">Belum menikah</option>
-                                <option value="married">Menikah</option>
-                                <option value="divorced">Cerai hidup</option>
-                                <option value="widowed">Cerai mati</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-900">
-                                Jumlah Anak
-                            </label>
-                            <input
-                                type="number"
-                                min="0"
-                                max="99"
-                                value={formProfile.children_count}
-                                onChange={(e) =>
-                                    updateProfileField(
-                                        'children_count',
-                                        e.target.value,
-                                    )
-                                }
-                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-900">
-                                Nomor Telepon
-                            </label>
-                            <input
-                                type="tel"
-                                value={formProfile.phone}
-                                onChange={(e) =>
-                                    updateProfileField('phone', e.target.value)
-                                }
-                                placeholder="+62812345678 atau 081234567890"
-                                className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-900">
-                            Alamat
-                        </label>
-                        <textarea
-                            value={formProfile.address}
-                            onChange={(e) =>
-                                updateProfileField(
-                                    'address',
-                                    e.target.value.slice(0, 500),
-                                )
-                            }
-                            placeholder="Masukkan alamat lengkap Anda"
-                            maxLength={500}
-                            className="mt-2 min-h-24 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none focus:border-stone-400"
-                            required
-                        />
-                        <p className="mt-1 text-xs text-slate-500">
-                            {formProfile.address.length}/500 karakter
-                        </p>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                        {[
-                            ['family_card_number', 'No. KK'],
-                            ['ktp_number', 'No. KTP'],
-                            ['bpjs_kesehatan_number', 'BPJS Kesehatan'],
-                            [
-                                'bpjs_ketenagakerjaan_number',
-                                'BPJS Ketenagakerjaan',
-                            ],
-                            ['sim_a_number', 'SIM A'],
-                            ['sim_b_number', 'SIM B'],
-                            ['sim_c_number', 'SIM C'],
-                        ].map(([field, label]) => (
-                            <div key={field}>
+                        <div className="grid gap-3 md:grid-cols-2">
+                            <div>
                                 <label className="block text-sm font-semibold text-slate-900">
-                                    {label}
+                                    Gender
                                 </label>
-                                <input
-                                    type="text"
-                                    value={
-                                        formProfile[
-                                            field as keyof typeof formProfile
-                                        ]
-                                    }
+                                <select
+                                    value={formProfile.gender}
                                     onChange={(e) =>
                                         updateProfileField(
-                                            field as keyof typeof formProfile,
-                                            e.target.value.slice(0, 32),
+                                            'gender',
+                                            e.target.value,
                                         )
                                     }
-                                    className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                >
+                                    <option value="">Pilih gender</option>
+                                    <option value="male">Laki-laki</option>
+                                    <option value="female">Perempuan</option>
+                                    <option value="other">Lainnya</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-900">
+                                    Tanggal Lahir
+                                </label>
+                                <input
+                                    type="date"
+                                    value={formProfile.birth_date}
+                                    onChange={(e) =>
+                                        updateProfileField(
+                                            'birth_date',
+                                            e.target.value,
+                                        )
+                                    }
+                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
                                 />
                             </div>
-                        ))}
-                    </div>
+                        </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                        {[
-                            ['biological_mother_name', 'Nama Ibu Kandung'],
-                            ['emergency_contact_name', 'Kontak Darurat'],
-                            [
-                                'emergency_contact_phone',
-                                'No. Telepon Kontak Darurat',
-                            ],
-                        ].map(([field, label]) => (
-                            <div key={field}>
+                        <div className="grid gap-3 md:grid-cols-2">
+                            <div>
                                 <label className="block text-sm font-semibold text-slate-900">
-                                    {label}
+                                    Pendidikan Terakhir
                                 </label>
                                 <input
                                     type="text"
-                                    value={
-                                        formProfile[
-                                            field as keyof typeof formProfile
-                                        ]
-                                    }
+                                    value={formProfile.last_education}
                                     onChange={(e) =>
                                         updateProfileField(
-                                            field as keyof typeof formProfile,
+                                            'last_education',
                                             e.target.value.slice(0, 100),
                                         )
                                     }
-                                    className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
+                                    placeholder="Contoh: S1"
+                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
                                 />
                             </div>
-                        ))}
-                    </div>
 
-                    <button
-                        type="submit"
-                        disabled={isSaving}
-                        className="portal-primary-bg inline-flex h-12 w-full items-center justify-center gap-2 rounded-[9px] text-sm font-semibold disabled:opacity-60"
-                    >
-                        {isSaving ? (
-                            <>
-                                <div className="inline-block size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                Menyimpan...
-                            </>
-                        ) : (
-                            <>
-                                <Save className="size-4" />
-                                Simpan Profil
-                            </>
-                        )}
-                    </button>
-                </form>
-            </section>
-
-            <section className="mt-5 rounded-[16px] bg-white px-5 py-5 shadow-[0_16px_42px_rgba(15,23,42,0.07)]">
-                <div className="flex items-center gap-3">
-                    <span className="portal-primary-soft inline-flex size-11 items-center justify-center rounded-lg">
-                        <CreditCard className="size-5" />
-                    </span>
-                    <div>
-                        <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
-                            Rekening Bank
-                        </p>
-                        <h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">
-                            Data Bank
-                        </h2>
-                    </div>
-                </div>
-
-                <form onSubmit={handleSaveBank} className="mt-5 space-y-4">
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-900">
-                            Nama Bank
-                        </label>
-                        <select
-                            value={formBank.bank_name}
-                            onChange={(e) =>
-                                setFormBank((cur) => ({
-                                    ...cur,
-                                    bank_name: e.target.value,
-                                }))
-                            }
-                            className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
-                            required
-                        >
-                            <option value="">Pilih Bank</option>
-                            <option value="BCA">BCA (Bank Central Asia)</option>
-                            <option value="Mandiri">
-                                Mandiri (Bank Mandiri)
-                            </option>
-                            <option value="BNI">
-                                BNI (Bank Nasional Indonesia)
-                            </option>
-                            <option value="BRI">
-                                BRI (Bank Rakyat Indonesia)
-                            </option>
-                            <option value="CIMB Niaga">CIMB Niaga</option>
-                            <option value="OCBC NISP">OCBC NISP</option>
-                            <option value="Permata">Bank Permata</option>
-                            <option value="Danamon">Bank Danamon</option>
-                            <option value="Maybank">Maybank Indonesia</option>
-                            <option value="OVO">OVO</option>
-                            <option value="GCash">GCash</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-900">
-                            Nomor Rekening
-                        </label>
-                        <input
-                            type="text"
-                            value={formBank.account_number}
-                            onChange={(e) => {
-                                const val = e.target.value.replace(/\D/g, '');
-                                if (val.length <= 30) {
-                                    setFormBank((cur) => ({
-                                        ...cur,
-                                        account_number: val,
-                                    }));
-                                }
-                            }}
-                            placeholder="Contoh: 1234567890"
-                            maxLength={30}
-                            className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
-                            required
-                        />
-                        <p className="mt-1 text-xs text-slate-500">
-                            10-30 digit angka
-                        </p>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-900">
-                            Nama Pemilik Rekening
-                        </label>
-                        <input
-                            type="text"
-                            value={formBank.account_holder_name}
-                            onChange={(e) =>
-                                setFormBank((cur) => ({
-                                    ...cur,
-                                    account_holder_name: e.target.value,
-                                }))
-                            }
-                            placeholder="Nama lengkap pemilik rekening"
-                            className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-stone-400"
-                            required
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={isSaving}
-                        className="portal-primary-bg inline-flex h-12 w-full items-center justify-center gap-2 rounded-[9px] text-sm font-semibold disabled:opacity-60"
-                    >
-                        {isSaving ? (
-                            <>
-                                <div className="inline-block size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                Menyimpan...
-                            </>
-                        ) : (
-                            <>
-                                <Save className="size-4" />
-                                Simpan Rekening
-                            </>
-                        )}
-                    </button>
-                </form>
-
-                {primaryBank ? (
-                    <div className="mt-5 rounded-[12px] border border-stone-200 bg-stone-50 p-4">
-                        <p className="text-xs font-semibold tracking-[0.22em] text-slate-500 uppercase">
-                            Rekening Tersimpan
-                        </p>
-                        <div className="mt-3 space-y-2">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-slate-600">
-                                    Bank
-                                </span>
-                                <span className="font-semibold text-slate-900">
-                                    {primaryBank.bank_name}
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-slate-600">
-                                    Nomor Rekening
-                                </span>
-                                <span className="font-semibold text-slate-900">
-                                    ****
-                                    {primaryBank.account_number.slice(-4)}
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-slate-600">
-                                    Atas Nama
-                                </span>
-                                <span className="font-semibold text-slate-900">
-                                    {primaryBank.account_holder_name}
-                                </span>
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-900">
+                                    Status Pernikahan
+                                </label>
+                                <select
+                                    value={formProfile.marital_status}
+                                    onChange={(e) =>
+                                        updateProfileField(
+                                            'marital_status',
+                                            e.target.value,
+                                        )
+                                    }
+                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                >
+                                    <option value="">Pilih status</option>
+                                    <option value="single">
+                                        Belum menikah
+                                    </option>
+                                    <option value="married">Menikah</option>
+                                    <option value="divorced">
+                                        Cerai hidup
+                                    </option>
+                                    <option value="widowed">Cerai mati</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
-                ) : null}
-            </section>
 
-            <section className="mt-5 rounded-[16px] bg-white px-5 py-5 shadow-[0_16px_42px_rgba(15,23,42,0.07)]">
-                <div className="flex items-center gap-3">
-                    <span className="inline-flex size-11 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
-                        <Mail className="size-5" />
-                    </span>
-                    <div>
-                        <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
-                            Email
+                        <div className="grid gap-3 md:grid-cols-2">
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-900">
+                                    Jumlah Anak
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="99"
+                                    value={formProfile.children_count}
+                                    onChange={(e) =>
+                                        updateProfileField(
+                                            'children_count',
+                                            e.target.value,
+                                        )
+                                    }
+                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-900">
+                                    Nomor Telepon
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={formProfile.phone}
+                                    onChange={(e) =>
+                                        updateProfileField(
+                                            'phone',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="+62812345678 atau 081234567890"
+                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-900">
+                                Alamat
+                            </label>
+                            <textarea
+                                value={formProfile.address}
+                                onChange={(e) =>
+                                    updateProfileField(
+                                        'address',
+                                        e.target.value.slice(0, 500),
+                                    )
+                                }
+                                placeholder="Masukkan alamat lengkap Anda"
+                                maxLength={500}
+                                className="mt-1.5 min-h-20 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none focus:border-stone-400"
+                                required
+                            />
+                            <p className="mt-1 text-xs text-slate-500">
+                                {formProfile.address.length}/500 karakter
+                            </p>
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                            {[
+                                ['family_card_number', 'No. KK'],
+                                ['ktp_number', 'No. KTP'],
+                                ['bpjs_kesehatan_number', 'BPJS Kesehatan'],
+                                [
+                                    'bpjs_ketenagakerjaan_number',
+                                    'BPJS Ketenagakerjaan',
+                                ],
+                                ['sim_a_number', 'SIM A'],
+                                ['sim_b_number', 'SIM B'],
+                                ['sim_c_number', 'SIM C'],
+                            ].map(([field, label]) => (
+                                <div key={field}>
+                                    <label className="block text-sm font-semibold text-slate-900">
+                                        {label}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={
+                                            formProfile[
+                                                field as keyof typeof formProfile
+                                            ]
+                                        }
+                                        onChange={(e) =>
+                                            updateProfileField(
+                                                field as keyof typeof formProfile,
+                                                e.target.value.slice(0, 32),
+                                            )
+                                        }
+                                        className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                            {[
+                                ['biological_mother_name', 'Nama Ibu Kandung'],
+                                ['emergency_contact_name', 'Kontak Darurat'],
+                                [
+                                    'emergency_contact_phone',
+                                    'No. Telepon Kontak Darurat',
+                                ],
+                            ].map(([field, label]) => (
+                                <div key={field}>
+                                    <label className="block text-sm font-semibold text-slate-900">
+                                        {label}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={
+                                            formProfile[
+                                                field as keyof typeof formProfile
+                                            ]
+                                        }
+                                        onChange={(e) =>
+                                            updateProfileField(
+                                                field as keyof typeof formProfile,
+                                                e.target.value.slice(0, 100),
+                                            )
+                                        }
+                                        className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={isSaving}
+                            className="portal-primary-bg inline-flex h-11 w-full items-center justify-center gap-2 rounded-[9px] text-sm font-semibold disabled:opacity-60"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <div className="inline-block size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    Menyimpan...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="size-4" />
+                                    Simpan Profil
+                                </>
+                            )}
+                        </button>
+                    </form>
+                </section>
+
+                <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-4 py-4 shadow-[var(--portal-shadow-raised)]">
+                    <div className="flex items-center gap-3">
+                        <span className="portal-primary-soft inline-flex size-9 items-center justify-center rounded-lg">
+                            <CreditCard className="size-4" />
+                        </span>
+                        <div>
+                            <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
+                                Rekening Bank
+                            </p>
+                            <h2 className="mt-1 text-lg font-bold tracking-[-0.04em]">
+                                Data Bank
+                            </h2>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleSaveBank} className="mt-4 space-y-3">
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-900">
+                                Nama Bank
+                            </label>
+                            <select
+                                value={formBank.bank_name}
+                                onChange={(e) =>
+                                    setFormBank((cur) => ({
+                                        ...cur,
+                                        bank_name: e.target.value,
+                                    }))
+                                }
+                                className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                required
+                            >
+                                <option value="">Pilih Bank</option>
+                                <option value="BCA">
+                                    BCA (Bank Central Asia)
+                                </option>
+                                <option value="Mandiri">
+                                    Mandiri (Bank Mandiri)
+                                </option>
+                                <option value="BNI">
+                                    BNI (Bank Nasional Indonesia)
+                                </option>
+                                <option value="BRI">
+                                    BRI (Bank Rakyat Indonesia)
+                                </option>
+                                <option value="CIMB Niaga">CIMB Niaga</option>
+                                <option value="OCBC NISP">OCBC NISP</option>
+                                <option value="Permata">Bank Permata</option>
+                                <option value="Danamon">Bank Danamon</option>
+                                <option value="Maybank">
+                                    Maybank Indonesia
+                                </option>
+                                <option value="OVO">OVO</option>
+                                <option value="GCash">GCash</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-900">
+                                Nomor Rekening
+                            </label>
+                            <input
+                                type="text"
+                                value={formBank.account_number}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(
+                                        /\D/g,
+                                        '',
+                                    );
+                                    if (val.length <= 30) {
+                                        setFormBank((cur) => ({
+                                            ...cur,
+                                            account_number: val,
+                                        }));
+                                    }
+                                }}
+                                placeholder="Contoh: 1234567890"
+                                maxLength={30}
+                                className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                required
+                            />
+                            <p className="mt-1 text-xs text-slate-500">
+                                10-30 digit angka
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-900">
+                                Nama Pemilik Rekening
+                            </label>
+                            <input
+                                type="text"
+                                value={formBank.account_holder_name}
+                                onChange={(e) =>
+                                    setFormBank((cur) => ({
+                                        ...cur,
+                                        account_holder_name: e.target.value,
+                                    }))
+                                }
+                                placeholder="Nama lengkap pemilik rekening"
+                                className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                required
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={isSaving}
+                            className="portal-primary-bg inline-flex h-11 w-full items-center justify-center gap-2 rounded-[9px] text-sm font-semibold disabled:opacity-60"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <div className="inline-block size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    Menyimpan...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="size-4" />
+                                    Simpan Rekening
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    {primaryBank ? (
+                        <div className="mt-5 rounded-[12px] border border-stone-200 bg-stone-50 p-4">
+                            <p className="text-xs font-semibold tracking-[0.22em] text-slate-500 uppercase">
+                                Rekening Tersimpan
+                            </p>
+                            <div className="mt-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-slate-600">
+                                        Bank
+                                    </span>
+                                    <span className="font-semibold text-slate-900">
+                                        {primaryBank.bank_name}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-slate-600">
+                                        Nomor Rekening
+                                    </span>
+                                    <span className="font-semibold text-slate-900">
+                                        ****
+                                        {primaryBank.account_number.slice(-4)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-slate-600">
+                                        Atas Nama
+                                    </span>
+                                    <span className="font-semibold text-slate-900">
+                                        {primaryBank.account_holder_name}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ) : null}
+                </section>
+
+                <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-4 py-4 shadow-[var(--portal-shadow-raised)]">
+                    <div className="flex items-center gap-3">
+                        <span className="inline-flex size-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
+                            <Mail className="size-4" />
+                        </span>
+                        <div>
+                            <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
+                                Email
+                            </p>
+                            <h2 className="mt-1 text-lg font-bold tracking-[-0.04em]">
+                                {profile?.employee.email ||
+                                    'Email tidak terdaftar'}
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 rounded-[9px] border border-stone-200 bg-stone-50 px-4 py-3">
+                        <p className="text-sm text-slate-600">
+                            Untuk mengubah email, silakan hubungi HR atau
+                            administrator sistem.
                         </p>
-                        <h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">
-                            {profile?.employee.email || 'Email tidak terdaftar'}
-                        </h2>
                     </div>
-                </div>
-
-                <div className="mt-4 rounded-[9px] border border-stone-200 bg-stone-50 px-4 py-3">
-                    <p className="text-sm text-slate-600">
-                        Untuk mengubah email, silakan hubungi HR atau
-                        administrator sistem.
-                    </p>
-                </div>
-            </section>
+                </section>
+            </div>
         </PortalShell>
     );
 }
