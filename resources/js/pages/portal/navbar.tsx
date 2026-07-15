@@ -32,8 +32,11 @@ const getNavItemHref = (key: string, links: PortalLinkMap): string => {
 
 export function PortalNavbar({ active, links }: PortalNavbarProps) {
     return (
-        <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md px-4 pb-4 sm:max-w-lg">
-            <div className="grid grid-cols-4 gap-2 rounded-[10px] border border-stone-200 bg-white p-2 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+        <nav
+            aria-label="Navigasi portal"
+            className="fixed inset-x-0 bottom-0 z-[var(--portal-z-sticky)] mx-auto w-full max-w-md px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:max-w-xl sm:px-6 md:max-w-2xl"
+        >
+            <div className="portal-material grid grid-cols-4 gap-1 rounded-[1.15rem] border p-1.5">
                 {navItems.map((item) => {
                     const href = getNavItemHref(item.key, links);
                     const isActive = active === item.key;
@@ -42,14 +45,18 @@ export function PortalNavbar({ active, links }: PortalNavbarProps) {
                         <a
                             key={item.key}
                             href={href}
-                            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-[11px] ${
+                            aria-current={isActive ? 'page' : undefined}
+                            className={`portal-focus-ring portal-pressable flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--portal-radius-control)] ${
                                 isActive
-                                    ? 'portal-primary-text bg-[rgba(0,96,105,0.12)]'
-                                    : 'text-slate-600'
+                                    ? 'bg-[var(--portal-accent-soft)] text-[var(--portal-accent-strong)]'
+                                    : 'text-[var(--portal-text-muted)]'
                             }`}
                         >
-                            <item.icon className="size-4" />
-                            <span className="text-[11px] font-semibold">
+                            <item.icon
+                                aria-hidden="true"
+                                className="size-[18px]"
+                            />
+                            <span className="max-w-full truncate text-[11px] font-semibold tracking-[-0.01em]">
                                 {item.label}
                             </span>
                         </a>
