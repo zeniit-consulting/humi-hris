@@ -1,4 +1,4 @@
-import { Clock3 } from 'lucide-react';
+import { Clock3, Plus, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
@@ -56,6 +56,7 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
     const [portal, setPortal] = useState<PortalSummary | null>(null);
     const [items, setItems] = useState<AttendanceRequestPayload['items']>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [form, setForm] = useState({
         attendance_date: '',
         shift_id: '',
@@ -111,6 +112,17 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
         return () => window.clearTimeout(timeoutId);
     }, [loadData]);
 
+    useEffect(() => {
+        if (!isSheetOpen) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setIsSheetOpen(false);
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isSheetOpen]);
+
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -142,6 +154,7 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
                 check_out_time: '',
                 reason: '',
             }));
+            setIsSheetOpen(false);
             notifyPortal('success', 'Request absensi berhasil dikirim.');
             await loadData();
         } catch (submitError) {
@@ -189,83 +202,139 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="mt-5 space-y-3">
-                    <input
-                        type="date"
-                        value={form.attendance_date}
-                        onChange={(event) =>
-                            setForm((current) => ({
-                                ...current,
-                                attendance_date: event.target.value,
-                            }))
-                        }
-                        className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
-                        required
-                    />
-                    <select
-                        value={form.shift_id}
-                        onChange={(event) =>
-                            setForm((current) => ({
-                                ...current,
-                                shift_id: event.target.value,
-                            }))
-                        }
-                        className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
-                    >
-                        <option value="">Tanpa shift</option>
-                        {portal?.shift_options.map((shift) => (
-                            <option key={shift.id} value={shift.id}>
-                                {formatShift(shift)}
-                            </option>
-                        ))}
-                    </select>
-                    <div className="grid grid-cols-2 gap-3">
-                        <input
-                            type="time"
-                            value={form.check_in_time}
-                            onChange={(event) =>
-                                setForm((current) => ({
-                                    ...current,
-                                    check_in_time: event.target.value,
-                                }))
-                            }
-                            className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
-                            aria-label="Jam masuk"
-                        />
-                        <input
-                            type="time"
-                            value={form.check_out_time}
-                            onChange={(event) =>
-                                setForm((current) => ({
-                                    ...current,
-                                    check_out_time: event.target.value,
-                                }))
-                            }
-                            className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
-                            aria-label="Jam pulang"
-                        />
-                    </div>
-                    <textarea
-                        value={form.reason}
-                        onChange={(event) =>
-                            setForm((current) => ({
-                                ...current,
-                                reason: event.target.value,
-                            }))
-                        }
-                        placeholder="Jelaskan kendala GPS atau alasan request absensi manual."
-                        className="min-h-28 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none"
-                        required
-                    />
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="portal-primary-bg inline-flex h-12 w-full items-center justify-center rounded-[12px] text-sm font-bold disabled:opacity-60"
-                    >
-                        {isSubmitting ? 'Mengirim...' : 'Kirim Request'}
-                    </button>
-                </form>
+                <p className="mt-3 text-sm text-slate-500">
+                    Ajukan koreksi jam masuk atau pulang ketika lokasi tidak
+                    terbaca.
+                </p>
+                <button
+                    type="button"
+                    onClick={() => setIsSheetOpen(true)}
+                    className="portal-primary-bg portal-pressable portal-focus-ring mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[12px] text-sm font-bold"
+                >
+                    <Plus className="size-4" />
+                    Buat Request Absensi
+                </button>
             </section>
+
+            {isSheetOpen ? (
+                <div
+                    className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/35 sm:items-center sm:px-4"
+                    role="presentation"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget)
+                            setIsSheetOpen(false);
+                    }}
+                >
+                    <section
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="attendance-request-sheet-title"
+                        className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-[22px] bg-white px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[18px]"
+                    >
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-xs font-bold tracking-[0.16em] text-slate-500 uppercase">
+                                    Request absensi
+                                </p>
+                                <h2
+                                    id="attendance-request-sheet-title"
+                                    className="mt-1 text-lg font-black tracking-[-0.04em] text-slate-950"
+                                >
+                                    Isi detail koreksi
+                                </h2>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsSheetOpen(false)}
+                                className="portal-pressable portal-focus-ring inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700"
+                                aria-label="Tutup form request absensi"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        <form
+                            onSubmit={handleSubmit}
+                            className="mt-5 space-y-3"
+                        >
+                            <input
+                                type="date"
+                                value={form.attendance_date}
+                                onChange={(event) =>
+                                    setForm((current) => ({
+                                        ...current,
+                                        attendance_date: event.target.value,
+                                    }))
+                                }
+                                className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
+                                required
+                            />
+                            <select
+                                value={form.shift_id}
+                                onChange={(event) =>
+                                    setForm((current) => ({
+                                        ...current,
+                                        shift_id: event.target.value,
+                                    }))
+                                }
+                                className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
+                            >
+                                <option value="">Tanpa shift</option>
+                                {portal?.shift_options.map((shift) => (
+                                    <option key={shift.id} value={shift.id}>
+                                        {formatShift(shift)}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="grid grid-cols-2 gap-3">
+                                <input
+                                    type="time"
+                                    value={form.check_in_time}
+                                    onChange={(event) =>
+                                        setForm((current) => ({
+                                            ...current,
+                                            check_in_time: event.target.value,
+                                        }))
+                                    }
+                                    className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
+                                    aria-label="Jam masuk"
+                                />
+                                <input
+                                    type="time"
+                                    value={form.check_out_time}
+                                    onChange={(event) =>
+                                        setForm((current) => ({
+                                            ...current,
+                                            check_out_time: event.target.value,
+                                        }))
+                                    }
+                                    className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
+                                    aria-label="Jam pulang"
+                                />
+                            </div>
+                            <textarea
+                                value={form.reason}
+                                onChange={(event) =>
+                                    setForm((current) => ({
+                                        ...current,
+                                        reason: event.target.value,
+                                    }))
+                                }
+                                placeholder="Jelaskan kendala GPS atau alasan request absensi manual."
+                                className="min-h-28 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none"
+                                required
+                            />
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="portal-primary-bg portal-pressable portal-focus-ring inline-flex h-12 w-full items-center justify-center rounded-[12px] text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {isSubmitting ? 'Mengirim...' : 'Kirim Request'}
+                            </button>
+                        </form>
+                    </section>
+                </div>
+            ) : null}
 
             <section className="mt-5 rounded-[18px] border border-slate-200 bg-white px-5 py-5">
                 <h2 className="text-lg font-black tracking-[-0.04em]">
@@ -287,7 +356,8 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
                                             {formatShift(item.shift)}
                                         </p>
                                         <p className="mt-1 text-sm text-slate-500">
-                                            Masuk {formatTime(item.check_in_at)} · Pulang{' '}
+                                            Masuk {formatTime(item.check_in_at)}{' '}
+                                            · Pulang{' '}
                                             {formatTime(item.check_out_at)}
                                         </p>
                                         {item.rejection_reason ? (
@@ -299,7 +369,8 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
                                     <span
                                         className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase ${chips[item.status] ?? 'bg-stone-200 text-stone-800'}`}
                                     >
-                                        {statusLabels[item.status] ?? item.status}
+                                        {statusLabels[item.status] ??
+                                            item.status}
                                     </span>
                                 </div>
                             </article>
