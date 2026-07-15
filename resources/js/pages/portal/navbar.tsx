@@ -48,8 +48,8 @@ export function PortalNavbar({ active, links }: PortalNavbarProps) {
                             aria-current={isActive ? 'page' : undefined}
                             className={`portal-focus-ring portal-pressable flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--portal-radius-control)] ${
                                 isActive
-                                    ? 'bg-[var(--portal-accent-soft)] text-[var(--portal-accent-strong)]'
-                                    : 'text-[var(--portal-text-muted)]'
+                                    ? 'portal-primary-soft portal-primary-text portal-primary-border border shadow-[inset_0_-2px_0_var(--portal-color-accent-strong)]'
+                                    : 'border border-transparent text-[var(--portal-color-muted)]'
                             }`}
                         >
                             <item.icon

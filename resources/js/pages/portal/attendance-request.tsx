@@ -218,7 +218,7 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
 
             {isSheetOpen ? (
                 <div
-                    className="portal-sheet-backdrop fixed inset-0 z-50 flex items-end justify-center bg-slate-950/35 sm:items-center sm:px-4"
+                    className="portal-sheet-backdrop fixed inset-0 z-[var(--portal-z-modal)] flex items-end justify-center bg-slate-950/35 sm:items-center sm:px-4"
                     role="presentation"
                     onMouseDown={(event) => {
                         if (event.target === event.currentTarget)
