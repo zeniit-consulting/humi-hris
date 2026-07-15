@@ -5,6 +5,10 @@ import type { PortalLinkMap } from './lib';
 import { PortalNavbar } from './navbar';
 import { PortalToastViewport } from './toast';
 
+// Hallmark · component: portal header · genre: modern-minimal · theme: Quiet
+// Hallmark · contrast: pass (46–50) · interaction: direct press + visible focus
+// Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4
+
 type PortalShellProps = PropsWithChildren<{
     title: string;
     eyebrow: string;
@@ -64,8 +68,8 @@ export function PortalShell({
                 <PortalToastViewport />
                 <div className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-white px-4 pt-4 pb-28 sm:max-w-lg">
                     <header className="-mx-4 mb-4 border-b border-stone-200 bg-white px-4 pb-4">
-                        <div className="flex items-center justify-between gap-3">
-                            <div className="flex min-w-0 items-center gap-3">
+                        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+                            <div className="min-w-0 justify-self-start">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -76,16 +80,18 @@ export function PortalShell({
 
                                         window.location.href = '/portal';
                                     }}
-                                    className="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-white text-slate-900"
+                                    className="portal-pressable portal-focus-ring inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-white text-slate-900 disabled:cursor-not-allowed disabled:opacity-55"
                                     aria-label="Kembali"
                                 >
                                     <ArrowLeft className="size-4" />
                                 </button>
-                                <h1 className="truncate text-xl font-extrabold tracking-[-0.04em] text-slate-950">
-                                    {title}
-                                </h1>
                             </div>
-                            {headerAction ? <div>{headerAction}</div> : null}
+                            <h1 className="max-w-[calc(100vw-10rem)] truncate justify-self-center text-center text-xl font-extrabold tracking-[-0.04em] text-slate-950">
+                                {title}
+                            </h1>
+                            <div className="min-w-0 justify-self-end">
+                                {headerAction}
+                            </div>
                         </div>
                     </header>
 

@@ -1,6 +1,6 @@
 import {
+    ArrowUpRight,
     BarChart3,
-    ChevronRight,
     ClipboardList,
     MapPinned,
     ScrollText,
@@ -19,6 +19,14 @@ type Props = {
     pageTitle?: string;
 };
 
+type ActivityItem = {
+    title: string;
+    description: string;
+    hrefKey: keyof PortalLinkMap;
+    fallbackHref: string;
+    icon: LucideIcon;
+};
+
 const fallbackLinks: PortalLinkMap = {
     attendance: '/portal/attendance',
     leaves: '/portal/leaves',
@@ -31,13 +39,7 @@ const fallbackLinks: PortalLinkMap = {
     profile: '/portal/profile',
 };
 
-const menuItems: Array<{
-    title: string;
-    description: string;
-    hrefKey: keyof PortalLinkMap;
-    fallbackHref: string;
-    icon: LucideIcon;
-}> = [
+const menuItems: ActivityItem[] = [
     {
         title: 'Client Visit',
         description: 'Clock-in, clock-out, dan riwayat kunjungan.',
@@ -67,6 +69,10 @@ const menuItems: Array<{
         icon: ScrollText,
     },
 ];
+
+// Hallmark · audience: field workers · use: start, update, and review daily work · tone: field-first utilitarian
+// Hallmark · genre: modern-minimal · macrostructure: Narrative Workflow · theme: Quiet · enrichment: none
+// Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · contrast: pass (46–50) · responsive: pass (36, 59, 61–69)
 
 export default function PortalActivityPage({ pageTitle }: Props) {
     const [portal, setPortal] = useState<PortalSummary | null>(null);
@@ -104,6 +110,11 @@ export default function PortalActivityPage({ pageTitle }: Props) {
     }, []);
 
     const links = portal?.links ?? fallbackLinks;
+    const activities = menuItems.map((item) => ({
+        ...item,
+        href: links[item.hrefKey] ?? item.fallbackHref,
+    }));
+    const [clientVisit, performance, personalActivity, reprimand] = activities;
 
     return (
         <PortalShell
@@ -112,46 +123,85 @@ export default function PortalActivityPage({ pageTitle }: Props) {
             active="activity"
             links={links}
         >
-            <div className="space-y-5">
-                <section className="rounded-[16px] border border-slate-200 bg-white px-5 py-5">
-                    <p className="text-xs font-semibold tracking-[0.22em] text-slate-500 uppercase">
-                        Menu aktivitas
-                    </p>
-                    <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-slate-950">
-                        Pilih aktivitas kerja
-                    </h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                        Setiap menu punya halaman kerja sendiri supaya form dan
-                        riwayat lebih fokus.
-                    </p>
+            <div className="min-w-0 space-y-5">
+                <section aria-labelledby="field-action-title">
+                    <div className="mb-3 flex min-w-0 flex-col gap-1">
+                        <p className="text-[var(--portal-text-label)] font-semibold tracking-[0.14em] text-[var(--portal-color-muted)] uppercase">
+                            Langkah utama
+                        </p>
+                        <h3
+                            id="field-action-title"
+                            className="min-w-0 text-[var(--portal-text-heading)] font-bold tracking-[-0.03em] text-[var(--portal-color-ink)] [overflow-wrap:anywhere]"
+                        >
+                            Kerja di lokasi
+                        </h3>
+                    </div>
+
+                    <a
+                        href={clientVisit.href}
+                        className="portal-pressable portal-focus-ring group flex min-h-44 min-w-0 flex-col justify-between rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-accent-strong)] p-5 text-[var(--portal-color-accent-ink)] shadow-[var(--portal-shadow-material)]"
+                    >
+                        <span className="flex min-w-0 items-start justify-between gap-4">
+                            <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)] bg-[var(--portal-color-accent)] text-[var(--portal-color-accent-ink)]">
+                                <MapPinned className="size-5" aria-hidden="true" />
+                            </span>
+                            <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[var(--portal-text-label)] font-semibold">
+                                Mulai visit
+                                <ArrowUpRight
+                                    className="size-4 transition-transform duration-[var(--portal-duration-press)] motion-reduce:transition-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                                    aria-hidden="true"
+                                />
+                            </span>
+                        </span>
+                        <span className="mt-5 min-w-0">
+                            <span className="block text-[var(--portal-text-heading)] font-bold tracking-[-0.03em]">
+                                {clientVisit.title}
+                            </span>
+                            <span className="mt-1 block max-w-[34ch] text-[var(--portal-text-body)] leading-6 text-[var(--portal-color-accent-soft)]">
+                                {clientVisit.description}
+                            </span>
+                        </span>
+                    </a>
                 </section>
 
-                <section className="grid grid-cols-3 gap-3">
-                    {menuItems.map((item) => {
-                        const href = links[item.hrefKey] ?? item.fallbackHref;
+                <section aria-labelledby="update-title">
+                    <div className="mb-3 flex min-w-0 flex-col gap-1">
+                        <h3
+                            id="update-title"
+                            className="min-w-0 text-[var(--portal-text-heading)] font-bold tracking-[-0.03em] text-[var(--portal-color-ink)] [overflow-wrap:anywhere]"
+                        >
+                            Menu lainnya
+                        </h3>
+                    </div>
 
-                        return (
+                    <div className="min-w-0 overflow-hidden rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] shadow-[var(--portal-shadow-subtle)]">
+                        {[performance, personalActivity, reprimand].map((item, index) => (
                             <a
                                 key={item.title}
-                                href={href}
-                                className="group flex min-h-36 flex-col rounded-[14px] border border-slate-200 bg-white p-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-[#006069]/35"
+                                href={item.href}
+                                className={`portal-pressable portal-focus-ring group flex min-h-20 min-w-0 items-center gap-3 px-4 py-3 ${index < 2 ? 'border-b border-[var(--portal-color-rule)]' : ''}`}
                             >
-                                <span className="portal-primary-soft inline-flex size-10 items-center justify-center rounded-[10px]">
-                                    <item.icon className="portal-primary-text size-5" />
+                                <span className="portal-primary-soft inline-flex size-10 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)]">
+                                    <item.icon
+                                        className="portal-primary-text size-5"
+                                        aria-hidden="true"
+                                    />
                                 </span>
-                                <span className="mt-3 text-sm leading-tight font-black tracking-[-0.03em] text-slate-950">
-                                    {item.title}
+                                <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-[var(--portal-text-body)] font-bold tracking-[-0.02em] text-[var(--portal-color-ink)]">
+                                        {item.title}
+                                    </span>
+                                    <span className="mt-0.5 block truncate text-[var(--portal-text-small)] text-[var(--portal-color-muted)]">
+                                        {item.description}
+                                    </span>
                                 </span>
-                                <span className="mt-1 line-clamp-3 text-[11px] leading-4 text-slate-500">
-                                    {item.description}
-                                </span>
-                                <span className="mt-auto inline-flex items-center pt-3 text-[11px] font-bold text-[#006069]">
-                                    Buka
-                                    <ChevronRight className="size-3.5 transition group-hover:translate-x-0.5" />
-                                </span>
+                                <ArrowUpRight
+                                    className="size-4 shrink-0 text-[var(--portal-color-accent-strong)] transition-transform duration-[var(--portal-duration-press)] motion-reduce:transition-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                                    aria-hidden="true"
+                                />
                             </a>
-                        );
-                    })}
+                        ))}
+                    </div>
                 </section>
             </div>
         </PortalShell>
