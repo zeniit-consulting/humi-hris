@@ -45,6 +45,11 @@ class Employee extends Model
         'offboarding_notes',
         'employment_status',
         'employment_type',
+        'contract_duration_months',
+        'contract_end_date',
+        'probation_duration_months',
+        'probation_end_date',
+        'pkwtt_activated_at',
         'pph21_method',
         'pph21_rate',
         'ptkp_category',
@@ -53,8 +58,12 @@ class Employee extends Model
         'manager_id',
         'base_salary',
         'address',
+        'domicile_address',
         'family_card_number',
         'ktp_number',
+        'npwp_number',
+        'blood_type',
+        'religion',
         'bpjs_kesehatan_number',
         'bpjs_ketenagakerjaan_number',
         'sim_a_number',
@@ -63,6 +72,7 @@ class Employee extends Model
         'biological_mother_name',
         'emergency_contact_name',
         'emergency_contact_phone',
+        'emergency_contact_relationship',
         'notes',
         'is_active',
     ];
@@ -78,6 +88,11 @@ class Employee extends Model
             'birth_date' => 'date',
             'children_count' => 'integer',
             'hire_date' => 'date',
+            'contract_duration_months' => 'integer',
+            'contract_end_date' => 'date',
+            'probation_duration_months' => 'integer',
+            'probation_end_date' => 'date',
+            'pkwtt_activated_at' => 'date',
             'offboarded_at' => 'date',
             'base_salary' => 'decimal:2',
             'pph21_rate' => 'decimal:2',
@@ -238,6 +253,11 @@ class Employee extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(EmployeeDocument::class);
+    }
+
+    public function employmentHistories(): HasMany
+    {
+        return $this->hasMany(EmployeeEmploymentHistory::class)->latest('effective_date')->latest('id');
     }
 
     public function performanceReviews(): HasMany

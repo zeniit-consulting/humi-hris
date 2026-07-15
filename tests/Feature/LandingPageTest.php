@@ -52,4 +52,32 @@ class LandingPageTest extends TestCase
                 );
         }
     }
+
+    public function test_public_news_pages_are_available(): void
+    {
+        $this->withoutVite();
+
+        $this->get('/berita')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('news/index')
+                ->has('articles', 4)
+            );
+
+        $this->get('/berita/apa-itu-hris-cara-memilih-software-hris-indonesia')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('news/show')
+                ->where('article.slug', 'apa-itu-hris-cara-memilih-software-hris-indonesia')
+                ->has('article.faqs', 3)
+                ->has('relatedArticles', 3)
+            );
+    }
+
+    public function test_unknown_news_article_returns_not_found(): void
+    {
+        $this->withoutVite();
+
+        $this->get('/berita/artikel-tidak-ada')->assertNotFound();
+    }
 }

@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Mail\EmailOtpMail;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
@@ -21,6 +23,8 @@ class RegistrationTest extends TestCase
 
     public function test_new_users_can_register()
     {
+        Mail::fake();
+
         $response = $this->post(route('register.store'), [
             'name' => 'Test User',
             'company_name' => 'PT Test Company',
@@ -38,8 +42,9 @@ class RegistrationTest extends TestCase
         $this->assertSame('admin', $user->role);
         $this->assertSame('PT Test Company', $user->company_name);
         $this->assertSame('6281234567890', $user->phone);
-        $this->assertNull($user->phone_verified_at);
-        $this->assertNotNull($user->whatsapp_otp_code);
+        $this->assertNull($user->email_verified_at);
+        $this->assertNotNull($user->email_otp_code);
+        Mail::assertSent(EmailOtpMail::class, fn ($mail): bool => $mail->hasTo('test@example.com'));
 
         $this->assertDatabaseHas('company_settings', [
             'user_id' => $user->id,

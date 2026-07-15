@@ -33,9 +33,9 @@ class AuthController extends Controller
         if ($user->role === 'user') {
             return response()->json([
                 'success' => false,
-                'message' => 'Akun portal karyawan menggunakan login OTP WhatsApp.',
+                'message' => 'Akun portal karyawan menggunakan login OTP email.',
                 'errors' => [
-                    'email' => ['Gunakan login OTP WhatsApp untuk akun portal karyawan.'],
+                    'email' => ['Gunakan login OTP email untuk akun portal karyawan.'],
                 ],
             ], 422);
         }

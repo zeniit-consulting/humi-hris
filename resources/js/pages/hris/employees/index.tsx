@@ -166,6 +166,20 @@ type EmployeeDocument = {
     download_url: string | null;
 };
 
+type EmployeeEmploymentHistory = {
+    id: number;
+    event_type: string;
+    effective_date: string;
+    old_status: string | null;
+    new_status: string | null;
+    old_division_name: string | null;
+    new_division_name: string | null;
+    old_position_name: string | null;
+    new_position_name: string | null;
+    notes: string | null;
+    created_by_name: string | null;
+};
+
 type Employee = {
     id: number;
     employee_code: string;
@@ -185,6 +199,11 @@ type Employee = {
     offboarding_notes: string | null;
     employment_status: string;
     employment_type: string;
+    contract_duration_months: number | null;
+    contract_end_date: string | null;
+    probation_duration_months: number | null;
+    probation_end_date: string | null;
+    pkwtt_activated_at: string | null;
     pph21_method: string;
     pph21_rate: string;
     ptkp_category: string | null;
@@ -194,8 +213,12 @@ type Employee = {
     manager_id: number | null;
     base_salary: string | null;
     address: string | null;
+    domicile_address: string | null;
     family_card_number: string | null;
     ktp_number: string | null;
+    npwp_number: string | null;
+    blood_type: string | null;
+    religion: string | null;
     bpjs_kesehatan_number: string | null;
     bpjs_ketenagakerjaan_number: string | null;
     sim_a_number: string | null;
@@ -204,6 +227,7 @@ type Employee = {
     biological_mother_name: string | null;
     emergency_contact_name: string | null;
     emergency_contact_phone: string | null;
+    emergency_contact_relationship: string | null;
     notes: string | null;
     is_active: boolean;
     division: {
@@ -227,6 +251,7 @@ type Employee = {
     bank_accounts: BankAccount[];
     allowances: EmployeeAllowance[];
     documents: EmployeeDocument[];
+    employment_histories: EmployeeEmploymentHistory[];
     compliance_summary: {
         valid: number;
         expiring: number;
@@ -260,6 +285,9 @@ type EmployeeFormData = {
     hire_date: string;
     employment_status: string;
     employment_type: string;
+    contract_duration_months: string;
+    contract_end_date: string;
+    probation_duration_months: string;
     pph21_method: string;
     pph21_rate: string;
     ptkp_category: string;
@@ -269,8 +297,12 @@ type EmployeeFormData = {
     manager_id: string;
     base_salary: string;
     address: string;
+    domicile_address: string;
     family_card_number: string;
     ktp_number: string;
+    npwp_number: string;
+    blood_type: string;
+    religion: string;
     bpjs_kesehatan_number: string;
     bpjs_ketenagakerjaan_number: string;
     sim_a_number: string;
@@ -279,6 +311,9 @@ type EmployeeFormData = {
     biological_mother_name: string;
     emergency_contact_name: string;
     emergency_contact_phone: string;
+    emergency_contact_relationship: string;
+    change_effective_date: string;
+    change_notes: string;
     notes: string;
     is_active: boolean;
 };
@@ -309,6 +344,11 @@ type OffboardingFormData = {
     offboarded_at: string;
     offboarding_reason: string;
     offboarding_notes: string;
+};
+
+type PkwttActivationFormData = {
+    effective_date: string;
+    notes: string;
 };
 
 type EmployeeDocumentFormData = {
@@ -391,6 +431,9 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     hire_date: todayDate(),
     employment_status: 'active',
     employment_type: 'PKWTT',
+    contract_duration_months: '',
+    contract_end_date: '',
+    probation_duration_months: '0',
     pph21_method: 'gross',
     pph21_rate: '0',
     ptkp_category: '',
@@ -400,8 +443,12 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     manager_id: '',
     base_salary: '',
     address: '',
+    domicile_address: '',
     family_card_number: '',
     ktp_number: '',
+    npwp_number: '',
+    blood_type: '',
+    religion: '',
     bpjs_kesehatan_number: '',
     bpjs_ketenagakerjaan_number: '',
     sim_a_number: '',
@@ -410,6 +457,9 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     biological_mother_name: '',
     emergency_contact_name: '',
     emergency_contact_phone: '',
+    emergency_contact_relationship: '',
+    change_effective_date: todayDate(),
+    change_notes: '',
     notes: '',
     is_active: true,
 });
@@ -513,12 +563,16 @@ const employeeFieldLabels: Record<string, string> = {
     marital_status: 'Status pernikahan',
     children_count: 'Jumlah anak',
     biological_mother_name: 'Nama ibu kandung',
-    address: 'Alamat',
+    address: 'Alamat KTP',
+    domicile_address: 'Alamat domisili',
     ktp_number: 'No. KTP',
     ptkp_category: 'Kategori PTKP',
     hire_date: 'Tanggal masuk',
     employment_status: 'Status karyawan',
     employment_type: 'Tipe karyawan',
+    contract_duration_months: 'Durasi kontrak',
+    contract_end_date: 'Tanggal akhir kontrak',
+    probation_duration_months: 'Durasi probation',
     pph21_method: 'Metode PPh21',
     pph21_rate: 'Nominal PPh21',
     division_id: 'Divisi',
@@ -528,6 +582,12 @@ const employeeFieldLabels: Record<string, string> = {
     base_salary: 'Gaji pokok',
     emergency_contact_name: 'Kontak darurat',
     emergency_contact_phone: 'Nomor kontak darurat',
+    emergency_contact_relationship: 'Hubungan kontak darurat',
+    npwp_number: 'NPWP',
+    blood_type: 'Golongan darah',
+    religion: 'Agama',
+    change_effective_date: 'Tanggal efektif perubahan',
+    change_notes: 'Catatan perubahan',
 };
 
 const genderLabels: Record<string, string> = {
@@ -541,6 +601,15 @@ const maritalStatusLabels: Record<string, string> = {
     married: 'Menikah',
     divorced: 'Cerai',
     widowed: 'Janda/Duda',
+};
+
+const employmentHistoryLabels: Record<string, string> = {
+    status_change: 'Perubahan Status',
+    division_transfer: 'Mutasi Divisi',
+    promotion: 'Promosi',
+    demotion: 'Demosi',
+    position_change: 'Perubahan Jabatan',
+    pkwtt_activation: 'Aktivasi PKWTT',
 };
 
 const getInitials = (name: string) => {
@@ -662,6 +731,11 @@ export default function EmployeesIndex() {
     const [detailEmployee, setDetailEmployee] = useState<Employee | null>(null);
     const [offboardingEmployee, setOffboardingEmployee] =
         useState<Employee | null>(null);
+    const [activatingPkwttEmployee, setActivatingPkwttEmployee] =
+        useState<Employee | null>(null);
+    const [contractEndMode, setContractEndMode] = useState<
+        'duration' | 'manual'
+    >('duration');
 
     const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
         null,
@@ -685,6 +759,10 @@ export default function EmployeesIndex() {
         offboarding_reason: 'resigned',
         offboarding_notes: '',
     });
+    const pkwttActivationForm = useForm<PkwttActivationFormData>({
+        effective_date: todayDate(),
+        notes: '',
+    });
 
     const employeeStepFields = useMemo<
         Record<number, (keyof EmployeeFormData)[]>
@@ -702,11 +780,20 @@ export default function EmployeesIndex() {
                 'children_count',
                 'biological_mother_name',
                 'address',
+                'domicile_address',
+                'blood_type',
+                'religion',
+                'emergency_contact_name',
+                'emergency_contact_phone',
+                'emergency_contact_relationship',
             ],
             2: [
                 'hire_date',
                 'employment_status',
                 'employment_type',
+                'contract_duration_months',
+                'contract_end_date',
+                'probation_duration_months',
                 'pph21_method',
                 'pph21_rate',
                 'ptkp_category',
@@ -716,10 +803,13 @@ export default function EmployeesIndex() {
                 'manager_id',
                 'base_salary',
                 'is_active',
+                'change_effective_date',
+                'change_notes',
             ],
             3: [
                 'family_card_number',
                 'ktp_number',
+                'npwp_number',
                 'bpjs_kesehatan_number',
                 'bpjs_ketenagakerjaan_number',
                 'sim_a_number',
@@ -841,6 +931,7 @@ export default function EmployeesIndex() {
         setEditingEmployee(null);
         setEmployeeFormStep(1);
         employeeForm.clearErrors();
+        setContractEndMode('duration');
         employeeForm.setData({
             ...buildEmployeeDefault(),
             sub_company_id: defaultScopedSubCompanyId,
@@ -853,6 +944,9 @@ export default function EmployeesIndex() {
         setEditingEmployee(employee);
         setEmployeeFormStep(1);
         employeeForm.clearErrors();
+        setContractEndMode(
+            employee.contract_duration_months !== null ? 'duration' : 'manual',
+        );
         employeeForm.setData({
             employee_code: employee.employee_code,
             full_name: employee.full_name,
@@ -869,6 +963,15 @@ export default function EmployeesIndex() {
             hire_date: employee.hire_date,
             employment_status: employee.employment_status,
             employment_type: employee.employment_type,
+            contract_duration_months:
+                employee.contract_duration_months !== null
+                    ? String(employee.contract_duration_months)
+                    : '',
+            contract_end_date: employee.contract_end_date ?? '',
+            probation_duration_months:
+                employee.probation_duration_months !== null
+                    ? String(employee.probation_duration_months)
+                    : '0',
             pph21_method: employee.pph21_method,
             pph21_rate: String(employee.pph21_rate ?? '0'),
             ptkp_category: employee.ptkp_category ?? '',
@@ -886,8 +989,12 @@ export default function EmployeesIndex() {
                 ? String(employee.base_salary)
                 : '',
             address: employee.address ?? '',
+            domicile_address: employee.domicile_address ?? '',
             family_card_number: employee.family_card_number ?? '',
             ktp_number: employee.ktp_number ?? '',
+            npwp_number: employee.npwp_number ?? '',
+            blood_type: employee.blood_type ?? '',
+            religion: employee.religion ?? '',
             bpjs_kesehatan_number: employee.bpjs_kesehatan_number ?? '',
             bpjs_ketenagakerjaan_number:
                 employee.bpjs_ketenagakerjaan_number ?? '',
@@ -897,6 +1004,10 @@ export default function EmployeesIndex() {
             biological_mother_name: employee.biological_mother_name ?? '',
             emergency_contact_name: employee.emergency_contact_name ?? '',
             emergency_contact_phone: employee.emergency_contact_phone ?? '',
+            emergency_contact_relationship:
+                employee.emergency_contact_relationship ?? '',
+            change_effective_date: todayDate(),
+            change_notes: '',
             notes: employee.notes ?? '',
             is_active: employee.is_active,
         });
@@ -909,6 +1020,9 @@ export default function EmployeesIndex() {
         employeeForm.clearErrors(
             'full_name',
             'hire_date',
+            'contract_duration_months',
+            'contract_end_date',
+            'probation_duration_months',
             'pph21_method',
             'pph21_rate',
             'division_id',
@@ -1000,6 +1114,44 @@ export default function EmployeesIndex() {
                 isValid = false;
             }
 
+            if (employeeForm.data.employment_type === 'PKWT') {
+                if (
+                    contractEndMode === 'duration' &&
+                    (Number(employeeForm.data.contract_duration_months) < 1 ||
+                        Number(employeeForm.data.contract_duration_months) >
+                            120)
+                ) {
+                    employeeForm.setError(
+                        'contract_duration_months',
+                        'Durasi kontrak wajib 1 sampai 120 bulan.',
+                    );
+                    isValid = false;
+                }
+
+                if (
+                    contractEndMode === 'manual' &&
+                    employeeForm.data.contract_end_date.trim() === ''
+                ) {
+                    employeeForm.setError(
+                        'contract_end_date',
+                        'Tanggal akhir kontrak wajib diisi.',
+                    );
+                    isValid = false;
+                }
+            }
+
+            if (
+                employeeForm.data.employment_type === 'PKWTT' &&
+                (Number(employeeForm.data.probation_duration_months) < 0 ||
+                    Number(employeeForm.data.probation_duration_months) > 12)
+            ) {
+                employeeForm.setError(
+                    'probation_duration_months',
+                    'Durasi probation harus 0 sampai 12 bulan.',
+                );
+                isValid = false;
+            }
+
             if (employeeForm.data.base_salary.trim() !== '') {
                 const baseSalaryValue = Number(
                     employeeForm.data.base_salary.replace(/[^\d]/g, ''),
@@ -1038,6 +1190,34 @@ export default function EmployeesIndex() {
         router.post(`/hris/employees/${employee.id}/activate-user`, undefined, {
             preserveScroll: true,
         });
+    };
+
+    const openPkwttActivationDialog = (employee: Employee) => {
+        setActivatingPkwttEmployee(employee);
+        pkwttActivationForm.clearErrors();
+        pkwttActivationForm.setData({
+            effective_date: todayDate(),
+            notes: '',
+        });
+    };
+
+    const submitPkwttActivationForm = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!activatingPkwttEmployee) {
+            return;
+        }
+
+        pkwttActivationForm.post(
+            `/hris/employees/${activatingPkwttEmployee.id}/activate-pkwtt`,
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setActivatingPkwttEmployee(null);
+                    pkwttActivationForm.reset();
+                },
+            },
+        );
     };
 
     const openOffboardingDialog = (employee: Employee) => {
@@ -1942,6 +2122,22 @@ export default function EmployeesIndex() {
                                                                         ? 'Kirim ulang aktivasi user'
                                                                         : 'Aktivasi user'}
                                                                 </DropdownMenuItem>
+                                                                {employee.employment_type ===
+                                                                    'PKWTT' &&
+                                                                    employee.employment_status ===
+                                                                        'probation' && (
+                                                                        <DropdownMenuItem
+                                                                            onClick={() =>
+                                                                                openPkwttActivationDialog(
+                                                                                    employee,
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <UserRoundCheck className="size-4" />
+                                                                            Aktivasi
+                                                                            PKWTT
+                                                                        </DropdownMenuItem>
+                                                                    )}
                                                                 <DropdownMenuItem
                                                                     disabled={
                                                                         employee.employment_status ===
@@ -2103,7 +2299,7 @@ export default function EmployeesIndex() {
                     }
                 }}
             >
-                <DialogContent className="sm:max-w-xl">
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Detail Karyawan</DialogTitle>
                         <DialogDescription>
@@ -2171,6 +2367,25 @@ export default function EmployeesIndex() {
                                         '-'}
                                 </p>
                                 <p>
+                                    Alamat KTP: {detailEmployee.address ?? '-'}
+                                </p>
+                                <p>
+                                    Alamat Domisili:{' '}
+                                    {detailEmployee.domicile_address ?? '-'}
+                                </p>
+                                <p>
+                                    Golongan Darah:{' '}
+                                    {detailEmployee.blood_type ?? '-'}
+                                </p>
+                                <p>Agama: {detailEmployee.religion ?? '-'}</p>
+                                <p>NPWP: {detailEmployee.npwp_number ?? '-'}</p>
+                                <p>
+                                    Kontak Darurat:{' '}
+                                    {detailEmployee.emergency_contact_name
+                                        ? `${detailEmployee.emergency_contact_name} - ${detailEmployee.emergency_contact_phone ?? '-'} (${detailEmployee.emergency_contact_relationship ?? '-'})`
+                                        : '-'}
+                                </p>
+                                <p>
                                     Divisi:{' '}
                                     {detailEmployee.division?.name ?? '-'}
                                 </p>
@@ -2194,6 +2409,28 @@ export default function EmployeesIndex() {
                                         detailEmployee.employment_status
                                     ] ?? detailEmployee.employment_status}
                                 </p>
+                                {detailEmployee.employment_type === 'PKWT' && (
+                                    <p>
+                                        Kontrak berakhir:{' '}
+                                        {formatDateDisplay(
+                                            detailEmployee.contract_end_date,
+                                        )}
+                                        {detailEmployee.contract_duration_months
+                                            ? ` (${detailEmployee.contract_duration_months} bulan)`
+                                            : ''}
+                                    </p>
+                                )}
+                                {detailEmployee.employment_type === 'PKWTT' && (
+                                    <p>
+                                        Probation:{' '}
+                                        {detailEmployee.probation_duration_months ??
+                                            0}{' '}
+                                        bulan, sampai{' '}
+                                        {formatDateDisplay(
+                                            detailEmployee.probation_end_date,
+                                        )}
+                                    </p>
+                                )}
                                 <p>
                                     Tanggal Offboarding:{' '}
                                     {formatDateDisplay(
@@ -2214,7 +2451,195 @@ export default function EmployeesIndex() {
                                     {detailEmployee.offboarding_notes ?? '-'}
                                 </p>
                             </div>
+                            <div className="flex flex-col gap-3 rounded-md border p-3">
+                                <p className="font-medium">
+                                    Histori Kepegawaian
+                                </p>
+                                {detailEmployee.employment_histories.length ===
+                                0 ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        Belum ada perubahan status, divisi, atau
+                                        jabatan.
+                                    </p>
+                                ) : (
+                                    detailEmployee.employment_histories.map(
+                                        (history) => (
+                                            <div
+                                                key={history.id}
+                                                className="flex flex-col gap-1 border-l-2 border-muted pl-3 text-sm"
+                                            >
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <Badge variant="secondary">
+                                                        {employmentHistoryLabels[
+                                                            history.event_type
+                                                        ] ?? history.event_type}
+                                                    </Badge>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {formatDateDisplay(
+                                                            history.effective_date,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                {history.old_status !==
+                                                    history.new_status && (
+                                                    <p>
+                                                        Status:{' '}
+                                                        {history.old_status
+                                                            ? (statusLabels[
+                                                                  history
+                                                                      .old_status
+                                                              ] ??
+                                                              history.old_status)
+                                                            : '-'}{' '}
+                                                        →{' '}
+                                                        {history.new_status
+                                                            ? (statusLabels[
+                                                                  history
+                                                                      .new_status
+                                                              ] ??
+                                                              history.new_status)
+                                                            : '-'}
+                                                    </p>
+                                                )}
+                                                {history.old_position_name !==
+                                                    history.new_position_name && (
+                                                    <p>
+                                                        Jabatan:{' '}
+                                                        {history.old_position_name ??
+                                                            '-'}{' '}
+                                                        →{' '}
+                                                        {history.new_position_name ??
+                                                            '-'}
+                                                    </p>
+                                                )}
+                                                {history.old_division_name !==
+                                                    history.new_division_name && (
+                                                    <p>
+                                                        Divisi:{' '}
+                                                        {history.old_division_name ??
+                                                            '-'}{' '}
+                                                        →{' '}
+                                                        {history.new_division_name ??
+                                                            '-'}
+                                                    </p>
+                                                )}
+                                                {history.notes && (
+                                                    <p className="text-muted-foreground">
+                                                        {history.notes}
+                                                    </p>
+                                                )}
+                                                <p className="text-xs text-muted-foreground">
+                                                    Oleh{' '}
+                                                    {history.created_by_name ??
+                                                        '-'}
+                                                </p>
+                                            </div>
+                                        ),
+                                    )
+                                )}
+                            </div>
                         </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={activatingPkwttEmployee !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setActivatingPkwttEmployee(null);
+                        pkwttActivationForm.clearErrors();
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Aktivasi Kontrak PKWTT</DialogTitle>
+                        <DialogDescription>
+                            Akhiri masa probation dan aktifkan status kontrak
+                            permanen karyawan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {activatingPkwttEmployee && (
+                        <form
+                            onSubmit={submitPkwttActivationForm}
+                            className="flex flex-col gap-4"
+                        >
+                            <div className="rounded-md border p-3 text-sm">
+                                <p className="font-medium">
+                                    {activatingPkwttEmployee.full_name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Probation sampai{' '}
+                                    {formatDateDisplay(
+                                        activatingPkwttEmployee.probation_end_date,
+                                    )}
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <Label htmlFor="pkwtt_effective_date">
+                                    Tanggal efektif
+                                </Label>
+                                <Input
+                                    id="pkwtt_effective_date"
+                                    type="date"
+                                    min={activatingPkwttEmployee.hire_date}
+                                    max={todayDate()}
+                                    value={
+                                        pkwttActivationForm.data.effective_date
+                                    }
+                                    onChange={(event) =>
+                                        pkwttActivationForm.setData(
+                                            'effective_date',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                                <InputError
+                                    message={
+                                        pkwttActivationForm.errors
+                                            .effective_date
+                                    }
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <Label htmlFor="pkwtt_activation_notes">
+                                    Catatan
+                                </Label>
+                                <textarea
+                                    id="pkwtt_activation_notes"
+                                    rows={3}
+                                    value={pkwttActivationForm.data.notes}
+                                    onChange={(event) =>
+                                        pkwttActivationForm.setData(
+                                            'notes',
+                                            event.target.value,
+                                        )
+                                    }
+                                    className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                />
+                                <InputError
+                                    message={pkwttActivationForm.errors.notes}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() =>
+                                        setActivatingPkwttEmployee(null)
+                                    }
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={pkwttActivationForm.processing}
+                                >
+                                    Aktivasi PKWTT
+                                </Button>
+                            </div>
+                        </form>
                     )}
                 </DialogContent>
             </Dialog>
@@ -2819,7 +3244,7 @@ export default function EmployeesIndex() {
                                 </div>
 
                                 <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="address">Alamat</Label>
+                                    <Label htmlFor="address">Alamat KTP</Label>
                                     <div className="space-y-1">
                                         <Input
                                             id="address"
@@ -2836,6 +3261,179 @@ export default function EmployeesIndex() {
                                                 employeeForm.errors.address
                                             }
                                         />
+                                    </div>
+                                </div>
+
+                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                    <Label htmlFor="domicile_address">
+                                        Alamat Domisili
+                                    </Label>
+                                    <div className="flex flex-col gap-1">
+                                        <Input
+                                            id="domicile_address"
+                                            value={
+                                                employeeForm.data
+                                                    .domicile_address
+                                            }
+                                            onChange={(event) =>
+                                                employeeForm.setData(
+                                                    'domicile_address',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                        <InputError
+                                            message={
+                                                employeeForm.errors
+                                                    .domicile_address
+                                            }
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                    <Label htmlFor="blood_type">
+                                        Golongan Darah
+                                    </Label>
+                                    <Select
+                                        value={
+                                            employeeForm.data.blood_type ||
+                                            '__none'
+                                        }
+                                        onValueChange={(value) =>
+                                            employeeForm.setData(
+                                                'blood_type',
+                                                value === '__none' ? '' : value,
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger
+                                            id="blood_type"
+                                            className="w-full"
+                                        >
+                                            <SelectValue placeholder="Pilih golongan darah" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__none">
+                                                -
+                                            </SelectItem>
+                                            {['A', 'B', 'AB', 'O'].map(
+                                                (bloodType) => (
+                                                    <SelectItem
+                                                        key={bloodType}
+                                                        value={bloodType}
+                                                    >
+                                                        {bloodType}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                    <Label htmlFor="religion">Agama</Label>
+                                    <Select
+                                        value={
+                                            employeeForm.data.religion ||
+                                            '__none'
+                                        }
+                                        onValueChange={(value) =>
+                                            employeeForm.setData(
+                                                'religion',
+                                                value === '__none' ? '' : value,
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger
+                                            id="religion"
+                                            className="w-full"
+                                        >
+                                            <SelectValue placeholder="Pilih agama" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__none">
+                                                -
+                                            </SelectItem>
+                                            {[
+                                                'Islam',
+                                                'Kristen',
+                                                'Katolik',
+                                                'Hindu',
+                                                'Buddha',
+                                                'Konghucu',
+                                                'Lainnya',
+                                            ].map((religion) => (
+                                                <SelectItem
+                                                    key={religion}
+                                                    value={religion}
+                                                >
+                                                    {religion}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                    <Label htmlFor="emergency_contact_name">
+                                        Kontak Darurat
+                                    </Label>
+                                    <div className="grid gap-2 md:grid-cols-3">
+                                        <Input
+                                            id="emergency_contact_name"
+                                            value={
+                                                employeeForm.data
+                                                    .emergency_contact_name
+                                            }
+                                            onChange={(event) =>
+                                                employeeForm.setData(
+                                                    'emergency_contact_name',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Nama"
+                                        />
+                                        <Input
+                                            id="emergency_contact_phone"
+                                            value={
+                                                employeeForm.data
+                                                    .emergency_contact_phone
+                                            }
+                                            onChange={(event) =>
+                                                employeeForm.setData(
+                                                    'emergency_contact_phone',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Nomor telepon"
+                                        />
+                                        <Input
+                                            id="emergency_contact_relationship"
+                                            value={
+                                                employeeForm.data
+                                                    .emergency_contact_relationship
+                                            }
+                                            onChange={(event) =>
+                                                employeeForm.setData(
+                                                    'emergency_contact_relationship',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Hubungan"
+                                        />
+                                        <div className="md:col-span-3">
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .emergency_contact_name ??
+                                                    employeeForm.errors
+                                                        .emergency_contact_phone ??
+                                                    employeeForm.errors
+                                                        .emergency_contact_relationship
+                                                }
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2927,8 +3525,22 @@ export default function EmployeesIndex() {
                                             }
                                             onValueChange={(value) =>
                                                 employeeForm.setData(
-                                                    'employment_type',
-                                                    value,
+                                                    (data) => ({
+                                                        ...data,
+                                                        employment_type: value,
+                                                        contract_duration_months:
+                                                            value === 'PKWT'
+                                                                ? data.contract_duration_months
+                                                                : '',
+                                                        contract_end_date:
+                                                            value === 'PKWT'
+                                                                ? data.contract_end_date
+                                                                : '',
+                                                        probation_duration_months:
+                                                            value === 'PKWTT'
+                                                                ? data.probation_duration_months
+                                                                : '0',
+                                                    }),
                                                 )
                                             }
                                         >
@@ -2960,6 +3572,146 @@ export default function EmployeesIndex() {
                                         />
                                     </div>
                                 </div>
+
+                                {employeeForm.data.employment_type ===
+                                    'PKWT' && (
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="contract_end_mode">
+                                            Masa Kontrak
+                                        </Label>
+                                        <div className="flex flex-col gap-2">
+                                            <Select
+                                                value={contractEndMode}
+                                                onValueChange={(value) => {
+                                                    const mode = value as
+                                                        | 'duration'
+                                                        | 'manual';
+                                                    setContractEndMode(mode);
+                                                    if (mode === 'duration') {
+                                                        employeeForm.setData(
+                                                            'contract_end_date',
+                                                            '',
+                                                        );
+                                                    } else {
+                                                        employeeForm.setData(
+                                                            'contract_duration_months',
+                                                            '',
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                <SelectTrigger
+                                                    id="contract_end_mode"
+                                                    className="w-full"
+                                                >
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="duration">
+                                                        Hitung dari durasi bulan
+                                                    </SelectItem>
+                                                    <SelectItem value="manual">
+                                                        Tentukan tanggal akhir
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+
+                                            {contractEndMode === 'duration' ? (
+                                                <>
+                                                    <Input
+                                                        id="contract_duration_months"
+                                                        type="number"
+                                                        min="1"
+                                                        max="120"
+                                                        value={
+                                                            employeeForm.data
+                                                                .contract_duration_months
+                                                        }
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'contract_duration_months',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="Contoh: 12 bulan"
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .contract_duration_months
+                                                        }
+                                                    />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Input
+                                                        id="contract_end_date"
+                                                        type="date"
+                                                        min={
+                                                            employeeForm.data
+                                                                .hire_date
+                                                        }
+                                                        value={
+                                                            employeeForm.data
+                                                                .contract_end_date
+                                                        }
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'contract_end_date',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .contract_end_date
+                                                        }
+                                                    />
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {employeeForm.data.employment_type ===
+                                    'PKWTT' && (
+                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="probation_duration_months">
+                                            Masa Probation
+                                        </Label>
+                                        <div className="flex flex-col gap-1">
+                                            <Input
+                                                id="probation_duration_months"
+                                                type="number"
+                                                min="0"
+                                                max="12"
+                                                value={
+                                                    employeeForm.data
+                                                        .probation_duration_months
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'probation_duration_months',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                Isi 0 jika tidak melalui
+                                                probation.
+                                            </p>
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .probation_duration_months
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                     <Label htmlFor="pph21_method">
@@ -3390,6 +4142,68 @@ export default function EmployeesIndex() {
                                         </Label>
                                     </div>
                                 </div>
+
+                                {editingEmployee && (
+                                    <>
+                                        <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                            <Label htmlFor="change_effective_date">
+                                                Efektif Perubahan
+                                            </Label>
+                                            <div className="flex flex-col gap-1">
+                                                <Input
+                                                    id="change_effective_date"
+                                                    type="date"
+                                                    max={todayDate()}
+                                                    value={
+                                                        employeeForm.data
+                                                            .change_effective_date
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'change_effective_date',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .change_effective_date
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                            <Label htmlFor="change_notes">
+                                                Catatan Perubahan
+                                            </Label>
+                                            <div className="flex flex-col gap-1">
+                                                <textarea
+                                                    id="change_notes"
+                                                    value={
+                                                        employeeForm.data
+                                                            .change_notes
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'change_notes',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    rows={3}
+                                                    className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                    placeholder="Contoh: promosi hasil evaluasi semester"
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .change_notes
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         )}
 
@@ -3509,6 +4323,34 @@ export default function EmployeesIndex() {
                                                 message={
                                                     employeeForm.errors
                                                         .ktp_number
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="npwp_number">
+                                            NPWP
+                                        </Label>
+                                        <div className="flex flex-col gap-1">
+                                            <Input
+                                                id="npwp_number"
+                                                value={
+                                                    employeeForm.data
+                                                        .npwp_number
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'npwp_number',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Opsional"
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .npwp_number
                                                 }
                                             />
                                         </div>

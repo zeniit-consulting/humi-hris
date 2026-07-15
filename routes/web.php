@@ -13,17 +13,27 @@ use App\Http\Controllers\Api\Mobile\V1\ShiftChangeRequestController;
 use App\Http\Controllers\Api\PortalClientVisitController;
 use App\Http\Controllers\Api\PortalPerformanceController;
 use App\Http\Controllers\Api\PortalResourceController;
+use App\Http\Controllers\Auth\EmailActivationController;
 use App\Http\Controllers\Auth\PortalOtpLoginController;
-use App\Http\Controllers\Auth\WhatsappActivationController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CareerController;
 use App\Http\Controllers\Client\ApprovalController as ClientApprovalController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocsManualController;
+use App\Http\Controllers\NewsController;
 use App\Http\Controllers\UserPortalController;
 use App\Http\Controllers\UserPortalSectionController;
+use App\Http\Middleware\HandleAppearance;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\JobVacancy;
+use App\Support\HumiNews;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
@@ -75,6 +85,7 @@ Route::get('robots.txt', function () {
         $lines[] = 'Allow: /';
         $lines[] = 'Allow: /features';
         $lines[] = 'Allow: /contact';
+        $lines[] = 'Allow: /berita';
         $lines[] = 'Allow: /careers';
         $lines[] = 'Allow: /hris-outsourcing';
         $lines[] = 'Allow: /hris-retail-fnb';
@@ -90,8 +101,20 @@ Route::get('robots.txt', function () {
     $lines[] = 'Sitemap: '.$baseUrl.'/sitemap.xml';
     $lines[] = '';
 
-    return response(implode("\n", $lines), 200, ['Content-Type' => 'text/plain']);
-})->name('robots');
+    return response(implode("\n", $lines), 200, [
+        'Content-Type' => 'text/plain; charset=UTF-8',
+        'Cache-Control' => 'public, max-age=3600',
+    ]);
+})->withoutMiddleware([
+    EncryptCookies::class,
+    AddQueuedCookiesToResponse::class,
+    StartSession::class,
+    ShareErrorsFromSession::class,
+    ValidateCsrfToken::class,
+    AddLinkHeadersForPreloadedAssets::class,
+    HandleAppearance::class,
+    HandleInertiaRequests::class,
+])->name('robots');
 
 Route::get('sitemap.xml', function () {
     $baseUrl = rtrim((string) config('app.url'), '/');
@@ -118,6 +141,12 @@ Route::get('sitemap.xml', function () {
             'loc' => $baseUrl.'/contact',
             'priority' => '0.7',
             'changefreq' => 'monthly',
+            'lastmod' => now()->toAtomString(),
+        ],
+        [
+            'loc' => $baseUrl.'/berita',
+            'priority' => '0.8',
+            'changefreq' => 'weekly',
             'lastmod' => now()->toAtomString(),
         ],
         [
@@ -160,10 +189,32 @@ Route::get('sitemap.xml', function () {
             ];
         });
 
+    HumiNews::all()
+        ->each(function (array $article) use (&$urls, $baseUrl): void {
+            $urls[] = [
+                'loc' => $baseUrl.'/berita/'.$article['slug'],
+                'priority' => '0.7',
+                'changefreq' => 'monthly',
+                'lastmod' => $article['updated_at'],
+            ];
+        });
+
     $xml = view('sitemap', ['urls' => $urls])->render();
 
-    return response($xml, 200, ['Content-Type' => 'application/xml']);
-})->name('sitemap');
+    return response($xml, 200, [
+        'Content-Type' => 'application/xml',
+        'Cache-Control' => 'public, max-age=3600',
+    ]);
+})->withoutMiddleware([
+    EncryptCookies::class,
+    AddQueuedCookiesToResponse::class,
+    StartSession::class,
+    ShareErrorsFromSession::class,
+    ValidateCsrfToken::class,
+    AddLinkHeadersForPreloadedAssets::class,
+    HandleAppearance::class,
+    HandleInertiaRequests::class,
+])->name('sitemap');
 
 Route::get('/', function () {
     return Inertia::render('welcome', [
@@ -206,14 +257,17 @@ Route::get('contact', function () {
     return Inertia::render('contact');
 })->name('contact');
 
+Route::get('berita', [NewsController::class, 'index'])->name('news.index');
+Route::get('berita/{slug}', [NewsController::class, 'show'])->name('news.show');
+
 Route::get('careers', [CareerController::class, 'index'])->name('careers.index');
 Route::get('careers/{slug}', [CareerController::class, 'show'])->name('careers.show');
 Route::post('careers/{slug}/apply', [CareerController::class, 'storeApplication'])->name('careers.apply');
 
 Route::middleware('auth')->group(function () {
-    Route::get('activate-account', [WhatsappActivationController::class, 'show'])->name('activation.notice');
-    Route::post('activate-account/send', [WhatsappActivationController::class, 'send'])->name('activation.send');
-    Route::post('activate-account/verify', [WhatsappActivationController::class, 'verify'])->name('activation.verify');
+    Route::get('activate-account', [EmailActivationController::class, 'show'])->name('activation.notice');
+    Route::post('activate-account/send', [EmailActivationController::class, 'send'])->name('activation.send');
+    Route::post('activate-account/verify', [EmailActivationController::class, 'verify'])->name('activation.verify');
 });
 
 Route::middleware('guest')->group(function () {

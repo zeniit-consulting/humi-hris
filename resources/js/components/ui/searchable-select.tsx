@@ -61,6 +61,7 @@ export default function SearchableSelect({
     return (
         <Combobox
             value={value}
+            immediate
             onChange={(nextValue: string | null) =>
                 onValueChange(nextValue ?? '')
             }
@@ -85,9 +86,10 @@ export default function SearchableSelect({
                 </ComboboxButton>
 
                 <ComboboxOptions
-                    anchor="bottom"
+                    portal={false}
+                    modal={false}
                     transition
-                    className="bg-popover text-popover-foreground data-[closed]:scale-95 data-[closed]:opacity-0 z-50 mt-1 max-h-60 w-[var(--input-width)] overflow-auto rounded-md border p-1 shadow-md transition"
+                    className="bg-popover text-popover-foreground data-[closed]:scale-95 data-[closed]:opacity-0 absolute top-full left-0 z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border p-1 shadow-md transition"
                 >
                     {filteredOptions.length === 0 ? (
                         <div className="px-2 py-1.5 text-sm text-muted-foreground">
@@ -98,7 +100,7 @@ export default function SearchableSelect({
                             <ComboboxOption
                                 key={option.value}
                                 value={option.value}
-                                className="data-[focus]:bg-accent data-[focus]:text-accent-foreground relative flex cursor-default items-center rounded-sm py-1.5 pr-2 pl-8 text-sm"
+                                className="data-[focus]:bg-accent data-[focus]:text-accent-foreground relative flex cursor-pointer items-center rounded-sm py-1.5 pr-2 pl-8 text-sm"
                             >
                                 {({ selected }) => (
                                     <>

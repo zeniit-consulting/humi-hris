@@ -32,6 +32,25 @@ class UserPortalAccountService
         return $this->createOrSyncFromEmployee($employee);
     }
 
+    public function createOrSyncFromEmail(string $email): ?User
+    {
+        $normalizedEmail = strtolower(trim($email));
+
+        if ($normalizedEmail === '') {
+            return null;
+        }
+
+        $employee = Employee::query()
+            ->whereRaw('LOWER(email) = ?', [$normalizedEmail])
+            ->first();
+
+        if (! $employee) {
+            return null;
+        }
+
+        return $this->createOrSyncFromEmployee($employee);
+    }
+
     public function createOrSyncFromEmployee(Employee $employee): ?User
     {
         return $this->upsertFromEmployee($employee, resetPasswordToDefault: false, sendCredentialMessage: false);
@@ -39,7 +58,7 @@ class UserPortalAccountService
 
     public function activateFromEmployee(Employee $employee): ?User
     {
-        return $this->upsertFromEmployee($employee, resetPasswordToDefault: true, sendCredentialMessage: true);
+        return $this->upsertFromEmployee($employee, resetPasswordToDefault: true, sendCredentialMessage: false);
     }
 
     public function createOrSyncForPasswordLogin(Employee $employee): ?User
@@ -52,13 +71,15 @@ class UserPortalAccountService
         bool $resetPasswordToDefault,
         bool $sendCredentialMessage,
     ): ?User {
-        if (! $employee->phone) {
+        if (! $employee->email && ! $employee->phone) {
             return null;
         }
 
-        $normalizedPhone = WhatsAppPhone::normalize($employee->phone);
+        $normalizedPhone = $employee->phone
+            ? WhatsAppPhone::normalize($employee->phone)
+            : null;
 
-        if ($normalizedPhone === '') {
+        if (! $employee->email && ($normalizedPhone === null || $normalizedPhone === '')) {
             return null;
         }
 
@@ -67,10 +88,14 @@ class UserPortalAccountService
         $user = User::query()
             ->where('parent_user_id', $ownerId)
             ->where(function ($query) use ($employee, $normalizedPhone): void {
-                $query->where('phone', $normalizedPhone);
-
                 if ($employee->email) {
-                    $query->orWhere('email', $employee->email);
+                    $query->where('email', $employee->email);
+                }
+
+                if ($normalizedPhone) {
+                    $employee->email
+                        ? $query->orWhere('phone', $normalizedPhone)
+                        : $query->where('phone', $normalizedPhone);
                 }
             })
             ->first();
@@ -78,16 +103,16 @@ class UserPortalAccountService
         if (! $user) {
             $user = User::query()->create([
                 'name' => $employee->full_name,
-                'email' => $employee->email ?: $this->portalPlaceholderEmail($employee, $normalizedPhone),
+                'email' => $employee->email ?: $this->portalPlaceholderEmail($employee, (string) $normalizedPhone),
                 'phone' => $normalizedPhone,
-                'password' => $resetPasswordToDefault
+                'password' => $resetPasswordToDefault && $normalizedPhone
                     ? UserPassword::defaultFromPhone($normalizedPhone)
                     : str()->random(32),
                 'role' => 'user',
                 'parent_user_id' => $ownerId,
-                'email_verified_at' => now(),
+                'email_verified_at' => null,
                 'phone_verified_at' => null,
-                'requires_password_change' => false,
+                'requires_password_change' => $resetPasswordToDefault,
                 'password_changed_at' => null,
             ]);
 
@@ -100,23 +125,25 @@ class UserPortalAccountService
 
         $user->fill([
             'name' => $employee->full_name,
-            'email' => $employee->email ?: $user->email ?: $this->portalPlaceholderEmail($employee, $normalizedPhone),
+            'email' => $employee->email ?: $user->email ?: $this->portalPlaceholderEmail($employee, (string) $normalizedPhone),
             'phone' => $normalizedPhone,
             'role' => 'user',
             'parent_user_id' => $ownerId,
         ]);
 
-        if ($user->isDirty('phone')) {
+        if ($user->isDirty('email')) {
             $user->forceFill([
-                'phone_verified_at' => null,
+                'email_verified_at' => null,
             ]);
         }
 
         if ($resetPasswordToDefault) {
             $user->forceFill([
-                'password' => UserPassword::defaultFromPhone($normalizedPhone),
-                'phone_verified_at' => null,
-                'requires_password_change' => false,
+                'password' => $normalizedPhone
+                    ? UserPassword::defaultFromPhone($normalizedPhone)
+                    : str()->random(32),
+                'email_verified_at' => null,
+                'requires_password_change' => true,
                 'password_changed_at' => null,
             ]);
         }
@@ -141,7 +168,7 @@ class UserPortalAccountService
         $message = implode("\n", [
             'Akun Portal User Anda sudah dibuat.',
             'Masuk menggunakan NIK/kode karyawan dan password nomor WhatsApp terdaftar Anda.',
-            'Jika OTP WhatsApp aktif, Anda juga bisa login lewat kode OTP.',
+            'Anda juga bisa login lewat kode OTP yang dikirim ke email terdaftar.',
             'Halaman login portal: '.route('portal.login'),
         ]);
 

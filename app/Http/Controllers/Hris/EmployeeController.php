@@ -12,6 +12,8 @@ use App\Models\EmployeeDocument;
 use App\Models\Position;
 use App\Models\SubCompany;
 use App\Models\User;
+use App\Services\EmailOtpService;
+use App\Services\EmployeeEmploymentHistoryService;
 use App\Services\UserPortalAccountService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
@@ -74,6 +76,7 @@ class EmployeeController extends Controller
                 'bankAccounts:id,employee_id,bank_name,account_number,account_holder_name,branch,currency,is_primary',
                 'allowances:id,employee_id,name,amount,is_active,effective_start_date,effective_end_date,notes',
                 'documents:id,employee_id,document_type,document_number,issued_at,expires_at,issuing_authority,file_path,file_disk,file_original_name,file_mime_type,file_size,notes,verified_at,verified_by',
+                'employmentHistories.createdBy:id,name',
             ])
             ->when($filters['search'] !== '', function ($query) use ($filters): void {
                 $query->where(function ($builder) use ($filters): void {
@@ -114,6 +117,11 @@ class EmployeeController extends Controller
                 'offboarding_notes' => $employee->offboarding_notes,
                 'employment_status' => $employee->employment_status,
                 'employment_type' => $employee->employment_type,
+                'contract_duration_months' => $employee->contract_duration_months,
+                'contract_end_date' => $employee->contract_end_date?->format('Y-m-d'),
+                'probation_duration_months' => $employee->probation_duration_months,
+                'probation_end_date' => $employee->probation_end_date?->format('Y-m-d'),
+                'pkwtt_activated_at' => $employee->pkwtt_activated_at?->format('Y-m-d'),
                 'pph21_method' => $employee->pph21_method,
                 'pph21_rate' => (int) $employee->pph21_rate,
                 'ptkp_category' => $employee->ptkp_category,
@@ -123,8 +131,12 @@ class EmployeeController extends Controller
                 'manager_id' => $employee->manager_id,
                 'base_salary' => $employee->base_salary ? (int) $employee->base_salary : null,
                 'address' => $employee->address,
+                'domicile_address' => $employee->domicile_address,
                 'family_card_number' => $employee->family_card_number,
                 'ktp_number' => $employee->ktp_number,
+                'npwp_number' => $employee->npwp_number,
+                'blood_type' => $employee->blood_type,
+                'religion' => $employee->religion,
                 'bpjs_kesehatan_number' => $employee->bpjs_kesehatan_number,
                 'bpjs_ketenagakerjaan_number' => $employee->bpjs_ketenagakerjaan_number,
                 'sim_a_number' => $employee->sim_a_number,
@@ -133,6 +145,7 @@ class EmployeeController extends Controller
                 'biological_mother_name' => $employee->biological_mother_name,
                 'emergency_contact_name' => $employee->emergency_contact_name,
                 'emergency_contact_phone' => $employee->emergency_contact_phone,
+                'emergency_contact_relationship' => $employee->emergency_contact_relationship,
                 'notes' => $employee->notes,
                 'is_active' => $employee->is_active,
                 'division' => $employee->division ? [
@@ -206,6 +219,21 @@ class EmployeeController extends Controller
                     'expired' => $employee->documents->filter(fn (EmployeeDocument $document) => $document->complianceStatus() === 'expired')->count(),
                     'missing_files' => $employee->documents->filter(fn (EmployeeDocument $document) => $document->complianceStatus() === 'missing')->count(),
                 ],
+                'employment_histories' => $employee->employmentHistories
+                    ->map(fn ($history) => [
+                        'id' => $history->id,
+                        'event_type' => $history->event_type,
+                        'effective_date' => $history->effective_date?->format('Y-m-d'),
+                        'old_status' => $history->old_status,
+                        'new_status' => $history->new_status,
+                        'old_division_name' => $history->old_division_name,
+                        'new_division_name' => $history->new_division_name,
+                        'old_position_name' => $history->old_position_name,
+                        'new_position_name' => $history->new_position_name,
+                        'notes' => $history->notes,
+                        'created_by_name' => $history->createdBy?->name,
+                    ])
+                    ->values(),
                 'portal_user' => (function () use ($employee) {
                     if (! $employee->email && ! $employee->phone) {
                         return null;
@@ -819,7 +847,7 @@ class EmployeeController extends Controller
      */
     public function store(StoreEmployeeRequest $request): RedirectResponse
     {
-        $validated = $request->validated();
+        $validated = $this->prepareEmploymentLifecycle($request->validated());
 
         $this->ensurePositionMatchesDivision($validated['position_id'] ?? null, $validated['division_id'] ?? null);
 
@@ -864,18 +892,35 @@ class EmployeeController extends Controller
     /**
      * Update the specified employee in storage.
      */
-    public function update(UpdateEmployeeRequest $request, Employee $employee): RedirectResponse
-    {
+    public function update(
+        UpdateEmployeeRequest $request,
+        Employee $employee,
+        EmployeeEmploymentHistoryService $historyService,
+    ): RedirectResponse {
         $validated = $request->validated();
+        $effectiveDate = (string) ($validated['change_effective_date'] ?? now()->toDateString());
+        $changeNotes = $validated['change_notes'] ?? null;
+        unset($validated['change_effective_date'], $validated['change_notes']);
+        $validated = $this->prepareEmploymentLifecycle($validated, $employee);
 
         $this->ensurePositionMatchesDivision($validated['position_id'] ?? null, $validated['division_id'] ?? null);
 
         try {
-            $employee = DB::transaction(function () use ($employee, $request, $validated): Employee {
+            $employee = DB::transaction(function () use ($employee, $request, $validated, $effectiveDate, $changeNotes, $historyService): Employee {
+                $before = $employee->only(['employment_status', 'division_id', 'position_id']);
+
                 $employee->update([
                     ...$validated,
                     'is_active' => $request->boolean('is_active', true),
                 ]);
+
+                $historyService->recordChanges(
+                    $employee->fresh(),
+                    $before,
+                    $effectiveDate,
+                    $changeNotes,
+                    $request->user(),
+                );
 
                 return $employee->fresh();
             });
@@ -891,10 +936,51 @@ class EmployeeController extends Controller
         return back();
     }
 
-    public function activatePortalUser(Employee $employee, UserPortalAccountService $portalAccountService): RedirectResponse
-    {
-        if (! $employee->email || ! $employee->phone) {
-            return back()->with('error', 'Aktivasi gagal: email dan nomor HP karyawan wajib diisi.');
+    public function activatePkwtt(
+        Request $request,
+        Employee $employee,
+        EmployeeEmploymentHistoryService $historyService,
+    ): RedirectResponse {
+        if ($employee->employment_type !== 'PKWTT' || $employee->employment_status !== 'probation') {
+            return back()->with('error', 'Hanya karyawan PKWTT berstatus probation yang dapat diaktivasi.');
+        }
+
+        $validated = $request->validate([
+            'effective_date' => [
+                'required',
+                'date',
+                'before_or_equal:today',
+                'after_or_equal:'.$employee->hire_date?->format('Y-m-d'),
+            ],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        DB::transaction(function () use ($employee, $validated, $request, $historyService): void {
+            $oldStatus = $employee->employment_status;
+            $employee->update([
+                'employment_status' => 'active',
+                'pkwtt_activated_at' => $validated['effective_date'],
+            ]);
+
+            $historyService->recordPkwttActivation(
+                $employee->fresh(),
+                $oldStatus,
+                $validated['effective_date'],
+                $validated['notes'] ?? null,
+                $request->user(),
+            );
+        });
+
+        return back()->with('success', 'Kontrak PKWTT berhasil diaktivasi.');
+    }
+
+    public function activatePortalUser(
+        Employee $employee,
+        UserPortalAccountService $portalAccountService,
+        EmailOtpService $otpService,
+    ): RedirectResponse {
+        if (! $employee->email) {
+            return back()->with('error', 'Aktivasi gagal: email karyawan wajib diisi.');
         }
 
         try {
@@ -903,17 +989,22 @@ class EmployeeController extends Controller
             if (! $portalUser) {
                 return back()->with('error', 'Aktivasi gagal: data kontak karyawan tidak valid.');
             }
+
+            $otpService->send($portalUser, strict: true, context: 'login');
         } catch (Throwable $exception) {
             report($exception);
 
-            return back()->with('error', 'Aktivasi gagal: tidak dapat mengirim kredensial ke WhatsApp.');
+            return back()->with('error', 'Aktivasi gagal: tidak dapat mengirim OTP ke email karyawan.');
         }
 
-        return back()->with('success', 'Akun portal berhasil diaktivasi dan kredensial dikirim ke WhatsApp.');
+        return back()->with('success', 'Akun portal berhasil diaktivasi dan OTP dikirim ke email karyawan.');
     }
 
-    public function offboard(Request $request, Employee $employee): RedirectResponse
-    {
+    public function offboard(
+        Request $request,
+        Employee $employee,
+        EmployeeEmploymentHistoryService $historyService,
+    ): RedirectResponse {
         $validated = $request->validate([
             'offboarded_at' => ['required', 'date', 'after_or_equal:'.$employee->hire_date?->format('Y-m-d')],
             'offboarding_reason' => ['required', Rule::in([
@@ -934,7 +1025,9 @@ class EmployeeController extends Controller
             return back()->with('error', 'Karyawan ini sudah melalui proses offboarding.');
         }
 
-        DB::transaction(function () use ($employee, $validated, $request): void {
+        DB::transaction(function () use ($employee, $validated, $request, $historyService): void {
+            $before = $employee->only(['employment_status', 'division_id', 'position_id']);
+
             $employee->forceFill([
                 'employment_status' => 'resigned',
                 'is_active' => false,
@@ -942,6 +1035,14 @@ class EmployeeController extends Controller
                 'offboarding_reason' => $validated['offboarding_reason'],
                 'offboarding_notes' => $validated['offboarding_notes'] ?? null,
             ])->save();
+
+            $historyService->recordChanges(
+                $employee->fresh(),
+                $before,
+                $validated['offboarded_at'],
+                $validated['offboarding_notes'] ?? $this->offboardingReasonLabel($validated['offboarding_reason']),
+                $request->user(),
+            );
 
             $employee->directReports()->update(['manager_id' => null]);
 
@@ -1193,5 +1294,55 @@ class EmployeeController extends Controller
             'os' => 'OS',
             default => 'PKWTT',
         };
+    }
+
+    /** @param array<string, mixed> $validated
+     * @return array<string, mixed>
+     */
+    private function prepareEmploymentLifecycle(array $validated, ?Employee $employee = null): array
+    {
+        $type = $validated['employment_type'];
+        $hireDate = CarbonImmutable::parse($validated['hire_date']);
+
+        if ($type === 'PKWT') {
+            $duration = isset($validated['contract_duration_months'])
+                ? (int) $validated['contract_duration_months']
+                : null;
+            $validated['contract_duration_months'] = $duration;
+            $validated['contract_end_date'] = $duration
+                ? $hireDate->addMonthsNoOverflow($duration)->subDay()->toDateString()
+                : ($validated['contract_end_date'] ?? null);
+            $validated['probation_duration_months'] = null;
+            $validated['probation_end_date'] = null;
+            $validated['pkwtt_activated_at'] = null;
+
+            return $validated;
+        }
+
+        if ($type === 'PKWTT') {
+            $months = array_key_exists('probation_duration_months', $validated)
+                ? (int) ($validated['probation_duration_months'] ?? 0)
+                : (int) ($employee?->probation_duration_months ?? 0);
+            $validated['contract_duration_months'] = null;
+            $validated['contract_end_date'] = null;
+            $validated['probation_duration_months'] = $months;
+            $validated['probation_end_date'] = $months > 0
+                ? $hireDate->addMonthsNoOverflow($months)->subDay()->toDateString()
+                : null;
+
+            if ($employee === null) {
+                $validated['employment_status'] = $months > 0 ? 'probation' : 'active';
+            }
+
+            return $validated;
+        }
+
+        $validated['contract_duration_months'] = null;
+        $validated['contract_end_date'] = null;
+        $validated['probation_duration_months'] = null;
+        $validated['probation_end_date'] = null;
+        $validated['pkwtt_activated_at'] = null;
+
+        return $validated;
     }
 }

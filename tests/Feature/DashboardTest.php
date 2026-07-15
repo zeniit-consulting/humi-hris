@@ -4,11 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\AttendanceCorrectionRequest;
 use App\Models\ClientInvoice;
-use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
-use App\Models\EmployeeBankAccount;
 use App\Models\EmployeeDocument;
 use App\Models\EmployeeSchedule;
 use App\Models\JobVacancy;
@@ -290,17 +288,10 @@ class DashboardTest extends TestCase
             );
     }
 
-    public function test_dashboard_includes_daily_focus_recent_requests_payroll_and_onboarding(): void
+    public function test_dashboard_includes_daily_focus_and_recent_requests_without_setup_cards(): void
     {
         $user = User::factory()->create([
             'email_verified_at' => now(),
-        ]);
-
-        CompanySetting::query()->create([
-            'user_id' => $user->id,
-            'name' => 'PT Dashboard Test',
-            'location_latitude' => -5.147665,
-            'location_longitude' => 119.432732,
         ]);
 
         $division = Division::factory()->create([
@@ -322,15 +313,6 @@ class DashboardTest extends TestCase
             'division_id' => $division->id,
             'position_id' => $position->id,
             'is_active' => true,
-        ]);
-
-        EmployeeBankAccount::query()->create([
-            'user_id' => $user->id,
-            'employee_id' => $lateEmployee->id,
-            'bank_name' => 'BCA',
-            'account_number' => '1234567890',
-            'account_holder_name' => $lateEmployee->full_name,
-            'is_primary' => true,
         ]);
 
         $shift = WorkShift::query()->create([
@@ -370,14 +352,6 @@ class DashboardTest extends TestCase
             'status' => 'pending',
         ]);
 
-        PayrollRun::factory()->create([
-            'user_id' => $user->id,
-            'period' => now()->format('Y-m'),
-            'type' => 'regular',
-            'is_saved' => false,
-            'generated_at' => now(),
-        ]);
-
         $this->actingAs($user)
             ->get(route('dashboard'))
             ->assertOk()
@@ -388,11 +362,8 @@ class DashboardTest extends TestCase
                 ->where('attendanceFocus.missingClockIns.0.id', $missingEmployee->id)
                 ->where('attendanceFocus.lateToday.0.id', $lateAttendance->id)
                 ->where('recentRequests.items.0.type', 'Cuti/Sakit')
-                ->where('payrollReadiness.period', now()->format('Y-m'))
-                ->where('payrollReadiness.score', 25)
-                ->where('payrollReadiness.status', 'generated')
-                ->where('onboardingChecklist.completed', 7)
-                ->where('onboardingChecklist.total', 7)
+                ->missing('payrollReadiness')
+                ->missing('onboardingChecklist')
             );
     }
 }

@@ -141,7 +141,7 @@ store.form = storeForm
 * @see app/Http/Controllers/Hris/CompanyAssetProcurementRequestController.php:100
 * @route '/hris/assets/procurement-requests/{procurementRequest}/status'
 */
-export const status = (args: { procurementRequest: string | number | { id: string | number } } | [procurementRequest: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const status = (args: { procurementRequest: number | { id: number } } | [procurementRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: status.url(args, options),
     method: 'post',
 })
@@ -156,7 +156,7 @@ status.definition = {
 * @see app/Http/Controllers/Hris/CompanyAssetProcurementRequestController.php:100
 * @route '/hris/assets/procurement-requests/{procurementRequest}/status'
 */
-status.url = (args: { procurementRequest: string | number | { id: string | number } } | [procurementRequest: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+status.url = (args: { procurementRequest: number | { id: number } } | [procurementRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { procurementRequest: args }
     }
@@ -189,7 +189,7 @@ status.url = (args: { procurementRequest: string | number | { id: string | numbe
 * @see app/Http/Controllers/Hris/CompanyAssetProcurementRequestController.php:100
 * @route '/hris/assets/procurement-requests/{procurementRequest}/status'
 */
-status.post = (args: { procurementRequest: string | number | { id: string | number } } | [procurementRequest: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+status.post = (args: { procurementRequest: number | { id: number } } | [procurementRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: status.url(args, options),
     method: 'post',
 })
@@ -199,7 +199,7 @@ status.post = (args: { procurementRequest: string | number | { id: string | numb
 * @see app/Http/Controllers/Hris/CompanyAssetProcurementRequestController.php:100
 * @route '/hris/assets/procurement-requests/{procurementRequest}/status'
 */
-const statusForm = (args: { procurementRequest: string | number | { id: string | number } } | [procurementRequest: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+const statusForm = (args: { procurementRequest: number | { id: number } } | [procurementRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: status.url(args, options),
     method: 'post',
 })
@@ -209,7 +209,7 @@ const statusForm = (args: { procurementRequest: string | number | { id: string |
 * @see app/Http/Controllers/Hris/CompanyAssetProcurementRequestController.php:100
 * @route '/hris/assets/procurement-requests/{procurementRequest}/status'
 */
-statusForm.post = (args: { procurementRequest: string | number | { id: string | number } } | [procurementRequest: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+statusForm.post = (args: { procurementRequest: number | { id: number } } | [procurementRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: status.url(args, options),
     method: 'post',
 })

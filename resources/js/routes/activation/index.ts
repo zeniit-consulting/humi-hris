@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::notice
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:18
+* @see \App\Http\Controllers\Auth\EmailActivationController::notice
+* @see app/Http/Controllers/Auth/EmailActivationController.php:18
 * @route '/activate-account'
 */
 export const notice = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -15,8 +15,8 @@ notice.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::notice
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:18
+* @see \App\Http\Controllers\Auth\EmailActivationController::notice
+* @see app/Http/Controllers/Auth/EmailActivationController.php:18
 * @route '/activate-account'
 */
 notice.url = (options?: RouteQueryOptions) => {
@@ -24,8 +24,8 @@ notice.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::notice
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:18
+* @see \App\Http\Controllers\Auth\EmailActivationController::notice
+* @see app/Http/Controllers/Auth/EmailActivationController.php:18
 * @route '/activate-account'
 */
 notice.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,8 +34,8 @@ notice.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::notice
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:18
+* @see \App\Http\Controllers\Auth\EmailActivationController::notice
+* @see app/Http/Controllers/Auth/EmailActivationController.php:18
 * @route '/activate-account'
 */
 notice.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,8 +44,8 @@ notice.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::notice
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:18
+* @see \App\Http\Controllers\Auth\EmailActivationController::notice
+* @see app/Http/Controllers/Auth/EmailActivationController.php:18
 * @route '/activate-account'
 */
 const noticeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,8 +54,8 @@ const noticeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 })
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::notice
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:18
+* @see \App\Http\Controllers\Auth\EmailActivationController::notice
+* @see app/Http/Controllers/Auth/EmailActivationController.php:18
 * @route '/activate-account'
 */
 noticeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -64,8 +64,8 @@ noticeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 })
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::notice
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:18
+* @see \App\Http\Controllers\Auth\EmailActivationController::notice
+* @see app/Http/Controllers/Auth/EmailActivationController.php:18
 * @route '/activate-account'
 */
 noticeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -81,8 +81,8 @@ noticeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 notice.form = noticeForm
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::send
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:32
+* @see \App\Http\Controllers\Auth\EmailActivationController::send
+* @see app/Http/Controllers/Auth/EmailActivationController.php:32
 * @route '/activate-account/send'
 */
 export const send = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -96,8 +96,8 @@ send.definition = {
 } satisfies RouteDefinition<["post"]>
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::send
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:32
+* @see \App\Http\Controllers\Auth\EmailActivationController::send
+* @see app/Http/Controllers/Auth/EmailActivationController.php:32
 * @route '/activate-account/send'
 */
 send.url = (options?: RouteQueryOptions) => {
@@ -105,8 +105,8 @@ send.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::send
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:32
+* @see \App\Http\Controllers\Auth\EmailActivationController::send
+* @see app/Http/Controllers/Auth/EmailActivationController.php:32
 * @route '/activate-account/send'
 */
 send.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -115,8 +115,8 @@ send.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 })
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::send
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:32
+* @see \App\Http\Controllers\Auth\EmailActivationController::send
+* @see app/Http/Controllers/Auth/EmailActivationController.php:32
 * @route '/activate-account/send'
 */
 const sendForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -125,8 +125,8 @@ const sendForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => (
 })
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::send
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:32
+* @see \App\Http\Controllers\Auth\EmailActivationController::send
+* @see app/Http/Controllers/Auth/EmailActivationController.php:32
 * @route '/activate-account/send'
 */
 sendForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -137,8 +137,8 @@ sendForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
 send.form = sendForm
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::verify
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:55
+* @see \App\Http\Controllers\Auth\EmailActivationController::verify
+* @see app/Http/Controllers/Auth/EmailActivationController.php:51
 * @route '/activate-account/verify'
 */
 export const verify = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -152,8 +152,8 @@ verify.definition = {
 } satisfies RouteDefinition<["post"]>
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::verify
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:55
+* @see \App\Http\Controllers\Auth\EmailActivationController::verify
+* @see app/Http/Controllers/Auth/EmailActivationController.php:51
 * @route '/activate-account/verify'
 */
 verify.url = (options?: RouteQueryOptions) => {
@@ -161,8 +161,8 @@ verify.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::verify
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:55
+* @see \App\Http\Controllers\Auth\EmailActivationController::verify
+* @see app/Http/Controllers/Auth/EmailActivationController.php:51
 * @route '/activate-account/verify'
 */
 verify.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -171,8 +171,8 @@ verify.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 })
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::verify
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:55
+* @see \App\Http\Controllers\Auth\EmailActivationController::verify
+* @see app/Http/Controllers/Auth/EmailActivationController.php:51
 * @route '/activate-account/verify'
 */
 const verifyForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -181,8 +181,8 @@ const verifyForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 })
 
 /**
-* @see \App\Http\Controllers\Auth\WhatsappActivationController::verify
-* @see app/Http/Controllers/Auth/WhatsappActivationController.php:55
+* @see \App\Http\Controllers\Auth\EmailActivationController::verify
+* @see app/Http/Controllers/Auth/EmailActivationController.php:51
 * @route '/activate-account/verify'
 */
 verifyForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

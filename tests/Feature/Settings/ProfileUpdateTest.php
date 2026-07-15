@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Mail\EmailOtpMail;
 use App\Models\CompanySetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProfileUpdateTest extends TestCase
@@ -27,6 +29,7 @@ class ProfileUpdateTest extends TestCase
 
     public function test_profile_information_can_be_updated()
     {
+        Mail::fake();
         $user = User::factory()->create();
 
         $response = $this
@@ -39,13 +42,15 @@ class ProfileUpdateTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('profile.edit'));
+            ->assertRedirect(route('activation.notice'));
 
         $user->refresh();
 
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
+        $this->assertNotNull($user->email_otp_code);
+        Mail::assertSent(EmailOtpMail::class, fn ($mail): bool => $mail->hasTo('test@example.com'));
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
@@ -67,7 +72,7 @@ class ProfileUpdateTest extends TestCase
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
-    public function test_phone_number_is_normalized_and_requires_reactivation_when_changed(): void
+    public function test_phone_number_is_normalized_without_requiring_reactivation(): void
     {
         Http::fake();
 
@@ -84,13 +89,12 @@ class ProfileUpdateTest extends TestCase
                 'phone' => '0812 0000 1111',
             ]);
 
-        $response->assertRedirect(route('activation.notice'));
+        $response->assertRedirect(route('profile.edit'));
 
         $user->refresh();
 
         $this->assertSame('6281200001111', $user->phone);
-        $this->assertNull($user->phone_verified_at);
-        $this->assertNotNull($user->whatsapp_otp_code);
+        $this->assertNotNull($user->email_verified_at);
     }
 
     public function test_profile_avatar_can_be_uploaded_to_r2(): void

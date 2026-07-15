@@ -280,6 +280,12 @@ export default function Welcome({
                             >
                                 Fitur
                             </Link>
+                            <Link
+                                href="/berita"
+                                className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
+                            >
+                                Berita
+                            </Link>
                             <a
                                 href="#segments"
                                 className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
@@ -873,6 +879,12 @@ export default function Welcome({
                                     className="transition hover:text-slate-900"
                                 >
                                     Fitur
+                                </Link>
+                                <Link
+                                    href="/berita"
+                                    className="transition hover:text-slate-900"
+                                >
+                                    Berita
                                 </Link>
                                 <a
                                     href="#pricing"

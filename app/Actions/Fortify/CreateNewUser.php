@@ -6,8 +6,8 @@ use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\CompanySetting;
 use App\Models\User;
+use App\Services\EmailOtpService;
 use App\Services\WhatsAppNotificationService;
-use App\Services\WhatsAppOtpService;
 use App\Support\WhatsAppPhone;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -17,7 +17,7 @@ class CreateNewUser implements CreatesNewUsers
     use PasswordValidationRules, ProfileValidationRules;
 
     public function __construct(
-        private readonly WhatsAppOtpService $otpService,
+        private readonly EmailOtpService $otpService,
         private readonly WhatsAppNotificationService $whatsAppNotifications,
     ) {}
 

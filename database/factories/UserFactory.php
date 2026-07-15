@@ -40,6 +40,9 @@ class UserFactory extends Factory
             'whatsapp_otp_code' => null,
             'whatsapp_otp_sent_at' => null,
             'whatsapp_otp_expires_at' => null,
+            'email_otp_code' => null,
+            'email_otp_sent_at' => null,
+            'email_otp_expires_at' => null,
         ];
     }
 
@@ -57,7 +60,7 @@ class UserFactory extends Factory
     public function unactivated(): static
     {
         return $this->state(fn (array $attributes) => [
-            'phone_verified_at' => null,
+            'email_verified_at' => null,
         ]);
     }
 

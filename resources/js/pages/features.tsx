@@ -144,6 +144,12 @@ export default function Features() {
                                 Fitur
                             </Link>
                             <Link
+                                href="/berita"
+                                className="transition hover:text-slate-900"
+                            >
+                                Berita
+                            </Link>
+                            <Link
                                 href="/contact"
                                 className="transition hover:text-slate-900"
                             >

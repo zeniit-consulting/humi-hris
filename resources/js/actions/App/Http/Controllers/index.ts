@@ -1,5 +1,6 @@
 import Api from './Api'
 import DocsManualController from './DocsManualController'
+import NewsController from './NewsController'
 import CareerController from './CareerController'
 import Auth from './Auth'
 import BillingController from './BillingController'
@@ -14,6 +15,7 @@ import Settings from './Settings'
 const Controllers = {
     Api: Object.assign(Api, Api),
     DocsManualController: Object.assign(DocsManualController, DocsManualController),
+    NewsController: Object.assign(NewsController, NewsController),
     CareerController: Object.assign(CareerController, CareerController),
     Auth: Object.assign(Auth, Auth),
     BillingController: Object.assign(BillingController, BillingController),

@@ -25,9 +25,16 @@ class PasswordResetTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->post(route('password.email'), ['email' => $user->email]);
+        $response = $this->post(route('password.email'), [
+            'email' => $user->email,
+        ]);
 
         Notification::assertSentTo($user, ResetPassword::class);
+
+        $response->assertSessionHas(
+            'status',
+            'Tautan reset kata sandi telah dikirim ke alamat email Anda.',
+        );
     }
 
     public function test_reset_password_screen_can_be_rendered()

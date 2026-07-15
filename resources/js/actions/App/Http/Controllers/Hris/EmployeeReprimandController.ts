@@ -141,7 +141,7 @@ store.form = storeForm
 * @see app/Http/Controllers/Hris/EmployeeReprimandController.php:78
 * @route '/hris/reprimands/{reprimand}'
 */
-export const update = (args: { reprimand: string | number | { id: string | number } } | [reprimand: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+export const update = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -156,7 +156,7 @@ update.definition = {
 * @see app/Http/Controllers/Hris/EmployeeReprimandController.php:78
 * @route '/hris/reprimands/{reprimand}'
 */
-update.url = (args: { reprimand: string | number | { id: string | number } } | [reprimand: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+update.url = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { reprimand: args }
     }
@@ -189,7 +189,7 @@ update.url = (args: { reprimand: string | number | { id: string | number } } | [
 * @see app/Http/Controllers/Hris/EmployeeReprimandController.php:78
 * @route '/hris/reprimands/{reprimand}'
 */
-update.put = (args: { reprimand: string | number | { id: string | number } } | [reprimand: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+update.put = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -199,7 +199,7 @@ update.put = (args: { reprimand: string | number | { id: string | number } } | [
 * @see app/Http/Controllers/Hris/EmployeeReprimandController.php:78
 * @route '/hris/reprimands/{reprimand}'
 */
-const updateForm = (args: { reprimand: string | number | { id: string | number } } | [reprimand: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+const updateForm = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: update.url(args, {
         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
             _method: 'PUT',
@@ -214,7 +214,7 @@ const updateForm = (args: { reprimand: string | number | { id: string | number }
 * @see app/Http/Controllers/Hris/EmployeeReprimandController.php:78
 * @route '/hris/reprimands/{reprimand}'
 */
-updateForm.put = (args: { reprimand: string | number | { id: string | number } } | [reprimand: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+updateForm.put = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: update.url(args, {
         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
             _method: 'PUT',
@@ -231,7 +231,7 @@ update.form = updateForm
 * @see app/Http/Controllers/Hris/EmployeeReprimandController.php:88
 * @route '/hris/reprimands/{reprimand}'
 */
-export const destroy = (args: { reprimand: string | number | { id: string | number } } | [reprimand: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+export const destroy = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -246,7 +246,7 @@ destroy.definition = {
 * @see app/Http/Controllers/Hris/EmployeeReprimandController.php:88
 * @route '/hris/reprimands/{reprimand}'
 */
-destroy.url = (args: { reprimand: string | number | { id: string | number } } | [reprimand: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+destroy.url = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { reprimand: args }
     }
@@ -279,7 +279,7 @@ destroy.url = (args: { reprimand: string | number | { id: string | number } } | 
 * @see app/Http/Controllers/Hris/EmployeeReprimandController.php:88
 * @route '/hris/reprimands/{reprimand}'
 */
-destroy.delete = (args: { reprimand: string | number | { id: string | number } } | [reprimand: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroy.delete = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -289,7 +289,7 @@ destroy.delete = (args: { reprimand: string | number | { id: string | number } }
 * @see app/Http/Controllers/Hris/EmployeeReprimandController.php:88
 * @route '/hris/reprimands/{reprimand}'
 */
-const destroyForm = (args: { reprimand: string | number | { id: string | number } } | [reprimand: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+const destroyForm = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: destroy.url(args, {
         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
             _method: 'DELETE',
@@ -304,7 +304,7 @@ const destroyForm = (args: { reprimand: string | number | { id: string | number 
 * @see app/Http/Controllers/Hris/EmployeeReprimandController.php:88
 * @route '/hris/reprimands/{reprimand}'
 */
-destroyForm.delete = (args: { reprimand: string | number | { id: string | number } } | [reprimand: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+destroyForm.delete = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: destroy.url(args, {
         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
             _method: 'DELETE',

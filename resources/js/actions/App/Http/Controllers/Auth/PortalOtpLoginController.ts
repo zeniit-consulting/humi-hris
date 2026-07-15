@@ -138,7 +138,7 @@ sendOtp.form = sendOtpForm
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::verifyOtp
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:65
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:61
 * @route '/portal/login/verify-otp'
 */
 export const verifyOtp = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -153,7 +153,7 @@ verifyOtp.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::verifyOtp
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:65
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:61
 * @route '/portal/login/verify-otp'
 */
 verifyOtp.url = (options?: RouteQueryOptions) => {
@@ -162,7 +162,7 @@ verifyOtp.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::verifyOtp
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:65
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:61
 * @route '/portal/login/verify-otp'
 */
 verifyOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -172,7 +172,7 @@ verifyOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::verifyOtp
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:65
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:61
 * @route '/portal/login/verify-otp'
 */
 const verifyOtpForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -182,7 +182,7 @@ const verifyOtpForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'>
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::verifyOtp
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:65
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:61
 * @route '/portal/login/verify-otp'
 */
 verifyOtpForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -194,7 +194,7 @@ verifyOtp.form = verifyOtpForm
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::loginWithPassword
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:104
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:100
 * @route '/portal/login/password'
 */
 export const loginWithPassword = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -209,7 +209,7 @@ loginWithPassword.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::loginWithPassword
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:104
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:100
 * @route '/portal/login/password'
 */
 loginWithPassword.url = (options?: RouteQueryOptions) => {
@@ -218,7 +218,7 @@ loginWithPassword.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::loginWithPassword
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:104
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:100
 * @route '/portal/login/password'
 */
 loginWithPassword.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -228,7 +228,7 @@ loginWithPassword.post = (options?: RouteQueryOptions): RouteDefinition<'post'> 
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::loginWithPassword
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:104
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:100
 * @route '/portal/login/password'
 */
 const loginWithPasswordForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -238,7 +238,7 @@ const loginWithPasswordForm = (options?: RouteQueryOptions): RouteFormDefinition
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::loginWithPassword
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:104
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:100
 * @route '/portal/login/password'
 */
 loginWithPasswordForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -386,6 +386,12 @@ export default function IndustryLanding({
                                 Fitur
                             </Link>
                             <Link
+                                href="/berita"
+                                className="rounded-full px-4 py-2 transition hover:bg-slate-50 hover:text-slate-950"
+                            >
+                                Berita
+                            </Link>
+                            <Link
                                 href="/contact"
                                 className="rounded-full px-4 py-2 transition hover:bg-slate-50 hover:text-slate-950"
                             >

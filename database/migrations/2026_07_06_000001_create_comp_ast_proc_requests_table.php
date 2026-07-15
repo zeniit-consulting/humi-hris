@@ -8,39 +8,43 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('comp_ast_proc_requests', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
-            $table->foreignId('requested_by_employee_id')->nullable()->constrained('employees')->nullOnDelete();
-            $table->string('request_number', 50);
-            $table->string('item_name', 150);
-            $table->string('category', 80)->nullable();
-            $table->unsignedSmallInteger('quantity')->default(1);
-            $table->decimal('estimated_unit_price', 15, 2)->default(0);
-            $table->decimal('actual_unit_price', 15, 2)->nullable();
-            $table->date('needed_by')->nullable();
-            $table->string('priority', 30)->default('normal');
-            $table->string('status', 30)->default('pending');
-            $table->text('reason')->nullable();
-            $table->text('notes')->nullable();
-            $table->timestamp('approved_at')->nullable();
-            $table->timestamp('ordered_at')->nullable();
-            $table->timestamp('received_at')->nullable();
-            $table->timestamps();
+        if (! Schema::hasTable('comp_ast_proc_requests')) {
+            Schema::create('comp_ast_proc_requests', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
+                $table->foreignId('requested_by_employee_id')->nullable()->constrained('employees')->nullOnDelete();
+                $table->string('request_number', 50);
+                $table->string('item_name', 150);
+                $table->string('category', 80)->nullable();
+                $table->unsignedSmallInteger('quantity')->default(1);
+                $table->decimal('estimated_unit_price', 15, 2)->default(0);
+                $table->decimal('actual_unit_price', 15, 2)->nullable();
+                $table->date('needed_by')->nullable();
+                $table->string('priority', 30)->default('normal');
+                $table->string('status', 30)->default('pending');
+                $table->text('reason')->nullable();
+                $table->text('notes')->nullable();
+                $table->timestamp('approved_at')->nullable();
+                $table->timestamp('ordered_at')->nullable();
+                $table->timestamp('received_at')->nullable();
+                $table->timestamps();
 
-            $table->unique(['user_id', 'request_number']);
-            $table->index(['user_id', 'status']);
-            $table->index(['user_id', 'priority']);
-        });
+                $table->unique(['user_id', 'request_number']);
+                $table->index(['user_id', 'status']);
+                $table->index(['user_id', 'priority']);
+            });
+        }
 
-        Schema::table('company_assets', function (Blueprint $table) {
-            $table
-                ->foreignId('procurement_request_id')
-                ->nullable()
-                ->after('user_id')
-                ->constrained('comp_ast_proc_requests')
-                ->nullOnDelete();
-        });
+        if (! Schema::hasColumn('company_assets', 'procurement_request_id')) {
+            Schema::table('company_assets', function (Blueprint $table) {
+                $table
+                    ->foreignId('procurement_request_id')
+                    ->nullable()
+                    ->after('user_id')
+                    ->constrained('comp_ast_proc_requests')
+                    ->nullOnDelete();
+            });
+        }
     }
 
     public function down(): void

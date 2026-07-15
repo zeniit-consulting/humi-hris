@@ -36,6 +36,9 @@ class User extends Authenticatable
         'role',
         'parent_user_id',
         'client_sub_company_id',
+        'email_otp_code',
+        'email_otp_sent_at',
+        'email_otp_expires_at',
         'phone_verified_at',
         'suspended_at',
         'suspension_reason',
@@ -57,6 +60,7 @@ class User extends Authenticatable
         'two_factor_secret',
         'two_factor_recovery_codes',
         'remember_token',
+        'email_otp_code',
         'whatsapp_otp_code',
     ];
 
@@ -69,6 +73,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_otp_sent_at' => 'datetime',
+            'email_otp_expires_at' => 'datetime',
             'phone_verified_at' => 'datetime',
             'suspended_at' => 'datetime',
             'whatsapp_otp_sent_at' => 'datetime',
@@ -81,11 +87,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Determine whether the account has been activated via WhatsApp OTP.
+     * Determine whether the account has been activated via email OTP.
      */
     public function hasActivatedAccount(): bool
     {
-        return $this->phone_verified_at !== null;
+        return $this->email_verified_at !== null;
     }
 
     /**

@@ -29,6 +29,7 @@ class SeoInfrastructureTest extends TestCase
             ->assertSee('Allow: /', false)
             ->assertSee('Allow: /features', false)
             ->assertSee('Allow: /contact', false)
+            ->assertSee('Allow: /berita', false)
             ->assertSee('Allow: /careers', false)
             ->assertSee('Disallow: /portal', false)
             ->assertSee('Disallow: /login', false)
@@ -74,6 +75,11 @@ class SeoInfrastructureTest extends TestCase
             ->assertSee('<loc>https://humi.test</loc>', false)
             ->assertSee('<loc>https://humi.test/features</loc>', false)
             ->assertSee('<loc>https://humi.test/contact</loc>', false)
+            ->assertSee('<loc>https://humi.test/berita</loc>', false)
+            ->assertSee(
+                '<loc>https://humi.test/berita/apa-itu-hris-cara-memilih-software-hris-indonesia</loc>',
+                false,
+            )
             ->assertSee('<loc>https://humi.test/careers</loc>', false)
             ->assertSee(
                 '<loc>https://humi.test/careers/hr-operations-specialist</loc>',

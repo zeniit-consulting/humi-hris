@@ -97,6 +97,12 @@ export default function Contact() {
                             >
                                 Fitur
                             </Link>
+                            <Link
+                                href="/berita"
+                                className="transition hover:text-slate-900"
+                            >
+                                Berita
+                            </Link>
                             <Link href="/contact" className="text-[#0d4d52]">
                                 Kontak
                             </Link>

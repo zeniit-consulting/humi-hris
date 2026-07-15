@@ -122,6 +122,17 @@ class StoreEmployeeRequest extends FormRequest
             'hire_date' => ['required', 'date'],
             'employment_status' => ['required', Rule::in(['active', 'probation', 'on_leave', 'resigned'])],
             'employment_type' => ['required', Rule::in(Employee::EMPLOYMENT_TYPES)],
+            'contract_duration_months' => [
+                'nullable', 'integer', 'min:1', 'max:120',
+                Rule::requiredIf(fn () => $this->input('employment_type') === 'PKWT' && ! $this->filled('contract_end_date')),
+            ],
+            'contract_end_date' => [
+                'nullable', 'date', 'after_or_equal:hire_date',
+                Rule::requiredIf(fn () => $this->input('employment_type') === 'PKWT' && ! $this->filled('contract_duration_months')),
+            ],
+            'probation_duration_months' => [
+                'nullable', 'integer', 'min:0', 'max:12',
+            ],
             'pph21_method' => ['required', Rule::in(['ter_harian', 'gross', 'net', 'gross_up'])],
             'pph21_rate' => ['required', 'integer', 'min:0'],
             'ptkp_category' => ['nullable', Rule::in(['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'])],
@@ -168,8 +179,12 @@ class StoreEmployeeRequest extends FormRequest
             'manager_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'base_salary' => ['nullable', 'numeric', 'min:0'],
             'address' => ['nullable', 'string', 'max:500'],
+            'domicile_address' => ['nullable', 'string', 'max:500'],
             'family_card_number' => ['nullable', 'string', 'max:32'],
             'ktp_number' => ['nullable', 'string', 'max:32'],
+            'npwp_number' => ['nullable', 'string', 'max:32'],
+            'blood_type' => ['nullable', Rule::in(['A', 'B', 'AB', 'O'])],
+            'religion' => ['nullable', 'string', 'max:50'],
             'bpjs_kesehatan_number' => ['nullable', 'string', 'max:32'],
             'bpjs_ketenagakerjaan_number' => ['nullable', 'string', 'max:32'],
             'sim_a_number' => ['nullable', 'string', 'max:32'],
@@ -178,6 +193,7 @@ class StoreEmployeeRequest extends FormRequest
             'biological_mother_name' => ['nullable', 'string', 'max:100'],
             'emergency_contact_name' => ['nullable', 'string', 'max:100'],
             'emergency_contact_phone' => ['nullable', 'string', 'max:30'],
+            'emergency_contact_relationship' => ['nullable', 'string', 'max:80'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'is_active' => ['sometimes', 'boolean'],
         ];

@@ -4,8 +4,6 @@ import {
     Building2,
     CalendarDays,
     ChevronDown,
-    CheckCircle2,
-    Circle,
     Clock3,
     Filter,
     ReceiptText,
@@ -107,35 +105,6 @@ type RecentRequests = {
     items: RecentRequest[];
 };
 
-type PayrollReadinessCheck = {
-    key: string;
-    label: string;
-    complete: boolean;
-    description: string;
-    href: string;
-};
-
-type PayrollReadiness = {
-    period: string;
-    score: number;
-    status: 'saved' | 'generated' | 'not_generated';
-    checks: PayrollReadinessCheck[];
-};
-
-type OnboardingChecklistItem = {
-    key: string;
-    label: string;
-    complete: boolean;
-    href: string;
-};
-
-type OnboardingChecklist = {
-    completed: number;
-    total: number;
-    percent: number;
-    items: OnboardingChecklistItem[];
-};
-
 type DashboardFilters = {
     range: 'today' | 'this_week' | 'this_month';
     outsourcing_period: string;
@@ -222,8 +191,6 @@ export default function Dashboard({
     actionQueue,
     attendanceFocus,
     recentRequests,
-    payrollReadiness,
-    onboardingChecklist,
     outsourcing,
 }: {
     stats: DashboardStats;
@@ -232,8 +199,6 @@ export default function Dashboard({
     actionQueue: ActionQueue;
     attendanceFocus: AttendanceFocus;
     recentRequests: RecentRequests;
-    payrollReadiness: PayrollReadiness;
-    onboardingChecklist: OnboardingChecklist;
     outsourcing: OutsourcingSummary;
 }) {
     const [outsourcingOpen, setOutsourcingOpen] = useState(true);
@@ -494,102 +459,6 @@ export default function Dashboard({
                                     ))}
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <div className="grid gap-4 xl:grid-cols-2">
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <CardTitle>Payroll Readiness</CardTitle>
-                                    <CardDescription>
-                                        Kesiapan payroll periode{' '}
-                                        {payrollReadiness.period}.
-                                    </CardDescription>
-                                </div>
-                                <div className="rounded-md border px-3 py-2 text-sm font-semibold">
-                                    {payrollReadiness.score}%
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="mb-4 h-2 overflow-hidden rounded-full bg-muted">
-                                <div
-                                    className="h-full rounded-full bg-[#006069]"
-                                    style={{
-                                        width: `${payrollReadiness.score}%`,
-                                    }}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                {payrollReadiness.checks.map((check) => (
-                                    <Link
-                                        key={check.key}
-                                        href={check.href}
-                                        className="flex items-start gap-3 rounded-md border p-3 transition-colors hover:bg-muted/40"
-                                    >
-                                        {check.complete ? (
-                                            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-                                        ) : (
-                                            <Circle className="mt-0.5 size-4 shrink-0 text-amber-600" />
-                                        )}
-                                        <div>
-                                            <p className="text-sm font-medium">
-                                                {check.label}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {check.description}
-                                            </p>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <CardTitle>Checklist Setup</CardTitle>
-                                    <CardDescription>
-                                        Langkah dasar agar tenant siap
-                                        beroperasi.
-                                    </CardDescription>
-                                </div>
-                                <div className="rounded-md border px-3 py-2 text-sm font-semibold">
-                                    {onboardingChecklist.completed}/
-                                    {onboardingChecklist.total}
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="mb-4 h-2 overflow-hidden rounded-full bg-muted">
-                                <div
-                                    className="h-full rounded-full bg-[#006069]"
-                                    style={{
-                                        width: `${onboardingChecklist.percent}%`,
-                                    }}
-                                />
-                            </div>
-                            <div className="grid gap-2 sm:grid-cols-2">
-                                {onboardingChecklist.items.map((item) => (
-                                    <Link
-                                        key={item.key}
-                                        href={item.href}
-                                        className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted/40"
-                                    >
-                                        {item.complete ? (
-                                            <CheckCircle2 className="size-4 text-emerald-600" />
-                                        ) : (
-                                            <Circle className="size-4 text-muted-foreground" />
-                                        )}
-                                        <span>{item.label}</span>
-                                    </Link>
-                                ))}
-                            </div>
                         </CardContent>
                     </Card>
                 </div>

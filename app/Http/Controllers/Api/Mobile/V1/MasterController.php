@@ -13,7 +13,7 @@ class MasterController extends Controller
 {
     use InteractsWithMobileApiResponse;
 
-    public function options(): JsonResponse
+    public function index(): JsonResponse
     {
         $divisions = Division::query()
             ->orderBy('name')

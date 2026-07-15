@@ -79,7 +79,7 @@ class AuthenticationTest extends TestCase
         $this->assertTrue(auth()->user()->is($portalUser));
         $this->assertSame($owner->id, $portalUser->parent_user_id);
         $this->assertSame('6281234567890', $portalUser->phone);
-        $this->assertNotNull($portalUser->phone_verified_at);
+        $this->assertNotNull($portalUser->email_verified_at);
         $this->assertTrue(Hash::check('6281234567890', $portalUser->password));
     }
 

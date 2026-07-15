@@ -48,7 +48,7 @@ Route::prefix('mobile/v1')->name('mobile.v1.')->group(function (): void {
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])->name('dashboard.summary');
         Route::get('portal/summary', [PortalController::class, 'summary'])->name('portal.summary');
-        Route::get('master/options', [MasterController::class, 'options'])->name('master.options');
+        Route::get('master/options', [MasterController::class, 'index'])->name('master.index');
 
         Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
         Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');

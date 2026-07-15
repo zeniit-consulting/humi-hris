@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Services\WhatsAppOtpService;
+use App\Services\EmailOtpService;
 use App\Support\RoleRedirect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,9 +11,9 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class WhatsappActivationController extends Controller
+class EmailActivationController extends Controller
 {
-    public function __construct(private readonly WhatsAppOtpService $otpService) {}
+    public function __construct(private readonly EmailOtpService $otpService) {}
 
     public function show(Request $request): Response|RedirectResponse
     {
@@ -24,7 +24,7 @@ class WhatsappActivationController extends Controller
         }
 
         return Inertia::render('auth/activate-account', [
-            'phone' => $user->phone,
+            'email' => $user->email,
             'status' => $request->session()->get('status'),
         ]);
     }
@@ -43,21 +43,14 @@ class WhatsappActivationController extends Controller
             ]);
         }
 
-        if (! $this->otpService->send($user, strict: true)) {
-            throw ValidationException::withMessages([
-                'otp' => 'OTP WhatsApp gagal dikirim. Silakan coba lagi.',
-            ]);
-        }
+        $this->otpService->send($user, strict: true);
 
         return back()->with('status', 'otp-sent');
     }
 
     public function verify(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'otp' => ['required', 'digits:6'],
-        ]);
-
+        $validated = $request->validate(['otp' => ['required', 'digits:6']]);
         $user = $request->user();
 
         if ($user->hasActivatedAccount()) {

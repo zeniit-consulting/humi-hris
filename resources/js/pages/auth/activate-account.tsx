@@ -7,24 +7,24 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 
 type Props = {
-    phone: string;
+    email: string;
     status?: string;
 };
 
-export default function ActivateAccount({ phone, status }: Props) {
+export default function ActivateAccount({ email, status }: Props) {
     const form = useForm({ otp: '' });
     const resendForm = useForm({ otp: '' });
 
     return (
         <AuthLayout
             title="Aktivasi akun"
-            description="Masukkan OTP yang dikirim ke WhatsApp untuk mengaktifkan akun Anda."
+            description="Masukkan OTP yang dikirim ke email untuk mengaktifkan akun Anda."
         >
             <Head title="Aktivasi akun" />
 
             {status === 'otp-sent' ? (
                 <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                    OTP baru sudah dikirim ke WhatsApp {phone}.
+                    OTP baru sudah dikirim ke email {email}.
                 </div>
             ) : null}
 
@@ -36,7 +36,7 @@ export default function ActivateAccount({ phone, status }: Props) {
                 className="space-y-6"
             >
                 <div className="grid gap-2">
-                    <Label htmlFor="otp">Kode OTP WhatsApp</Label>
+                    <Label htmlFor="otp">Kode OTP Email</Label>
                     <Input
                         id="otp"
                         name="otp"
@@ -44,12 +44,19 @@ export default function ActivateAccount({ phone, status }: Props) {
                         maxLength={6}
                         autoFocus
                         value={form.data.otp}
-                        onChange={(event) => form.setData('otp', event.target.value.replace(/[^\d]/g, '').slice(0, 6))}
+                        onChange={(event) =>
+                            form.setData(
+                                'otp',
+                                event.target.value
+                                    .replace(/[^\d]/g, '')
+                                    .slice(0, 6),
+                            )
+                        }
                         placeholder="123456"
                     />
                     <InputError message={form.errors.otp} />
                     <p className="text-sm text-muted-foreground">
-                        OTP dikirim ke nomor WhatsApp {phone}.
+                        OTP dikirim ke email {email}.
                     </p>
                 </div>
 
@@ -68,7 +75,9 @@ export default function ActivateAccount({ phone, status }: Props) {
                         variant="outline"
                         className="w-full"
                         disabled={resendForm.processing}
-                        onClick={() => resendForm.post('/activate-account/send')}
+                        onClick={() =>
+                            resendForm.post('/activate-account/send')
+                        }
                     >
                         {resendForm.processing && <Spinner />}
                         Kirim ulang OTP

@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\User;
+use App\Services\EmailOtpService;
 use App\Services\UserPortalAccountService;
-use App\Services\WhatsAppOtpService;
 use App\Support\RoleRedirect;
 use App\Support\WhatsAppPhone;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +19,7 @@ use Inertia\Response;
 class PortalOtpLoginController extends Controller
 {
     public function __construct(
-        private readonly WhatsAppOtpService $otpService,
+        private readonly EmailOtpService $otpService,
         private readonly UserPortalAccountService $portalAccounts,
     ) {}
 
@@ -31,33 +31,29 @@ class PortalOtpLoginController extends Controller
 
         return Inertia::render('auth/portal-login', [
             'status' => $request->session()->get('status'),
-            'otpSentTo' => $request->session()->get('portal_login_phone'),
+            'otpSentTo' => $request->session()->get('portal_login_email'),
         ]);
     }
 
     public function sendOtp(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'phone' => ['required', 'string', 'max:30'],
+            'email' => ['required', 'email', 'max:150'],
         ]);
 
-        $normalizedPhone = WhatsAppPhone::normalize($validated['phone']);
-        $user = $this->resolvePortalUser($normalizedPhone);
+        $email = strtolower(trim((string) $validated['email']));
+        $user = $this->resolvePortalUser($email);
 
         if (! $this->otpService->canResend($user)) {
             throw ValidationException::withMessages([
-                'phone' => 'OTP baru dapat dikirim ulang setelah 1 menit.',
+                'email' => 'OTP baru dapat dikirim ulang setelah 1 menit.',
             ]);
         }
 
-        if (! $this->otpService->send($user, strict: true, context: 'login')) {
-            throw ValidationException::withMessages([
-                'phone' => 'OTP WhatsApp gagal dikirim. Silakan coba lagi.',
-            ]);
-        }
+        $this->otpService->send($user, strict: true, context: 'login');
 
         $request->session()->put('portal_login_user_id', $user->id);
-        $request->session()->put('portal_login_phone', $normalizedPhone);
+        $request->session()->put('portal_login_email', $email);
 
         return back()->with('status', 'otp-sent');
     }
@@ -69,9 +65,9 @@ class PortalOtpLoginController extends Controller
         ]);
 
         $userId = $request->session()->get('portal_login_user_id');
-        $phone = $request->session()->get('portal_login_phone');
+        $email = $request->session()->get('portal_login_email');
 
-        if (! $userId || ! $phone) {
+        if (! $userId || ! $email) {
             throw ValidationException::withMessages([
                 'otp' => 'Sesi login telah berakhir. Minta OTP baru untuk melanjutkan.',
             ]);
@@ -81,7 +77,7 @@ class PortalOtpLoginController extends Controller
         $user = User::query()
             ->whereKey($userId)
             ->where('role', 'user')
-            ->where('phone', $phone)
+            ->whereRaw('LOWER(email) = ?', [$email])
             ->first();
 
         if (! $user || ! $this->otpService->verify($user, $validated['otp'])) {
@@ -92,7 +88,7 @@ class PortalOtpLoginController extends Controller
 
         $request->session()->forget([
             'portal_login_user_id',
-            'portal_login_phone',
+            'portal_login_email',
         ]);
 
         Auth::login($user, true);
@@ -137,12 +133,12 @@ class PortalOtpLoginController extends Controller
         }
 
         $user->forceFill([
-            'phone_verified_at' => now(),
+            'email_verified_at' => now(),
         ])->save();
 
         $request->session()->forget([
             'portal_login_user_id',
-            'portal_login_phone',
+            'portal_login_email',
         ]);
 
         Auth::login($user, true);
@@ -151,20 +147,20 @@ class PortalOtpLoginController extends Controller
         return redirect()->route('portal.index');
     }
 
-    private function resolvePortalUser(string $phone): User
+    private function resolvePortalUser(string $email): User
     {
         $user = User::query()
             ->where('role', 'user')
-            ->where('phone', $phone)
+            ->whereRaw('LOWER(email) = ?', [$email])
             ->first();
 
         if (! $user) {
-            $user = $this->portalAccounts->createOrSyncFromPhone($phone);
+            $user = $this->portalAccounts->createOrSyncFromEmail($email);
         }
 
         if (! $user) {
             throw ValidationException::withMessages([
-                'phone' => 'Nomor WhatsApp belum terdaftar pada data karyawan.',
+                'email' => 'Email belum terdaftar pada data karyawan.',
             ]);
         }
 

@@ -57,7 +57,7 @@ sendOtp.form = sendOtpForm
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::verifyOtp
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:65
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:61
 * @route '/portal/login/verify-otp'
 */
 export const verifyOtp = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -72,7 +72,7 @@ verifyOtp.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::verifyOtp
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:65
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:61
 * @route '/portal/login/verify-otp'
 */
 verifyOtp.url = (options?: RouteQueryOptions) => {
@@ -81,7 +81,7 @@ verifyOtp.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::verifyOtp
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:65
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:61
 * @route '/portal/login/verify-otp'
 */
 verifyOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -91,7 +91,7 @@ verifyOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::verifyOtp
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:65
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:61
 * @route '/portal/login/verify-otp'
 */
 const verifyOtpForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -101,7 +101,7 @@ const verifyOtpForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'>
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::verifyOtp
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:65
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:61
 * @route '/portal/login/verify-otp'
 */
 verifyOtpForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -113,7 +113,7 @@ verifyOtp.form = verifyOtpForm
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::password
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:104
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:100
 * @route '/portal/login/password'
 */
 export const password = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -128,7 +128,7 @@ password.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::password
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:104
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:100
 * @route '/portal/login/password'
 */
 password.url = (options?: RouteQueryOptions) => {
@@ -137,7 +137,7 @@ password.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::password
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:104
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:100
 * @route '/portal/login/password'
 */
 password.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -147,7 +147,7 @@ password.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::password
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:104
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:100
 * @route '/portal/login/password'
 */
 const passwordForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -157,7 +157,7 @@ const passwordForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> 
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::password
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:104
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:100
 * @route '/portal/login/password'
 */
 passwordForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\CompanySetting;
-use App\Services\WhatsAppOtpService;
+use App\Services\EmailOtpService;
 use App\Support\R2Storage;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -68,24 +68,20 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request, WhatsAppOtpService $otpService): RedirectResponse
+    public function update(ProfileUpdateRequest $request, EmailOtpService $otpService): RedirectResponse
     {
         $user = $request->user();
         $validated = $request->safe()->except(['avatar', 'remove_avatar']);
 
         $user->fill($validated);
 
-        if ($user->isDirty('email')) {
+        $emailChanged = $user->isDirty('email');
+
+        if ($emailChanged) {
             $user->email_verified_at = null;
-        }
-
-        $phoneChanged = $user->isDirty('phone');
-
-        if ($phoneChanged) {
-            $user->phone_verified_at = null;
-            $user->whatsapp_otp_code = null;
-            $user->whatsapp_otp_sent_at = null;
-            $user->whatsapp_otp_expires_at = null;
+            $user->email_otp_code = null;
+            $user->email_otp_sent_at = null;
+            $user->email_otp_expires_at = null;
         }
 
         if ($request->boolean('remove_avatar')) {
@@ -106,8 +102,8 @@ class ProfileController extends Controller
 
         $user->save();
 
-        if ($phoneChanged) {
-            $otpService->send($user);
+        if ($emailChanged) {
+            $otpService->send($user, strict: true);
 
             return redirect()
                 ->route('activation.notice')

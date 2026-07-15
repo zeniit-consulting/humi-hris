@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Hris;
 
+use App\Mail\EmailOtpMail;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAllowance;
@@ -13,6 +14,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -396,6 +398,7 @@ class EmployeeManagementTest extends TestCase
 
     public function test_admin_can_activate_portal_user_for_employee(): void
     {
+        Mail::fake();
         $user = User::factory()->create([
             'email_verified_at' => now(),
         ]);
@@ -435,6 +438,35 @@ class EmployeeManagementTest extends TestCase
         $this->assertSame('user', $portalUser->role);
         $this->assertTrue($portalUser->requires_password_change);
         $this->assertTrue(Hash::check('628123456789', $portalUser->password));
+        $this->assertNull($portalUser->email_verified_at);
+        $this->assertNotNull($portalUser->email_otp_code);
+        Mail::assertSent(EmailOtpMail::class, fn ($mail): bool => $mail->hasTo('dio@example.com'));
+    }
+
+    public function test_admin_can_activate_portal_user_using_employee_email_without_phone(): void
+    {
+        Mail::fake();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'email' => 'email-only@example.com',
+            'phone' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.employees.activate-user', $employee))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'parent_user_id' => $user->id,
+            'email' => 'email-only@example.com',
+            'phone' => null,
+        ]);
+        Mail::assertSent(EmailOtpMail::class, fn ($mail): bool => $mail->hasTo('email-only@example.com'));
     }
 
     public function test_admin_can_offboard_employee(): void
@@ -498,6 +530,16 @@ class EmployeeManagementTest extends TestCase
         $this->assertSame('2026-06-02', $employee->offboarded_at?->format('Y-m-d'));
         $this->assertSame('contract_ended', $employee->offboarding_reason);
         $this->assertSame('Serah terima aset selesai.', $employee->offboarding_notes);
+
+        $this->assertDatabaseHas('employee_employment_histories', [
+            'employee_id' => $employee->id,
+            'event_type' => 'status_change',
+            'effective_date' => '2026-06-02 00:00:00',
+            'old_status' => 'active',
+            'new_status' => 'resigned',
+            'notes' => 'Serah terima aset selesai.',
+            'created_by_user_id' => $user->id,
+        ]);
 
         $this->assertDatabaseHas('employees', [
             'id' => $directReport->id,

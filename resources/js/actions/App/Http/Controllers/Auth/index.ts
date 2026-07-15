@@ -1,8 +1,8 @@
-import WhatsappActivationController from './WhatsappActivationController'
+import EmailActivationController from './EmailActivationController'
 import PortalOtpLoginController from './PortalOtpLoginController'
 
 const Auth = {
-    WhatsappActivationController: Object.assign(WhatsappActivationController, WhatsappActivationController),
+    EmailActivationController: Object.assign(EmailActivationController, EmailActivationController),
     PortalOtpLoginController: Object.assign(PortalOtpLoginController, PortalOtpLoginController),
 }
 

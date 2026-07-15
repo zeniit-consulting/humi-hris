@@ -39,7 +39,7 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
         password: '',
     });
     const sendForm = useForm({
-        phone: otpSentTo ?? '',
+        email: otpSentTo ?? '',
     });
     const verifyForm = useForm({
         otp: '',
@@ -204,7 +204,7 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
                                             : 'text-white/75'
                                     }`}
                                 >
-                                    OTP WA
+                                    OTP Email
                                 </button>
                             </div>
 
@@ -305,29 +305,29 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
                                 >
                                     <div className="grid gap-2">
                                         <Label
-                                            htmlFor="phone"
+                                            htmlFor="email"
                                             className="text-sm font-semibold text-white"
                                         >
-                                            Nomor WhatsApp
+                                            Email Karyawan
                                         </Label>
                                         <Input
-                                            id="phone"
-                                            name="phone"
-                                            inputMode="tel"
+                                            id="email"
+                                            name="email"
+                                            type="email"
                                             autoFocus={otpRequested}
-                                            value={sendForm.data.phone}
+                                            value={sendForm.data.email}
                                             onChange={(event) =>
                                                 sendForm.setData(
-                                                    'phone',
+                                                    'email',
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder="081234567890"
+                                            placeholder="nama@perusahaan.com"
                                             className="h-12 border-white/20 bg-white text-slate-950 placeholder:text-slate-400"
                                         />
                                         <InputError
                                             className="text-red-100"
-                                            message={sendForm.errors.phone}
+                                            message={sendForm.errors.email}
                                         />
                                     </div>
 
@@ -404,7 +404,7 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
                                         />
                                         <p className="text-sm text-white/70">
                                             OTP dikirim ke{' '}
-                                            {otpSentTo ?? sendForm.data.phone}.
+                                            {otpSentTo ?? sendForm.data.email}.
                                         </p>
                                     </div>
 
