@@ -422,6 +422,7 @@ class PortalController extends Controller
                 'leaves' => route('portal.leaves'),
                 'overtimes' => route('portal.overtimes'),
                 'kasbons' => route('portal.kasbons'),
+                'reimbursements' => route('portal.reimbursements'),
                 'payroll' => route('portal.payroll'),
                 'activity' => route('portal.activity'),
                 'client_visits' => route('portal.activity.client-visits'),
