@@ -275,6 +275,16 @@
         font-variant-numeric: tabular-nums;
     }
 
+    .portal-horizontal-scroll {
+        overscroll-behavior-inline: contain;
+        scroll-padding-inline: var(--portal-space-md);
+        scrollbar-width: none;
+    }
+
+    .portal-horizontal-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
     .portal-pressable {
         touch-action: manipulation;
         transition:

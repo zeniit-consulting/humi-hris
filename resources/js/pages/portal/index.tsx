@@ -125,9 +125,6 @@ type PortalSummary = {
 };
 
 type AttendanceFocusState = {
-    tone: 'ready' | 'working' | 'complete' | 'day-off';
-    label: string;
-    title: string;
     description: string;
     href: string;
     actionLabel: string;
@@ -189,9 +186,6 @@ const resolveAttendanceFocus = (
 
     if (action?.shift?.is_day_off) {
         return {
-            tone: 'day-off',
-            label: 'Hari libur',
-            title: 'Tidak ada shift hari ini',
             description: action.hint,
             href: attendanceHref,
             actionLabel: 'Lihat jadwal',
@@ -200,9 +194,6 @@ const resolveAttendanceFocus = (
 
     if (action?.can_clock_in) {
         return {
-            tone: 'ready',
-            label: 'Siap bekerja',
-            title: 'Mulai shift Anda',
             description: action.hint,
             href: '/portal/check-in',
             actionLabel: 'Mulai kerja',
@@ -211,9 +202,6 @@ const resolveAttendanceFocus = (
 
     if (action?.can_clock_out) {
         return {
-            tone: 'working',
-            label: 'Sedang bekerja',
-            title: 'Selesaikan shift',
             description: action.hint,
             href: '/portal/check-out',
             actionLabel: 'Selesaikan kerja',
@@ -221,9 +209,6 @@ const resolveAttendanceFocus = (
     }
 
     return {
-        tone: 'complete',
-        label: 'Hari ini',
-        title: 'Absensi sudah tercatat',
         description: action?.hint ?? 'Lihat rincian kehadiran Anda.',
         href: attendanceHref,
         actionLabel: 'Lihat absensi',
@@ -451,43 +436,38 @@ export default function PortalPage() {
                                     className="overflow-hidden rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-ink)] text-[var(--portal-color-paper)] shadow-[var(--portal-shadow-raised)]"
                                     aria-live="polite"
                                 >
-                                    <div className="px-5 pt-5 pb-6 sm:px-6">
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="min-w-0">
-                                                <p className="flex items-center gap-2 text-sm text-[var(--portal-color-accent-soft)]">
-                                                    <span className="size-2 rounded-full bg-[var(--portal-color-accent)]" />
-                                                    {attendanceFocus.label}
-                                                </p>
-                                                <h1 className="portal-display mt-3 leading-[1.08] font-extrabold text-[var(--portal-text-display)]">
-                                                    {attendanceFocus.title}
-                                                </h1>
-                                            </div>
-                                            <span className="portal-tabular shrink-0 text-sm text-[var(--portal-color-accent-soft)]">
+                                    <div className="px-4 pt-4 pb-4 sm:px-5">
+                                        <div className="flex items-center justify-between gap-3 text-sm text-[var(--portal-color-accent-soft)]">
+                                            <span className="flex min-w-0 items-center gap-2 font-semibold">
+                                                <span className="size-2 shrink-0 rounded-full bg-[var(--portal-color-accent)]" />
+                                                Presensi hari ini
+                                            </span>
+                                            <span className="portal-tabular shrink-0 text-xs">
                                                 {summary?.today.formatted}
                                             </span>
                                         </div>
 
-                                        <p className="mt-3 max-w-[34rem] text-sm leading-6 text-[var(--portal-color-accent-soft)]">
+                                        <p className="mt-2 max-w-[34rem] text-xs leading-5 text-[var(--portal-color-accent-soft)]">
                                             {attendanceFocus.description}
                                         </p>
 
-                                        <dl className="portal-tabular mt-6 grid grid-cols-2 border-y border-[var(--portal-color-ink-soft)]">
-                                            <div className="py-4 pr-4">
+                                        <dl className="portal-tabular mt-4 grid grid-cols-2 border-y border-[var(--portal-color-ink-soft)]">
+                                            <div className="py-3 pr-3">
                                                 <dt className="text-xs text-[var(--portal-color-accent-soft)]">
                                                     Masuk
                                                 </dt>
-                                                <dd className="portal-display mt-1 text-2xl font-bold">
+                                                <dd className="portal-display mt-1 text-xl font-bold">
                                                     {formatTime(
                                                         currentAttendance?.check_in_at ??
                                                             null,
                                                     )}
                                                 </dd>
                                             </div>
-                                            <div className="border-l border-[var(--portal-color-ink-soft)] py-4 pl-4">
+                                            <div className="border-l border-[var(--portal-color-ink-soft)] py-3 pl-3">
                                                 <dt className="text-xs text-[var(--portal-color-accent-soft)]">
                                                     Pulang
                                                 </dt>
-                                                <dd className="portal-display mt-1 text-2xl font-bold">
+                                                <dd className="portal-display mt-1 text-xl font-bold">
                                                     {formatTime(
                                                         currentAttendance?.check_out_at ??
                                                             null,
@@ -496,7 +476,7 @@ export default function PortalPage() {
                                             </div>
                                         </dl>
 
-                                        <div className="mt-4 flex items-center justify-between gap-4 text-xs text-[var(--portal-color-accent-soft)]">
+                                        <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--portal-color-accent-soft)]">
                                             <span className="truncate">
                                                 {summary?.quick_action.shift
                                                     ?.name ?? 'Jadwal reguler'}
@@ -513,7 +493,7 @@ export default function PortalPage() {
 
                                     <a
                                         href={attendanceFocus.href}
-                                        className="portal-pressable portal-focus-ring flex min-h-14 items-center justify-between bg-[var(--portal-color-surface)] px-5 text-sm font-bold whitespace-nowrap text-[var(--portal-color-ink)] sm:px-6"
+                                        className="portal-pressable portal-focus-ring flex min-h-12 items-center justify-between bg-[var(--portal-color-surface)] px-4 text-sm font-bold whitespace-nowrap text-[var(--portal-color-ink)] sm:px-5"
                                     >
                                         {attendanceFocus.actionLabel}
                                         <ChevronRight className="size-5" />
@@ -560,30 +540,35 @@ export default function PortalPage() {
                                     <h2 className="portal-display text-xl font-extrabold">
                                         Akses cepat
                                     </h2>
-                                    <div className="mt-4 grid grid-cols-6 gap-2">
-                                        {quickLinks.map((item, index) => {
-                                            const href =
-                                                links[
-                                                    item.key as keyof PortalSummary['links']
-                                                ] ?? '#';
+                                    <div className="portal-horizontal-scroll -mx-4 mt-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
+                                        <ul
+                                            aria-label="Menu akses cepat"
+                                            className="flex w-max touch-pan-x snap-x snap-mandatory gap-3"
+                                        >
+                                            {quickLinks.map((item) => {
+                                                const href =
+                                                    links[
+                                                        item.key as keyof PortalSummary['links']
+                                                    ] ?? '#';
 
-                                            return (
-                                                <a
-                                                    key={item.key}
-                                                    href={href}
-                                                    className={`portal-pressable portal-focus-ring flex min-h-[5.5rem] flex-col items-start justify-between rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface)] p-3 shadow-[var(--portal-shadow-raised)] ${
-                                                        index < 3
-                                                            ? 'col-span-2'
-                                                            : 'col-span-3'
-                                                    }`}
-                                                >
-                                                    <item.icon className="size-5 text-[var(--portal-color-accent-strong)]" />
-                                                    <span className="text-sm font-semibold whitespace-nowrap">
-                                                        {item.label}
-                                                    </span>
-                                                </a>
-                                            );
-                                        })}
+                                                return (
+                                                    <li
+                                                        key={item.key}
+                                                        className="w-28 shrink-0 snap-start"
+                                                    >
+                                                        <a
+                                                            href={href}
+                                                            className="portal-pressable portal-focus-ring flex min-h-24 flex-col items-start justify-between rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface)] p-3 shadow-[var(--portal-shadow-raised)]"
+                                                        >
+                                                            <item.icon className="size-5 text-[var(--portal-color-accent-strong)]" />
+                                                            <span className="text-sm font-semibold whitespace-nowrap">
+                                                                {item.label}
+                                                            </span>
+                                                        </a>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
                                     </div>
                                 </section>
 
