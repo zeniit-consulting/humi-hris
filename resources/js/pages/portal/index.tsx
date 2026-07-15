@@ -2,14 +2,20 @@ import { Head, Link } from '@inertiajs/react';
 import {
     BellRing,
     CalendarDays,
+    ChevronRight,
+    CircleCheck,
+    ClipboardCheck,
     Clock3,
     HandCoins,
+    History,
     LogOut,
+    PackageCheck,
+    RotateCcw,
     ScanLine,
-    Sparkles,
     Wallet,
 } from 'lucide-react';
-import { startTransition, useEffect, useMemo, useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { notifyPortal, requestApi, translatePortalError } from './lib';
 import { PortalNavbar } from './navbar';
 import { PortalToastViewport } from './toast';
@@ -51,14 +57,8 @@ type PortalSummary = {
         email: string | null;
         employment_status: string | null;
         employment_type: string | null;
-        division: {
-            id: number;
-            name: string;
-        } | null;
-        position: {
-            id: number;
-            name: string;
-        } | null;
+        division: { id: number; name: string } | null;
+        position: { id: number; name: string } | null;
     } | null;
     quick_action: {
         shift: ShiftPayload | null;
@@ -124,37 +124,45 @@ type PortalSummary = {
     };
 };
 
+type AttendanceFocusState = {
+    tone: 'ready' | 'working' | 'complete' | 'day-off';
+    label: string;
+    title: string;
+    description: string;
+    href: string;
+    actionLabel: string;
+};
+
+type AttentionItem = {
+    key: string;
+    label: string;
+    title: string;
+    href: string;
+    icon: LucideIcon;
+};
+
+const fallbackLinks: PortalSummary['links'] = {
+    attendance: '/portal/attendance',
+    leaves: '/portal/leaves',
+    overtimes: '/portal/overtimes',
+    kasbons: '/portal/kasbons',
+    payroll: '/portal/payroll',
+    activity: '/portal/activity',
+    profile: '/portal/profile',
+    dashboard: '/portal',
+};
+
 const quickLinks = [
-    {
-        key: 'attendance',
-        label: 'Absensi',
-        icon: ScanLine,
-    },
-    {
-        key: 'leaves',
-        label: 'Cuti',
-        icon: CalendarDays,
-    },
-    {
-        key: 'overtimes',
-        label: 'Lembur',
-        icon: Clock3,
-    },
-    {
-        key: 'kasbons',
-        label: 'Kasbon',
-        icon: HandCoins,
-    },
-    {
-        key: 'payroll',
-        label: 'Payroll',
-        icon: Wallet,
-    },
+    { key: 'attendance', label: 'Absensi', icon: ScanLine },
+    { key: 'leaves', label: 'Cuti', icon: CalendarDays },
+    { key: 'overtimes', label: 'Lembur', icon: Clock3 },
+    { key: 'kasbons', label: 'Kasbon', icon: HandCoins },
+    { key: 'payroll', label: 'Payroll', icon: Wallet },
 ] as const;
 
 const formatTime = (value: string | null) => {
     if (!value) {
-        return '--:--';
+        return '—';
     }
 
     const date = new Date(value);
@@ -167,49 +175,85 @@ const formatTime = (value: string | null) => {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
-    }).format(date);
+    })
+        .format(date)
+        .replace('.', ':');
 };
 
-const formatDateParts = (value: string | null) => {
-    if (!value) {
-        return { month: '-', day: '--' };
+const resolveAttendanceFocus = (
+    summary: PortalSummary | null,
+): AttendanceFocusState => {
+    const action = summary?.quick_action;
+    const attendanceHref =
+        summary?.links.attendance ?? fallbackLinks.attendance;
+
+    if (action?.shift?.is_day_off) {
+        return {
+            tone: 'day-off',
+            label: 'Hari libur',
+            title: 'Tidak ada shift hari ini',
+            description: action.hint,
+            href: attendanceHref,
+            actionLabel: 'Lihat jadwal',
+        };
     }
 
-    const date = new Date(value);
+    if (action?.can_clock_in) {
+        return {
+            tone: 'ready',
+            label: 'Siap bekerja',
+            title: 'Mulai shift Anda',
+            description: action.hint,
+            href: '/portal/check-in',
+            actionLabel: 'Mulai kerja',
+        };
+    }
 
-    if (Number.isNaN(date.getTime())) {
-        return { month: '-', day: '--' };
+    if (action?.can_clock_out) {
+        return {
+            tone: 'working',
+            label: 'Sedang bekerja',
+            title: 'Selesaikan shift',
+            description: action.hint,
+            href: '/portal/check-out',
+            actionLabel: 'Selesaikan kerja',
+        };
     }
 
     return {
-        month: new Intl.DateTimeFormat('id-ID', {
-            month: 'short',
-        })
-            .format(date)
-            .toUpperCase(),
-        day: new Intl.DateTimeFormat('id-ID', {
-            day: '2-digit',
-        }).format(date),
+        tone: 'complete',
+        label: 'Hari ini',
+        title: 'Absensi sudah tercatat',
+        description: action?.hint ?? 'Lihat rincian kehadiran Anda.',
+        href: attendanceHref,
+        actionLabel: 'Lihat absensi',
     };
 };
+
+const initials = (value: string) =>
+    value
+        .split(' ')
+        .slice(0, 2)
+        .map((part) => part[0] ?? '')
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
 
 export default function PortalPage() {
     const [summary, setSummary] = useState<PortalSummary | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [loadFailed, setLoadFailed] = useState(false);
+    const [reloadKey, setReloadKey] = useState(0);
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
-    const [currentTime, setCurrentTime] = useState(() =>
-        new Intl.DateTimeFormat('id-ID', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-        }).format(new Date()),
-    );
+    const cancelLogoutRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         let cancelled = false;
 
         const loadSummary = async () => {
+            setIsLoading(true);
+            setLoadFailed(false);
+
             try {
                 const response = await requestApi<PortalSummary>(
                     '/portal/api/summary',
@@ -237,6 +281,7 @@ export default function PortalPage() {
                           )
                         : 'Data portal tidak bisa dimuat.',
                 );
+                setLoadFailed(true);
                 setIsLoading(false);
             }
         };
@@ -246,77 +291,86 @@ export default function PortalPage() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [reloadKey]);
 
     useEffect(() => {
-        const intervalId = window.setInterval(() => {
-            setCurrentTime(
-                new Intl.DateTimeFormat('id-ID', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false,
-                }).format(new Date()),
-            );
-        }, 1000);
+        if (!logoutConfirmOpen) {
+            return;
+        }
 
-        return () => window.clearInterval(intervalId);
-    }, []);
+        cancelLogoutRef.current?.focus();
+
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setLogoutConfirmOpen(false);
+            }
+        };
+
+        window.addEventListener('keydown', closeOnEscape);
+
+        return () => window.removeEventListener('keydown', closeOnEscape);
+    }, [logoutConfirmOpen]);
 
     const headlineName =
         summary?.employee?.full_name ?? summary?.user.name ?? 'Pengguna';
-    const workingDays = useMemo(() => {
-        if (!summary?.today.date) {
-            return 0;
+    const firstName = headlineName.split(' ')[0] ?? headlineName;
+    const links = summary?.links ?? fallbackLinks;
+    const attendanceFocus = useMemo(
+        () => resolveAttendanceFocus(summary),
+        [summary],
+    );
+    const currentAttendance =
+        summary?.quick_action.open_attendance ??
+        summary?.quick_action.attendance ??
+        null;
+    const attentionItems = useMemo<AttentionItem[]>(() => {
+        const items: AttentionItem[] = [];
+        const announcement = summary?.announcements[0];
+        const survey = summary?.surveys[0];
+        const asset = summary?.assets[0];
+
+        if (announcement) {
+            items.push({
+                key: `announcement-${announcement.id}`,
+                label: 'Pengumuman terbaru',
+                title: announcement.title,
+                href: '/portal/announcements',
+                icon: BellRing,
+            });
         }
 
-        const today = new Date(summary.today.date);
-        const year = today.getFullYear();
-        const month = today.getMonth();
-        let total = 0;
-
-        for (let day = 1; day <= today.getDate(); day += 1) {
-            const current = new Date(year, month, day);
-            const weekDay = current.getDay();
-
-            if (weekDay !== 0 && weekDay !== 6) {
-                total += 1;
-            }
+        if (survey) {
+            items.push({
+                key: `survey-${survey.id}`,
+                label: 'Perlu diisi',
+                title: survey.title,
+                href: '/portal/surveys',
+                icon: ClipboardCheck,
+            });
         }
 
-        return total;
-    }, [summary?.today.date]);
+        if (asset) {
+            items.push({
+                key: `asset-${asset.id}`,
+                label: 'Aset dititipkan',
+                title: asset.name,
+                href: '/portal/assets',
+                icon: PackageCheck,
+            });
+        }
 
-    const announcements = useMemo(() => {
-        return summary?.announcements ?? [];
-    }, [summary?.announcements]);
+        return items;
+    }, [summary?.announcements, summary?.assets, summary?.surveys]);
 
     return (
         <>
-            <Head title="Employee App">
-                <meta name="theme-color" content="#006069" />
-                <meta
-                    name="theme-color"
-                    content="#006069"
-                    media="(prefers-color-scheme: light)"
-                />
-                <meta
-                    name="theme-color"
-                    content="#006069"
-                    media="(prefers-color-scheme: dark)"
-                />
+            <Head title="Portal Karyawan">
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta
                     name="apple-mobile-web-app-status-bar-style"
                     content="black-translucent"
                 />
-                <meta
-                    name="apple-mobile-web-app-title"
-                    content={
-                        import.meta.env.VITE_APP_NAME ||
-                        'Humi - Easy HR Management'
-                    }
-                />
+                <meta name="apple-mobile-web-app-title" content="Humi" />
                 <link rel="manifest" href="/manifest.webmanifest" />
                 <link
                     rel="apple-touch-icon"
@@ -334,425 +388,380 @@ export default function PortalPage() {
                 />
             </Head>
 
-            <div className="min-h-screen bg-white text-slate-900">
+            <div className="portal-page min-h-screen overflow-x-clip">
                 <PortalToastViewport />
-                <div className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-white px-4 pt-4 pb-28 sm:max-w-lg">
-                    <section className="rounded-[17px] border border-stone-200 bg-white px-4 py-4 text-slate-900">
-                        <div className="relative">
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <a
-                                        href={
-                                            summary?.links.profile ??
-                                            '/portal/profile'
-                                        }
-                                        className="portal-primary-soft inline-flex size-14 items-center justify-center rounded-full text-lg font-bold"
-                                        aria-label="Buka profil"
-                                    >
-                                        {headlineName
-                                            .split(' ')
-                                            .slice(0, 2)
-                                            .map((part) => part[0] ?? '')
-                                            .join('')
-                                            .slice(0, 2)
-                                            .toUpperCase()}
-                                    </a>
-                                    <div className="min-w-0">
-                                        <h1
-                                            className="truncate text-2xl font-extrabold tracking-[-0.05em]"
-                                            style={{
-                                                fontFamily:
-                                                    'Manrope, ui-sans-serif, system-ui, sans-serif',
-                                            }}
-                                        >
-                                            {headlineName}
-                                        </h1>
-                                        <p className="mt-0.5 text-sm text-slate-500">
-                                            {summary?.employee?.position
-                                                ?.name ?? 'Portal User'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setLogoutConfirmOpen(true)
-                                        }
-                                        className="inline-flex size-10 items-center justify-center rounded-full border border-stone-200 bg-white text-slate-900"
-                                        aria-label="Logout"
-                                    >
-                                        <LogOut className="size-4" />
-                                    </button>
-                                </div>
-                            </div>
+                <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-32 sm:max-w-xl sm:px-6 md:max-w-2xl">
+                    <header className="flex items-center justify-between gap-4 py-2">
+                        <a
+                            href={links.profile ?? fallbackLinks.profile}
+                            className="portal-pressable portal-focus-ring flex min-h-14 min-w-0 items-center gap-3 rounded-[var(--portal-radius-control)] pr-2"
+                            aria-label="Buka profil"
+                        >
+                            <span className="flex size-12 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)] bg-[var(--portal-color-accent-soft)] font-bold text-[var(--portal-color-accent-strong)]">
+                                {initials(headlineName)}
+                            </span>
+                            <span className="min-w-0 text-left">
+                                <span className="block text-sm text-[var(--portal-color-muted)]">
+                                    Halo, {firstName}
+                                </span>
+                                <span className="portal-display block truncate text-base font-bold">
+                                    {summary?.employee?.position?.name ??
+                                        'Portal karyawan'}
+                                </span>
+                            </span>
+                        </a>
+                        <button
+                            type="button"
+                            onClick={() => setLogoutConfirmOpen(true)}
+                            className="portal-pressable portal-focus-ring flex size-11 shrink-0 items-center justify-center rounded-full border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] text-[var(--portal-color-ink-soft)]"
+                            aria-label="Keluar dari portal"
+                        >
+                            <LogOut className="size-[18px]" />
+                        </button>
+                    </header>
 
-                            <div className="mt-4 grid grid-cols-2 gap-3">
-                                <div className="rounded-[14px] border border-stone-200 bg-white px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                                    <p className="text-xs font-medium text-slate-500">
-                                        Clock In
-                                    </p>
-                                    <p className="mt-2 text-3xl font-bold tracking-[-0.04em] text-slate-950">
-                                        {formatTime(
-                                            summary?.quick_action
-                                                .open_attendance?.check_in_at ??
-                                                summary?.quick_action.attendance
-                                                    ?.check_in_at ??
-                                                null,
-                                        )}
-                                    </p>
-                                    <p className="mt-1 text-xs text-slate-400">
-                                        {summary?.today.formatted ?? 'Hari ini'}
-                                    </p>
-                                </div>
-                                <div className="rounded-[14px] border border-stone-200 bg-white px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                                    <p className="text-xs font-medium text-slate-500">
-                                        Clock Out
-                                    </p>
-                                    <p className="mt-2 text-3xl font-bold tracking-[-0.04em] text-slate-950">
-                                        {formatTime(
-                                            summary?.quick_action
-                                                .open_attendance
-                                                ?.check_out_at ??
-                                                summary?.quick_action.attendance
-                                                    ?.check_out_at ??
-                                                null,
-                                        )}
-                                    </p>
-                                    <p className="mt-1 text-xs text-slate-400">
-                                        {currentTime}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="mt-3">
+                    <main className="flex-1 pt-4">
+                        {isLoading ? <PortalHomeSkeleton /> : null}
+
+                        {loadFailed ? (
+                            <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] p-5">
+                                <RotateCcw className="size-6 text-[var(--portal-color-accent-strong)]" />
+                                <h1 className="portal-display mt-4 text-xl font-bold">
+                                    Data portal belum termuat
+                                </h1>
+                                <p className="mt-2 text-sm leading-6 text-[var(--portal-color-muted)]">
+                                    Periksa koneksi Anda, lalu muat ulang data
+                                    portal.
+                                </p>
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        void (window.location.href = summary
-                                            ?.quick_action.can_clock_in
-                                            ? '/portal/check-in'
-                                            : '/portal/check-out')
+                                        setReloadKey((current) => current + 1)
                                     }
-                                    disabled={
-                                        !summary?.quick_action.can_clock_in &&
-                                        !summary?.quick_action.can_clock_out
-                                    }
-                                    className="portal-primary-bg inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[11px] px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="portal-pressable portal-focus-ring mt-5 inline-flex min-h-11 items-center justify-center rounded-[var(--portal-radius-control)] bg-[var(--portal-color-ink)] px-5 text-sm font-semibold whitespace-nowrap text-[var(--portal-color-paper)]"
                                 >
-                                    <Clock3 className="size-4" />
-                                    {summary?.quick_action.can_clock_in
-                                        ? 'Masuk'
-                                        : 'Pulang'}
+                                    Muat ulang
                                 </button>
-                            </div>
-
-                            <div className="mt-2 overflow-hidden rounded-[14px] bg-white px-2 py-1.5">
-                                <div className="-mx-2 flex snap-x snap-mandatory gap-2 overflow-x-auto px-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                                    {quickLinks.map((item) => {
-                                        const href =
-                                            summary?.links[
-                                                item.key as keyof PortalSummary['links']
-                                            ] ?? '#';
-
-                                        return (
-                                            <a
-                                                key={item.key}
-                                                href={href}
-                                                className="min-w-[22.4%] flex-[0_0_22.4%] snap-start rounded-[11px] bg-white px-1.5 py-2 text-center"
-                                            >
-                                                <span className="mx-auto inline-flex size-10 items-center justify-center rounded-lg bg-white">
-                                                    <item.icon className="portal-primary-text size-5" />
-                                                </span>
-                                                <p className="mt-2 text-[11px] font-semibold text-slate-700">
-                                                    {item.label}
-                                                </p>
-                                            </a>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {isLoading ? (
-                        <div className="mt-5 space-y-3">
-                            <div className="h-28 animate-pulse rounded-[14px] bg-white/70" />
-                            <div className="h-28 animate-pulse rounded-[14px] bg-white/70" />
-                            <div className="h-52 animate-pulse rounded-[14px] bg-white/70" />
-                        </div>
-                    ) : null}
-
-                    {!isLoading ? (
-                        <>
-                            <section className="mt-5 rounded-[16px] border border-slate-200 bg-white px-5 py-5">
-                                <div className="flex items-center justify-between gap-3">
-                                    <div>
-                                        <h2
-                                            className="text-xl font-extrabold tracking-[-0.04em] text-slate-950"
-                                            style={{
-                                                fontFamily:
-                                                    'Manrope, ui-sans-serif, system-ui, sans-serif',
-                                            }}
-                                        >
-                                            Today
-                                        </h2>
-                                    </div>
-                                    <span className="portal-primary-soft inline-flex size-11 items-center justify-center rounded-lg">
-                                        <Sparkles className="portal-primary-text size-5" />
-                                    </span>
-                                </div>
-
-                                <div className="mt-5 grid grid-cols-2 gap-3">
-                                    <div className="rounded-[12px] border border-slate-200 bg-white px-4 py-4">
-                                        <p className="text-xs tracking-[0.2em] text-slate-500 uppercase">
-                                            Sisa cuti
-                                        </p>
-                                        <p className="mt-2 text-2xl font-bold tracking-[-0.04em]">
-                                            {summary?.cards.annual_leave_days ??
-                                                0}
-                                        </p>
-                                        <p className="text-sm text-slate-500">
-                                            hari
-                                        </p>
-                                    </div>
-                                    <div className="rounded-[12px] border border-slate-200 bg-white px-4 py-4">
-                                        <p className="text-xs tracking-[0.2em] text-slate-500 uppercase">
-                                            Hari kerja
-                                        </p>
-                                        <p className="mt-2 text-2xl font-bold tracking-[-0.04em]">
-                                            {workingDays}
-                                        </p>
-                                        <p className="text-sm text-slate-500">
-                                            hari kerja
-                                        </p>
-                                    </div>
-                                </div>
                             </section>
+                        ) : null}
 
-                            <section className="mt-5 rounded-[16px] border border-slate-200 bg-white px-5 py-5">
-                                <div className="flex items-center justify-between gap-3">
-                                    <div>
-                                        <h2
-                                            className="text-xl font-extrabold tracking-[-0.04em] text-slate-950"
-                                            style={{
-                                                fontFamily:
-                                                    'Manrope, ui-sans-serif, system-ui, sans-serif',
-                                            }}
-                                        >
-                                            Pengumuman
-                                        </h2>
+                        {!isLoading && !loadFailed ? (
+                            <div className="space-y-8">
+                                <section
+                                    className="overflow-hidden rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-ink)] text-[var(--portal-color-paper)] shadow-[var(--portal-shadow-raised)]"
+                                    aria-live="polite"
+                                >
+                                    <div className="px-5 pt-5 pb-6 sm:px-6">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="min-w-0">
+                                                <p className="flex items-center gap-2 text-sm text-[var(--portal-color-accent-soft)]">
+                                                    <span className="size-2 rounded-full bg-[var(--portal-color-accent)]" />
+                                                    {attendanceFocus.label}
+                                                </p>
+                                                <h1 className="portal-display mt-3 leading-[1.08] font-extrabold text-[var(--portal-text-display)]">
+                                                    {attendanceFocus.title}
+                                                </h1>
+                                            </div>
+                                            <span className="portal-tabular shrink-0 text-sm text-[var(--portal-color-accent-soft)]">
+                                                {summary?.today.formatted}
+                                            </span>
+                                        </div>
+
+                                        <p className="mt-3 max-w-[34rem] text-sm leading-6 text-[var(--portal-color-accent-soft)]">
+                                            {attendanceFocus.description}
+                                        </p>
+
+                                        <dl className="portal-tabular mt-6 grid grid-cols-2 border-y border-[var(--portal-color-ink-soft)]">
+                                            <div className="py-4 pr-4">
+                                                <dt className="text-xs text-[var(--portal-color-accent-soft)]">
+                                                    Masuk
+                                                </dt>
+                                                <dd className="portal-display mt-1 text-2xl font-bold">
+                                                    {formatTime(
+                                                        currentAttendance?.check_in_at ??
+                                                            null,
+                                                    )}
+                                                </dd>
+                                            </div>
+                                            <div className="border-l border-[var(--portal-color-ink-soft)] py-4 pl-4">
+                                                <dt className="text-xs text-[var(--portal-color-accent-soft)]">
+                                                    Pulang
+                                                </dt>
+                                                <dd className="portal-display mt-1 text-2xl font-bold">
+                                                    {formatTime(
+                                                        currentAttendance?.check_out_at ??
+                                                            null,
+                                                    )}
+                                                </dd>
+                                            </div>
+                                        </dl>
+
+                                        <div className="mt-4 flex items-center justify-between gap-4 text-xs text-[var(--portal-color-accent-soft)]">
+                                            <span className="truncate">
+                                                {summary?.quick_action.shift
+                                                    ?.name ?? 'Jadwal reguler'}
+                                            </span>
+                                            <span className="portal-tabular shrink-0">
+                                                {summary?.quick_action.shift
+                                                    ?.start_time ?? '—'}
+                                                {' – '}
+                                                {summary?.quick_action.shift
+                                                    ?.end_time ?? '—'}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <span className="portal-primary-soft inline-flex size-11 items-center justify-center rounded-lg">
-                                        <BellRing className="portal-primary-text size-5" />
-                                    </span>
-                                </div>
 
-                                <div className="mt-5 space-y-3">
-                                    {announcements.length ? (
-                                        announcements.map((item) => {
-                                            const dateParts = formatDateParts(
-                                                item.publish_at,
-                                            );
+                                    <a
+                                        href={attendanceFocus.href}
+                                        className="portal-pressable portal-focus-ring flex min-h-14 items-center justify-between bg-[var(--portal-color-surface)] px-5 text-sm font-bold whitespace-nowrap text-[var(--portal-color-ink)] sm:px-6"
+                                    >
+                                        {attendanceFocus.actionLabel}
+                                        <ChevronRight className="size-5" />
+                                    </a>
+                                </section>
+
+                                {attentionItems.length > 0 ? (
+                                    <section>
+                                        <div className="flex items-end justify-between gap-4">
+                                            <div>
+                                                <h2 className="portal-display text-xl font-extrabold">
+                                                    Perlu perhatian
+                                                </h2>
+                                                <p className="mt-1 text-sm text-[var(--portal-color-muted)]">
+                                                    {attentionItems.length} hal
+                                                    menunggu tindak lanjut.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 divide-y divide-[var(--portal-color-rule)] border-y border-[var(--portal-color-rule)]">
+                                            {attentionItems.map((item) => (
+                                                <a
+                                                    key={item.key}
+                                                    href={item.href}
+                                                    className="portal-pressable portal-focus-ring flex min-h-16 items-center gap-3 py-3"
+                                                >
+                                                    <item.icon className="size-5 shrink-0 text-[var(--portal-color-accent-strong)]" />
+                                                    <span className="min-w-0 flex-1">
+                                                        <span className="block text-xs text-[var(--portal-color-muted)]">
+                                                            {item.label}
+                                                        </span>
+                                                        <span className="mt-0.5 block truncate text-sm font-semibold">
+                                                            {item.title}
+                                                        </span>
+                                                    </span>
+                                                    <ChevronRight className="size-4 shrink-0 text-[var(--portal-color-muted)]" />
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </section>
+                                ) : null}
+
+                                <section>
+                                    <h2 className="portal-display text-xl font-extrabold">
+                                        Akses cepat
+                                    </h2>
+                                    <div className="mt-4 grid grid-cols-6 gap-2">
+                                        {quickLinks.map((item, index) => {
+                                            const href =
+                                                links[
+                                                    item.key as keyof PortalSummary['links']
+                                                ] ?? '#';
 
                                             return (
                                                 <a
-                                                    key={item.id}
-                                                    href="/portal/announcements"
-                                                    className="flex items-center gap-4 rounded-[12px] border border-slate-200 bg-white px-4 py-4"
+                                                    key={item.key}
+                                                    href={href}
+                                                    className={`portal-pressable portal-focus-ring flex min-h-[5.5rem] flex-col items-start justify-between rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface)] p-3 shadow-[var(--portal-shadow-raised)] ${
+                                                        index < 3
+                                                            ? 'col-span-2'
+                                                            : 'col-span-3'
+                                                    }`}
                                                 >
-                                                    <div className="flex w-14 shrink-0 flex-col items-center justify-center rounded-[10px] bg-white py-2 text-slate-900">
-                                                        <span className="text-[10px] font-semibold tracking-[0.2em] text-slate-500 uppercase">
-                                                            {dateParts.month}
-                                                        </span>
-                                                        <span className="text-xl font-bold tracking-[-0.04em]">
-                                                            {dateParts.day}
-                                                        </span>
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div>
-                                                                <p className="text-sm font-semibold text-slate-900">
-                                                                    {item.title}
-                                                                </p>
-                                                                <p className="mt-1 text-sm leading-5 text-slate-500">
-                                                                    {
-                                                                        item.message
-                                                                    }
-                                                                </p>
-                                                            </div>
-                                                            <span className="portal-primary-soft shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold uppercase">
-                                                                info
-                                                            </span>
-                                                        </div>
-                                                    </div>
+                                                    <item.icon className="size-5 text-[var(--portal-color-accent-strong)]" />
+                                                    <span className="text-sm font-semibold whitespace-nowrap">
+                                                        {item.label}
+                                                    </span>
                                                 </a>
                                             );
-                                        })
+                                        })}
+                                    </div>
+                                </section>
+
+                                <section className="border-y border-[var(--portal-color-rule)] py-5">
+                                    <div className="grid grid-cols-2 gap-5">
+                                        <div>
+                                            <p className="text-xs text-[var(--portal-color-muted)]">
+                                                Sisa cuti tahunan
+                                            </p>
+                                            <p className="portal-display portal-tabular mt-2 text-2xl font-extrabold">
+                                                {summary?.cards
+                                                    .annual_leave_days ?? 0}
+                                                <span className="ml-1 text-sm font-medium text-[var(--portal-color-muted)]">
+                                                    hari
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-[var(--portal-color-muted)]">
+                                                Payroll periode ini
+                                            </p>
+                                            <p className="mt-2 flex items-center gap-2 text-sm font-semibold">
+                                                {summary?.cards.payroll_preview
+                                                    .is_saved ? (
+                                                    <CircleCheck className="size-4 text-[var(--portal-color-success)]" />
+                                                ) : (
+                                                    <Clock3 className="size-4 text-[var(--portal-color-warning)]" />
+                                                )}
+                                                {summary?.cards.payroll_preview
+                                                    .is_saved
+                                                    ? 'Sudah tersedia'
+                                                    : 'Belum tersedia'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section>
+                                    <div className="flex items-center justify-between gap-4">
+                                        <h2 className="portal-display text-xl font-extrabold">
+                                            Aktivitas terbaru
+                                        </h2>
+                                        <a
+                                            href={
+                                                links.activity ??
+                                                fallbackLinks.activity
+                                            }
+                                            className="portal-focus-ring rounded-md text-sm font-semibold whitespace-nowrap text-[var(--portal-color-accent-strong)]"
+                                        >
+                                            Lihat semua
+                                        </a>
+                                    </div>
+
+                                    {summary?.timeline.length ? (
+                                        <ol className="mt-4 space-y-1">
+                                            {summary.timeline
+                                                .slice(0, 3)
+                                                .map((item) => (
+                                                    <li
+                                                        key={item.id}
+                                                        className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 py-3"
+                                                    >
+                                                        <time
+                                                            dateTime={item.date}
+                                                            className="portal-tabular text-center"
+                                                        >
+                                                            <span className="block text-[10px] font-semibold tracking-[0.08em] text-[var(--portal-color-muted)] uppercase">
+                                                                {
+                                                                    item.month_label
+                                                                }
+                                                            </span>
+                                                            <span className="portal-display block text-xl font-extrabold">
+                                                                {item.day_label}
+                                                            </span>
+                                                        </time>
+                                                        <div className="min-w-0 border-l border-[var(--portal-color-rule)] pl-3">
+                                                            <p className="text-sm font-semibold">
+                                                                {item.title}
+                                                            </p>
+                                                            <p className="mt-1 truncate text-sm text-[var(--portal-color-muted)]">
+                                                                {item.subtitle}
+                                                            </p>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                        </ol>
                                     ) : (
-                                        <div className="rounded-[12px] bg-stone-50 px-4 py-5 text-sm text-slate-500">
-                                            Belum ada pengumuman terbaru.
+                                        <div className="mt-4 flex items-center gap-3 border-y border-[var(--portal-color-rule)] py-5">
+                                            <History className="size-5 text-[var(--portal-color-muted)]" />
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-semibold">
+                                                    Belum ada aktivitas terbaru
+                                                </p>
+                                                <a
+                                                    href={links.attendance}
+                                                    className="portal-focus-ring mt-1 inline-flex rounded text-sm whitespace-nowrap text-[var(--portal-color-accent-strong)]"
+                                                >
+                                                    Buka riwayat absensi
+                                                </a>
+                                            </div>
                                         </div>
                                     )}
-                                </div>
-                            </section>
+                                </section>
+                            </div>
+                        ) : null}
+                    </main>
 
-                            <section className="mt-5 rounded-[16px] border border-slate-200 bg-white px-5 py-5">
-                                <div className="flex items-center justify-between gap-3">
-                                    <div>
-                                        <h2
-                                            className="text-xl font-extrabold tracking-[-0.04em] text-slate-950"
-                                            style={{
-                                                fontFamily:
-                                                    'Manrope, ui-sans-serif, system-ui, sans-serif',
-                                            }}
-                                        >
-                                            Required task
-                                        </h2>
-                                    </div>
-                                    <span className="portal-primary-soft inline-flex size-11 items-center justify-center rounded-lg">
-                                        <Sparkles className="portal-primary-text size-5" />
-                                    </span>
-                                </div>
-
-                                <div className="mt-5 space-y-3">
-                                    {summary?.surveys.length
-                                        ? summary.surveys.map((survey) => (
-                                              <a
-                                                  key={`survey-${survey.id}`}
-                                                  href="/portal/surveys"
-                                                  className="block rounded-[12px] border border-slate-200 bg-white px-4 py-4"
-                                              >
-                                                  <div className="flex items-start justify-between gap-3">
-                                                      <div>
-                                                          <p className="text-sm font-semibold text-slate-900">
-                                                              {survey.title}
-                                                          </p>
-                                                          <p className="mt-1 text-sm text-slate-500">
-                                                              {
-                                                                  survey.questions_count
-                                                              }{' '}
-                                                              pertanyaan
-                                                              {survey.is_anonymous
-                                                                  ? ' • anonim'
-                                                                  : ''}
-                                                          </p>
-                                                          {survey.description ? (
-                                                              <p className="mt-2 text-sm leading-5 text-slate-600">
-                                                                  {
-                                                                      survey.description
-                                                                  }
-                                                              </p>
-                                                          ) : null}
-                                                      </div>
-                                                      <span className="portal-primary-soft rounded-full px-3 py-1 text-[11px] font-semibold uppercase">
-                                                          survey
-                                                      </span>
-                                                  </div>
-                                              </a>
-                                          ))
-                                        : null}
-
-                                    {summary?.assets.length
-                                        ? summary.assets.map((asset) => (
-                                              <a
-                                                  key={`asset-${asset.id}`}
-                                                  href="/portal/assets"
-                                                  className="block rounded-[12px] border border-slate-200 bg-white px-3 py-3"
-                                              >
-                                                  <div className="flex items-center justify-between gap-3">
-                                                      <div className="min-w-0 flex-1">
-                                                          <p className="truncate text-sm font-semibold text-slate-900">
-                                                              {asset.name}
-                                                          </p>
-                                                          <p className="mt-0.5 truncate text-xs text-slate-500">
-                                                              {asset.asset_code ??
-                                                                  '-'}{' '}
-                                                              •{' '}
-                                                              {asset.category ??
-                                                                  'Asset'}
-                                                          </p>
-                                                          <p className="mt-1 truncate text-xs text-slate-600">
-                                                              Sejak{' '}
-                                                              {asset.issued_at ??
-                                                                  '-'}
-                                                              {asset.condition_out
-                                                                  ? ` • ${asset.condition_out}`
-                                                                  : ''}
-                                                          </p>
-                                                      </div>
-                                                      <span className="portal-primary-soft shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase">
-                                                          asset
-                                                      </span>
-                                                  </div>
-                                              </a>
-                                          ))
-                                        : null}
-
-                                    {!summary?.surveys.length &&
-                                    !summary?.assets.length ? (
-                                        <div className="rounded-[12px] bg-stone-50 px-4 py-5 text-sm text-slate-500">
-                                            Tidak ada survey aktif atau asset
-                                            pinjaman yang perlu ditindaklanjuti.
-                                        </div>
-                                    ) : null}
-                                </div>
-                            </section>
-                        </>
-                    ) : null}
-
-                    <PortalNavbar
-                        active="home"
-                        links={
-                            summary?.links ?? {
-                                attendance: '/portal/attendance',
-                                leaves: '/portal/leaves',
-                                overtimes: '/portal/overtimes',
-                                payroll: '/portal/payroll',
-                                activity: '/portal/activity',
-                                profile: '/portal/profile',
-                            }
-                        }
-                    />
+                    <PortalNavbar active="home" links={links} />
                 </div>
 
                 {logoutConfirmOpen ? (
-                    <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-slate-950/45 px-4 py-5 backdrop-blur-sm sm:items-center">
-                        <div className="w-full max-w-sm rounded-[22px] bg-white p-5 text-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.28)]">
-                            <div className="flex items-start gap-3">
-                                <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
-                                    <LogOut className="size-5" />
-                                </span>
-                                <div>
-                                    <h2 className="text-lg font-black tracking-[-0.04em]">
-                                        Keluar dari portal?
-                                    </h2>
-                                    <p className="mt-1 text-sm leading-5 text-slate-500">
-                                        Anda harus login ulang untuk membuka
-                                        portal karyawan setelah logout.
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="mt-5 grid grid-cols-2 gap-2">
+                    <div
+                        className="fixed inset-0 z-[var(--portal-z-modal)] flex items-end justify-center bg-[var(--portal-color-scrim)] px-4 py-5 backdrop-blur-sm sm:items-center"
+                        onMouseDown={(event) => {
+                            if (event.target === event.currentTarget) {
+                                setLogoutConfirmOpen(false);
+                            }
+                        }}
+                    >
+                        <section
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="logout-dialog-title"
+                            className="w-full max-w-sm rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-surface)] p-5 text-[var(--portal-color-ink)] shadow-[var(--portal-shadow-material)]"
+                        >
+                            <LogOut className="size-6 text-[var(--portal-color-danger)]" />
+                            <h2
+                                id="logout-dialog-title"
+                                className="portal-display mt-4 text-xl font-extrabold"
+                            >
+                                Keluar dari portal?
+                            </h2>
+                            <p className="mt-2 text-sm leading-6 text-[var(--portal-color-muted)]">
+                                Anda perlu masuk kembali untuk membuka data
+                                portal karyawan.
+                            </p>
+                            <div className="mt-6 grid grid-cols-2 gap-2">
                                 <button
+                                    ref={cancelLogoutRef}
                                     type="button"
                                     onClick={() => setLogoutConfirmOpen(false)}
-                                    className="inline-flex h-12 items-center justify-center rounded-[13px] border border-slate-200 bg-white text-sm font-bold text-slate-900"
+                                    className="portal-pressable portal-focus-ring inline-flex min-h-12 items-center justify-center rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] text-sm font-bold whitespace-nowrap"
                                 >
-                                    Batal
+                                    Tetap masuk
                                 </button>
                                 <Link
                                     href="/logout"
                                     method="post"
                                     as="button"
-                                    className="inline-flex h-12 items-center justify-center rounded-[13px] bg-red-600 text-sm font-bold text-white"
+                                    className="portal-pressable portal-focus-ring inline-flex min-h-12 items-center justify-center rounded-[var(--portal-radius-control)] bg-[var(--portal-color-danger)] text-sm font-bold whitespace-nowrap text-[var(--portal-color-accent-ink)]"
                                 >
-                                    Logout
+                                    Keluar
                                 </Link>
                             </div>
-                        </div>
+                        </section>
                     </div>
                 ) : null}
             </div>
         </>
+    );
+}
+
+function PortalHomeSkeleton() {
+    return (
+        <div className="space-y-8" aria-label="Memuat portal" aria-busy="true">
+            <div className="h-[25rem] animate-pulse rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-surface-raised)]" />
+            <div className="space-y-3">
+                <div className="h-6 w-40 animate-pulse rounded bg-[var(--portal-color-surface-raised)]" />
+                <div className="h-16 animate-pulse rounded bg-[var(--portal-color-surface-raised)]" />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+                {Array.from({ length: 3 }).map((_, index) => (
+                    <div
+                        key={index}
+                        className="h-24 animate-pulse rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface-raised)]"
+                    />
+                ))}
+            </div>
+        </div>
     );
 }
