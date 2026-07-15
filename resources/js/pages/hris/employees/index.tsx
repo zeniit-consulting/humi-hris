@@ -1187,7 +1187,7 @@ export default function EmployeesIndex() {
     };
 
     const activatePortalUser = (employee: Employee) => {
-        router.post(`/hris/employees/${employee.id}/activate-user`, undefined, {
+        router.post(`/hris/employees/${employee.id}/invite-user`, undefined, {
             preserveScroll: true,
         });
     };
@@ -2119,8 +2119,8 @@ export default function EmployeesIndex() {
                                                                 >
                                                                     <UserRoundCheck className="size-4" />
                                                                     {employee.portal_user
-                                                                        ? 'Kirim ulang aktivasi user'
-                                                                        : 'Aktivasi user'}
+                                                                        ? 'Kirim ulang undangan login'
+                                                                        : 'Undang ke login portal'}
                                                                 </DropdownMenuItem>
                                                                 {employee.employment_type ===
                                                                     'PKWTT' &&

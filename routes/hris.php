@@ -61,6 +61,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::get('employees/export', [EmployeeController::class, 'export'])->name('employees.export');
     Route::get('employees/{employee}/contract', [EmployeeController::class, 'contract'])->name('employees.contract');
     Route::post('employees/{employee}/activate-user', [EmployeeController::class, 'activatePortalUser'])->name('employees.activate-user');
+    Route::post('employees/{employee}/invite-user', [EmployeeController::class, 'invitePortalUser'])->name('employees.invite-user');
     Route::post('employees/{employee}/activate-pkwtt', [EmployeeController::class, 'activatePkwtt'])->name('employees.activate-pkwtt');
     Route::post('employees/{employee}/offboard', [EmployeeController::class, 'offboard'])->name('employees.offboard');
     Route::post('employees', [EmployeeController::class, 'store'])->middleware('employee.limit')->name('employees.store');

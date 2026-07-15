@@ -979,25 +979,33 @@ class EmployeeController extends Controller
         UserPortalAccountService $portalAccountService,
         EmailOtpService $otpService,
     ): RedirectResponse {
+        return $this->invitePortalUser($employee, $portalAccountService, $otpService);
+    }
+
+    public function invitePortalUser(
+        Employee $employee,
+        UserPortalAccountService $portalAccountService,
+        EmailOtpService $otpService,
+    ): RedirectResponse {
         if (! $employee->email) {
-            return back()->with('error', 'Aktivasi gagal: email karyawan wajib diisi.');
+            return back()->with('error', 'Undangan gagal: email karyawan wajib diisi.');
         }
 
         try {
             $portalUser = $portalAccountService->activateFromEmployee($employee);
 
             if (! $portalUser) {
-                return back()->with('error', 'Aktivasi gagal: data kontak karyawan tidak valid.');
+                return back()->with('error', 'Undangan gagal: data kontak karyawan tidak valid.');
             }
 
             $otpService->send($portalUser, strict: true, context: 'login');
         } catch (Throwable $exception) {
             report($exception);
 
-            return back()->with('error', 'Aktivasi gagal: tidak dapat mengirim OTP ke email karyawan.');
+            return back()->with('error', 'Undangan gagal: tidak dapat mengirim OTP ke email karyawan.');
         }
 
-        return back()->with('success', 'Akun portal berhasil diaktivasi dan OTP dikirim ke email karyawan.');
+        return back()->with('success', 'Undangan login portal berhasil dikirim ke email karyawan.');
     }
 
     public function offboard(
