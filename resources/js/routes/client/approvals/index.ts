@@ -2,9 +2,10 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import attendance from './attendance'
 import leaves from './leaves'
 import overtimes from './overtimes'
+import reimbursements from './reimbursements'
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::index
-* @see app/Http/Controllers/Client/ApprovalController.php:21
+* @see app/Http/Controllers/Client/ApprovalController.php:22
 * @route '/client/approvals'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -19,7 +20,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::index
-* @see app/Http/Controllers/Client/ApprovalController.php:21
+* @see app/Http/Controllers/Client/ApprovalController.php:22
 * @route '/client/approvals'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -28,7 +29,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::index
-* @see app/Http/Controllers/Client/ApprovalController.php:21
+* @see app/Http/Controllers/Client/ApprovalController.php:22
 * @route '/client/approvals'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -38,7 +39,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::index
-* @see app/Http/Controllers/Client/ApprovalController.php:21
+* @see app/Http/Controllers/Client/ApprovalController.php:22
 * @route '/client/approvals'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -48,7 +49,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::index
-* @see app/Http/Controllers/Client/ApprovalController.php:21
+* @see app/Http/Controllers/Client/ApprovalController.php:22
 * @route '/client/approvals'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -58,7 +59,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::index
-* @see app/Http/Controllers/Client/ApprovalController.php:21
+* @see app/Http/Controllers/Client/ApprovalController.php:22
 * @route '/client/approvals'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -68,7 +69,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::index
-* @see app/Http/Controllers/Client/ApprovalController.php:21
+* @see app/Http/Controllers/Client/ApprovalController.php:22
 * @route '/client/approvals'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -88,6 +89,7 @@ const approvals = {
     attendance: Object.assign(attendance, attendance),
     leaves: Object.assign(leaves, leaves),
     overtimes: Object.assign(overtimes, overtimes),
+    reimbursements: Object.assign(reimbursements, reimbursements),
 }
 
 export default approvals

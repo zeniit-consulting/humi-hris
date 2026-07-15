@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Mobile\V1\PortalController;
 use App\Http\Controllers\Api\Mobile\V1\ProfileController as MobileProfileController;
 use App\Http\Controllers\Api\Mobile\V1\ShiftChangeRequestController;
 use App\Http\Controllers\Api\PortalClientVisitController;
+use App\Http\Controllers\Api\PortalReimbursementController;
 use App\Http\Controllers\Api\PortalPerformanceController;
 use App\Http\Controllers\Api\PortalResourceController;
 use App\Http\Controllers\Auth\EmailActivationController;
@@ -321,6 +322,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->prefi
     Route::post('approvals/leaves/{leave}/reject', [ClientApprovalController::class, 'rejectLeave'])->name('approvals.leaves.reject');
     Route::post('approvals/overtimes/{overtime}/approve', [ClientApprovalController::class, 'approveOvertime'])->name('approvals.overtimes.approve');
     Route::post('approvals/overtimes/{overtime}/reject', [ClientApprovalController::class, 'rejectOvertime'])->name('approvals.overtimes.reject');
+    Route::post('approvals/reimbursements/{reimbursement}/approve', [ClientApprovalController::class, 'approveReimbursement'])->name('approvals.reimbursements.approve');
+    Route::post('approvals/reimbursements/{reimbursement}/reject', [ClientApprovalController::class, 'rejectReimbursement'])->name('approvals.reimbursements.reject');
 });
 
 Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group(function () {
@@ -342,6 +345,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::delete('portal/api/overtimes/{overtime}', [OvertimeController::class, 'destroy'])->name('portal.api.overtimes.destroy');
     Route::get('portal/api/kasbons', [KasbonController::class, 'index'])->name('portal.api.kasbons.index');
     Route::post('portal/api/kasbons', [KasbonController::class, 'store'])->name('portal.api.kasbons.store');
+    Route::get('portal/api/reimbursements', [PortalReimbursementController::class, 'index'])->name('portal.api.reimbursements.index');
+    Route::post('portal/api/reimbursements', [PortalReimbursementController::class, 'store'])->name('portal.api.reimbursements.store');
     Route::get('portal/api/shift-change-requests', [ShiftChangeRequestController::class, 'index'])->name('portal.api.shift-change-requests.index');
     Route::post('portal/api/shift-change-requests', [ShiftChangeRequestController::class, 'store'])->name('portal.api.shift-change-requests.store');
     Route::get('portal/api/payrolls/preview', [PayrollController::class, 'preview'])->name('portal.api.payrolls.preview');
@@ -366,6 +371,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/leaves', [UserPortalSectionController::class, 'leaves'])->name('portal.leaves');
     Route::get('portal/overtimes', [UserPortalSectionController::class, 'overtimes'])->name('portal.overtimes');
     Route::get('portal/kasbons', [UserPortalSectionController::class, 'kasbons'])->name('portal.kasbons');
+    Route::get('portal/reimbursements', [UserPortalSectionController::class, 'reimbursements'])->name('portal.reimbursements');
     Route::get('portal/payroll', [UserPortalSectionController::class, 'payroll'])->name('portal.payroll');
     Route::get('portal/activity', [UserPortalSectionController::class, 'activity'])->name('portal.activity');
     Route::get('portal/activity/client-visits', [UserPortalSectionController::class, 'clientVisits'])->name('portal.activity.client-visits');

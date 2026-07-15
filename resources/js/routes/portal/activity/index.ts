@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::clientVisits
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/activity/client-visits'
 */
 export const clientVisits = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ clientVisits.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::clientVisits
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/activity/client-visits'
 */
 clientVisits.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ clientVisits.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::clientVisits
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/activity/client-visits'
 */
 clientVisits.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ clientVisits.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::clientVisits
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/activity/client-visits'
 */
 clientVisits.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ clientVisits.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::clientVisits
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/activity/client-visits'
 */
 const clientVisitsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const clientVisitsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::clientVisits
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/activity/client-visits'
 */
 clientVisitsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ clientVisitsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::clientVisits
-* @see app/Http/Controllers/UserPortalSectionController.php:71
+* @see app/Http/Controllers/UserPortalSectionController.php:76
 * @route '/portal/activity/client-visits'
 */
 clientVisitsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ clientVisits.form = clientVisitsForm
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::performance
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/activity/performance'
 */
 export const performance = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ performance.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::performance
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/activity/performance'
 */
 performance.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ performance.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::performance
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/activity/performance'
 */
 performance.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ performance.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::performance
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/activity/performance'
 */
 performance.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ performance.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::performance
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/activity/performance'
 */
 const performanceForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const performanceForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::performance
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/activity/performance'
 */
 performanceForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ performanceForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> 
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::performance
-* @see app/Http/Controllers/UserPortalSectionController.php:76
+* @see app/Http/Controllers/UserPortalSectionController.php:81
 * @route '/portal/activity/performance'
 */
 performanceForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

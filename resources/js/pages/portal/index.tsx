@@ -10,6 +10,7 @@ import {
     History,
     LogOut,
     PackageCheck,
+    ReceiptText,
     RotateCcw,
     ScanLine,
     Wallet,
@@ -117,6 +118,7 @@ type PortalSummary = {
         leaves: string;
         overtimes: string;
         kasbons?: string;
+        reimbursements?: string;
         payroll: string;
         activity?: string;
         profile?: string;
@@ -143,6 +145,7 @@ const fallbackLinks: PortalSummary['links'] = {
     leaves: '/portal/leaves',
     overtimes: '/portal/overtimes',
     kasbons: '/portal/kasbons',
+    reimbursements: '/portal/reimbursements',
     payroll: '/portal/payroll',
     activity: '/portal/activity',
     profile: '/portal/profile',
@@ -154,6 +157,7 @@ const quickLinks = [
     { key: 'leaves', label: 'Cuti', icon: CalendarDays },
     { key: 'overtimes', label: 'Lembur', icon: Clock3 },
     { key: 'kasbons', label: 'Kasbon', icon: HandCoins },
+    { key: 'reimbursements', label: 'Reimburse', icon: ReceiptText },
     { key: 'payroll', label: 'Payroll', icon: Wallet },
 ] as const;
 

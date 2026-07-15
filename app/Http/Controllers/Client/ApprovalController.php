@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
+use App\Models\ReimbursementRequest;
 use App\Services\LeaveBalanceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -85,6 +86,22 @@ class ApprovalController extends Controller
                     'date' => $row->work_date?->format('Y-m-d'),
                     'description' => $row->start_time.' - '.$row->end_time.' ('.$row->total_hours.' jam)',
                     'reason' => $row->reason,
+                    'status' => $row->status,
+                ]),
+            'reimbursementRequests' => ReimbursementRequest::query()
+                ->with('employee:id,employee_code,first_name,last_name,sub_company_id')
+                ->where('user_id', $ownerId)
+                ->whereHas('employee', fn ($query) => $query->whereIn('sub_company_id', $subCompanyIds))
+                ->where('status', $status)
+                ->latest('id')
+                ->limit(50)
+                ->get()
+                ->map(fn (ReimbursementRequest $row): array => [
+                    'id' => $row->id,
+                    'employee_label' => $row->employee?->employee_code.' - '.$row->employee?->full_name,
+                    'date' => $row->created_at?->format('Y-m-d'),
+                    'description' => $row->title.' · Rp '.number_format((float) $row->amount, 0, ',', '.'),
+                    'reason' => $row->description,
                     'status' => $row->status,
                 ]),
         ]);
@@ -183,6 +200,25 @@ class ApprovalController extends Controller
         ]);
 
         return back()->with('success', 'Pengajuan lembur ditolak.');
+    }
+
+    public function approveReimbursement(Request $request, ReimbursementRequest $reimbursement): RedirectResponse
+    {
+        $this->authorizeScoped($request, $reimbursement->employee_id, $reimbursement->user_id);
+        abort_if($reimbursement->status !== 'pending', 422, 'Reimbursement sudah diproses.');
+        $reimbursement->update(['status' => 'approved', 'approved_by' => $request->user()->id, 'approved_at' => now(), 'rejection_reason' => null]);
+
+        return back()->with('success', 'Reimbursement disetujui dan siap diproses Finance.');
+    }
+
+    public function rejectReimbursement(Request $request, ReimbursementRequest $reimbursement): RedirectResponse
+    {
+        $this->authorizeScoped($request, $reimbursement->employee_id, $reimbursement->user_id);
+        abort_if($reimbursement->status !== 'pending', 422, 'Reimbursement sudah diproses.');
+        $validated = $request->validate(['rejection_reason' => ['required', 'string', 'max:255']]);
+        $reimbursement->update(['status' => 'rejected', 'approved_by' => $request->user()->id, 'approved_at' => now(), 'rejection_reason' => $validated['rejection_reason']]);
+
+        return back()->with('success', 'Reimbursement ditolak.');
     }
 
     private function authorizeScoped(Request $request, int $employeeId, int $ownerId): void

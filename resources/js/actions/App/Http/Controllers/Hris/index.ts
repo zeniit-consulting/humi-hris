@@ -26,6 +26,7 @@ import LeaveController from './LeaveController'
 import LeavePolicyController from './LeavePolicyController'
 import LeaveBalanceController from './LeaveBalanceController'
 import OvertimeController from './OvertimeController'
+import ReimbursementController from './ReimbursementController'
 import ReportController from './ReportController'
 import NotificationController from './NotificationController'
 import SurveyController from './SurveyController'
@@ -59,6 +60,7 @@ const Hris = {
     LeavePolicyController: Object.assign(LeavePolicyController, LeavePolicyController),
     LeaveBalanceController: Object.assign(LeaveBalanceController, LeaveBalanceController),
     OvertimeController: Object.assign(OvertimeController, OvertimeController),
+    ReimbursementController: Object.assign(ReimbursementController, ReimbursementController),
     ReportController: Object.assign(ReportController, ReportController),
     NotificationController: Object.assign(NotificationController, NotificationController),
     SurveyController: Object.assign(SurveyController, SurveyController),

@@ -4,6 +4,7 @@ import attendanceRequests from './attendance-requests'
 import leaves from './leaves'
 import overtimes from './overtimes'
 import kasbons from './kasbons'
+import reimbursements from './reimbursements'
 import shiftChangeRequests from './shift-change-requests'
 import payrolls from './payrolls'
 import profile from './profile'
@@ -101,6 +102,7 @@ const api = {
     leaves: Object.assign(leaves, leaves),
     overtimes: Object.assign(overtimes, overtimes),
     kasbons: Object.assign(kasbons, kasbons),
+    reimbursements: Object.assign(reimbursements, reimbursements),
     shiftChangeRequests: Object.assign(shiftChangeRequests, shiftChangeRequests),
     payrolls: Object.assign(payrolls, payrolls),
     profile: Object.assign(profile, profile),

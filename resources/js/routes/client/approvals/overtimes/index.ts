@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approve
-* @see app/Http/Controllers/Client/ApprovalController.php:161
+* @see app/Http/Controllers/Client/ApprovalController.php:178
 * @route '/client/approvals/overtimes/{overtime}/approve'
 */
 export const approve = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ approve.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approve
-* @see app/Http/Controllers/Client/ApprovalController.php:161
+* @see app/Http/Controllers/Client/ApprovalController.php:178
 * @route '/client/approvals/overtimes/{overtime}/approve'
 */
 approve.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ approve.url = (args: { overtime: number | { id: number } } | [overtime: number |
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approve
-* @see app/Http/Controllers/Client/ApprovalController.php:161
+* @see app/Http/Controllers/Client/ApprovalController.php:178
 * @route '/client/approvals/overtimes/{overtime}/approve'
 */
 approve.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ approve.post = (args: { overtime: number | { id: number } } | [overtime: number 
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approve
-* @see app/Http/Controllers/Client/ApprovalController.php:161
+* @see app/Http/Controllers/Client/ApprovalController.php:178
 * @route '/client/approvals/overtimes/{overtime}/approve'
 */
 const approveForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ const approveForm = (args: { overtime: number | { id: number } } | [overtime: nu
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approve
-* @see app/Http/Controllers/Client/ApprovalController.php:161
+* @see app/Http/Controllers/Client/ApprovalController.php:178
 * @route '/client/approvals/overtimes/{overtime}/approve'
 */
 approveForm.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -81,7 +81,7 @@ approve.form = approveForm
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:174
+* @see app/Http/Controllers/Client/ApprovalController.php:191
 * @route '/client/approvals/overtimes/{overtime}/reject'
 */
 export const reject = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -96,7 +96,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:174
+* @see app/Http/Controllers/Client/ApprovalController.php:191
 * @route '/client/approvals/overtimes/{overtime}/reject'
 */
 reject.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -129,7 +129,7 @@ reject.url = (args: { overtime: number | { id: number } } | [overtime: number | 
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:174
+* @see app/Http/Controllers/Client/ApprovalController.php:191
 * @route '/client/approvals/overtimes/{overtime}/reject'
 */
 reject.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -139,7 +139,7 @@ reject.post = (args: { overtime: number | { id: number } } | [overtime: number |
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:174
+* @see app/Http/Controllers/Client/ApprovalController.php:191
 * @route '/client/approvals/overtimes/{overtime}/reject'
 */
 const rejectForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -149,7 +149,7 @@ const rejectForm = (args: { overtime: number | { id: number } } | [overtime: num
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:174
+* @see app/Http/Controllers/Client/ApprovalController.php:191
 * @route '/client/approvals/overtimes/{overtime}/reject'
 */
 rejectForm.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

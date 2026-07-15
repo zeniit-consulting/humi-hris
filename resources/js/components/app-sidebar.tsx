@@ -185,6 +185,11 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     ...locked('kasbon'),
                 },
                 {
+                    title: 'Reimbursement',
+                    href: '/hris/reimbursements',
+                    icon: ReceiptText,
+                },
+                {
                     title: 'Asset Management',
                     href: '/hris/assets',
                     icon: PackageCheck,

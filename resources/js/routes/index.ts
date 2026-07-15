@@ -218,7 +218,7 @@ registerForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 register.form = registerForm
 
 /**
-* @see routes/web.php:50
+* @see routes/web.php:51
 * @route '/robots.txt'
 */
 export const robots = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -232,7 +232,7 @@ robots.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:50
+* @see routes/web.php:51
 * @route '/robots.txt'
 */
 robots.url = (options?: RouteQueryOptions) => {
@@ -240,7 +240,7 @@ robots.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:50
+* @see routes/web.php:51
 * @route '/robots.txt'
 */
 robots.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -249,7 +249,7 @@ robots.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:50
+* @see routes/web.php:51
 * @route '/robots.txt'
 */
 robots.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -258,7 +258,7 @@ robots.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:50
+* @see routes/web.php:51
 * @route '/robots.txt'
 */
 const robotsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -267,7 +267,7 @@ const robotsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 })
 
 /**
-* @see routes/web.php:50
+* @see routes/web.php:51
 * @route '/robots.txt'
 */
 robotsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -276,7 +276,7 @@ robotsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:50
+* @see routes/web.php:51
 * @route '/robots.txt'
 */
 robotsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -292,7 +292,7 @@ robotsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 robots.form = robotsForm
 
 /**
-* @see routes/web.php:119
+* @see routes/web.php:120
 * @route '/sitemap.xml'
 */
 export const sitemap = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -306,7 +306,7 @@ sitemap.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:119
+* @see routes/web.php:120
 * @route '/sitemap.xml'
 */
 sitemap.url = (options?: RouteQueryOptions) => {
@@ -314,7 +314,7 @@ sitemap.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:119
+* @see routes/web.php:120
 * @route '/sitemap.xml'
 */
 sitemap.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -323,7 +323,7 @@ sitemap.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:119
+* @see routes/web.php:120
 * @route '/sitemap.xml'
 */
 sitemap.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -332,7 +332,7 @@ sitemap.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:119
+* @see routes/web.php:120
 * @route '/sitemap.xml'
 */
 const sitemapForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -341,7 +341,7 @@ const sitemapForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 })
 
 /**
-* @see routes/web.php:119
+* @see routes/web.php:120
 * @route '/sitemap.xml'
 */
 sitemapForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -350,7 +350,7 @@ sitemapForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 })
 
 /**
-* @see routes/web.php:119
+* @see routes/web.php:120
 * @route '/sitemap.xml'
 */
 sitemapForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -366,7 +366,7 @@ sitemapForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 sitemap.form = sitemapForm
 
 /**
-* @see routes/web.php:219
+* @see routes/web.php:220
 * @route '/'
 */
 export const home = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -380,7 +380,7 @@ home.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:219
+* @see routes/web.php:220
 * @route '/'
 */
 home.url = (options?: RouteQueryOptions) => {
@@ -388,7 +388,7 @@ home.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:219
+* @see routes/web.php:220
 * @route '/'
 */
 home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -397,7 +397,7 @@ home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:219
+* @see routes/web.php:220
 * @route '/'
 */
 home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -406,7 +406,7 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:219
+* @see routes/web.php:220
 * @route '/'
 */
 const homeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -415,7 +415,7 @@ const homeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:219
+* @see routes/web.php:220
 * @route '/'
 */
 homeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -424,7 +424,7 @@ homeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:219
+* @see routes/web.php:220
 * @route '/'
 */
 homeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -440,7 +440,7 @@ homeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 home.form = homeForm
 
 /**
-* @see routes/web.php:225
+* @see routes/web.php:226
 * @route '/landing-v2'
 */
 export const landingV2 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -454,7 +454,7 @@ landingV2.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:225
+* @see routes/web.php:226
 * @route '/landing-v2'
 */
 landingV2.url = (options?: RouteQueryOptions) => {
@@ -462,7 +462,7 @@ landingV2.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:225
+* @see routes/web.php:226
 * @route '/landing-v2'
 */
 landingV2.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -471,7 +471,7 @@ landingV2.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:225
+* @see routes/web.php:226
 * @route '/landing-v2'
 */
 landingV2.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -480,7 +480,7 @@ landingV2.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:225
+* @see routes/web.php:226
 * @route '/landing-v2'
 */
 const landingV2Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -489,7 +489,7 @@ const landingV2Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> 
 })
 
 /**
-* @see routes/web.php:225
+* @see routes/web.php:226
 * @route '/landing-v2'
 */
 landingV2Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -498,7 +498,7 @@ landingV2Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 })
 
 /**
-* @see routes/web.php:225
+* @see routes/web.php:226
 * @route '/landing-v2'
 */
 landingV2Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -514,7 +514,7 @@ landingV2Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 landingV2.form = landingV2Form
 
 /**
-* @see routes/web.php:252
+* @see routes/web.php:253
 * @route '/features'
 */
 export const features = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -528,7 +528,7 @@ features.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:252
+* @see routes/web.php:253
 * @route '/features'
 */
 features.url = (options?: RouteQueryOptions) => {
@@ -536,7 +536,7 @@ features.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:252
+* @see routes/web.php:253
 * @route '/features'
 */
 features.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -545,7 +545,7 @@ features.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:252
+* @see routes/web.php:253
 * @route '/features'
 */
 features.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -554,7 +554,7 @@ features.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:252
+* @see routes/web.php:253
 * @route '/features'
 */
 const featuresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -563,7 +563,7 @@ const featuresForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 })
 
 /**
-* @see routes/web.php:252
+* @see routes/web.php:253
 * @route '/features'
 */
 featuresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -572,7 +572,7 @@ featuresForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 })
 
 /**
-* @see routes/web.php:252
+* @see routes/web.php:253
 * @route '/features'
 */
 featuresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -588,7 +588,7 @@ featuresForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 features.form = featuresForm
 
 /**
-* @see routes/web.php:256
+* @see routes/web.php:257
 * @route '/contact'
 */
 export const contact = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -602,7 +602,7 @@ contact.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:256
+* @see routes/web.php:257
 * @route '/contact'
 */
 contact.url = (options?: RouteQueryOptions) => {
@@ -610,7 +610,7 @@ contact.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:256
+* @see routes/web.php:257
 * @route '/contact'
 */
 contact.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -619,7 +619,7 @@ contact.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:256
+* @see routes/web.php:257
 * @route '/contact'
 */
 contact.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -628,7 +628,7 @@ contact.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:256
+* @see routes/web.php:257
 * @route '/contact'
 */
 const contactForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -637,7 +637,7 @@ const contactForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 })
 
 /**
-* @see routes/web.php:256
+* @see routes/web.php:257
 * @route '/contact'
 */
 contactForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -646,7 +646,7 @@ contactForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 })
 
 /**
-* @see routes/web.php:256
+* @see routes/web.php:257
 * @route '/contact'
 */
 contactForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

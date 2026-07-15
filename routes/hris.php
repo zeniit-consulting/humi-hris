@@ -27,6 +27,7 @@ use App\Http\Controllers\Hris\PerformanceController;
 use App\Http\Controllers\Hris\PositionController;
 use App\Http\Controllers\Hris\RecruitmentController;
 use App\Http\Controllers\Hris\ReportController;
+use App\Http\Controllers\Hris\ReimbursementController;
 use App\Http\Controllers\Hris\ScheduleController;
 use App\Http\Controllers\Hris\ShiftChangeApprovalController;
 use App\Http\Controllers\Hris\SubCompanyController;
@@ -209,6 +210,11 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::post('overtimes', [OvertimeController::class, 'store'])->name('overtimes.store');
     Route::put('overtimes/{overtime}', [OvertimeController::class, 'update'])->name('overtimes.update');
     Route::delete('overtimes/{overtime}', [OvertimeController::class, 'destroy'])->name('overtimes.destroy');
+
+    Route::get('reimbursements', [ReimbursementController::class, 'index'])->name('reimbursements.index');
+    Route::post('reimbursements/{reimbursement}/approve', [ReimbursementController::class, 'approve'])->name('reimbursements.approve');
+    Route::post('reimbursements/{reimbursement}/reject', [ReimbursementController::class, 'reject'])->name('reimbursements.reject');
+    Route::post('reimbursements/{reimbursement}/status', [ReimbursementController::class, 'updateStatus'])->name('reimbursements.status');
 
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
