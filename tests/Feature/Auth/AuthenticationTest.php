@@ -5,7 +5,6 @@ namespace Tests\Feature\Auth;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
@@ -63,9 +62,9 @@ class AuthenticationTest extends TestCase
             'phone' => '0812-3456-7890',
         ]);
 
-        $response = $this->post(route('portal.login.password'), [
+        $response = $this->post(route('portal.login.authenticate'), [
             'employee_code' => 'emp001',
-            'password' => '6281234567890',
+            'phone' => '0812-3456-7890',
         ]);
 
         $response->assertRedirect(route('portal.index', absolute: false));
@@ -80,10 +79,10 @@ class AuthenticationTest extends TestCase
         $this->assertSame($owner->id, $portalUser->parent_user_id);
         $this->assertSame('6281234567890', $portalUser->phone);
         $this->assertNotNull($portalUser->email_verified_at);
-        $this->assertTrue(Hash::check('6281234567890', $portalUser->password));
+        $this->assertNotNull($portalUser->phone_verified_at);
     }
 
-    public function test_employee_portal_password_login_rejects_unmatched_whatsapp_number(): void
+    public function test_employee_portal_login_rejects_unmatched_whatsapp_number(): void
     {
         $owner = User::factory()->create();
 
@@ -93,14 +92,14 @@ class AuthenticationTest extends TestCase
             'phone' => '081234567890',
         ]);
 
-        $response = $this->from(route('portal.login'))->post(route('portal.login.password'), [
+        $response = $this->from(route('portal.login'))->post(route('portal.login.authenticate'), [
             'employee_code' => 'EMP001',
-            'password' => '081299999999',
+            'phone' => '081299999999',
         ]);
 
         $response
             ->assertRedirect(route('portal.login'))
-            ->assertSessionHasErrors(['employee_code']);
+            ->assertSessionHasErrors(['phone']);
 
         $this->assertGuest();
     }

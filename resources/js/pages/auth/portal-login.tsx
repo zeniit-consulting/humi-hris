@@ -1,23 +1,13 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { X } from 'lucide-react';
+import { ArrowRight, Download, ShieldCheck, Smartphone, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
 import SeoHead from '@/components/seo-head';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-} from '@/components/ui/input-otp';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
-
-type Props = {
-    status?: string;
-    otpSentTo?: string | null;
-};
 
 type BeforeInstallPromptEvent = Event & {
     prompt: () => Promise<void>;
@@ -33,22 +23,11 @@ const isPwaStandalone = () =>
         (window.navigator as Navigator & { standalone?: boolean })
             .standalone === true);
 
-export default function PortalLogin({ status, otpSentTo }: Props) {
-    const passwordForm = useForm({
+export default function PortalLogin() {
+    const form = useForm({
         employee_code: '',
-        password: '',
+        phone: '',
     });
-    const sendForm = useForm({
-        email: otpSentTo ?? '',
-    });
-    const verifyForm = useForm({
-        otp: '',
-    });
-
-    const otpRequested = status === 'otp-sent' || Boolean(otpSentTo);
-    const [loginMode, setLoginMode] = useState<'password' | 'otp'>(
-        otpRequested ? 'otp' : 'password',
-    );
     const [installPrompt, setInstallPrompt] =
         useState<BeforeInstallPromptEvent | null>(null);
     const [showInstallPopup, setShowInstallPopup] = useState(false);
@@ -64,39 +43,41 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
         const dismissedRecently =
             dismissedAt > 0 && Date.now() - dismissedAt < 24 * 60 * 60 * 1000;
 
-        if (!dismissedRecently) {
-            const fallbackTimer = window.setTimeout(() => {
-                setShowInstallPopup(true);
-            }, 1200);
+        if (dismissedRecently) {
+            return;
+        }
 
-            const handleBeforeInstallPrompt = (event: Event) => {
-                event.preventDefault();
-                window.clearTimeout(fallbackTimer);
-                setInstallPrompt(event as BeforeInstallPromptEvent);
-                setShowInstallPopup(true);
-            };
+        const fallbackTimer = window.setTimeout(() => {
+            setShowInstallPopup(true);
+        }, 1200);
 
-            const handleAppInstalled = () => {
-                window.clearTimeout(fallbackTimer);
-                setShowInstallPopup(false);
-                setInstallPrompt(null);
-            };
+        const handleBeforeInstallPrompt = (event: Event) => {
+            event.preventDefault();
+            window.clearTimeout(fallbackTimer);
+            setInstallPrompt(event as BeforeInstallPromptEvent);
+            setShowInstallPopup(true);
+        };
 
-            window.addEventListener(
+        const handleAppInstalled = () => {
+            window.clearTimeout(fallbackTimer);
+            setShowInstallPopup(false);
+            setInstallPrompt(null);
+        };
+
+        window.addEventListener(
+            'beforeinstallprompt',
+            handleBeforeInstallPrompt,
+        );
+        window.addEventListener('appinstalled', handleAppInstalled);
+
+        return () => {
+            window.clearTimeout(fallbackTimer);
+            window.removeEventListener(
                 'beforeinstallprompt',
                 handleBeforeInstallPrompt,
             );
-            window.addEventListener('appinstalled', handleAppInstalled);
-
-            return () => {
-                window.clearTimeout(fallbackTimer);
-                window.removeEventListener(
-                    'beforeinstallprompt',
-                    handleBeforeInstallPrompt,
-                );
-                window.removeEventListener('appinstalled', handleAppInstalled);
-            };
-        }
+            window.removeEventListener('appinstalled', handleAppInstalled);
+        };
     }, []);
 
     const dismissInstallPopup = () => {
@@ -122,24 +103,19 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
         setInstallPrompt(null);
     };
 
+    const submit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        form.post('/portal/login/authenticate');
+    };
+
     return (
         <>
             <Head title="Portal Karyawan">
                 <meta name="theme-color" content="#006069" />
-                <meta
-                    name="theme-color"
-                    content="#006069"
-                    media="(prefers-color-scheme: light)"
-                />
-                <meta
-                    name="theme-color"
-                    content="#006069"
-                    media="(prefers-color-scheme: dark)"
-                />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta
                     name="apple-mobile-web-app-status-bar-style"
-                    content="black-translucent"
+                    content="default"
                 />
                 <meta name="apple-mobile-web-app-title" content="Humi" />
                 <meta name="application-name" content="Humi" />
@@ -151,343 +127,193 @@ export default function PortalLogin({ status, otpSentTo }: Props) {
             </Head>
             <SeoHead
                 title="Portal Karyawan Humi HRIS"
-                description="Halaman login portal karyawan Humi untuk akses absensi, cuti, lembur, payroll, dan profil karyawan."
+                description="Login portal karyawan Humi menggunakan ID karyawan dan nomor WhatsApp terdaftar."
                 canonicalPath="/portal/login"
                 noIndex
             />
 
-            <main className="relative min-h-svh overflow-hidden bg-[#006069] text-white">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,255,255,0.22),transparent_28%),radial-gradient(circle_at_92%_8%,rgba(181,232,223,0.2),transparent_24%),linear-gradient(155deg,#006069_0%,#004951_52%,#002f36_100%)]" />
-                <div className="absolute -top-28 right-[-90px] h-72 w-72 rounded-full border border-white/15" />
-                <div className="absolute bottom-[-150px] left-[-120px] h-96 w-96 rounded-full bg-white/10 blur-3xl" />
+            <main className="portal-auth">
+                <header className="portal-auth__header">
+                    <Link
+                        href="/portal/login"
+                        className="portal-auth__brand portal-focus-ring"
+                    >
+                        <img
+                            src="/icons/icon-192.png"
+                            alt=""
+                            className="portal-auth__logo"
+                        />
+                        <span>Humi</span>
+                    </Link>
+                    <span className="portal-auth__context">
+                        Portal karyawan
+                    </span>
+                </header>
 
-                <div className="relative mx-auto flex min-h-svh w-full max-w-md flex-col px-6 py-8">
-                    <div className="flex flex-1 flex-col justify-center">
-                        <div className="mb-9">
-                            <img
-                                src="/icons/icon-192.png"
-                                alt="Humi"
-                                className="mb-6 size-16 rounded-2xl border border-white/25 bg-white/95 p-2 shadow-[0_18px_48px_rgba(0,0,0,0.2)]"
-                            />
-                            <p className="mb-3 text-xs font-semibold tracking-[0.32em] text-white/65 uppercase">
-                                Portal Karyawan
+                <div className="portal-auth__layout">
+                    <section
+                        className="portal-auth__intro"
+                        aria-labelledby="portal-title"
+                    >
+                        <div>
+                            <p className="portal-auth__eyebrow">
+                                Ruang kerja karyawan
                             </p>
-                            <h1 className="max-w-sm text-4xl font-semibold text-white">
-                                Masuk ke portal karyawan.
+                            <h1
+                                id="portal-title"
+                                className="portal-auth__title portal-display"
+                            >
+                                Masuk dan lanjutkan pekerjaan Anda.
                             </h1>
-                            <p className="mt-4 max-w-sm text-sm leading-6 font-normal text-white/75">
-                                Gunakan NIK/kode karyawan dan password yang
-                                dikirim melalui email untuk mengakses absensi, cuti, lembur,
-                                dan payroll karyawan.
+                            <p className="portal-auth__lead">
+                                Gunakan identitas karyawan yang tercatat di
+                                Humi.
                             </p>
                         </div>
 
-                        <section className="rounded-[28px] border border-white/18 bg-white/[0.12] p-5 shadow-[0_28px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl">
-                            <div className="mb-4 grid grid-cols-2 rounded-2xl bg-white/10 p-1 text-sm font-semibold">
-                                <button
-                                    type="button"
-                                    onClick={() => setLoginMode('password')}
-                                    className={`rounded-xl px-3 py-2 transition ${
-                                        loginMode === 'password'
-                                            ? 'bg-white text-[#006069]'
-                                            : 'text-white/75'
-                                    }`}
+                        <div className="portal-auth__trust">
+                            <ShieldCheck aria-hidden="true" />
+                            <span>Akses khusus karyawan terdaftar</span>
+                        </div>
+                    </section>
+
+                    <section
+                        className="portal-auth__form-panel"
+                        aria-label="Form login portal karyawan"
+                    >
+                        <div className="portal-auth__form-heading">
+                            <p className="portal-auth__eyebrow">
+                                Selamat datang
+                            </p>
+                            <h2>Masuk ke portal</h2>
+                            <p>
+                                ID karyawan dan nomor WhatsApp harus sesuai
+                                dengan data perusahaan.
+                            </p>
+                        </div>
+
+                        <form onSubmit={submit} className="portal-auth__form">
+                            <div className="portal-auth__field">
+                                <Label htmlFor="employee_code">
+                                    ID Karyawan
+                                </Label>
+                                <Input
+                                    id="employee_code"
+                                    name="employee_code"
+                                    value={form.data.employee_code}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'employee_code',
+                                            event.target.value,
+                                        )
+                                    }
+                                    autoComplete="username"
+                                    autoCapitalize="characters"
+                                    placeholder="Contoh: EMP001"
+                                    autoFocus
+                                    className="portal-auth__input portal-focus-ring"
+                                />
+                                <div
+                                    className="portal-auth__error"
+                                    aria-live="polite"
                                 >
-                                    NIK
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setLoginMode('otp')}
-                                    className={`rounded-xl px-3 py-2 transition ${
-                                        loginMode === 'otp'
-                                            ? 'bg-white text-[#006069]'
-                                            : 'text-white/75'
-                                    }`}
-                                >
-                                    OTP Email
-                                </button>
+                                    <InputError
+                                        message={form.errors.employee_code}
+                                    />
+                                </div>
                             </div>
 
-                            {loginMode === 'password' ? (
-                                <form
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        passwordForm.post(
-                                            '/portal/login/password',
-                                        );
-                                    }}
-                                    className="space-y-4"
+                            <div className="portal-auth__field">
+                                <Label htmlFor="phone">Nomor WhatsApp</Label>
+                                <div className="portal-auth__input-wrap">
+                                    <Smartphone aria-hidden="true" />
+                                    <Input
+                                        id="phone"
+                                        name="phone"
+                                        type="tel"
+                                        inputMode="tel"
+                                        value={form.data.phone}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'phone',
+                                                event.target.value,
+                                            )
+                                        }
+                                        autoComplete="tel"
+                                        placeholder="0812 3456 7890"
+                                        className="portal-auth__input portal-auth__input--icon portal-focus-ring"
+                                    />
+                                </div>
+                                <div
+                                    className="portal-auth__error"
+                                    aria-live="polite"
                                 >
-                                    <div className="grid gap-2">
-                                        <Label
-                                            htmlFor="employee_code"
-                                            className="text-sm font-semibold text-white"
-                                        >
-                                            NIK / Kode Karyawan
-                                        </Label>
-                                        <Input
-                                            id="employee_code"
-                                            name="employee_code"
-                                            autoFocus={!otpRequested}
-                                            value={
-                                                passwordForm.data.employee_code
-                                            }
-                                            onChange={(event) =>
-                                                passwordForm.setData(
-                                                    'employee_code',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="EMP001"
-                                            className="h-12 border-white/20 bg-white text-slate-950 placeholder:text-slate-400"
-                                        />
-                                        <InputError
-                                            className="text-red-100"
-                                            message={
-                                                passwordForm.errors
-                                                    .employee_code
-                                            }
-                                        />
-                                    </div>
+                                    <InputError message={form.errors.phone} />
+                                </div>
+                            </div>
 
-                                    <div className="grid gap-2">
-                                        <Label
-                                            htmlFor="portal-password"
-                                            className="text-sm font-semibold text-white"
-                                        >
-                                            Password
-                                        </Label>
-                                        <Input
-                                            id="portal-password"
-                                            name="password"
-                                            type="password"
-                                            inputMode="tel"
-                                            autoComplete="current-password"
-                                            value={passwordForm.data.password}
-                                            onChange={(event) =>
-                                                passwordForm.setData(
-                                                    'password',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="Password dari email undangan"
-                                            className="h-12 border-white/20 bg-white text-slate-950 placeholder:text-slate-400"
-                                        />
-                                        <InputError
-                                            className="text-red-100"
-                                            message={
-                                                passwordForm.errors.password
-                                            }
-                                        />
-                                    </div>
-
-                                    <Button
-                                        type="submit"
-                                        className="h-12 w-full rounded-xl bg-white font-bold text-[#006069] shadow-[0_16px_36px_rgba(0,0,0,0.18)] hover:bg-white/90"
-                                        disabled={passwordForm.processing}
-                                    >
-                                        {passwordForm.processing && <Spinner />}
-                                        Masuk ke portal
-                                    </Button>
-                                    <p className="text-xs leading-5 text-white/65">
-                                        Gunakan password sementara dari email
-                                        undangan login Anda.
-                                    </p>
-                                </form>
-                            ) : (
-                                <form
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        sendForm.post('/portal/login/send-otp');
-                                    }}
-                                    className="space-y-4"
-                                >
-                                    <div className="grid gap-2">
-                                        <Label
-                                            htmlFor="email"
-                                            className="text-sm font-semibold text-white"
-                                        >
-                                            Email Karyawan
-                                        </Label>
-                                        <Input
-                                            id="email"
-                                            name="email"
-                                            type="email"
-                                            autoFocus={otpRequested}
-                                            value={sendForm.data.email}
-                                            onChange={(event) =>
-                                                sendForm.setData(
-                                                    'email',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="nama@perusahaan.com"
-                                            className="h-12 border-white/20 bg-white text-slate-950 placeholder:text-slate-400"
-                                        />
-                                        <InputError
-                                            className="text-red-100"
-                                            message={sendForm.errors.email}
-                                        />
-                                    </div>
-
-                                    <Button
-                                        type="submit"
-                                        className="h-12 w-full rounded-xl bg-white font-bold text-[#006069] shadow-[0_16px_36px_rgba(0,0,0,0.18)] hover:bg-white/90"
-                                        disabled={sendForm.processing}
-                                    >
-                                        {sendForm.processing && <Spinner />}
-                                        {otpRequested
-                                            ? 'Kirim ulang OTP'
-                                            : 'Kirim OTP'}
-                                    </Button>
-                                </form>
-                            )}
-
-                            {loginMode === 'otp' && otpRequested ? (
-                                <form
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-                                        verifyForm.post(
-                                            '/portal/login/verify-otp',
-                                        );
-                                    }}
-                                    className="mt-5 space-y-4 rounded-2xl border border-white/14 bg-white/[0.08] p-4"
-                                >
-                                    <div className="space-y-3">
-                                        <Label
-                                            htmlFor="otp"
-                                            className="text-sm font-semibold text-white"
-                                        >
-                                            Kode OTP
-                                        </Label>
-                                        <InputOTP
-                                            id="otp"
-                                            maxLength={6}
-                                            value={verifyForm.data.otp}
-                                            onChange={(value) =>
-                                                verifyForm.setData('otp', value)
-                                            }
-                                            containerClassName="justify-center"
-                                            autoFocus
-                                        >
-                                            <InputOTPGroup className="gap-1">
-                                                <InputOTPSlot
-                                                    index={0}
-                                                    className="border-white/25 bg-white text-slate-950"
-                                                />
-                                                <InputOTPSlot
-                                                    index={1}
-                                                    className="border-white/25 bg-white text-slate-950"
-                                                />
-                                                <InputOTPSlot
-                                                    index={2}
-                                                    className="border-white/25 bg-white text-slate-950"
-                                                />
-                                                <InputOTPSlot
-                                                    index={3}
-                                                    className="border-white/25 bg-white text-slate-950"
-                                                />
-                                                <InputOTPSlot
-                                                    index={4}
-                                                    className="border-white/25 bg-white text-slate-950"
-                                                />
-                                                <InputOTPSlot
-                                                    index={5}
-                                                    className="border-white/25 bg-white text-slate-950"
-                                                />
-                                            </InputOTPGroup>
-                                        </InputOTP>
-                                        <InputError
-                                            className="text-red-100"
-                                            message={verifyForm.errors.otp}
-                                        />
-                                        <p className="text-sm text-white/70">
-                                            OTP dikirim ke{' '}
-                                            {otpSentTo ?? sendForm.data.email}.
-                                        </p>
-                                    </div>
-
-                                    <Button
-                                        type="submit"
-                                        className="h-12 w-full rounded-xl bg-[#b8fff1] font-bold text-[#003f46] hover:bg-[#d7fff8]"
-                                        disabled={verifyForm.processing}
-                                    >
-                                        {verifyForm.processing && <Spinner />}
-                                        Masuk ke portal
-                                    </Button>
-                                </form>
-                            ) : null}
-                        </section>
-
-                        <div className="mt-6 text-center text-sm text-white/70">
-                            Login admin atau staf internal?{' '}
-                            <Link
-                                href={login()}
-                                className="font-semibold text-white underline decoration-white/35 underline-offset-4 transition hover:decoration-white"
+                            <button
+                                type="submit"
+                                className="portal-auth__submit portal-pressable portal-focus-ring"
+                                disabled={form.processing}
                             >
+                                <span>
+                                    {form.processing ? 'Memeriksa...' : 'Masuk'}
+                                </span>
+                                {form.processing ? (
+                                    <Spinner />
+                                ) : (
+                                    <ArrowRight aria-hidden="true" />
+                                )}
+                            </button>
+                        </form>
+
+                        <p className="portal-auth__admin-link">
+                            Admin atau staf internal?{' '}
+                            <Link href={login()} className="portal-focus-ring">
                                 Gunakan login utama
                             </Link>
-                        </div>
-                    </div>
+                        </p>
+                    </section>
                 </div>
 
+                <footer className="portal-auth__footer">
+                    <span>Humi - Easy HR Management</span>
+                    <span>{new Date().getFullYear()}</span>
+                </footer>
+
                 {showInstallPopup ? (
-                    <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md px-4 pb-4">
-                        <div className="rounded-[24px] border border-white/20 bg-white p-4 text-slate-950 shadow-[0_24px_70px_rgba(0,0,0,0.34)]">
-                            <div className="flex items-start gap-3">
-                                <img
-                                    src="/icons/icon-192.png"
-                                    alt="Humi"
-                                    className="size-12 rounded-2xl border border-slate-200 bg-white p-1"
-                                />
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-bold text-slate-950">
-                                        Install Portal Karyawan
-                                    </p>
-                                    <p className="mt-1 text-sm leading-5 text-slate-600">
-                                        Buka portal lebih cepat dari home screen
-                                        untuk absensi, cuti, dan payroll.
-                                    </p>
-                                </div>
+                    <div className="portal-auth__install-wrap">
+                        <section
+                            className="portal-auth__install portal-material portal-sheet-panel"
+                            aria-label="Instal Portal Karyawan"
+                        >
+                            <img src="/icons/icon-192.png" alt="" />
+                            <div className="portal-auth__install-copy">
+                                <strong>Instal Portal Karyawan</strong>
+                                <span>
+                                    Akses Humi langsung dari layar utama.
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={dismissInstallPopup}
+                                className="portal-auth__icon-button portal-pressable portal-focus-ring"
+                                aria-label="Tutup"
+                            >
+                                <X aria-hidden="true" />
+                            </button>
+                            {installPrompt ? (
                                 <button
                                     type="button"
-                                    onClick={dismissInstallPopup}
-                                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500"
-                                    aria-label="Tutup popup install PWA"
+                                    className="portal-auth__install-button portal-pressable portal-focus-ring"
+                                    onClick={handleInstallPwa}
                                 >
-                                    <X className="size-4" />
+                                    <Download aria-hidden="true" />
+                                    Instal
                                 </button>
-                            </div>
-
-                            {installPrompt ? (
-                                <div className="mt-4 grid grid-cols-2 gap-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="h-11 rounded-xl"
-                                        onClick={dismissInstallPopup}
-                                    >
-                                        Nanti saja
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        className="h-11 rounded-xl bg-[#006069] text-white hover:bg-[#00545c]"
-                                        onClick={handleInstallPwa}
-                                    >
-                                        Install
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-                                    Jika tombol install tidak muncul, gunakan
-                                    menu browser lalu pilih{' '}
-                                    <span className="font-semibold">
-                                        Add to Home Screen
-                                    </span>
-                                    .
-                                </div>
-                            )}
-                        </div>
+                            ) : null}
+                        </section>
                     </div>
                 ) : null}
             </main>

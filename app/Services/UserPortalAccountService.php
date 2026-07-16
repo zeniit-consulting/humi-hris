@@ -196,8 +196,7 @@ class UserPortalAccountService
 
         $message = implode("\n", [
             'Akun Portal User Anda sudah dibuat.',
-            'Masuk menggunakan NIK/kode karyawan dan password nomor WhatsApp terdaftar Anda.',
-            'Anda juga bisa login lewat kode OTP yang dikirim ke email terdaftar.',
+            'Masuk menggunakan ID karyawan dan nomor WhatsApp yang terdaftar pada data karyawan Anda.',
             'Halaman login portal: '.route('portal.login'),
         ]);
 

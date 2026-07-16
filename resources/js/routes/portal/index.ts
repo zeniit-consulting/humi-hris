@@ -5,7 +5,7 @@ import payrollCe309f from './payroll'
 import activity260dc3 from './activity'
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::login
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:26
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:23
 * @route '/portal/login'
 */
 export const login = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -20,7 +20,7 @@ login.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::login
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:26
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:23
 * @route '/portal/login'
 */
 login.url = (options?: RouteQueryOptions) => {
@@ -29,7 +29,7 @@ login.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::login
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:26
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:23
 * @route '/portal/login'
 */
 login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -39,7 +39,7 @@ login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::login
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:26
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:23
 * @route '/portal/login'
 */
 login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -49,7 +49,7 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::login
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:26
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:23
 * @route '/portal/login'
 */
 const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -59,7 +59,7 @@ const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::login
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:26
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:23
 * @route '/portal/login'
 */
 loginForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -69,7 +69,7 @@ loginForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\PortalOtpLoginController::login
-* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:26
+* @see app/Http/Controllers/Auth/PortalOtpLoginController.php:23
 * @route '/portal/login'
 */
 loginForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

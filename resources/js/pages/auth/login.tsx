@@ -110,7 +110,7 @@ export default function Login({
                         <div className="text-center text-sm text-muted-foreground">
                             Login karyawan?{' '}
                             <TextLink href="/portal/login" tabIndex={6}>
-                                Masuk dengan OTP Email
+                                Buka Portal Karyawan
                             </TextLink>
                         </div>
                     </>

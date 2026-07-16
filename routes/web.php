@@ -11,8 +11,8 @@ use App\Http\Controllers\Api\Mobile\V1\PortalController;
 use App\Http\Controllers\Api\Mobile\V1\ProfileController as MobileProfileController;
 use App\Http\Controllers\Api\Mobile\V1\ShiftChangeRequestController;
 use App\Http\Controllers\Api\PortalClientVisitController;
-use App\Http\Controllers\Api\PortalReimbursementController;
 use App\Http\Controllers\Api\PortalPerformanceController;
+use App\Http\Controllers\Api\PortalReimbursementController;
 use App\Http\Controllers\Api\PortalResourceController;
 use App\Http\Controllers\Auth\EmailActivationController;
 use App\Http\Controllers\Auth\PortalOtpLoginController;
@@ -273,15 +273,9 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('guest')->group(function () {
     Route::get('portal/login', [PortalOtpLoginController::class, 'create'])->name('portal.login');
-    Route::post('portal/login/send-otp', [PortalOtpLoginController::class, 'sendOtp'])
-        ->middleware('throttle:5,1')
-        ->name('portal.login.send-otp');
-    Route::post('portal/login/verify-otp', [PortalOtpLoginController::class, 'verifyOtp'])
+    Route::post('portal/login/authenticate', [PortalOtpLoginController::class, 'loginWithWhatsApp'])
         ->middleware('throttle:10,1')
-        ->name('portal.login.verify-otp');
-    Route::post('portal/login/password', [PortalOtpLoginController::class, 'loginWithPassword'])
-        ->middleware('throttle:10,1')
-        ->name('portal.login.password');
+        ->name('portal.login.authenticate');
 });
 
 Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access', 'billing.owner'])->group(function () {
