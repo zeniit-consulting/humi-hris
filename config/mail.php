@@ -16,6 +16,8 @@ return [
 
     'default' => env('MAIL_MAILER', 'log'),
 
+    'rate_limit_per_minute' => (int) env('MAIL_RATE_PER_MINUTE', 5),
+
     /*
     |--------------------------------------------------------------------------
     | Mailer Configurations

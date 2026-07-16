@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Hris;
 
-use App\Mail\EmailOtpMail;
+use App\Jobs\SendEmployeePortalInvitation;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAllowance;
@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -398,6 +399,7 @@ class EmployeeManagementTest extends TestCase
 
     public function test_admin_can_activate_portal_user_for_employee(): void
     {
+        Queue::fake();
         Mail::fake();
         $user = User::factory()->create([
             'email_verified_at' => now(),
@@ -439,12 +441,41 @@ class EmployeeManagementTest extends TestCase
         $this->assertTrue($portalUser->requires_password_change);
         $this->assertTrue(Hash::check('628123456789', $portalUser->password));
         $this->assertNull($portalUser->email_verified_at);
-        $this->assertNotNull($portalUser->email_otp_code);
-        Mail::assertSent(EmailOtpMail::class, fn ($mail): bool => $mail->hasTo('dio@example.com'));
+        $this->assertNull($portalUser->email_otp_code);
+        Queue::assertPushed(SendEmployeePortalInvitation::class);
+        Mail::assertNothingSent();
+    }
+
+    public function test_employee_portal_invitation_is_queued_on_the_emails_queue(): void
+    {
+        Queue::fake();
+        Mail::fake();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-QUEUE-01',
+            'first_name' => 'Queue Employee',
+            'email' => 'queued-invitation@example.com',
+            'phone' => '08123456789',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.employees.invite-user', $employee))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        Queue::assertPushed(
+            SendEmployeePortalInvitation::class,
+            fn (SendEmployeePortalInvitation $job): bool => $job->email === 'queued-invitation@example.com'
+                && $job->queue === 'emails',
+        );
+        Mail::assertNothingSent();
     }
 
     public function test_admin_can_activate_portal_user_using_employee_email_without_phone(): void
     {
+        Queue::fake();
         Mail::fake();
         $user = User::factory()->create([
             'email_verified_at' => now(),
@@ -466,7 +497,8 @@ class EmployeeManagementTest extends TestCase
             'email' => 'email-only@example.com',
             'phone' => null,
         ]);
-        Mail::assertSent(EmailOtpMail::class, fn ($mail): bool => $mail->hasTo('email-only@example.com'));
+        Queue::assertPushed(SendEmployeePortalInvitation::class);
+        Mail::assertNothingSent();
     }
 
     public function test_admin_can_offboard_employee(): void

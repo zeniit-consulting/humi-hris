@@ -12,7 +12,7 @@ use App\Models\EmployeeDocument;
 use App\Models\Position;
 use App\Models\SubCompany;
 use App\Models\User;
-use App\Mail\EmployeePortalInvitationMail;
+use App\Jobs\SendEmployeePortalInvitation;
 use App\Services\EmployeeEmploymentHistoryService;
 use App\Services\UserPortalAccountService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -22,7 +22,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -1025,19 +1024,20 @@ class EmployeeController extends Controller
             if (! CompanySetting::employeeActivationOtpEnabledFor($request->user())) {
                 $portalUser->forceFill(['email_verified_at' => now()])->save();
             }
-            Mail::to($portalUser->email)->send(new EmployeePortalInvitationMail(
+            SendEmployeePortalInvitation::dispatch(
+                email: $portalUser->email,
                 employeeName: $employee->full_name,
                 username: $employee->employee_code,
                 temporaryPassword: $invitation['password'],
                 loginUrl: route('portal.login'),
-            ));
+            );
         } catch (Throwable $exception) {
             report($exception);
 
-            return back()->with('error', 'Undangan gagal: tidak dapat mengirim OTP ke email karyawan.');
+            return back()->with('error', 'Undangan gagal: tidak dapat menjadwalkan email karyawan.');
         }
 
-        return back()->with('success', 'Undangan login portal berhasil dikirim ke email karyawan.');
+        return back()->with('success', 'Undangan login portal dijadwalkan untuk dikirim ke email karyawan.');
     }
 
     public function offboard(
