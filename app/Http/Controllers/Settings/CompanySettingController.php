@@ -26,6 +26,7 @@ class CompanySettingController extends Controller
                 'name' => 'Perusahaan',
                 'details' => null,
                 'portal_kasbon_enabled' => true,
+                'employee_activation_otp_enabled' => true,
                 'location_name' => null,
                 'location_address' => null,
                 'location_latitude' => null,

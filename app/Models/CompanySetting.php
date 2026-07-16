@@ -22,6 +22,7 @@ class CompanySetting extends Model
         'name',
         'details',
         'portal_kasbon_enabled',
+        'employee_activation_otp_enabled',
         'location_name',
         'location_address',
         'location_latitude',
@@ -45,6 +46,7 @@ class CompanySetting extends Model
             'attendance_radius_meters' => 'integer',
             'attendance_locations' => 'array',
             'portal_kasbon_enabled' => 'boolean',
+            'employee_activation_otp_enabled' => 'boolean',
             'overtime_hour_divisor' => 'float',
             'overtime_multiplier_hour1' => 'float',
             'overtime_multiplier_subsequent' => 'float',
@@ -56,6 +58,15 @@ class CompanySetting extends Model
         $value = static::query()
             ->where('user_id', $user->accountOwnerId())
             ->value('portal_kasbon_enabled');
+
+        return $value === null ? true : (bool) $value;
+    }
+
+    public static function employeeActivationOtpEnabledFor(User $user): bool
+    {
+        $value = static::query()
+            ->where('user_id', $user->accountOwnerId())
+            ->value('employee_activation_otp_enabled');
 
         return $value === null ? true : (bool) $value;
     }

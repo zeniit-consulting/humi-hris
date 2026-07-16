@@ -89,6 +89,7 @@ export default function Profile({
         name: string;
         details: string | null;
         portal_kasbon_enabled: boolean;
+        employee_activation_otp_enabled: boolean;
         logo_url: string | null;
         location_name: string | null;
         location_address: string | null;
@@ -403,6 +404,25 @@ export default function Profile({
                                         </Label>
                                         <p className="mt-1 text-xs text-slate-500">
                                             Jika dimatikan, menu, halaman, dan API Kasbon tidak dapat diakses karyawan.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-3 rounded-lg border bg-slate-50/60 p-4">
+                                    <input
+                                        id="employee_activation_otp_enabled"
+                                        name="employee_activation_otp_enabled"
+                                        type="checkbox"
+                                        value="1"
+                                        defaultChecked={company.employee_activation_otp_enabled}
+                                        className="mt-1 size-4 rounded border-input accent-primary"
+                                    />
+                                    <div>
+                                        <Label htmlFor="employee_activation_otp_enabled">
+                                            Wajibkan OTP Aktivasi Karyawan
+                                        </Label>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            Jika dimatikan, karyawan dapat langsung masuk menggunakan kredensial dari email undangan.
                                         </p>
                                     </div>
                                 </div>

@@ -976,13 +976,15 @@ class EmployeeController extends Controller
     }
 
     public function activatePortalUser(
+        Request $request,
         Employee $employee,
         UserPortalAccountService $portalAccountService,
     ): RedirectResponse {
-        return $this->invitePortalUser($employee, $portalAccountService);
+        return $this->invitePortalUser($request, $employee, $portalAccountService);
     }
 
     public function invitePortalUser(
+        Request $request,
         Employee $employee,
         UserPortalAccountService $portalAccountService,
     ): RedirectResponse {
@@ -998,6 +1000,9 @@ class EmployeeController extends Controller
             }
 
             $portalUser = $invitation['user'];
+            if (! CompanySetting::employeeActivationOtpEnabledFor($request->user())) {
+                $portalUser->forceFill(['email_verified_at' => now()])->save();
+            }
             Mail::to($portalUser->email)->send(new EmployeePortalInvitationMail(
                 employeeName: $employee->full_name,
                 username: $employee->employee_code,

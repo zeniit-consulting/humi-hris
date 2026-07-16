@@ -24,6 +24,7 @@ class CompanySettingUpdateRequest extends FormRequest
             'attendance_radius_meters' => $this->input('attendance_radius_meters', 100),
             'attendance_locations' => $this->input('attendance_locations', []),
             'portal_kasbon_enabled' => $this->boolean('portal_kasbon_enabled'),
+            'employee_activation_otp_enabled' => $this->boolean('employee_activation_otp_enabled'),
         ]);
     }
 
@@ -38,6 +39,7 @@ class CompanySettingUpdateRequest extends FormRequest
             'name' => ['required', 'string', 'max:150'],
             'details' => ['nullable', 'string', 'max:3000'],
             'portal_kasbon_enabled' => ['required', 'boolean'],
+            'employee_activation_otp_enabled' => ['required', 'boolean'],
             'location_name' => ['nullable', 'string', 'max:150'],
             'location_address' => ['nullable', 'string', 'max:1000'],
             'location_latitude' => ['nullable', 'numeric', 'between:-90,90'],

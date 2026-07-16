@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\CompanySetting;
+use App\Models\User;
 use App\Services\EmailOtpService;
 use App\Support\RoleRedirect;
 use Illuminate\Http\RedirectResponse;
@@ -19,6 +21,12 @@ class EmailActivationController extends Controller
     {
         $user = $request->user();
 
+        if ($this->shouldSkipEmployeeActivationOtp($user)) {
+            $user->forceFill(['email_verified_at' => now()])->save();
+
+            return redirect()->to(RoleRedirect::for($user));
+        }
+
         if ($user->hasActivatedAccount()) {
             return redirect()->to(RoleRedirect::for($user));
         }
@@ -32,6 +40,12 @@ class EmailActivationController extends Controller
     public function send(Request $request): RedirectResponse
     {
         $user = $request->user();
+
+        if ($this->shouldSkipEmployeeActivationOtp($user)) {
+            $user->forceFill(['email_verified_at' => now()])->save();
+
+            return redirect()->to(RoleRedirect::for($user));
+        }
 
         if ($user->hasActivatedAccount()) {
             return redirect()->to(RoleRedirect::for($user));
@@ -50,8 +64,15 @@ class EmailActivationController extends Controller
 
     public function verify(Request $request): RedirectResponse
     {
-        $validated = $request->validate(['otp' => ['required', 'digits:6']]);
         $user = $request->user();
+
+        if ($this->shouldSkipEmployeeActivationOtp($user)) {
+            $user->forceFill(['email_verified_at' => now()])->save();
+
+            return redirect()->to(RoleRedirect::for($user));
+        }
+
+        $validated = $request->validate(['otp' => ['required', 'digits:6']]);
 
         if ($user->hasActivatedAccount()) {
             return redirect()->to(RoleRedirect::for($user));
@@ -64,5 +85,11 @@ class EmailActivationController extends Controller
         }
 
         return redirect()->to(RoleRedirect::for($user));
+    }
+
+    private function shouldSkipEmployeeActivationOtp(User $user): bool
+    {
+        return $user->role === 'user'
+            && ! CompanySetting::employeeActivationOtpEnabledFor($user);
     }
 }
