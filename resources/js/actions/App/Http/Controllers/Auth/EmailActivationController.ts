@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::show
-* @see app/Http/Controllers/Auth/EmailActivationController.php:18
+* @see app/Http/Controllers/Auth/EmailActivationController.php:20
 * @route '/activate-account'
 */
 export const show = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::show
-* @see app/Http/Controllers/Auth/EmailActivationController.php:18
+* @see app/Http/Controllers/Auth/EmailActivationController.php:20
 * @route '/activate-account'
 */
 show.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ show.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::show
-* @see app/Http/Controllers/Auth/EmailActivationController.php:18
+* @see app/Http/Controllers/Auth/EmailActivationController.php:20
 * @route '/activate-account'
 */
 show.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ show.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::show
-* @see app/Http/Controllers/Auth/EmailActivationController.php:18
+* @see app/Http/Controllers/Auth/EmailActivationController.php:20
 * @route '/activate-account'
 */
 show.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ show.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::show
-* @see app/Http/Controllers/Auth/EmailActivationController.php:18
+* @see app/Http/Controllers/Auth/EmailActivationController.php:20
 * @route '/activate-account'
 */
 const showForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const showForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::show
-* @see app/Http/Controllers/Auth/EmailActivationController.php:18
+* @see app/Http/Controllers/Auth/EmailActivationController.php:20
 * @route '/activate-account'
 */
 showForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ showForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::show
-* @see app/Http/Controllers/Auth/EmailActivationController.php:18
+* @see app/Http/Controllers/Auth/EmailActivationController.php:20
 * @route '/activate-account'
 */
 showForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::send
-* @see app/Http/Controllers/Auth/EmailActivationController.php:32
+* @see app/Http/Controllers/Auth/EmailActivationController.php:40
 * @route '/activate-account/send'
 */
 export const send = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ send.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::send
-* @see app/Http/Controllers/Auth/EmailActivationController.php:32
+* @see app/Http/Controllers/Auth/EmailActivationController.php:40
 * @route '/activate-account/send'
 */
 send.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ send.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::send
-* @see app/Http/Controllers/Auth/EmailActivationController.php:32
+* @see app/Http/Controllers/Auth/EmailActivationController.php:40
 * @route '/activate-account/send'
 */
 send.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ send.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::send
-* @see app/Http/Controllers/Auth/EmailActivationController.php:32
+* @see app/Http/Controllers/Auth/EmailActivationController.php:40
 * @route '/activate-account/send'
 */
 const sendForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const sendForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => (
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::send
-* @see app/Http/Controllers/Auth/EmailActivationController.php:32
+* @see app/Http/Controllers/Auth/EmailActivationController.php:40
 * @route '/activate-account/send'
 */
 sendForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ send.form = sendForm
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::verify
-* @see app/Http/Controllers/Auth/EmailActivationController.php:51
+* @see app/Http/Controllers/Auth/EmailActivationController.php:65
 * @route '/activate-account/verify'
 */
 export const verify = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -153,7 +153,7 @@ verify.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::verify
-* @see app/Http/Controllers/Auth/EmailActivationController.php:51
+* @see app/Http/Controllers/Auth/EmailActivationController.php:65
 * @route '/activate-account/verify'
 */
 verify.url = (options?: RouteQueryOptions) => {
@@ -162,7 +162,7 @@ verify.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::verify
-* @see app/Http/Controllers/Auth/EmailActivationController.php:51
+* @see app/Http/Controllers/Auth/EmailActivationController.php:65
 * @route '/activate-account/verify'
 */
 verify.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -172,7 +172,7 @@ verify.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::verify
-* @see app/Http/Controllers/Auth/EmailActivationController.php:51
+* @see app/Http/Controllers/Auth/EmailActivationController.php:65
 * @route '/activate-account/verify'
 */
 const verifyForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -182,7 +182,7 @@ const verifyForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Auth\EmailActivationController::verify
-* @see app/Http/Controllers/Auth/EmailActivationController.php:51
+* @see app/Http/Controllers/Auth/EmailActivationController.php:65
 * @route '/activate-account/verify'
 */
 verifyForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

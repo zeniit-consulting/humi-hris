@@ -137,6 +137,7 @@ type BankAccount = {
     account_holder_name: string;
     branch: string | null;
     currency: string;
+    fixed_allowance_amount: string;
     is_primary: boolean;
 };
 
@@ -328,6 +329,7 @@ type BankAccountFormData = {
     account_holder_name: string;
     branch: string;
     currency: string;
+    fixed_allowance_amount: string;
     is_primary: boolean;
 };
 
@@ -481,6 +483,7 @@ const BANK_ACCOUNT_DEFAULT: BankAccountFormData = {
     account_holder_name: '',
     branch: '',
     currency: 'IDR',
+    fixed_allowance_amount: '0',
     is_primary: false,
 };
 
@@ -874,7 +877,12 @@ export default function EmployeesIndex() {
                 isCurrentEmployeePosition
             );
         });
-    }, [editingEmployee, employeeForm.data.division_id, positionOptions]);
+    }, [
+        editingEmployee,
+        employeeForm.data.division_id,
+        employeeForm.data.sub_company_id,
+        positionOptions,
+    ]);
 
     const previewEmployeeCode = useMemo(() => {
         if (editingEmployee) {
@@ -1314,6 +1322,7 @@ export default function EmployeesIndex() {
             account_holder_name: bankAccount.account_holder_name,
             branch: bankAccount.branch ?? '',
             currency: bankAccount.currency,
+            fixed_allowance_amount: bankAccount.fixed_allowance_amount ?? '0',
             is_primary: bankAccount.is_primary,
         });
         setEditingBankAccount(bankAccount);
@@ -4874,6 +4883,12 @@ export default function EmployeesIndex() {
                                                             bankAccount.account_holder_name
                                                         }
                                                     </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Tunjangan tetap:{' '}
+                                                        {formatCurrencyDisplay(
+                                                            bankAccount.fixed_allowance_amount,
+                                                        )}
+                                                    </p>
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <ActionIconButton
@@ -5003,6 +5018,35 @@ export default function EmployeesIndex() {
                                     <InputError
                                         message={
                                             bankAccountForm.errors.currency
+                                        }
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="fixed_allowance_amount">
+                                        Tunjangan Tetap
+                                    </Label>
+                                    <Input
+                                        id="fixed_allowance_amount"
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={formatThousandDigits(
+                                            bankAccountForm.data
+                                                .fixed_allowance_amount,
+                                        )}
+                                        onChange={(event) =>
+                                            bankAccountForm.setData(
+                                                'fixed_allowance_amount',
+                                                normalizeDigitInput(
+                                                    event.target.value,
+                                                ),
+                                            )
+                                        }
+                                        placeholder="1.250.000"
+                                    />
+                                    <InputError
+                                        message={
+                                            bankAccountForm.errors
+                                                .fixed_allowance_amount
                                         }
                                     />
                                 </div>

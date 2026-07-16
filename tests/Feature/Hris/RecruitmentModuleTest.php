@@ -52,8 +52,8 @@ class RecruitmentModuleTest extends TestCase
             'workplace_type' => 'onsite',
             'location' => 'Makassar',
             'openings' => 2,
-            'min_salary' => '5000000',
-            'max_salary' => '7000000',
+            'min_salary' => '5.000.000',
+            'max_salary' => '7.000.000',
             'description' => 'Handle end-to-end recruitment.',
             'requirements' => 'Minimum 2 years experience.',
             'benefits' => 'BPJS and bonus.',
@@ -89,8 +89,8 @@ class RecruitmentModuleTest extends TestCase
                 'interviewed_at' => '2026-04-10 10:30:00',
                 'interview_notes' => 'Komunikasi baik dan cukup siap.',
                 'recruiter_notes' => 'Lanjut ke offering.',
-                'expected_salary' => '6500000',
-                'offered_salary' => '6200000',
+                'expected_salary' => '6.500.000',
+                'offered_salary' => '6.200.000',
                 'proposed_start_date' => '2026-05-01',
                 'employment_type' => 'permanent',
             ]
@@ -127,6 +127,8 @@ class RecruitmentModuleTest extends TestCase
             'title' => 'Supervisor',
             'slug' => 'supervisor',
             'status' => 'published',
+            'min_salary' => '5000000.00',
+            'max_salary' => '7000000.00',
         ]);
         $application = JobApplication::factory()->create([
             'user_id' => $user->id,

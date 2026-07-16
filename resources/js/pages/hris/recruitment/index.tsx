@@ -318,6 +318,18 @@ const formatCurrency = (value: string | null) => {
     }).format(numericValue);
 };
 
+const normalizeDigitInput = (value: string) => value.replace(/[^\d]/g, '');
+
+const formatThousandDigits = (value: string | null) => {
+    const digits = normalizeDigitInput(value ?? '');
+
+    if (digits === '') {
+        return '';
+    }
+
+    return new Intl.NumberFormat('id-ID').format(Number(digits));
+};
+
 const formatDateTime = (value: string | null) => {
     if (!value) {
         return '-';
@@ -419,8 +431,8 @@ export default function RecruitmentPage() {
             workplace_type: vacancy.workplace_type ?? '',
             location: vacancy.location ?? '',
             openings: String(vacancy.openings),
-            min_salary: vacancy.min_salary ?? '',
-            max_salary: vacancy.max_salary ?? '',
+            min_salary: normalizeDigitInput(vacancy.min_salary ?? ''),
+            max_salary: normalizeDigitInput(vacancy.max_salary ?? ''),
             description: vacancy.description ?? '',
             requirements: vacancy.requirements ?? '',
             benefits: vacancy.benefits ?? '',
@@ -441,8 +453,10 @@ export default function RecruitmentPage() {
             interviewed_at: toDateTimeLocal(application.interviewed_at),
             interview_notes: application.interview_notes ?? '',
             recruiter_notes: application.recruiter_notes ?? '',
-            expected_salary: application.expected_salary ?? '',
-            offered_salary: application.offered_salary ?? '',
+            expected_salary: normalizeDigitInput(
+                application.expected_salary ?? '',
+            ),
+            offered_salary: normalizeDigitInput(application.offered_salary ?? ''),
             proposed_start_date: application.proposed_start_date ?? '',
             employment_type: application.employment_type ?? '',
         });
@@ -1534,14 +1548,20 @@ export default function RecruitmentPage() {
                                     </Label>
                                     <Input
                                         id="min_salary"
-                                        value={vacancyForm.data.min_salary}
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={formatThousandDigits(
+                                            vacancyForm.data.min_salary,
+                                        )}
                                         onChange={(event) =>
                                             vacancyForm.setData(
                                                 'min_salary',
-                                                event.target.value,
+                                                normalizeDigitInput(
+                                                    event.target.value,
+                                                ),
                                             )
                                         }
-                                        placeholder="5000000"
+                                        placeholder="5.000.000"
                                     />
                                     <InputError
                                         message={vacancyForm.errors.min_salary}
@@ -1554,14 +1574,20 @@ export default function RecruitmentPage() {
                                     </Label>
                                     <Input
                                         id="max_salary"
-                                        value={vacancyForm.data.max_salary}
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={formatThousandDigits(
+                                            vacancyForm.data.max_salary,
+                                        )}
                                         onChange={(event) =>
                                             vacancyForm.setData(
                                                 'max_salary',
-                                                event.target.value,
+                                                normalizeDigitInput(
+                                                    event.target.value,
+                                                ),
                                             )
                                         }
-                                        placeholder="7000000"
+                                        placeholder="7.000.000"
                                     />
                                     <InputError
                                         message={vacancyForm.errors.max_salary}
@@ -1872,13 +1898,20 @@ export default function RecruitmentPage() {
                                     </Label>
                                     <Input
                                         id="expected_salary"
+                                        type="text"
+                                        inputMode="numeric"
                                         value={
-                                            applicationForm.data.expected_salary
+                                            formatThousandDigits(
+                                                applicationForm.data
+                                                    .expected_salary,
+                                            )
                                         }
                                         onChange={(event) =>
                                             applicationForm.setData(
                                                 'expected_salary',
-                                                event.target.value,
+                                                normalizeDigitInput(
+                                                    event.target.value,
+                                                ),
                                             )
                                         }
                                         placeholder="Opsional"
@@ -1897,13 +1930,20 @@ export default function RecruitmentPage() {
                                     </Label>
                                     <Input
                                         id="offered_salary"
+                                        type="text"
+                                        inputMode="numeric"
                                         value={
-                                            applicationForm.data.offered_salary
+                                            formatThousandDigits(
+                                                applicationForm.data
+                                                    .offered_salary,
+                                            )
                                         }
                                         onChange={(event) =>
                                             applicationForm.setData(
                                                 'offered_salary',
-                                                event.target.value,
+                                                normalizeDigitInput(
+                                                    event.target.value,
+                                                ),
                                             )
                                         }
                                         placeholder="Opsional"

@@ -11,17 +11,30 @@ class AttendanceStatusService
 {
     public function resolveStatus(array $data, int $ownerId, ?string $timezone = null): string
     {
+        return $this->resolveStatusAttributes($data, $ownerId, $timezone)['status'];
+    }
+
+    /**
+     * @return array{status: string, late_minutes: int|null, late_level: string|null}
+     */
+    public function resolveStatusAttributes(array $data, int $ownerId, ?string $timezone = null): array
+    {
         $timezone ??= config('app.timezone');
         $status = (string) ($data['status'] ?? 'present');
+        $result = [
+            'status' => $status,
+            'late_minutes' => null,
+            'late_level' => null,
+        ];
 
         if (! in_array($status, ['present', 'late'], true) || empty($data['check_in_at'])) {
-            return $status;
+            return $result;
         }
 
         $shift = $this->resolveShift($data, $ownerId);
 
         if (! $shift || $shift->is_day_off || $shift->start_time === null) {
-            return $status;
+            return $result;
         }
 
         $attendanceDate = Carbon::parse($data['attendance_date'])->toDateString();
@@ -29,7 +42,19 @@ class AttendanceStatusService
         $latestAllowed = $shiftStart->copy()->addMinutes((int) $shift->late_tolerance_minutes);
         $checkIn = Carbon::parse($data['check_in_at'], config('app.timezone'))->setTimezone($timezone);
 
-        return $checkIn->gt($latestAllowed) ? 'late' : 'present';
+        if (! $checkIn->gt($latestAllowed)) {
+            $result['status'] = 'present';
+
+            return $result;
+        }
+
+        $lateMinutes = (int) $shiftStart->diffInMinutes($checkIn);
+
+        return [
+            'status' => 'late',
+            'late_minutes' => $lateMinutes,
+            'late_level' => $this->lateLevel($lateMinutes),
+        ];
     }
 
     public function resolveStatusForAttendance(EmployeeAttendance $attendance, int $ownerId): string
@@ -70,5 +95,18 @@ class AttendanceStatusService
             ->where('user_id', $ownerId)
             ->where('code', $schedule->shift_code)
             ->first();
+    }
+
+    private function lateLevel(int $lateMinutes): string
+    {
+        if ($lateMinutes <= 30) {
+            return 'level_1';
+        }
+
+        if ($lateMinutes <= 60) {
+            return 'level_2';
+        }
+
+        return 'level_3';
     }
 }

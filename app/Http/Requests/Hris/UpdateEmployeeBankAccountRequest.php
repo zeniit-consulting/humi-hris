@@ -28,6 +28,12 @@ class UpdateEmployeeBankAccountRequest extends FormRequest
                 'currency' => strtoupper((string) $this->input('currency')),
             ]);
         }
+
+        if ($this->has('fixed_allowance_amount')) {
+            $this->merge([
+                'fixed_allowance_amount' => $this->normalizeCurrencyInput($this->input('fixed_allowance_amount')),
+            ]);
+        }
     }
 
     /**
@@ -56,7 +62,19 @@ class UpdateEmployeeBankAccountRequest extends FormRequest
             'account_holder_name' => ['required', 'string', 'max:100'],
             'branch' => ['nullable', 'string', 'max:100'],
             'currency' => ['required', 'string', 'size:3'],
+            'fixed_allowance_amount' => ['nullable', 'numeric', 'min:0'],
             'is_primary' => ['sometimes', 'boolean'],
         ];
+    }
+
+    private function normalizeCurrencyInput(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = preg_replace('/[^\d]/', '', (string) $value);
+
+        return $normalized === '' ? null : $normalized;
     }
 }

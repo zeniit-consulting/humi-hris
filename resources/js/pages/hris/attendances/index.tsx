@@ -71,6 +71,8 @@ type AttendanceRecord = {
     attendance_date: string;
     shift_name: string;
     status: string;
+    late_minutes: number | null;
+    late_level: string | null;
     check_in_at: string | null;
     check_out_at: string | null;
     notes: string | null;
@@ -119,6 +121,12 @@ const statusLabelMap: Record<string, string> = {
     late: 'Terlambat',
     on_leave: 'Cuti',
     absent: 'Absen',
+};
+
+const lateLevelLabelMap: Record<string, string> = {
+    level_1: 'Level 1',
+    level_2: 'Level 2',
+    level_3: 'Level 3',
 };
 
 const defaultAttendanceForm: AttendanceFormData = {
@@ -574,6 +582,17 @@ export default function AttendancePage() {
                                                         row.status
                                                     ] ?? row.status}
                                                 </Badge>
+                                                {row.late_level ? (
+                                                    <div className="mt-1 text-xs text-destructive">
+                                                        {lateLevelLabelMap[
+                                                            row.late_level
+                                                        ] ?? row.late_level}
+                                                        {row.late_minutes !==
+                                                        null
+                                                            ? ` - ${row.late_minutes} menit`
+                                                            : ''}
+                                                    </div>
+                                                ) : null}
                                             </td>
                                             <td className="px-3 py-3">
                                                 {formatDeviceTime(
@@ -686,6 +705,12 @@ export default function AttendancePage() {
                                 Status:{' '}
                                 {statusLabelMap[detailRecord.status] ??
                                     detailRecord.status}
+                            </p>
+                            <p>
+                                Keterlambatan:{' '}
+                                {detailRecord.late_level
+                                    ? `${lateLevelLabelMap[detailRecord.late_level] ?? detailRecord.late_level} (${detailRecord.late_minutes ?? 0} menit)`
+                                    : '-'}
                             </p>
                             <p>
                                 Check-in:{' '}

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { formatThousandDigits, normalizeDigitInput } from '@/lib/currency-input';
 import type { BreadcrumbItem } from '@/types';
 
 type LinkItem = { url: string | null; label: string; active: boolean };
@@ -210,12 +211,12 @@ export default function ClientBillingPage() {
                         </div>
                         <div className="grid gap-2">
                             <Label>Service Fee</Label>
-                            <Input type="number" min="0" value={form.data.service_fee} onChange={(event) => form.setData('service_fee', event.target.value)} />
+                            <Input type="text" inputMode="numeric" value={formatThousandDigits(form.data.service_fee)} onChange={(event) => form.setData('service_fee', normalizeDigitInput(event.target.value))} />
                             <InputError message={form.errors.service_fee} />
                         </div>
                         <div className="grid gap-2">
                             <Label>Pajak</Label>
-                            <Input type="number" min="0" value={form.data.tax_amount} onChange={(event) => form.setData('tax_amount', event.target.value)} />
+                            <Input type="text" inputMode="numeric" value={formatThousandDigits(form.data.tax_amount)} onChange={(event) => form.setData('tax_amount', normalizeDigitInput(event.target.value))} />
                             <InputError message={form.errors.tax_amount} />
                         </div>
                         <div className="grid gap-2 md:col-span-3">

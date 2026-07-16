@@ -40,6 +40,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import {
+    formatThousandDigits,
+    normalizeDigitInput,
+} from '@/lib/currency-input';
 import { formatDeviceDateTime } from '@/lib/utils';
 import {
     generate as generatePayroll,
@@ -1333,6 +1337,7 @@ export default function PayrollPage() {
                                 <PayrollEditField
                                     id="edit_overtime_hours"
                                     label="Jam Lembur"
+                                    currency={false}
                                     value={editItemForm.data.overtime_hours}
                                     error={editItemForm.errors.overtime_hours}
                                     onChange={(value) =>
@@ -1464,21 +1469,29 @@ function PayrollEditField({
     value,
     error,
     onChange,
+    currency = true,
 }: {
     id: string;
     label: string;
     value: string;
     error?: string;
     onChange: (value: string) => void;
+    currency?: boolean;
 }) {
     return (
         <div className="grid gap-2">
             <Label htmlFor={id}>{label}</Label>
             <Input
                 id={id}
-                inputMode="decimal"
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
+                inputMode={currency ? 'numeric' : 'decimal'}
+                value={currency ? formatThousandDigits(value) : value}
+                onChange={(event) =>
+                    onChange(
+                        currency
+                            ? normalizeDigitInput(event.target.value)
+                            : event.target.value,
+                    )
+                }
             />
             {error ? <p className="text-xs text-destructive">{error}</p> : null}
         </div>

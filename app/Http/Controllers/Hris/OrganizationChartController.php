@@ -23,6 +23,7 @@ class OrganizationChartController extends Controller
                 'division:id,name',
                 'employees' => fn ($query) => $query
                     ->where('user_id', $ownerId)
+                    ->where('employment_status', '!=', 'resigned')
                     ->orderBy('first_name')
                     ->orderBy('last_name'),
             ])

@@ -25,6 +25,7 @@ class EmployeeBankAccount extends Model
         'account_holder_name',
         'branch',
         'currency',
+        'fixed_allowance_amount',
         'is_primary',
     ];
 
@@ -36,6 +37,7 @@ class EmployeeBankAccount extends Model
     protected function casts(): array
     {
         return [
+            'fixed_allowance_amount' => 'decimal:2',
             'is_primary' => 'boolean',
         ];
     }

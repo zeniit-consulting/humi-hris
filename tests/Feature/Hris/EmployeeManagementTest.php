@@ -763,6 +763,36 @@ class EmployeeManagementTest extends TestCase
         ]);
     }
 
+    public function test_bank_account_stores_fixed_allowance_amount()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $this->actingAs($user)->post(
+            route('hris.employees.bank-accounts.store', $employee),
+            [
+                'bank_name' => 'BCA',
+                'account_number' => '1234567890',
+                'account_holder_name' => 'Dewi Puspita',
+                'branch' => 'Makassar',
+                'currency' => 'IDR',
+                'fixed_allowance_amount' => '1.250.000',
+                'is_primary' => true,
+            ]
+        )->assertRedirect();
+
+        $this->assertDatabaseHas('employee_bank_accounts', [
+            'employee_id' => $employee->id,
+            'account_number' => '1234567890',
+            'fixed_allowance_amount' => 1250000,
+        ]);
+    }
+
     public function test_employee_allowance_can_be_deleted()
     {
         $user = User::factory()->create([

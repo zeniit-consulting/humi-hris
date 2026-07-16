@@ -93,6 +93,8 @@ class AttendanceController extends Controller
             'attendance_date' => $attendance->attendance_date->format('Y-m-d'),
             'shift_name' => (string) ($shiftByEmployee->get($attendance->employee_id) ?? 'OFF'),
             'status' => $attendance->status,
+            'late_minutes' => $attendance->late_minutes,
+            'late_level' => $attendance->late_level,
             'check_in_at' => $attendance->check_in_at?->toIso8601String(),
             'check_out_at' => $attendance->check_out_at?->toIso8601String(),
             'notes' => $attendance->notes,
@@ -177,6 +179,8 @@ class AttendanceController extends Controller
                     ?? $attendance->shift?->code
                     ?? 'OFF',
                 'status' => $attendance->status,
+                'late_minutes' => $attendance->late_minutes,
+                'late_level' => $attendance->late_level,
                 'check_in_at' => $attendance->check_in_at?->toIso8601String(),
                 'check_out_at' => $attendance->check_out_at?->toIso8601String(),
                 'notes' => $attendance->notes,
@@ -193,7 +197,7 @@ class AttendanceController extends Controller
         $ownerId = $request->user()->accountOwnerId();
         $timezone = $this->deviceTimezone($request);
         $this->normalizeAttendanceTimestamps($validated, $timezone);
-        $validated['status'] = $statusService->resolveStatus($validated, $ownerId, $timezone);
+        $validated = array_merge($validated, $statusService->resolveStatusAttributes($validated, $ownerId, $timezone));
 
         EmployeeAttendance::updateOrCreate(
             [
@@ -202,6 +206,8 @@ class AttendanceController extends Controller
             ],
             [
                 'status' => $validated['status'],
+                'late_minutes' => $validated['late_minutes'],
+                'late_level' => $validated['late_level'],
                 'check_in_at' => $validated['check_in_at'] ?? null,
                 'check_out_at' => $validated['check_out_at'] ?? null,
                 'notes' => $validated['notes'] ?? null,
@@ -219,7 +225,7 @@ class AttendanceController extends Controller
         $validated = $request->validated();
         $timezone = $this->deviceTimezone($request);
         $this->normalizeAttendanceTimestamps($validated, $timezone);
-        $validated['status'] = $statusService->resolveStatus($validated, $request->user()->accountOwnerId(), $timezone);
+        $validated = array_merge($validated, $statusService->resolveStatusAttributes($validated, $request->user()->accountOwnerId(), $timezone));
 
         $employeeAttendance->update($validated);
 
@@ -318,13 +324,13 @@ class AttendanceController extends Controller
             echo '</table>';
             echo '<table>';
             echo '<thead><tr>';
-            foreach (['Tanggal', 'Kode Pegawai', 'Nama Pegawai', 'Status', 'Check In', 'Check Out', 'Catatan'] as $heading) {
+            foreach (['Tanggal', 'Kode Pegawai', 'Nama Pegawai', 'Status', 'Level Terlambat', 'Menit Terlambat', 'Check In', 'Check Out', 'Catatan'] as $heading) {
                 echo '<th>'.$escape($heading).'</th>';
             }
             echo '</tr></thead><tbody>';
 
             if ($rows->isEmpty()) {
-                echo '<tr><td colspan="7">Tidak ada data kehadiran.</td></tr>';
+                echo '<tr><td colspan="9">Tidak ada data kehadiran.</td></tr>';
             }
 
             foreach ($rows as $row) {
@@ -333,6 +339,8 @@ class AttendanceController extends Controller
                 echo '<td>'.$escape($row->employee?->employee_code).'</td>';
                 echo '<td>'.$escape($row->employee?->full_name).'</td>';
                 echo '<td>'.$escape($statusLabels[$row->status] ?? $row->status).'</td>';
+                echo '<td>'.$escape($this->lateLevelLabel($row->late_level)).'</td>';
+                echo '<td>'.$escape($row->late_minutes).'</td>';
                 echo '<td>'.$escape($this->localExportTime($row->check_in_at, $timezone)).'</td>';
                 echo '<td>'.$escape($this->localExportTime($row->check_out_at, $timezone)).'</td>';
                 echo '<td>'.$escape($row->notes).'</td>';
@@ -354,6 +362,16 @@ class AttendanceController extends Controller
         }
 
         return Carbon::parse($value, config('app.timezone'))->setTimezone($timezone)->format('H:i');
+    }
+
+    private function lateLevelLabel(?string $level): string
+    {
+        return match ($level) {
+            'level_1' => 'Level 1',
+            'level_2' => 'Level 2',
+            'level_3' => 'Level 3',
+            default => '-',
+        };
     }
 
     private function deviceTimezone(Request $request): string

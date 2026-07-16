@@ -169,7 +169,7 @@ class AttendanceController extends Controller
             'notes' => $validated['notes'] ?? null,
         ];
 
-        $payload['status'] = $statusService->resolveStatus($payload, $user->accountOwnerId(), $timezone);
+        $payload = array_merge($payload, $statusService->resolveStatusAttributes($payload, $user->accountOwnerId(), $timezone));
 
         $attendance = EmployeeAttendance::query()->create($payload);
 
@@ -214,7 +214,7 @@ class AttendanceController extends Controller
             return $this->error('Clock out hanya bisa dilakukan maksimal 3 hari dari tanggal absensi.');
         }
 
-        $validated['status'] = $statusService->resolveStatus($validated, $user->accountOwnerId(), $timezone);
+        $validated = array_merge($validated, $statusService->resolveStatusAttributes($validated, $user->accountOwnerId(), $timezone));
 
         $employeeAttendance->update($validated);
         $employeeAttendance->refresh()->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes']);
@@ -248,6 +248,8 @@ class AttendanceController extends Controller
                 : '-',
             'attendance_date' => $attendance->attendance_date?->format('Y-m-d'),
             'status' => $attendance->status,
+            'late_minutes' => $attendance->late_minutes,
+            'late_level' => $attendance->late_level,
             'shift' => $attendance->shift ? [
                 'id' => $attendance->shift->id,
                 'code' => $attendance->shift->code,

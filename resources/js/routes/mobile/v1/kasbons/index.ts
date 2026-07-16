@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::index
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:21
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:22
 * @route '/api/mobile/v1/kasbons'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::index
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:21
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:22
 * @route '/api/mobile/v1/kasbons'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::index
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:21
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:22
 * @route '/api/mobile/v1/kasbons'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::index
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:21
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:22
 * @route '/api/mobile/v1/kasbons'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::index
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:21
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:22
 * @route '/api/mobile/v1/kasbons'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::index
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:21
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:22
 * @route '/api/mobile/v1/kasbons'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::index
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:21
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:22
 * @route '/api/mobile/v1/kasbons'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::store
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:69
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:71
 * @route '/api/mobile/v1/kasbons'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::store
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:69
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:71
 * @route '/api/mobile/v1/kasbons'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::store
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:69
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:71
 * @route '/api/mobile/v1/kasbons'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::store
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:69
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:71
 * @route '/api/mobile/v1/kasbons'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::store
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:69
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:71
 * @route '/api/mobile/v1/kasbons'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::update
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:108
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:111
 * @route '/api/mobile/v1/kasbons/{employeeDeduction}'
 */
 export const update = (args: { employeeDeduction: number | { id: number } } | [employeeDeduction: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -153,7 +153,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::update
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:108
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:111
 * @route '/api/mobile/v1/kasbons/{employeeDeduction}'
 */
 update.url = (args: { employeeDeduction: number | { id: number } } | [employeeDeduction: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +186,7 @@ update.url = (args: { employeeDeduction: number | { id: number } } | [employeeDe
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::update
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:108
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:111
 * @route '/api/mobile/v1/kasbons/{employeeDeduction}'
 */
 update.put = (args: { employeeDeduction: number | { id: number } } | [employeeDeduction: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -196,7 +196,7 @@ update.put = (args: { employeeDeduction: number | { id: number } } | [employeeDe
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::update
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:108
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:111
 * @route '/api/mobile/v1/kasbons/{employeeDeduction}'
 */
 const updateForm = (args: { employeeDeduction: number | { id: number } } | [employeeDeduction: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -211,7 +211,7 @@ const updateForm = (args: { employeeDeduction: number | { id: number } } | [empl
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::update
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:108
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:111
 * @route '/api/mobile/v1/kasbons/{employeeDeduction}'
 */
 updateForm.put = (args: { employeeDeduction: number | { id: number } } | [employeeDeduction: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -228,7 +228,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:130
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:133
 * @route '/api/mobile/v1/kasbons/{employeeDeduction}'
 */
 export const destroy = (args: { employeeDeduction: number | { id: number } } | [employeeDeduction: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -243,7 +243,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:130
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:133
 * @route '/api/mobile/v1/kasbons/{employeeDeduction}'
 */
 destroy.url = (args: { employeeDeduction: number | { id: number } } | [employeeDeduction: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -276,7 +276,7 @@ destroy.url = (args: { employeeDeduction: number | { id: number } } | [employeeD
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:130
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:133
 * @route '/api/mobile/v1/kasbons/{employeeDeduction}'
 */
 destroy.delete = (args: { employeeDeduction: number | { id: number } } | [employeeDeduction: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -286,7 +286,7 @@ destroy.delete = (args: { employeeDeduction: number | { id: number } } | [employ
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:130
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:133
 * @route '/api/mobile/v1/kasbons/{employeeDeduction}'
 */
 const destroyForm = (args: { employeeDeduction: number | { id: number } } | [employeeDeduction: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -301,7 +301,7 @@ const destroyForm = (args: { employeeDeduction: number | { id: number } } | [emp
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\KasbonController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:130
+* @see app/Http/Controllers/Api/Mobile/V1/KasbonController.php:133
 * @route '/api/mobile/v1/kasbons/{employeeDeduction}'
 */
 destroyForm.delete = (args: { employeeDeduction: number | { id: number } } | [employeeDeduction: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

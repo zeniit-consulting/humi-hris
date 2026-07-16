@@ -177,6 +177,7 @@ class EmployeeController extends Controller
                         'account_holder_name' => $bankAccount->account_holder_name,
                         'branch' => $bankAccount->branch,
                         'currency' => $bankAccount->currency,
+                        'fixed_allowance_amount' => $bankAccount->fixed_allowance_amount,
                         'is_primary' => $bankAccount->is_primary,
                     ])
                     ->values(),

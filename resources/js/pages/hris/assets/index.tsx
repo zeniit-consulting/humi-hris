@@ -40,6 +40,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import {
+    formatThousandDigits,
+    normalizeDigitInput,
+} from '@/lib/currency-input';
 import type { BreadcrumbItem } from '@/types';
 import {
     destroy as assetsDestroy,
@@ -835,14 +839,17 @@ export default function AssetsPage() {
                                 error={assetForm.errors.purchase_price}
                             >
                                 <Input
-                                    type="number"
-                                    min={0}
-                                    step="0.01"
-                                    value={assetForm.data.purchase_price}
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={formatThousandDigits(
+                                        assetForm.data.purchase_price,
+                                    )}
                                     onChange={(event) =>
                                         assetForm.setData(
                                             'purchase_price',
-                                            event.target.value,
+                                            normalizeDigitInput(
+                                                event.target.value,
+                                            ),
                                         )
                                     }
                                 />
@@ -907,14 +914,17 @@ export default function AssetsPage() {
                                 error={assetForm.errors.salvage_value}
                             >
                                 <Input
-                                    type="number"
-                                    min={0}
-                                    step="0.01"
-                                    value={assetForm.data.salvage_value}
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={formatThousandDigits(
+                                        assetForm.data.salvage_value,
+                                    )}
                                     onChange={(event) =>
                                         assetForm.setData(
                                             'salvage_value',
-                                            event.target.value,
+                                            normalizeDigitInput(
+                                                event.target.value,
+                                            ),
                                         )
                                     }
                                 />

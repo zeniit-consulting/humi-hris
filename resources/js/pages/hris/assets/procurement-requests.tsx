@@ -39,6 +39,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import {
+    formatThousandDigits,
+    normalizeDigitInput,
+} from '@/lib/currency-input';
 import type { BreadcrumbItem } from '@/types';
 import {
     index as assetsIndex,
@@ -716,15 +720,17 @@ export default function AssetProcurementRequestsPage() {
                                 error={requestForm.errors.estimated_unit_price}
                             >
                                 <Input
-                                    type="number"
-                                    min="0"
-                                    value={
-                                        requestForm.data.estimated_unit_price
-                                    }
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={formatThousandDigits(
+                                        requestForm.data.estimated_unit_price,
+                                    )}
                                     onChange={(event) =>
                                         requestForm.setData(
                                             'estimated_unit_price',
-                                            event.target.value,
+                                            normalizeDigitInput(
+                                                event.target.value,
+                                            ),
                                         )
                                     }
                                 />
@@ -840,13 +846,17 @@ export default function AssetProcurementRequestsPage() {
                                 error={statusForm.errors.actual_unit_price}
                             >
                                 <Input
-                                    type="number"
-                                    min="0"
-                                    value={statusForm.data.actual_unit_price}
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={formatThousandDigits(
+                                        statusForm.data.actual_unit_price,
+                                    )}
                                     onChange={(event) =>
                                         statusForm.setData(
                                             'actual_unit_price',
-                                            event.target.value,
+                                            normalizeDigitInput(
+                                                event.target.value,
+                                            ),
                                         )
                                     }
                                 />

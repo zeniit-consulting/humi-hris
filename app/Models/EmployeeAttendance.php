@@ -23,6 +23,8 @@ class EmployeeAttendance extends Model
         'shift_id',
         'attendance_date',
         'status',
+        'late_minutes',
+        'late_level',
         'check_in_at',
         'check_in_latitude',
         'check_in_longitude',
@@ -41,6 +43,7 @@ class EmployeeAttendance extends Model
     {
         return [
             'attendance_date' => 'date',
+            'late_minutes' => 'integer',
             'check_in_at' => 'datetime',
             'check_out_at' => 'datetime',
             'check_in_latitude' => 'decimal:7',

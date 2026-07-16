@@ -234,9 +234,9 @@ export default function Dashboard({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
 
-            <div className="space-y-4 p-4">
-                <Card className="border-rose-200 bg-rose-50/70">
-                    <CardHeader>
+            <div className="space-y-3 p-3 sm:p-4">
+                <Card className="gap-0 border-rose-200 bg-rose-50/70 py-0">
+                    <CardHeader className="px-3 py-3 sm:px-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
                                 <CardTitle>Action Queue</CardTitle>
@@ -244,7 +244,7 @@ export default function Dashboard({
                                     Pekerjaan operasional yang perlu ditangani.
                                 </CardDescription>
                             </div>
-                            <div className="rounded-md border border-rose-200 bg-white/70 px-3 py-2 text-sm">
+                            <div className="rounded-md border border-rose-200 bg-white/70 px-2.5 py-1.5 text-xs">
                                 <span className="font-semibold">
                                     {actionQueue.total}
                                 </span>{' '}
@@ -252,30 +252,28 @@ export default function Dashboard({
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="px-3 pb-3 sm:px-4">
                         {actionQueue.items.length === 0 ? (
-                            <div className="rounded-md border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                            <div className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
                                 Tidak ada action pending.
                             </div>
                         ) : (
-                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                                 {actionQueue.items.map((item) => (
                                     <Link
                                         key={item.key}
                                         href={item.href}
-                                        className="rounded-md border border-rose-200 bg-white/80 p-3 transition-colors hover:bg-white"
+                                        className="flex min-h-11 items-center justify-between gap-3 rounded-md border border-rose-200 bg-white/80 px-3 py-2 transition-colors hover:bg-white"
                                     >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <p className="text-sm font-medium">
-                                                    {item.label}
-                                                </p>
-                                                <p className="mt-1 text-2xl font-semibold">
-                                                    {item.count}
-                                                </p>
-                                            </div>
+                                        <p className="truncate text-sm font-medium">
+                                            {item.label}
+                                        </p>
+                                        <div className="flex shrink-0 items-center gap-2">
+                                            <span className="text-lg font-semibold tabular-nums">
+                                                {item.count}
+                                            </span>
                                             <AlertTriangle
-                                                className={`size-5 ${
+                                                className={`size-4 ${
                                                     item.severity === 'high'
                                                         ? 'text-destructive'
                                                         : 'text-amber-600'
@@ -289,65 +287,65 @@ export default function Dashboard({
                     </CardContent>
                 </Card>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                    <Card className="gap-2 py-2">
-                        <CardHeader className="px-4 pb-0">
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                    <Card className="gap-1 border-l-2 border-l-sky-500 bg-sky-50/30 py-2">
+                        <CardHeader className="px-3 pb-0">
                             <CardDescription>Total Employees</CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.total_employees}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-4 pt-0 pb-2">
-                            <p className="text-sm text-muted-foreground">
+                        <CardContent className="px-3 pt-0 pb-1">
+                            <p className="text-xs text-muted-foreground">
                                 Active: {stats.active_employees}
                             </p>
                         </CardContent>
                     </Card>
 
-                    <Card className="gap-2 py-2">
-                        <CardHeader className="px-4 pb-0">
+                    <Card className="gap-1 border-l-2 border-l-emerald-500 bg-emerald-50/30 py-2">
+                        <CardHeader className="px-3 pb-0">
                             <CardDescription>Present Today</CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.present_today}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-4 pt-0 pb-2">
-                            <p className="text-sm text-muted-foreground">
+                        <CardContent className="px-3 pt-0 pb-1">
+                            <p className="text-xs text-muted-foreground">
                                 Late: {stats.late_today}
                             </p>
                         </CardContent>
                     </Card>
 
-                    <Card className="gap-2 py-2">
-                        <CardHeader className="px-4 pb-0">
+                    <Card className="gap-1 border-l-2 border-l-amber-500 bg-amber-50/30 py-2">
+                        <CardHeader className="px-3 pb-0">
                             <CardDescription>On Leave</CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.on_leave_today}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-4 pt-0 pb-2">
-                            <p className="text-sm text-muted-foreground">
+                        <CardContent className="px-3 pt-0 pb-1">
+                            <p className="text-xs text-muted-foreground">
                                 Absent: {stats.absent_today}
                             </p>
                         </CardContent>
                     </Card>
 
-                    <Card className="gap-2 py-2">
-                        <CardHeader className="px-4 pb-0">
+                    <Card className="gap-1 border-l-2 border-l-violet-500 bg-violet-50/30 py-2">
+                        <CardHeader className="px-3 pb-0">
                             <CardDescription>Open Positions</CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.open_positions}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-4 pt-0 pb-2">
-                            <p className="text-sm text-muted-foreground">
+                        <CardContent className="px-3 pt-0 pb-1">
+                            <p className="text-xs text-muted-foreground">
                                 Published vacancies
                             </p>
                         </CardContent>
                     </Card>
 
-                    <Card className="gap-2 py-2">
-                        <CardHeader className="px-4 pb-0">
+                    <Card className="gap-1 border-l-2 border-l-rose-500 bg-rose-50/30 py-2">
+                        <CardHeader className="px-3 pb-0">
                             <CardDescription>
                                 Monthly Payroll Burn
                             </CardDescription>
@@ -357,17 +355,17 @@ export default function Dashboard({
                                 )}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-4 pt-0 pb-2">
-                            <p className="text-sm text-muted-foreground">
+                        <CardContent className="px-3 pt-0 pb-1">
+                            <p className="text-xs text-muted-foreground">
                                 Current period net salary
                             </p>
                         </CardContent>
                     </Card>
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-2">
-                    <Card>
-                        <CardHeader>
+                <div className="grid gap-3 xl:grid-cols-2">
+                    <Card className="gap-0 py-0">
+                        <CardHeader className="px-4 py-3">
                             <div className="flex items-start justify-between gap-3">
                                 <div>
                                     <CardTitle>Absensi Hari Ini</CardTitle>
@@ -378,7 +376,7 @@ export default function Dashboard({
                                 <CalendarDays className="size-5 text-muted-foreground" />
                             </div>
                         </CardHeader>
-                        <CardContent className="grid gap-4 md:grid-cols-2">
+                        <CardContent className="grid gap-3 px-4 pb-4 md:grid-cols-2">
                             <DashboardList
                                 icon={UserX}
                                 title="Belum Clock In"
@@ -410,8 +408,8 @@ export default function Dashboard({
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader>
+                    <Card className="gap-0 py-0">
+                        <CardHeader className="px-4 py-3">
                             <div className="flex items-start justify-between gap-3">
                                 <div>
                                     <CardTitle>Request Terbaru</CardTitle>
@@ -423,18 +421,18 @@ export default function Dashboard({
                                 <AlertTriangle className="size-5 text-muted-foreground" />
                             </div>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="px-4 pb-4">
                             {recentRequests.items.length === 0 ? (
-                                <div className="rounded-md border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                                <div className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
                                     Belum ada request terbaru.
                                 </div>
                             ) : (
-                                <div className="space-y-2">
+                                <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
                                     {recentRequests.items.map((item) => (
                                         <Link
                                             key={item.id}
                                             href={item.href}
-                                            className="flex items-start justify-between gap-3 rounded-md border p-3 transition-colors hover:bg-muted/40"
+                                            className="flex items-start justify-between gap-3 rounded-md border px-3 py-2 transition-colors hover:bg-muted/40"
                                         >
                                             <div className="min-w-0">
                                                 <div className="flex flex-wrap items-center gap-2">
@@ -463,11 +461,11 @@ export default function Dashboard({
                     </Card>
                 </div>
 
-                <Card>
-                    <CardHeader>
+                <Card className="gap-0 py-0">
+                    <CardHeader className="px-4 py-3">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <CardTitle>Chart Kehadiran</CardTitle>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-1.5">
                                 {rangeOptions.map((option) => (
                                     <Button
                                         key={option.value}
@@ -500,34 +498,34 @@ export default function Dashboard({
                             hari.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="mb-4 flex flex-wrap gap-2 text-xs">
-                            <div className="inline-flex items-center gap-1 rounded border px-2 py-1">
+                    <CardContent className="px-4 pb-4">
+                        <div className="mb-3 flex flex-wrap gap-1.5 text-xs">
+                            <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
                                 <span className="size-2 rounded-full bg-emerald-500" />
                                 Hadir
                             </div>
-                            <div className="inline-flex items-center gap-1 rounded border px-2 py-1">
+                            <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
                                 <span className="size-2 rounded-full bg-amber-500" />
                                 Terlambat
                             </div>
-                            <div className="inline-flex items-center gap-1 rounded border px-2 py-1">
+                            <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
                                 <span className="size-2 rounded-full bg-blue-500" />
                                 Cuti
                             </div>
-                            <div className="inline-flex items-center gap-1 rounded border px-2 py-1">
+                            <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
                                 <span className="size-2 rounded-full bg-slate-300" />
                                 Absen
                             </div>
                         </div>
 
                         <div className="overflow-x-auto">
-                            <div className="flex min-w-[720px] items-end gap-3">
+                            <div className="flex min-w-[720px] items-end gap-2">
                                 {attendanceChart.map((day) => (
                                     <div
                                         key={day.date}
-                                        className="flex flex-1 flex-col items-center gap-2"
+                                        className="flex flex-1 flex-col items-center gap-1.5"
                                     >
-                                        <div className="flex h-52 w-full max-w-16 items-end overflow-hidden rounded-md border bg-muted/20">
+                                        <div className="flex h-36 w-full max-w-16 items-end overflow-hidden rounded-md border bg-muted/20">
                                             <div className="flex h-full w-full flex-col justify-end">
                                                 <div
                                                     className="bg-slate-300"
@@ -577,9 +575,9 @@ export default function Dashboard({
                     onOpenChange={setOutsourcingOpen}
                     className="rounded-lg border bg-card text-card-foreground shadow-xs"
                 >
-                    <div className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-col gap-2 p-3 md:flex-row md:items-center md:justify-between md:px-4">
                         <div>
-                            <h2 className="text-lg font-semibold">
+                            <h2 className="text-base font-semibold">
                                 Operasional Outsourcing
                             </h2>
                             <p className="text-sm text-muted-foreground">
@@ -598,9 +596,9 @@ export default function Dashboard({
                     </div>
 
                     <CollapsibleContent>
-                        <div className="space-y-4 border-t p-4">
-                            <div className="flex flex-wrap items-end gap-3">
-                                <div className="grid w-[180px] gap-2">
+                        <div className="space-y-3 border-t p-3 sm:p-4">
+                            <div className="flex flex-wrap items-end gap-2">
+                                <div className="grid w-full gap-1.5 sm:w-[180px]">
                                     <Label htmlFor="outsourcing-period">
                                         Periode
                                     </Label>
@@ -616,7 +614,7 @@ export default function Dashboard({
                                         }
                                     />
                                 </div>
-                                <div className="grid w-[280px] gap-2">
+                                <div className="grid w-full gap-1.5 sm:w-[280px]">
                                     <Label htmlFor="outsourcing-client">
                                         Sub-company
                                     </Label>
@@ -675,7 +673,7 @@ export default function Dashboard({
                                 </Button>
                             </div>
 
-                            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                                 <OutsourcingStat
                                     icon={Building2}
                                     label="Klien Aktif"
@@ -772,7 +770,7 @@ export default function Dashboard({
                                             <tr>
                                                 <td
                                                     colSpan={9}
-                                                    className="px-3 py-8 text-center text-muted-foreground"
+                                                    className="px-3 py-5 text-center text-muted-foreground"
                                                 >
                                                     Belum ada sub-company.
                                                 </td>
@@ -783,7 +781,7 @@ export default function Dashboard({
                                                 key={client.id}
                                                 className="border-b align-top last:border-0"
                                             >
-                                                <td className="px-3 py-3 font-medium">
+                                                <td className="px-3 py-2 font-medium">
                                                     {client.label}
                                                     <div className="text-xs text-muted-foreground">
                                                         {client.active
@@ -791,7 +789,7 @@ export default function Dashboard({
                                                             : 'Nonaktif'}
                                                     </div>
                                                 </td>
-                                                <td className="px-3 py-3">
+                                                <td className="px-3 py-2">
                                                     <div
                                                         className={`inline-flex rounded px-2 py-1 text-xs font-semibold ${
                                                             client.sla_score >=
@@ -814,10 +812,10 @@ export default function Dashboard({
                                                               )}
                                                     </div>
                                                 </td>
-                                                <td className="px-3 py-3">
+                                                <td className="px-3 py-2">
                                                     {client.employees}
                                                 </td>
-                                                <td className="px-3 py-3">
+                                                <td className="px-3 py-2">
                                                     {client.attendance_rate}%
                                                     <div className="text-xs text-muted-foreground">
                                                         {client.present_today}{' '}
@@ -826,26 +824,26 @@ export default function Dashboard({
                                                         absen
                                                     </div>
                                                 </td>
-                                                <td className="px-3 py-3">
+                                                <td className="px-3 py-2">
                                                     {client.remaining_manpower}
                                                 </td>
-                                                <td className="px-3 py-3">
+                                                <td className="px-3 py-2">
                                                     {formatRupiahCompact(
                                                         client.invoice_total,
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-3">
+                                                <td className="px-3 py-2">
                                                     {formatRupiahCompact(
                                                         client.outstanding_invoice,
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-3">
+                                                <td className="px-3 py-2">
                                                     {formatRupiahCompact(
                                                         client.payroll_cost,
                                                     )}
                                                 </td>
                                                 <td
-                                                    className={`px-3 py-3 font-semibold ${
+                                                    className={`px-3 py-2 font-semibold ${
                                                         client.margin < 0
                                                             ? 'text-destructive'
                                                             : 'text-emerald-600'
@@ -887,8 +885,8 @@ function DashboardList({
     }>;
 }) {
     return (
-        <div className="rounded-md border p-3">
-            <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="rounded-md border p-2.5">
+            <div className="mb-2 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                     <Icon className="size-4 text-muted-foreground" />
                     <p className="text-sm font-medium">{title}</p>
@@ -900,12 +898,12 @@ function DashboardList({
             {items.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{empty}</p>
             ) : (
-                <div className="space-y-2">
+                <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
                     {items.map((item) => (
                         <Link
                             key={item.key}
                             href={item.href}
-                            className="block rounded border px-3 py-2 transition-colors hover:bg-muted/40"
+                            className="block rounded border px-2.5 py-1.5 transition-colors hover:bg-muted/40"
                         >
                             <p className="truncate text-sm font-medium">
                                 {item.label}
@@ -960,16 +958,16 @@ function OutsourcingStat({
     description: string;
 }) {
     return (
-        <Card className="gap-2 py-3">
-            <CardHeader className="px-4 pb-0">
+        <Card className="gap-1 py-2">
+            <CardHeader className="px-3 pb-0">
                 <div className="flex items-center justify-between gap-3">
                     <CardDescription>{label}</CardDescription>
                     <Icon className="size-4 text-muted-foreground" />
                 </div>
-                <CardTitle className="text-2xl">{value}</CardTitle>
+                <CardTitle className="text-xl">{value}</CardTitle>
             </CardHeader>
-            <CardContent className="px-4 pt-0 pb-2">
-                <p className="text-sm text-muted-foreground">{description}</p>
+            <CardContent className="px-3 pt-0 pb-1">
+                <p className="text-xs text-muted-foreground">{description}</p>
             </CardContent>
         </Card>
     );

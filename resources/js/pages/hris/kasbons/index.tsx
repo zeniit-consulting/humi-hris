@@ -17,6 +17,10 @@ import { Label } from '@/components/ui/label';
 import SearchableSelect from '@/components/ui/searchable-select';
 import AppLayout from '@/layouts/app-layout';
 import {
+    formatThousandDigits,
+    normalizeDigitInput,
+} from '@/lib/currency-input';
+import {
     destroy as kasbonsDestroy,
     index as kasbonsIndex,
     store as kasbonsStore,
@@ -294,14 +298,17 @@ export default function KasbonPage() {
                                 </Label>
                                 <Input
                                     id="kasbon_amount"
-                                    type="number"
-                                    min={0}
-                                    step="0.01"
-                                    value={kasbonForm.data.amount}
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={formatThousandDigits(
+                                        kasbonForm.data.amount,
+                                    )}
                                     onChange={(event) =>
                                         kasbonForm.setData(
                                             'amount',
-                                            event.target.value,
+                                            normalizeDigitInput(
+                                                event.target.value,
+                                            ),
                                         )
                                     }
                                     placeholder="0"
