@@ -394,6 +394,7 @@ export function PortalAttendanceLocationPage({
             }
             active="attendance"
             hideNavbar
+            fullBleed
             links={
                 portal?.links ?? {
                     attendance: '/portal/attendance',
@@ -403,7 +404,10 @@ export function PortalAttendanceLocationPage({
                 }
             }
         >
-            <section className="relative -mx-4 -mt-4 h-[calc(100svh-5rem)] overflow-hidden bg-slate-950 sm:-mx-4">
+            <section
+                data-testid="portal-checkin-canvas"
+                className="portal-checkin-canvas relative -mx-4 -mt-4 h-[calc(100svh-5rem)] overflow-hidden"
+            >
                 <div className="absolute inset-0">
                     <MapboxLocationMap
                         center={{
@@ -426,79 +430,94 @@ export function PortalAttendanceLocationPage({
                     />
                 </div>
 
-                <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] bg-gradient-to-b from-slate-950/55 via-slate-950/18 to-transparent px-3 pt-3 pb-16">
-                    <div className="pointer-events-auto rounded-[18px] border border-white/20 bg-white/90 p-3 text-slate-950 shadow-[0_20px_48px_rgba(15,23,42,0.2)] backdrop-blur-xl">
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                                <p className="text-[10px] font-semibold tracking-[0.16em] text-slate-500 uppercase">
-                                    {mode === 'clock-out'
-                                        ? 'Clock out'
-                                        : 'Clock in'}
-                                </p>
-                                <h2 className="mt-0.5 truncate text-base font-black tracking-[-0.04em]">
-                                    Lokasi Absensi
-                                </h2>
-                            </div>
+                <div className="portal-checkin-dock pointer-events-none absolute inset-x-0 bottom-0 z-[500]">
+                    <div
+                        data-testid="portal-checkin-card"
+                        className="portal-checkin-card pointer-events-auto"
+                    >
+                        <div className="portal-checkin-card__header">
+                            <h2>Lokasi Absensi</h2>
                             <span
-                                className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${
+                                aria-live="polite"
+                                className={`portal-checkin-status ${
                                     isLocating
-                                        ? 'bg-slate-100 text-slate-600'
+                                        ? 'portal-checkin-status--locating'
                                         : isTrackingLocation
-                                          ? 'bg-[#e6f7f6] text-[#006069]'
-                                          : 'bg-amber-50 text-amber-700'
+                                          ? 'portal-checkin-status--live'
+                                          : 'portal-checkin-status--idle'
                                 }`}
                             >
                                 {isLocating ? (
-                                    <LoaderCircle className="size-3 animate-spin" />
+                                    <LoaderCircle className="size-3 animate-spin motion-reduce:animate-none" />
                                 ) : null}
                                 {isLocating
                                     ? 'Mencari lokasi'
                                     : isTrackingLocation
-                                      ? 'Live'
-                                      : 'Belum aktif'}
+                                      ? 'GPS aktif'
+                                      : 'GPS belum aktif'}
                             </span>
                         </div>
 
-                        {isWfa ? (
-                            <div className="mt-3 rounded-xl bg-emerald-50 p-3 text-xs text-emerald-800">
-                                <p className="font-bold">Mode WFA aktif</p>
-                                <p className="mt-1 leading-5">
-                                    Anda dapat absensi dari lokasi saat ini.
-                                    Koordinat GPS tetap direkam.
-                                </p>
-                            </div>
-                        ) : closestLocation ? (
-                            <div className="mt-3 grid grid-cols-[1fr_auto] items-end gap-3 rounded-xl bg-slate-50 p-2.5">
+                        <div className="portal-checkin-card__information">
+                            {isWfa ? (
                                 <div className="min-w-0">
-                                    <p className="truncate text-xs font-bold text-slate-950">
-                                        {closestLocation.name}
+                                    <p className="portal-checkin-card__label">
+                                        Mode kerja
                                     </p>
-                                    <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-slate-500">
-                                        {closestLocation.address ??
-                                            'Lokasi absensi'}
+                                    <p className="portal-checkin-card__primary">
+                                        WFA aktif
                                     </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-lg font-black tracking-[-0.05em] text-slate-950">
-                                        {Math.round(closestLocation.distance)}m
-                                    </p>
-                                    <p className="text-[10px] font-semibold text-slate-500">
-                                        radius {closestLocation.radius_meters}m
+                                    <p className="portal-checkin-card__secondary">
+                                        Koordinat GPS saat ini akan direkam.
                                     </p>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="mt-3 rounded-xl bg-slate-50 p-2.5 text-xs text-slate-500">
-                                {isLocating
-                                    ? 'Mengambil lokasi perangkat secara otomatis...'
-                                    : 'Menunggu izin lokasi untuk menghitung radius absensi.'}
-                            </div>
-                        )}
-                    </div>
-                </div>
+                            ) : closestLocation ? (
+                                <>
+                                    <div className="min-w-0">
+                                        <p className="portal-checkin-card__label">
+                                            {isOutsideRadius
+                                                ? 'Di luar radius'
+                                                : 'Lokasi terdekat'}
+                                        </p>
+                                        <p className="portal-checkin-card__primary truncate">
+                                            {closestLocation.name}
+                                        </p>
+                                        <p className="portal-checkin-card__secondary line-clamp-1">
+                                            {closestLocation.address ??
+                                                'Lokasi absensi'}
+                                        </p>
+                                    </div>
+                                    <div className="portal-checkin-card__distance">
+                                        <strong>
+                                            {Math.round(
+                                                closestLocation.distance,
+                                            )}
+                                            m
+                                        </strong>
+                                        <span>
+                                            radius{' '}
+                                            {closestLocation.radius_meters}m
+                                        </span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="min-w-0">
+                                    <p className="portal-checkin-card__label">
+                                        Validasi radius
+                                    </p>
+                                    <p className="portal-checkin-card__primary">
+                                        {isLocating
+                                            ? 'Mengambil koordinat perangkat'
+                                            : 'Menunggu izin lokasi'}
+                                    </p>
+                                    <p className="portal-checkin-card__secondary">
+                                        Posisi Anda diperlukan untuk
+                                        melanjutkan.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
 
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[500] bg-gradient-to-t from-slate-950/70 via-slate-950/24 to-transparent px-4 pt-24 pb-5">
-                    <div className="pointer-events-auto space-y-3">
                         <button
                             type="button"
                             onClick={() => {
@@ -514,12 +533,16 @@ export function PortalAttendanceLocationPage({
                                 isLocating ||
                                 (!isOutsideRadius && !canSubmit)
                             }
-                            className={`inline-flex h-14 w-full items-center justify-center rounded-[18px] text-sm font-bold shadow-[0_22px_52px_rgba(0,96,105,0.4)] disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100 ${
+                            aria-busy={isSubmitting || isLocating}
+                            className={`portal-checkin-action portal-focus-ring portal-pressable ${
                                 isOutsideRadius
-                                    ? 'bg-red-600 text-white hover:bg-red-700'
-                                    : 'portal-primary-bg'
+                                    ? 'portal-checkin-action--danger'
+                                    : ''
                             }`}
                         >
+                            {isSubmitting || isLocating ? (
+                                <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" />
+                            ) : null}
                             {actionButtonText}
                         </button>
                     </div>

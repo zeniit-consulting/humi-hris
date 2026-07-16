@@ -954,3 +954,193 @@
         border-color: var(--portal-color-ink-soft);
     }
 }
+
+.portal-checkin-canvas {
+    background: var(--portal-color-ink);
+    color: var(--portal-color-accent-ink);
+}
+
+.portal-checkin-dock {
+    padding-inline: max(
+        var(--portal-space-sm),
+        env(safe-area-inset-left),
+        env(safe-area-inset-right)
+    );
+    padding-bottom: max(var(--portal-space-sm), env(safe-area-inset-bottom));
+}
+
+.portal-checkin-card {
+    display: grid;
+    gap: var(--portal-space-md);
+    width: min(100%, 36rem);
+    margin-inline: auto;
+    border: var(--portal-rule-width) solid var(--portal-color-rule);
+    border-radius: var(--portal-radius-surface);
+    background: var(--portal-color-surface);
+    color: var(--portal-color-ink);
+    box-shadow: var(--portal-shadow-material);
+    padding: var(--portal-space-md);
+}
+
+.portal-checkin-card__header,
+.portal-checkin-card__information {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--portal-space-sm);
+}
+
+.portal-checkin-card__header h2 {
+    min-width: 0;
+    font-family: var(--portal-font-display);
+    font-size: var(--portal-text-md);
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.portal-checkin-card__label {
+    color: var(--portal-color-muted);
+    font-size: var(--portal-text-xs);
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.portal-checkin-status {
+    display: inline-flex;
+    min-height: 2rem;
+    align-items: center;
+    justify-content: center;
+    gap: var(--portal-space-xs);
+    border-radius: var(--portal-radius-pill);
+    padding-inline: var(--portal-space-sm);
+    font-size: var(--portal-text-xs);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.portal-checkin-status--locating {
+    background: var(--portal-color-surface-raised);
+    color: var(--portal-color-ink-soft);
+}
+
+.portal-checkin-status--live {
+    background: var(--portal-color-accent-soft);
+    color: var(--portal-color-accent-strong);
+}
+
+.portal-checkin-status--idle {
+    background: var(--portal-color-warning-soft);
+    color: var(--portal-color-ink-soft);
+}
+
+.portal-checkin-card__information {
+    border-top: var(--portal-rule-width) solid var(--portal-color-rule);
+    padding-top: var(--portal-space-sm);
+}
+
+.portal-checkin-card__primary {
+    margin-top: var(--portal-space-2xs);
+    font-size: var(--portal-text-sm);
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.portal-checkin-card__secondary {
+    margin-top: var(--portal-space-2xs);
+    color: var(--portal-color-muted);
+    font-size: var(--portal-text-xs);
+    line-height: 1.45;
+}
+
+.portal-checkin-card__distance {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.portal-checkin-card__distance strong {
+    font-family: var(--portal-font-display);
+    font-size: var(--portal-text-md);
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.portal-checkin-card__distance span {
+    margin-top: var(--portal-space-2xs);
+    color: var(--portal-color-muted);
+    font-size: var(--portal-text-xs);
+    font-weight: 600;
+}
+
+.portal-checkin-action {
+    display: inline-flex;
+    width: 100%;
+    height: 3.25rem;
+    align-items: center;
+    justify-content: center;
+    gap: var(--portal-space-xs);
+    border-radius: var(--portal-radius-control);
+    background: var(--portal-color-accent-strong);
+    color: var(--portal-color-accent-ink);
+    font-size: var(--portal-text-sm);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.portal-checkin-action--danger {
+    background: var(--portal-color-danger);
+    color: var(--portal-color-danger-ink);
+}
+
+.portal-checkin-action:disabled {
+    cursor: not-allowed;
+    background: var(--portal-color-surface-raised);
+    color: var(--portal-color-muted);
+    opacity: 0.78;
+}
+
+.portal-checkin-action:focus-visible {
+    outline: 2px solid var(--portal-color-ink);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--portal-color-accent-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .portal-checkin-action:hover:not(:disabled) {
+        opacity: 0.9;
+    }
+}
+
+@media (min-width: 40rem) {
+    .portal-checkin-dock {
+        padding-inline: var(--portal-space-lg);
+        padding-bottom: var(--portal-space-lg);
+    }
+
+    .portal-checkin-card {
+        padding: var(--portal-space-lg);
+    }
+}
+
+@media (max-width: 22rem) {
+    .portal-checkin-card {
+        gap: var(--portal-space-sm);
+        padding: var(--portal-space-sm);
+    }
+
+    .portal-checkin-status {
+        padding-inline: var(--portal-space-xs);
+    }
+}
+
+@media (prefers-contrast: more) {
+    .portal-checkin-card {
+        border-width: 2px;
+        border-color: var(--portal-color-ink-soft);
+    }
+}

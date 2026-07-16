@@ -17,6 +17,7 @@ type PortalShellProps = PropsWithChildren<{
     links: PortalLinkMap;
     headerAction?: ReactNode;
     hideNavbar?: boolean;
+    fullBleed?: boolean;
 }>;
 
 export function PortalShell({
@@ -26,6 +27,7 @@ export function PortalShell({
     links,
     headerAction,
     hideNavbar = false,
+    fullBleed = false,
 }: PortalShellProps) {
     return (
         <>
@@ -66,7 +68,13 @@ export function PortalShell({
 
             <div className="min-h-screen bg-white text-slate-900">
                 <PortalToastViewport />
-                <div className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-white px-4 pt-4 pb-28 sm:max-w-lg">
+                <div
+                    className={`mx-auto flex min-h-screen w-full flex-col bg-white px-4 pt-4 ${
+                        fullBleed
+                            ? 'max-w-none pb-0'
+                            : 'max-w-md pb-28 sm:max-w-lg'
+                    }`}
+                >
                     <header className="-mx-4 mb-4 border-b border-stone-200 bg-white px-4 pb-4">
                         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
                             <div className="min-w-0 justify-self-start">
@@ -86,7 +94,7 @@ export function PortalShell({
                                     <ArrowLeft className="size-4" />
                                 </button>
                             </div>
-                            <h1 className="max-w-[calc(100vw-10rem)] truncate justify-self-center text-center text-xl font-extrabold tracking-[-0.04em] text-slate-950">
+                            <h1 className="max-w-[calc(100vw-10rem)] justify-self-center truncate text-center text-xl font-extrabold tracking-[-0.04em] text-slate-950">
                                 {title}
                             </h1>
                             <div className="min-w-0 justify-self-end">

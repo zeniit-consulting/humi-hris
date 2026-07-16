@@ -1,6 +1,13 @@
 [
     {
         "date": "2026-07-17",
+        "macrostructure": "Map / Diagram",
+        "theme": "Quiet",
+        "enrichment": "live map",
+        "brief": "Full-screen employee attendance map with one unified bottom action card"
+    },
+    {
+        "date": "2026-07-17",
         "macrostructure": "Split Studio",
         "theme": "Quiet",
         "enrichment": "none",

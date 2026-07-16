@@ -1,5 +1,5 @@
-/* Hallmark · macrostructure: Split Studio · genre: modern-minimal · tone: calm-utilitarian · theme: Quiet · anchor: Humi teal · enrichment: none
- * Hallmark · nav: N9 · footer: Ft2 · auth: employee ID + WhatsApp · contrast: pass (46-50) · slop: pass (51-60) · mobile: pass (36, 59, 61-69)
+/* Hallmark · macrostructure: Map / Diagram · genre: modern-minimal · tone: technical · theme: Quiet · anchor: Humi teal · enrichment: live map
+ * Hallmark · nav: existing portal header · footer: none · check-in: full-screen map + unified bottom card · contrast: pass (46-50) · slop: pass (51-60) · mobile: pass (36, 59, 61-69)
  * Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5
  */
 
@@ -16,6 +16,7 @@
     --portal-color-accent-soft: oklch(0.93 0.035 195);
     --portal-color-accent-ink: oklch(0.985 0.006 195);
     --portal-color-danger: oklch(0.54 0.19 27);
+    --portal-color-danger-ink: oklch(0.985 0.006 195);
     --portal-color-danger-soft: oklch(0.95 0.035 27);
     --portal-color-warning: oklch(0.58 0.12 78);
     --portal-color-warning-soft: oklch(0.95 0.038 78);

@@ -34,9 +34,9 @@ export function PortalNavbar({ active, links }: PortalNavbarProps) {
     return (
         <nav
             aria-label="Navigasi portal"
-            className="fixed inset-x-0 bottom-0 z-[var(--portal-z-sticky)] mx-auto w-full max-w-md px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:max-w-xl sm:px-6 md:max-w-2xl"
+            className="fixed inset-x-0 bottom-0 z-[var(--portal-z-sticky)] w-full"
         >
-            <div className="portal-material grid grid-cols-4 gap-1 rounded-[1.15rem] border p-1.5">
+            <div className="portal-material grid grid-cols-4 gap-1 rounded-t-[1.15rem] rounded-b-none border p-1.5 pb-[max(1.125rem,calc(0.375rem+env(safe-area-inset-bottom)))]">
                 {navItems.map((item) => {
                     const href = getNavItemHref(item.key, links);
                     const isActive = active === item.key;
