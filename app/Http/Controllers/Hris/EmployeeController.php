@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Hris;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Hris\StoreEmployeeRequest;
 use App\Http\Requests\Hris\UpdateEmployeeRequest;
+use App\Jobs\SendEmployeePortalInvitation;
 use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
@@ -12,7 +13,6 @@ use App\Models\EmployeeDocument;
 use App\Models\Position;
 use App\Models\SubCompany;
 use App\Models\User;
-use App\Jobs\SendEmployeePortalInvitation;
 use App\Services\EmployeeEmploymentHistoryService;
 use App\Services\UserPortalAccountService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -128,6 +128,7 @@ class EmployeeController extends Controller
                 'division_id' => $employee->division_id,
                 'sub_company_id' => $employee->sub_company_id,
                 'attendance_location_ids' => $employee->attendance_location_ids ?? [],
+                'is_wfa' => $employee->is_wfa,
                 'position_id' => $employee->position_id,
                 'manager_id' => $employee->manager_id,
                 'base_salary' => $employee->base_salary ? (int) $employee->base_salary : null,

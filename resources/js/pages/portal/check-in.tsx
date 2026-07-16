@@ -41,6 +41,7 @@ type PortalSummary = {
         can_clock_out: boolean;
     };
     attendance_policy: {
+        mode: 'onsite' | 'wfa';
         radius_meters: number;
         primary_location: {
             name: string;
@@ -240,14 +241,16 @@ export function PortalAttendanceLocationPage({
     const isWithinRadius =
         !!closestLocation &&
         closestLocation.distance <= closestLocation.radius_meters;
+    const isWfa = portal?.attendance_policy.mode === 'wfa';
     const canSubmit =
         !!portal?.employee &&
-        !!closestLocation &&
-        isWithinRadius &&
+        !!coordinates &&
+        (isWfa || (!!closestLocation && isWithinRadius)) &&
         (mode === 'clock-out'
             ? !!openAttendance && portal.quick_action.can_clock_out
             : portal.quick_action.can_clock_in);
     const isOutsideRadius =
+        !isWfa &&
         !!closestLocation &&
         closestLocation.distance > closestLocation.radius_meters;
     const actionButtonText = isOutsideRadius
@@ -456,7 +459,15 @@ export function PortalAttendanceLocationPage({
                             </span>
                         </div>
 
-                        {closestLocation ? (
+                        {isWfa ? (
+                            <div className="mt-3 rounded-xl bg-emerald-50 p-3 text-xs text-emerald-800">
+                                <p className="font-bold">Mode WFA aktif</p>
+                                <p className="mt-1 leading-5">
+                                    Anda dapat absensi dari lokasi saat ini.
+                                    Koordinat GPS tetap direkam.
+                                </p>
+                            </div>
+                        ) : closestLocation ? (
                             <div className="mt-3 grid grid-cols-[1fr_auto] items-end gap-3 rounded-xl bg-slate-50 p-2.5">
                                 <div className="min-w-0">
                                     <p className="truncate text-xs font-bold text-slate-950">

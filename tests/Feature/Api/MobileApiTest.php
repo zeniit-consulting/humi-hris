@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
@@ -676,6 +677,48 @@ class MobileApiTest extends TestCase
             ->firstOrFail();
 
         $this->assertNull($attendance->shift_id);
+    }
+
+    public function test_wfa_employee_can_clock_in_outside_the_company_radius(): void
+    {
+        $owner = User::factory()->create(['email_verified_at' => now()]);
+        $portalUser = User::factory()->create([
+            'email' => 'wfa.employee@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'email' => $portalUser->email,
+            'is_wfa' => true,
+        ]);
+
+        CompanySetting::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Humi',
+            'location_name' => 'Kantor Utama',
+            'location_latitude' => -6.2000000,
+            'location_longitude' => 106.8166667,
+            'attendance_radius_meters' => 100,
+        ]);
+
+        Sanctum::actingAs($portalUser, ['mobile']);
+
+        $this->postJson('/api/mobile/v1/attendances', [
+            'employee_id' => $employee->id,
+            'attendance_date' => today()->toDateString(),
+            'status' => 'present',
+            'check_in_at' => today()->setTime(8, 0)->toIso8601String(),
+            'check_in_latitude' => -8.6500000,
+            'check_in_longitude' => 115.2166667,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.check_in_latitude', '-8.6500000');
+
+        $this->getJson('/api/mobile/v1/portal/summary')
+            ->assertOk()
+            ->assertJsonPath('data.attendance_policy.mode', 'wfa');
     }
 
     public function test_self_service_clock_in_detects_shift_when_today_schedule_is_missing(): void

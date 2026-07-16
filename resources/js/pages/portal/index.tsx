@@ -58,6 +58,7 @@ type PortalSummary = {
         email: string | null;
         employment_status: string | null;
         employment_type: string | null;
+        is_wfa: boolean;
         division: { id: number; name: string } | null;
         position: { id: number; name: string } | null;
     } | null;

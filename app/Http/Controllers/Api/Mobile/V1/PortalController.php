@@ -293,6 +293,7 @@ class PortalController extends Controller
                 'email' => $employee->email,
                 'employment_status' => $employee->employment_status,
                 'employment_type' => $employee->employment_type,
+                'is_wfa' => $employee->is_wfa,
                 'division' => $employee->division ? [
                     'id' => $employee->division->id,
                     'name' => $employee->division->name,
@@ -394,6 +395,7 @@ class PortalController extends Controller
                 'condition_out' => $assignment->condition_out,
             ])->values(),
             'attendance_policy' => [
+                'mode' => $employee?->is_wfa ? 'wfa' : 'onsite',
                 'radius_meters' => (int) ($companySetting?->attendance_radius_meters ?? 100),
                 'primary_location' => $companySetting?->location_latitude !== null && $companySetting?->location_longitude !== null ? [
                     'name' => $companySetting->location_name ?: 'Lokasi utama',

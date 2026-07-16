@@ -210,6 +210,7 @@ type Employee = {
     division_id: number | null;
     sub_company_id: number | null;
     attendance_location_ids: string[];
+    is_wfa: boolean;
     position_id: number | null;
     manager_id: number | null;
     base_salary: string | null;
@@ -295,6 +296,7 @@ type EmployeeFormData = {
     division_id: string;
     sub_company_id: string;
     attendance_location_ids: string[];
+    is_wfa: boolean;
     position_id: string;
     manager_id: string;
     base_salary: string;
@@ -447,6 +449,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     division_id: '',
     sub_company_id: '',
     attendance_location_ids: [],
+    is_wfa: false,
     position_id: '',
     manager_id: '',
     base_salary: '',
@@ -991,6 +994,7 @@ export default function EmployeesIndex() {
                 ? String(employee.sub_company_id)
                 : '',
             attendance_location_ids: employee.attendance_location_ids ?? [],
+            is_wfa: employee.is_wfa ?? false,
             position_id: employee.position_id
                 ? String(employee.position_id)
                 : '',
@@ -1956,17 +1960,27 @@ export default function EmployeesIndex() {
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         <div>
-                                                            <p
-                                                                className={
-                                                                    isResigned
-                                                                        ? 'text-xs font-semibold text-red-900'
-                                                                        : 'text-xs font-medium'
-                                                                }
-                                                            >
-                                                                {
-                                                                    employee.full_name
-                                                                }
-                                                            </p>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <p
+                                                                    className={
+                                                                        isResigned
+                                                                            ? 'text-xs font-semibold text-red-900'
+                                                                            : 'text-xs font-medium'
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        employee.full_name
+                                                                    }
+                                                                </p>
+                                                                {employee.is_wfa ? (
+                                                                    <Badge
+                                                                        variant="secondary"
+                                                                        className="h-4 px-1 text-[9px]"
+                                                                    >
+                                                                        WFA
+                                                                    </Badge>
+                                                                ) : null}
+                                                            </div>
                                                             <p className="max-w-[150px] truncate text-[11px] text-muted-foreground">
                                                                 {employee
                                                                     .position
@@ -4001,45 +4015,130 @@ export default function EmployeesIndex() {
                                 </div>
 
                                 <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                    <Label htmlFor="is_wfa" className="pt-1">
+                                        Mode Kerja
+                                    </Label>
+                                    <label className="flex cursor-pointer items-start gap-3 rounded-md border p-3">
+                                        <Checkbox
+                                            id="is_wfa"
+                                            checked={employeeForm.data.is_wfa}
+                                            onCheckedChange={(checked) =>
+                                                employeeForm.setData(
+                                                    'is_wfa',
+                                                    checked === true,
+                                                )
+                                            }
+                                        />
+                                        <span>
+                                            <span className="block text-sm font-medium">
+                                                Karyawan WFA
+                                            </span>
+                                            <span className="block text-xs text-muted-foreground">
+                                                Dapat melakukan absensi dari
+                                                lokasi mana pun. GPS tetap
+                                                direkam.
+                                            </span>
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
                                     <Label className="pt-2">
                                         Lokasi Absensi
                                     </Label>
                                     <div className="space-y-2">
                                         <p className="text-xs text-muted-foreground">
-                                            Kosongkan untuk menggunakan lokasi utama perusahaan.
+                                            {employeeForm.data.is_wfa
+                                                ? 'Assignment lokasi diabaikan selama mode WFA aktif.'
+                                                : 'Kosongkan untuk menggunakan lokasi utama perusahaan.'}
                                         </p>
-                                        {attendanceLocationOptions.length === 0 ? (
+                                        {attendanceLocationOptions.length ===
+                                        0 ? (
                                             <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-                                                Belum ada lokasi pada Multi-location attendance.
+                                                Belum ada lokasi pada
+                                                Multi-location attendance.
                                             </p>
                                         ) : (
-                                            <div className="grid gap-2 sm:grid-cols-2">
-                                                {attendanceLocationOptions.map((location) => {
-                                                    const checked = employeeForm.data.attendance_location_ids.includes(location.id);
+                                            <div
+                                                className={`grid gap-2 sm:grid-cols-2 ${employeeForm.data.is_wfa ? 'opacity-50' : ''}`}
+                                            >
+                                                {attendanceLocationOptions.map(
+                                                    (location) => {
+                                                        const checked =
+                                                            employeeForm.data.attendance_location_ids.includes(
+                                                                location.id,
+                                                            );
 
-                                                    return (
-                                                        <label key={location.id} className="flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={checked}
-                                                                onChange={(event) => {
-                                                                    const next = event.target.checked
-                                                                        ? [...employeeForm.data.attendance_location_ids, location.id]
-                                                                        : employeeForm.data.attendance_location_ids.filter((id) => id !== location.id);
-                                                                    employeeForm.setData('attendance_location_ids', next);
-                                                                }}
-                                                                className="mt-0.5 size-4 rounded border-input accent-primary"
-                                                            />
-                                                            <span>
-                                                                <span className="block font-medium">{location.name}</span>
-                                                                {location.address ? <span className="block text-xs text-muted-foreground">{location.address}</span> : null}
-                                                            </span>
-                                                        </label>
-                                                    );
-                                                })}
+                                                        return (
+                                                            <label
+                                                                key={
+                                                                    location.id
+                                                                }
+                                                                className="flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm"
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={
+                                                                        checked
+                                                                    }
+                                                                    disabled={
+                                                                        employeeForm
+                                                                            .data
+                                                                            .is_wfa
+                                                                    }
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) => {
+                                                                        const next =
+                                                                            event
+                                                                                .target
+                                                                                .checked
+                                                                                ? [
+                                                                                      ...employeeForm
+                                                                                          .data
+                                                                                          .attendance_location_ids,
+                                                                                      location.id,
+                                                                                  ]
+                                                                                : employeeForm.data.attendance_location_ids.filter(
+                                                                                      (
+                                                                                          id,
+                                                                                      ) =>
+                                                                                          id !==
+                                                                                          location.id,
+                                                                                  );
+                                                                        employeeForm.setData(
+                                                                            'attendance_location_ids',
+                                                                            next,
+                                                                        );
+                                                                    }}
+                                                                    className="mt-0.5 size-4 rounded border-input accent-primary"
+                                                                />
+                                                                <span>
+                                                                    <span className="block font-medium">
+                                                                        {
+                                                                            location.name
+                                                                        }
+                                                                    </span>
+                                                                    {location.address ? (
+                                                                        <span className="block text-xs text-muted-foreground">
+                                                                            {
+                                                                                location.address
+                                                                            }
+                                                                        </span>
+                                                                    ) : null}
+                                                                </span>
+                                                            </label>
+                                                        );
+                                                    },
+                                                )}
                                             </div>
                                         )}
-                                        <InputError message={employeeForm.errors.attendance_location_ids} />
+                                        <InputError
+                                            message={
+                                                employeeForm.errors
+                                                    .attendance_location_ids
+                                            }
+                                        />
                                     </div>
                                 </div>
 

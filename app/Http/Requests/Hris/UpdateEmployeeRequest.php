@@ -157,6 +157,7 @@ class UpdateEmployeeRequest extends FormRequest
             ],
             'attendance_location_ids' => ['nullable', 'array', 'max:20'],
             'attendance_location_ids.*' => ['string', 'max:100'],
+            'is_wfa' => ['sometimes', 'boolean'],
             'position_id' => [
                 'required',
                 'integer',

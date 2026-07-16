@@ -433,6 +433,10 @@ class AttendanceController extends Controller
 
     private function ensureWithinAttendanceRadius(User $user, Employee $employee, mixed $latitude, mixed $longitude): void
     {
+        if ($employee->is_wfa) {
+            return;
+        }
+
         if ($latitude === null || $longitude === null) {
             return;
         }

@@ -30,6 +30,7 @@ class Employee extends Model
         'created_by_user_id',
         'sub_company_id',
         'attendance_location_ids',
+        'is_wfa',
         'employee_code',
         'first_name',
         'last_name',
@@ -99,6 +100,7 @@ class Employee extends Model
             'pph21_rate' => 'decimal:2',
             'is_active' => 'boolean',
             'attendance_location_ids' => 'array',
+            'is_wfa' => 'boolean',
         ];
     }
 

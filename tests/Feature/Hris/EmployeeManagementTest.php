@@ -139,6 +139,38 @@ class EmployeeManagementTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_mark_employee_as_wfa(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $division = Division::factory()->create(['user_id' => $user->id]);
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'level' => '3',
+        ]);
+
+        $this->actingAs($user)->post(route('hris.employees.store'), [
+            'employee_code' => 'WFA-001',
+            'full_name' => 'Karyawan WFA',
+            'email' => 'wfa@example.com',
+            'hire_date' => '2026-07-16',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+            'pph21_method' => 'gross',
+            'pph21_rate' => '0',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'is_wfa' => true,
+            'is_active' => true,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('employees', [
+            'user_id' => $user->id,
+            'employee_code' => 'WFA-001',
+            'is_wfa' => true,
+        ]);
+    }
+
     public function test_employee_code_can_be_updated_manually(): void
     {
         $user = User::factory()->create([
