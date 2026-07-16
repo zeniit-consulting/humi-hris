@@ -45,6 +45,18 @@ class ProfileController extends Controller
             ],
         );
 
+        $attendanceLocations = collect($companySetting->attendance_locations ?? [])
+            ->map(fn (array $location) => [
+                'id' => $location['id'] ?? (string) \Illuminate\Support\Str::uuid(),
+                ...$location,
+            ])
+            ->values()
+            ->all();
+
+        if ($attendanceLocations !== ($companySetting->attendance_locations ?? [])) {
+            $companySetting->update(['attendance_locations' => $attendanceLocations]);
+        }
+
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
@@ -58,7 +70,7 @@ class ProfileController extends Controller
                 'location_latitude' => $companySetting->location_latitude,
                 'location_longitude' => $companySetting->location_longitude,
                 'attendance_radius_meters' => $companySetting->attendance_radius_meters ?? 100,
-                'attendance_locations' => $companySetting->attendance_locations ?? [],
+                'attendance_locations' => $attendanceLocations,
                 'logo_url' => $companySetting->logo_path
                     ? Storage::disk('public')->url($companySetting->logo_path)
                     : null,

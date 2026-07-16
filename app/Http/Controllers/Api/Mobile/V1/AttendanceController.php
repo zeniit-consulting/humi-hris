@@ -464,8 +464,9 @@ class AttendanceController extends Controller
             return;
         }
 
-        if ($locations->isEmpty() && $setting) {
+        if ($locations->isEmpty() && $setting && ! empty($employee->attendance_location_ids)) {
             $locations = collect($setting->attendance_locations ?? [])
+                ->whereIn('id', $employee->attendance_location_ids)
                 ->map(fn (array $location) => [
                     'latitude' => $location['latitude'] ?? null,
                     'longitude' => $location['longitude'] ?? null,

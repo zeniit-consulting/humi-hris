@@ -43,6 +43,7 @@ class CompanySettingController extends Controller
         unset($validated['logo']);
         $validated['attendance_locations'] = collect($validated['attendance_locations'] ?? [])
             ->map(fn (array $location) => [
+                'id' => $location['id'] ?? (string) Str::uuid(),
                 'name' => $location['name'],
                 'address' => $location['address'] ?? null,
                 'latitude' => (float) $location['latitude'],

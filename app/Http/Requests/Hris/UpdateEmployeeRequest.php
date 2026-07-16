@@ -155,6 +155,8 @@ class UpdateEmployeeRequest extends FormRequest
                     $fail('Sub-company tidak termasuk scope sub-user ini.');
                 },
             ],
+            'attendance_location_ids' => ['nullable', 'array', 'max:20'],
+            'attendance_location_ids.*' => ['string', 'max:100'],
             'position_id' => [
                 'required',
                 'integer',

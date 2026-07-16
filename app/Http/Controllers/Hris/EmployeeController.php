@@ -128,6 +128,7 @@ class EmployeeController extends Controller
                 'ptkp_category' => $employee->ptkp_category,
                 'division_id' => $employee->division_id,
                 'sub_company_id' => $employee->sub_company_id,
+                'attendance_location_ids' => $employee->attendance_location_ids ?? [],
                 'position_id' => $employee->position_id,
                 'manager_id' => $employee->manager_id,
                 'base_salary' => $employee->base_salary ? (int) $employee->base_salary : null,
@@ -367,6 +368,19 @@ class EmployeeController extends Controller
             ])
             ->values();
 
+        $companySetting = CompanySetting::query()->where('user_id', $ownerId)->first();
+        $attendanceLocations = collect($companySetting?->attendance_locations ?? [])
+            ->map(fn (array $location): array => [
+                'id' => (string) ($location['id'] ?? (string) Str::uuid()),
+                ...$location,
+            ])
+            ->values()
+            ->all();
+
+        if ($companySetting && $attendanceLocations !== ($companySetting->attendance_locations ?? [])) {
+            $companySetting->update(['attendance_locations' => $attendanceLocations]);
+        }
+
         return Inertia::render('hris/employees/index', [
             'employees' => $employees,
             'divisions' => $divisions,
@@ -375,6 +389,14 @@ class EmployeeController extends Controller
             'subCompanyOptions' => $subCompanyOptions,
             'positionOptions' => $positionOptions,
             'managerOptions' => $managerOptions,
+            'attendanceLocationOptions' => collect($attendanceLocations)
+                ->map(fn (array $location): array => [
+                    'id' => (string) ($location['id'] ?? ''),
+                    'name' => (string) ($location['name'] ?? 'Lokasi absensi'),
+                    'address' => $location['address'] ?? null,
+                ])
+                ->filter(fn (array $location): bool => $location['id'] !== '')
+                ->values(),
             'employeeAccess' => [
                 'requires_sub_company' => $subCompanyScopeIds !== null,
                 'sub_company_scope_ids' => $subCompanyScopeIds ?? [],

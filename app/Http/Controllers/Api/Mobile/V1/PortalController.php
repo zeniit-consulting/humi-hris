@@ -527,7 +527,12 @@ class PortalController extends Controller
                 ->values();
         }
 
-        return collect($companySetting?->attendance_locations ?? [])
+        if (! $companySetting || empty($employee?->attendance_location_ids)) {
+            return collect();
+        }
+
+        return collect($companySetting->attendance_locations ?? [])
+            ->whereIn('id', $employee->attendance_location_ids)
             ->map(fn (array $location) => [
                 'name' => $location['name'] ?? 'Lokasi absensi',
                 'address' => $location['address'] ?? null,

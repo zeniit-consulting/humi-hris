@@ -209,6 +209,7 @@ type Employee = {
     ptkp_category: string | null;
     division_id: number | null;
     sub_company_id: number | null;
+    attendance_location_ids: string[];
     position_id: number | null;
     manager_id: number | null;
     base_salary: string | null;
@@ -293,6 +294,7 @@ type EmployeeFormData = {
     ptkp_category: string;
     division_id: string;
     sub_company_id: string;
+    attendance_location_ids: string[];
     position_id: string;
     manager_id: string;
     base_salary: string;
@@ -379,6 +381,11 @@ type PageProps = {
     subCompanyOptions: SubCompanyOption[];
     positionOptions: PositionOption[];
     managerOptions: ManagerOption[];
+    attendanceLocationOptions: Array<{
+        id: string;
+        name: string;
+        address: string | null;
+    }>;
     employeeAccess: {
         requires_sub_company: boolean;
         sub_company_scope_ids: number[];
@@ -439,6 +446,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     ptkp_category: '',
     division_id: '',
     sub_company_id: '',
+    attendance_location_ids: [],
     position_id: '',
     manager_id: '',
     base_salary: '',
@@ -713,6 +721,7 @@ export default function EmployeesIndex() {
         subCompanyOptions,
         positionOptions,
         managerOptions,
+        attendanceLocationOptions,
         employeeAccess,
         filters,
         stats,
@@ -981,6 +990,7 @@ export default function EmployeesIndex() {
             sub_company_id: employee.sub_company_id
                 ? String(employee.sub_company_id)
                 : '',
+            attendance_location_ids: employee.attendance_location_ids ?? [],
             position_id: employee.position_id
                 ? String(employee.position_id)
                 : '',
@@ -3987,6 +3997,49 @@ export default function EmployeesIndex() {
                                                     .sub_company_id
                                             }
                                         />
+                                    </div>
+                                </div>
+
+                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                    <Label className="pt-2">
+                                        Lokasi Absensi
+                                    </Label>
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-muted-foreground">
+                                            Kosongkan untuk menggunakan lokasi utama perusahaan.
+                                        </p>
+                                        {attendanceLocationOptions.length === 0 ? (
+                                            <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                                                Belum ada lokasi pada Multi-location attendance.
+                                            </p>
+                                        ) : (
+                                            <div className="grid gap-2 sm:grid-cols-2">
+                                                {attendanceLocationOptions.map((location) => {
+                                                    const checked = employeeForm.data.attendance_location_ids.includes(location.id);
+
+                                                    return (
+                                                        <label key={location.id} className="flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={checked}
+                                                                onChange={(event) => {
+                                                                    const next = event.target.checked
+                                                                        ? [...employeeForm.data.attendance_location_ids, location.id]
+                                                                        : employeeForm.data.attendance_location_ids.filter((id) => id !== location.id);
+                                                                    employeeForm.setData('attendance_location_ids', next);
+                                                                }}
+                                                                className="mt-0.5 size-4 rounded border-input accent-primary"
+                                                            />
+                                                            <span>
+                                                                <span className="block font-medium">{location.name}</span>
+                                                                {location.address ? <span className="block text-xs text-muted-foreground">{location.address}</span> : null}
+                                                            </span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                        <InputError message={employeeForm.errors.attendance_location_ids} />
                                     </div>
                                 </div>
 

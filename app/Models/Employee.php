@@ -29,6 +29,7 @@ class Employee extends Model
         'user_id',
         'created_by_user_id',
         'sub_company_id',
+        'attendance_location_ids',
         'employee_code',
         'first_name',
         'last_name',
@@ -97,6 +98,7 @@ class Employee extends Model
             'base_salary' => 'decimal:2',
             'pph21_rate' => 'decimal:2',
             'is_active' => 'boolean',
+            'attendance_location_ids' => 'array',
         ];
     }
 
