@@ -148,7 +148,6 @@ const fallbackLinks: PortalSummary['links'] = {
     attendance: '/portal/attendance',
     leaves: '/portal/leaves',
     overtimes: '/portal/overtimes',
-    kasbons: '/portal/kasbons',
     reimbursements: '/portal/reimbursements',
     payroll: '/portal/payroll',
     activity: '/portal/activity',
@@ -313,7 +312,7 @@ export default function PortalPage() {
             quickLinks.filter(
                 (item) =>
                     item.key !== 'kasbons' ||
-                    summary?.features?.kasbon !== false,
+                    summary?.features?.kasbon === true,
             ),
         [summary],
     );

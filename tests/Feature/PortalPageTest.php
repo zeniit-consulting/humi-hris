@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AttendanceCorrectionRequest;
+use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
@@ -49,6 +50,33 @@ class PortalPageTest extends TestCase
         $this->actingAs($user)
             ->get(route('portal.index'))
             ->assertRedirect(route('dashboard'));
+    }
+
+    public function test_disabled_kasbon_is_removed_from_portal_and_cannot_be_accessed(): void
+    {
+        $this->withoutVite();
+
+        $owner = User::factory()->create(['role' => 'admin']);
+        $portalUser = User::factory()->create([
+            'role' => 'user',
+            'parent_user_id' => $owner->id,
+            'email_verified_at' => now(),
+        ]);
+
+        CompanySetting::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Perusahaan',
+            'portal_kasbon_enabled' => false,
+        ]);
+
+        $this->actingAs($portalUser)
+            ->getJson(route('portal.api.summary'))
+            ->assertOk()
+            ->assertJsonPath('data.features.kasbon', false)
+            ->assertJsonMissingPath('data.links.kasbons');
+
+        $this->get(route('portal.kasbons'))->assertNotFound();
+        $this->getJson(route('portal.api.kasbons.index'))->assertNotFound();
     }
 
     public function test_verified_user_can_open_self_service_pages(): void

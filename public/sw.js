@@ -3,12 +3,13 @@
  *
  * Strategy:
  * - Static assets (CSS, JS, images): Cache-first with network fallback
- * - API GET requests: Network-first with cache fallback (stale-while-revalidate)
+ * - Authenticated API GET requests: Network-only to avoid stale or cross-user data
+ * - Public API GET requests: Network-first with cache fallback
  * - Navigation requests (HTML pages): Network-first with offline fallback
  * - POST/PUT/DELETE requests: Network-only with background sync queue
  */
 
-const VERSION = 'v2.3.0';
+const VERSION = 'v2.4.0';
 const STATIC_CACHE = `humi-static-${VERSION}`;
 const RUNTIME_CACHE = `humi-runtime-${VERSION}`;
 const API_CACHE = `humi-api-${VERSION}`;
@@ -33,22 +34,7 @@ const MAX_API_CACHE_ENTRIES = 50;
 const MAX_RUNTIME_CACHE_ENTRIES = 60;
 
 // API endpoints to cache
-const CACHEABLE_API_PATTERNS = [
-    /\/portal\/api\/summary/,
-    /\/portal\/api\/attendances/,
-    /\/portal\/api\/leaves/,
-    /\/portal\/api\/overtimes/,
-    /\/portal\/api\/payrolls\/preview/,
-    /\/portal\/api\/payrolls\/preview-secure/,
-    /\/portal\/api\/announcements/,
-    /\/portal\/api\/assets/,
-    /\/portal\/api\/surveys/,
-    /\/api\/mobile\/v1\/portal\/summary/,
-    /\/api\/mobile\/v1\/profile/,
-    /\/api\/mobile\/v1\/attendances/,
-    /\/api\/mobile\/v1\/leaves/,
-    /\/api\/mobile\/v1\/overtimes/,
-];
+const CACHEABLE_API_PATTERNS = [/\/api\/public\//];
 
 // ============================================================================
 // Lifecycle Events
@@ -113,6 +99,8 @@ self.addEventListener('fetch', (event) => {
     // Route to appropriate strategy
     if (isStaticAsset(url)) {
         event.respondWith(cacheFirst(request, STATIC_CACHE));
+    } else if (isAuthenticatedApiRequest(url)) {
+        event.respondWith(fetch(request));
     } else if (isApiRequest(url)) {
         event.respondWith(networkFirstWithCache(request, API_CACHE));
     } else if (isNavigationRequest(request)) {
@@ -273,6 +261,13 @@ function isStaticAsset(url) {
 
 function isApiRequest(url) {
     return CACHEABLE_API_PATTERNS.some((pattern) => pattern.test(url.pathname));
+}
+
+function isAuthenticatedApiRequest(url) {
+    return (
+        url.pathname.startsWith('/portal/api/') ||
+        url.pathname.startsWith('/api/mobile/v1/')
+    );
 }
 
 function isNavigationRequest(request) {

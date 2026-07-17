@@ -1,6 +1,9 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
+    ArrowDown,
+    ArrowUp,
+    ArrowUpDown,
     Download,
     Eye,
     Filter,
@@ -190,6 +193,7 @@ type Employee = {
     email: string | null;
     phone: string | null;
     gender: string | null;
+    birth_place: string | null;
     birth_date: string | null;
     last_education: string | null;
     marital_status: string | null;
@@ -281,6 +285,7 @@ type EmployeeFormData = {
     email: string;
     phone: string;
     gender: string;
+    birth_place: string;
     birth_date: string;
     last_education: string;
     marital_status: string;
@@ -368,11 +373,25 @@ type EmployeeDocumentFormData = {
     notes: string;
 };
 
+type EmployeeSortKey =
+    | 'name'
+    | 'code'
+    | 'contact'
+    | 'division'
+    | 'sub_company'
+    | 'position'
+    | 'hire_date'
+    | 'employment_type'
+    | 'base_salary'
+    | 'status';
+
 type Filters = {
     search: string;
     division_id: string;
     sub_company_id: string;
     status: string;
+    sort: EmployeeSortKey;
+    direction: 'asc' | 'desc';
     division_search: string;
     position_search: string;
 };
@@ -427,6 +446,57 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+type SortableEmployeeHeaderProps = {
+    label: string;
+    sortKey: EmployeeSortKey;
+    activeSort: EmployeeSortKey;
+    direction: 'asc' | 'desc';
+    onSort: (key: EmployeeSortKey) => void;
+    className?: string;
+};
+
+function SortableEmployeeHeader({
+    label,
+    sortKey,
+    activeSort,
+    direction,
+    onSort,
+    className = '',
+}: SortableEmployeeHeaderProps) {
+    const isActive = activeSort === sortKey;
+    const SortIcon = !isActive
+        ? ArrowUpDown
+        : direction === 'asc'
+          ? ArrowUp
+          : ArrowDown;
+
+    return (
+        <th
+            className={className}
+            aria-sort={
+                isActive
+                    ? direction === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                    : 'none'
+            }
+        >
+            <button
+                type="button"
+                onClick={() => onSort(sortKey)}
+                className="inline-flex min-h-8 w-full items-center justify-center gap-1 rounded-sm px-1 font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                title={`Urutkan berdasarkan ${label}`}
+            >
+                <span>{label}</span>
+                <SortIcon
+                    aria-hidden="true"
+                    className={`size-3.5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
+                />
+            </button>
+        </th>
+    );
+}
+
 const todayDate = () => new Date().toISOString().slice(0, 10);
 
 const buildEmployeeDefault = (): EmployeeFormData => ({
@@ -435,6 +505,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     email: '',
     phone: '',
     gender: '',
+    birth_place: '',
     birth_date: '',
     last_education: '',
     marital_status: '',
@@ -572,6 +643,7 @@ const employeeFieldLabels: Record<string, string> = {
     email: 'Email',
     phone: 'Nomor HP',
     gender: 'Jenis kelamin',
+    birth_place: 'Tempat lahir',
     birth_date: 'Tanggal lahir',
     last_education: 'Pendidikan terakhir',
     marital_status: 'Status pernikahan',
@@ -789,6 +861,7 @@ export default function EmployeesIndex() {
                 'email',
                 'phone',
                 'gender',
+                'birth_place',
                 'birth_date',
                 'last_education',
                 'marital_status',
@@ -973,6 +1046,7 @@ export default function EmployeesIndex() {
             email: employee.email ?? '',
             phone: employee.phone ?? '',
             gender: employee.gender ?? '',
+            birth_place: employee.birth_place ?? '',
             birth_date: employee.birth_date ?? '',
             last_education: employee.last_education ?? '',
             marital_status: employee.marital_status ?? '',
@@ -1523,12 +1597,33 @@ export default function EmployeesIndex() {
         });
     };
 
+    const handleSort = (key: EmployeeSortKey) => {
+        const direction =
+            filters.sort === key && filters.direction === 'asc'
+                ? 'desc'
+                : 'asc';
+        const nextFilters: Filters = {
+            ...filterState,
+            sort: key,
+            direction,
+        };
+
+        setFilterState(nextFilters);
+        router.get(employeeRoutes.index.url(), nextFilters, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
     const resetFilters = () => {
         const initialFilters = {
             search: '',
             division_id: '',
             sub_company_id: '',
             status: '',
+            sort: 'name' as const,
+            direction: 'asc' as const,
             division_search: '',
             position_search: '',
         };
@@ -1903,36 +1998,86 @@ export default function EmployeesIndex() {
                             <table className="w-full min-w-[1320px] text-xs">
                                 <thead>
                                     <tr className="border-b text-center">
-                                        <th className="sticky left-0 z-20 min-w-[220px] bg-background px-2 py-1.5 text-center font-medium shadow-[6px_0_8px_-8px_rgba(15,23,42,0.25)]">
-                                            Nama
-                                        </th>
-                                        <th className="min-w-[110px] px-2 py-1.5 text-center font-medium">
-                                            Kode
-                                        </th>
-                                        <th className="min-w-[190px] px-2 py-1.5 text-center font-medium">
-                                            Kontak
-                                        </th>
-                                        <th className="px-2 py-1.5 text-center font-medium">
-                                            Divisi
-                                        </th>
-                                        <th className="min-w-[160px] px-2 py-1.5 text-center font-medium">
-                                            Perusahaan
-                                        </th>
-                                        <th className="px-2 py-1.5 text-center font-medium">
-                                            Jabatan
-                                        </th>
-                                        <th className="min-w-[110px] px-2 py-1.5 text-center font-medium">
-                                            Tgl Masuk
-                                        </th>
-                                        <th className="min-w-[110px] px-2 py-1.5 text-center font-medium">
-                                            Tipe
-                                        </th>
-                                        <th className="min-w-[135px] px-2 py-1.5 text-center font-medium">
-                                            Gaji
-                                        </th>
-                                        <th className="px-2 py-1.5 text-center font-medium">
-                                            Status
-                                        </th>
+                                        <SortableEmployeeHeader
+                                            label="Nama"
+                                            sortKey="name"
+                                            activeSort={filters.sort}
+                                            direction={filters.direction}
+                                            onSort={handleSort}
+                                            className="sticky left-0 z-20 min-w-[220px] bg-background px-2 py-1.5 text-center shadow-[6px_0_8px_-8px_rgba(15,23,42,0.25)]"
+                                        />
+                                        <SortableEmployeeHeader
+                                            label="Kode"
+                                            sortKey="code"
+                                            activeSort={filters.sort}
+                                            direction={filters.direction}
+                                            onSort={handleSort}
+                                            className="min-w-[110px] px-2 py-1.5 text-center"
+                                        />
+                                        <SortableEmployeeHeader
+                                            label="Kontak"
+                                            sortKey="contact"
+                                            activeSort={filters.sort}
+                                            direction={filters.direction}
+                                            onSort={handleSort}
+                                            className="min-w-[190px] px-2 py-1.5 text-center"
+                                        />
+                                        <SortableEmployeeHeader
+                                            label="Divisi"
+                                            sortKey="division"
+                                            activeSort={filters.sort}
+                                            direction={filters.direction}
+                                            onSort={handleSort}
+                                            className="px-2 py-1.5 text-center"
+                                        />
+                                        <SortableEmployeeHeader
+                                            label="Perusahaan"
+                                            sortKey="sub_company"
+                                            activeSort={filters.sort}
+                                            direction={filters.direction}
+                                            onSort={handleSort}
+                                            className="min-w-[160px] px-2 py-1.5 text-center"
+                                        />
+                                        <SortableEmployeeHeader
+                                            label="Jabatan"
+                                            sortKey="position"
+                                            activeSort={filters.sort}
+                                            direction={filters.direction}
+                                            onSort={handleSort}
+                                            className="px-2 py-1.5 text-center"
+                                        />
+                                        <SortableEmployeeHeader
+                                            label="Tgl Masuk"
+                                            sortKey="hire_date"
+                                            activeSort={filters.sort}
+                                            direction={filters.direction}
+                                            onSort={handleSort}
+                                            className="min-w-[110px] px-2 py-1.5 text-center"
+                                        />
+                                        <SortableEmployeeHeader
+                                            label="Tipe"
+                                            sortKey="employment_type"
+                                            activeSort={filters.sort}
+                                            direction={filters.direction}
+                                            onSort={handleSort}
+                                            className="min-w-[110px] px-2 py-1.5 text-center"
+                                        />
+                                        <SortableEmployeeHeader
+                                            label="Gaji"
+                                            sortKey="base_salary"
+                                            activeSort={filters.sort}
+                                            direction={filters.direction}
+                                            onSort={handleSort}
+                                            className="min-w-[135px] px-2 py-1.5 text-center"
+                                        />
+                                        <SortableEmployeeHeader
+                                            label="Status"
+                                            sortKey="status"
+                                            activeSort={filters.sort}
+                                            direction={filters.direction}
+                                            onSort={handleSort}
+                                            className="px-2 py-1.5 text-center"
+                                        />
                                         <th className="sticky right-0 z-20 min-w-[72px] bg-background px-2 py-1.5 text-center font-medium shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.25)]">
                                             Aksi
                                         </th>
@@ -3054,6 +3199,33 @@ export default function EmployeesIndex() {
                                         </Select>
                                         <InputError
                                             message={employeeForm.errors.gender}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                    <Label htmlFor="birth_place">
+                                        Tempat Lahir
+                                    </Label>
+                                    <div className="space-y-1">
+                                        <Input
+                                            id="birth_place"
+                                            value={
+                                                employeeForm.data.birth_place
+                                            }
+                                            onChange={(event) =>
+                                                employeeForm.setData(
+                                                    'birth_place',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Contoh: Makassar"
+                                            maxLength={150}
+                                        />
+                                        <InputError
+                                            message={
+                                                employeeForm.errors.birth_place
+                                            }
                                         />
                                     </div>
                                 </div>

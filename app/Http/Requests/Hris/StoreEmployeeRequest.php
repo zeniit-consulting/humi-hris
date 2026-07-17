@@ -115,6 +115,7 @@ class StoreEmployeeRequest extends FormRequest
             ],
             'phone' => ['nullable', 'string', 'max:30'],
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
+            'birth_place' => ['nullable', 'string', 'max:150'],
             'birth_date' => ['nullable', 'date'],
             'last_education' => ['nullable', 'string', 'max:100'],
             'marital_status' => ['nullable', Rule::in(['single', 'married', 'divorced', 'widowed'])],

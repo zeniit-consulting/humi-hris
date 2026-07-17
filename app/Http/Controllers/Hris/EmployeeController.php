@@ -54,6 +54,19 @@ class EmployeeController extends Controller
             'division_id' => ['nullable', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
             'sub_company_id' => ['nullable', 'string'],
             'status' => ['nullable', 'string'],
+            'sort' => ['nullable', Rule::in([
+                'name',
+                'code',
+                'contact',
+                'division',
+                'sub_company',
+                'position',
+                'hire_date',
+                'employment_type',
+                'base_salary',
+                'status',
+            ])],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
             'division_search' => ['nullable', 'string', 'max:100'],
             'position_search' => ['nullable', 'string', 'max:100'],
         ]);
@@ -63,6 +76,8 @@ class EmployeeController extends Controller
             'division_id' => isset($rawFilters['division_id']) ? (string) $rawFilters['division_id'] : '',
             'sub_company_id' => $rawFilters['sub_company_id'] ?? '',
             'status' => $rawFilters['status'] ?? '',
+            'sort' => $rawFilters['sort'] ?? 'name',
+            'direction' => $rawFilters['direction'] ?? 'asc',
             'division_search' => $rawFilters['division_search'] ?? '',
             'position_search' => $rawFilters['position_search'] ?? '',
         ];
@@ -94,8 +109,28 @@ class EmployeeController extends Controller
                 fn ($query) => $query->where('sub_company_id', $filters['sub_company_id']),
             )
             ->when($filters['status'] !== '', fn ($query) => $query->where('employment_status', $filters['status']))
-            ->orderBy('first_name')
-            ->orderBy('last_name')
+            ->when($filters['sort'] === 'name', fn ($query) => $query
+                ->orderBy('first_name', $filters['direction'])
+                ->orderBy('last_name', $filters['direction']))
+            ->when($filters['sort'] === 'code', fn ($query) => $query->orderBy('employee_code', $filters['direction']))
+            ->when($filters['sort'] === 'contact', fn ($query) => $query->orderBy('email', $filters['direction']))
+            ->when($filters['sort'] === 'division', fn ($query) => $query->orderBy(
+                Division::query()->select('name')->whereColumn('divisions.id', 'employees.division_id'),
+                $filters['direction'],
+            ))
+            ->when($filters['sort'] === 'sub_company', fn ($query) => $query->orderBy(
+                SubCompany::query()->select('name')->whereColumn('sub_companies.id', 'employees.sub_company_id'),
+                $filters['direction'],
+            ))
+            ->when($filters['sort'] === 'position', fn ($query) => $query->orderBy(
+                Position::query()->select('name')->whereColumn('positions.id', 'employees.position_id'),
+                $filters['direction'],
+            ))
+            ->when($filters['sort'] === 'hire_date', fn ($query) => $query->orderBy('hire_date', $filters['direction']))
+            ->when($filters['sort'] === 'employment_type', fn ($query) => $query->orderBy('employment_type', $filters['direction']))
+            ->when($filters['sort'] === 'base_salary', fn ($query) => $query->orderBy('base_salary', $filters['direction']))
+            ->when($filters['sort'] === 'status', fn ($query) => $query->orderBy('employment_status', $filters['direction']))
+            ->orderBy('id')
             ->paginate(10)
             ->withQueryString()
             ->through(fn (Employee $employee) => [
@@ -107,6 +142,7 @@ class EmployeeController extends Controller
                 'email' => $employee->email,
                 'phone' => $employee->phone,
                 'gender' => $employee->gender,
+                'birth_place' => $employee->birth_place,
                 'birth_date' => $employee->birth_date?->format('Y-m-d'),
                 'last_education' => $employee->last_education,
                 'marital_status' => $employee->marital_status,

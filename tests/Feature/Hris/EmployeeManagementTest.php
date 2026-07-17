@@ -40,6 +40,58 @@ class EmployeeManagementTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_employee_table_can_be_sorted_by_name_descending(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $alphaDivision = Division::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Alpha',
+        ]);
+        $zuluDivision = Division::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Zulu',
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $zuluDivision->id,
+            'first_name' => 'Andi',
+            'last_name' => null,
+        ]);
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $alphaDivision->id,
+            'first_name' => 'Zahra',
+            'last_name' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.employees.index', [
+                'sort' => 'name',
+                'direction' => 'desc',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.sort', 'name')
+                ->where('filters.direction', 'desc')
+                ->where('employees.data.0.full_name', 'Zahra')
+                ->where('employees.data.1.full_name', 'Andi')
+            );
+
+        $this->actingAs($user)
+            ->get(route('hris.employees.index', [
+                'sort' => 'division',
+                'direction' => 'desc',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('employees.data.0.full_name', 'Andi')
+                ->where('employees.data.1.full_name', 'Zahra')
+            );
+    }
+
     public function test_employee_code_is_generated_from_position_division_sequence_and_hire_date()
     {
         $user = User::factory()->create([
@@ -92,6 +144,53 @@ class EmployeeManagementTest extends TestCase
             ->first();
 
         $this->assertNull($portalUser);
+    }
+
+    public function test_admin_can_store_and_update_employee_birth_place(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $division = Division::factory()->create(['user_id' => $user->id]);
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'level' => '3',
+        ]);
+
+        $payload = [
+            'full_name' => 'Ayu Lestari',
+            'birth_place' => 'Makassar',
+            'birth_date' => '1998-05-20',
+            'hire_date' => '2026-03-01',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+            'pph21_method' => 'gross',
+            'pph21_rate' => '0',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'is_active' => true,
+        ];
+
+        $this->actingAs($user)
+            ->post(route('hris.employees.store'), $payload)
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $employee = Employee::query()->where('first_name', 'Ayu Lestari')->firstOrFail();
+        $this->assertSame('Makassar', $employee->birth_place);
+
+        $this->actingAs($user)
+            ->put(route('hris.employees.update', $employee), [
+                ...$payload,
+                'employee_code' => $employee->employee_code,
+                'birth_place' => 'Gowa',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('employees', [
+            'id' => $employee->id,
+            'birth_place' => 'Gowa',
+        ]);
     }
 
     public function test_employee_code_can_be_filled_manually_when_creating_employee(): void

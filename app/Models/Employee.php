@@ -37,6 +37,7 @@ class Employee extends Model
         'email',
         'phone',
         'gender',
+        'birth_place',
         'birth_date',
         'last_education',
         'marital_status',
