@@ -8,8 +8,8 @@ import {
     Send,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
-import SeoHead from '@/components/seo-head';
 import InputError from '@/components/input-error';
+import SeoHead from '@/components/seo-head';
 import { Button } from '@/components/ui/button';
 import {
     Card,

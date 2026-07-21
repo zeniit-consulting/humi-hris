@@ -10,7 +10,6 @@ import {
     ClipboardCheck,
     Factory,
     FileText,
-    Fingerprint,
     FolderKanban,
     ShieldCheck,
     Store,

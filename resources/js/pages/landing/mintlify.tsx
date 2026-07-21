@@ -7,8 +7,6 @@ import {
     Clock,
     Fingerprint,
     NotebookPen,
-    Shield,
-    Sparkles,
     Users,
 } from 'lucide-react';
 import SeoHead from '@/components/seo-head';
@@ -18,7 +16,6 @@ const accent = '#0c8c5e';
 const ink = '#08090a';
 const trueBlack = '#000000';
 const mist = '#f2f2f2';
-const cloud = '#dddddd';
 
 const modules = [
     {
@@ -110,14 +107,17 @@ const pricingPlans = [
             'Coba sistem maksimal 30 hari sebelum memilih paket berbayar.',
         cta: 'Mulai Trial',
         badge: '30 HARI',
-        features: ['Maks. 10 karyawan', 'Maks. 30 hari', ...coreFeaturesIncluded.slice(0, 5)],
+        features: [
+            'Maks. 10 karyawan',
+            'Maks. 30 hari',
+            ...coreFeaturesIncluded.slice(0, 5),
+        ],
     },
     {
         name: 'Basic',
         price: fmt.format(PRICE_CORE),
         period: '/karyawan/bulan',
-        description:
-            'Paket minimum setelah trial untuk operasional HR harian.',
+        description: 'Paket minimum setelah trial untuk operasional HR harian.',
         cta: 'Pilih Basic',
         features: coreFeaturesIncluded,
     },
@@ -143,7 +143,11 @@ export default function MintlifyLanding({
         appUrl: string;
     };
     const siteUrl = appUrl.replace(/\/$/, '');
-    const primaryHref = auth.user ? dashboard() : canRegister ? register() : login();
+    const primaryHref = auth.user
+        ? dashboard()
+        : canRegister
+          ? register()
+          : login();
 
     return (
         <>
@@ -193,7 +197,11 @@ export default function MintlifyLanding({
                 <header className="sticky top-0 z-50 bg-white">
                     <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-5">
                         <Link href="/" className="flex items-center gap-3">
-                            <img src="/logo.png" alt="Humi" className="h-8 w-auto" />
+                            <img
+                                src="/logo.png"
+                                alt="Humi"
+                                className="h-8 w-auto"
+                            />
                         </Link>
                         <nav className="hidden items-center gap-1 md:flex">
                             <a className="nav-link" href="#features">
@@ -211,7 +219,10 @@ export default function MintlifyLanding({
                         </nav>
                         <div className="flex items-center gap-2">
                             {!auth.user ? (
-                                <Link className="ghost-button hidden sm:inline-flex" href={login()}>
+                                <Link
+                                    className="ghost-button hidden sm:inline-flex"
+                                    href={login()}
+                                >
                                     Masuk
                                 </Link>
                             ) : null}
@@ -271,8 +282,15 @@ export default function MintlifyLanding({
                             </p>
                             <div className="mt-8 grid grid-cols-2 items-center gap-6 opacity-65 grayscale md:grid-cols-4">
                                 {clientLogos.map((logo) => (
-                                    <div key={logo} className="flex h-12 items-center justify-center">
-                                        <img src={logo} alt="" className="max-h-8 max-w-[150px]" />
+                                    <div
+                                        key={logo}
+                                        className="flex h-12 items-center justify-center"
+                                    >
+                                        <img
+                                            src={logo}
+                                            alt=""
+                                            className="max-h-8 max-w-[150px]"
+                                        />
                                     </div>
                                 ))}
                             </div>
@@ -299,7 +317,9 @@ export default function MintlifyLanding({
                                     >
                                         <div className="flex items-center gap-3">
                                             <module.icon className="size-5 text-[#0c8c5e]" />
-                                            <p className="eyebrow">{module.eyebrow}</p>
+                                            <p className="eyebrow">
+                                                {module.eyebrow}
+                                            </p>
                                         </div>
                                         <h3 className="mt-4 text-[20px] leading-[1.3] font-semibold text-[#08090a]">
                                             {module.title}
@@ -387,13 +407,19 @@ export default function MintlifyLanding({
                                         </div>
                                         <ul className="mt-6 flex-1 space-y-3">
                                             {plan.features.map((feature) => (
-                                                <li key={feature} className="flex gap-3 text-[15px] text-black/75">
+                                                <li
+                                                    key={feature}
+                                                    className="flex gap-3 text-[15px] text-black/75"
+                                                >
                                                     <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#0c8c5e]" />
                                                     {feature}
                                                 </li>
                                             ))}
                                         </ul>
-                                        <Link className="filled-button mt-8 justify-center" href={primaryHref}>
+                                        <Link
+                                            className="filled-button mt-8 justify-center"
+                                            href={primaryHref}
+                                        >
                                             {plan.cta}
                                         </Link>
                                     </article>
@@ -414,8 +440,13 @@ export default function MintlifyLanding({
                                     lanjutkan dengan paket Basic atau Plus.
                                 </p>
                                 <div className="mt-8 flex justify-center">
-                                    <Link className="filled-button h-12 items-center px-6" href={primaryHref}>
-                                        {auth.user ? 'Lanjut ke Dashboard' : 'Coba Gratis Sekarang'}
+                                    <Link
+                                        className="filled-button h-12 items-center px-6"
+                                        href={primaryHref}
+                                    >
+                                        {auth.user
+                                            ? 'Lanjut ke Dashboard'
+                                            : 'Coba Gratis Sekarang'}
                                         <ArrowRight className="size-4" />
                                     </Link>
                                 </div>
@@ -426,8 +457,15 @@ export default function MintlifyLanding({
 
                 <footer className="border-t border-[#f2f2f2] bg-white">
                     <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-5 px-5 py-8 text-[13px] text-black/55 sm:flex-row">
-                        <img src="/logo.png" alt="Humi" className="h-7 w-auto" />
-                        <p>&copy; {new Date().getFullYear()} Humi. All rights reserved.</p>
+                        <img
+                            src="/logo.png"
+                            alt="Humi"
+                            className="h-7 w-auto"
+                        />
+                        <p>
+                            &copy; {new Date().getFullYear()} Humi. All rights
+                            reserved.
+                        </p>
                         <div className="flex gap-5">
                             <Link href="/features">Fitur</Link>
                             <a href="#pricing">Harga</a>
@@ -522,13 +560,17 @@ function ProductShowcase() {
                                 className="product-row"
                                 style={{
                                     background:
-                                        index === 0 ? 'rgba(12,140,94,0.08)' : 'transparent',
+                                        index === 0
+                                            ? 'rgba(12,140,94,0.08)'
+                                            : 'transparent',
                                     color: index === 0 ? accent : trueBlack,
                                 }}
                             >
                                 <Icon className="size-4" />
                                 <span className="flex-1">{label}</span>
-                                <span className="text-[13px] opacity-60">{value}</span>
+                                <span className="text-[13px] opacity-60">
+                                    {value}
+                                </span>
                             </div>
                         ))}
                     </div>
@@ -553,8 +595,13 @@ function ProductShowcase() {
                             ['Waktu payroll', '< 10 mnt'],
                             ['Akurasi data', '99.9%'],
                         ].map(([label, value]) => (
-                            <div key={label} className="rounded-[16px] border border-[#f2f2f2] p-4">
-                                <p className="text-[13px] text-black/50">{label}</p>
+                            <div
+                                key={label}
+                                className="rounded-[16px] border border-[#f2f2f2] p-4"
+                            >
+                                <p className="text-[13px] text-black/50">
+                                    {label}
+                                </p>
                                 <p className="mt-2 text-[24px] leading-[1.33] font-semibold text-[#08090a]">
                                     {value}
                                 </p>
@@ -563,7 +610,9 @@ function ProductShowcase() {
                     </div>
                     <div className="mt-4 rounded-[16px] border border-[#f2f2f2] p-4">
                         <div className="mb-3 flex items-center justify-between text-[14px]">
-                            <span className="font-medium">Payroll progress</span>
+                            <span className="font-medium">
+                                Payroll progress
+                            </span>
                             <span className="text-[#0c8c5e]">82%</span>
                         </div>
                         <div className="h-2 rounded-[4px] bg-[#f2f2f2]">

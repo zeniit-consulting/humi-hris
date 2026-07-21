@@ -7,6 +7,7 @@ use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\EmployeeLeaveBalance;
 use App\Models\EmployeeReprimand;
 use App\Models\LeaveRequest;
 use App\Models\PayrollItem;
@@ -229,6 +230,18 @@ class PortalPageTest extends TestCase
             'end_date' => today()->copy()->addDays(2)->toDateString(),
             'total_days' => 2,
             'status' => 'approved',
+        ]);
+
+        EmployeeLeaveBalance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'annual',
+            'year' => today()->year,
+            'policy_type' => 'annual',
+            'total_quota' => 12,
+            'accrued_days' => 4,
+            'used_days' => 2,
+            'adjusted_days' => 0,
         ]);
 
         $run = PayrollRun::factory()->create([
@@ -611,15 +624,15 @@ class PortalPageTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('portal.payroll.export', [
+            ->post(route('portal.payroll.export'), [
                 'period' => now()->format('Y-m'),
-                'birth_date' => '1995-05-12',
-            ]))
+                'current_password' => 'password',
+            ])
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
     }
 
-    public function test_user_cannot_export_payslip_without_birth_date_verification(): void
+    public function test_user_cannot_export_payslip_without_password_verification(): void
     {
         $user = User::factory()->create([
             'role' => 'user',
@@ -669,12 +682,12 @@ class PortalPageTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->getJson(route('portal.payroll.export', ['period' => now()->format('Y-m')]))
+            ->postJson(route('portal.payroll.export'), ['period' => now()->format('Y-m')])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['birth_date']);
+            ->assertJsonValidationErrors(['current_password']);
     }
 
-    public function test_user_cannot_export_payslip_with_wrong_birth_date(): void
+    public function test_user_cannot_export_payslip_with_wrong_password(): void
     {
         $user = User::factory()->create([
             'role' => 'user',
@@ -724,12 +737,12 @@ class PortalPageTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->getJson(route('portal.payroll.export', [
+            ->postJson(route('portal.payroll.export'), [
                 'period' => now()->format('Y-m'),
-                'birth_date' => '1990-01-01',
-            ]))
+                'current_password' => 'wrong-password',
+            ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['birth_date']);
+            ->assertJsonValidationErrors(['current_password']);
     }
 
     /**

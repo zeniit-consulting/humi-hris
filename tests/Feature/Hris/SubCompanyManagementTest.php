@@ -94,6 +94,7 @@ class SubCompanyManagementTest extends TestCase
                 'hire_date' => now()->toDateString(),
                 'employment_status' => 'active',
                 'employment_type' => 'contract',
+                'contract_duration_months' => 12,
                 'pph21_method' => 'gross',
                 'pph21_rate' => 0,
                 'division_id' => $division->id,

@@ -35,7 +35,8 @@ type MapboxLocationMapProps = {
     autoCenter?: MapCoordinates | null;
 };
 
-const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
+const mapboxAccessToken =
+    import.meta.env.VITE_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
 
 const tileAttribution = '';
 
@@ -145,9 +146,7 @@ export function MapboxLocationMap({
     const initialCenterRef = useRef(center);
     const initialZoomRef = useRef(zoom);
     const [mapError, setMapError] = useState<string | null>(
-        mapboxAccessToken
-            ? null
-            : 'Mapbox access token belum dikonfigurasi.',
+        mapboxAccessToken ? null : 'Mapbox access token belum dikonfigurasi.',
     );
     const circleData = useMemo<GeoJSON.FeatureCollection>(() => {
         return {
@@ -225,11 +224,10 @@ export function MapboxLocationMap({
                 attributionControl: false,
             });
         } catch (error) {
-            setMapError(
-                error instanceof Error
-                    ? error.message
-                    : 'Map gagal dimuat.',
-            );
+            const message =
+                error instanceof Error ? error.message : 'Map gagal dimuat.';
+
+            queueMicrotask(() => setMapError(message));
 
             return;
         }

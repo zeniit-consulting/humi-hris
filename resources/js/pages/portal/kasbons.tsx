@@ -1,5 +1,5 @@
 import { HandCoins, LoaderCircle, Plus, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
     formatCurrency,
@@ -54,7 +54,7 @@ export default function PortalKasbonsPage({ pageTitle }: Props) {
         notes: '',
     });
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             const [portalResponse, kasbonResponse] = await Promise.all([
                 requestApi<PortalSummary>('/portal/api/summary'),
@@ -76,11 +76,11 @@ export default function PortalKasbonsPage({ pageTitle }: Props) {
                     : 'Data kasbon tidak bisa dimuat.',
             );
         }
-    };
+    }, [period]);
 
     useEffect(() => {
         void loadData();
-    }, []);
+    }, [loadData]);
 
     const requestedAmount = Number(form.amount || 0);
     const availableAmount = Number(kasbon?.limit?.available_amount ?? 0);
