@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:181
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:184
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 export const update = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -153,7 +153,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:181
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:184
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 update.url = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +186,7 @@ update.url = (args: { employeeAttendance: number | { id: number } } | [employeeA
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:181
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:184
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 update.put = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -196,7 +196,7 @@ update.put = (args: { employeeAttendance: number | { id: number } } | [employeeA
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:181
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:184
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 const updateForm = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -211,7 +211,7 @@ const updateForm = (args: { employeeAttendance: number | { id: number } } | [emp
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:181
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:184
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 updateForm.put = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -228,7 +228,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:225
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:231
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 export const destroy = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -243,7 +243,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:225
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:231
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 destroy.url = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -276,7 +276,7 @@ destroy.url = (args: { employeeAttendance: number | { id: number } } | [employee
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:225
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:231
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 destroy.delete = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -286,7 +286,7 @@ destroy.delete = (args: { employeeAttendance: number | { id: number } } | [emplo
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:225
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:231
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 const destroyForm = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -301,7 +301,7 @@ const destroyForm = (args: { employeeAttendance: number | { id: number } } | [em
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:225
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:231
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 destroyForm.delete = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\TestCase;
@@ -38,6 +39,69 @@ class EmployeeManagementTest extends TestCase
         $response = $this->actingAs($user)->get(route('hris.employees.index'));
 
         $response->assertOk();
+    }
+
+    public function test_employee_management_page_excludes_resigned_employees(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Karyawan Aktif',
+            'last_name' => null,
+            'employment_status' => 'active',
+            'is_active' => true,
+        ]);
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Karyawan Resign',
+            'last_name' => null,
+            'employment_status' => 'resigned',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.employees.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('employeeList', 'active')
+                ->has('employees.data', 1)
+                ->where('employees.data.0.full_name', 'Karyawan Aktif')
+            );
+    }
+
+    public function test_resigned_employee_page_only_lists_resigned_employees(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Karyawan Aktif',
+            'last_name' => null,
+            'employment_status' => 'active',
+            'is_active' => true,
+        ]);
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Karyawan Resign',
+            'last_name' => null,
+            'employment_status' => 'resigned',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.employees.resigned'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hris/employees/index')
+                ->where('employeeList', 'resigned')
+                ->has('employees.data', 1)
+                ->where('employees.data.0.full_name', 'Karyawan Resign')
+            );
     }
 
     public function test_employee_table_can_be_sorted_by_name_descending(): void
@@ -159,6 +223,7 @@ class EmployeeManagementTest extends TestCase
         $payload = [
             'full_name' => 'Ayu Lestari',
             'birth_place' => 'Makassar',
+            'timezone' => 'Asia/Makassar',
             'birth_date' => '1998-05-20',
             'hire_date' => '2026-03-01',
             'employment_status' => 'active',
@@ -177,12 +242,14 @@ class EmployeeManagementTest extends TestCase
 
         $employee = Employee::query()->where('first_name', 'Ayu Lestari')->firstOrFail();
         $this->assertSame('Makassar', $employee->birth_place);
+        $this->assertSame('Asia/Makassar', $employee->timezone);
 
         $this->actingAs($user)
             ->put(route('hris.employees.update', $employee), [
                 ...$payload,
                 'employee_code' => $employee->employee_code,
                 'birth_place' => 'Gowa',
+                'timezone' => 'Asia/Jakarta',
             ])
             ->assertRedirect()
             ->assertSessionHasNoErrors();
@@ -190,6 +257,7 @@ class EmployeeManagementTest extends TestCase
         $this->assertDatabaseHas('employees', [
             'id' => $employee->id,
             'birth_place' => 'Gowa',
+            'timezone' => 'Asia/Jakarta',
         ]);
     }
 
@@ -1190,6 +1258,176 @@ class EmployeeManagementTest extends TestCase
         $response->assertOk();
         $response->assertDownload('employee_import_template.xlsx');
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $temporaryFile = tmpfile();
+        fwrite($temporaryFile, $response->streamedContent());
+        $temporaryPath = stream_get_meta_data($temporaryFile)['uri'];
+        $spreadsheet = IOFactory::load($temporaryPath);
+        $headers = $spreadsheet->getActiveSheet()->rangeToArray('A1:AF1')[0];
+
+        $this->assertContains('birth_place', $headers);
+
+        $spreadsheet->disconnectWorksheets();
+        fclose($temporaryFile);
+    }
+
+    public function test_employee_export_can_be_limited_to_personal_data(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Export Personal',
+            'last_name' => null,
+            'birth_place' => 'Denpasar',
+            'base_salary' => 7500000,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('hris.employees.export', [
+            'category' => 'personal',
+        ]));
+
+        $response->assertOk();
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('Tempat Lahir', $content);
+        $this->assertStringContainsString('Denpasar', $content);
+        $this->assertStringNotContainsString('Gaji Pokok', $content);
+        $this->assertStringNotContainsString('Status Karyawan', $content);
+    }
+
+    public function test_employee_export_supports_payroll_and_all_categories(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Export Payroll',
+            'last_name' => null,
+            'base_salary' => 7500000,
+        ]);
+        $employee->bankAccounts()->create([
+            'user_id' => $user->id,
+            'bank_name' => 'Bank Uji',
+            'account_number' => '1234567890',
+            'account_holder_name' => 'Export Payroll',
+            'currency' => 'IDR',
+            'fixed_allowance_amount' => 500000,
+            'is_primary' => true,
+        ]);
+        $employee->allowances()->create([
+            'user_id' => $user->id,
+            'name' => 'Transport',
+            'amount' => 250000,
+            'is_active' => true,
+        ]);
+
+        $payrollContent = $this->actingAs($user)
+            ->get(route('hris.employees.export', ['category' => 'payroll']))
+            ->streamedContent();
+
+        $this->assertStringContainsString('Gaji Pokok', $payrollContent);
+        $this->assertStringContainsString('Bank Uji', $payrollContent);
+        $this->assertStringContainsString('Transport: 250000.00', $payrollContent);
+        $this->assertStringNotContainsString('Tempat Lahir', $payrollContent);
+
+        $allContent = $this->actingAs($user)
+            ->get(route('hris.employees.export', ['category' => 'all']))
+            ->streamedContent();
+
+        $this->assertStringContainsString('Tempat Lahir', $allContent);
+        $this->assertStringContainsString('No. KTP', $allContent);
+        $this->assertStringContainsString('Gaji Pokok', $allContent);
+        $this->assertStringContainsString('Status Karyawan', $allContent);
+    }
+
+    public function test_employee_export_rejects_unknown_category(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $this->actingAs($user)
+            ->get(route('hris.employees.export', ['category' => 'unknown']))
+            ->assertSessionHasErrors('category');
+    }
+
+    public function test_employee_export_prefixes_long_numbers_as_spreadsheet_text(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Nomor Panjang',
+            'last_name' => null,
+            'phone' => '081234567890',
+            'emergency_contact_phone' => '089876543210',
+            'family_card_number' => '5103012345678901',
+            'ktp_number' => '5103012345678902',
+            'npwp_number' => '1234567890123456',
+            'bpjs_kesehatan_number' => '0001234567890',
+            'sim_a_number' => '123456789012',
+        ]);
+        $employee->bankAccounts()->create([
+            'user_id' => $user->id,
+            'bank_name' => 'Bank Uji',
+            'account_number' => '0012345678901234',
+            'account_holder_name' => 'Nomor Panjang',
+            'currency' => 'IDR',
+            'is_primary' => true,
+        ]);
+
+        $content = $this->actingAs($user)
+            ->get(route('hris.employees.export', [
+                'category' => 'all',
+                'format' => 'xls',
+            ]))
+            ->streamedContent();
+
+        $this->assertStringContainsString("'081234567890", $content);
+        $this->assertStringContainsString("'5103012345678901", $content);
+        $this->assertStringContainsString("'5103012345678902", $content);
+        $this->assertStringContainsString("'0001234567890", $content);
+        $this->assertStringContainsString("'0012345678901234", $content);
+    }
+
+    public function test_employee_export_can_be_downloaded_as_pdf(): void
+    {
+        $this->withoutVite();
+        $this->travelTo(now()->setDate(2026, 7, 20)->setTime(10, 15));
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Export PDF',
+            'last_name' => null,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('hris.employees.export', [
+            'category' => 'personal',
+            'format' => 'pdf',
+        ]));
+
+        $response->assertOk();
+        $response->assertDownload('employees_personal_20260720_101500.pdf');
+        $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_employee_export_rejects_unknown_format(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $this->actingAs($user)
+            ->get(route('hris.employees.export', [
+                'category' => 'personal',
+                'format' => 'csv',
+            ]))
+            ->assertSessionHasErrors('format');
     }
 
     public function test_admin_can_import_employees_from_xlsx(): void
@@ -1216,6 +1454,7 @@ class EmployeeManagementTest extends TestCase
                 'email' => 'dio@example.com',
                 'phone' => '08123456789',
                 'gender' => 'male',
+                'birth_place' => 'Denpasar',
                 'birth_date' => '1998-05-20',
                 'last_education' => 'S1',
                 'marital_status' => 'single',
@@ -1256,6 +1495,7 @@ class EmployeeManagementTest extends TestCase
             'first_name' => 'Dio Manuaba',
             'last_name' => null,
             'email' => 'dio@example.com',
+            'birth_place' => 'Denpasar',
             'division_id' => $division->id,
             'position_id' => $position->id,
             'base_salary' => '5000000.00',
@@ -1658,6 +1898,7 @@ class EmployeeManagementTest extends TestCase
             'email',
             'phone',
             'gender',
+            'birth_place',
             'birth_date',
             'last_education',
             'marital_status',

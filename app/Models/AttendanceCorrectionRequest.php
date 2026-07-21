@@ -17,6 +17,7 @@ class AttendanceCorrectionRequest extends Model
         'user_id',
         'employee_id',
         'attendance_date',
+        'timezone',
         'shift_id',
         'check_in_at',
         'check_out_at',

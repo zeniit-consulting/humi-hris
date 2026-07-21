@@ -2,12 +2,12 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
     Building2,
+    CalendarClock,
     CalendarDays,
     ChevronDown,
     Clock3,
     Filter,
     ReceiptText,
-    UserX,
     UsersRound,
     WalletCards,
 } from 'lucide-react';
@@ -89,6 +89,12 @@ type AttendanceFocus = {
     late_today_count: number;
     missingClockIns: AttendanceFocusItem[];
     lateToday: AttendanceFocusItem[];
+    items: Array<{
+        id: string;
+        label: string;
+        description: string;
+        href: string;
+    }>;
 };
 
 type RecentRequest = {
@@ -103,6 +109,18 @@ type RecentRequest = {
 
 type RecentRequests = {
     items: RecentRequest[];
+};
+
+type ContractReminders = {
+    total: number;
+    items: Array<{
+        id: number;
+        type: 'Kontrak' | 'Probation';
+        employee_label: string;
+        date_label: string;
+        days_remaining: number;
+        href: string;
+    }>;
 };
 
 type DashboardFilters = {
@@ -191,6 +209,7 @@ export default function Dashboard({
     actionQueue,
     attendanceFocus,
     recentRequests,
+    contractReminders,
     outsourcing,
 }: {
     stats: DashboardStats;
@@ -199,6 +218,7 @@ export default function Dashboard({
     actionQueue: ActionQueue;
     attendanceFocus: AttendanceFocus;
     recentRequests: RecentRequests;
+    contractReminders: ContractReminders;
     outsourcing: OutsourcingSummary;
 }) {
     const [outsourcingOpen, setOutsourcingOpen] = useState(true);
@@ -363,7 +383,7 @@ export default function Dashboard({
                     </Card>
                 </div>
 
-                <div className="grid gap-3 xl:grid-cols-2">
+                <div className="grid gap-3 xl:grid-cols-3">
                     <Card className="gap-0 py-0">
                         <CardHeader className="px-4 py-3">
                             <div className="flex items-start justify-between gap-3">
@@ -376,34 +396,21 @@ export default function Dashboard({
                                 <CalendarDays className="size-5 text-muted-foreground" />
                             </div>
                         </CardHeader>
-                        <CardContent className="grid gap-3 px-4 pb-4 md:grid-cols-2">
-                            <DashboardList
-                                icon={UserX}
-                                title="Belum Clock In"
-                                count={attendanceFocus.missing_clock_ins_count}
-                                empty="Semua karyawan aktif sudah memiliki data absensi."
-                                items={attendanceFocus.missingClockIns.map(
-                                    (item) => ({
-                                        key: String(item.id),
-                                        label: item.label,
-                                        description: 'Belum ada data hari ini',
-                                        href: item.href,
-                                    }),
-                                )}
-                            />
+                        <CardContent className="px-4 pb-4">
                             <DashboardList
                                 icon={Clock3}
-                                title="Telat"
-                                count={attendanceFocus.late_today_count}
-                                empty="Belum ada karyawan telat hari ini."
-                                items={attendanceFocus.lateToday.map(
-                                    (item) => ({
-                                        key: String(item.id),
-                                        label: item.label,
-                                        description: `Clock in ${item.time ?? '-'}`,
-                                        href: item.href,
-                                    }),
-                                )}
+                                title="Perlu Ditindaklanjuti"
+                                count={
+                                    attendanceFocus.missing_clock_ins_count +
+                                    attendanceFocus.late_today_count
+                                }
+                                empty="Tidak ada absensi yang perlu ditindaklanjuti."
+                                items={attendanceFocus.items.map((item) => ({
+                                    key: item.id,
+                                    label: item.label,
+                                    description: item.description,
+                                    href: item.href,
+                                }))}
                             />
                         </CardContent>
                     </Card>
@@ -457,6 +464,36 @@ export default function Dashboard({
                                     ))}
                                 </div>
                             )}
+                        </CardContent>
+                    </Card>
+
+                    <Card className="gap-0 py-0">
+                        <CardHeader className="px-4 py-3">
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <CardTitle>
+                                        Reminder Kontrak & Probation
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Berakhir dalam 30 hari ke depan.
+                                    </CardDescription>
+                                </div>
+                                <CalendarClock className="size-5 text-muted-foreground" />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="px-4 pb-4">
+                            <DashboardList
+                                icon={CalendarClock}
+                                title="Akan Berakhir"
+                                count={contractReminders.total}
+                                empty="Tidak ada kontrak atau probation yang segera berakhir."
+                                items={contractReminders.items.map((item) => ({
+                                    key: `${item.type}-${item.id}`,
+                                    label: item.employee_label,
+                                    description: `${item.type} · ${item.date_label} · ${item.days_remaining} hari`,
+                                    href: item.href,
+                                }))}
+                            />
                         </CardContent>
                     </Card>
                 </div>

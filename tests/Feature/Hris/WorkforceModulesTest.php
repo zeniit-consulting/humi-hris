@@ -31,7 +31,7 @@ class WorkforceModulesTest extends TestCase
         $this->actingAs($user)->get(route('hris.overtimes.index'))->assertOk();
     }
 
-    public function test_attendance_page_returns_iso_timestamps_for_device_timezone_display(): void
+    public function test_attendance_page_returns_source_timezone_with_iso_timestamps(): void
     {
         $this->withoutVite();
 
@@ -47,6 +47,7 @@ class WorkforceModulesTest extends TestCase
             'user_id' => $user->id,
             'employee_id' => $employee->id,
             'attendance_date' => '2026-06-08',
+            'timezone' => 'Asia/Jakarta',
             'check_in_at' => '2026-06-08 01:30:00',
             'check_out_at' => '2026-06-08 10:00:00',
         ]);
@@ -57,6 +58,7 @@ class WorkforceModulesTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('hris/attendances/index')
                 ->where('attendances.data.0.id', $attendance->id)
+                ->where('attendances.data.0.timezone', 'Asia/Jakarta')
                 ->where('attendances.data.0.check_in_at', '2026-06-08T01:30:00+00:00')
                 ->where('attendances.data.0.check_out_at', '2026-06-08T10:00:00+00:00')
             );
@@ -158,6 +160,7 @@ class WorkforceModulesTest extends TestCase
 
         $this->assertSame('2026-06-08 01:30:00', $attendance->check_in_at?->format('Y-m-d H:i:s'));
         $this->assertSame('2026-06-08 10:00:00', $attendance->check_out_at?->format('Y-m-d H:i:s'));
+        $this->assertSame('Asia/Makassar', $attendance->timezone);
     }
 
     public function test_leave_balances_page_can_be_opened()
@@ -432,7 +435,6 @@ class WorkforceModulesTest extends TestCase
         $this->seedWorkShifts($user);
 
         $this->actingAs($user)->post(route('hris.schedules.roster'), [
-            'employee_id' => $firstEmployee->id,
             'apply_scope' => 'selected',
             'target_employee_ids' => [$firstEmployee->id, $secondEmployee->id],
             'start_date' => '2026-02-01',
@@ -488,7 +490,6 @@ class WorkforceModulesTest extends TestCase
         $this->seedWorkShifts($otherUser);
 
         $this->actingAs($user)->post(route('hris.schedules.roster'), [
-            'employee_id' => $firstEmployee->id,
             'apply_scope' => 'all',
             'start_date' => '2026-02-01',
             'end_date' => '2026-02-01',

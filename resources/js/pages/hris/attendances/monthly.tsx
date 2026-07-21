@@ -20,6 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
+import { formatAttendanceTime } from '@/lib/attendance-timezone';
 import { index as attendancesIndex } from '@/routes/hris/attendances';
 import type { BreadcrumbItem } from '@/types';
 
@@ -40,6 +41,7 @@ type Period = {
 type AttendanceRecord = {
     id: number;
     attendance_date: string;
+    timezone: string | null;
     shift_name: string;
     status: string;
     check_in_at: string | null;
@@ -69,24 +71,6 @@ const statusLabelMap: Record<string, string> = {
     on_leave: 'Cuti',
     absent: 'Absen',
 };
-
-function formatDeviceTime(value: string | null) {
-    if (!value) {
-        return '-';
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return '-';
-    }
-
-    return new Intl.DateTimeFormat('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    }).format(date);
-}
 
 function formatDate(value: string) {
     const date = new Date(`${value}T00:00:00`);
@@ -260,9 +244,7 @@ export default function MonthlyAttendancePage() {
                                         <th className="px-3 py-2">Shift</th>
                                         <th className="px-3 py-2">Status</th>
                                         <th className="px-3 py-2">Check-in</th>
-                                        <th className="px-3 py-2">
-                                            Check-out
-                                        </th>
+                                        <th className="px-3 py-2">Check-out</th>
                                         <th className="px-3 py-2">Catatan</th>
                                     </tr>
                                 </thead>
@@ -279,10 +261,7 @@ export default function MonthlyAttendancePage() {
                                         </tr>
                                     )}
                                     {attendances.map((row) => (
-                                        <tr
-                                            key={row.id}
-                                            className="border-b"
-                                        >
+                                        <tr key={row.id} className="border-b">
                                             <td className="px-3 py-3">
                                                 {formatDate(
                                                     row.attendance_date,
@@ -296,7 +275,8 @@ export default function MonthlyAttendancePage() {
                                                     variant={
                                                         row.status === 'late'
                                                             ? 'destructive'
-                                                            : row.status === 'present'
+                                                            : row.status ===
+                                                                'present'
                                                               ? 'default'
                                                               : 'secondary'
                                                     }
@@ -309,14 +289,16 @@ export default function MonthlyAttendancePage() {
                                             <td className="px-3 py-3">
                                                 <span className="inline-flex items-center gap-1.5">
                                                     <Clock3 className="size-3.5 text-muted-foreground" />
-                                                    {formatDeviceTime(
+                                                    {formatAttendanceTime(
                                                         row.check_in_at,
+                                                        row.timezone,
                                                     )}
                                                 </span>
                                             </td>
                                             <td className="px-3 py-3">
-                                                {formatDeviceTime(
+                                                {formatAttendanceTime(
                                                     row.check_out_at,
+                                                    row.timezone,
                                                 )}
                                             </td>
                                             <td className="max-w-[280px] px-3 py-3">

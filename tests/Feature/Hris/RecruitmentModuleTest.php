@@ -104,6 +104,40 @@ class RecruitmentModuleTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_update_candidate_stage_with_minimal_tracker_payload(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $division = Division::factory()->create(['user_id' => $user->id]);
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'level' => '3',
+        ]);
+        $vacancy = JobVacancy::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+        ]);
+        $application = JobApplication::factory()->create([
+            'user_id' => $user->id,
+            'job_vacancy_id' => $vacancy->id,
+            'stage' => 'applied',
+            'interviewed_at' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->put(route('hris.recruitment.applications.update', $application), [
+                'stage' => 'interviewed',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $application->refresh();
+
+        $this->assertSame('interviewed', $application->stage);
+        $this->assertNotNull($application->interviewed_at);
+    }
+
     public function test_admin_can_generate_offer_letter_and_initial_contract_for_candidate()
     {
         $user = User::factory()->create([

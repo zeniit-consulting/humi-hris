@@ -1166,6 +1166,7 @@ class MobileApiTest extends TestCase
             'division_id' => $division->id,
             'position_id' => $position->id,
             'email' => 'timezone-staff@example.com',
+            'timezone' => 'Asia/Jakarta',
         ]);
 
         Sanctum::actingAs($subUser, ['mobile']);
@@ -1188,11 +1189,61 @@ class MobileApiTest extends TestCase
             '2026-05-19 00:00:00',
             $attendance->check_in_at?->format('Y-m-d H:i:s'),
         );
+        $this->assertSame('Asia/Makassar', $attendance->timezone);
 
         $this->withHeader('X-Timezone', 'Asia/Jayapura')
             ->getJson('/api/mobile/v1/attendances?date=2026-05-19')
             ->assertOk()
-            ->assertJsonPath('data.items.0.check_in_at', '2026-05-19T09:00:00+09:00');
+            ->assertJsonPath('data.items.0.timezone', 'Asia/Makassar')
+            ->assertJsonPath('data.items.0.check_in_at', '2026-05-19T08:00:00+08:00');
+    }
+
+    public function test_self_service_attendance_falls_back_to_employee_timezone(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $subUser = User::factory()->create([
+            'email' => 'fallback-timezone@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create(['user_id' => $owner->id]);
+        $position = Position::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'level' => '3',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'fallback-timezone@example.com',
+            'timezone' => 'Asia/Jakarta',
+        ]);
+
+        Sanctum::actingAs($subUser, ['mobile']);
+
+        $this->postJson('/api/mobile/v1/attendances', [
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-05-20',
+            'status' => 'present',
+            'check_in_at' => '2026-05-20T08:00:00',
+            'check_in_latitude' => -6.2,
+            'check_in_longitude' => 106.81667,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.timezone', 'Asia/Jakarta')
+            ->assertJsonPath('data.check_in_at', '2026-05-20T08:00:00+07:00');
+
+        $attendance = EmployeeAttendance::query()->firstOrFail();
+
+        $this->assertSame('Asia/Jakarta', $attendance->timezone);
+        $this->assertSame('2026-05-20 01:00:00', $attendance->check_in_at?->format('Y-m-d H:i:s'));
     }
 
     public function test_clock_out_is_blocked_after_three_days(): void

@@ -81,7 +81,7 @@ approve.form = approveForm
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:141
+* @see app/Http/Controllers/Client/ApprovalController.php:142
 * @route '/client/approvals/attendance/{attendanceRequest}/reject'
 */
 export const reject = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -96,7 +96,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:141
+* @see app/Http/Controllers/Client/ApprovalController.php:142
 * @route '/client/approvals/attendance/{attendanceRequest}/reject'
 */
 reject.url = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -129,7 +129,7 @@ reject.url = (args: { attendanceRequest: number | { id: number } } | [attendance
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:141
+* @see app/Http/Controllers/Client/ApprovalController.php:142
 * @route '/client/approvals/attendance/{attendanceRequest}/reject'
 */
 reject.post = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -139,7 +139,7 @@ reject.post = (args: { attendanceRequest: number | { id: number } } | [attendanc
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:141
+* @see app/Http/Controllers/Client/ApprovalController.php:142
 * @route '/client/approvals/attendance/{attendanceRequest}/reject'
 */
 const rejectForm = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -149,7 +149,7 @@ const rejectForm = (args: { attendanceRequest: number | { id: number } } | [atte
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:141
+* @see app/Http/Controllers/Client/ApprovalController.php:142
 * @route '/client/approvals/attendance/{attendanceRequest}/reject'
 */
 rejectForm.post = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

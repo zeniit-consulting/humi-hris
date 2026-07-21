@@ -26,8 +26,8 @@ use App\Http\Controllers\Hris\PayrollController;
 use App\Http\Controllers\Hris\PerformanceController;
 use App\Http\Controllers\Hris\PositionController;
 use App\Http\Controllers\Hris\RecruitmentController;
-use App\Http\Controllers\Hris\ReportController;
 use App\Http\Controllers\Hris\ReimbursementController;
+use App\Http\Controllers\Hris\ReportController;
 use App\Http\Controllers\Hris\ScheduleController;
 use App\Http\Controllers\Hris\ShiftChangeApprovalController;
 use App\Http\Controllers\Hris\SubCompanyController;
@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access', 'subscription.active'])->prefix('hris')->name('hris.')->group(function () {
     Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('employees/resigned', [EmployeeController::class, 'resigned'])->name('employees.resigned');
     Route::get('sub-companies', [SubCompanyController::class, 'index'])->name('sub-companies.index');
     Route::post('sub-companies', [SubCompanyController::class, 'store'])->name('sub-companies.store');
     Route::put('sub-companies/{subCompany}', [SubCompanyController::class, 'update'])->name('sub-companies.update');

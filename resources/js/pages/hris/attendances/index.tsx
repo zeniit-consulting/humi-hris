@@ -41,6 +41,12 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import {
+    browserTimezone,
+    formatAttendanceTime,
+    timezoneLabel,
+    toAttendanceDateTimeInput,
+} from '@/lib/attendance-timezone';
 import { cn } from '@/lib/utils';
 import { index as attendancesIndex } from '@/routes/hris/attendances';
 import type { BreadcrumbItem } from '@/types';
@@ -69,6 +75,7 @@ type AttendanceRecord = {
     employee_id: number;
     employee_label: string;
     attendance_date: string;
+    timezone: string | null;
     shift_name: string;
     status: string;
     late_minutes: number | null;
@@ -139,48 +146,6 @@ const defaultAttendanceForm: AttendanceFormData = {
     notes: '',
 };
 
-function browserTimezone() {
-    if (typeof Intl === 'undefined') {
-        return 'UTC';
-    }
-
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-}
-
-function formatDeviceTime(value: string | null) {
-    if (!value) {
-        return '-';
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return '-';
-    }
-
-    return new Intl.DateTimeFormat('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    }).format(date);
-}
-
-function toDeviceDateTimeInput(value: string | null) {
-    if (!value) {
-        return '';
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return '';
-    }
-
-    const offsetMs = date.getTimezoneOffset() * 60_000;
-
-    return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-}
-
 function monthlyAttendanceUrl(employeeId: number, period: string) {
     return `/hris/attendances/employees/${employeeId}/monthly?period=${period}`;
 }
@@ -226,9 +191,15 @@ export default function AttendancePage() {
             employee_id: String(record.employee_id),
             attendance_date: record.attendance_date,
             status: record.status,
-            check_in_at: toDeviceDateTimeInput(record.check_in_at),
-            check_out_at: toDeviceDateTimeInput(record.check_out_at),
-            timezone: browserTimezone(),
+            check_in_at: toAttendanceDateTimeInput(
+                record.check_in_at,
+                record.timezone,
+            ),
+            check_out_at: toAttendanceDateTimeInput(
+                record.check_out_at,
+                record.timezone,
+            ),
+            timezone: record.timezone ?? browserTimezone(),
             notes: record.notes ?? '',
         });
         setDialogOpen(true);
@@ -509,7 +480,9 @@ export default function AttendancePage() {
                                 <thead>
                                     <tr className="border-b text-left">
                                         <th className="px-3 py-2">Karyawan</th>
-                                        <th className="px-3 py-2">Nama Shift</th>
+                                        <th className="px-3 py-2">
+                                            Nama Shift
+                                        </th>
                                         <th className="px-3 py-2">Status</th>
                                         <th className="px-3 py-2">
                                             <Button
@@ -573,7 +546,8 @@ export default function AttendancePage() {
                                                     variant={
                                                         row.status === 'late'
                                                             ? 'destructive'
-                                                            : row.status === 'present'
+                                                            : row.status ===
+                                                                'present'
                                                               ? 'default'
                                                               : 'secondary'
                                                     }
@@ -595,13 +569,15 @@ export default function AttendancePage() {
                                                 ) : null}
                                             </td>
                                             <td className="px-3 py-3">
-                                                {formatDeviceTime(
+                                                {formatAttendanceTime(
                                                     row.check_in_at,
+                                                    row.timezone,
                                                 )}
                                             </td>
                                             <td className="px-3 py-3">
-                                                {formatDeviceTime(
+                                                {formatAttendanceTime(
                                                     row.check_out_at,
+                                                    row.timezone,
                                                 )}
                                             </td>
                                             <td className="px-3 py-3">
@@ -652,7 +628,9 @@ export default function AttendancePage() {
                                     key={`${link.label}-${index}`}
                                     asChild={link.url !== null}
                                     size="sm"
-                                    variant={link.active ? 'default' : 'outline'}
+                                    variant={
+                                        link.active ? 'default' : 'outline'
+                                    }
                                     disabled={link.url === null}
                                 >
                                     {link.url ? (
@@ -714,11 +692,23 @@ export default function AttendancePage() {
                             </p>
                             <p>
                                 Check-in:{' '}
-                                {formatDeviceTime(detailRecord.check_in_at)}
+                                {formatAttendanceTime(
+                                    detailRecord.check_in_at,
+                                    detailRecord.timezone,
+                                )}
                             </p>
                             <p>
                                 Check-out:{' '}
-                                {formatDeviceTime(detailRecord.check_out_at)}
+                                {formatAttendanceTime(
+                                    detailRecord.check_out_at,
+                                    detailRecord.timezone,
+                                )}
+                            </p>
+                            <p>
+                                Zona waktu:{' '}
+                                {detailRecord.timezone
+                                    ? `${detailRecord.timezone} (${timezoneLabel(detailRecord.timezone)})`
+                                    : `Mengikuti perangkat admin (${timezoneLabel(null)})`}
                             </p>
                             <p>Catatan: {detailRecord.notes ?? '-'}</p>
                             <div className="pt-2">

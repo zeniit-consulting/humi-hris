@@ -153,6 +153,7 @@ class StoreEmployeeRequest extends FormRequest
             'attendance_location_ids' => ['nullable', 'array', 'max:20'],
             'attendance_location_ids.*' => ['string', 'max:100'],
             'is_wfa' => ['sometimes', 'boolean'],
+            'timezone' => ['nullable', Rule::in(array_keys(Employee::TIMEZONES))],
             'position_id' => [
                 'required',
                 'integer',

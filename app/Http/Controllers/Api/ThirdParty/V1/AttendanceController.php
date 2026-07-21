@@ -46,6 +46,7 @@ class AttendanceController extends Controller
             'id' => $attendance->id,
             'employee' => $attendance->employee ? $this->employeeSummary($attendance->employee) : null,
             'attendance_date' => $attendance->attendance_date?->format('Y-m-d'),
+            'timezone' => $attendance->timezone,
             'status' => $attendance->status,
             'check_in_at' => $attendance->check_in_at?->toISOString(),
             'check_out_at' => $attendance->check_out_at?->toISOString(),

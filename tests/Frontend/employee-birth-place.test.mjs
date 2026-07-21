@@ -20,3 +20,10 @@ test('employee form places birth place before birth date', () => {
     assert.match(source, /employeeForm\.data\.birth_place/);
     assert.match(source, /employeeForm\.errors\.birth_place/);
 });
+
+test('employee address fields use textareas', () => {
+    assert.match(source, /<textarea\s+id="address"/);
+    assert.match(source, /<textarea\s+id="domicile_address"/);
+    assert.doesNotMatch(source, /<Input\s+id="address"/);
+    assert.doesNotMatch(source, /<Input\s+id="domicile_address"/);
+});

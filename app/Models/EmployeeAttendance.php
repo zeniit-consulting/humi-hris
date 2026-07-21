@@ -22,6 +22,7 @@ class EmployeeAttendance extends Model
         'employee_id',
         'shift_id',
         'attendance_date',
+        'timezone',
         'status',
         'late_minutes',
         'late_level',

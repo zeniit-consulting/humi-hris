@@ -1249,36 +1249,40 @@ export default function SchedulePage() {
                             />
                         </div>
 
-                        <div className="grid gap-2 md:col-span-2">
-                            <Label htmlFor="roster_employee">Karyawan</Label>
-                            <SearchableSelect
-                                id="roster_employee"
-                                value={
-                                    rosterForm.data.employee_id === ''
-                                        ? '__none'
-                                        : rosterForm.data.employee_id
-                                }
-                                onValueChange={(value) =>
-                                    rosterForm.setData(
-                                        'employee_id',
-                                        value === '__none' ? '' : value,
-                                    )
-                                }
-                                placeholder="Pilih karyawan"
-                                searchPlaceholder="Cari karyawan..."
-                                options={[
-                                    { value: '__none', label: '-' },
-                                    ...employees.map((employee) => ({
-                                        value: String(employee.id),
-                                        label: employee.label,
-                                    })),
-                                ]}
-                                className="w-full"
-                            />
-                            <InputError
-                                message={rosterForm.errors.employee_id}
-                            />
-                        </div>
+                        {rosterForm.data.apply_scope === 'single' ? (
+                            <div className="grid gap-2 md:col-span-2">
+                                <Label htmlFor="roster_employee">
+                                    Karyawan
+                                </Label>
+                                <SearchableSelect
+                                    id="roster_employee"
+                                    value={
+                                        rosterForm.data.employee_id === ''
+                                            ? '__none'
+                                            : rosterForm.data.employee_id
+                                    }
+                                    onValueChange={(value) =>
+                                        rosterForm.setData(
+                                            'employee_id',
+                                            value === '__none' ? '' : value,
+                                        )
+                                    }
+                                    placeholder="Pilih karyawan"
+                                    searchPlaceholder="Cari karyawan..."
+                                    options={[
+                                        { value: '__none', label: '-' },
+                                        ...employees.map((employee) => ({
+                                            value: String(employee.id),
+                                            label: employee.label,
+                                        })),
+                                    ]}
+                                    className="w-full"
+                                />
+                                <InputError
+                                    message={rosterForm.errors.employee_id}
+                                />
+                            </div>
+                        ) : null}
 
                         {rosterForm.data.apply_scope === 'selected' ? (
                             <div className="grid gap-2 md:col-span-2">

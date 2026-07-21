@@ -550,13 +550,15 @@ class PortalPageTest extends TestCase
 
         $this->assertSame('2026-05-19 01:30:00', $attendanceRequest->check_in_at?->format('Y-m-d H:i:s'));
         $this->assertSame('2026-05-19 10:00:00', $attendanceRequest->check_out_at?->format('Y-m-d H:i:s'));
+        $this->assertSame('Asia/Makassar', $attendanceRequest->timezone);
 
         $this->actingAs($user)
             ->withHeader('X-Timezone', 'Asia/Jayapura')
             ->getJson(route('portal.api.attendance-requests.index'))
             ->assertOk()
-            ->assertJsonPath('data.items.0.check_in_at', '2026-05-19T10:30:00+09:00')
-            ->assertJsonPath('data.items.0.check_out_at', '2026-05-19T19:00:00+09:00');
+            ->assertJsonPath('data.items.0.timezone', 'Asia/Makassar')
+            ->assertJsonPath('data.items.0.check_in_at', '2026-05-19T09:30:00+08:00')
+            ->assertJsonPath('data.items.0.check_out_at', '2026-05-19T18:00:00+08:00');
     }
 
     public function test_user_can_export_own_payslip_pdf(): void

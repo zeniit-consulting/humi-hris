@@ -259,10 +259,10 @@ const vacancyStatusLabels: Record<string, string> = {
 };
 
 const stageLabels: Record<string, string> = {
-    applied: 'Applied',
+    applied: 'Data Masuk',
     screening: 'Screening',
-    interview_scheduled: 'Interview Dijadwalkan',
-    interviewed: 'Sudah Interview',
+    interview_scheduled: 'Jadwal Interview',
+    interviewed: 'Diinterview',
     offered: 'Offering',
     hired: 'Diterima',
     rejected: 'Ditolak',
@@ -391,6 +391,9 @@ export default function RecruitmentPage() {
         useState<Application | null>(null);
     const [detailApplication, setDetailApplication] =
         useState<Application | null>(null);
+    const [updatingApplicationId, setUpdatingApplicationId] = useState<
+        number | null
+    >(null);
 
     const vacancyForm = useForm<VacancyFormData>(defaultVacancyForm);
     const applicationForm = useForm<ApplicationFormData>(
@@ -456,11 +459,30 @@ export default function RecruitmentPage() {
             expected_salary: normalizeDigitInput(
                 application.expected_salary ?? '',
             ),
-            offered_salary: normalizeDigitInput(application.offered_salary ?? ''),
+            offered_salary: normalizeDigitInput(
+                application.offered_salary ?? '',
+            ),
             proposed_start_date: application.proposed_start_date ?? '',
             employment_type: application.employment_type ?? '',
         });
         setApplicationDialogOpen(true);
+    };
+
+    const updateCandidateStage = (application: Application, stage: string) => {
+        if (stage === application.stage || updatingApplicationId !== null) {
+            return;
+        }
+
+        setUpdatingApplicationId(application.id);
+        router.put(
+            `/hris/recruitment/applications/${application.id}`,
+            { stage },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => setUpdatingApplicationId(null),
+            },
+        );
     };
 
     const submitVacancyForm = (event: FormEvent<HTMLFormElement>) => {
@@ -549,9 +571,11 @@ export default function RecruitmentPage() {
     };
 
     const { subscription } = usePage().props;
-    const isLocked = (subscription as any)?.locked_features?.includes('recruitment') ?? false;
+    const isLocked =
+        (subscription as any)?.locked_features?.includes('recruitment') ??
+        false;
 
-        const deleteVacancy = (vacancy: Vacancy) => {
+    const deleteVacancy = (vacancy: Vacancy) => {
         if (
             !window.confirm(
                 `Hapus lowongan "${vacancy.title}" beserta semua lamaran kandidat?`,
@@ -578,7 +602,10 @@ export default function RecruitmentPage() {
             <Head title="Rekrutmen" />
 
             {isLocked && (
-                <LockedFeatureBanner featureName="Rekrutmen" planRequired="plus" />
+                <LockedFeatureBanner
+                    featureName="Rekrutmen"
+                    planRequired="plus"
+                />
             )}
 
             <div className="space-y-4 p-4">
@@ -1075,8 +1102,8 @@ export default function RecruitmentPage() {
                         <div>
                             <CardTitle>Tracker Kandidat</CardTitle>
                             <CardDescription>
-                                Tandai kandidat sudah interview atau belum, lalu
-                                generate offering letter dan kontrak awal.
+                                Perbarui status kandidat dari data masuk hingga
+                                diterima, lalu kelola dokumen rekrutmen.
                             </CardDescription>
                         </div>
                         <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
@@ -1096,7 +1123,7 @@ export default function RecruitmentPage() {
                                             Lowongan
                                         </th>
                                         <th className="px-3 py-3 font-medium">
-                                            Stage
+                                            Status Kandidat
                                         </th>
                                         <th className="px-3 py-3 font-medium">
                                             Interview
@@ -1157,15 +1184,55 @@ export default function RecruitmentPage() {
                                                     </p>
                                                 </td>
                                                 <td className="px-3 py-3">
-                                                    <Badge
-                                                        className={statusBadgeClass(
-                                                            application.stage,
-                                                        )}
-                                                    >
-                                                        {stageLabels[
+                                                    <Select
+                                                        value={
                                                             application.stage
-                                                        ] ?? application.stage}
-                                                    </Badge>
+                                                        }
+                                                        disabled={
+                                                            updatingApplicationId !==
+                                                            null
+                                                        }
+                                                        onValueChange={(
+                                                            stage,
+                                                        ) =>
+                                                            updateCandidateStage(
+                                                                application,
+                                                                stage,
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger
+                                                            aria-label={`Update status ${application.full_name}`}
+                                                            className={`h-8 w-[190px] ${statusBadgeClass(application.stage)}`}
+                                                        >
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {options.application_stages.map(
+                                                                (stage) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            stage
+                                                                        }
+                                                                        value={
+                                                                            stage
+                                                                        }
+                                                                    >
+                                                                        {stageLabels[
+                                                                            stage
+                                                                        ] ??
+                                                                            stage}
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {updatingApplicationId ===
+                                                    application.id ? (
+                                                        <p className="mt-1 text-xs text-slate-500">
+                                                            Menyimpan...
+                                                        </p>
+                                                    ) : null}
                                                 </td>
                                                 <td className="px-3 py-3 text-slate-600">
                                                     <p>
@@ -1761,7 +1828,9 @@ export default function RecruitmentPage() {
                             </p>
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="stage">Stage</Label>
+                                    <Label htmlFor="stage">
+                                        Status Kandidat
+                                    </Label>
                                     <Select
                                         value={applicationForm.data.stage}
                                         onValueChange={(value) =>
@@ -1900,12 +1969,10 @@ export default function RecruitmentPage() {
                                         id="expected_salary"
                                         type="text"
                                         inputMode="numeric"
-                                        value={
-                                            formatThousandDigits(
-                                                applicationForm.data
-                                                    .expected_salary,
-                                            )
-                                        }
+                                        value={formatThousandDigits(
+                                            applicationForm.data
+                                                .expected_salary,
+                                        )}
                                         onChange={(event) =>
                                             applicationForm.setData(
                                                 'expected_salary',
@@ -1932,12 +1999,9 @@ export default function RecruitmentPage() {
                                         id="offered_salary"
                                         type="text"
                                         inputMode="numeric"
-                                        value={
-                                            formatThousandDigits(
-                                                applicationForm.data
-                                                    .offered_salary,
-                                            )
-                                        }
+                                        value={formatThousandDigits(
+                                            applicationForm.data.offered_salary,
+                                        )}
                                         onChange={(event) =>
                                             applicationForm.setData(
                                                 'offered_salary',

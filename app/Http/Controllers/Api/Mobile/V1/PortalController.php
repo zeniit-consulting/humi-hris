@@ -32,11 +32,11 @@ class PortalController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
-        $timezone = $this->deviceTimezone($request);
+        $employee = $this->resolveSelfServiceEmployee($user);
+        $timezone = $this->deviceTimezone($request, $employee?->timezone);
 
         $today = Carbon::today($timezone);
         $period = $today->format('Y-m');
-        $employee = $this->resolveSelfServiceEmployee($user);
 
         $todayAttendance = null;
         $openAttendance = null;
@@ -396,6 +396,8 @@ class PortalController extends Controller
             ])->values(),
             'attendance_policy' => [
                 'mode' => $employee?->is_wfa ? 'wfa' : 'onsite',
+                'employee_timezone' => $employee?->timezone,
+                'active_timezone' => $timezone,
                 'radius_meters' => (int) ($companySetting?->attendance_radius_meters ?? 100),
                 'primary_location' => $companySetting?->location_latitude !== null && $companySetting?->location_longitude !== null ? [
                     'name' => $companySetting->location_name ?: 'Lokasi utama',
@@ -458,12 +460,16 @@ class PortalController extends Controller
         ];
     }
 
-    private function deviceTimezone(Request $request): string
+    private function deviceTimezone(Request $request, ?string $fallback = null): string
     {
-        $timezone = (string) $request->header('X-Timezone', config('app.timezone'));
+        $timezone = (string) $request->header('X-Timezone', '');
 
-        return in_array($timezone, timezone_identifiers_list(), true)
-            ? $timezone
+        if (in_array($timezone, timezone_identifiers_list(), true)) {
+            return $timezone;
+        }
+
+        return $fallback !== null && in_array($fallback, timezone_identifiers_list(), true)
+            ? $fallback
             : config('app.timezone');
     }
 

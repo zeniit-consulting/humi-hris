@@ -120,6 +120,7 @@ class ApprovalController extends Controller
             $attendance->fill([
                 'user_id' => $request->user()->accountOwnerId(),
                 'shift_id' => $attendanceRequest->shift_id ?? $attendance->shift_id,
+                'timezone' => $attendanceRequest->timezone ?? $attendance->timezone,
                 'status' => 'present',
                 'check_in_at' => $attendanceRequest->check_in_at ?? $attendance->check_in_at,
                 'check_out_at' => $attendanceRequest->check_out_at ?? $attendance->check_out_at,

@@ -162,7 +162,7 @@ approveAttendance.form = approveAttendanceForm
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectAttendance
-* @see app/Http/Controllers/Client/ApprovalController.php:141
+* @see app/Http/Controllers/Client/ApprovalController.php:142
 * @route '/client/approvals/attendance/{attendanceRequest}/reject'
 */
 export const rejectAttendance = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -177,7 +177,7 @@ rejectAttendance.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectAttendance
-* @see app/Http/Controllers/Client/ApprovalController.php:141
+* @see app/Http/Controllers/Client/ApprovalController.php:142
 * @route '/client/approvals/attendance/{attendanceRequest}/reject'
 */
 rejectAttendance.url = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -210,7 +210,7 @@ rejectAttendance.url = (args: { attendanceRequest: number | { id: number } } | [
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectAttendance
-* @see app/Http/Controllers/Client/ApprovalController.php:141
+* @see app/Http/Controllers/Client/ApprovalController.php:142
 * @route '/client/approvals/attendance/{attendanceRequest}/reject'
 */
 rejectAttendance.post = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -220,7 +220,7 @@ rejectAttendance.post = (args: { attendanceRequest: number | { id: number } } | 
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectAttendance
-* @see app/Http/Controllers/Client/ApprovalController.php:141
+* @see app/Http/Controllers/Client/ApprovalController.php:142
 * @route '/client/approvals/attendance/{attendanceRequest}/reject'
 */
 const rejectAttendanceForm = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -230,7 +230,7 @@ const rejectAttendanceForm = (args: { attendanceRequest: number | { id: number }
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectAttendance
-* @see app/Http/Controllers/Client/ApprovalController.php:141
+* @see app/Http/Controllers/Client/ApprovalController.php:142
 * @route '/client/approvals/attendance/{attendanceRequest}/reject'
 */
 rejectAttendanceForm.post = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -242,7 +242,7 @@ rejectAttendance.form = rejectAttendanceForm
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveLeave
-* @see app/Http/Controllers/Client/ApprovalController.php:149
+* @see app/Http/Controllers/Client/ApprovalController.php:150
 * @route '/client/approvals/leaves/{leave}/approve'
 */
 export const approveLeave = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -257,7 +257,7 @@ approveLeave.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveLeave
-* @see app/Http/Controllers/Client/ApprovalController.php:149
+* @see app/Http/Controllers/Client/ApprovalController.php:150
 * @route '/client/approvals/leaves/{leave}/approve'
 */
 approveLeave.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -290,7 +290,7 @@ approveLeave.url = (args: { leave: number | { id: number } } | [leave: number | 
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveLeave
-* @see app/Http/Controllers/Client/ApprovalController.php:149
+* @see app/Http/Controllers/Client/ApprovalController.php:150
 * @route '/client/approvals/leaves/{leave}/approve'
 */
 approveLeave.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -300,7 +300,7 @@ approveLeave.post = (args: { leave: number | { id: number } } | [leave: number |
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveLeave
-* @see app/Http/Controllers/Client/ApprovalController.php:149
+* @see app/Http/Controllers/Client/ApprovalController.php:150
 * @route '/client/approvals/leaves/{leave}/approve'
 */
 const approveLeaveForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -310,7 +310,7 @@ const approveLeaveForm = (args: { leave: number | { id: number } } | [leave: num
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveLeave
-* @see app/Http/Controllers/Client/ApprovalController.php:149
+* @see app/Http/Controllers/Client/ApprovalController.php:150
 * @route '/client/approvals/leaves/{leave}/approve'
 */
 approveLeaveForm.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -322,7 +322,7 @@ approveLeave.form = approveLeaveForm
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectLeave
-* @see app/Http/Controllers/Client/ApprovalController.php:166
+* @see app/Http/Controllers/Client/ApprovalController.php:167
 * @route '/client/approvals/leaves/{leave}/reject'
 */
 export const rejectLeave = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -337,7 +337,7 @@ rejectLeave.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectLeave
-* @see app/Http/Controllers/Client/ApprovalController.php:166
+* @see app/Http/Controllers/Client/ApprovalController.php:167
 * @route '/client/approvals/leaves/{leave}/reject'
 */
 rejectLeave.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -370,7 +370,7 @@ rejectLeave.url = (args: { leave: number | { id: number } } | [leave: number | {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectLeave
-* @see app/Http/Controllers/Client/ApprovalController.php:166
+* @see app/Http/Controllers/Client/ApprovalController.php:167
 * @route '/client/approvals/leaves/{leave}/reject'
 */
 rejectLeave.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -380,7 +380,7 @@ rejectLeave.post = (args: { leave: number | { id: number } } | [leave: number | 
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectLeave
-* @see app/Http/Controllers/Client/ApprovalController.php:166
+* @see app/Http/Controllers/Client/ApprovalController.php:167
 * @route '/client/approvals/leaves/{leave}/reject'
 */
 const rejectLeaveForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -390,7 +390,7 @@ const rejectLeaveForm = (args: { leave: number | { id: number } } | [leave: numb
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectLeave
-* @see app/Http/Controllers/Client/ApprovalController.php:166
+* @see app/Http/Controllers/Client/ApprovalController.php:167
 * @route '/client/approvals/leaves/{leave}/reject'
 */
 rejectLeaveForm.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -402,7 +402,7 @@ rejectLeave.form = rejectLeaveForm
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveOvertime
-* @see app/Http/Controllers/Client/ApprovalController.php:178
+* @see app/Http/Controllers/Client/ApprovalController.php:179
 * @route '/client/approvals/overtimes/{overtime}/approve'
 */
 export const approveOvertime = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -417,7 +417,7 @@ approveOvertime.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveOvertime
-* @see app/Http/Controllers/Client/ApprovalController.php:178
+* @see app/Http/Controllers/Client/ApprovalController.php:179
 * @route '/client/approvals/overtimes/{overtime}/approve'
 */
 approveOvertime.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -450,7 +450,7 @@ approveOvertime.url = (args: { overtime: number | { id: number } } | [overtime: 
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveOvertime
-* @see app/Http/Controllers/Client/ApprovalController.php:178
+* @see app/Http/Controllers/Client/ApprovalController.php:179
 * @route '/client/approvals/overtimes/{overtime}/approve'
 */
 approveOvertime.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -460,7 +460,7 @@ approveOvertime.post = (args: { overtime: number | { id: number } } | [overtime:
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveOvertime
-* @see app/Http/Controllers/Client/ApprovalController.php:178
+* @see app/Http/Controllers/Client/ApprovalController.php:179
 * @route '/client/approvals/overtimes/{overtime}/approve'
 */
 const approveOvertimeForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -470,7 +470,7 @@ const approveOvertimeForm = (args: { overtime: number | { id: number } } | [over
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveOvertime
-* @see app/Http/Controllers/Client/ApprovalController.php:178
+* @see app/Http/Controllers/Client/ApprovalController.php:179
 * @route '/client/approvals/overtimes/{overtime}/approve'
 */
 approveOvertimeForm.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -482,7 +482,7 @@ approveOvertime.form = approveOvertimeForm
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectOvertime
-* @see app/Http/Controllers/Client/ApprovalController.php:191
+* @see app/Http/Controllers/Client/ApprovalController.php:192
 * @route '/client/approvals/overtimes/{overtime}/reject'
 */
 export const rejectOvertime = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -497,7 +497,7 @@ rejectOvertime.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectOvertime
-* @see app/Http/Controllers/Client/ApprovalController.php:191
+* @see app/Http/Controllers/Client/ApprovalController.php:192
 * @route '/client/approvals/overtimes/{overtime}/reject'
 */
 rejectOvertime.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -530,7 +530,7 @@ rejectOvertime.url = (args: { overtime: number | { id: number } } | [overtime: n
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectOvertime
-* @see app/Http/Controllers/Client/ApprovalController.php:191
+* @see app/Http/Controllers/Client/ApprovalController.php:192
 * @route '/client/approvals/overtimes/{overtime}/reject'
 */
 rejectOvertime.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -540,7 +540,7 @@ rejectOvertime.post = (args: { overtime: number | { id: number } } | [overtime: 
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectOvertime
-* @see app/Http/Controllers/Client/ApprovalController.php:191
+* @see app/Http/Controllers/Client/ApprovalController.php:192
 * @route '/client/approvals/overtimes/{overtime}/reject'
 */
 const rejectOvertimeForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -550,7 +550,7 @@ const rejectOvertimeForm = (args: { overtime: number | { id: number } } | [overt
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectOvertime
-* @see app/Http/Controllers/Client/ApprovalController.php:191
+* @see app/Http/Controllers/Client/ApprovalController.php:192
 * @route '/client/approvals/overtimes/{overtime}/reject'
 */
 rejectOvertimeForm.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -562,7 +562,7 @@ rejectOvertime.form = rejectOvertimeForm
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveReimbursement
-* @see app/Http/Controllers/Client/ApprovalController.php:205
+* @see app/Http/Controllers/Client/ApprovalController.php:206
 * @route '/client/approvals/reimbursements/{reimbursement}/approve'
 */
 export const approveReimbursement = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -577,7 +577,7 @@ approveReimbursement.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveReimbursement
-* @see app/Http/Controllers/Client/ApprovalController.php:205
+* @see app/Http/Controllers/Client/ApprovalController.php:206
 * @route '/client/approvals/reimbursements/{reimbursement}/approve'
 */
 approveReimbursement.url = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -610,7 +610,7 @@ approveReimbursement.url = (args: { reimbursement: number | { id: number } } | [
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveReimbursement
-* @see app/Http/Controllers/Client/ApprovalController.php:205
+* @see app/Http/Controllers/Client/ApprovalController.php:206
 * @route '/client/approvals/reimbursements/{reimbursement}/approve'
 */
 approveReimbursement.post = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -620,7 +620,7 @@ approveReimbursement.post = (args: { reimbursement: number | { id: number } } | 
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveReimbursement
-* @see app/Http/Controllers/Client/ApprovalController.php:205
+* @see app/Http/Controllers/Client/ApprovalController.php:206
 * @route '/client/approvals/reimbursements/{reimbursement}/approve'
 */
 const approveReimbursementForm = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -630,7 +630,7 @@ const approveReimbursementForm = (args: { reimbursement: number | { id: number }
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approveReimbursement
-* @see app/Http/Controllers/Client/ApprovalController.php:205
+* @see app/Http/Controllers/Client/ApprovalController.php:206
 * @route '/client/approvals/reimbursements/{reimbursement}/approve'
 */
 approveReimbursementForm.post = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -642,7 +642,7 @@ approveReimbursement.form = approveReimbursementForm
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectReimbursement
-* @see app/Http/Controllers/Client/ApprovalController.php:214
+* @see app/Http/Controllers/Client/ApprovalController.php:215
 * @route '/client/approvals/reimbursements/{reimbursement}/reject'
 */
 export const rejectReimbursement = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -657,7 +657,7 @@ rejectReimbursement.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectReimbursement
-* @see app/Http/Controllers/Client/ApprovalController.php:214
+* @see app/Http/Controllers/Client/ApprovalController.php:215
 * @route '/client/approvals/reimbursements/{reimbursement}/reject'
 */
 rejectReimbursement.url = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -690,7 +690,7 @@ rejectReimbursement.url = (args: { reimbursement: number | { id: number } } | [r
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectReimbursement
-* @see app/Http/Controllers/Client/ApprovalController.php:214
+* @see app/Http/Controllers/Client/ApprovalController.php:215
 * @route '/client/approvals/reimbursements/{reimbursement}/reject'
 */
 rejectReimbursement.post = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -700,7 +700,7 @@ rejectReimbursement.post = (args: { reimbursement: number | { id: number } } | [
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectReimbursement
-* @see app/Http/Controllers/Client/ApprovalController.php:214
+* @see app/Http/Controllers/Client/ApprovalController.php:215
 * @route '/client/approvals/reimbursements/{reimbursement}/reject'
 */
 const rejectReimbursementForm = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -710,7 +710,7 @@ const rejectReimbursementForm = (args: { reimbursement: number | { id: number } 
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::rejectReimbursement
-* @see app/Http/Controllers/Client/ApprovalController.php:214
+* @see app/Http/Controllers/Client/ApprovalController.php:215
 * @route '/client/approvals/reimbursements/{reimbursement}/reject'
 */
 rejectReimbursementForm.post = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

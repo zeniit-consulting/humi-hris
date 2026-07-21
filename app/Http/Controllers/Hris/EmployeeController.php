@@ -9,6 +9,7 @@ use App\Jobs\SendEmployeePortalInvitation;
 use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
+use App\Models\EmployeeBankAccount;
 use App\Models\EmployeeDocument;
 use App\Models\Position;
 use App\Models\SubCompany;
@@ -45,6 +46,7 @@ class EmployeeController extends Controller
     {
         $user = $request->user();
         $ownerId = $user->accountOwnerId();
+        $isResignedList = $request->routeIs('hris.employees.resigned');
         $subCompanyScopeIds = $user->parent_user_id && $user->role !== 'user'
             ? $user->subCompanyScopeIds()
             : null;
@@ -75,7 +77,7 @@ class EmployeeController extends Controller
             'search' => $rawFilters['search'] ?? '',
             'division_id' => isset($rawFilters['division_id']) ? (string) $rawFilters['division_id'] : '',
             'sub_company_id' => $rawFilters['sub_company_id'] ?? '',
-            'status' => $rawFilters['status'] ?? '',
+            'status' => $isResignedList ? '' : ($rawFilters['status'] ?? ''),
             'sort' => $rawFilters['sort'] ?? 'name',
             'direction' => $rawFilters['direction'] ?? 'asc',
             'division_search' => $rawFilters['division_search'] ?? '',
@@ -93,6 +95,11 @@ class EmployeeController extends Controller
                 'documents:id,employee_id,document_type,document_number,issued_at,expires_at,issuing_authority,file_path,file_disk,file_original_name,file_mime_type,file_size,notes,verified_at,verified_by',
                 'employmentHistories.createdBy:id,name',
             ])
+            ->when(
+                $isResignedList,
+                fn ($query) => $query->where('employment_status', 'resigned'),
+                fn ($query) => $query->where('employment_status', '!=', 'resigned'),
+            )
             ->when($filters['search'] !== '', function ($query) use ($filters): void {
                 $query->where(function ($builder) use ($filters): void {
                     $builder
@@ -165,6 +172,7 @@ class EmployeeController extends Controller
                 'sub_company_id' => $employee->sub_company_id,
                 'attendance_location_ids' => $employee->attendance_location_ids ?? [],
                 'is_wfa' => $employee->is_wfa,
+                'timezone' => $employee->timezone,
                 'position_id' => $employee->position_id,
                 'manager_id' => $employee->manager_id,
                 'base_salary' => $employee->base_salary ? (int) $employee->base_salary : null,
@@ -419,6 +427,7 @@ class EmployeeController extends Controller
         }
 
         return Inertia::render('hris/employees/index', [
+            'employeeList' => $isResignedList ? 'resigned' : 'active',
             'employees' => $employees,
             'divisions' => $divisions,
             'positions' => $positions,
@@ -451,8 +460,14 @@ class EmployeeController extends Controller
                 'positions_total' => Position::query()->count(),
             ],
             'options' => [
-                'employment_statuses' => ['active', 'probation', 'on_leave', 'resigned'],
+                'employment_statuses' => $isResignedList ? [] : ['active', 'probation', 'on_leave'],
                 'employment_types' => Employee::EMPLOYMENT_TYPES,
+                'timezones' => collect(Employee::TIMEZONES)
+                    ->map(fn (string $label, string $value): array => [
+                        'value' => $value,
+                        'label' => $label.' - '.$value,
+                    ])
+                    ->values(),
                 'pph21_methods' => [
                     [
                         'value' => 'ter_harian',
@@ -515,9 +530,17 @@ class EmployeeController extends Controller
     }
 
     /**
+     * Display employees who have completed offboarding.
+     */
+    public function resigned(Request $request): InertiaResponse
+    {
+        return $this->index($request);
+    }
+
+    /**
      * Export employees data to XLS-compatible file.
      */
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request): StreamedResponse|HttpResponse
     {
         $ownerId = $request->user()->accountOwnerId();
 
@@ -526,10 +549,19 @@ class EmployeeController extends Controller
             'division_id' => ['nullable', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
             'sub_company_id' => ['nullable', 'string'],
             'status' => ['nullable', 'string'],
+            'category' => ['required', Rule::in(['personal', 'administration', 'payroll', 'employment', 'all'])],
+            'format' => ['nullable', Rule::in(['xls', 'pdf'])],
         ]);
 
         $rows = Employee::query()
-            ->with(['division:id,name', 'subCompany:id,name', 'position:id,name'])
+            ->with([
+                'division:id,name',
+                'subCompany:id,name',
+                'position:id,name',
+                'manager:id,employee_code,first_name,last_name',
+                'bankAccounts:id,employee_id,bank_name,account_number,account_holder_name,fixed_allowance_amount,is_primary',
+                'allowances:id,employee_id,name,amount,is_active',
+            ])
             ->when(($filters['search'] ?? '') !== '', function ($query) use ($filters): void {
                 $query->where(function ($builder) use ($filters): void {
                     $builder
@@ -550,43 +582,148 @@ class EmployeeController extends Controller
             ->orderBy('last_name')
             ->get();
 
-        $fileName = 'employees_'.now()->format('Ymd_His').'.xls';
+        $category = $filters['category'];
+        $format = $filters['format'] ?? 'xls';
+        $columns = $this->employeeExportColumns($category);
+        $fileName = 'employees_'.$category.'_'.now()->format('Ymd_His').'.'.$format;
 
-        return response()->streamDownload(function () use ($rows): void {
+        if ($format === 'pdf') {
+            return Pdf::loadView('hris.employees.export', [
+                'documentTitle' => $fileName,
+                'categoryLabel' => match ($category) {
+                    'personal' => 'Data Pribadi',
+                    'administration' => 'Data Administrasi',
+                    'payroll' => 'Data Payroll',
+                    'employment' => 'Data Pekerjaan',
+                    default => 'Seluruh Data',
+                },
+                'headers' => array_column($columns, 'header'),
+                'rows' => $rows->map(fn (Employee $employee): array => array_map(
+                    fn (array $column): mixed => $column['value']($employee),
+                    $columns,
+                )),
+                'generatedAt' => now()->locale('id')->translatedFormat('d F Y H:i'),
+            ])
+                ->setPaper('a3', 'landscape')
+                ->download($fileName);
+        }
+
+        return response()->streamDownload(function () use ($columns, $rows): void {
             $out = fopen('php://output', 'wb');
 
-            fputcsv($out, [
-                'Kode Pegawai',
-                'Nama',
-                'Email',
-                'Telepon',
-                'Divisi',
-                'Sub Company',
-                'Tipe Karyawan',
-                'Jabatan',
-                'Status',
-                'Tanggal Masuk',
-            ], "\t");
+            fputcsv($out, array_column($columns, 'header'), "\t");
 
             foreach ($rows as $employee) {
-                fputcsv($out, [
-                    $employee->employee_code,
-                    $employee->full_name,
-                    $employee->email,
-                    $employee->phone,
-                    $employee->division?->name,
-                    $employee->subCompany?->name ?? '-',
-                    $employee->employment_type,
-                    $employee->position?->name,
-                    $employee->employment_status,
-                    $employee->hire_date?->format('Y-m-d'),
-                ], "\t");
+                fputcsv($out, array_map(
+                    fn (array $column): mixed => $this->spreadsheetExportValue(
+                        $column['value']($employee),
+                        $column['long_number'] ?? false,
+                    ),
+                    $columns,
+                ), "\t");
             }
 
             fclose($out);
         }, $fileName, [
             'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
         ]);
+    }
+
+    /**
+     * @return array<int, array{header: string, value: callable(Employee): mixed, long_number?: bool}>
+     */
+    private function employeeExportColumns(string $category): array
+    {
+        $identity = [
+            ['header' => 'Kode Pegawai', 'value' => fn (Employee $employee) => $employee->employee_code],
+            ['header' => 'Nama', 'value' => fn (Employee $employee) => $employee->full_name],
+        ];
+
+        $groups = [
+            'personal' => [
+                ['header' => 'Email', 'value' => fn (Employee $employee) => $employee->email],
+                ['header' => 'Telepon', 'value' => fn (Employee $employee) => $employee->phone, 'long_number' => true],
+                ['header' => 'Jenis Kelamin', 'value' => fn (Employee $employee) => $employee->gender],
+                ['header' => 'Tempat Lahir', 'value' => fn (Employee $employee) => $employee->birth_place],
+                ['header' => 'Tanggal Lahir', 'value' => fn (Employee $employee) => $employee->birth_date?->format('Y-m-d')],
+                ['header' => 'Pendidikan Terakhir', 'value' => fn (Employee $employee) => $employee->last_education],
+                ['header' => 'Status Pernikahan', 'value' => fn (Employee $employee) => $employee->marital_status],
+                ['header' => 'Jumlah Anak', 'value' => fn (Employee $employee) => $employee->children_count],
+                ['header' => 'Golongan Darah', 'value' => fn (Employee $employee) => $employee->blood_type],
+                ['header' => 'Agama', 'value' => fn (Employee $employee) => $employee->religion],
+                ['header' => 'Alamat KTP', 'value' => fn (Employee $employee) => $employee->address],
+                ['header' => 'Alamat Domisili', 'value' => fn (Employee $employee) => $employee->domicile_address],
+                ['header' => 'Kontak Darurat', 'value' => fn (Employee $employee) => $employee->emergency_contact_name],
+                ['header' => 'Telepon Darurat', 'value' => fn (Employee $employee) => $employee->emergency_contact_phone, 'long_number' => true],
+                ['header' => 'Hubungan Kontak Darurat', 'value' => fn (Employee $employee) => $employee->emergency_contact_relationship],
+            ],
+            'administration' => [
+                ['header' => 'No. KK', 'value' => fn (Employee $employee) => $employee->family_card_number, 'long_number' => true],
+                ['header' => 'No. KTP', 'value' => fn (Employee $employee) => $employee->ktp_number, 'long_number' => true],
+                ['header' => 'NPWP', 'value' => fn (Employee $employee) => $employee->npwp_number, 'long_number' => true],
+                ['header' => 'BPJS Kesehatan', 'value' => fn (Employee $employee) => $employee->bpjs_kesehatan_number, 'long_number' => true],
+                ['header' => 'BPJS Ketenagakerjaan', 'value' => fn (Employee $employee) => $employee->bpjs_ketenagakerjaan_number, 'long_number' => true],
+                ['header' => 'SIM A', 'value' => fn (Employee $employee) => $employee->sim_a_number, 'long_number' => true],
+                ['header' => 'SIM B', 'value' => fn (Employee $employee) => $employee->sim_b_number, 'long_number' => true],
+                ['header' => 'SIM C', 'value' => fn (Employee $employee) => $employee->sim_c_number, 'long_number' => true],
+                ['header' => 'Nama Ibu Kandung', 'value' => fn (Employee $employee) => $employee->biological_mother_name],
+            ],
+            'payroll' => [
+                ['header' => 'Gaji Pokok', 'value' => fn (Employee $employee) => $employee->base_salary],
+                ['header' => 'Metode PPh21', 'value' => fn (Employee $employee) => $employee->pph21_method],
+                ['header' => 'Nominal PPh21', 'value' => fn (Employee $employee) => $employee->pph21_rate],
+                ['header' => 'Kategori PTKP', 'value' => fn (Employee $employee) => $employee->ptkp_category],
+                ['header' => 'Bank Utama', 'value' => fn (Employee $employee) => $this->primaryBankAccount($employee)?->bank_name],
+                ['header' => 'No. Rekening', 'value' => fn (Employee $employee) => $this->primaryBankAccount($employee)?->account_number, 'long_number' => true],
+                ['header' => 'Nama Pemilik Rekening', 'value' => fn (Employee $employee) => $this->primaryBankAccount($employee)?->account_holder_name],
+                ['header' => 'Tunjangan Tetap', 'value' => fn (Employee $employee) => $this->primaryBankAccount($employee)?->fixed_allowance_amount],
+                ['header' => 'Tunjangan Aktif', 'value' => fn (Employee $employee) => $employee->allowances
+                    ->where('is_active', true)
+                    ->map(fn ($allowance) => $allowance->name.': '.$allowance->amount)
+                    ->implode('; ')],
+            ],
+            'employment' => [
+                ['header' => 'Sub Company', 'value' => fn (Employee $employee) => $employee->subCompany?->name ?? '-'],
+                ['header' => 'Divisi', 'value' => fn (Employee $employee) => $employee->division?->name],
+                ['header' => 'Jabatan', 'value' => fn (Employee $employee) => $employee->position?->name],
+                ['header' => 'Atasan', 'value' => fn (Employee $employee) => $employee->manager?->full_name],
+                ['header' => 'Status Karyawan', 'value' => fn (Employee $employee) => $employee->employment_status],
+                ['header' => 'Tipe Karyawan', 'value' => fn (Employee $employee) => $employee->employment_type],
+                ['header' => 'Tanggal Masuk', 'value' => fn (Employee $employee) => $employee->hire_date?->format('Y-m-d')],
+                ['header' => 'Durasi Kontrak (Bulan)', 'value' => fn (Employee $employee) => $employee->contract_duration_months],
+                ['header' => 'Tanggal Akhir Kontrak', 'value' => fn (Employee $employee) => $employee->contract_end_date?->format('Y-m-d')],
+                ['header' => 'Durasi Probation (Bulan)', 'value' => fn (Employee $employee) => $employee->probation_duration_months],
+                ['header' => 'Tanggal Akhir Probation', 'value' => fn (Employee $employee) => $employee->probation_end_date?->format('Y-m-d')],
+                ['header' => 'Tanggal Aktivasi PKWTT', 'value' => fn (Employee $employee) => $employee->pkwtt_activated_at?->format('Y-m-d')],
+                ['header' => 'WFA', 'value' => fn (Employee $employee) => $employee->is_wfa ? 'Ya' : 'Tidak'],
+                ['header' => 'Zona Waktu', 'value' => fn (Employee $employee) => $employee->timezone],
+                ['header' => 'Aktif', 'value' => fn (Employee $employee) => $employee->is_active ? 'Ya' : 'Tidak'],
+                ['header' => 'Tanggal Offboarding', 'value' => fn (Employee $employee) => $employee->offboarded_at?->format('Y-m-d')],
+                ['header' => 'Alasan Offboarding', 'value' => fn (Employee $employee) => $employee->offboarding_reason],
+                ['header' => 'Catatan Pekerjaan', 'value' => fn (Employee $employee) => $employee->notes],
+            ],
+        ];
+
+        $selectedColumns = $category === 'all'
+            ? array_merge(...array_values($groups))
+            : $groups[$category];
+
+        return array_merge($identity, $selectedColumns);
+    }
+
+    private function spreadsheetExportValue(mixed $value, bool $longNumber): mixed
+    {
+        if (! $longNumber || $value === null || $value === '') {
+            return $value;
+        }
+
+        return "'".$value;
+    }
+
+    private function primaryBankAccount(Employee $employee): ?EmployeeBankAccount
+    {
+        return $employee->bankAccounts->firstWhere('is_primary', true)
+            ?? $employee->bankAccounts->first();
     }
 
     /**
@@ -600,6 +737,8 @@ class EmployeeController extends Controller
             'email',
             'phone',
             'gender',
+            'birth_place',
+            'timezone',
             'birth_date',
             'last_education',
             'marital_status',
@@ -707,6 +846,8 @@ class EmployeeController extends Controller
                     'email' => $this->nullableString($row['email'] ?? null),
                     'phone' => $this->nullableString($row['phone'] ?? null),
                     'gender' => $this->nullableString($row['gender'] ?? null),
+                    'birth_place' => $this->nullableString($row['birth_place'] ?? null),
+                    'timezone' => $this->nullableString($row['timezone'] ?? null),
                     'birth_date' => $this->nullableString($row['birth_date'] ?? null),
                     'last_education' => $this->nullableString($row['last_education'] ?? null),
                     'marital_status' => $this->nullableString($row['marital_status'] ?? null),
@@ -751,6 +892,8 @@ class EmployeeController extends Controller
                     ],
                     'phone' => ['nullable', 'string', 'max:30'],
                     'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
+                    'birth_place' => ['nullable', 'string', 'max:150'],
+                    'timezone' => ['nullable', Rule::in(array_keys(Employee::TIMEZONES))],
                     'birth_date' => ['nullable', 'date'],
                     'last_education' => ['nullable', 'string', 'max:100'],
                     'marital_status' => ['nullable', Rule::in(['single', 'married', 'divorced', 'widowed'])],

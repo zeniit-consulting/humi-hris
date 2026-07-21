@@ -171,6 +171,7 @@ class DashboardController extends Controller
             'actionQueue' => $this->actionQueue($ownerId, $today),
             'attendanceFocus' => $this->attendanceFocus($ownerId, $today),
             'recentRequests' => $this->recentRequests($ownerId),
+            'contractReminders' => $this->contractReminders($ownerId, $today),
             'outsourcing' => $this->outsourcingSummary(
                 $ownerId,
                 $outsourcingPeriod,
@@ -353,7 +354,7 @@ class DashboardController extends Controller
                 'label' => $attendance->employee
                     ? $attendance->employee->employee_code.' - '.$attendance->employee->full_name
                     : 'Karyawan',
-                'time' => $attendance->check_in_at?->format('H:i') ?? '-',
+                'time' => $this->attendanceLocalTime($attendance),
                 'href' => route('hris.attendances.index', ['date' => $todayDate, 'employee_id' => $attendance->employee_id]),
             ]);
 
@@ -370,7 +371,43 @@ class DashboardController extends Controller
                 ->count(),
             'missingClockIns' => $missingClockIns,
             'lateToday' => $lateToday,
+            'items' => $lateToday
+                ->map(fn (array $item): array => [
+                    'id' => 'late-'.$item['id'],
+                    'label' => $item['label'],
+                    'description' => 'Telat · Clock in '.$item['time'],
+                    'href' => $item['href'],
+                ])
+                ->concat($missingClockIns->map(fn (array $item): array => [
+                    'id' => 'missing-'.$item['id'],
+                    'label' => $item['label'],
+                    'description' => 'Belum clock in',
+                    'href' => $item['href'],
+                ]))
+                ->take(5)
+                ->values(),
         ];
+    }
+
+    private function attendanceLocalTime(EmployeeAttendance $attendance): string
+    {
+        if ($attendance->check_in_at === null) {
+            return '-';
+        }
+
+        $timezone = is_string($attendance->timezone)
+            && in_array($attendance->timezone, timezone_identifiers_list(), true)
+                ? $attendance->timezone
+                : config('app.timezone');
+
+        $label = match ($timezone) {
+            'Asia/Jakarta', 'Asia/Pontianak' => 'WIB',
+            'Asia/Makassar', 'Asia/Ujung_Pandang' => 'WITA',
+            'Asia/Jayapura' => 'WIT',
+            default => $timezone,
+        };
+
+        return $attendance->check_in_at->copy()->setTimezone($timezone)->format('H:i').' '.$label;
     }
 
     private function recentRequests(int $ownerId): array
@@ -381,7 +418,7 @@ class DashboardController extends Controller
             ->merge($this->recentOvertimeRequests($ownerId))
             ->merge($this->recentShiftChangeRequests($ownerId))
             ->sortByDesc('created_at')
-            ->take(8)
+            ->take(5)
             ->values();
 
         return [
@@ -389,6 +426,60 @@ class DashboardController extends Controller
                 ...$item,
                 'created_at' => $item['created_at']?->diffForHumans(),
             ]),
+        ];
+    }
+
+    private function contractReminders(int $ownerId, Carbon $today): array
+    {
+        $threshold = $today->copy()->addDays(30);
+        $dateRange = [$today->toDateString(), $threshold->toDateString()];
+
+        $contractQuery = Employee::query()
+            ->where('user_id', $ownerId)
+            ->where('is_active', true)
+            ->where('employment_type', 'PKWT')
+            ->whereBetween('contract_end_date', $dateRange);
+        $probationQuery = Employee::query()
+            ->where('user_id', $ownerId)
+            ->where('is_active', true)
+            ->where('employment_status', 'probation')
+            ->whereBetween('probation_end_date', $dateRange);
+
+        $contracts = (clone $contractQuery)
+            ->orderBy('contract_end_date')
+            ->limit(5)
+            ->get(['id', 'employee_code', 'first_name', 'last_name', 'contract_end_date'])
+            ->map(fn (Employee $employee): array => [
+                'id' => $employee->id,
+                'type' => 'Kontrak',
+                'employee_label' => $employee->employee_code.' - '.$employee->full_name,
+                'end_date' => $employee->contract_end_date?->toDateString(),
+            ]);
+
+        $probations = (clone $probationQuery)
+            ->orderBy('probation_end_date')
+            ->limit(5)
+            ->get(['id', 'employee_code', 'first_name', 'last_name', 'probation_end_date'])
+            ->map(fn (Employee $employee): array => [
+                'id' => $employee->id,
+                'type' => 'Probation',
+                'employee_label' => $employee->employee_code.' - '.$employee->full_name,
+                'end_date' => $employee->probation_end_date?->toDateString(),
+            ]);
+
+        return [
+            'total' => (clone $contractQuery)->count() + (clone $probationQuery)->count(),
+            'items' => $contracts
+                ->concat($probations)
+                ->sortBy('end_date')
+                ->take(5)
+                ->values()
+                ->map(fn (array $item): array => [
+                    ...$item,
+                    'date_label' => Carbon::parse($item['end_date'])->translatedFormat('d M Y'),
+                    'days_remaining' => (int) $today->diffInDays(Carbon::parse($item['end_date'])),
+                    'href' => route('hris.employees.index', ['search' => str($item['employee_label'])->before(' - ')->toString()]),
+                ]),
         ];
     }
 

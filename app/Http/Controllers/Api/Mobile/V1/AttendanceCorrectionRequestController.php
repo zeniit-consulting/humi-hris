@@ -21,7 +21,7 @@ class AttendanceCorrectionRequestController extends Controller
         /** @var User $user */
         $user = $request->user();
         $employee = $this->resolveRequiredSelfServiceEmployee($user);
-        $timezone = $this->deviceTimezone($request);
+        $timezone = $this->deviceTimezone($request, $employee->timezone);
 
         $requests = AttendanceCorrectionRequest::query()
             ->with('shift:id,code,name,start_time,end_time,is_day_off')
@@ -43,7 +43,7 @@ class AttendanceCorrectionRequestController extends Controller
         $user = $request->user();
         $ownerId = $user->accountOwnerId();
         $employee = $this->resolveRequiredSelfServiceEmployee($user);
-        $timezone = $this->deviceTimezone($request);
+        $timezone = $this->deviceTimezone($request, $employee->timezone);
 
         $validated = $request->validate([
             'attendance_date' => ['required', 'date', 'before_or_equal:today'],
@@ -63,6 +63,7 @@ class AttendanceCorrectionRequestController extends Controller
             'user_id' => $ownerId,
             'employee_id' => $employee->id,
             'attendance_date' => $validated['attendance_date'],
+            'timezone' => $timezone,
             'shift_id' => $validated['shift_id'] ?? null,
             'check_in_at' => $validated['check_in_at'] ?? null,
             'check_out_at' => $validated['check_out_at'] ?? null,
@@ -81,10 +82,15 @@ class AttendanceCorrectionRequestController extends Controller
     private function payload(AttendanceCorrectionRequest $request, ?string $timezone = null): array
     {
         $timezone ??= config('app.timezone');
+        $sourceTimezone = is_string($request->timezone)
+            && in_array($request->timezone, timezone_identifiers_list(), true)
+                ? $request->timezone
+                : $timezone;
 
         return [
             'id' => $request->id,
             'attendance_date' => $request->attendance_date?->format('Y-m-d'),
+            'timezone' => $request->timezone,
             'shift' => $request->shift ? [
                 'id' => $request->shift->id,
                 'code' => $request->shift->code,
@@ -93,20 +99,24 @@ class AttendanceCorrectionRequestController extends Controller
                 'end_time' => $request->shift->end_time,
                 'is_day_off' => $request->shift->is_day_off,
             ] : null,
-            'check_in_at' => $this->localTimestamp($request->check_in_at, $timezone),
-            'check_out_at' => $this->localTimestamp($request->check_out_at, $timezone),
+            'check_in_at' => $this->localTimestamp($request->check_in_at, $sourceTimezone),
+            'check_out_at' => $this->localTimestamp($request->check_out_at, $sourceTimezone),
             'reason' => $request->reason,
             'status' => $request->status,
             'rejection_reason' => $request->rejection_reason,
         ];
     }
 
-    private function deviceTimezone(Request $request): string
+    private function deviceTimezone(Request $request, ?string $fallback = null): string
     {
-        $timezone = (string) $request->header('X-Timezone', config('app.timezone'));
+        $timezone = (string) $request->header('X-Timezone', '');
 
-        return in_array($timezone, timezone_identifiers_list(), true)
-            ? $timezone
+        if (in_array($timezone, timezone_identifiers_list(), true)) {
+            return $timezone;
+        }
+
+        return $fallback !== null && in_array($fallback, timezone_identifiers_list(), true)
+            ? $fallback
             : config('app.timezone');
     }
 

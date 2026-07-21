@@ -105,11 +105,13 @@ class AttendanceController extends Controller
         $validated = $request->validated();
         /** @var User $user */
         $user = $request->user();
-        $timezone = $this->deviceTimezone($request);
+        $employee = $this->isSelfServiceUser($user)
+            ? $this->resolveRequiredSelfServiceEmployee($user)
+            : Employee::query()->findOrFail($validated['employee_id']);
+        $timezone = $this->deviceTimezone($request, $employee->timezone);
         $this->normalizeAttendanceTimestamps($validated, $timezone);
 
         if ($this->isSelfServiceUser($user)) {
-            $employee = $this->resolveRequiredSelfServiceEmployee($user);
             $validated['employee_id'] = $employee->id;
             $validated['status'] = 'present';
             $this->ensureWithinAttendanceRadius(
@@ -159,6 +161,7 @@ class AttendanceController extends Controller
             'employee_id' => $validated['employee_id'],
             'shift_id' => $validated['shift_id'] ?? null,
             'attendance_date' => $validated['attendance_date'],
+            'timezone' => $timezone,
             'status' => $validated['status'],
             'check_in_at' => $validated['check_in_at'] ?? null,
             'check_in_latitude' => $validated['check_in_latitude'] ?? null,
@@ -185,11 +188,13 @@ class AttendanceController extends Controller
         $this->guardSelfServiceRecordOwnership($user, (int) $employeeAttendance->employee_id);
 
         $validated = $request->validated();
-        $timezone = $this->deviceTimezone($request);
+        $employee = $this->isSelfServiceUser($user)
+            ? $this->resolveRequiredSelfServiceEmployee($user)
+            : $employeeAttendance->employee()->firstOrFail();
+        $timezone = $this->deviceTimezone($request, $employee->timezone);
         $this->normalizeAttendanceTimestamps($validated, $timezone);
 
         if ($this->isSelfServiceUser($user)) {
-            $employee = $this->resolveRequiredSelfServiceEmployee($user);
             $validated['employee_id'] = $employee->id;
             $validated['status'] = $employeeAttendance->status ?: 'present';
 
@@ -215,6 +220,7 @@ class AttendanceController extends Controller
         }
 
         $validated = array_merge($validated, $statusService->resolveStatusAttributes($validated, $user->accountOwnerId(), $timezone));
+        $validated['timezone'] = $employeeAttendance->timezone ?: $timezone;
 
         $employeeAttendance->update($validated);
         $employeeAttendance->refresh()->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes']);
@@ -239,6 +245,10 @@ class AttendanceController extends Controller
     private function payload(EmployeeAttendance $attendance, ?string $timezone = null): array
     {
         $timezone ??= config('app.timezone');
+        $sourceTimezone = is_string($attendance->timezone)
+            && in_array($attendance->timezone, timezone_identifiers_list(), true)
+                ? $attendance->timezone
+                : $timezone;
 
         return [
             'id' => $attendance->id,
@@ -247,6 +257,7 @@ class AttendanceController extends Controller
                 ? $attendance->employee->employee_code.' - '.$attendance->employee->full_name
                 : '-',
             'attendance_date' => $attendance->attendance_date?->format('Y-m-d'),
+            'timezone' => $attendance->timezone,
             'status' => $attendance->status,
             'late_minutes' => $attendance->late_minutes,
             'late_level' => $attendance->late_level,
@@ -259,22 +270,26 @@ class AttendanceController extends Controller
                 'is_day_off' => $attendance->shift->is_day_off,
                 'late_tolerance_minutes' => $attendance->shift->late_tolerance_minutes,
             ] : null,
-            'check_in_at' => $this->localTimestamp($attendance->check_in_at, $timezone),
+            'check_in_at' => $this->localTimestamp($attendance->check_in_at, $sourceTimezone),
             'check_in_latitude' => $attendance->check_in_latitude,
             'check_in_longitude' => $attendance->check_in_longitude,
-            'check_out_at' => $this->localTimestamp($attendance->check_out_at, $timezone),
+            'check_out_at' => $this->localTimestamp($attendance->check_out_at, $sourceTimezone),
             'check_out_latitude' => $attendance->check_out_latitude,
             'check_out_longitude' => $attendance->check_out_longitude,
             'notes' => $attendance->notes,
         ];
     }
 
-    private function deviceTimezone(Request $request): string
+    private function deviceTimezone(Request $request, ?string $fallback = null): string
     {
-        $timezone = (string) $request->header('X-Timezone', config('app.timezone'));
+        $timezone = (string) $request->header('X-Timezone', '');
 
-        return in_array($timezone, timezone_identifiers_list(), true)
-            ? $timezone
+        if (in_array($timezone, timezone_identifiers_list(), true)) {
+            return $timezone;
+        }
+
+        return $fallback !== null && in_array($fallback, timezone_identifiers_list(), true)
+            ? $fallback
             : config('app.timezone');
     }
 

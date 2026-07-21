@@ -18,6 +18,12 @@ class Employee extends Model
 
     public const EMPLOYMENT_TYPES = ['FL', 'PKWT', 'PKWTT', 'OS'];
 
+    public const TIMEZONES = [
+        'Asia/Jakarta' => 'WIB',
+        'Asia/Makassar' => 'WITA',
+        'Asia/Jayapura' => 'WIT',
+    ];
+
     private static ?bool $hasCreatedByUserIdColumn = null;
 
     /**
@@ -31,6 +37,7 @@ class Employee extends Model
         'sub_company_id',
         'attendance_location_ids',
         'is_wfa',
+        'timezone',
         'employee_code',
         'first_name',
         'last_name',

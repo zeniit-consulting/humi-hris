@@ -80,6 +80,7 @@ class AttendanceExportTest extends TestCase
             'user_id' => $user->id,
             'employee_id' => $employee->id,
             'attendance_date' => '2026-05-21',
+            'timezone' => 'Asia/Jakarta',
             'status' => 'present',
             'check_in_at' => '2026-05-21 00:00:00',
             'check_out_at' => '2026-05-21 09:00:00',
@@ -93,9 +94,11 @@ class AttendanceExportTest extends TestCase
 
         $content = $response->streamedContent();
 
-        $this->assertStringContainsString('08:00', $content);
-        $this->assertStringContainsString('17:00', $content);
+        $this->assertStringContainsString('07:00', $content);
+        $this->assertStringContainsString('16:00', $content);
+        $this->assertStringContainsString('Asia/Jakarta', $content);
         $this->assertStringNotContainsString('>00:00<', $content);
         $this->assertStringNotContainsString('>09:00<', $content);
+        $this->assertStringNotContainsString('>08:00<', $content);
     }
 }

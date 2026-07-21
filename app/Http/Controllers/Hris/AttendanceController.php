@@ -91,6 +91,7 @@ class AttendanceController extends Controller
                 ? $attendance->employee->employee_code.' - '.$attendance->employee->full_name
                 : '-',
             'attendance_date' => $attendance->attendance_date->format('Y-m-d'),
+            'timezone' => $attendance->timezone,
             'shift_name' => (string) ($shiftByEmployee->get($attendance->employee_id) ?? 'OFF'),
             'status' => $attendance->status,
             'late_minutes' => $attendance->late_minutes,
@@ -175,6 +176,7 @@ class AttendanceController extends Controller
             'attendances' => $rows->map(fn (EmployeeAttendance $attendance) => [
                 'id' => $attendance->id,
                 'attendance_date' => $attendance->attendance_date->format('Y-m-d'),
+                'timezone' => $attendance->timezone,
                 'shift_name' => $attendance->shift?->name
                     ?? $attendance->shift?->code
                     ?? 'OFF',
@@ -206,6 +208,7 @@ class AttendanceController extends Controller
             ],
             [
                 'status' => $validated['status'],
+                'timezone' => $timezone,
                 'late_minutes' => $validated['late_minutes'],
                 'late_level' => $validated['late_level'],
                 'check_in_at' => $validated['check_in_at'] ?? null,
@@ -225,6 +228,7 @@ class AttendanceController extends Controller
         $validated = $request->validated();
         $timezone = $this->deviceTimezone($request);
         $this->normalizeAttendanceTimestamps($validated, $timezone);
+        $validated['timezone'] = $timezone;
         $validated = array_merge($validated, $statusService->resolveStatusAttributes($validated, $request->user()->accountOwnerId(), $timezone));
 
         $employeeAttendance->update($validated);
@@ -324,13 +328,13 @@ class AttendanceController extends Controller
             echo '</table>';
             echo '<table>';
             echo '<thead><tr>';
-            foreach (['Tanggal', 'Kode Pegawai', 'Nama Pegawai', 'Status', 'Level Terlambat', 'Menit Terlambat', 'Check In', 'Check Out', 'Catatan'] as $heading) {
+            foreach (['Tanggal', 'Kode Pegawai', 'Nama Pegawai', 'Status', 'Level Terlambat', 'Menit Terlambat', 'Check In', 'Check Out', 'Zona Waktu', 'Catatan'] as $heading) {
                 echo '<th>'.$escape($heading).'</th>';
             }
             echo '</tr></thead><tbody>';
 
             if ($rows->isEmpty()) {
-                echo '<tr><td colspan="9">Tidak ada data kehadiran.</td></tr>';
+                echo '<tr><td colspan="10">Tidak ada data kehadiran.</td></tr>';
             }
 
             foreach ($rows as $row) {
@@ -341,8 +345,10 @@ class AttendanceController extends Controller
                 echo '<td>'.$escape($statusLabels[$row->status] ?? $row->status).'</td>';
                 echo '<td>'.$escape($this->lateLevelLabel($row->late_level)).'</td>';
                 echo '<td>'.$escape($row->late_minutes).'</td>';
-                echo '<td>'.$escape($this->localExportTime($row->check_in_at, $timezone)).'</td>';
-                echo '<td>'.$escape($this->localExportTime($row->check_out_at, $timezone)).'</td>';
+                $rowTimezone = $this->validTimezone($row->timezone) ?? $timezone;
+                echo '<td>'.$escape($this->localExportTime($row->check_in_at, $rowTimezone)).'</td>';
+                echo '<td>'.$escape($this->localExportTime($row->check_out_at, $rowTimezone)).'</td>';
+                echo '<td>'.$escape($rowTimezone).'</td>';
                 echo '<td>'.$escape($row->notes).'</td>';
                 echo '</tr>';
             }
@@ -381,6 +387,13 @@ class AttendanceController extends Controller
         return in_array($timezone, timezone_identifiers_list(), true)
             ? $timezone
             : config('app.timezone');
+    }
+
+    private function validTimezone(mixed $timezone): ?string
+    {
+        return is_string($timezone) && in_array($timezone, timezone_identifiers_list(), true)
+            ? $timezone
+            : null;
     }
 
     /**

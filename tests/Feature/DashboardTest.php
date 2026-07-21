@@ -366,4 +366,59 @@ class DashboardTest extends TestCase
                 ->missing('onboardingChecklist')
             );
     }
+
+    public function test_dashboard_limits_operational_cards_and_includes_contract_reminders(): void
+    {
+        $this->travelTo(now()->startOfDay());
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $contractEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'PKWT-001',
+            'first_name' => 'Kontrak',
+            'last_name' => null,
+            'is_active' => true,
+            'employment_type' => 'PKWT',
+            'contract_end_date' => now()->addDays(10)->toDateString(),
+        ]);
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'PROB-001',
+            'first_name' => 'Probation',
+            'last_name' => null,
+            'is_active' => true,
+            'employment_status' => 'probation',
+            'probation_end_date' => now()->addDays(5)->toDateString(),
+        ]);
+
+        Employee::factory()->count(4)->create([
+            'user_id' => $user->id,
+            'is_active' => true,
+        ]);
+
+        foreach (range(1, 6) as $index) {
+            LeaveRequest::query()->create([
+                'user_id' => $user->id,
+                'employee_id' => $contractEmployee->id,
+                'leave_type' => 'annual',
+                'start_date' => now()->addDays($index)->toDateString(),
+                'end_date' => now()->addDays($index)->toDateString(),
+                'total_days' => 1,
+                'reason' => 'Request '.$index,
+                'status' => 'pending',
+            ]);
+        }
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('attendanceFocus.items', 5)
+                ->has('recentRequests.items', 5)
+                ->where('contractReminders.total', 2)
+                ->has('contractReminders.items', 2)
+                ->where('contractReminders.items.0.type', 'Probation')
+                ->where('contractReminders.items.1.type', 'Kontrak')
+            );
+    }
 }

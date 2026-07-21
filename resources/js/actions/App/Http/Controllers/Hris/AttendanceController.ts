@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:248
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
 * @route '/hris/attendances/export'
 */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:248
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
 * @route '/hris/attendances/export'
 */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:248
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
 * @route '/hris/attendances/export'
 */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:248
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
 * @route '/hris/attendances/export'
 */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:248
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
 * @route '/hris/attendances/export'
 */
 const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:248
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
 * @route '/hris/attendances/export'
 */
 exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:248
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
 * @route '/hris/attendances/export'
 */
 exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -163,7 +163,7 @@ exportMethod.form = exportMethodForm
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::showMonthly
-* @see app/Http/Controllers/Hris/AttendanceController.php:129
+* @see app/Http/Controllers/Hris/AttendanceController.php:130
 * @route '/hris/attendances/employees/{employee}/monthly'
 */
 export const showMonthly = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -178,7 +178,7 @@ showMonthly.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::showMonthly
-* @see app/Http/Controllers/Hris/AttendanceController.php:129
+* @see app/Http/Controllers/Hris/AttendanceController.php:130
 * @route '/hris/attendances/employees/{employee}/monthly'
 */
 showMonthly.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -211,7 +211,7 @@ showMonthly.url = (args: { employee: number | { id: number } } | [employee: numb
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::showMonthly
-* @see app/Http/Controllers/Hris/AttendanceController.php:129
+* @see app/Http/Controllers/Hris/AttendanceController.php:130
 * @route '/hris/attendances/employees/{employee}/monthly'
 */
 showMonthly.get = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -221,7 +221,7 @@ showMonthly.get = (args: { employee: number | { id: number } } | [employee: numb
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::showMonthly
-* @see app/Http/Controllers/Hris/AttendanceController.php:129
+* @see app/Http/Controllers/Hris/AttendanceController.php:130
 * @route '/hris/attendances/employees/{employee}/monthly'
 */
 showMonthly.head = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -231,7 +231,7 @@ showMonthly.head = (args: { employee: number | { id: number } } | [employee: num
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::showMonthly
-* @see app/Http/Controllers/Hris/AttendanceController.php:129
+* @see app/Http/Controllers/Hris/AttendanceController.php:130
 * @route '/hris/attendances/employees/{employee}/monthly'
 */
 const showMonthlyForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -241,7 +241,7 @@ const showMonthlyForm = (args: { employee: number | { id: number } } | [employee
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::showMonthly
-* @see app/Http/Controllers/Hris/AttendanceController.php:129
+* @see app/Http/Controllers/Hris/AttendanceController.php:130
 * @route '/hris/attendances/employees/{employee}/monthly'
 */
 showMonthlyForm.get = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -251,7 +251,7 @@ showMonthlyForm.get = (args: { employee: number | { id: number } } | [employee: 
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::showMonthly
-* @see app/Http/Controllers/Hris/AttendanceController.php:129
+* @see app/Http/Controllers/Hris/AttendanceController.php:130
 * @route '/hris/attendances/employees/{employee}/monthly'
 */
 showMonthlyForm.head = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -268,7 +268,7 @@ showMonthly.form = showMonthlyForm
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::store
-* @see app/Http/Controllers/Hris/AttendanceController.php:194
+* @see app/Http/Controllers/Hris/AttendanceController.php:196
 * @route '/hris/attendances'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -283,7 +283,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::store
-* @see app/Http/Controllers/Hris/AttendanceController.php:194
+* @see app/Http/Controllers/Hris/AttendanceController.php:196
 * @route '/hris/attendances'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -292,7 +292,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::store
-* @see app/Http/Controllers/Hris/AttendanceController.php:194
+* @see app/Http/Controllers/Hris/AttendanceController.php:196
 * @route '/hris/attendances'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -302,7 +302,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::store
-* @see app/Http/Controllers/Hris/AttendanceController.php:194
+* @see app/Http/Controllers/Hris/AttendanceController.php:196
 * @route '/hris/attendances'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -312,7 +312,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::store
-* @see app/Http/Controllers/Hris/AttendanceController.php:194
+* @see app/Http/Controllers/Hris/AttendanceController.php:196
 * @route '/hris/attendances'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -324,7 +324,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::update
-* @see app/Http/Controllers/Hris/AttendanceController.php:223
+* @see app/Http/Controllers/Hris/AttendanceController.php:226
 * @route '/hris/attendances/{employeeAttendance}'
 */
 export const update = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -339,7 +339,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::update
-* @see app/Http/Controllers/Hris/AttendanceController.php:223
+* @see app/Http/Controllers/Hris/AttendanceController.php:226
 * @route '/hris/attendances/{employeeAttendance}'
 */
 update.url = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -372,7 +372,7 @@ update.url = (args: { employeeAttendance: number | { id: number } } | [employeeA
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::update
-* @see app/Http/Controllers/Hris/AttendanceController.php:223
+* @see app/Http/Controllers/Hris/AttendanceController.php:226
 * @route '/hris/attendances/{employeeAttendance}'
 */
 update.put = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -382,7 +382,7 @@ update.put = (args: { employeeAttendance: number | { id: number } } | [employeeA
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::update
-* @see app/Http/Controllers/Hris/AttendanceController.php:223
+* @see app/Http/Controllers/Hris/AttendanceController.php:226
 * @route '/hris/attendances/{employeeAttendance}'
 */
 const updateForm = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -397,7 +397,7 @@ const updateForm = (args: { employeeAttendance: number | { id: number } } | [emp
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::update
-* @see app/Http/Controllers/Hris/AttendanceController.php:223
+* @see app/Http/Controllers/Hris/AttendanceController.php:226
 * @route '/hris/attendances/{employeeAttendance}'
 */
 updateForm.put = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -414,7 +414,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::destroy
-* @see app/Http/Controllers/Hris/AttendanceController.php:238
+* @see app/Http/Controllers/Hris/AttendanceController.php:242
 * @route '/hris/attendances/{employeeAttendance}'
 */
 export const destroy = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -429,7 +429,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::destroy
-* @see app/Http/Controllers/Hris/AttendanceController.php:238
+* @see app/Http/Controllers/Hris/AttendanceController.php:242
 * @route '/hris/attendances/{employeeAttendance}'
 */
 destroy.url = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -462,7 +462,7 @@ destroy.url = (args: { employeeAttendance: number | { id: number } } | [employee
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::destroy
-* @see app/Http/Controllers/Hris/AttendanceController.php:238
+* @see app/Http/Controllers/Hris/AttendanceController.php:242
 * @route '/hris/attendances/{employeeAttendance}'
 */
 destroy.delete = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -472,7 +472,7 @@ destroy.delete = (args: { employeeAttendance: number | { id: number } } | [emplo
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::destroy
-* @see app/Http/Controllers/Hris/AttendanceController.php:238
+* @see app/Http/Controllers/Hris/AttendanceController.php:242
 * @route '/hris/attendances/{employeeAttendance}'
 */
 const destroyForm = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -487,7 +487,7 @@ const destroyForm = (args: { employeeAttendance: number | { id: number } } | [em
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::destroy
-* @see app/Http/Controllers/Hris/AttendanceController.php:238
+* @see app/Http/Controllers/Hris/AttendanceController.php:242
 * @route '/hris/attendances/{employeeAttendance}'
 */
 destroyForm.delete = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

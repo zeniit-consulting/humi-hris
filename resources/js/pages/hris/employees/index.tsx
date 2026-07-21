@@ -57,6 +57,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { browserTimezone } from '@/lib/attendance-timezone';
 import employeeRoutes from '@/routes/hris/employees';
 import allowanceRoutes from '@/routes/hris/employees/allowances';
 import bankAccountRoutes from '@/routes/hris/employees/bank-accounts';
@@ -216,6 +217,7 @@ type Employee = {
     sub_company_id: number | null;
     attendance_location_ids: string[];
     is_wfa: boolean;
+    timezone: string | null;
     position_id: number | null;
     manager_id: number | null;
     base_salary: string | null;
@@ -303,6 +305,7 @@ type EmployeeFormData = {
     sub_company_id: string;
     attendance_location_ids: string[];
     is_wfa: boolean;
+    timezone: string;
     position_id: string;
     manager_id: string;
     base_salary: string;
@@ -385,6 +388,15 @@ type EmployeeSortKey =
     | 'base_salary'
     | 'status';
 
+type EmployeeExportCategory =
+    | 'personal'
+    | 'administration'
+    | 'payroll'
+    | 'employment'
+    | 'all';
+
+type EmployeeExportFormat = 'xls' | 'pdf';
+
 type Filters = {
     search: string;
     division_id: string;
@@ -397,6 +409,7 @@ type Filters = {
 };
 
 type PageProps = {
+    employeeList: 'active' | 'resigned';
     employees: Paginator<Employee>;
     divisions: Paginator<Division>;
     positions: Paginator<Position>;
@@ -424,6 +437,7 @@ type PageProps = {
     options: {
         employment_statuses: string[];
         employment_types: string[];
+        timezones: Array<{ value: string; label: string }>;
         pph21_methods: Array<{
             value: string;
             label: string;
@@ -438,13 +452,6 @@ type PageProps = {
         }>;
     };
 };
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Karyawan',
-        href: employeeRoutes.index(),
-    },
-];
 
 type SortableEmployeeHeaderProps = {
     label: string;
@@ -499,6 +506,14 @@ function SortableEmployeeHeader({
 
 const todayDate = () => new Date().toISOString().slice(0, 10);
 
+const defaultEmployeeTimezone = () => {
+    const timezone = browserTimezone();
+
+    return ['Asia/Jakarta', 'Asia/Makassar', 'Asia/Jayapura'].includes(timezone)
+        ? timezone
+        : 'Asia/Jakarta';
+};
+
 const buildEmployeeDefault = (): EmployeeFormData => ({
     employee_code: '',
     full_name: '',
@@ -523,6 +538,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     sub_company_id: '',
     attendance_location_ids: [],
     is_wfa: false,
+    timezone: defaultEmployeeTimezone(),
     position_id: '',
     manager_id: '',
     base_salary: '',
@@ -584,6 +600,38 @@ const statusLabels: Record<string, string> = {
     on_leave: 'Cuti',
     resigned: 'Resign',
 };
+
+const employeeExportCategories: Array<{
+    value: EmployeeExportCategory;
+    label: string;
+    description: string;
+}> = [
+    {
+        value: 'personal',
+        label: 'Data Pribadi',
+        description: 'Identitas, kontak, alamat, dan kontak darurat.',
+    },
+    {
+        value: 'administration',
+        label: 'Data Administrasi',
+        description: 'KTP, KK, NPWP, BPJS, SIM, dan data administrasi.',
+    },
+    {
+        value: 'payroll',
+        label: 'Data Payroll',
+        description: 'Gaji, pajak, rekening bank, dan tunjangan.',
+    },
+    {
+        value: 'employment',
+        label: 'Data Pekerjaan',
+        description: 'Organisasi, status kerja, kontrak, dan probation.',
+    },
+    {
+        value: 'all',
+        label: 'Seluruhnya',
+        description: 'Semua data karyawan yang tersedia.',
+    },
+];
 
 const offboardingReasonLabels: Record<string, string> = {
     resigned: 'Mengundurkan diri',
@@ -793,6 +841,7 @@ const buildEmployeeCodePreview = ({
 
 export default function EmployeesIndex() {
     const {
+        employeeList,
         employees,
         divisions,
         divisionOptions,
@@ -805,10 +854,34 @@ export default function EmployeesIndex() {
         stats,
         options,
     } = usePage<PageProps>().props;
+    const isResignedList = employeeList === 'resigned';
+    const employeeListUrl = isResignedList
+        ? employeeRoutes.resigned.url()
+        : employeeRoutes.index.url();
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Karyawan',
+            href: employeeRoutes.index(),
+        },
+        ...(isResignedList
+            ? [
+                  {
+                      title: 'Karyawan Resign',
+                      href: employeeRoutes.resigned(),
+                  },
+              ]
+            : []),
+    ];
 
     const [filterState, setFilterState] = useState<Filters>(filters);
 
     const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
+    const [employeeExportDialogOpen, setEmployeeExportDialogOpen] =
+        useState(false);
+    const [employeeExportCategory, setEmployeeExportCategory] =
+        useState<EmployeeExportCategory>('all');
+    const [employeeExportFormat, setEmployeeExportFormat] =
+        useState<EmployeeExportFormat>('xls');
     const [employeeImportDialogOpen, setEmployeeImportDialogOpen] =
         useState(false);
     const [employeeFormStep, setEmployeeFormStep] = useState(1);
@@ -1077,6 +1150,7 @@ export default function EmployeesIndex() {
                 : '',
             attendance_location_ids: employee.attendance_location_ids ?? [],
             is_wfa: employee.is_wfa ?? false,
+            timezone: employee.timezone ?? defaultEmployeeTimezone(),
             position_id: employee.position_id
                 ? String(employee.position_id)
                 : '',
@@ -1590,7 +1664,7 @@ export default function EmployeesIndex() {
     const submitFilters = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        router.get(employeeRoutes.index.url(), filterState, {
+        router.get(employeeListUrl, filterState, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -1609,7 +1683,7 @@ export default function EmployeesIndex() {
         };
 
         setFilterState(nextFilters);
-        router.get(employeeRoutes.index.url(), nextFilters, {
+        router.get(employeeListUrl, nextFilters, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -1630,7 +1704,7 @@ export default function EmployeesIndex() {
 
         setFilterState(initialFilters);
 
-        router.get(employeeRoutes.index.url(), initialFilters, {
+        router.get(employeeListUrl, initialFilters, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -1665,19 +1739,21 @@ export default function EmployeesIndex() {
         .filter(Boolean)
         .join(' • ');
 
-    const employeeExportQuery = new URLSearchParams(
-        Object.entries({
-            search: filterState.search,
-            division_id: filterState.division_id,
-            sub_company_id: filterState.sub_company_id,
-            status: filterState.status,
-        }).filter(([, value]) => value !== ''),
-    ).toString();
+    const downloadEmployeeExport = () => {
+        const employeeExportQuery = new URLSearchParams(
+            Object.entries({
+                search: filterState.search,
+                division_id: filterState.division_id,
+                sub_company_id: filterState.sub_company_id,
+                status: isResignedList ? 'resigned' : filterState.status,
+                category: employeeExportCategory,
+                format: employeeExportFormat,
+            }).filter(([, value]) => value !== ''),
+        ).toString();
 
-    const employeeExportUrl =
-        employeeExportQuery === ''
-            ? '/hris/employees/export'
-            : `/hris/employees/export?${employeeExportQuery}`;
+        window.location.assign(`/hris/employees/export?${employeeExportQuery}`);
+        setEmployeeExportDialogOpen(false);
+    };
 
     const employeeImportTemplateUrl = '/hris/employees/import-template';
 
@@ -1700,32 +1776,56 @@ export default function EmployeesIndex() {
             breadcrumbs={breadcrumbs}
             headerActions={
                 <div className="flex items-center gap-2">
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEmployeeImportDialogOpen(true)}
-                    >
-                        <Upload className="size-4" />
-                        Import Karyawan
-                    </Button>
-                    <Button
-                        asChild
-                        size="sm"
-                        variant="outline"
-                        className="border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-800"
-                    >
-                        <Link href="/hris/employees/master-data">
-                            Divisi & Jabatan
-                        </Link>
-                    </Button>
-                    <Button size="sm" onClick={openCreateEmployeeDialog}>
-                        <Plus className="size-4" />
-                        Tambah Karyawan
-                    </Button>
+                    {isResignedList ? (
+                        <Button asChild size="sm" variant="outline">
+                            <Link href={employeeRoutes.index.url()}>
+                                <UserRoundCheck className="size-4" />
+                                Kembali ke Data Karyawan
+                            </Link>
+                        </Button>
+                    ) : (
+                        <>
+                            <Button asChild size="sm" variant="outline">
+                                <Link href={employeeRoutes.resigned.url()}>
+                                    <UserRoundX className="size-4" />
+                                    Karyawan Resign
+                                </Link>
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                    setEmployeeImportDialogOpen(true)
+                                }
+                            >
+                                <Upload className="size-4" />
+                                Import Karyawan
+                            </Button>
+                            <Button
+                                asChild
+                                size="sm"
+                                variant="outline"
+                                className="border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-800"
+                            >
+                                <Link href="/hris/employees/master-data">
+                                    Divisi & Jabatan
+                                </Link>
+                            </Button>
+                            <Button
+                                size="sm"
+                                onClick={openCreateEmployeeDialog}
+                            >
+                                <Plus className="size-4" />
+                                Tambah Karyawan
+                            </Button>
+                        </>
+                    )}
                 </div>
             }
         >
-            <Head title="HRIS Karyawan" />
+            <Head
+                title={isResignedList ? 'Karyawan Resign' : 'HRIS Karyawan'}
+            />
 
             <div className="space-y-6 p-4">
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-8">
@@ -1822,7 +1922,11 @@ export default function EmployeesIndex() {
                     <CardContent>
                         <form
                             onSubmit={submitFilters}
-                            className="grid gap-3 md:grid-cols-[1fr_220px_220px_220px_auto_auto]"
+                            className={
+                                isResignedList
+                                    ? 'grid gap-3 md:grid-cols-[1fr_220px_220px_auto_auto]'
+                                    : 'grid gap-3 md:grid-cols-[1fr_220px_220px_220px_auto_auto]'
+                            }
                         >
                             <div className="grid gap-2">
                                 <Label htmlFor="search">Pencarian</Label>
@@ -1875,46 +1979,52 @@ export default function EmployeesIndex() {
                                 />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="status-filter">Status</Label>
-                                <Select
-                                    value={
-                                        filterState.status === ''
-                                            ? '__all'
-                                            : filterState.status
-                                    }
-                                    onValueChange={(value) =>
-                                        setFilterState((current) => ({
-                                            ...current,
-                                            status:
-                                                value === '__all' ? '' : value,
-                                        }))
-                                    }
-                                >
-                                    <SelectTrigger
-                                        id="status-filter"
-                                        className="w-full"
+                            {!isResignedList && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="status-filter">
+                                        Status
+                                    </Label>
+                                    <Select
+                                        value={
+                                            filterState.status === ''
+                                                ? '__all'
+                                                : filterState.status
+                                        }
+                                        onValueChange={(value) =>
+                                            setFilterState((current) => ({
+                                                ...current,
+                                                status:
+                                                    value === '__all'
+                                                        ? ''
+                                                        : value,
+                                            }))
+                                        }
                                     >
-                                        <SelectValue placeholder="Semua status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="__all">
-                                            Semua status
-                                        </SelectItem>
-                                        {options.employment_statuses.map(
-                                            (status) => (
-                                                <SelectItem
-                                                    key={status}
-                                                    value={status}
-                                                >
-                                                    {statusLabels[status] ??
-                                                        status}
-                                                </SelectItem>
-                                            ),
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                        <SelectTrigger
+                                            id="status-filter"
+                                            className="w-full"
+                                        >
+                                            <SelectValue placeholder="Semua status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__all">
+                                                Semua status
+                                            </SelectItem>
+                                            {options.employment_statuses.map(
+                                                (status) => (
+                                                    <SelectItem
+                                                        key={status}
+                                                        value={status}
+                                                    >
+                                                        {statusLabels[status] ??
+                                                            status}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
 
                             <div className="grid gap-2">
                                 <Label htmlFor="sub-company-filter">
@@ -1979,18 +2089,27 @@ export default function EmployeesIndex() {
                 <Card>
                     <CardHeader className="flex flex-row items-start justify-between gap-3">
                         <div>
-                            <CardTitle>Daftar Karyawan</CardTitle>
+                            <CardTitle>
+                                {isResignedList
+                                    ? 'Karyawan Resign'
+                                    : 'Daftar Karyawan'}
+                            </CardTitle>
                             <CardDescription>
                                 {activeFilterSummary === ''
-                                    ? 'Filter aktif: Semua karyawan'
+                                    ? isResignedList
+                                        ? 'Daftar karyawan yang sudah melalui proses offboarding.'
+                                        : 'Filter aktif: Semua karyawan'
                                     : `Filter aktif: ${activeFilterSummary}`}
                             </CardDescription>
                         </div>
-                        <Button asChild size="sm" variant="outline">
-                            <a href={employeeExportUrl}>
-                                <Download className="size-4" />
-                                Export .xls
-                            </a>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEmployeeExportDialogOpen(true)}
+                        >
+                            <Download className="size-4" />
+                            Export Data
                         </Button>
                     </CardHeader>
                     <CardContent>
@@ -2090,7 +2209,9 @@ export default function EmployeesIndex() {
                                                 colSpan={11}
                                                 className="px-3 py-8 text-center text-muted-foreground"
                                             >
-                                                Belum ada data karyawan.
+                                                {isResignedList
+                                                    ? 'Belum ada karyawan resign.'
+                                                    : 'Belum ada data karyawan.'}
                                             </td>
                                         </tr>
                                     )}
@@ -2381,6 +2502,100 @@ export default function EmployeesIndex() {
             </div>
 
             <Dialog
+                open={employeeExportDialogOpen}
+                onOpenChange={setEmployeeExportDialogOpen}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Pilih Data Export</DialogTitle>
+                        <DialogDescription>
+                            Kategori menentukan kolom pada file export.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-2">
+                        <Label>Format File</Label>
+                        <div className="grid grid-cols-2 rounded-md bg-muted p-1">
+                            {(['xls', 'pdf'] as EmployeeExportFormat[]).map(
+                                (format) => (
+                                    <button
+                                        key={format}
+                                        type="button"
+                                        aria-pressed={
+                                            employeeExportFormat === format
+                                        }
+                                        onClick={() =>
+                                            setEmployeeExportFormat(format)
+                                        }
+                                        className={`h-8 rounded-sm text-sm font-medium transition-colors ${
+                                            employeeExportFormat === format
+                                                ? 'bg-background text-foreground shadow-sm'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        {format === 'xls' ? 'XLS' : 'PDF'}
+                                    </button>
+                                ),
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        {employeeExportCategories.map((category) => (
+                            <label
+                                key={category.value}
+                                htmlFor={`export-category-${category.value}`}
+                                className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors hover:bg-muted/50 ${
+                                    employeeExportCategory === category.value
+                                        ? 'border-primary bg-primary/5'
+                                        : ''
+                                }`}
+                            >
+                                <input
+                                    id={`export-category-${category.value}`}
+                                    type="radio"
+                                    name="employee-export-category"
+                                    value={category.value}
+                                    checked={
+                                        employeeExportCategory ===
+                                        category.value
+                                    }
+                                    onChange={() =>
+                                        setEmployeeExportCategory(
+                                            category.value,
+                                        )
+                                    }
+                                    className="mt-1 size-4 accent-primary"
+                                />
+                                <span className="min-w-0">
+                                    <span className="block text-sm font-medium">
+                                        {category.label}
+                                    </span>
+                                    <span className="block text-xs text-muted-foreground">
+                                        {category.description}
+                                    </span>
+                                </span>
+                            </label>
+                        ))}
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setEmployeeExportDialogOpen(false)}
+                        >
+                            Batal
+                        </Button>
+                        <Button type="button" onClick={downloadEmployeeExport}>
+                            <Download className="size-4" />
+                            Export .{employeeExportFormat}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
                 open={employeeImportDialogOpen}
                 onOpenChange={(open) => {
                     setEmployeeImportDialogOpen(open);
@@ -2570,6 +2785,10 @@ export default function EmployeesIndex() {
                                 <p>
                                     Perusahaan:{' '}
                                     {detailEmployee.sub_company?.name ?? '-'}
+                                </p>
+                                <p>
+                                    Zona Waktu Utama:{' '}
+                                    {detailEmployee.timezone ?? '-'}
                                 </p>
                                 <p>
                                     Tipe Karyawan:{' '}
@@ -3451,7 +3670,7 @@ export default function EmployeesIndex() {
                                 <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
                                     <Label htmlFor="address">Alamat KTP</Label>
                                     <div className="space-y-1">
-                                        <Input
+                                        <textarea
                                             id="address"
                                             value={employeeForm.data.address}
                                             onChange={(event) =>
@@ -3460,6 +3679,9 @@ export default function EmployeesIndex() {
                                                     event.target.value,
                                                 )
                                             }
+                                            rows={3}
+                                            maxLength={500}
+                                            className="min-h-20 w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                         />
                                         <InputError
                                             message={
@@ -3474,7 +3696,7 @@ export default function EmployeesIndex() {
                                         Alamat Domisili
                                     </Label>
                                     <div className="flex flex-col gap-1">
-                                        <Input
+                                        <textarea
                                             id="domicile_address"
                                             value={
                                                 employeeForm.data
@@ -3486,6 +3708,9 @@ export default function EmployeesIndex() {
                                                     event.target.value,
                                                 )
                                             }
+                                            rows={3}
+                                            maxLength={500}
+                                            className="min-h-20 w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                         />
                                         <InputError
                                             message={
@@ -4190,6 +4415,53 @@ export default function EmployeesIndex() {
                                             message={
                                                 employeeForm.errors
                                                     .sub_company_id
+                                            }
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                    <Label htmlFor="timezone" className="pt-2">
+                                        Zona Waktu Utama
+                                    </Label>
+                                    <div className="space-y-1">
+                                        <Select
+                                            value={employeeForm.data.timezone}
+                                            onValueChange={(value) =>
+                                                employeeForm.setData(
+                                                    'timezone',
+                                                    value,
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger
+                                                id="timezone"
+                                                className="w-full"
+                                            >
+                                                <SelectValue placeholder="Pilih zona waktu" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {options.timezones.map(
+                                                    (timezone) => (
+                                                        <SelectItem
+                                                            key={timezone.value}
+                                                            value={
+                                                                timezone.value
+                                                            }
+                                                        >
+                                                            {timezone.label}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Menjadi fallback. Zona perangkat
+                                            saat presensi tetap diprioritaskan.
+                                        </p>
+                                        <InputError
+                                            message={
+                                                employeeForm.errors.timezone
                                             }
                                         />
                                     </div>

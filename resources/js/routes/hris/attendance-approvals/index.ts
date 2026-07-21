@@ -162,7 +162,7 @@ approve.form = approveForm
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::reject
-* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:111
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:112
 * @route '/hris/attendance-approvals/{attendanceRequest}/reject'
 */
 export const reject = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -177,7 +177,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::reject
-* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:111
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:112
 * @route '/hris/attendance-approvals/{attendanceRequest}/reject'
 */
 reject.url = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -210,7 +210,7 @@ reject.url = (args: { attendanceRequest: number | { id: number } } | [attendance
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::reject
-* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:111
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:112
 * @route '/hris/attendance-approvals/{attendanceRequest}/reject'
 */
 reject.post = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -220,7 +220,7 @@ reject.post = (args: { attendanceRequest: number | { id: number } } | [attendanc
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::reject
-* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:111
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:112
 * @route '/hris/attendance-approvals/{attendanceRequest}/reject'
 */
 const rejectForm = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -230,7 +230,7 @@ const rejectForm = (args: { attendanceRequest: number | { id: number } } | [atte
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::reject
-* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:111
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:112
 * @route '/hris/attendance-approvals/{attendanceRequest}/reject'
 */
 rejectForm.post = (args: { attendanceRequest: number | { id: number } } | [attendanceRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
