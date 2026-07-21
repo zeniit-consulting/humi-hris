@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Hris;
 
+use App\Http\Requests\Hris\Concerns\ValidatesAnnualLeavePolicy;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreLeaveRequest extends FormRequest
 {
+    use ValidatesAnnualLeavePolicy;
+
     /**
      * Determine if the user is authorized to make this request.
      */

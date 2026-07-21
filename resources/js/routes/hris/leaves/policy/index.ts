@@ -57,7 +57,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\LeavePolicyController::update
-* @see app/Http/Controllers/Hris/LeavePolicyController.php:44
+* @see app/Http/Controllers/Hris/LeavePolicyController.php:46
 * @route '/hris/leaves/policy/{policy}'
 */
 export const update = (args: { policy: number | { id: number } } | [policy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -72,7 +72,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\LeavePolicyController::update
-* @see app/Http/Controllers/Hris/LeavePolicyController.php:44
+* @see app/Http/Controllers/Hris/LeavePolicyController.php:46
 * @route '/hris/leaves/policy/{policy}'
 */
 update.url = (args: { policy: number | { id: number } } | [policy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -105,7 +105,7 @@ update.url = (args: { policy: number | { id: number } } | [policy: number | { id
 
 /**
 * @see \App\Http\Controllers\Hris\LeavePolicyController::update
-* @see app/Http/Controllers/Hris/LeavePolicyController.php:44
+* @see app/Http/Controllers/Hris/LeavePolicyController.php:46
 * @route '/hris/leaves/policy/{policy}'
 */
 update.put = (args: { policy: number | { id: number } } | [policy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -115,7 +115,7 @@ update.put = (args: { policy: number | { id: number } } | [policy: number | { id
 
 /**
 * @see \App\Http\Controllers\Hris\LeavePolicyController::update
-* @see app/Http/Controllers/Hris/LeavePolicyController.php:44
+* @see app/Http/Controllers/Hris/LeavePolicyController.php:46
 * @route '/hris/leaves/policy/{policy}'
 */
 const updateForm = (args: { policy: number | { id: number } } | [policy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -130,7 +130,7 @@ const updateForm = (args: { policy: number | { id: number } } | [policy: number 
 
 /**
 * @see \App\Http\Controllers\Hris\LeavePolicyController::update
-* @see app/Http/Controllers/Hris/LeavePolicyController.php:44
+* @see app/Http/Controllers/Hris/LeavePolicyController.php:46
 * @route '/hris/leaves/policy/{policy}'
 */
 updateForm.put = (args: { policy: number | { id: number } } | [policy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

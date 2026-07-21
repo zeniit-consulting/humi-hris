@@ -53,15 +53,18 @@ type BalanceRow = {
     used_days: number;
     adjusted_days: number;
     remaining_balance: number;
-    policy_type: 'lump_sum' | 'accrual';
+    policy_type: PolicyMethod;
+    period_start: string | null;
+    period_end: string | null;
     has_balance: boolean;
 };
 
 type Policy = {
     id: number;
     leave_type: string;
-    policy_type: 'lump_sum' | 'accrual';
+    policy_type: PolicyMethod;
     yearly_days: number;
+    waiting_period_months: number;
     max_days_per_request: number | null;
     is_active: boolean;
 };
@@ -91,9 +94,27 @@ const yearOptions = [
 
 type PolicyFormData = {
     leave_type: string;
-    policy_type: 'lump_sum' | 'accrual';
+    policy_type: PolicyMethod;
     yearly_days: string;
+    waiting_period_months: string;
     max_days_per_request: string;
+};
+
+type PolicyMethod = 'annual' | 'prorated' | 'monthly_accrual' | 'anniversary';
+
+const policyLabels: Record<PolicyMethod, string> = {
+    annual: 'Annual basis',
+    prorated: 'Prorata tanggal masuk',
+    monthly_accrual: 'Akumulasi bulanan',
+    anniversary: 'Anniversary basis',
+};
+
+const policyDescriptions: Record<PolicyMethod, string> = {
+    annual: 'Jatah diberikan penuh untuk setiap tahun kalender.',
+    prorated: 'Jatah tahun pertama mengikuti sisa bulan sejak tanggal masuk.',
+    monthly_accrual:
+        'Saldo bertambah per bulan dalam periode yang dimulai dari tanggal masuk.',
+    anniversary: 'Periode jatah mengikuti ulang tahun tanggal masuk karyawan.',
 };
 
 type AdjustFormData = {
@@ -117,8 +138,9 @@ export default function BalancesPage() {
 
     const policyForm = useForm<PolicyFormData>({
         leave_type,
-        policy_type: policy?.policy_type ?? 'lump_sum',
+        policy_type: policy?.policy_type ?? 'annual',
         yearly_days: String(policy?.yearly_days ?? 12),
+        waiting_period_months: String(policy?.waiting_period_months ?? 0),
         max_days_per_request:
             policy?.max_days_per_request != null
                 ? String(policy.max_days_per_request)
@@ -246,7 +268,7 @@ export default function BalancesPage() {
                     <CardContent>
                         <form
                             onSubmit={submitPolicy}
-                            className="grid gap-4 md:grid-cols-[240px_180px_200px_auto]"
+                            className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.4fr)_150px_170px_190px_auto]"
                         >
                             <div className="grid gap-2">
                                 <Label htmlFor="policy_type">
@@ -257,7 +279,7 @@ export default function BalancesPage() {
                                     onValueChange={(v) =>
                                         policyForm.setData(
                                             'policy_type',
-                                            v as 'lump_sum' | 'accrual',
+                                            v as PolicyMethod,
                                         )
                                     }
                                 >
@@ -268,14 +290,27 @@ export default function BalancesPage() {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="lump_sum">
-                                            Lump Sum (langsung)
+                                        <SelectItem value="annual">
+                                            Annual basis / tahunan
                                         </SelectItem>
-                                        <SelectItem value="accrual">
-                                            Accrual (dicicil bulanan)
+                                        <SelectItem value="prorated">
+                                            Prorata tanggal masuk
+                                        </SelectItem>
+                                        <SelectItem value="monthly_accrual">
+                                            Monthly accrual
+                                        </SelectItem>
+                                        <SelectItem value="anniversary">
+                                            Anniversary basis
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
+                                <p className="text-xs text-muted-foreground">
+                                    {
+                                        policyDescriptions[
+                                            policyForm.data.policy_type
+                                        ]
+                                    }
+                                </p>
                                 <InputError
                                     message={policyForm.errors.policy_type}
                                 />
@@ -302,37 +337,65 @@ export default function BalancesPage() {
                                 />
                             </div>
 
-                            {policyForm.data.policy_type === 'lump_sum' && (
-                                <div className="grid gap-2">
-                                    <Label htmlFor="max_days">
-                                        Maks Hari / Pengajuan
-                                        <span className="ml-1 text-xs text-muted-foreground">
-                                            (opsional)
-                                        </span>
-                                    </Label>
+                            <div className="grid gap-2">
+                                <Label htmlFor="waiting_period_months">
+                                    Bisa Diambil Setelah
+                                </Label>
+                                <div className="relative">
                                     <Input
-                                        id="max_days"
+                                        id="waiting_period_months"
                                         type="number"
-                                        min={1}
-                                        placeholder="Tidak dibatasi"
+                                        min={0}
+                                        max={120}
+                                        className="pr-16"
                                         value={
-                                            policyForm.data.max_days_per_request
+                                            policyForm.data
+                                                .waiting_period_months
                                         }
                                         onChange={(e) =>
                                             policyForm.setData(
-                                                'max_days_per_request',
+                                                'waiting_period_months',
                                                 e.target.value,
                                             )
                                         }
                                     />
-                                    <InputError
-                                        message={
-                                            policyForm.errors
-                                                .max_days_per_request
-                                        }
-                                    />
+                                    <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                                        bulan
+                                    </span>
                                 </div>
-                            )}
+                                <InputError
+                                    message={
+                                        policyForm.errors.waiting_period_months
+                                    }
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="max_days">
+                                    Maks Hari / Pengajuan
+                                    <span className="ml-1 text-xs text-muted-foreground">
+                                        (opsional)
+                                    </span>
+                                </Label>
+                                <Input
+                                    id="max_days"
+                                    type="number"
+                                    min={1}
+                                    placeholder="Tidak dibatasi"
+                                    value={policyForm.data.max_days_per_request}
+                                    onChange={(e) =>
+                                        policyForm.setData(
+                                            'max_days_per_request',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                                <InputError
+                                    message={
+                                        policyForm.errors.max_days_per_request
+                                    }
+                                />
+                            </div>
 
                             <div className="flex items-end">
                                 <Button
@@ -426,7 +489,7 @@ export default function BalancesPage() {
                                     Inisialisasi Jatah
                                 </Button>
 
-                                {policy?.policy_type === 'accrual' && (
+                                {policy?.policy_type === 'monthly_accrual' && (
                                     <Button
                                         variant="outline"
                                         onClick={() =>
@@ -503,15 +566,14 @@ export default function BalancesPage() {
                                             </td>
                                             <td className="px-3 py-3">
                                                 <Badge variant="secondary">
-                                                    {row.policy_type ===
-                                                    'lump_sum'
-                                                        ? 'Lump Sum'
-                                                        : 'Accrual'}
+                                                    {policyLabels[
+                                                        row.policy_type
+                                                    ] ?? row.policy_type}
                                                 </Badge>
                                             </td>
                                             <td className="px-3 py-3">
-                                                {row.policy_type ===
-                                                'lump_sum' ? (
+                                                {row.policy_type !==
+                                                'monthly_accrual' ? (
                                                     <span>
                                                         {row.total_quota} hari
                                                     </span>
@@ -523,6 +585,13 @@ export default function BalancesPage() {
                                                         hari
                                                     </span>
                                                 )}
+                                                {row.period_start &&
+                                                    row.period_end && (
+                                                        <div className="mt-1 text-xs text-muted-foreground">
+                                                            {row.period_start} -{' '}
+                                                            {row.period_end}
+                                                        </div>
+                                                    )}
                                             </td>
                                             <td className="px-3 py-3">
                                                 {row.used_days} hari

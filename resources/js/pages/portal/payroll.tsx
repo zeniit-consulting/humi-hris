@@ -44,6 +44,8 @@ type PayrollPayload = {
         deductions_total: string | number;
         net_salary: string | number;
         allowance_breakdown: Record<string, number>;
+        variable_allowance_breakdown: Record<string, number>;
+        bonus_breakdown: Record<string, number>;
     }>;
 };
 
@@ -350,6 +352,35 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                                 className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3"
                                             >
                                                 <span>{name}</span>
+                                                <span className="font-semibold">
+                                                    {formatCurrency(amount)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                        {Object.entries(
+                                            slip.variable_allowance_breakdown ??
+                                                {},
+                                        ).map(([name, amount]) => (
+                                            <div
+                                                key={`variable-${name}`}
+                                                className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3"
+                                            >
+                                                <span>
+                                                    {name} (Tidak Tetap)
+                                                </span>
+                                                <span className="font-semibold">
+                                                    {formatCurrency(amount)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                        {Object.entries(
+                                            slip.bonus_breakdown ?? {},
+                                        ).map(([name, amount]) => (
+                                            <div
+                                                key={`bonus-${name}`}
+                                                className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3"
+                                            >
+                                                <span>{name} (Bonus)</span>
                                                 <span className="font-semibold">
                                                     {formatCurrency(amount)}
                                                 </span>

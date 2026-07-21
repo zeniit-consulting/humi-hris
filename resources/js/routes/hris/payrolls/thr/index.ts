@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::generate
-* @see app/Http/Controllers/Hris/PayrollController.php:173
+* @see app/Http/Controllers/Hris/PayrollController.php:179
 * @route '/hris/payrolls/thr/generate'
 */
 export const generate = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ generate.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::generate
-* @see app/Http/Controllers/Hris/PayrollController.php:173
+* @see app/Http/Controllers/Hris/PayrollController.php:179
 * @route '/hris/payrolls/thr/generate'
 */
 generate.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ generate.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::generate
-* @see app/Http/Controllers/Hris/PayrollController.php:173
+* @see app/Http/Controllers/Hris/PayrollController.php:179
 * @route '/hris/payrolls/thr/generate'
 */
 generate.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ generate.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::generate
-* @see app/Http/Controllers/Hris/PayrollController.php:173
+* @see app/Http/Controllers/Hris/PayrollController.php:179
 * @route '/hris/payrolls/thr/generate'
 */
 const generateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ const generateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> 
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::generate
-* @see app/Http/Controllers/Hris/PayrollController.php:173
+* @see app/Http/Controllers/Hris/PayrollController.php:179
 * @route '/hris/payrolls/thr/generate'
 */
 generateForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

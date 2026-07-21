@@ -16,6 +16,8 @@ class EmployeeLeaveBalance extends Model
         'employee_id',
         'leave_type',
         'year',
+        'period_start',
+        'period_end',
         'policy_type',
         'total_quota',
         'accrued_days',
@@ -31,6 +33,8 @@ class EmployeeLeaveBalance extends Model
             'used_days' => 'float',
             'adjusted_days' => 'float',
             'year' => 'integer',
+            'period_start' => 'date',
+            'period_end' => 'date',
         ];
     }
 

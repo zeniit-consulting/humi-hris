@@ -14,6 +14,7 @@ class LeavePolicy extends Model
         'leave_type',
         'policy_type',
         'yearly_days',
+        'waiting_period_months',
         'max_days_per_request',
         'is_active',
     ];
@@ -23,17 +24,18 @@ class LeavePolicy extends Model
         return [
             'is_active' => 'boolean',
             'yearly_days' => 'integer',
+            'waiting_period_months' => 'integer',
             'max_days_per_request' => 'integer',
         ];
     }
 
     public function isLumpSum(): bool
     {
-        return $this->policy_type === 'lump_sum';
+        return in_array($this->policy_type, ['annual', 'prorated', 'anniversary'], true);
     }
 
     public function isAccrual(): bool
     {
-        return $this->policy_type === 'accrual';
+        return $this->policy_type === 'monthly_accrual';
     }
 }

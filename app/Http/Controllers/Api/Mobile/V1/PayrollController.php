@@ -84,6 +84,7 @@ class PayrollController extends Controller
 
         $items = $payrolls->map(function ($payroll) {
             $item = $payroll->items->first();
+
             return [
                 'period' => $payroll->period,
                 'period_label' => Carbon::createFromFormat('Y-m', $payroll->period)->locale('id')->translatedFormat('F Y'),
@@ -153,6 +154,8 @@ class PayrollController extends Controller
                     'deductions_total' => $item->deductions_total,
                     'net_salary' => $item->net_salary,
                     'allowance_breakdown' => $item->allowance_breakdown ?? [],
+                    'variable_allowance_breakdown' => $item->variable_allowance_breakdown ?? [],
+                    'bonus_breakdown' => $item->bonus_breakdown ?? [],
                 ])->values()
                 : [],
         ];

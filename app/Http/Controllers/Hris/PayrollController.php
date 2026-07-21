@@ -126,6 +126,10 @@ class PayrollController extends Controller
                         : false,
                     'base_salary' => $item->base_salary,
                     'allowances_total' => $item->allowances_total,
+                    'is_prorated' => $item->is_prorated,
+                    'proration_working_days' => $item->proration_working_days,
+                    'proration_payable_days' => $item->proration_payable_days,
+                    'proration_factor' => $item->proration_factor,
                     'overtime_hours' => $item->overtime_hours,
                     'overtime_pay' => $item->overtime_pay,
                     'pph21_method' => $item->pph21_method,
@@ -138,6 +142,8 @@ class PayrollController extends Controller
                     'deductions_total' => $item->deductions_total,
                     'net_salary' => $item->net_salary,
                     'allowance_breakdown' => $item->allowance_breakdown ?? [],
+                    'variable_allowance_breakdown' => $item->variable_allowance_breakdown ?? [],
+                    'bonus_breakdown' => $item->bonus_breakdown ?? [],
                     'thr_months_of_service' => $item->thr_months_of_service,
                     'thr_amount' => $item->thr_amount,
                 ])->values(),
@@ -222,6 +228,8 @@ class PayrollController extends Controller
         }
 
         $this->normalizePayrollItemInput($request);
+        $this->normalizeCompensationRows($request, 'variable_allowances');
+        $this->normalizeCompensationRows($request, 'bonuses');
 
         $validated = $request->validate([
             'base_salary' => ['nullable', 'numeric', 'min:0'],
@@ -234,9 +242,38 @@ class PayrollController extends Controller
             'pph21_company_borne' => ['nullable', 'numeric', 'min:0'],
             'kasbon_deduction' => ['nullable', 'numeric', 'min:0'],
             'denda_deduction' => ['nullable', 'numeric', 'min:0'],
+            'variable_allowances' => ['nullable', 'array', 'max:20'],
+            'variable_allowances.*.name' => ['required', 'string', 'max:100'],
+            'variable_allowances.*.amount' => ['required', 'numeric', 'min:0'],
+            'bonuses' => ['nullable', 'array', 'max:20'],
+            'bonuses.*.name' => ['required', 'string', 'max:100'],
+            'bonuses.*.amount' => ['required', 'numeric', 'min:0'],
         ]);
 
+        $variableAllowances = $validated['variable_allowances'] ?? null;
+        $bonuses = $validated['bonuses'] ?? null;
+        unset($validated['variable_allowances'], $validated['bonuses']);
+
         $payrollItem->fill($validated);
+
+        if ($variableAllowances !== null || $bonuses !== null) {
+            $variableBreakdown = $this->compensationBreakdown(
+                $variableAllowances ?? ($payrollItem->variable_allowance_breakdown ?? [])
+            );
+            $bonusBreakdown = $this->compensationBreakdown(
+                $bonuses ?? ($payrollItem->bonus_breakdown ?? [])
+            );
+            $fixedAllowancesTotal = (float) collect($payrollItem->allowance_breakdown ?? [])->sum();
+
+            $payrollItem->forceFill([
+                'variable_allowance_breakdown' => $variableBreakdown,
+                'bonus_breakdown' => $bonusBreakdown,
+                'allowances_total' => round(
+                    $fixedAllowancesTotal + collect($variableBreakdown)->sum() + collect($bonusBreakdown)->sum(),
+                    2
+                ),
+            ]);
+        }
 
         $deductionsTotal = round(
             (float) $payrollItem->pph21_deduction
@@ -338,6 +375,45 @@ class PayrollController extends Controller
         }
 
         $request->merge($normalized);
+    }
+
+    private function normalizeCompensationRows(Request $request, string $key): void
+    {
+        if (! $request->has($key)) {
+            return;
+        }
+
+        $rows = collect($request->input($key, []))
+            ->map(function (mixed $row): mixed {
+                if (! is_array($row)) {
+                    return $row;
+                }
+
+                $row['amount'] = preg_replace('/[^\d]/', '', (string) ($row['amount'] ?? ''));
+
+                return $row;
+            })
+            ->all();
+
+        $request->merge([$key => $rows]);
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $rows
+     * @return array<string, float>
+     */
+    private function compensationBreakdown(array $rows): array
+    {
+        $breakdown = [];
+
+        foreach ($rows as $key => $row) {
+            $name = is_array($row) ? trim((string) ($row['name'] ?? '')) : (string) $key;
+            $amount = is_array($row) ? (float) ($row['amount'] ?? 0) : (float) $row;
+
+            $breakdown[$name] = round(($breakdown[$name] ?? 0) + $amount, 2);
+        }
+
+        return $breakdown;
     }
 
     private function normalizeAmount(mixed $value, bool $allowDecimal = false): ?string

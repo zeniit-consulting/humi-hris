@@ -254,7 +254,7 @@ export default function Dashboard({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
 
-            <div className="space-y-3 p-3 sm:p-4">
+            <div className="space-y-[14px] p-3 sm:p-4">
                 <Card className="gap-0 border-rose-200 bg-rose-50/70 py-0">
                     <CardHeader className="px-3 py-3 sm:px-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -307,7 +307,7 @@ export default function Dashboard({
                     </CardContent>
                 </Card>
 
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <div className="grid gap-[14px] md:grid-cols-2 xl:grid-cols-5">
                     <Card className="gap-1 border-l-2 border-l-sky-500 bg-sky-50/30 py-2">
                         <CardHeader className="px-3 pb-0">
                             <CardDescription>Total Employees</CardDescription>
@@ -383,7 +383,7 @@ export default function Dashboard({
                     </Card>
                 </div>
 
-                <div className="grid gap-3 xl:grid-cols-3">
+                <div className="grid gap-[14px] xl:grid-cols-3">
                     <Card className="gap-0 py-0">
                         <CardHeader className="px-4 py-3">
                             <div className="flex items-start justify-between gap-3">
@@ -633,7 +633,7 @@ export default function Dashboard({
                     </div>
 
                     <CollapsibleContent>
-                        <div className="space-y-3 border-t p-3 sm:p-4">
+                        <div className="space-y-[14px] border-t p-3 sm:p-4">
                             <div className="flex flex-wrap items-end gap-2">
                                 <div className="grid w-full gap-1.5 sm:w-[180px]">
                                     <Label htmlFor="outsourcing-period">
@@ -710,7 +710,7 @@ export default function Dashboard({
                                 </Button>
                             </div>
 
-                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                            <div className="grid gap-[14px] md:grid-cols-2 xl:grid-cols-4">
                                 <OutsourcingStat
                                     icon={Building2}
                                     label="Klien Aktif"

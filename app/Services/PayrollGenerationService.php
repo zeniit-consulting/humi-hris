@@ -149,8 +149,19 @@ class PayrollGenerationService
         return Employee::query()
             ->withoutGlobalScopes()
             ->where('user_id', $ownerId)
-            ->where('is_active', true)
-            ->whereIn('employment_status', ['active', 'probation', 'on_leave'])
+            ->whereDate('hire_date', '<=', $end->toDateString())
+            ->where(function ($query) use ($start): void {
+                $query
+                    ->where(function ($active): void {
+                        $active->where('is_active', true)
+                            ->whereIn('employment_status', ['active', 'probation', 'on_leave']);
+                    })
+                    ->orWhere(function ($resigned) use ($start): void {
+                        $resigned->where('employment_status', 'resigned')
+                            ->whereNotNull('offboarded_at')
+                            ->whereDate('offboarded_at', '>=', $start->toDateString());
+                    });
+            })
             ->when(! $includeSubCompanyEmployees, fn ($query) => $query->whereNull('sub_company_id'))
             ->when($excludedEmployeeIds !== [], fn ($query) => $query->whereNotIn('id', $excludedEmployeeIds))
             ->with([
@@ -174,6 +185,11 @@ class PayrollGenerationService
                         ->where('status', 'approved')
                         ->whereBetween('work_date', [$start->toDateString(), $end->toDateString()]);
                 },
+                'schedules' => function ($query) use ($ownerId, $start, $end): void {
+                    $query->withoutGlobalScopes()
+                        ->where('user_id', $ownerId)
+                        ->whereBetween('work_date', [$start->toDateString(), $end->toDateString()]);
+                },
             ])
             ->orderBy('first_name')
             ->orderBy('last_name')
@@ -191,18 +207,20 @@ class PayrollGenerationService
         Carbon $end,
         ?CompanySetting $setting,
     ): array {
-        $baseSalary = (float) ($employee->base_salary ?? 0);
+        $monthlyBaseSalary = (float) ($employee->base_salary ?? 0);
+        [$prorationFactor, $workingDays, $payableDays] = $this->prorationDetails($employee, $start, $end);
+        $baseSalary = round($monthlyBaseSalary * $prorationFactor, 2);
 
         $allowanceGrouped = $employee->allowances
             ->groupBy('name')
-            ->map(fn ($rows) => round((float) $rows->sum('amount'), 2))
+            ->map(fn ($rows) => round((float) $rows->sum('amount') * $prorationFactor, 2))
             ->sortKeys();
 
         $allowancesTotal = round((float) $allowanceGrouped->sum(), 2);
 
         // Overtime calculation
         $overtimeHours = (float) $employee->overtimeRequests->sum('total_hours');
-        $hourlyRate = $baseSalary / max((int) ($setting->overtime_hour_divisor ?? 173), 1);
+        $hourlyRate = $monthlyBaseSalary / max((int) ($setting->overtime_hour_divisor ?? 173), 1);
         $overtimePay = 0.0;
         if ($overtimeHours > 0) {
             $multiplierHour1 = (float) ($setting->overtime_multiplier_hour1 ?? 1.5);
@@ -235,6 +253,10 @@ class PayrollGenerationService
             'employee_id' => $employee->id,
             'base_salary' => $baseSalary,
             'allowances_total' => $allowancesTotal,
+            'is_prorated' => $prorationFactor < 1,
+            'proration_working_days' => $workingDays,
+            'proration_payable_days' => $payableDays,
+            'proration_factor' => round($prorationFactor, 6),
             'overtime_hours' => $overtimeHours,
             'overtime_pay' => $overtimePay,
             'pph21_method' => $pph21Method,
@@ -247,9 +269,55 @@ class PayrollGenerationService
             'deductions_total' => $deductionsTotal,
             'net_salary' => $netSalary,
             'allowance_breakdown' => $allowanceGrouped->toArray(),
+            'variable_allowance_breakdown' => [],
+            'bonus_breakdown' => [],
             'created_at' => now(),
             'updated_at' => now(),
         ];
+    }
+
+    /**
+     * @return array{0: float, 1: int, 2: int}
+     */
+    private function prorationDetails(Employee $employee, Carbon $start, Carbon $end): array
+    {
+        $employmentStart = $employee->hire_date && $employee->hire_date->greaterThan($start)
+            ? Carbon::parse($employee->hire_date)
+            : $start->copy();
+        $employmentEnd = $employee->offboarded_at && $employee->offboarded_at->lessThan($end)
+            ? Carbon::parse($employee->offboarded_at)
+            : $end->copy();
+
+        if ($employmentStart->greaterThan($employmentEnd)) {
+            return [0.0, 0, 0];
+        }
+
+        $schedules = $employee->schedules->keyBy(
+            fn ($schedule): string => $schedule->work_date->toDateString()
+        );
+        $workingDays = 0;
+        $payableDays = 0;
+
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            $schedule = $schedules->get($date->toDateString());
+            $isWorkingDay = $schedule ? ! $schedule->is_day_off : $date->isWeekday();
+
+            if (! $isWorkingDay) {
+                continue;
+            }
+
+            $workingDays++;
+
+            if ($date->betweenIncluded($employmentStart, $employmentEnd)) {
+                $payableDays++;
+            }
+        }
+
+        $factor = $workingDays > 0
+            ? min($payableDays / $workingDays, 1.0)
+            : 1.0;
+
+        return [$factor, $workingDays, $payableDays];
     }
 
     /**

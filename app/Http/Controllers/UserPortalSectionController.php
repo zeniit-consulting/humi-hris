@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Employee;
 use App\Models\CompanySetting;
+use App\Models\Employee;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\User;
@@ -217,6 +217,8 @@ class UserPortalSectionController extends Controller
                 'deductions_total' => $item->deductions_total,
                 'net_salary' => $item->net_salary,
                 'allowance_breakdown' => $item->allowance_breakdown ?? [],
+                'variable_allowance_breakdown' => $item->variable_allowance_breakdown ?? [],
+                'bonus_breakdown' => $item->bonus_breakdown ?? [],
             ])->values(),
         ];
     }

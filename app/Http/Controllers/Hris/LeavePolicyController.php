@@ -17,8 +17,9 @@ class LeavePolicyController extends Controller
     {
         $validated = $request->validate([
             'leave_type' => ['required', 'string', 'max:30'],
-            'policy_type' => ['required', Rule::in(['lump_sum', 'accrual'])],
+            'policy_type' => ['required', Rule::in(['annual', 'prorated', 'monthly_accrual', 'anniversary'])],
             'yearly_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'waiting_period_months' => ['required', 'integer', 'min:0', 'max:120'],
             'max_days_per_request' => ['nullable', 'integer', 'min:1', 'max:365'],
             'is_active' => ['boolean'],
         ]);
@@ -30,6 +31,7 @@ class LeavePolicyController extends Controller
             [
                 'policy_type' => $validated['policy_type'],
                 'yearly_days' => $validated['yearly_days'],
+                'waiting_period_months' => $validated['waiting_period_months'],
                 'max_days_per_request' => $validated['max_days_per_request'] ?? null,
                 'is_active' => $validated['is_active'] ?? true,
             ]
@@ -44,8 +46,9 @@ class LeavePolicyController extends Controller
     public function update(Request $request, LeavePolicy $policy): RedirectResponse
     {
         $validated = $request->validate([
-            'policy_type' => ['required', Rule::in(['lump_sum', 'accrual'])],
+            'policy_type' => ['required', Rule::in(['annual', 'prorated', 'monthly_accrual', 'anniversary'])],
             'yearly_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'waiting_period_months' => ['required', 'integer', 'min:0', 'max:120'],
             'max_days_per_request' => ['nullable', 'integer', 'min:1', 'max:365'],
             'is_active' => ['boolean'],
         ]);
@@ -53,6 +56,7 @@ class LeavePolicyController extends Controller
         $policy->update([
             'policy_type' => $validated['policy_type'],
             'yearly_days' => $validated['yearly_days'],
+            'waiting_period_months' => $validated['waiting_period_months'],
             'max_days_per_request' => $validated['max_days_per_request'] ?? null,
             'is_active' => $validated['is_active'] ?? $policy->is_active,
         ]);

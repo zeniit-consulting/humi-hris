@@ -70,6 +70,20 @@ class UpdateEmployeeRequest extends FormRequest
             );
         }
 
+        if ($this->has('fixed_allowances')) {
+            $normalizedPayload['fixed_allowances'] = collect($this->input('fixed_allowances', []))
+                ->map(function (mixed $allowance): mixed {
+                    if (! is_array($allowance)) {
+                        return $allowance;
+                    }
+
+                    $allowance['amount'] = $this->normalizeCurrencyInput($allowance['amount'] ?? null);
+
+                    return $allowance;
+                })
+                ->all();
+        }
+
         if ($this->filled('phone')) {
             $normalizedPayload['phone'] = WhatsAppPhone::normalize((string) $this->input('phone'));
         }
@@ -195,6 +209,9 @@ class UpdateEmployeeRequest extends FormRequest
                 Rule::notIn([$employee->id]),
             ],
             'base_salary' => ['nullable', 'numeric', 'min:0'],
+            'fixed_allowances' => ['nullable', 'array', 'max:20'],
+            'fixed_allowances.*.name' => ['required', 'string', 'max:100'],
+            'fixed_allowances.*.amount' => ['required', 'numeric', 'min:0'],
             'address' => ['nullable', 'string', 'max:500'],
             'domicile_address' => ['nullable', 'string', 'max:500'],
             'family_card_number' => ['nullable', 'string', 'max:32'],

@@ -113,6 +113,60 @@ class PayrollGenerationTest extends TestCase
         ]);
     }
 
+    public function test_resigned_employee_receives_prorated_salary_in_their_final_month(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2025-01-01',
+            'offboarded_at' => '2026-02-13',
+            'base_salary' => 6_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'is_active' => false,
+            'employment_status' => 'resigned',
+        ]);
+
+        EmployeeAllowance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Tetap',
+            'amount' => 600_000,
+            'is_active' => true,
+            'effective_start_date' => '2025-01-01',
+            'effective_end_date' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), [
+                'period' => '2026-02',
+            ])
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+
+        $this->assertDatabaseHas('payroll_runs', [
+            'user_id' => $user->id,
+            'period' => '2026-02',
+            'employees_count' => 1,
+            'total_base_salary' => 3_000_000,
+            'total_allowances' => 300_000,
+            'total_net_salary' => 3_300_000,
+        ]);
+
+        $this->assertDatabaseHas('payroll_items', [
+            'employee_id' => $employee->id,
+            'base_salary' => 3_000_000,
+            'allowances_total' => 300_000,
+            'net_salary' => 3_300_000,
+            'is_prorated' => true,
+            'proration_working_days' => 20,
+            'proration_payable_days' => 10,
+            'proration_factor' => 0.5,
+        ]);
+    }
+
     public function test_pph21_gross_up_adds_tax_allowance_and_equal_tax_deduction(): void
     {
         $user = User::factory()->create([
@@ -511,6 +565,50 @@ class PayrollGenerationTest extends TestCase
         ]);
     }
 
+    public function test_draft_payroll_accepts_variable_allowances_and_bonuses(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2025-01-01',
+            'base_salary' => 5_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $this->actingAs($user)->post(route('hris.payrolls.generate'), [
+            'period' => '2026-02',
+        ]);
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-02')->firstOrFail();
+        $item = PayrollItem::query()->where('payroll_run_id', $run->id)->where('employee_id', $employee->id)->firstOrFail();
+
+        $this->actingAs($user)
+            ->put(route('hris.payrolls.items.update', [$run, $item]), [
+                'variable_allowances' => [
+                    ['name' => 'Uang Makan Kehadiran', 'amount' => '500.000'],
+                    ['name' => 'Insentif Shift', 'amount' => '250.000'],
+                ],
+                'bonuses' => [
+                    ['name' => 'Bonus Target', 'amount' => '1.000.000'],
+                ],
+            ])
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']))
+            ->assertSessionHasNoErrors();
+
+        $item->refresh();
+
+        $this->assertSame('1750000.00', $item->allowances_total);
+        $this->assertSame('6750000.00', $item->net_salary);
+        $this->assertSame([
+            'Uang Makan Kehadiran' => 500_000,
+            'Insentif Shift' => 250_000,
+        ], $item->variable_allowance_breakdown);
+        $this->assertSame(['Bonus Target' => 1_000_000], $item->bonus_breakdown);
+    }
+
     public function test_saved_payroll_item_cannot_be_edited(): void
     {
         $user = User::factory()->create([
@@ -751,6 +849,7 @@ class PayrollGenerationTest extends TestCase
 
         Employee::factory()->create([
             'user_id' => $firstUser->id,
+            'hire_date' => '2025-01-01',
             'base_salary' => 4_000_000,
             'pph21_method' => 'gross',
             'pph21_rate' => 0,
@@ -760,6 +859,7 @@ class PayrollGenerationTest extends TestCase
 
         Employee::factory()->create([
             'user_id' => $secondUser->id,
+            'hire_date' => '2025-01-01',
             'base_salary' => 4_500_000,
             'pph21_method' => 'gross',
             'pph21_rate' => 0,

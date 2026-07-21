@@ -231,6 +231,18 @@
                                         <td>Rp {{ number_format((float) $amount, 0, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
+                                @foreach (($slip->variable_allowance_breakdown ?? []) as $name => $amount)
+                                    <tr>
+                                        <td>{{ $name }} (Tidak Tetap)</td>
+                                        <td>Rp {{ number_format((float) $amount, 0, ',', '.') }}</td>
+                                    </tr>
+                                @endforeach
+                                @foreach (($slip->bonus_breakdown ?? []) as $name => $amount)
+                                    <tr>
+                                        <td>{{ $name }} (Bonus)</td>
+                                        <td>Rp {{ number_format((float) $amount, 0, ',', '.') }}</td>
+                                    </tr>
+                                @endforeach
                                 @if ((float) ($slip->pph21_allowance ?? 0) > 0)
                                     <tr>
                                         <td>Tunjangan PPh21</td>

@@ -64,7 +64,7 @@ class LeaveBalanceController extends Controller
             ->map(function (Employee $employee) use ($balancesByEmployeeId, $policy) {
                 /** @var EmployeeLeaveBalance|null $balance */
                 $balance = $balancesByEmployeeId->get($employee->id);
-                $policyType = $balance?->policy_type ?? $policy?->policy_type ?? 'lump_sum';
+                $policyType = $balance?->policy_type ?? $policy?->policy_type ?? 'annual';
                 $totalQuota = $balance?->total_quota ?? (float) ($policy?->yearly_days ?? 12);
 
                 return [
@@ -72,6 +72,8 @@ class LeaveBalanceController extends Controller
                     'employee_id' => $employee->id,
                     'employee_label' => $employee->employee_code.' - '.$employee->full_name,
                     'policy_type' => $policyType,
+                    'period_start' => $balance?->period_start?->format('Y-m-d'),
+                    'period_end' => $balance?->period_end?->format('Y-m-d'),
                     'total_quota' => $totalQuota,
                     'accrued_days' => $balance?->accrued_days ?? 0,
                     'used_days' => $balance?->used_days ?? 0,
@@ -96,6 +98,7 @@ class LeaveBalanceController extends Controller
                 'leave_type' => $policy->leave_type,
                 'policy_type' => $policy->policy_type,
                 'yearly_days' => $policy->yearly_days,
+                'waiting_period_months' => $policy->waiting_period_months,
                 'max_days_per_request' => $policy->max_days_per_request,
                 'is_active' => $policy->is_active,
             ] : null,
@@ -215,6 +218,9 @@ class LeaveBalanceController extends Controller
                 'label' => $employee->employee_code.' - '.$employee->full_name,
             ],
             'balance' => $balance ? [
+                'policy_type' => $balance->policy_type,
+                'period_start' => $balance->period_start?->format('Y-m-d'),
+                'period_end' => $balance->period_end?->format('Y-m-d'),
                 'total_quota' => $balance->total_quota,
                 'accrued_days' => $balance->accrued_days,
                 'used_days' => $balance->used_days,

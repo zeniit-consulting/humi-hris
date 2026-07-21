@@ -309,6 +309,7 @@ type EmployeeFormData = {
     position_id: string;
     manager_id: string;
     base_salary: string;
+    fixed_allowances: Array<{ name: string; amount: string }>;
     address: string;
     domicile_address: string;
     family_card_number: string;
@@ -542,6 +543,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     position_id: '',
     manager_id: '',
     base_salary: '',
+    fixed_allowances: [],
     address: '',
     domicile_address: '',
     family_card_number: '',
@@ -963,6 +965,7 @@ export default function EmployeesIndex() {
                 'position_id',
                 'manager_id',
                 'base_salary',
+                'fixed_allowances',
                 'is_active',
                 'change_effective_date',
                 'change_notes',
@@ -1158,6 +1161,12 @@ export default function EmployeesIndex() {
             base_salary: employee.base_salary
                 ? String(employee.base_salary)
                 : '',
+            fixed_allowances: employee.allowances
+                .filter((allowance) => allowance.is_active)
+                .map((allowance) => ({
+                    name: allowance.name,
+                    amount: String(allowance.amount),
+                })),
             address: employee.address ?? '',
             domicile_address: employee.domicile_address ?? '',
             family_card_number: employee.family_card_number ?? '',
@@ -1335,6 +1344,24 @@ export default function EmployeesIndex() {
                     isValid = false;
                 }
             }
+
+            employeeForm.data.fixed_allowances.forEach((allowance, index) => {
+                if (allowance.name.trim() === '') {
+                    employeeForm.setError(
+                        `fixed_allowances.${index}.name`,
+                        'Nama tunjangan wajib diisi.',
+                    );
+                    isValid = false;
+                }
+
+                if (Number(allowance.amount.replace(/[^\d]/g, '')) <= 0) {
+                    employeeForm.setError(
+                        `fixed_allowances.${index}.amount`,
+                        'Nominal tunjangan harus lebih dari 0.',
+                    );
+                    isValid = false;
+                }
+            });
         }
 
         return isValid;
@@ -4725,6 +4752,155 @@ export default function EmployeesIndex() {
                                     </div>
                                 </div>
 
+                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                    <div>
+                                        <Label>Tunjangan Tetap</Label>
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            Komponen bulanan tanpa batas waktu.
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {employeeForm.data.fixed_allowances.map(
+                                            (allowance, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="grid gap-2 rounded-md border p-2 sm:grid-cols-[1fr_180px_36px]"
+                                                >
+                                                    <div>
+                                                        <Input
+                                                            aria-label={`Nama tunjangan tetap ${index + 1}`}
+                                                            value={
+                                                                allowance.name
+                                                            }
+                                                            placeholder="Contoh: Tunjangan Jabatan"
+                                                            onChange={(
+                                                                event,
+                                                            ) => {
+                                                                const rows = [
+                                                                    ...employeeForm
+                                                                        .data
+                                                                        .fixed_allowances,
+                                                                ];
+                                                                rows[index] = {
+                                                                    ...rows[
+                                                                        index
+                                                                    ],
+                                                                    name: event
+                                                                        .target
+                                                                        .value,
+                                                                };
+                                                                employeeForm.setData(
+                                                                    'fixed_allowances',
+                                                                    rows,
+                                                                );
+                                                            }}
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                (
+                                                                    employeeForm.errors as Record<
+                                                                        string,
+                                                                        string
+                                                                    >
+                                                                )[
+                                                                    `fixed_allowances.${index}.name`
+                                                                ]
+                                                            }
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Input
+                                                            aria-label={`Nominal tunjangan tetap ${index + 1}`}
+                                                            inputMode="numeric"
+                                                            value={formatThousandDigits(
+                                                                allowance.amount,
+                                                            )}
+                                                            placeholder="500.000"
+                                                            onChange={(
+                                                                event,
+                                                            ) => {
+                                                                const rows = [
+                                                                    ...employeeForm
+                                                                        .data
+                                                                        .fixed_allowances,
+                                                                ];
+                                                                rows[index] = {
+                                                                    ...rows[
+                                                                        index
+                                                                    ],
+                                                                    amount: normalizeDigitInput(
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    ),
+                                                                };
+                                                                employeeForm.setData(
+                                                                    'fixed_allowances',
+                                                                    rows,
+                                                                );
+                                                            }}
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                (
+                                                                    employeeForm.errors as Record<
+                                                                        string,
+                                                                        string
+                                                                    >
+                                                                )[
+                                                                    `fixed_allowances.${index}.amount`
+                                                                ]
+                                                            }
+                                                        />
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        title="Hapus tunjangan tetap"
+                                                        onClick={() =>
+                                                            employeeForm.setData(
+                                                                'fixed_allowances',
+                                                                employeeForm.data.fixed_allowances.filter(
+                                                                    (
+                                                                        _,
+                                                                        rowIndex,
+                                                                    ) =>
+                                                                        rowIndex !==
+                                                                        index,
+                                                                ),
+                                                            )
+                                                        }
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </div>
+                                            ),
+                                        )}
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() =>
+                                                employeeForm.setData(
+                                                    'fixed_allowances',
+                                                    [
+                                                        ...employeeForm.data
+                                                            .fixed_allowances,
+                                                        {
+                                                            name: '',
+                                                            amount: '',
+                                                        },
+                                                    ],
+                                                )
+                                            }
+                                        >
+                                            <Plus className="size-4" />
+                                            Tambah Tunjangan Tetap
+                                        </Button>
+                                    </div>
+                                </div>
+
                                 <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                     <Label htmlFor="employee_is_active">
                                         Status Aktif
@@ -5190,11 +5366,11 @@ export default function EmployeesIndex() {
             >
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
                     <DialogHeader>
-                        <DialogTitle>Kelola Kompensasi & Dokumen</DialogTitle>
+                        <DialogTitle>Kelola Rekening & Dokumen</DialogTitle>
                         <DialogDescription>
                             {selectedEmployee
                                 ? `${selectedEmployee.employee_code} - ${selectedEmployee.full_name}`
-                                : 'Pilih karyawan dari tabel untuk mengelola rekening, tunjangan, dan dokumen kepatuhan.'}
+                                : 'Pilih karyawan dari tabel untuk mengelola rekening dan dokumen kepatuhan.'}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -5327,7 +5503,7 @@ export default function EmployeesIndex() {
                                                             bankAccount.account_holder_name
                                                         }
                                                     </p>
-                                                    <p className="text-xs text-muted-foreground">
+                                                    <p className="hidden text-xs text-muted-foreground">
                                                         Tunjangan tetap:{' '}
                                                         {formatCurrencyDisplay(
                                                             bankAccount.fixed_allowance_amount,
@@ -5465,7 +5641,7 @@ export default function EmployeesIndex() {
                                         }
                                     />
                                 </div>
-                                <div className="grid gap-2">
+                                <div className="hidden">
                                     <Label htmlFor="fixed_allowance_amount">
                                         Tunjangan Tetap
                                     </Label>
@@ -5530,7 +5706,7 @@ export default function EmployeesIndex() {
                                 </div>
                             </form>
 
-                            <div className="space-y-3 rounded-lg border p-3">
+                            <div className="hidden space-y-3 rounded-lg border p-3">
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm font-medium">
                                         Dokumen Kepatuhan
@@ -5645,7 +5821,7 @@ export default function EmployeesIndex() {
 
                             <form
                                 onSubmit={submitDocumentForm}
-                                className="grid gap-3 rounded-lg border p-3 md:grid-cols-2"
+                                className="hidden gap-3 rounded-lg border p-3 md:grid-cols-2"
                             >
                                 <p className="text-sm font-medium md:col-span-2">
                                     {editingDocument

@@ -306,6 +306,77 @@ class EmployeeManagementTest extends TestCase
         ]);
     }
 
+    public function test_employee_wizard_stores_multiple_fixed_allowances(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $division = Division::factory()->create(['user_id' => $user->id]);
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'level' => '3',
+        ]);
+
+        $this->actingAs($user)->post(route('hris.employees.store'), [
+            'employee_code' => 'FIXED-001',
+            'full_name' => 'Karyawan Tunjangan Tetap',
+            'hire_date' => '2026-07-01',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'is_active' => true,
+            'fixed_allowances' => [
+                ['name' => 'Tunjangan Jabatan', 'amount' => '1.500.000'],
+                ['name' => 'Tunjangan Transport', 'amount' => '750.000'],
+            ],
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $employee = Employee::query()->where('employee_code', 'FIXED-001')->firstOrFail();
+
+        $this->assertDatabaseHas('employee_allowances', [
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Jabatan',
+            'amount' => 1_500_000,
+            'is_active' => true,
+            'effective_end_date' => null,
+        ]);
+        $this->assertDatabaseHas('employee_allowances', [
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Transport',
+            'amount' => 750_000,
+            'is_active' => true,
+            'effective_end_date' => null,
+        ]);
+
+        $this->actingAs($user)->put(route('hris.employees.update', $employee), [
+            'employee_code' => $employee->employee_code,
+            'full_name' => $employee->full_name,
+            'hire_date' => '2026-07-01',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'is_active' => true,
+            'fixed_allowances' => [
+                ['name' => 'Tunjangan Komunikasi', 'amount' => '300.000'],
+            ],
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertDatabaseMissing('employee_allowances', [
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Jabatan',
+        ]);
+        $this->assertDatabaseHas('employee_allowances', [
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Komunikasi',
+            'amount' => 300_000,
+        ]);
+    }
+
     public function test_admin_can_mark_employee_as_wfa(): void
     {
         $user = User::factory()->create(['email_verified_at' => now()]);

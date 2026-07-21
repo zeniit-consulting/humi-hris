@@ -676,8 +676,7 @@ class EmployeeController extends Controller
                 ['header' => 'Bank Utama', 'value' => fn (Employee $employee) => $this->primaryBankAccount($employee)?->bank_name],
                 ['header' => 'No. Rekening', 'value' => fn (Employee $employee) => $this->primaryBankAccount($employee)?->account_number, 'long_number' => true],
                 ['header' => 'Nama Pemilik Rekening', 'value' => fn (Employee $employee) => $this->primaryBankAccount($employee)?->account_holder_name],
-                ['header' => 'Tunjangan Tetap', 'value' => fn (Employee $employee) => $this->primaryBankAccount($employee)?->fixed_allowance_amount],
-                ['header' => 'Tunjangan Aktif', 'value' => fn (Employee $employee) => $employee->allowances
+                ['header' => 'Tunjangan Tetap', 'value' => fn (Employee $employee) => $employee->allowances
                     ->where('is_active', true)
                     ->map(fn ($allowance) => $allowance->name.': '.$allowance->amount)
                     ->implode('; ')],
@@ -1051,11 +1050,13 @@ class EmployeeController extends Controller
     public function store(StoreEmployeeRequest $request): RedirectResponse
     {
         $validated = $this->prepareEmploymentLifecycle($request->validated());
+        $fixedAllowances = $validated['fixed_allowances'] ?? [];
+        unset($validated['fixed_allowances']);
 
         $this->ensurePositionMatchesDivision($validated['position_id'] ?? null, $validated['division_id'] ?? null);
 
         try {
-            $employee = DB::transaction(function () use ($request, $validated): Employee {
+            $employee = DB::transaction(function () use ($request, $validated, $fixedAllowances): Employee {
                 $division = Division::query()
                     ->lockForUpdate()
                     ->findOrFail($validated['division_id']);
@@ -1074,11 +1075,15 @@ class EmployeeController extends Controller
                     );
                 }
 
-                return Employee::create([
+                $employee = Employee::create([
                     ...$validated,
                     'employee_code' => $employeeCode,
                     'is_active' => $request->boolean('is_active', true),
                 ]);
+
+                $this->syncFixedAllowances($employee, $fixedAllowances);
+
+                return $employee;
             });
 
         } catch (Throwable $exception) {
@@ -1103,19 +1108,25 @@ class EmployeeController extends Controller
         $validated = $request->validated();
         $effectiveDate = (string) ($validated['change_effective_date'] ?? now()->toDateString());
         $changeNotes = $validated['change_notes'] ?? null;
-        unset($validated['change_effective_date'], $validated['change_notes']);
+        $shouldSyncFixedAllowances = array_key_exists('fixed_allowances', $validated);
+        $fixedAllowances = $validated['fixed_allowances'] ?? [];
+        unset($validated['change_effective_date'], $validated['change_notes'], $validated['fixed_allowances']);
         $validated = $this->prepareEmploymentLifecycle($validated, $employee);
 
         $this->ensurePositionMatchesDivision($validated['position_id'] ?? null, $validated['division_id'] ?? null);
 
         try {
-            $employee = DB::transaction(function () use ($employee, $request, $validated, $effectiveDate, $changeNotes, $historyService): Employee {
+            $employee = DB::transaction(function () use ($employee, $request, $validated, $effectiveDate, $changeNotes, $historyService, $fixedAllowances, $shouldSyncFixedAllowances): Employee {
                 $before = $employee->only(['employment_status', 'division_id', 'position_id']);
 
                 $employee->update([
                     ...$validated,
                     'is_active' => $request->boolean('is_active', true),
                 ]);
+
+                if ($shouldSyncFixedAllowances) {
+                    $this->syncFixedAllowances($employee, $fixedAllowances);
+                }
 
                 $historyService->recordChanges(
                     $employee->fresh(),
@@ -1137,6 +1148,26 @@ class EmployeeController extends Controller
         }
 
         return back();
+    }
+
+    /**
+     * @param  array<int, array{name: string, amount: int|float|string}>  $allowances
+     */
+    private function syncFixedAllowances(Employee $employee, array $allowances): void
+    {
+        $employee->allowances()->delete();
+
+        foreach ($allowances as $allowance) {
+            $employee->allowances()->create([
+                'user_id' => $employee->user_id,
+                'name' => trim($allowance['name']),
+                'amount' => $allowance['amount'],
+                'is_active' => true,
+                'effective_start_date' => $employee->hire_date?->toDateString(),
+                'effective_end_date' => null,
+                'notes' => 'Tunjangan tetap',
+            ]);
+        }
     }
 
     public function activatePkwtt(

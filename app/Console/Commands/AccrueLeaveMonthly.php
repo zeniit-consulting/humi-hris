@@ -17,7 +17,7 @@ class AccrueLeaveMonthly extends Command
     {
         // Get all unique user_ids that have accrual policies
         $ownerIds = LeavePolicy::withoutGlobalScopes()
-            ->where('policy_type', 'accrual')
+            ->where('policy_type', 'monthly_accrual')
             ->where('is_active', true)
             ->distinct()
             ->pluck('user_id');
@@ -38,7 +38,7 @@ class AccrueLeaveMonthly extends Command
             // Get all accrual leave types for this owner
             $leaveTypes = LeavePolicy::withoutGlobalScopes()
                 ->where('user_id', $ownerId)
-                ->where('policy_type', 'accrual')
+                ->where('policy_type', 'monthly_accrual')
                 ->where('is_active', true)
                 ->pluck('leave_type');
 

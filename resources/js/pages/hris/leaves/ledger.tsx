@@ -21,7 +21,9 @@ type BalanceRow = {
     used_days: number;
     adjusted_days: number;
     remaining_balance: number;
-    policy_type: 'lump_sum' | 'accrual';
+    policy_type: 'annual' | 'prorated' | 'monthly_accrual' | 'anniversary';
+    period_start: string | null;
+    period_end: string | null;
     has_balance: boolean;
 };
 
@@ -61,8 +63,18 @@ const typeBadgeClass: Record<Transaction['type'], string> = {
 
 function formatDateId(dateStr: string): string {
     const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-        'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
     ];
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
@@ -75,7 +87,10 @@ export default function LedgerPage() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Cuti', href: leavesIndex() },
-        { title: 'Jatah Cuti', href: `/hris/leaves/balances?year=${year}&leave_type=${leave_type}` },
+        {
+            title: 'Jatah Cuti',
+            href: `/hris/leaves/balances?year=${year}&leave_type=${leave_type}`,
+        },
         { title: employee.label, href: '#' },
     ];
 
@@ -111,12 +126,12 @@ export default function LedgerPage() {
                         <Card className="gap-2 py-3">
                             <CardHeader className="px-4 pb-0">
                                 <CardDescription>
-                                    {balance.policy_type === 'lump_sum'
+                                    {balance.policy_type !== 'monthly_accrual'
                                         ? 'Jatah Total'
                                         : 'Akrual'}
                                 </CardDescription>
                                 <CardTitle className="text-2xl">
-                                    {balance.policy_type === 'lump_sum'
+                                    {balance.policy_type !== 'monthly_accrual'
                                         ? balance.total_quota
                                         : balance.accrued_days}{' '}
                                     hari
@@ -165,7 +180,7 @@ export default function LedgerPage() {
                     </div>
                 ) : (
                     <Card className="py-4">
-                        <CardContent className="text-center text-muted-foreground text-sm">
+                        <CardContent className="text-center text-sm text-muted-foreground">
                             Belum ada data saldo untuk karyawan ini.
                         </CardContent>
                     </Card>
@@ -189,8 +204,12 @@ export default function LedgerPage() {
                                     <tr className="border-b text-left">
                                         <th className="px-3 py-2">Tanggal</th>
                                         <th className="px-3 py-2">Tipe</th>
-                                        <th className="px-3 py-2">Keterangan</th>
-                                        <th className="px-3 py-2 text-right">Jumlah</th>
+                                        <th className="px-3 py-2">
+                                            Keterangan
+                                        </th>
+                                        <th className="px-3 py-2 text-right">
+                                            Jumlah
+                                        </th>
                                         <th className="px-3 py-2 text-right">
                                             Saldo Setelah
                                         </th>
@@ -213,12 +232,16 @@ export default function LedgerPage() {
                                             className="border-b align-middle"
                                         >
                                             <td className="px-3 py-3 whitespace-nowrap">
-                                                {formatDateId(tx.effective_date)}
+                                                {formatDateId(
+                                                    tx.effective_date,
+                                                )}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <Badge
                                                     variant="outline"
-                                                    className={typeBadgeClass[tx.type]}
+                                                    className={
+                                                        typeBadgeClass[tx.type]
+                                                    }
                                                 >
                                                     {typeLabelMap[tx.type]}
                                                 </Badge>

@@ -8,8 +8,10 @@ import {
     Download,
     Filter,
     Pencil,
+    Plus,
     Send,
     Sparkles,
+    Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { LockedFeatureBanner } from '@/components/locked-feature-banner';
@@ -80,6 +82,10 @@ type PayrollItem = {
     can_send_payslip: boolean;
     base_salary: string;
     allowances_total: string;
+    is_prorated: boolean;
+    proration_working_days: number | null;
+    proration_payable_days: number | null;
+    proration_factor: string | number;
     pph21_method: string | null;
     pph21_rate: string | number;
     pph21_allowance: string | number;
@@ -90,11 +96,15 @@ type PayrollItem = {
     deductions_total: string;
     net_salary: string;
     allowance_breakdown: Record<string, number>;
+    variable_allowance_breakdown: Record<string, number>;
+    bonus_breakdown: Record<string, number>;
     overtime_hours: string | number;
     overtime_pay: string | number;
     thr_months_of_service?: number | null;
     thr_amount?: string | number;
 };
+
+type CompensationRow = { name: string; amount: string };
 
 type PageProps = {
     period: string;
@@ -202,6 +212,8 @@ export default function PayrollPage() {
     const editItemForm = useForm({
         base_salary: '',
         allowances_total: '',
+        variable_allowances: [] as CompensationRow[],
+        bonuses: [] as CompensationRow[],
         overtime_hours: '',
         overtime_pay: '',
         pph21_rate: '',
@@ -308,6 +320,18 @@ export default function PayrollPage() {
         editItemForm.setData({
             base_salary: formNumber(item.base_salary),
             allowances_total: formNumber(item.allowances_total),
+            variable_allowances: Object.entries(
+                item.variable_allowance_breakdown ?? {},
+            ).map(([name, amount]) => ({
+                name,
+                amount: formNumber(amount),
+            })),
+            bonuses: Object.entries(item.bonus_breakdown ?? {}).map(
+                ([name, amount]) => ({
+                    name,
+                    amount: formNumber(amount),
+                }),
+            ),
             overtime_hours: String(Number(item.overtime_hours ?? 0)),
             overtime_pay: formNumber(item.overtime_pay),
             pph21_rate: formNumber(item.pph21_rate),
@@ -884,8 +908,26 @@ export default function PayrollPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-3 py-3">
-                                                    {formatCurrency(
-                                                        item.base_salary,
+                                                    <p>
+                                                        {formatCurrency(
+                                                            item.base_salary,
+                                                        )}
+                                                    </p>
+                                                    {item.is_prorated && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="mt-1"
+                                                        >
+                                                            Prorata{' '}
+                                                            {
+                                                                item.proration_payable_days
+                                                            }
+                                                            /
+                                                            {
+                                                                item.proration_working_days
+                                                            }{' '}
+                                                            hari
+                                                        </Badge>
                                                     )}
                                                 </td>
                                                 <td className="px-3 py-3">
@@ -918,6 +960,48 @@ export default function PayrollPage() {
                                                                 >
                                                                     <Coins className="size-3" />
                                                                     {name}:{' '}
+                                                                    {formatCurrency(
+                                                                        amount,
+                                                                    )}
+                                                                </Badge>
+                                                            ),
+                                                        )}
+                                                        {Object.entries(
+                                                            item.variable_allowance_breakdown ??
+                                                                {},
+                                                        ).map(
+                                                            ([
+                                                                name,
+                                                                amount,
+                                                            ]) => (
+                                                                <Badge
+                                                                    key={`${item.id}-variable-${name}`}
+                                                                    variant="secondary"
+                                                                    className="font-normal"
+                                                                >
+                                                                    Tidak tetap:{' '}
+                                                                    {name}{' '}
+                                                                    {formatCurrency(
+                                                                        amount,
+                                                                    )}
+                                                                </Badge>
+                                                            ),
+                                                        )}
+                                                        {Object.entries(
+                                                            item.bonus_breakdown ??
+                                                                {},
+                                                        ).map(
+                                                            ([
+                                                                name,
+                                                                amount,
+                                                            ]) => (
+                                                                <Badge
+                                                                    key={`${item.id}-bonus-${name}`}
+                                                                    variant="outline"
+                                                                    className="font-normal"
+                                                                >
+                                                                    Bonus:{' '}
+                                                                    {name}{' '}
                                                                     {formatCurrency(
                                                                         amount,
                                                                     )}
@@ -1322,18 +1406,20 @@ export default function PayrollPage() {
                                         )
                                     }
                                 />
-                                <PayrollEditField
-                                    id="edit_allowances_total"
-                                    label="Tunjangan"
-                                    value={editItemForm.data.allowances_total}
-                                    error={editItemForm.errors.allowances_total}
-                                    onChange={(value) =>
-                                        editItemForm.setData(
-                                            'allowances_total',
-                                            value,
-                                        )
-                                    }
-                                />
+                                <div className="grid gap-1">
+                                    <Label>Tunjangan Tetap</Label>
+                                    <div className="flex h-9 items-center rounded-md border bg-muted/40 px-3 text-sm">
+                                        {formatCurrency(
+                                            Object.values(
+                                                editingItem.allowance_breakdown ??
+                                                    {},
+                                            ).reduce(
+                                                (sum, amount) => sum + amount,
+                                                0,
+                                            ),
+                                        )}
+                                    </div>
+                                </div>
                                 <PayrollEditField
                                     id="edit_overtime_hours"
                                     label="Jam Lembur"
@@ -1437,6 +1523,27 @@ export default function PayrollPage() {
                                 />
                             </div>
 
+                            <CompensationRowsEditor
+                                title="Tunjangan Tidak Tetap"
+                                addLabel="Tambah Tunjangan Tidak Tetap"
+                                rows={editItemForm.data.variable_allowances}
+                                onChange={(rows) =>
+                                    editItemForm.setData(
+                                        'variable_allowances',
+                                        rows,
+                                    )
+                                }
+                            />
+
+                            <CompensationRowsEditor
+                                title="Bonus"
+                                addLabel="Tambah Bonus"
+                                rows={editItemForm.data.bonuses}
+                                onChange={(rows) =>
+                                    editItemForm.setData('bonuses', rows)
+                                }
+                            />
+
                             <div className="flex justify-end gap-2 border-t pt-4">
                                 <Button
                                     type="button"
@@ -1460,6 +1567,82 @@ export default function PayrollPage() {
                 </DialogContent>
             </Dialog>
         </AppLayout>
+    );
+}
+
+function CompensationRowsEditor({
+    title,
+    addLabel,
+    rows,
+    onChange,
+}: {
+    title: string;
+    addLabel: string;
+    rows: CompensationRow[];
+    onChange: (rows: CompensationRow[]) => void;
+}) {
+    return (
+        <div className="space-y-2 border-t pt-4">
+            <Label>{title}</Label>
+            {rows.map((row, index) => (
+                <div
+                    key={index}
+                    className="grid gap-2 sm:grid-cols-[1fr_180px_36px]"
+                >
+                    <Input
+                        aria-label={`${title} ${index + 1}`}
+                        value={row.name}
+                        placeholder="Nama komponen"
+                        onChange={(event) => {
+                            const next = [...rows];
+                            next[index] = {
+                                ...next[index],
+                                name: event.target.value,
+                            };
+                            onChange(next);
+                        }}
+                    />
+                    <Input
+                        aria-label={`Nominal ${title} ${index + 1}`}
+                        inputMode="numeric"
+                        value={formatThousandDigits(row.amount)}
+                        placeholder="500.000"
+                        onChange={(event) => {
+                            const next = [...rows];
+                            next[index] = {
+                                ...next[index],
+                                amount: normalizeDigitInput(event.target.value),
+                            };
+                            onChange(next);
+                        }}
+                    />
+                    <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        title={`Hapus ${title.toLowerCase()}`}
+                        onClick={() =>
+                            onChange(
+                                rows.filter(
+                                    (_, rowIndex) => rowIndex !== index,
+                                ),
+                            )
+                        }
+                    >
+                        <Trash2 className="size-4" />
+                    </Button>
+                </div>
+            ))}
+            <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => onChange([...rows, { name: '', amount: '' }])}
+            >
+                <Plus className="size-4" />
+                {addLabel}
+            </Button>
+        </div>
     );
 }
 

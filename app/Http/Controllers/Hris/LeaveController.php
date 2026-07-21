@@ -8,15 +8,14 @@ use App\Http\Requests\Hris\UpdateLeaveRequest;
 use App\Models\Employee;
 use App\Models\EmployeeLeaveBalance;
 use App\Models\LeaveRequest;
-use App\Models\User;
 use App\Services\LeaveBalanceService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LeaveController extends Controller
 {
@@ -229,19 +228,6 @@ class LeaveController extends Controller
 
         $totalDays = $this->calculateTotalDays($validated['start_date'], $validated['end_date']);
 
-        // Validate max_days_per_request for annual lump_sum policy
-        if ($validated['leave_type'] === 'annual') {
-            $owner = User::find($request->user()->accountOwnerId());
-            $balanceService = app(LeaveBalanceService::class);
-            $policy = $balanceService->getPolicy($owner, 'annual');
-
-            if ($policy && $policy->isLumpSum() && $policy->max_days_per_request) {
-                if ($totalDays > $policy->max_days_per_request) {
-                    return back()->withErrors(['total_days' => "Maksimal pengajuan cuti tahunan adalah {$policy->max_days_per_request} hari sekaligus."]);
-                }
-            }
-        }
-
         [$approvedAt, $approvedBy] = $this->resolveApprovalState($validated['status'], $request->user()?->id);
 
         $leave = LeaveRequest::create([
@@ -281,19 +267,6 @@ class LeaveController extends Controller
         $totalDays = $this->calculateTotalDays($validated['start_date'], $validated['end_date']);
         $previousStatus = $leave->status;
         $newStatus = $validated['status'];
-
-        // Validate max_days_per_request for annual lump_sum policy
-        if ($validated['leave_type'] === 'annual') {
-            $owner = User::find($request->user()->accountOwnerId());
-            $balanceService = app(LeaveBalanceService::class);
-            $policy = $balanceService->getPolicy($owner, 'annual');
-
-            if ($policy && $policy->isLumpSum() && $policy->max_days_per_request) {
-                if ($totalDays > $policy->max_days_per_request) {
-                    return back()->withErrors(['total_days' => "Maksimal pengajuan cuti tahunan adalah {$policy->max_days_per_request} hari sekaligus."]);
-                }
-            }
-        }
 
         [$approvedAt, $approvedBy] = $this->resolveApprovalState(
             $newStatus,
