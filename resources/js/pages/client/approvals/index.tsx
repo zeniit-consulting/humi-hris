@@ -37,6 +37,8 @@ type RequestRow = {
     description: string;
     reason: string | null;
     status: string;
+    approval_label?: string | null;
+    can_approve?: boolean;
 };
 type RejectTarget = {
     type: 'attendance' | 'leaves' | 'overtimes' | 'reimbursements';
@@ -280,12 +282,12 @@ function ApprovalTable({
                                     </td>
                                     <td className="px-3 py-3">
                                         <Badge>
-                                            {statusLabels[row.status] ??
+                                            {row.approval_label ?? statusLabels[row.status] ??
                                                 row.status}
                                         </Badge>
                                     </td>
                                     <td className="px-3 py-3">
-                                        {status === 'pending' && (
+                                        {status === 'pending' && row.can_approve !== false && (
                                             <div className="flex gap-2">
                                                 <Button
                                                     size="sm"
@@ -315,6 +317,9 @@ function ApprovalTable({
                                                     Tolak
                                                 </Button>
                                             </div>
+                                        )}
+                                        {status === 'pending' && row.can_approve === false && (
+                                            <span className="text-xs text-muted-foreground">Menunggu approver berikutnya</span>
                                         )}
                                     </td>
                                 </tr>

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approve
-* @see app/Http/Controllers/Client/ApprovalController.php:150
+* @see app/Http/Controllers/Client/ApprovalController.php:162
 * @route '/client/approvals/leaves/{leave}/approve'
 */
 export const approve = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ approve.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approve
-* @see app/Http/Controllers/Client/ApprovalController.php:150
+* @see app/Http/Controllers/Client/ApprovalController.php:162
 * @route '/client/approvals/leaves/{leave}/approve'
 */
 approve.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ approve.url = (args: { leave: number | { id: number } } | [leave: number | { id:
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approve
-* @see app/Http/Controllers/Client/ApprovalController.php:150
+* @see app/Http/Controllers/Client/ApprovalController.php:162
 * @route '/client/approvals/leaves/{leave}/approve'
 */
 approve.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ approve.post = (args: { leave: number | { id: number } } | [leave: number | { id
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approve
-* @see app/Http/Controllers/Client/ApprovalController.php:150
+* @see app/Http/Controllers/Client/ApprovalController.php:162
 * @route '/client/approvals/leaves/{leave}/approve'
 */
 const approveForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ const approveForm = (args: { leave: number | { id: number } } | [leave: number |
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::approve
-* @see app/Http/Controllers/Client/ApprovalController.php:150
+* @see app/Http/Controllers/Client/ApprovalController.php:162
 * @route '/client/approvals/leaves/{leave}/approve'
 */
 approveForm.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -81,7 +81,7 @@ approve.form = approveForm
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:167
+* @see app/Http/Controllers/Client/ApprovalController.php:176
 * @route '/client/approvals/leaves/{leave}/reject'
 */
 export const reject = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -96,7 +96,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:167
+* @see app/Http/Controllers/Client/ApprovalController.php:176
 * @route '/client/approvals/leaves/{leave}/reject'
 */
 reject.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -129,7 +129,7 @@ reject.url = (args: { leave: number | { id: number } } | [leave: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:167
+* @see app/Http/Controllers/Client/ApprovalController.php:176
 * @route '/client/approvals/leaves/{leave}/reject'
 */
 reject.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -139,7 +139,7 @@ reject.post = (args: { leave: number | { id: number } } | [leave: number | { id:
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:167
+* @see app/Http/Controllers/Client/ApprovalController.php:176
 * @route '/client/approvals/leaves/{leave}/reject'
 */
 const rejectForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -149,7 +149,7 @@ const rejectForm = (args: { leave: number | { id: number } } | [leave: number | 
 
 /**
 * @see \App\Http\Controllers\Client\ApprovalController::reject
-* @see app/Http/Controllers/Client/ApprovalController.php:167
+* @see app/Http/Controllers/Client/ApprovalController.php:176
 * @route '/client/approvals/leaves/{leave}/reject'
 */
 rejectForm.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

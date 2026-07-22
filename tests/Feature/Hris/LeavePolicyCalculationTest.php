@@ -3,7 +3,9 @@
 namespace Tests\Feature\Hris;
 
 use App\Models\Employee;
+use App\Models\EmployeeLeaveBalance;
 use App\Models\LeavePolicy;
+use App\Models\LeaveRequest;
 use App\Models\User;
 use App\Services\LeaveBalanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -137,6 +139,7 @@ class LeavePolicyCalculationTest extends TestCase
                 'yearly_days' => 18,
                 'waiting_period_months' => 6,
                 'max_days_per_request' => 5,
+                'approval_levels' => 2,
                 'is_active' => true,
             ])
             ->assertRedirect();
@@ -148,6 +151,7 @@ class LeavePolicyCalculationTest extends TestCase
             'yearly_days' => 18,
             'waiting_period_months' => 6,
             'max_days_per_request' => 5,
+            'approval_levels' => 2,
         ]);
     }
 
@@ -197,6 +201,70 @@ class LeavePolicyCalculationTest extends TestCase
             ]);
 
         $this->assertDatabaseCount('leave_requests', 0);
+    }
+
+    public function test_two_level_leave_approval_requires_two_different_approvers_before_deducting_balance(): void
+    {
+        $owner = User::factory()->create([
+            'role' => 'admin',
+            'email_verified_at' => now(),
+        ]);
+        $secondApprover = User::factory()->create([
+            'parent_user_id' => $owner->id,
+            'role' => 'admin_staff',
+            'email_verified_at' => now(),
+        ]);
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'hire_date' => '2024-01-01',
+        ]);
+        LeavePolicy::query()->create([
+            'user_id' => $owner->id,
+            'leave_type' => 'annual',
+            'policy_type' => 'annual',
+            'yearly_days' => 12,
+            'waiting_period_months' => 0,
+            'max_days_per_request' => null,
+            'approval_levels' => 2,
+            'is_active' => true,
+        ]);
+        $leave = LeaveRequest::factory()->create([
+            'user_id' => $owner->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'annual',
+            'start_date' => '2026-10-01',
+            'end_date' => '2026-10-02',
+            'total_days' => 2,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('hris.leave-approvals.approve', $leave))
+            ->assertSessionHas('success', 'Approval tingkat 1 berhasil. Menunggu approval tingkat 2.');
+
+        $this->assertDatabaseHas('leave_requests', [
+            'id' => $leave->id,
+            'status' => 'pending',
+            'approval_stage' => 1,
+            'first_approved_by' => $owner->id,
+        ]);
+        $this->assertDatabaseCount('employee_leave_balances', 0);
+
+        $this->actingAs($owner)
+            ->post(route('hris.leave-approvals.approve', $leave))
+            ->assertSessionHasErrors(['approval']);
+
+        $this->actingAs($secondApprover)
+            ->post(route('hris.leave-approvals.approve', $leave))
+            ->assertSessionHas('success', 'Pengajuan cuti disetujui pada tingkat 2.');
+
+        $this->assertDatabaseHas('leave_requests', [
+            'id' => $leave->id,
+            'status' => 'approved',
+            'approval_stage' => 2,
+            'approved_by' => $secondApprover->id,
+        ]);
+        $this->assertSame(2.0, EmployeeLeaveBalance::query()->firstOrFail()->used_days);
     }
 
     /**

@@ -16,6 +16,7 @@ class LeavePolicy extends Model
         'yearly_days',
         'waiting_period_months',
         'max_days_per_request',
+        'approval_levels',
         'is_active',
     ];
 
@@ -26,6 +27,7 @@ class LeavePolicy extends Model
             'yearly_days' => 'integer',
             'waiting_period_months' => 'integer',
             'max_days_per_request' => 'integer',
+            'approval_levels' => 'integer',
         ];
     }
 

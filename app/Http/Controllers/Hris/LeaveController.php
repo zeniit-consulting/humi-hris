@@ -8,6 +8,8 @@ use App\Http\Requests\Hris\UpdateLeaveRequest;
 use App\Models\Employee;
 use App\Models\EmployeeLeaveBalance;
 use App\Models\LeaveRequest;
+use App\Models\User;
+use App\Services\LeaveApprovalService;
 use App\Services\LeaveBalanceService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -65,6 +67,8 @@ class LeaveController extends Controller
             ]);
 
         $employees = Employee::query()
+            ->where('is_active', true)
+            ->where('employment_status', '!=', 'resigned')
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get(['id', 'employee_code', 'first_name', 'last_name']);
@@ -102,7 +106,7 @@ class LeaveController extends Controller
         ];
 
         $leaves = LeaveRequest::query()
-            ->with(['employee:id,employee_code,first_name,last_name,division_id,position_id', 'employee.division:id,name', 'employee.position:id,name', 'approver:id,name'])
+            ->with(['employee:id,employee_code,first_name,last_name,division_id,position_id', 'employee.division:id,name', 'employee.position:id,name', 'approver:id,name', 'firstApprover:id,name'])
             ->where('user_id', $ownerId)
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']))
@@ -123,6 +127,9 @@ class LeaveController extends Controller
                 'total_days' => $leave->total_days,
                 'reason' => $leave->reason,
                 'status' => $leave->status,
+                'approval_stage' => $leave->approval_stage,
+                'first_approved_by' => $leave->firstApprover?->name,
+                'first_approved_at' => $leave->first_approved_at?->toIso8601String(),
                 'approved_by' => $leave->approver?->name,
                 'approved_at' => $leave->approved_at?->toIso8601String(),
                 'rejection_reason' => $leave->rejection_reason,
@@ -131,6 +138,8 @@ class LeaveController extends Controller
 
         $employees = Employee::query()
             ->where('user_id', $ownerId)
+            ->where('is_active', true)
+            ->where('employment_status', '!=', 'resigned')
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get(['id', 'employee_code', 'first_name', 'last_name']);
@@ -154,6 +163,7 @@ class LeaveController extends Controller
                 'approved' => (int) ($stats['approved'] ?? 0),
                 'rejected' => (int) ($stats['rejected'] ?? 0),
             ],
+            'approvalLevels' => (int) (app(LeaveBalanceService::class)->getPolicy(User::findOrFail($ownerId), 'annual')?->approval_levels ?? 1),
         ]);
     }
 
@@ -161,37 +171,18 @@ class LeaveController extends Controller
     {
         abort_unless((int) $leave->user_id === $request->user()->accountOwnerId(), 404);
 
-        if ($leave->status !== 'pending') {
-            return back()->with('error', 'Request cuti sudah diproses.');
-        }
+        $result = app(LeaveApprovalService::class)->approve($leave, $request->user());
 
-        $previousStatus = $leave->status;
-        $leave->update([
-            'status' => 'approved',
-            'approved_at' => now(),
-            'approved_by' => $request->user()->id,
-            'rejection_reason' => null,
-        ]);
-
-        if ($leave->leave_type === 'annual') {
-            $balanceService = app(LeaveBalanceService::class);
-
-            if (! $balanceService->deductBalance($leave)) {
-                $remaining = $this->getRemainingBalance($leave);
-                $leave->update([
-                    'status' => $previousStatus,
-                    'approved_at' => null,
-                    'approved_by' => null,
-                ]);
-
-                return back()->withErrors(['balance' => "Saldo cuti tidak mencukupi. Sisa saldo: {$remaining} hari."]);
-            }
+        if ($result === LeaveApprovalService::FIRST_LEVEL) {
+            return back()->with('success', 'Approval tingkat 1 berhasil. Menunggu approval tingkat 2.');
         }
 
         $leave->loadMissing('employee');
         app(\App\Services\WhatsAppNotificationService::class)->notifyLeaveStatus($leave);
 
-        return back()->with('success', 'Pengajuan cuti disetujui.');
+        return back()->with('success', $leave->approval_stage === 2
+            ? 'Pengajuan cuti disetujui pada tingkat 2.'
+            : 'Pengajuan cuti disetujui.');
     }
 
     public function reject(Request $request, LeaveRequest $leave): RedirectResponse

@@ -33,6 +33,8 @@ class LeaveBalanceController extends Controller
         $leaveType = $validated['leave_type'] ?? 'annual';
         $visibleEmployees = Employee::query()
             ->where('user_id', $ownerId)
+            ->where('is_active', true)
+            ->where('employment_status', '!=', 'resigned')
             ->orderBy('first_name')
             ->get(['id', 'employee_code', 'first_name', 'last_name']);
         $visibleEmployeeIds = $visibleEmployees->pluck('id');
@@ -100,6 +102,7 @@ class LeaveBalanceController extends Controller
                 'yearly_days' => $policy->yearly_days,
                 'waiting_period_months' => $policy->waiting_period_months,
                 'max_days_per_request' => $policy->max_days_per_request,
+                'approval_levels' => $policy->approval_levels,
                 'is_active' => $policy->is_active,
             ] : null,
             'year' => $year,
@@ -240,6 +243,8 @@ class LeaveBalanceController extends Controller
 
         return Employee::query()
             ->where('user_id', $request->user()->accountOwnerId())
+            ->where('is_active', true)
+            ->where('employment_status', '!=', 'resigned')
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->all();

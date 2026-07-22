@@ -183,6 +183,7 @@ class LeaveBalanceService
         $employees = Employee::withoutGlobalScopes()
             ->where('user_id', $owner->id)
             ->where('is_active', true)
+            ->where('employment_status', '!=', 'resigned')
             ->when($employeeIds !== null, fn ($query) => $query->whereIn('id', $employeeIds))
             ->get();
 
@@ -218,6 +219,7 @@ class LeaveBalanceService
         $employees = Employee::withoutGlobalScopes()
             ->where('user_id', $owner->id)
             ->where('is_active', true)
+            ->where('employment_status', '!=', 'resigned')
             ->when($employeeIds !== null, fn ($query) => $query->whereIn('id', $employeeIds))
             ->get();
 

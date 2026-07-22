@@ -66,6 +66,7 @@ type Policy = {
     yearly_days: number;
     waiting_period_months: number;
     max_days_per_request: number | null;
+    approval_levels: 1 | 2;
     is_active: boolean;
 };
 
@@ -98,6 +99,7 @@ type PolicyFormData = {
     yearly_days: string;
     waiting_period_months: string;
     max_days_per_request: string;
+    approval_levels: '1' | '2';
 };
 
 type PolicyMethod = 'annual' | 'prorated' | 'monthly_accrual' | 'anniversary';
@@ -141,6 +143,7 @@ export default function BalancesPage() {
         policy_type: policy?.policy_type ?? 'annual',
         yearly_days: String(policy?.yearly_days ?? 12),
         waiting_period_months: String(policy?.waiting_period_months ?? 0),
+        approval_levels: String(policy?.approval_levels ?? 1) as '1' | '2',
         max_days_per_request:
             policy?.max_days_per_request != null
                 ? String(policy.max_days_per_request)
@@ -268,9 +271,9 @@ export default function BalancesPage() {
                     <CardContent>
                         <form
                             onSubmit={submitPolicy}
-                            className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.4fr)_150px_170px_190px_auto]"
+                            className="grid gap-4 md:grid-cols-2 xl:grid-cols-12"
                         >
-                            <div className="grid gap-2">
+                            <div className="grid gap-2 md:col-span-2 xl:col-span-4">
                                 <Label htmlFor="policy_type">
                                     Jenis Kebijakan
                                 </Label>
@@ -316,7 +319,7 @@ export default function BalancesPage() {
                                 />
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="grid content-start gap-2 xl:col-span-2">
                                 <Label htmlFor="yearly_days">
                                     Jatah Hari / Tahun
                                 </Label>
@@ -337,7 +340,7 @@ export default function BalancesPage() {
                                 />
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="grid content-start gap-2 xl:col-span-2">
                                 <Label htmlFor="waiting_period_months">
                                     Bisa Diambil Setelah
                                 </Label>
@@ -370,12 +373,9 @@ export default function BalancesPage() {
                                 />
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="grid content-start gap-2 xl:col-span-2">
                                 <Label htmlFor="max_days">
-                                    Maks Hari / Pengajuan
-                                    <span className="ml-1 text-xs text-muted-foreground">
-                                        (opsional)
-                                    </span>
+                                    Batas per Pengajuan
                                 </Label>
                                 <Input
                                     id="max_days"
@@ -397,7 +397,40 @@ export default function BalancesPage() {
                                 />
                             </div>
 
-                            <div className="flex items-end">
+                            <div className="grid content-start gap-2 xl:col-span-2">
+                                <Label htmlFor="approval_levels">
+                                    Tahap Approval
+                                </Label>
+                                <Select
+                                    value={policyForm.data.approval_levels}
+                                    onValueChange={(value) =>
+                                        policyForm.setData(
+                                            'approval_levels',
+                                            value as '1' | '2',
+                                        )
+                                    }
+                                >
+                                    <SelectTrigger
+                                        id="approval_levels"
+                                        className="w-full"
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="1">
+                                            1 tingkat
+                                        </SelectItem>
+                                        <SelectItem value="2">
+                                            2 tingkat
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError
+                                    message={policyForm.errors.approval_levels}
+                                />
+                            </div>
+
+                            <div className="flex justify-end border-t pt-4 md:col-span-2 xl:col-span-12">
                                 <Button
                                     type="submit"
                                     disabled={policyForm.processing}

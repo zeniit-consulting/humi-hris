@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class LeaveRequest extends Model
 {
     /** @use HasFactory<\Database\Factories\LeaveRequestFactory> */
-    use HasFactory, BelongsToAccount;
+    use BelongsToAccount, HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -26,6 +26,9 @@ class LeaveRequest extends Model
         'total_days',
         'reason',
         'status',
+        'approval_stage',
+        'first_approved_by',
+        'first_approved_at',
         'approved_by',
         'approved_at',
         'rejection_reason',
@@ -42,6 +45,8 @@ class LeaveRequest extends Model
             'start_date' => 'date',
             'end_date' => 'date',
             'total_days' => 'decimal:2',
+            'approval_stage' => 'integer',
+            'first_approved_at' => 'datetime',
             'approved_at' => 'datetime',
         ];
     }
@@ -60,5 +65,10 @@ class LeaveRequest extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function firstApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'first_approved_by');
     }
 }

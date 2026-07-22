@@ -30,6 +30,9 @@ type LeaveRow = {
     total_days: string;
     reason: string | null;
     status: string;
+    approval_stage: number;
+    first_approved_by: string | null;
+    first_approved_at: string | null;
     approved_by: string | null;
     approved_at: string | null;
     rejection_reason: string | null;
@@ -40,6 +43,7 @@ type PageProps = {
     filters: Filters;
     statusOptions: string[];
     stats: { pending: number; approved: number; rejected: number };
+    approvalLevels: number;
 };
 
 const pageUrl = '/hris/leave-approvals';
@@ -61,7 +65,7 @@ const badgeVariant = (status: string) =>
     status === 'approved' ? 'default' : status === 'rejected' ? 'destructive' : 'secondary';
 
 export default function LeaveApprovalPage() {
-    const { leaves, employees, filters, statusOptions, stats } = usePage<PageProps>().props;
+    const { leaves, employees, filters, statusOptions, stats, approvalLevels } = usePage<PageProps>().props;
     const [filterState, setFilterState] = useState(filters);
     const [detailRow, setDetailRow] = useState<LeaveRow | null>(null);
     const [rejectRow, setRejectRow] = useState<LeaveRow | null>(null);
@@ -185,7 +189,7 @@ export default function LeaveApprovalPage() {
                                             <td className="px-3 py-3">{row.start_date} s/d {row.end_date}<div className="text-xs text-muted-foreground">{row.total_days} hari</div></td>
                                             <td className="px-3 py-3">{typeLabels[row.leave_type] ?? row.leave_type}</td>
                                             <td className="max-w-[260px] px-3 py-3"><p className="line-clamp-2 whitespace-normal">{row.reason ?? '-'}</p></td>
-                                            <td className="px-3 py-3"><Badge variant={badgeVariant(row.status)}>{statusLabels[row.status] ?? row.status}</Badge></td>
+                                            <td className="px-3 py-3"><Badge variant={badgeVariant(row.status)}>{row.status === 'pending' && approvalLevels === 2 ? `Menunggu ${row.approval_stage + 1}/2` : statusLabels[row.status] ?? row.status}</Badge></td>
                                             <td className="px-3 py-3">
                                                 <div className="flex gap-1.5">
                                                     <ActionIconButton label="Detail" icon={Eye} variant="outline" onClick={() => setDetailRow(row)} />
@@ -218,6 +222,7 @@ export default function LeaveApprovalPage() {
                         <p><strong>Periode:</strong> {detailRow.start_date} s/d {detailRow.end_date} ({detailRow.total_days} hari)</p>
                         <p><strong>Jenis:</strong> {typeLabels[detailRow.leave_type] ?? detailRow.leave_type}</p>
                         <p className="whitespace-pre-line"><strong>Alasan:</strong> {detailRow.reason ?? '-'}</p>
+                        {detailRow.first_approved_by && <p><strong>Approval tingkat 1:</strong> {detailRow.first_approved_by}</p>}
                         {detailRow.rejection_reason && <p><strong>Alasan penolakan:</strong> {detailRow.rejection_reason}</p>}
                     </div>}
                 </DialogContent>

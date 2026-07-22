@@ -6,10 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\AttendanceCorrectionRequest;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Models\LeavePolicy;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\ReimbursementRequest;
-use App\Services\LeaveBalanceService;
+use App\Services\LeaveApprovalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,11 @@ class ApprovalController extends Controller
             'status' => ['nullable', Rule::in(['pending', 'approved', 'rejected'])],
         ]);
         $status = $validated['status'] ?? 'pending';
+        $leaveApprovalLevels = (int) (LeavePolicy::withoutGlobalScopes()
+            ->where('user_id', $ownerId)
+            ->where('leave_type', 'annual')
+            ->where('is_active', true)
+            ->value('approval_levels') ?? 1);
 
         return Inertia::render('client/approvals/index', [
             'status' => $status,
@@ -71,6 +77,12 @@ class ApprovalController extends Controller
                     'description' => $row->leave_type.' - '.$row->total_days.' hari',
                     'reason' => $row->reason,
                     'status' => $row->status,
+                    'approval_label' => $row->status === 'pending' && $leaveApprovalLevels === 2
+                        ? 'Menunggu '.($row->approval_stage + 1).'/2'
+                        : null,
+                    'can_approve' => ! ($leaveApprovalLevels === 2
+                        && $row->approval_stage === 1
+                        && (int) $row->first_approved_by === $user->id),
                 ]),
             'overtimeRequests' => OvertimeRequest::query()
                 ->with('employee:id,employee_code,first_name,last_name,sub_company_id')
@@ -150,18 +162,15 @@ class ApprovalController extends Controller
     public function approveLeave(Request $request, LeaveRequest $leave): RedirectResponse
     {
         $this->authorizeScoped($request, $leave->employee_id, $leave->user_id);
-        $leave->update([
-            'status' => 'approved',
-            'approved_at' => now(),
-            'approved_by' => $request->user()->id,
-            'rejection_reason' => null,
-        ]);
+        $result = app(LeaveApprovalService::class)->approve($leave, $request->user());
 
-        if ($leave->leave_type === 'annual') {
-            app(LeaveBalanceService::class)->deductBalance($leave);
+        if ($result === LeaveApprovalService::FIRST_LEVEL) {
+            return back()->with('success', 'Approval tingkat 1 berhasil. Menunggu approval tingkat 2.');
         }
 
-        return back()->with('success', 'Pengajuan cuti disetujui.');
+        return back()->with('success', $leave->approval_stage === 2
+            ? 'Pengajuan cuti disetujui pada tingkat 2.'
+            : 'Pengajuan cuti disetujui.');
     }
 
     public function rejectLeave(Request $request, LeaveRequest $leave): RedirectResponse

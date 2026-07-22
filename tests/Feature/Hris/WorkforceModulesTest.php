@@ -203,6 +203,60 @@ class WorkforceModulesTest extends TestCase
             );
     }
 
+    public function test_leave_balances_exclude_inactive_and_resigned_employees(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $activeEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-ACTIVE',
+            'employment_status' => 'active',
+            'is_active' => true,
+        ]);
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-INACTIVE',
+            'employment_status' => 'active',
+            'is_active' => false,
+        ]);
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-RESIGNED',
+            'employment_status' => 'resigned',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.leaves.balances.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('balances', 1)
+                ->where('balances.0.employee_id', $activeEmployee->id)
+                ->has('employees', 1)
+                ->where('employees.0.id', $activeEmployee->id)
+            );
+
+        $this->actingAs($user)
+            ->get(route('hris.leaves.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('employees', 1)
+                ->where('employees.0.id', $activeEmployee->id)
+            );
+
+        $this->actingAs($user)
+            ->get(route('hris.leave-approvals.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('employees', 1)
+                ->where('employees.0.id', $activeEmployee->id)
+            );
+    }
+
     public function test_sub_user_leave_balances_are_limited_to_linked_sub_companies()
     {
         $this->withoutVite();
