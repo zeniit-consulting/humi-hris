@@ -243,4 +243,44 @@ class ProfileUpdateTest extends TestCase
                 ->where('company.portal_kasbon_enabled', false)
             );
     }
+
+    public function test_payroll_settings_page_can_be_opened(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get('/settings/payroll')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('settings/payroll')
+                ->where('settings.active_working_days', 22)
+            );
+    }
+
+    public function test_payroll_settings_can_be_updated_independently(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->patch('/settings/payroll', [
+                'active_working_days' => 24,
+                'auto_deduct_leave_for_missing_checkout' => '0',
+                'overtime_calculation_mode' => 'threshold_daily',
+                'overtime_threshold_hours' => 10,
+                'overtime_hour_divisor' => 173,
+                'overtime_multiplier_hour1' => 1.5,
+                'overtime_multiplier_subsequent' => 2,
+            ])
+            ->assertRedirect('/settings/payroll');
+
+        $this->assertDatabaseHas('company_settings', [
+            'user_id' => $user->id,
+            'active_working_days' => 24,
+            'auto_deduct_leave_for_missing_checkout' => false,
+            'overtime_calculation_mode' => 'threshold_daily',
+            'overtime_threshold_hours' => 10,
+        ]);
+    }
 }

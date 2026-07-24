@@ -18,6 +18,11 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
+        title: 'Pengaturan Payroll & Lembur',
+        href: '/settings/payroll',
+        icon: null,
+    },
+    {
         title: 'Kata sandi',
         href: editPassword(),
         icon: null,

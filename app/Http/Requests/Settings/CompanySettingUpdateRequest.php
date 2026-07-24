@@ -20,13 +20,18 @@ class CompanySettingUpdateRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        $this->merge([
+        $values = [
             'attendance_radius_meters' => $this->input('attendance_radius_meters', 100),
             'attendance_locations' => $this->input('attendance_locations', []),
             'portal_kasbon_enabled' => $this->boolean('portal_kasbon_enabled'),
             'employee_activation_otp_enabled' => $this->boolean('employee_activation_otp_enabled'),
-            'auto_deduct_leave_for_missing_checkout' => $this->boolean('auto_deduct_leave_for_missing_checkout'),
-        ]);
+        ];
+
+        if ($this->has('auto_deduct_leave_for_missing_checkout')) {
+            $values['auto_deduct_leave_for_missing_checkout'] = $this->boolean('auto_deduct_leave_for_missing_checkout');
+        }
+
+        $this->merge($values);
     }
 
     /**
@@ -41,7 +46,7 @@ class CompanySettingUpdateRequest extends FormRequest
             'details' => ['nullable', 'string', 'max:3000'],
             'portal_kasbon_enabled' => ['required', 'boolean'],
             'employee_activation_otp_enabled' => ['required', 'boolean'],
-            'auto_deduct_leave_for_missing_checkout' => ['required', 'boolean'],
+            'auto_deduct_leave_for_missing_checkout' => ['sometimes', 'boolean'],
             'location_name' => ['nullable', 'string', 'max:150'],
             'location_address' => ['nullable', 'string', 'max:1000'],
             'location_latitude' => ['nullable', 'numeric', 'between:-90,90'],
