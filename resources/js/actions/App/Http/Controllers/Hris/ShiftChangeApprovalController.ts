@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::index
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:20
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:21
 * @route '/hris/shift-change-requests'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::index
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:20
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:21
 * @route '/hris/shift-change-requests'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::index
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:20
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:21
 * @route '/hris/shift-change-requests'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::index
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:20
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:21
 * @route '/hris/shift-change-requests'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::index
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:20
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:21
 * @route '/hris/shift-change-requests'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::index
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:20
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:21
 * @route '/hris/shift-change-requests'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::index
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:20
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:21
 * @route '/hris/shift-change-requests'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::approve
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:84
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:85
 * @route '/hris/shift-change-requests/{shiftChangeRequest}/approve'
 */
 export const approve = (args: { shiftChangeRequest: number | { id: number } } | [shiftChangeRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ approve.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::approve
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:84
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:85
 * @route '/hris/shift-change-requests/{shiftChangeRequest}/approve'
 */
 approve.url = (args: { shiftChangeRequest: number | { id: number } } | [shiftChangeRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -130,7 +130,7 @@ approve.url = (args: { shiftChangeRequest: number | { id: number } } | [shiftCha
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::approve
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:84
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:85
 * @route '/hris/shift-change-requests/{shiftChangeRequest}/approve'
 */
 approve.post = (args: { shiftChangeRequest: number | { id: number } } | [shiftChangeRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -140,7 +140,7 @@ approve.post = (args: { shiftChangeRequest: number | { id: number } } | [shiftCh
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::approve
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:84
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:85
 * @route '/hris/shift-change-requests/{shiftChangeRequest}/approve'
 */
 const approveForm = (args: { shiftChangeRequest: number | { id: number } } | [shiftChangeRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -150,7 +150,7 @@ const approveForm = (args: { shiftChangeRequest: number | { id: number } } | [sh
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::approve
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:84
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:85
 * @route '/hris/shift-change-requests/{shiftChangeRequest}/approve'
 */
 approveForm.post = (args: { shiftChangeRequest: number | { id: number } } | [shiftChangeRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -162,7 +162,7 @@ approve.form = approveForm
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::reject
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:125
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:124
 * @route '/hris/shift-change-requests/{shiftChangeRequest}/reject'
 */
 export const reject = (args: { shiftChangeRequest: number | { id: number } } | [shiftChangeRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -177,7 +177,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::reject
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:125
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:124
 * @route '/hris/shift-change-requests/{shiftChangeRequest}/reject'
 */
 reject.url = (args: { shiftChangeRequest: number | { id: number } } | [shiftChangeRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -210,7 +210,7 @@ reject.url = (args: { shiftChangeRequest: number | { id: number } } | [shiftChan
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::reject
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:125
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:124
 * @route '/hris/shift-change-requests/{shiftChangeRequest}/reject'
 */
 reject.post = (args: { shiftChangeRequest: number | { id: number } } | [shiftChangeRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -220,7 +220,7 @@ reject.post = (args: { shiftChangeRequest: number | { id: number } } | [shiftCha
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::reject
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:125
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:124
 * @route '/hris/shift-change-requests/{shiftChangeRequest}/reject'
 */
 const rejectForm = (args: { shiftChangeRequest: number | { id: number } } | [shiftChangeRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -230,7 +230,7 @@ const rejectForm = (args: { shiftChangeRequest: number | { id: number } } | [shi
 
 /**
 * @see \App\Http\Controllers\Hris\ShiftChangeApprovalController::reject
-* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:125
+* @see app/Http/Controllers/Hris/ShiftChangeApprovalController.php:124
 * @route '/hris/shift-change-requests/{shiftChangeRequest}/reject'
 */
 rejectForm.post = (args: { shiftChangeRequest: number | { id: number } } | [shiftChangeRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

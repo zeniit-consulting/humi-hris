@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::index
-* @see app/Http/Controllers/Hris/OvertimeController.php:86
+* @see app/Http/Controllers/Hris/OvertimeController.php:87
 * @route '/hris/overtime-approvals'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::index
-* @see app/Http/Controllers/Hris/OvertimeController.php:86
+* @see app/Http/Controllers/Hris/OvertimeController.php:87
 * @route '/hris/overtime-approvals'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::index
-* @see app/Http/Controllers/Hris/OvertimeController.php:86
+* @see app/Http/Controllers/Hris/OvertimeController.php:87
 * @route '/hris/overtime-approvals'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::index
-* @see app/Http/Controllers/Hris/OvertimeController.php:86
+* @see app/Http/Controllers/Hris/OvertimeController.php:87
 * @route '/hris/overtime-approvals'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::index
-* @see app/Http/Controllers/Hris/OvertimeController.php:86
+* @see app/Http/Controllers/Hris/OvertimeController.php:87
 * @route '/hris/overtime-approvals'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::index
-* @see app/Http/Controllers/Hris/OvertimeController.php:86
+* @see app/Http/Controllers/Hris/OvertimeController.php:87
 * @route '/hris/overtime-approvals'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::index
-* @see app/Http/Controllers/Hris/OvertimeController.php:86
+* @see app/Http/Controllers/Hris/OvertimeController.php:87
 * @route '/hris/overtime-approvals'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::approve
-* @see app/Http/Controllers/Hris/OvertimeController.php:159
+* @see app/Http/Controllers/Hris/OvertimeController.php:160
 * @route '/hris/overtime-approvals/{overtime}/approve'
 */
 export const approve = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ approve.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::approve
-* @see app/Http/Controllers/Hris/OvertimeController.php:159
+* @see app/Http/Controllers/Hris/OvertimeController.php:160
 * @route '/hris/overtime-approvals/{overtime}/approve'
 */
 approve.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -130,7 +130,7 @@ approve.url = (args: { overtime: number | { id: number } } | [overtime: number |
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::approve
-* @see app/Http/Controllers/Hris/OvertimeController.php:159
+* @see app/Http/Controllers/Hris/OvertimeController.php:160
 * @route '/hris/overtime-approvals/{overtime}/approve'
 */
 approve.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -140,7 +140,7 @@ approve.post = (args: { overtime: number | { id: number } } | [overtime: number 
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::approve
-* @see app/Http/Controllers/Hris/OvertimeController.php:159
+* @see app/Http/Controllers/Hris/OvertimeController.php:160
 * @route '/hris/overtime-approvals/{overtime}/approve'
 */
 const approveForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -150,7 +150,7 @@ const approveForm = (args: { overtime: number | { id: number } } | [overtime: nu
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::approve
-* @see app/Http/Controllers/Hris/OvertimeController.php:159
+* @see app/Http/Controllers/Hris/OvertimeController.php:160
 * @route '/hris/overtime-approvals/{overtime}/approve'
 */
 approveForm.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -162,7 +162,7 @@ approve.form = approveForm
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::reject
-* @see app/Http/Controllers/Hris/OvertimeController.php:180
+* @see app/Http/Controllers/Hris/OvertimeController.php:179
 * @route '/hris/overtime-approvals/{overtime}/reject'
 */
 export const reject = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -177,7 +177,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::reject
-* @see app/Http/Controllers/Hris/OvertimeController.php:180
+* @see app/Http/Controllers/Hris/OvertimeController.php:179
 * @route '/hris/overtime-approvals/{overtime}/reject'
 */
 reject.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -210,7 +210,7 @@ reject.url = (args: { overtime: number | { id: number } } | [overtime: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::reject
-* @see app/Http/Controllers/Hris/OvertimeController.php:180
+* @see app/Http/Controllers/Hris/OvertimeController.php:179
 * @route '/hris/overtime-approvals/{overtime}/reject'
 */
 reject.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -220,7 +220,7 @@ reject.post = (args: { overtime: number | { id: number } } | [overtime: number |
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::reject
-* @see app/Http/Controllers/Hris/OvertimeController.php:180
+* @see app/Http/Controllers/Hris/OvertimeController.php:179
 * @route '/hris/overtime-approvals/{overtime}/reject'
 */
 const rejectForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -230,7 +230,7 @@ const rejectForm = (args: { overtime: number | { id: number } } | [overtime: num
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::reject
-* @see app/Http/Controllers/Hris/OvertimeController.php:180
+* @see app/Http/Controllers/Hris/OvertimeController.php:179
 * @route '/hris/overtime-approvals/{overtime}/reject'
 */
 rejectForm.post = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

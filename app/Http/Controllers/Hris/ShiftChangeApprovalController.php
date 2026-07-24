@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\EmployeeSchedule;
 use App\Models\ShiftChangeRequest;
 use App\Models\WorkShift;
+use App\Services\ApprovalWorkflowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -86,9 +87,7 @@ class ShiftChangeApprovalController extends Controller
         $ownerId = $request->user()->accountOwnerId();
         $this->ensureOwnedRequest($shiftChangeRequest, $ownerId);
 
-        if ($shiftChangeRequest->status !== 'pending') {
-            return back()->with('error', 'Request perubahan jadwal sudah diproses.');
-        }
+        if (app(ApprovalWorkflowService::class)->approve($shiftChangeRequest, $request->user()) === ApprovalWorkflowService::ADVANCED) return back()->with('success', 'Approval tahap 1 berhasil. Menunggu tahap 2.');
 
         DB::transaction(function () use ($request, $shiftChangeRequest, $ownerId): void {
             /** @var WorkShift $shift */
@@ -127,20 +126,11 @@ class ShiftChangeApprovalController extends Controller
         $ownerId = $request->user()->accountOwnerId();
         $this->ensureOwnedRequest($shiftChangeRequest, $ownerId);
 
-        if ($shiftChangeRequest->status !== 'pending') {
-            return back()->with('error', 'Request perubahan jadwal sudah diproses.');
-        }
-
         $validated = $request->validate([
             'rejection_reason' => ['required', 'string', 'max:255'],
         ]);
 
-        $shiftChangeRequest->update([
-            'status' => 'rejected',
-            'approved_by' => $request->user()->id,
-            'approved_at' => now(),
-            'rejection_reason' => $validated['rejection_reason'],
-        ]);
+        app(ApprovalWorkflowService::class)->reject($shiftChangeRequest, $request->user(), $validated['rejection_reason']);
 
         return back()->with('success', 'Request perubahan jadwal kerja ditolak.');
     }

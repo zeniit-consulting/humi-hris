@@ -27,6 +27,7 @@ class OvertimeRequest extends Model
         'total_hours',
         'reason',
         'status',
+        'approval_levels', 'approval_stage', 'first_approver_employee_id', 'second_approver_employee_id', 'first_approved_by', 'first_approved_at', 'rejection_stage',
         'approved_by',
         'approved_at',
         'notes',
@@ -44,8 +45,11 @@ class OvertimeRequest extends Model
             'total_hours' => 'decimal:2',
             'break_minutes' => 'integer',
             'approved_at' => 'datetime',
+            'first_approved_at' => 'datetime', 'approval_levels' => 'integer', 'approval_stage' => 'integer', 'rejection_stage' => 'integer',
         ];
     }
+
+    protected static function booted(): void { static::creating(fn (self $request) => app(\App\Services\ApprovalWorkflowService::class)->snapshot($request)); }
 
     /**
      * Get employee for this overtime request.

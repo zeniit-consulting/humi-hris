@@ -1,8 +1,8 @@
-import { Activity, Clock3, House, User } from 'lucide-react';
+import { Activity, CheckSquare, Clock3, House, User } from 'lucide-react';
 import type { PortalLinkMap } from './lib';
 
 type PortalNavbarProps = {
-    active: 'home' | 'attendance' | 'activity' | 'payroll' | 'profile';
+    active: 'home' | 'attendance' | 'activity' | 'payroll' | 'profile' | 'approvals';
     links: PortalLinkMap;
 };
 
@@ -10,6 +10,7 @@ const navItems = [
     { key: 'home', label: 'Beranda', icon: House, href: '/portal' },
     { key: 'attendance', label: 'Jadwal', icon: Clock3 },
     { key: 'activity', label: 'Aktivitas', icon: Activity },
+    { key: 'approvals', label: 'Approval', icon: CheckSquare },
     { key: 'profile', label: 'Profil', icon: User },
 ] as const;
 
@@ -25,6 +26,8 @@ const getNavItemHref = (key: string, links: PortalLinkMap): string => {
             return links.activity ?? '/portal/activity';
         case 'payroll':
             return links.payroll ?? '#';
+        case 'approvals':
+            return links.approvals ?? '/portal/approvals';
         default:
             return '#';
     }
@@ -36,7 +39,7 @@ export function PortalNavbar({ active, links }: PortalNavbarProps) {
             aria-label="Navigasi portal"
             className="fixed inset-x-0 bottom-0 z-[var(--portal-z-sticky)] w-full"
         >
-            <div className="portal-material grid grid-cols-4 gap-1 rounded-t-[1.15rem] rounded-b-none border p-1.5 pb-[max(1.125rem,calc(0.375rem+env(safe-area-inset-bottom)))]">
+            <div className="portal-material grid grid-cols-5 gap-1 rounded-t-[1.15rem] rounded-b-none border p-1.5 pb-[max(1.125rem,calc(0.375rem+env(safe-area-inset-bottom)))]">
                 {navItems.map((item) => {
                     const href = getNavItemHref(item.key, links);
                     const isActive = active === item.key;

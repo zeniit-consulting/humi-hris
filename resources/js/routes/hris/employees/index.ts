@@ -85,7 +85,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::resigned
-* @see app/Http/Controllers/Hris/EmployeeController.php:535
+* @see app/Http/Controllers/Hris/EmployeeController.php:536
 * @route '/hris/employees/resigned'
 */
 export const resigned = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -100,7 +100,7 @@ resigned.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::resigned
-* @see app/Http/Controllers/Hris/EmployeeController.php:535
+* @see app/Http/Controllers/Hris/EmployeeController.php:536
 * @route '/hris/employees/resigned'
 */
 resigned.url = (options?: RouteQueryOptions) => {
@@ -109,7 +109,7 @@ resigned.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::resigned
-* @see app/Http/Controllers/Hris/EmployeeController.php:535
+* @see app/Http/Controllers/Hris/EmployeeController.php:536
 * @route '/hris/employees/resigned'
 */
 resigned.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -119,7 +119,7 @@ resigned.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::resigned
-* @see app/Http/Controllers/Hris/EmployeeController.php:535
+* @see app/Http/Controllers/Hris/EmployeeController.php:536
 * @route '/hris/employees/resigned'
 */
 resigned.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -129,7 +129,7 @@ resigned.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::resigned
-* @see app/Http/Controllers/Hris/EmployeeController.php:535
+* @see app/Http/Controllers/Hris/EmployeeController.php:536
 * @route '/hris/employees/resigned'
 */
 const resignedForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -139,7 +139,7 @@ const resignedForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::resigned
-* @see app/Http/Controllers/Hris/EmployeeController.php:535
+* @see app/Http/Controllers/Hris/EmployeeController.php:536
 * @route '/hris/employees/resigned'
 */
 resignedForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -149,7 +149,7 @@ resignedForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::resigned
-* @see app/Http/Controllers/Hris/EmployeeController.php:535
+* @see app/Http/Controllers/Hris/EmployeeController.php:536
 * @route '/hris/employees/resigned'
 */
 resignedForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -247,7 +247,7 @@ masterData.form = masterDataForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importTemplate
-* @see app/Http/Controllers/Hris/EmployeeController.php:731
+* @see app/Http/Controllers/Hris/EmployeeController.php:732
 * @route '/hris/employees/import-template'
 */
 export const importTemplate = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -262,7 +262,7 @@ importTemplate.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importTemplate
-* @see app/Http/Controllers/Hris/EmployeeController.php:731
+* @see app/Http/Controllers/Hris/EmployeeController.php:732
 * @route '/hris/employees/import-template'
 */
 importTemplate.url = (options?: RouteQueryOptions) => {
@@ -271,7 +271,7 @@ importTemplate.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importTemplate
-* @see app/Http/Controllers/Hris/EmployeeController.php:731
+* @see app/Http/Controllers/Hris/EmployeeController.php:732
 * @route '/hris/employees/import-template'
 */
 importTemplate.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -281,7 +281,7 @@ importTemplate.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importTemplate
-* @see app/Http/Controllers/Hris/EmployeeController.php:731
+* @see app/Http/Controllers/Hris/EmployeeController.php:732
 * @route '/hris/employees/import-template'
 */
 importTemplate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -291,7 +291,7 @@ importTemplate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importTemplate
-* @see app/Http/Controllers/Hris/EmployeeController.php:731
+* @see app/Http/Controllers/Hris/EmployeeController.php:732
 * @route '/hris/employees/import-template'
 */
 const importTemplateForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -301,7 +301,7 @@ const importTemplateForm = (options?: RouteQueryOptions): RouteFormDefinition<'g
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importTemplate
-* @see app/Http/Controllers/Hris/EmployeeController.php:731
+* @see app/Http/Controllers/Hris/EmployeeController.php:732
 * @route '/hris/employees/import-template'
 */
 importTemplateForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -311,7 +311,7 @@ importTemplateForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importTemplate
-* @see app/Http/Controllers/Hris/EmployeeController.php:731
+* @see app/Http/Controllers/Hris/EmployeeController.php:732
 * @route '/hris/employees/import-template'
 */
 importTemplateForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -328,7 +328,7 @@ importTemplate.form = importTemplateForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:789
+* @see app/Http/Controllers/Hris/EmployeeController.php:790
 * @route '/hris/employees/import'
 */
 export const importMethod = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -343,7 +343,7 @@ importMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:789
+* @see app/Http/Controllers/Hris/EmployeeController.php:790
 * @route '/hris/employees/import'
 */
 importMethod.url = (options?: RouteQueryOptions) => {
@@ -352,7 +352,7 @@ importMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:789
+* @see app/Http/Controllers/Hris/EmployeeController.php:790
 * @route '/hris/employees/import'
 */
 importMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -362,7 +362,7 @@ importMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:789
+* @see app/Http/Controllers/Hris/EmployeeController.php:790
 * @route '/hris/employees/import'
 */
 const importMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -372,7 +372,7 @@ const importMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'pos
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::importMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:789
+* @see app/Http/Controllers/Hris/EmployeeController.php:790
 * @route '/hris/employees/import'
 */
 importMethodForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -384,7 +384,7 @@ importMethod.form = importMethodForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::exportMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:543
+* @see app/Http/Controllers/Hris/EmployeeController.php:544
 * @route '/hris/employees/export'
 */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -399,7 +399,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::exportMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:543
+* @see app/Http/Controllers/Hris/EmployeeController.php:544
 * @route '/hris/employees/export'
 */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -408,7 +408,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::exportMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:543
+* @see app/Http/Controllers/Hris/EmployeeController.php:544
 * @route '/hris/employees/export'
 */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -418,7 +418,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::exportMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:543
+* @see app/Http/Controllers/Hris/EmployeeController.php:544
 * @route '/hris/employees/export'
 */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -428,7 +428,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::exportMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:543
+* @see app/Http/Controllers/Hris/EmployeeController.php:544
 * @route '/hris/employees/export'
 */
 const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -438,7 +438,7 @@ const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::exportMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:543
+* @see app/Http/Controllers/Hris/EmployeeController.php:544
 * @route '/hris/employees/export'
 */
 exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -448,7 +448,7 @@ exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::exportMethod
-* @see app/Http/Controllers/Hris/EmployeeController.php:543
+* @see app/Http/Controllers/Hris/EmployeeController.php:544
 * @route '/hris/employees/export'
 */
 exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -465,7 +465,7 @@ exportMethod.form = exportMethodForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::contract
-* @see app/Http/Controllers/Hris/EmployeeController.php:999
+* @see app/Http/Controllers/Hris/EmployeeController.php:1000
 * @route '/hris/employees/{employee}/contract'
 */
 export const contract = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -480,7 +480,7 @@ contract.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::contract
-* @see app/Http/Controllers/Hris/EmployeeController.php:999
+* @see app/Http/Controllers/Hris/EmployeeController.php:1000
 * @route '/hris/employees/{employee}/contract'
 */
 contract.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -513,7 +513,7 @@ contract.url = (args: { employee: number | { id: number } } | [employee: number 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::contract
-* @see app/Http/Controllers/Hris/EmployeeController.php:999
+* @see app/Http/Controllers/Hris/EmployeeController.php:1000
 * @route '/hris/employees/{employee}/contract'
 */
 contract.get = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -523,7 +523,7 @@ contract.get = (args: { employee: number | { id: number } } | [employee: number 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::contract
-* @see app/Http/Controllers/Hris/EmployeeController.php:999
+* @see app/Http/Controllers/Hris/EmployeeController.php:1000
 * @route '/hris/employees/{employee}/contract'
 */
 contract.head = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -533,7 +533,7 @@ contract.head = (args: { employee: number | { id: number } } | [employee: number
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::contract
-* @see app/Http/Controllers/Hris/EmployeeController.php:999
+* @see app/Http/Controllers/Hris/EmployeeController.php:1000
 * @route '/hris/employees/{employee}/contract'
 */
 const contractForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -543,7 +543,7 @@ const contractForm = (args: { employee: number | { id: number } } | [employee: n
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::contract
-* @see app/Http/Controllers/Hris/EmployeeController.php:999
+* @see app/Http/Controllers/Hris/EmployeeController.php:1000
 * @route '/hris/employees/{employee}/contract'
 */
 contractForm.get = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -553,7 +553,7 @@ contractForm.get = (args: { employee: number | { id: number } } | [employee: num
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::contract
-* @see app/Http/Controllers/Hris/EmployeeController.php:999
+* @see app/Http/Controllers/Hris/EmployeeController.php:1000
 * @route '/hris/employees/{employee}/contract'
 */
 contractForm.head = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -570,7 +570,7 @@ contract.form = contractForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::activateUser
-* @see app/Http/Controllers/Hris/EmployeeController.php:1211
+* @see app/Http/Controllers/Hris/EmployeeController.php:1213
 * @route '/hris/employees/{employee}/activate-user'
 */
 export const activateUser = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -585,7 +585,7 @@ activateUser.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::activateUser
-* @see app/Http/Controllers/Hris/EmployeeController.php:1211
+* @see app/Http/Controllers/Hris/EmployeeController.php:1213
 * @route '/hris/employees/{employee}/activate-user'
 */
 activateUser.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -618,7 +618,7 @@ activateUser.url = (args: { employee: number | { id: number } } | [employee: num
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::activateUser
-* @see app/Http/Controllers/Hris/EmployeeController.php:1211
+* @see app/Http/Controllers/Hris/EmployeeController.php:1213
 * @route '/hris/employees/{employee}/activate-user'
 */
 activateUser.post = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -628,7 +628,7 @@ activateUser.post = (args: { employee: number | { id: number } } | [employee: nu
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::activateUser
-* @see app/Http/Controllers/Hris/EmployeeController.php:1211
+* @see app/Http/Controllers/Hris/EmployeeController.php:1213
 * @route '/hris/employees/{employee}/activate-user'
 */
 const activateUserForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -638,7 +638,7 @@ const activateUserForm = (args: { employee: number | { id: number } } | [employe
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::activateUser
-* @see app/Http/Controllers/Hris/EmployeeController.php:1211
+* @see app/Http/Controllers/Hris/EmployeeController.php:1213
 * @route '/hris/employees/{employee}/activate-user'
 */
 activateUserForm.post = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -650,7 +650,7 @@ activateUser.form = activateUserForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::inviteUser
-* @see app/Http/Controllers/Hris/EmployeeController.php:1219
+* @see app/Http/Controllers/Hris/EmployeeController.php:1221
 * @route '/hris/employees/{employee}/invite-user'
 */
 export const inviteUser = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -665,7 +665,7 @@ inviteUser.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::inviteUser
-* @see app/Http/Controllers/Hris/EmployeeController.php:1219
+* @see app/Http/Controllers/Hris/EmployeeController.php:1221
 * @route '/hris/employees/{employee}/invite-user'
 */
 inviteUser.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -698,7 +698,7 @@ inviteUser.url = (args: { employee: number | { id: number } } | [employee: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::inviteUser
-* @see app/Http/Controllers/Hris/EmployeeController.php:1219
+* @see app/Http/Controllers/Hris/EmployeeController.php:1221
 * @route '/hris/employees/{employee}/invite-user'
 */
 inviteUser.post = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -708,7 +708,7 @@ inviteUser.post = (args: { employee: number | { id: number } } | [employee: numb
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::inviteUser
-* @see app/Http/Controllers/Hris/EmployeeController.php:1219
+* @see app/Http/Controllers/Hris/EmployeeController.php:1221
 * @route '/hris/employees/{employee}/invite-user'
 */
 const inviteUserForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -718,7 +718,7 @@ const inviteUserForm = (args: { employee: number | { id: number } } | [employee:
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::inviteUser
-* @see app/Http/Controllers/Hris/EmployeeController.php:1219
+* @see app/Http/Controllers/Hris/EmployeeController.php:1221
 * @route '/hris/employees/{employee}/invite-user'
 */
 inviteUserForm.post = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -730,7 +730,7 @@ inviteUser.form = inviteUserForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::activatePkwtt
-* @see app/Http/Controllers/Hris/EmployeeController.php:1173
+* @see app/Http/Controllers/Hris/EmployeeController.php:1175
 * @route '/hris/employees/{employee}/activate-pkwtt'
 */
 export const activatePkwtt = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -745,7 +745,7 @@ activatePkwtt.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::activatePkwtt
-* @see app/Http/Controllers/Hris/EmployeeController.php:1173
+* @see app/Http/Controllers/Hris/EmployeeController.php:1175
 * @route '/hris/employees/{employee}/activate-pkwtt'
 */
 activatePkwtt.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -778,7 +778,7 @@ activatePkwtt.url = (args: { employee: number | { id: number } } | [employee: nu
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::activatePkwtt
-* @see app/Http/Controllers/Hris/EmployeeController.php:1173
+* @see app/Http/Controllers/Hris/EmployeeController.php:1175
 * @route '/hris/employees/{employee}/activate-pkwtt'
 */
 activatePkwtt.post = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -788,7 +788,7 @@ activatePkwtt.post = (args: { employee: number | { id: number } } | [employee: n
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::activatePkwtt
-* @see app/Http/Controllers/Hris/EmployeeController.php:1173
+* @see app/Http/Controllers/Hris/EmployeeController.php:1175
 * @route '/hris/employees/{employee}/activate-pkwtt'
 */
 const activatePkwttForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -798,7 +798,7 @@ const activatePkwttForm = (args: { employee: number | { id: number } } | [employ
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::activatePkwtt
-* @see app/Http/Controllers/Hris/EmployeeController.php:1173
+* @see app/Http/Controllers/Hris/EmployeeController.php:1175
 * @route '/hris/employees/{employee}/activate-pkwtt'
 */
 activatePkwttForm.post = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -810,7 +810,7 @@ activatePkwtt.form = activatePkwttForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::offboard
-* @see app/Http/Controllers/Hris/EmployeeController.php:1255
+* @see app/Http/Controllers/Hris/EmployeeController.php:1257
 * @route '/hris/employees/{employee}/offboard'
 */
 export const offboard = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -825,7 +825,7 @@ offboard.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::offboard
-* @see app/Http/Controllers/Hris/EmployeeController.php:1255
+* @see app/Http/Controllers/Hris/EmployeeController.php:1257
 * @route '/hris/employees/{employee}/offboard'
 */
 offboard.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -858,7 +858,7 @@ offboard.url = (args: { employee: number | { id: number } } | [employee: number 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::offboard
-* @see app/Http/Controllers/Hris/EmployeeController.php:1255
+* @see app/Http/Controllers/Hris/EmployeeController.php:1257
 * @route '/hris/employees/{employee}/offboard'
 */
 offboard.post = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -868,7 +868,7 @@ offboard.post = (args: { employee: number | { id: number } } | [employee: number
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::offboard
-* @see app/Http/Controllers/Hris/EmployeeController.php:1255
+* @see app/Http/Controllers/Hris/EmployeeController.php:1257
 * @route '/hris/employees/{employee}/offboard'
 */
 const offboardForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -878,7 +878,7 @@ const offboardForm = (args: { employee: number | { id: number } } | [employee: n
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::offboard
-* @see app/Http/Controllers/Hris/EmployeeController.php:1255
+* @see app/Http/Controllers/Hris/EmployeeController.php:1257
 * @route '/hris/employees/{employee}/offboard'
 */
 offboardForm.post = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -890,7 +890,7 @@ offboard.form = offboardForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::store
-* @see app/Http/Controllers/Hris/EmployeeController.php:1050
+* @see app/Http/Controllers/Hris/EmployeeController.php:1052
 * @route '/hris/employees'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -905,7 +905,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::store
-* @see app/Http/Controllers/Hris/EmployeeController.php:1050
+* @see app/Http/Controllers/Hris/EmployeeController.php:1052
 * @route '/hris/employees'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -914,7 +914,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::store
-* @see app/Http/Controllers/Hris/EmployeeController.php:1050
+* @see app/Http/Controllers/Hris/EmployeeController.php:1052
 * @route '/hris/employees'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -924,7 +924,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::store
-* @see app/Http/Controllers/Hris/EmployeeController.php:1050
+* @see app/Http/Controllers/Hris/EmployeeController.php:1052
 * @route '/hris/employees'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -934,7 +934,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::store
-* @see app/Http/Controllers/Hris/EmployeeController.php:1050
+* @see app/Http/Controllers/Hris/EmployeeController.php:1052
 * @route '/hris/employees'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -946,7 +946,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::update
-* @see app/Http/Controllers/Hris/EmployeeController.php:1103
+* @see app/Http/Controllers/Hris/EmployeeController.php:1105
 * @route '/hris/employees/{employee}'
 */
 export const update = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -961,7 +961,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::update
-* @see app/Http/Controllers/Hris/EmployeeController.php:1103
+* @see app/Http/Controllers/Hris/EmployeeController.php:1105
 * @route '/hris/employees/{employee}'
 */
 update.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -994,7 +994,7 @@ update.url = (args: { employee: number | { id: number } } | [employee: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::update
-* @see app/Http/Controllers/Hris/EmployeeController.php:1103
+* @see app/Http/Controllers/Hris/EmployeeController.php:1105
 * @route '/hris/employees/{employee}'
 */
 update.put = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -1004,7 +1004,7 @@ update.put = (args: { employee: number | { id: number } } | [employee: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::update
-* @see app/Http/Controllers/Hris/EmployeeController.php:1103
+* @see app/Http/Controllers/Hris/EmployeeController.php:1105
 * @route '/hris/employees/{employee}'
 */
 const updateForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1019,7 +1019,7 @@ const updateForm = (args: { employee: number | { id: number } } | [employee: num
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::update
-* @see app/Http/Controllers/Hris/EmployeeController.php:1103
+* @see app/Http/Controllers/Hris/EmployeeController.php:1105
 * @route '/hris/employees/{employee}'
 */
 updateForm.put = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1036,7 +1036,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::destroy
-* @see app/Http/Controllers/Hris/EmployeeController.php:1316
+* @see app/Http/Controllers/Hris/EmployeeController.php:1318
 * @route '/hris/employees/{employee}'
 */
 export const destroy = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -1051,7 +1051,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::destroy
-* @see app/Http/Controllers/Hris/EmployeeController.php:1316
+* @see app/Http/Controllers/Hris/EmployeeController.php:1318
 * @route '/hris/employees/{employee}'
 */
 destroy.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -1084,7 +1084,7 @@ destroy.url = (args: { employee: number | { id: number } } | [employee: number |
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::destroy
-* @see app/Http/Controllers/Hris/EmployeeController.php:1316
+* @see app/Http/Controllers/Hris/EmployeeController.php:1318
 * @route '/hris/employees/{employee}'
 */
 destroy.delete = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -1094,7 +1094,7 @@ destroy.delete = (args: { employee: number | { id: number } } | [employee: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::destroy
-* @see app/Http/Controllers/Hris/EmployeeController.php:1316
+* @see app/Http/Controllers/Hris/EmployeeController.php:1318
 * @route '/hris/employees/{employee}'
 */
 const destroyForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1109,7 +1109,7 @@ const destroyForm = (args: { employee: number | { id: number } } | [employee: nu
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeController::destroy
-* @see app/Http/Controllers/Hris/EmployeeController.php:1316
+* @see app/Http/Controllers/Hris/EmployeeController.php:1318
 * @route '/hris/employees/{employee}'
 */
 destroyForm.delete = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -82,7 +82,7 @@ preview.form = previewForm
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewSecure
-* @see app/Http/Controllers/UserPortalSectionController.php:114
+* @see app/Http/Controllers/UserPortalSectionController.php:119
 * @route '/portal/api/payrolls/preview-secure'
 */
 export const previewSecure = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ previewSecure.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewSecure
-* @see app/Http/Controllers/UserPortalSectionController.php:114
+* @see app/Http/Controllers/UserPortalSectionController.php:119
 * @route '/portal/api/payrolls/preview-secure'
 */
 previewSecure.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ previewSecure.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewSecure
-* @see app/Http/Controllers/UserPortalSectionController.php:114
+* @see app/Http/Controllers/UserPortalSectionController.php:119
 * @route '/portal/api/payrolls/preview-secure'
 */
 previewSecure.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ previewSecure.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewSecure
-* @see app/Http/Controllers/UserPortalSectionController.php:114
+* @see app/Http/Controllers/UserPortalSectionController.php:119
 * @route '/portal/api/payrolls/preview-secure'
 */
 const previewSecureForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const previewSecureForm = (options?: RouteQueryOptions): RouteFormDefinition<'po
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewSecure
-* @see app/Http/Controllers/UserPortalSectionController.php:114
+* @see app/Http/Controllers/UserPortalSectionController.php:119
 * @route '/portal/api/payrolls/preview-secure'
 */
 previewSecureForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

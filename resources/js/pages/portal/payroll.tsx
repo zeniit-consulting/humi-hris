@@ -41,6 +41,7 @@ type PayrollPayload = {
         pph21_company_borne: string | number;
         kasbon_deduction: string | number;
         denda_deduction: string | number;
+        unpaid_leave_deduction: string | number;
         deductions_total: string | number;
         net_salary: string | number;
         allowance_breakdown: Record<string, number>;
@@ -440,6 +441,12 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                                 {formatCurrency(
                                                     slip.denda_deduction,
                                                 )}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                            <span>Cuti tanpa gaji</span>
+                                            <span className="font-semibold">
+                                                {formatCurrency(slip.unpaid_leave_deduction)}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between rounded-[10px] bg-rose-50 px-4 py-3">

@@ -25,6 +25,7 @@ class CompanySettingUpdateRequest extends FormRequest
             'attendance_locations' => $this->input('attendance_locations', []),
             'portal_kasbon_enabled' => $this->boolean('portal_kasbon_enabled'),
             'employee_activation_otp_enabled' => $this->boolean('employee_activation_otp_enabled'),
+            'auto_deduct_leave_for_missing_checkout' => $this->boolean('auto_deduct_leave_for_missing_checkout'),
         ]);
     }
 
@@ -40,6 +41,7 @@ class CompanySettingUpdateRequest extends FormRequest
             'details' => ['nullable', 'string', 'max:3000'],
             'portal_kasbon_enabled' => ['required', 'boolean'],
             'employee_activation_otp_enabled' => ['required', 'boolean'],
+            'auto_deduct_leave_for_missing_checkout' => ['required', 'boolean'],
             'location_name' => ['nullable', 'string', 'max:150'],
             'location_address' => ['nullable', 'string', 'max:1000'],
             'location_latitude' => ['nullable', 'numeric', 'between:-90,90'],
@@ -53,6 +55,9 @@ class CompanySettingUpdateRequest extends FormRequest
             'attendance_locations.*.radius_meters' => ['required_with:attendance_locations', 'integer', 'min:10', 'max:100000'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'overtime_hour_divisor' => ['nullable', 'integer', 'min:1', 'max:300'],
+            'overtime_calculation_mode' => ['nullable', 'in:hourly,threshold_daily'],
+            'overtime_threshold_hours' => ['nullable', 'integer', 'min:1', 'max:24'],
+            'active_working_days' => ['nullable', 'integer', 'min:1', 'max:31'],
             'overtime_multiplier_hour1' => ['nullable', 'numeric', 'min:1', 'max:10'],
             'overtime_multiplier_subsequent' => ['nullable', 'numeric', 'min:1', 'max:10'],
         ];

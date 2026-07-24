@@ -160,6 +160,7 @@ class EmployeeController extends Controller
                 'offboarding_notes' => $employee->offboarding_notes,
                 'employment_status' => $employee->employment_status,
                 'employment_type' => $employee->employment_type,
+                'daily_wage' => $employee->daily_wage,
                 'contract_duration_months' => $employee->contract_duration_months,
                 'contract_end_date' => $employee->contract_end_date?->format('Y-m-d'),
                 'probation_duration_months' => $employee->probation_duration_months,
@@ -1031,6 +1032,7 @@ class EmployeeController extends Controller
             'contractDateText' => $hireDate->locale('id')->translatedFormat('d F Y'),
             'hireDateText' => $hireDate->locale('id')->translatedFormat('d F Y'),
             'employmentTypeLabel' => match ($employee->employment_type) {
+                'DW' => 'Daily Worker',
                 'FL' => 'Freelance',
                 'PKWT' => 'PKWT',
                 'OS' => 'Outsourcing',

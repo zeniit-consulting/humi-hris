@@ -81,7 +81,7 @@ class MasterController extends Controller
                 'leave_types' => ['annual', 'sick', 'unpaid', 'other'],
                 'overtime_statuses' => ['pending', 'approved', 'rejected'],
                 'employment_statuses' => ['active', 'probation', 'on_leave', 'resigned'],
-                'employment_types' => ['permanent', 'contract', 'internship', 'freelance'],
+                'employment_types' => ['daily_worker', 'permanent', 'contract', 'internship', 'freelance'],
                 'marital_statuses' => ['single', 'married', 'divorced', 'widowed'],
             ],
         ]);

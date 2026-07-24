@@ -34,6 +34,10 @@ class CompanySetting extends Model
         'employee_code_digits',
         'employee_code_next_number',
         'overtime_hour_divisor',
+        'overtime_calculation_mode',
+        'overtime_threshold_hours',
+        'active_working_days',
+        'auto_deduct_leave_for_missing_checkout',
         'overtime_multiplier_hour1',
         'overtime_multiplier_subsequent',
     ];
@@ -48,6 +52,9 @@ class CompanySetting extends Model
             'portal_kasbon_enabled' => 'boolean',
             'employee_activation_otp_enabled' => 'boolean',
             'overtime_hour_divisor' => 'float',
+            'overtime_threshold_hours' => 'integer',
+            'active_working_days' => 'integer',
+            'auto_deduct_leave_for_missing_checkout' => 'boolean',
             'overtime_multiplier_hour1' => 'float',
             'overtime_multiplier_subsequent' => 'float',
         ];

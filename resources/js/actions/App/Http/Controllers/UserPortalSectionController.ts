@@ -1459,7 +1459,7 @@ reprimands.form = reprimandsForm
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::approvals
-* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @see app/Http/Controllers/UserPortalSectionController.php:114
 * @route '/portal/approvals'
 */
 export const approvals = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1474,7 +1474,7 @@ approvals.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::approvals
-* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @see app/Http/Controllers/UserPortalSectionController.php:114
 * @route '/portal/approvals'
 */
 approvals.url = (options?: RouteQueryOptions) => {
@@ -1483,7 +1483,7 @@ approvals.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::approvals
-* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @see app/Http/Controllers/UserPortalSectionController.php:114
 * @route '/portal/approvals'
 */
 approvals.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -1493,7 +1493,7 @@ approvals.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::approvals
-* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @see app/Http/Controllers/UserPortalSectionController.php:114
 * @route '/portal/approvals'
 */
 approvals.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -1503,7 +1503,7 @@ approvals.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::approvals
-* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @see app/Http/Controllers/UserPortalSectionController.php:114
 * @route '/portal/approvals'
 */
 const approvalsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1513,7 +1513,7 @@ const approvalsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> 
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::approvals
-* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @see app/Http/Controllers/UserPortalSectionController.php:114
 * @route '/portal/approvals'
 */
 approvalsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1523,7 +1523,7 @@ approvalsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::approvals
-* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @see app/Http/Controllers/UserPortalSectionController.php:114
 * @route '/portal/approvals'
 */
 approvalsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -1540,7 +1540,7 @@ approvals.form = approvalsForm
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:114
+* @see app/Http/Controllers/UserPortalSectionController.php:119
 * @route '/portal/api/payrolls/preview-secure'
 */
 export const previewPayslip = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1555,7 +1555,7 @@ previewPayslip.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:114
+* @see app/Http/Controllers/UserPortalSectionController.php:119
 * @route '/portal/api/payrolls/preview-secure'
 */
 previewPayslip.url = (options?: RouteQueryOptions) => {
@@ -1564,7 +1564,7 @@ previewPayslip.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:114
+* @see app/Http/Controllers/UserPortalSectionController.php:119
 * @route '/portal/api/payrolls/preview-secure'
 */
 previewPayslip.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1574,7 +1574,7 @@ previewPayslip.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:114
+* @see app/Http/Controllers/UserPortalSectionController.php:119
 * @route '/portal/api/payrolls/preview-secure'
 */
 const previewPayslipForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1584,7 +1584,7 @@ const previewPayslipForm = (options?: RouteQueryOptions): RouteFormDefinition<'p
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:114
+* @see app/Http/Controllers/UserPortalSectionController.php:119
 * @route '/portal/api/payrolls/preview-secure'
 */
 previewPayslipForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1596,7 +1596,7 @@ previewPayslip.form = previewPayslipForm
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:140
+* @see app/Http/Controllers/UserPortalSectionController.php:145
 * @route '/portal/payroll/export'
 */
 export const exportPayslip = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1611,7 +1611,7 @@ exportPayslip.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:140
+* @see app/Http/Controllers/UserPortalSectionController.php:145
 * @route '/portal/payroll/export'
 */
 exportPayslip.url = (options?: RouteQueryOptions) => {
@@ -1620,7 +1620,7 @@ exportPayslip.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:140
+* @see app/Http/Controllers/UserPortalSectionController.php:145
 * @route '/portal/payroll/export'
 */
 exportPayslip.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1630,7 +1630,7 @@ exportPayslip.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:140
+* @see app/Http/Controllers/UserPortalSectionController.php:145
 * @route '/portal/payroll/export'
 */
 const exportPayslipForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1640,7 +1640,7 @@ const exportPayslipForm = (options?: RouteQueryOptions): RouteFormDefinition<'po
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:140
+* @see app/Http/Controllers/UserPortalSectionController.php:145
 * @route '/portal/payroll/export'
 */
 exportPayslipForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
