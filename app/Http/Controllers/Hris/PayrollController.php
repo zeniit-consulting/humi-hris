@@ -77,13 +77,14 @@ class PayrollController extends Controller
                 ->whereIn('employment_status', ['active', 'probation', 'on_leave'])
                 ->orderBy('first_name')
                 ->orderBy('last_name')
-                ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id'])
+                ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id', 'service_fee_points'])
                 ->map(fn (Employee $employee): array => [
                     'id' => $employee->id,
                     'label' => $employee->employee_code.' - '.$employee->full_name,
                     'sub_company_label' => $employee->subCompany
                         ? $employee->subCompany->code.' - '.$employee->subCompany->name
                         : 'Internal',
+                    'service_fee_points' => $employee->service_fee_points,
                 ]),
             'subCompanies' => SubCompany::query()
                 ->where('user_id', $ownerId)
@@ -108,6 +109,7 @@ class PayrollController extends Controller
                 'total_allowances' => $filteredTotals['total_allowances'],
                 'total_deductions' => $filteredTotals['total_deductions'],
                 'total_net_salary' => $filteredTotals['total_net_salary'],
+                'service_fee_total' => $run->service_fee_total,
                 'unfiltered_employees_count' => $run->employees_count,
                 'unfiltered_total_net_salary' => $run->total_net_salary,
             ] : null,
@@ -161,6 +163,7 @@ class PayrollController extends Controller
         $period = $request->validated('period');
         $employeeScope = $request->validated('employee_scope') ?? 'all';
         $excludedEmployeeIds = $request->validated('excluded_employee_ids') ?? [];
+        $serviceFeeTotal = (float) ($request->validated('service_fee_total') ?? 0);
 
         $payrolls->generateForPeriod(
             $ownerId,
@@ -169,6 +172,7 @@ class PayrollController extends Controller
             markAsDraft: true,
             includeSubCompanyEmployees: $employeeScope === 'all',
             excludedEmployeeIds: $excludedEmployeeIds,
+            serviceFeeTotal: $serviceFeeTotal,
         );
 
         return to_route('hris.payrolls.index', ['period' => $period, 'type' => 'regular']);

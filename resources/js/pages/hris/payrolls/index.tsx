@@ -68,6 +68,7 @@ type PayrollRun = {
     total_allowances: string;
     total_deductions: string;
     total_net_salary: string;
+    service_fee_total: string;
     unfiltered_employees_count?: number;
     unfiltered_total_net_salary?: string;
     type: string;
@@ -117,6 +118,7 @@ type PageProps = {
         id: number;
         label: string;
         sub_company_label: string;
+        service_fee_points: string | number;
     }>;
     subCompanies: Array<{ id: number; label: string }>;
     payrollReadiness: {
@@ -208,6 +210,7 @@ export default function PayrollPage() {
         period,
         employee_scope: 'all',
         excluded_employee_ids: [] as number[],
+        service_fee_total: '',
     });
     const [editingItem, setEditingItem] = useState<PayrollItem | null>(null);
     const editItemForm = useForm({
@@ -1257,6 +1260,49 @@ export default function PayrollPage() {
                                     untuk karyawan internal, tanpa karyawan yang
                                     berada di sub-company.
                                 </p>
+                            </div>
+                        ) : null}
+
+                        {type === 'regular' ? (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="service_fee_total">
+                                        Total Service Fee
+                                    </Label>
+                                    <Input
+                                        id="service_fee_total"
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={formatThousandDigits(
+                                            generateForm.data.service_fee_total,
+                                        )}
+                                        onChange={(event) =>
+                                            generateForm.setData(
+                                                'service_fee_total',
+                                                normalizeDigitInput(event.target.value),
+                                            )
+                                        }
+                                        placeholder="Contoh: 10.000.000"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Opsional. Nominal dibagikan proporsional
+                                        kepada staf dengan poin Service Fee lebih
+                                        dari 0 dan dicatat sebagai bonus payroll.
+                                    </p>
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                    {employeeOptions
+                                        .filter(
+                                            (employee) =>
+                                                Number(employee.service_fee_points) >
+                                                0,
+                                        )
+                                        .map((employee) => (
+                                            <span key={employee.id}>
+                                                {employee.label}: {employee.service_fee_points} poin
+                                            </span>
+                                        ))}
+                                </div>
                             </div>
                         ) : null}
 

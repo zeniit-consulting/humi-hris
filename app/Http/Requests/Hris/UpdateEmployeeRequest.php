@@ -149,6 +149,7 @@ class UpdateEmployeeRequest extends FormRequest
             'employment_status' => ['required', Rule::in(['active', 'probation', 'on_leave', 'resigned'])],
             'employment_type' => ['required', Rule::in(Employee::EMPLOYMENT_TYPES)],
             'daily_wage' => ['nullable', 'numeric', 'min:0', Rule::requiredIf(fn () => $this->input('employment_type') === 'DW')],
+            'service_fee_points' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             'contract_duration_months' => [
                 'nullable', 'integer', 'min:1', 'max:120',
                 Rule::requiredIf(fn () => $this->input('employment_type') === 'PKWT' && ! $this->filled('contract_end_date')),

@@ -30,6 +30,7 @@ class PayrollRun extends Model
         'total_allowances',
         'total_deductions',
         'total_net_salary',
+        'service_fee_total',
         'generated_at',
         'generated_by',
         'is_saved',
@@ -55,6 +56,7 @@ class PayrollRun extends Model
             'total_allowances' => 'decimal:2',
             'total_deductions' => 'decimal:2',
             'total_net_salary' => 'decimal:2',
+            'service_fee_total' => 'decimal:2',
         ];
     }
 

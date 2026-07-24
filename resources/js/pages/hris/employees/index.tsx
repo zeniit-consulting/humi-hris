@@ -227,6 +227,7 @@ type Employee = {
     manager_id: number | null;
     base_salary: string | null;
     daily_wage: string | null;
+    service_fee_points: string | null;
     address: string | null;
     domicile_address: string | null;
     family_card_number: string | null;
@@ -316,6 +317,7 @@ type EmployeeFormData = {
     manager_id: string;
     base_salary: string;
     daily_wage: string;
+    service_fee_points: string;
     fixed_allowances: Array<{ name: string; amount: string }>;
     address: string;
     domicile_address: string;
@@ -551,6 +553,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     manager_id: '',
     base_salary: '',
     daily_wage: '',
+    service_fee_points: '0',
     fixed_allowances: [],
     address: '',
     domicile_address: '',
@@ -1162,6 +1165,7 @@ export default function EmployeesIndex() {
             manager_id: employee.manager_id ? String(employee.manager_id) : '',
             base_salary: normalizeStoredCurrencyValue(employee.base_salary),
             daily_wage: normalizeStoredCurrencyValue(employee.daily_wage),
+            service_fee_points: employee.service_fee_points ?? '0',
             fixed_allowances: employee.allowances
                 .filter((allowance) => allowance.is_active)
                 .map((allowance) => ({
@@ -4777,6 +4781,32 @@ export default function EmployeesIndex() {
                                         </div>
                                     </div>
                                 )}
+
+                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                    <Label htmlFor="service_fee_points">
+                                        Poin Service Fee
+                                    </Label>
+                                    <div className="space-y-1">
+                                        <Input
+                                            id="service_fee_points"
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={employeeForm.data.service_fee_points}
+                                            onChange={(event) =>
+                                                employeeForm.setData(
+                                                    'service_fee_points',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Contoh: 1"
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Digunakan untuk pembagian proporsional bonus Service Fee pada payroll.
+                                        </p>
+                                        <InputError message={employeeForm.errors.service_fee_points} />
+                                    </div>
+                                </div>
 
                                 <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
                                     <div>

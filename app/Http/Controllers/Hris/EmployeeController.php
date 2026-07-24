@@ -161,6 +161,7 @@ class EmployeeController extends Controller
                 'employment_status' => $employee->employment_status,
                 'employment_type' => $employee->employment_type,
                 'daily_wage' => $employee->daily_wage,
+                'service_fee_points' => $employee->service_fee_points,
                 'contract_duration_months' => $employee->contract_duration_months,
                 'contract_end_date' => $employee->contract_end_date?->format('Y-m-d'),
                 'probation_duration_months' => $employee->probation_duration_months,

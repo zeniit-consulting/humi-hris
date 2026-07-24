@@ -19,11 +19,12 @@ class PayrollGenerationService
         bool $markAsDraft = true,
         bool $includeSubCompanyEmployees = true,
         array $excludedEmployeeIds = [],
+        float $serviceFeeTotal = 0,
     ): PayrollRun {
         $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth();
         $end = $start->copy()->endOfMonth();
 
-        return DB::transaction(function () use ($ownerId, $period, $start, $end, $generatedBy, $markAsDraft, $includeSubCompanyEmployees, $excludedEmployeeIds): PayrollRun {
+        return DB::transaction(function () use ($ownerId, $period, $start, $end, $generatedBy, $markAsDraft, $includeSubCompanyEmployees, $excludedEmployeeIds, $serviceFeeTotal): PayrollRun {
             $run = PayrollRun::query()->updateOrCreate(
                 [
                     'user_id' => $ownerId,
@@ -35,6 +36,7 @@ class PayrollGenerationService
                     'period_end' => $end->toDateString(),
                     'generated_at' => now(),
                     'generated_by' => $generatedBy,
+                    'service_fee_total' => round(max($serviceFeeTotal, 0), 2),
                     ...($markAsDraft ? [
                         'is_saved' => false,
                         'saved_at' => null,
@@ -136,9 +138,12 @@ class PayrollGenerationService
             ->where('user_id', $ownerId)
             ->first();
 
-        return $this->employees($ownerId, $start, $end, $includeSubCompanyEmployees, $excludedEmployeeIds)
+        $employees = $this->employees($ownerId, $start, $end, $includeSubCompanyEmployees, $excludedEmployeeIds);
+        $items = $employees
             ->map(fn (Employee $employee): array => $this->payrollItem($ownerId, $run, $employee, $start, $end, $setting))
             ->values();
+
+        return $this->applyServiceFee($items, $employees, (float) ($run->service_fee_total ?? 0));
     }
 
     /**
@@ -207,6 +212,50 @@ class PayrollGenerationService
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
+    }
+
+    /**
+     * @param Collection<int, array<string, mixed>> $items
+     * @param Collection<int, Employee> $employees
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function applyServiceFee(Collection $items, Collection $employees, float $serviceFeeTotal): Collection
+    {
+        $serviceFeeCents = (int) round(max($serviceFeeTotal, 0) * 100);
+        $eligibleEmployees = $employees
+            ->filter(fn (Employee $employee): bool => (float) $employee->service_fee_points > 0)
+            ->values();
+        $totalPoints = (float) $eligibleEmployees->sum('service_fee_points');
+
+        if ($serviceFeeCents === 0 || $totalPoints <= 0) {
+            return $items;
+        }
+
+        $allocatedCents = 0;
+        $shares = [];
+        foreach ($eligibleEmployees as $index => $employee) {
+            $isLast = $index === $eligibleEmployees->count() - 1;
+            $share = $isLast
+                ? $serviceFeeCents - $allocatedCents
+                : (int) floor($serviceFeeCents * ((float) $employee->service_fee_points / $totalPoints));
+            $shares[$employee->id] = $share / 100;
+            $allocatedCents += $share;
+        }
+
+        return $items->map(function (array $item) use ($shares): array {
+            $serviceFeeShare = (float) ($shares[$item['employee_id']] ?? 0);
+            if ($serviceFeeShare <= 0) {
+                return $item;
+            }
+
+            $bonusBreakdown = $item['bonus_breakdown'];
+            $bonusBreakdown['Service Fee'] = $serviceFeeShare;
+            $item['bonus_breakdown'] = $bonusBreakdown;
+            $item['allowances_total'] = round((float) $item['allowances_total'] + $serviceFeeShare, 2);
+            $item['net_salary'] = round((float) $item['net_salary'] + $serviceFeeShare, 2);
+
+            return $item;
+        });
     }
 
     /**

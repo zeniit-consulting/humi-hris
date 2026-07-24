@@ -116,6 +116,45 @@ class PayrollGenerationTest extends TestCase
         ]);
     }
 
+    public function test_service_fee_is_distributed_by_employee_points(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $senior = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 5_000_000,
+            'service_fee_points' => 3,
+            'pph21_rate' => 0,
+        ]);
+        $junior = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 4_000_000,
+            'service_fee_points' => 1,
+            'pph21_rate' => 0,
+        ]);
+
+        $this->actingAs($user)->post(route('hris.payrolls.generate'), [
+            'period' => '2026-02',
+            'service_fee_total' => 1_000_000,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('payroll_runs', [
+            'user_id' => $user->id,
+            'period' => '2026-02',
+            'service_fee_total' => 1_000_000,
+        ]);
+        $this->assertDatabaseHas('payroll_items', [
+            'employee_id' => $senior->id,
+            'allowances_total' => 750_000,
+            'net_salary' => 5_750_000,
+        ]);
+        $this->assertDatabaseHas('payroll_items', [
+            'employee_id' => $junior->id,
+            'allowances_total' => 250_000,
+            'net_salary' => 4_250_000,
+        ]);
+    }
+
     public function test_resigned_employee_receives_prorated_salary_in_their_final_month(): void
     {
         $user = User::factory()->create([

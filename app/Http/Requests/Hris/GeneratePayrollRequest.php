@@ -8,6 +8,14 @@ use Illuminate\Validation\Rule;
 
 class GeneratePayrollRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('service_fee_total')) {
+            $this->merge([
+                'service_fee_total' => preg_replace('/[^0-9]/', '', (string) $this->input('service_fee_total')),
+            ]);
+        }
+    }
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -33,6 +41,7 @@ class GeneratePayrollRequest extends FormRequest
                 'integer',
                 Rule::exists('employees', 'id')->where('user_id', $ownerId),
             ],
+            'service_fee_total' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }
