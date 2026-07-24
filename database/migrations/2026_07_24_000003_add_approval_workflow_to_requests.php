@@ -14,10 +14,14 @@ return new class extends Migration {
                 if (! Schema::hasColumn($tableName, 'approval_stage')) {
                     $table->unsignedTinyInteger('approval_stage')->default(0)->after('approval_levels');
                 }
-                $table->foreignId('first_approver_employee_id')->nullable();
+                if (! Schema::hasColumn($tableName, 'first_approver_employee_id')) {
+                    $table->foreignId('first_approver_employee_id')->nullable();
+                }
                 $table->foreign('first_approver_employee_id', "{$tableName}_first_approver_fk")
                     ->references('id')->on('employees')->nullOnDelete();
-                $table->foreignId('second_approver_employee_id')->nullable();
+                if (! Schema::hasColumn($tableName, 'second_approver_employee_id')) {
+                    $table->foreignId('second_approver_employee_id')->nullable();
+                }
                 $table->foreign('second_approver_employee_id', "{$tableName}_second_approver_fk")
                     ->references('id')->on('employees')->nullOnDelete();
                 if (! Schema::hasColumn($tableName, 'first_approved_by')) {
@@ -26,7 +30,9 @@ return new class extends Migration {
                 if (! Schema::hasColumn($tableName, 'first_approved_at')) {
                     $table->timestamp('first_approved_at')->nullable();
                 }
-                $table->unsignedTinyInteger('rejection_stage')->nullable();
+                if (! Schema::hasColumn($tableName, 'rejection_stage')) {
+                    $table->unsignedTinyInteger('rejection_stage')->nullable();
+                }
             });
         }
     }
