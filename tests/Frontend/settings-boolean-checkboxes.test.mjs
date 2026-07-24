@@ -17,3 +17,13 @@ test('company boolean settings submit explicit controlled values', () => {
         /defaultChecked=\{company\.portal_kasbon_enabled\}/,
     );
 });
+
+test('company boolean settings are inside the company settings form', () => {
+    const companyForm = source.indexOf('CompanySettingController.update.form()');
+    const kasbonField = source.indexOf('name="portal_kasbon_enabled"');
+    const otpField = source.indexOf('name="employee_activation_otp_enabled"');
+
+    assert.ok(companyForm >= 0);
+    assert.ok(kasbonField > companyForm);
+    assert.ok(otpField > companyForm);
+});

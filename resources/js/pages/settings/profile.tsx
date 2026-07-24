@@ -434,68 +434,6 @@ export default function Profile({
                                     />
                                 </div>
 
-                                <div className="flex items-start gap-3 rounded-lg border bg-slate-50/60 p-4">
-                                    <input
-                                        type="hidden"
-                                        name="portal_kasbon_enabled"
-                                        value={portalKasbonEnabled ? '1' : '0'}
-                                    />
-                                    <input
-                                        id="portal_kasbon_enabled"
-                                        type="checkbox"
-                                        checked={portalKasbonEnabled}
-                                        onChange={(event) =>
-                                            setPortalKasbonEnabled(
-                                                event.target.checked,
-                                            )
-                                        }
-                                        className="mt-1 size-4 rounded border-input accent-primary"
-                                    />
-                                    <div>
-                                        <Label htmlFor="portal_kasbon_enabled">
-                                            Tampilkan Kasbon di Portal Karyawan
-                                        </Label>
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            Jika dimatikan, menu, halaman, dan
-                                            API Kasbon tidak dapat diakses
-                                            karyawan.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-3 rounded-lg border bg-slate-50/60 p-4">
-                                    <input
-                                        type="hidden"
-                                        name="employee_activation_otp_enabled"
-                                        value={
-                                            employeeActivationOtpEnabled
-                                                ? '1'
-                                                : '0'
-                                        }
-                                    />
-                                    <input
-                                        id="employee_activation_otp_enabled"
-                                        type="checkbox"
-                                        checked={employeeActivationOtpEnabled}
-                                        onChange={(event) =>
-                                            setEmployeeActivationOtpEnabled(
-                                                event.target.checked,
-                                            )
-                                        }
-                                        className="mt-1 size-4 rounded border-input accent-primary"
-                                    />
-                                    <div>
-                                        <Label htmlFor="employee_activation_otp_enabled">
-                                            Wajibkan OTP Aktivasi Karyawan
-                                        </Label>
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            Jika dimatikan, karyawan dapat
-                                            langsung masuk menggunakan
-                                            kredensial dari email undangan.
-                                        </p>
-                                    </div>
-                                </div>
-
                                 <div className="grid gap-2">
                                     <Label htmlFor="email">Alamat email</Label>
 
@@ -655,6 +593,58 @@ export default function Profile({
                                         className="mt-2"
                                         message={errors.details}
                                     />
+                                </div>
+
+                                <div className="grid gap-3 rounded-lg border bg-slate-50/60 p-4">
+                                    <div className="flex items-start gap-3">
+                                        <input
+                                            type="hidden"
+                                            name="portal_kasbon_enabled"
+                                            value={portalKasbonEnabled ? '1' : '0'}
+                                        />
+                                        <input
+                                            id="portal_kasbon_enabled"
+                                            type="checkbox"
+                                            checked={portalKasbonEnabled}
+                                            onChange={(event) =>
+                                                setPortalKasbonEnabled(event.target.checked)
+                                            }
+                                            className="mt-1 size-4 rounded border-input accent-primary"
+                                        />
+                                        <div>
+                                            <Label htmlFor="portal_kasbon_enabled">
+                                                Tampilkan Kasbon di Portal Karyawan
+                                            </Label>
+                                            <p className="mt-1 text-xs text-slate-500">
+                                                Jika dimatikan, menu, halaman, dan API Kasbon tidak dapat diakses karyawan.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-3 border-t pt-3">
+                                        <input
+                                            type="hidden"
+                                            name="employee_activation_otp_enabled"
+                                            value={employeeActivationOtpEnabled ? '1' : '0'}
+                                        />
+                                        <input
+                                            id="employee_activation_otp_enabled"
+                                            type="checkbox"
+                                            checked={employeeActivationOtpEnabled}
+                                            onChange={(event) =>
+                                                setEmployeeActivationOtpEnabled(event.target.checked)
+                                            }
+                                            className="mt-1 size-4 rounded border-input accent-primary"
+                                        />
+                                        <div>
+                                            <Label htmlFor="employee_activation_otp_enabled">
+                                                Wajibkan OTP Aktivasi Karyawan
+                                            </Label>
+                                            <p className="mt-1 text-xs text-slate-500">
+                                                Jika dimatikan, karyawan dapat langsung masuk menggunakan kredensial dari email undangan.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="rounded-lg border bg-slate-50/60 p-4">
