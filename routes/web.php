@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\PortalClientVisitController;
 use App\Http\Controllers\Api\PortalPerformanceController;
 use App\Http\Controllers\Api\PortalReimbursementController;
 use App\Http\Controllers\Api\PortalResourceController;
+use App\Http\Controllers\Api\PortalApprovalController;
 use App\Http\Controllers\Auth\EmailActivationController;
 use App\Http\Controllers\Auth\PortalOtpLoginController;
 use App\Http\Controllers\BillingController;
@@ -352,6 +353,9 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::post('portal/api/surveys/{survey}/responses', [PortalResourceController::class, 'submitSurvey'])->name('portal.api.surveys.responses.store');
     Route::get('portal/api/assets', [PortalResourceController::class, 'assets'])->name('portal.api.assets.index');
     Route::get('portal/api/reprimands', [PortalResourceController::class, 'reprimands'])->name('portal.api.reprimands.index');
+    Route::get('portal/api/approvals', [PortalApprovalController::class, 'index'])->name('portal.api.approvals.index');
+    Route::post('portal/api/approvals/{type}/{id}/approve', [PortalApprovalController::class, 'approve'])->name('portal.api.approvals.approve');
+    Route::post('portal/api/approvals/{type}/{id}/reject', [PortalApprovalController::class, 'reject'])->name('portal.api.approvals.reject');
     Route::get('portal/api/performances', [PortalPerformanceController::class, 'index'])->name('portal.api.performances.index');
     Route::post('portal/api/performances/{review}/check-ins', [PortalPerformanceController::class, 'storeCheckIn'])->name('portal.api.performances.check-ins.store');
     Route::get('portal/api/client-visits', [PortalClientVisitController::class, 'index'])->name('portal.api.client-visits.index');
@@ -375,6 +379,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/surveys', [UserPortalSectionController::class, 'surveys'])->name('portal.surveys');
     Route::get('portal/assets', [UserPortalSectionController::class, 'assets'])->name('portal.assets');
     Route::get('portal/reprimands', [UserPortalSectionController::class, 'reprimands'])->name('portal.reprimands');
+    Route::get('portal/approvals', [UserPortalSectionController::class, 'approvals'])->name('portal.approvals');
     Route::post('portal/api/payrolls/preview-secure', [UserPortalSectionController::class, 'previewPayslip'])->name('portal.api.payrolls.preview-secure');
     Route::post('portal/payroll/export', [UserPortalSectionController::class, 'exportPayslip'])->name('portal.payroll.export');
 });

@@ -280,10 +280,16 @@ export default function AttendancePage() {
         <AppLayout
             breadcrumbs={breadcrumbs}
             headerActions={
-                <Button size="sm" onClick={openCreateDialog}>
-                    <Plus className="size-4" />
-                    Input Kehadiran
-                </Button>
+                <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => router.post('/hris/attendances/sync-missing-checkouts', { date: filterState.date }, { preserveScroll: true })}>
+                        <RotateCcw className="size-4" />
+                        Sync Lupa Pulang
+                    </Button>
+                    <Button size="sm" onClick={openCreateDialog}>
+                        <Plus className="size-4" />
+                        Input Kehadiran
+                    </Button>
+                </div>
             }
         >
             <Head title="Kehadiran" />

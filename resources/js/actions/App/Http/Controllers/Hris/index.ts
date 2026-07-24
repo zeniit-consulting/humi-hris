@@ -1,3 +1,4 @@
+import ApprovalSettingController from './ApprovalSettingController'
 import EmployeeController from './EmployeeController'
 import SubCompanyController from './SubCompanyController'
 import ClientBillingController from './ClientBillingController'
@@ -32,6 +33,7 @@ import NotificationController from './NotificationController'
 import SurveyController from './SurveyController'
 
 const Hris = {
+    ApprovalSettingController: Object.assign(ApprovalSettingController, ApprovalSettingController),
     EmployeeController: Object.assign(EmployeeController, EmployeeController),
     SubCompanyController: Object.assign(SubCompanyController, SubCompanyController),
     ClientBillingController: Object.assign(ClientBillingController, ClientBillingController),

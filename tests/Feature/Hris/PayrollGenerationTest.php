@@ -8,7 +8,9 @@ use App\Models\EmployeeAllowance;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeBankAccount;
 use App\Models\EmployeeDeduction;
+use App\Models\CompanySetting;
 use App\Models\LeaveRequest;
+use App\Models\OvertimeRequest;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\SubCompany;
@@ -51,6 +53,7 @@ class PayrollGenerationTest extends TestCase
         EmployeeAllowance::query()->create([
             'user_id' => $user->id,
             'employee_id' => $employee->id,
+            'name' => 'Tunjangan Tetap',
             'name' => 'Tunjangan Transport',
             'amount' => 500_000,
             'is_active' => true,
@@ -481,6 +484,107 @@ class PayrollGenerationTest extends TestCase
             'pph21_deduction' => 60000.00,
             'deductions_total' => 60000.00,
             'net_salary' => 2940000.00,
+        ]);
+    }
+
+    public function test_daily_worker_payroll_uses_paid_attendance_days_and_daily_wage(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employment_type' => 'DW',
+            'base_salary' => 0,
+            'daily_wage' => 150_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+        ]);
+
+        foreach (['2026-02-03' => 'present', '2026-02-04' => 'late', '2026-02-05' => 'absent'] as $date => $status) {
+            EmployeeAttendance::factory()->create([
+                'user_id' => $user->id,
+                'employee_id' => $employee->id,
+                'attendance_date' => $date,
+                'status' => $status,
+            ]);
+        }
+
+        $this->actingAs($user)->post(route('hris.payrolls.generate'), ['period' => '2026-02']);
+
+        $this->assertDatabaseHas('payroll_items', [
+            'employee_id' => $employee->id,
+            'base_salary' => 300000.00,
+            'net_salary' => 300000.00,
+        ]);
+    }
+
+    public function test_overtime_threshold_mode_pays_eight_hours_for_each_completed_threshold(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        CompanySetting::query()->create([
+            'user_id' => $user->id,
+            'overtime_calculation_mode' => 'threshold_daily',
+            'overtime_threshold_hours' => 10,
+        ]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 1_730_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+        ]);
+        OvertimeRequest::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-02-03',
+            'total_hours' => 10,
+            'status' => 'approved',
+        ]);
+
+        $this->actingAs($user)->post(route('hris.payrolls.generate'), ['period' => '2026-02']);
+
+        $this->assertDatabaseHas('payroll_items', [
+            'employee_id' => $employee->id,
+            'overtime_hours' => 8.00,
+            'overtime_pay' => 155000.00,
+        ]);
+    }
+
+    public function test_approved_unpaid_leave_deducts_daily_base_salary_and_fixed_allowances(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        CompanySetting::query()->create([
+            'user_id' => $user->id,
+            'active_working_days' => 22,
+        ]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 4_400_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+        ]);
+        EmployeeAllowance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Tetap',
+            'amount' => 2_200_000,
+            'is_active' => true,
+        ]);
+        LeaveRequest::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'unpaid',
+            'status' => 'approved',
+            'start_date' => '2026-02-10',
+            'end_date' => '2026-02-11',
+            'total_days' => 2,
+        ]);
+
+        $this->actingAs($user)->post(route('hris.payrolls.generate'), ['period' => '2026-02']);
+
+        $this->assertDatabaseHas('payroll_items', [
+            'employee_id' => $employee->id,
+            'unpaid_leave_deduction' => 600000.00,
+            'deductions_total' => 600000.00,
+            'net_salary' => 6000000.00,
         ]);
     }
 

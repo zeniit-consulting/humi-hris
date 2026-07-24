@@ -7,6 +7,7 @@ use App\Http\Requests\Hris\StoreOvertimeRequest;
 use App\Http\Requests\Hris\UpdateOvertimeRequest;
 use App\Models\Employee;
 use App\Models\OvertimeRequest;
+use App\Services\ApprovalWorkflowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -160,9 +161,7 @@ class OvertimeController extends Controller
     {
         abort_unless((int) $overtime->user_id === $request->user()->accountOwnerId(), 404);
 
-        if ($overtime->status !== 'pending') {
-            return back()->with('error', 'Request lembur sudah diproses.');
-        }
+        if (app(ApprovalWorkflowService::class)->approve($overtime, $request->user()) === ApprovalWorkflowService::ADVANCED) return back()->with('success', 'Approval tahap 1 berhasil. Menunggu tahap 2.');
 
         $overtime->update([
             'status' => 'approved',
@@ -181,20 +180,11 @@ class OvertimeController extends Controller
     {
         abort_unless((int) $overtime->user_id === $request->user()->accountOwnerId(), 404);
 
-        if ($overtime->status !== 'pending') {
-            return back()->with('error', 'Request lembur sudah diproses.');
-        }
-
         $validated = $request->validate([
             'notes' => ['required', 'string', 'max:255'],
         ]);
 
-        $overtime->update([
-            'status' => 'rejected',
-            'approved_at' => now(),
-            'approved_by' => $request->user()->id,
-            'notes' => $validated['notes'],
-        ]);
+        app(ApprovalWorkflowService::class)->reject($overtime, $request->user(), $validated['notes']);
 
         $overtime->loadMissing('employee');
         app(\App\Services\WhatsAppNotificationService::class)->notifyOvertimeStatus($overtime);

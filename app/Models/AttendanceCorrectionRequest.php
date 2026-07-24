@@ -23,6 +23,7 @@ class AttendanceCorrectionRequest extends Model
         'check_out_at',
         'reason',
         'status',
+        'approval_levels', 'approval_stage', 'first_approver_employee_id', 'second_approver_employee_id', 'first_approved_by', 'first_approved_at', 'rejection_stage',
         'approved_by',
         'approved_at',
         'rejection_reason',
@@ -38,8 +39,11 @@ class AttendanceCorrectionRequest extends Model
             'check_in_at' => 'datetime',
             'check_out_at' => 'datetime',
             'approved_at' => 'datetime',
+            'first_approved_at' => 'datetime', 'approval_levels' => 'integer', 'approval_stage' => 'integer', 'rejection_stage' => 'integer',
         ];
     }
+
+    protected static function booted(): void { static::creating(fn (self $request) => app(\App\Services\ApprovalWorkflowService::class)->snapshot($request)); }
 
     public function employee(): BelongsTo
     {

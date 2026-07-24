@@ -14,6 +14,7 @@ export type PortalLinkMap = {
     client_visits?: string;
     performance_activity?: string;
     reprimands?: string;
+    approvals?: string;
     profile?: string;
     dashboard?: string;
 };

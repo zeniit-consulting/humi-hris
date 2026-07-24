@@ -70,6 +70,10 @@ class StoreEmployeeRequest extends FormRequest
             );
         }
 
+        if ($this->has('daily_wage')) {
+            $normalizedPayload['daily_wage'] = $this->normalizeCurrencyInput($this->input('daily_wage'));
+        }
+
         if ($this->has('fixed_allowances')) {
             $normalizedPayload['fixed_allowances'] = collect($this->input('fixed_allowances', []))
                 ->map(function (mixed $allowance): mixed {
@@ -137,6 +141,7 @@ class StoreEmployeeRequest extends FormRequest
             'hire_date' => ['required', 'date'],
             'employment_status' => ['required', Rule::in(['active', 'probation', 'on_leave', 'resigned'])],
             'employment_type' => ['required', Rule::in(Employee::EMPLOYMENT_TYPES)],
+            'daily_wage' => ['nullable', 'numeric', 'min:0', Rule::requiredIf(fn () => $this->input('employment_type') === 'DW')],
             'contract_duration_months' => [
                 'nullable', 'integer', 'min:1', 'max:120',
                 Rule::requiredIf(fn () => $this->input('employment_type') === 'PKWT' && ! $this->filled('contract_end_date')),

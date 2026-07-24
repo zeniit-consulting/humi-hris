@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AttendanceCorrectionRequest;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
+use App\Services\ApprovalWorkflowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -77,9 +78,7 @@ class AttendanceCorrectionApprovalController extends Controller
         $ownerId = $request->user()->accountOwnerId();
         abort_unless((int) $attendanceRequest->user_id === $ownerId, 404);
 
-        if ($attendanceRequest->status !== 'pending') {
-            return back()->with('error', 'Request absensi sudah diproses.');
-        }
+        if (app(ApprovalWorkflowService::class)->approve($attendanceRequest, $request->user()) === ApprovalWorkflowService::ADVANCED) return back()->with('success', 'Approval tahap 1 berhasil. Menunggu tahap 2.');
 
         DB::transaction(function () use ($request, $attendanceRequest, $ownerId): void {
             $attendance = EmployeeAttendance::query()->firstOrNew([
@@ -114,20 +113,11 @@ class AttendanceCorrectionApprovalController extends Controller
         $ownerId = $request->user()->accountOwnerId();
         abort_unless((int) $attendanceRequest->user_id === $ownerId, 404);
 
-        if ($attendanceRequest->status !== 'pending') {
-            return back()->with('error', 'Request absensi sudah diproses.');
-        }
-
         $validated = $request->validate([
             'rejection_reason' => ['required', 'string', 'max:255'],
         ]);
 
-        $attendanceRequest->update([
-            'status' => 'rejected',
-            'approved_by' => $request->user()->id,
-            'approved_at' => now(),
-            'rejection_reason' => $validated['rejection_reason'],
-        ]);
+        app(ApprovalWorkflowService::class)->reject($attendanceRequest, $request->user(), $validated['rejection_reason']);
 
         return back()->with('success', 'Request absensi ditolak.');
     }

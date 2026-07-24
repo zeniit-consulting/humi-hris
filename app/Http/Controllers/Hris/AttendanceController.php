@@ -10,6 +10,7 @@ use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeSchedule;
 use App\Services\AttendanceStatusService;
+use App\Services\MissingCheckoutLeaveSyncService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -188,6 +189,14 @@ class AttendanceController extends Controller
                 'notes' => $attendance->notes,
             ])->values(),
         ]);
+    }
+
+    public function syncMissingCheckouts(Request $request, MissingCheckoutLeaveSyncService $syncService): RedirectResponse
+    {
+        $validated = $request->validate(['date' => ['required', 'date']]);
+        $result = $syncService->sync($request->user()->accountOwnerId(), $validated['date']);
+
+        return back()->with('success', "Sync selesai: {$result['clocked_out']} absensi ditutup, {$result['leave_deducted']} saldo cuti dipotong.");
     }
 
     /**

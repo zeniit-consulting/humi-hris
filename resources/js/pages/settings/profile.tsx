@@ -104,6 +104,10 @@ export default function Profile({
             radius_meters: number;
         }>;
         overtime_hour_divisor: number;
+        overtime_calculation_mode: 'hourly' | 'threshold_daily';
+        overtime_threshold_hours: number;
+        active_working_days: number;
+        auto_deduct_leave_for_missing_checkout: boolean;
         overtime_multiplier_hour1: number;
         overtime_multiplier_subsequent: number;
     };
@@ -223,6 +227,24 @@ export default function Profile({
                 setIsResolvingAddress(false);
             }
         }
+    };
+
+    const handleAttendanceLocationSelect = (
+        index: number,
+        latitude: number,
+        longitude: number,
+    ) => {
+        setAttendanceLocations((current) =>
+            current.map((location, currentIndex) =>
+                currentIndex === index
+                    ? {
+                          ...location,
+                          latitude: latitude.toFixed(7),
+                          longitude: longitude.toFixed(7),
+                      }
+                    : location,
+            ),
+        );
     };
 
     return (
@@ -985,101 +1007,51 @@ export default function Profile({
                                                             />
                                                         </div>
 
-                                                        <div className="grid gap-2">
-                                                            <Label>
-                                                                Latitude
-                                                            </Label>
-                                                            <Input
+                                                        <div className="grid gap-3 md:col-span-2">
+                                                            <input
+                                                                type="hidden"
                                                                 name={`attendance_locations[${index}][latitude]`}
-                                                                type="number"
-                                                                step="0.0000001"
-                                                                value={String(
-                                                                    location.latitude ??
-                                                                        '',
-                                                                )}
-                                                                onChange={(
-                                                                    event,
-                                                                ) =>
-                                                                    setAttendanceLocations(
-                                                                        (
-                                                                            current,
-                                                                        ) =>
-                                                                            current.map(
-                                                                                (
-                                                                                    item,
-                                                                                    currentIndex,
-                                                                                ) =>
-                                                                                    currentIndex ===
-                                                                                    index
-                                                                                        ? {
-                                                                                              ...item,
-                                                                                              latitude:
-                                                                                                  event
-                                                                                                      .target
-                                                                                                      .value,
-                                                                                          }
-                                                                                        : item,
-                                                                            ),
-                                                                    )
-                                                                }
-                                                                placeholder="-6.2000000"
+                                                                value={String(location.latitude ?? '')}
                                                             />
-                                                            <InputError
-                                                                className="mt-2"
-                                                                message={
-                                                                    errors[
-                                                                        `attendance_locations.${index}.latitude` as never
-                                                                    ]
-                                                                }
-                                                            />
-                                                        </div>
-
-                                                        <div className="grid gap-2">
-                                                            <Label>
-                                                                Longitude
-                                                            </Label>
-                                                            <Input
+                                                            <input
+                                                                type="hidden"
                                                                 name={`attendance_locations[${index}][longitude]`}
-                                                                type="number"
-                                                                step="0.0000001"
-                                                                value={String(
-                                                                    location.longitude ??
-                                                                        '',
-                                                                )}
-                                                                onChange={(
-                                                                    event,
-                                                                ) =>
-                                                                    setAttendanceLocations(
-                                                                        (
-                                                                            current,
-                                                                        ) =>
-                                                                            current.map(
-                                                                                (
-                                                                                    item,
-                                                                                    currentIndex,
-                                                                                ) =>
-                                                                                    currentIndex ===
-                                                                                    index
-                                                                                        ? {
-                                                                                              ...item,
-                                                                                              longitude:
-                                                                                                  event
-                                                                                                      .target
-                                                                                                      .value,
-                                                                                          }
-                                                                                        : item,
-                                                                            ),
-                                                                    )
-                                                                }
-                                                                placeholder="106.8166667"
+                                                                value={String(location.longitude ?? '')}
+                                                            />
+
+                                                            <div>
+                                                                <Label>Pilih titik lokasi di map</Label>
+                                                                <p className="mt-1 text-xs text-slate-500">
+                                                                    Klik map untuk mengisi koordinat lokasi absensi secara otomatis.
+                                                                </p>
+                                                            </div>
+
+                                                            <div className="overflow-hidden rounded-lg border bg-white">
+                                                                <LocationMapPicker
+                                                                    latitude={String(location.latitude ?? '')}
+                                                                    longitude={String(location.longitude ?? '')}
+                                                                    onSelect={(latitude, longitude) =>
+                                                                        handleAttendanceLocationSelect(index, latitude, longitude)
+                                                                    }
+                                                                />
+                                                            </div>
+
+                                                            <div className="grid gap-3 rounded-md border bg-white p-3 text-sm md:grid-cols-2">
+                                                                <div>
+                                                                    <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">Latitude</p>
+                                                                    <p className="mt-1 font-mono text-slate-900">{location.latitude || 'Belum dipilih'}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">Longitude</p>
+                                                                    <p className="mt-1 font-mono text-slate-900">{location.longitude || 'Belum dipilih'}</p>
+                                                                </div>
+                                                            </div>
+
+                                                            <InputError
+                                                                message={errors[`attendance_locations.${index}.latitude` as never]}
                                                             />
                                                             <InputError
-                                                                className="mt-2"
-                                                                message={
-                                                                    errors[
-                                                                        `attendance_locations.${index}.longitude` as never
-                                                                    ]
-                                                                }
+                                                                message={errors[`attendance_locations.${index}.longitude` as never]}
                                                             />
                                                         </div>
                                                     </div>
@@ -1184,15 +1156,44 @@ export default function Profile({
                                 <div className="rounded-lg border bg-slate-50/60 p-4">
                                     <div className="mb-4">
                                         <p className="text-sm font-medium text-slate-900">
-                                            Pengaturan Lembur
+                                            Pengaturan Payroll & Lembur
                                         </p>
                                         <p className="text-xs text-slate-500">
-                                            Konfigurasi perhitungan upah lembur
-                                            karyawan sesuai regulasi.
+                                            Hari kerja aktif, potongan cuti tanpa gaji,
+                                            dan konfigurasi upah lembur.
                                         </p>
                                     </div>
 
                                     <div className="grid gap-4 md:grid-cols-3">
+                                        <label className="flex items-start gap-3 rounded-md border bg-white p-3 md:col-span-3">
+                                            <input type="checkbox" id="auto_deduct_leave_for_missing_checkout" name="auto_deduct_leave_for_missing_checkout" value="1" defaultChecked={company.auto_deduct_leave_for_missing_checkout} className="mt-0.5 size-4 rounded border-slate-300" />
+                                            <span>
+                                                <span className="block text-sm font-medium text-slate-900">Potong saldo cuti bila lupa absen pulang</span>
+                                                <span className="mt-1 block text-xs text-muted-foreground">Dijalankan saat Sync Kehadiran atau sinkronisasi otomatis malam hari. Sistem mencatat 1 hari cuti tahunan per absensi yang belum pulang.</span>
+                                            </span>
+                                        </label>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="active_working_days">Hari Kerja Aktif</Label>
+                                            <Input id="active_working_days" name="active_working_days" type="number" min="1" max="31" defaultValue={String(company.active_working_days ?? 22)} />
+                                            <p className="text-xs text-muted-foreground">Default 22 hari. Dipakai untuk potongan cuti tanpa gaji per hari.</p>
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="overtime_calculation_mode">Metode Hitung</Label>
+                                            <select id="overtime_calculation_mode" name="overtime_calculation_mode" defaultValue={company.overtime_calculation_mode ?? 'hourly'} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+                                                <option value="hourly">Per jam</option>
+                                                <option value="threshold_daily">Per ambang jam</option>
+                                            </select>
+                                            <p className="text-xs text-muted-foreground">Mode ambang mengonversi setiap ambang yang terpenuhi menjadi 8 jam / 1 hari dibayar.</p>
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="overtime_threshold_hours">Ambang Jam</Label>
+                                            <Input id="overtime_threshold_hours" name="overtime_threshold_hours" type="number" min="1" max="24" defaultValue={String(company.overtime_threshold_hours ?? 8)} />
+                                            <p className="text-xs text-muted-foreground">Contoh: 10 jam lembur dihitung sebagai 8 jam / 1 hari.</p>
+                                        </div>
+
                                         <div className="grid gap-2">
                                             <Label htmlFor="overtime_hour_divisor">
                                                 Pembagi Jam (Divisor)

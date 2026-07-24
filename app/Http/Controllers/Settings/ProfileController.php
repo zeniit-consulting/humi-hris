@@ -75,6 +75,10 @@ class ProfileController extends Controller
                     ? Storage::disk('public')->url($companySetting->logo_path)
                     : null,
                 'overtime_hour_divisor' => $companySetting->overtime_hour_divisor ?? 173,
+                'overtime_calculation_mode' => $companySetting->overtime_calculation_mode ?? 'hourly',
+                'overtime_threshold_hours' => $companySetting->overtime_threshold_hours ?? 8,
+                'active_working_days' => $companySetting->active_working_days ?? 22,
+                'auto_deduct_leave_for_missing_checkout' => (bool) ($companySetting->auto_deduct_leave_for_missing_checkout ?? false),
                 'overtime_multiplier_hour1' => $companySetting->overtime_multiplier_hour1 ?? 1.5,
                 'overtime_multiplier_subsequent' => $companySetting->overtime_multiplier_subsequent ?? 2.0,
             ],

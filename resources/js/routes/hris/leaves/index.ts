@@ -84,7 +84,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::exportMethod
-* @see app/Http/Controllers/Hris/LeaveController.php:315
+* @see app/Http/Controllers/Hris/LeaveController.php:319
 * @route '/hris/leaves/export'
 */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -99,7 +99,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::exportMethod
-* @see app/Http/Controllers/Hris/LeaveController.php:315
+* @see app/Http/Controllers/Hris/LeaveController.php:319
 * @route '/hris/leaves/export'
 */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -108,7 +108,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::exportMethod
-* @see app/Http/Controllers/Hris/LeaveController.php:315
+* @see app/Http/Controllers/Hris/LeaveController.php:319
 * @route '/hris/leaves/export'
 */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -118,7 +118,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::exportMethod
-* @see app/Http/Controllers/Hris/LeaveController.php:315
+* @see app/Http/Controllers/Hris/LeaveController.php:319
 * @route '/hris/leaves/export'
 */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -128,7 +128,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::exportMethod
-* @see app/Http/Controllers/Hris/LeaveController.php:315
+* @see app/Http/Controllers/Hris/LeaveController.php:319
 * @route '/hris/leaves/export'
 */
 const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -138,7 +138,7 @@ const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::exportMethod
-* @see app/Http/Controllers/Hris/LeaveController.php:315
+* @see app/Http/Controllers/Hris/LeaveController.php:319
 * @route '/hris/leaves/export'
 */
 exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -148,7 +148,7 @@ exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::exportMethod
-* @see app/Http/Controllers/Hris/LeaveController.php:315
+* @see app/Http/Controllers/Hris/LeaveController.php:319
 * @route '/hris/leaves/export'
 */
 exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -165,7 +165,7 @@ exportMethod.form = exportMethodForm
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::store
-* @see app/Http/Controllers/Hris/LeaveController.php:212
+* @see app/Http/Controllers/Hris/LeaveController.php:216
 * @route '/hris/leaves'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -180,7 +180,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::store
-* @see app/Http/Controllers/Hris/LeaveController.php:212
+* @see app/Http/Controllers/Hris/LeaveController.php:216
 * @route '/hris/leaves'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -189,7 +189,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::store
-* @see app/Http/Controllers/Hris/LeaveController.php:212
+* @see app/Http/Controllers/Hris/LeaveController.php:216
 * @route '/hris/leaves'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -199,7 +199,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::store
-* @see app/Http/Controllers/Hris/LeaveController.php:212
+* @see app/Http/Controllers/Hris/LeaveController.php:216
 * @route '/hris/leaves'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -209,7 +209,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::store
-* @see app/Http/Controllers/Hris/LeaveController.php:212
+* @see app/Http/Controllers/Hris/LeaveController.php:216
 * @route '/hris/leaves'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -221,7 +221,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::update
-* @see app/Http/Controllers/Hris/LeaveController.php:250
+* @see app/Http/Controllers/Hris/LeaveController.php:254
 * @route '/hris/leaves/{leave}'
 */
 export const update = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -236,7 +236,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::update
-* @see app/Http/Controllers/Hris/LeaveController.php:250
+* @see app/Http/Controllers/Hris/LeaveController.php:254
 * @route '/hris/leaves/{leave}'
 */
 update.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -269,7 +269,7 @@ update.url = (args: { leave: number | { id: number } } | [leave: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::update
-* @see app/Http/Controllers/Hris/LeaveController.php:250
+* @see app/Http/Controllers/Hris/LeaveController.php:254
 * @route '/hris/leaves/{leave}'
 */
 update.put = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -279,7 +279,7 @@ update.put = (args: { leave: number | { id: number } } | [leave: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::update
-* @see app/Http/Controllers/Hris/LeaveController.php:250
+* @see app/Http/Controllers/Hris/LeaveController.php:254
 * @route '/hris/leaves/{leave}'
 */
 const updateForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -294,7 +294,7 @@ const updateForm = (args: { leave: number | { id: number } } | [leave: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::update
-* @see app/Http/Controllers/Hris/LeaveController.php:250
+* @see app/Http/Controllers/Hris/LeaveController.php:254
 * @route '/hris/leaves/{leave}'
 */
 updateForm.put = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -311,7 +311,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::destroy
-* @see app/Http/Controllers/Hris/LeaveController.php:305
+* @see app/Http/Controllers/Hris/LeaveController.php:309
 * @route '/hris/leaves/{leave}'
 */
 export const destroy = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -326,7 +326,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::destroy
-* @see app/Http/Controllers/Hris/LeaveController.php:305
+* @see app/Http/Controllers/Hris/LeaveController.php:309
 * @route '/hris/leaves/{leave}'
 */
 destroy.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -359,7 +359,7 @@ destroy.url = (args: { leave: number | { id: number } } | [leave: number | { id:
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::destroy
-* @see app/Http/Controllers/Hris/LeaveController.php:305
+* @see app/Http/Controllers/Hris/LeaveController.php:309
 * @route '/hris/leaves/{leave}'
 */
 destroy.delete = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -369,7 +369,7 @@ destroy.delete = (args: { leave: number | { id: number } } | [leave: number | { 
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::destroy
-* @see app/Http/Controllers/Hris/LeaveController.php:305
+* @see app/Http/Controllers/Hris/LeaveController.php:309
 * @route '/hris/leaves/{leave}'
 */
 const destroyForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -384,7 +384,7 @@ const destroyForm = (args: { leave: number | { id: number } } | [leave: number |
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::destroy
-* @see app/Http/Controllers/Hris/LeaveController.php:305
+* @see app/Http/Controllers/Hris/LeaveController.php:309
 * @route '/hris/leaves/{leave}'
 */
 destroyForm.delete = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

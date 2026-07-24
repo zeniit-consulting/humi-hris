@@ -221,6 +221,7 @@ type Employee = {
     position_id: number | null;
     manager_id: number | null;
     base_salary: string | null;
+    daily_wage: string | null;
     address: string | null;
     domicile_address: string | null;
     family_card_number: string | null;
@@ -309,6 +310,7 @@ type EmployeeFormData = {
     position_id: string;
     manager_id: string;
     base_salary: string;
+    daily_wage: string;
     fixed_allowances: Array<{ name: string; amount: string }>;
     address: string;
     domicile_address: string;
@@ -543,6 +545,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     position_id: '',
     manager_id: '',
     base_salary: '',
+    daily_wage: '',
     fixed_allowances: [],
     address: '',
     domicile_address: '',
@@ -644,6 +647,7 @@ const offboardingReasonLabels: Record<string, string> = {
 };
 
 const typeLabels: Record<string, string> = {
+    DW: 'Daily Worker',
     FL: 'FL',
     PKWT: 'PKWT',
     PKWTT: 'PKWTT',
@@ -1161,6 +1165,7 @@ export default function EmployeesIndex() {
             base_salary: employee.base_salary
                 ? String(employee.base_salary)
                 : '',
+            daily_wage: employee.daily_wage ? String(employee.daily_wage) : '',
             fixed_allowances: employee.allowances
                 .filter((allowance) => allowance.is_active)
                 .map((allowance) => ({
@@ -2351,7 +2356,9 @@ export default function EmployeesIndex() {
                                                 </td>
                                                 <td className="px-2 py-2">
                                                     {formatCurrencyDisplay(
-                                                        employee.base_salary,
+                                                        employee.employment_type === 'DW'
+                                                            ? employee.daily_wage
+                                                            : employee.base_salary,
                                                     )}
                                                 </td>
                                                 <td className="px-2 py-2">
@@ -4724,7 +4731,7 @@ export default function EmployeesIndex() {
 
                                 <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                     <Label htmlFor="base_salary">
-                                        Gaji Pokok
+                                        {employeeForm.data.employment_type === 'DW' ? 'Gaji Pokok (tidak digunakan)' : 'Gaji Pokok'}
                                     </Label>
                                     <div className="space-y-1">
                                         <Input
@@ -4751,6 +4758,17 @@ export default function EmployeesIndex() {
                                         />
                                     </div>
                                 </div>
+
+                                {employeeForm.data.employment_type === 'DW' && (
+                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="daily_wage">Upah Harian</Label>
+                                        <div className="space-y-1">
+                                            <Input id="daily_wage" type="text" inputMode="numeric" value={formatThousandDigits(employeeForm.data.daily_wage)} onChange={(event) => employeeForm.setData('daily_wage', normalizeDigitInput(event.target.value))} placeholder="150.000" />
+                                            <p className="text-xs text-muted-foreground">Payroll dihitung dari jumlah absensi hadir atau terlambat dikali upah harian.</p>
+                                            <InputError message={employeeForm.errors.daily_wage} />
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
                                     <div>

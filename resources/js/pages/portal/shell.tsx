@@ -13,7 +13,7 @@ type PortalShellProps = PropsWithChildren<{
     title: string;
     eyebrow: string;
     description?: string;
-    active: 'home' | 'attendance' | 'activity' | 'payroll' | 'profile';
+    active: 'home' | 'attendance' | 'activity' | 'payroll' | 'profile' | 'approvals';
     links: PortalLinkMap;
     headerAction?: ReactNode;
     hideNavbar?: boolean;

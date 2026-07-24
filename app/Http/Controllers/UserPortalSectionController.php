@@ -111,6 +111,11 @@ class UserPortalSectionController extends Controller
         return $this->renderForUser($request, 'portal/reprimands', 'Reprimand');
     }
 
+    public function approvals(Request $request): Response|RedirectResponse
+    {
+        return $this->renderForUser($request, 'portal/approvals', 'Approval');
+    }
+
     public function previewPayslip(Request $request): JsonResponse|RedirectResponse
     {
         /** @var User $user */
@@ -214,6 +219,7 @@ class UserPortalSectionController extends Controller
                 'pph21_company_borne' => $item->pph21_company_borne,
                 'kasbon_deduction' => $item->kasbon_deduction,
                 'denda_deduction' => $item->denda_deduction,
+                'unpaid_leave_deduction' => $item->unpaid_leave_deduction,
                 'deductions_total' => $item->deductions_total,
                 'net_salary' => $item->net_salary,
                 'allowance_breakdown' => $item->allowance_breakdown ?? [],

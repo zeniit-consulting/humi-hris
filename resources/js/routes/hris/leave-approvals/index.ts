@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::index
-* @see app/Http/Controllers/Hris/LeaveController.php:90
+* @see app/Http/Controllers/Hris/LeaveController.php:92
 * @route '/hris/leave-approvals'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::index
-* @see app/Http/Controllers/Hris/LeaveController.php:90
+* @see app/Http/Controllers/Hris/LeaveController.php:92
 * @route '/hris/leave-approvals'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::index
-* @see app/Http/Controllers/Hris/LeaveController.php:90
+* @see app/Http/Controllers/Hris/LeaveController.php:92
 * @route '/hris/leave-approvals'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::index
-* @see app/Http/Controllers/Hris/LeaveController.php:90
+* @see app/Http/Controllers/Hris/LeaveController.php:92
 * @route '/hris/leave-approvals'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::index
-* @see app/Http/Controllers/Hris/LeaveController.php:90
+* @see app/Http/Controllers/Hris/LeaveController.php:92
 * @route '/hris/leave-approvals'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::index
-* @see app/Http/Controllers/Hris/LeaveController.php:90
+* @see app/Http/Controllers/Hris/LeaveController.php:92
 * @route '/hris/leave-approvals'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::index
-* @see app/Http/Controllers/Hris/LeaveController.php:90
+* @see app/Http/Controllers/Hris/LeaveController.php:92
 * @route '/hris/leave-approvals'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::approve
-* @see app/Http/Controllers/Hris/LeaveController.php:166
+* @see app/Http/Controllers/Hris/LeaveController.php:170
 * @route '/hris/leave-approvals/{leave}/approve'
 */
 export const approve = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ approve.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::approve
-* @see app/Http/Controllers/Hris/LeaveController.php:166
+* @see app/Http/Controllers/Hris/LeaveController.php:170
 * @route '/hris/leave-approvals/{leave}/approve'
 */
 approve.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -130,7 +130,7 @@ approve.url = (args: { leave: number | { id: number } } | [leave: number | { id:
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::approve
-* @see app/Http/Controllers/Hris/LeaveController.php:166
+* @see app/Http/Controllers/Hris/LeaveController.php:170
 * @route '/hris/leave-approvals/{leave}/approve'
 */
 approve.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -140,7 +140,7 @@ approve.post = (args: { leave: number | { id: number } } | [leave: number | { id
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::approve
-* @see app/Http/Controllers/Hris/LeaveController.php:166
+* @see app/Http/Controllers/Hris/LeaveController.php:170
 * @route '/hris/leave-approvals/{leave}/approve'
 */
 const approveForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -150,7 +150,7 @@ const approveForm = (args: { leave: number | { id: number } } | [leave: number |
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::approve
-* @see app/Http/Controllers/Hris/LeaveController.php:166
+* @see app/Http/Controllers/Hris/LeaveController.php:170
 * @route '/hris/leave-approvals/{leave}/approve'
 */
 approveForm.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -162,7 +162,7 @@ approve.form = approveForm
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::reject
-* @see app/Http/Controllers/Hris/LeaveController.php:184
+* @see app/Http/Controllers/Hris/LeaveController.php:188
 * @route '/hris/leave-approvals/{leave}/reject'
 */
 export const reject = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -177,7 +177,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::reject
-* @see app/Http/Controllers/Hris/LeaveController.php:184
+* @see app/Http/Controllers/Hris/LeaveController.php:188
 * @route '/hris/leave-approvals/{leave}/reject'
 */
 reject.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -210,7 +210,7 @@ reject.url = (args: { leave: number | { id: number } } | [leave: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::reject
-* @see app/Http/Controllers/Hris/LeaveController.php:184
+* @see app/Http/Controllers/Hris/LeaveController.php:188
 * @route '/hris/leave-approvals/{leave}/reject'
 */
 reject.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -220,7 +220,7 @@ reject.post = (args: { leave: number | { id: number } } | [leave: number | { id:
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::reject
-* @see app/Http/Controllers/Hris/LeaveController.php:184
+* @see app/Http/Controllers/Hris/LeaveController.php:188
 * @route '/hris/leave-approvals/{leave}/reject'
 */
 const rejectForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -230,7 +230,7 @@ const rejectForm = (args: { leave: number | { id: number } } | [leave: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveController::reject
-* @see app/Http/Controllers/Hris/LeaveController.php:184
+* @see app/Http/Controllers/Hris/LeaveController.php:188
 * @route '/hris/leave-approvals/{leave}/reject'
 */
 rejectForm.post = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

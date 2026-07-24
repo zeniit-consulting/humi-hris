@@ -3,6 +3,7 @@ import ThirdParty from './ThirdParty'
 import Mobile from './Mobile'
 import PortalReimbursementController from './PortalReimbursementController'
 import PortalResourceController from './PortalResourceController'
+import PortalApprovalController from './PortalApprovalController'
 import PortalPerformanceController from './PortalPerformanceController'
 import PortalClientVisitController from './PortalClientVisitController'
 
@@ -12,6 +13,7 @@ const Api = {
     Mobile: Object.assign(Mobile, Mobile),
     PortalReimbursementController: Object.assign(PortalReimbursementController, PortalReimbursementController),
     PortalResourceController: Object.assign(PortalResourceController, PortalResourceController),
+    PortalApprovalController: Object.assign(PortalApprovalController, PortalApprovalController),
     PortalPerformanceController: Object.assign(PortalPerformanceController, PortalPerformanceController),
     PortalClientVisitController: Object.assign(PortalClientVisitController, PortalClientVisitController),
 }

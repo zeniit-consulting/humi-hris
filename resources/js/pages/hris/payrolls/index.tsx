@@ -93,6 +93,7 @@ type PayrollItem = {
     pph21_company_borne: string | number;
     kasbon_deduction: string;
     denda_deduction: string;
+    unpaid_leave_deduction: string;
     deductions_total: string;
     net_salary: string;
     allowance_breakdown: Record<string, number>;
@@ -856,6 +857,7 @@ export default function PayrollPage() {
                                                 Kasbon
                                             </th>
                                             <th className="px-3 py-2">Denda</th>
+                                            <th className="px-3 py-2">Cuti Tanpa Gaji</th>
                                             <th className="px-3 py-2">
                                                 Total Potongan
                                             </th>
@@ -1070,6 +1072,9 @@ export default function PayrollPage() {
                                                     {formatCurrency(
                                                         item.denda_deduction,
                                                     )}
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    {formatCurrency(item.unpaid_leave_deduction)}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     {formatCurrency(

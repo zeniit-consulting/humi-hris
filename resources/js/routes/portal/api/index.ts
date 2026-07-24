@@ -12,6 +12,7 @@ import announcements from './announcements'
 import surveys from './surveys'
 import assets from './assets'
 import reprimands from './reprimands'
+import approvals from './approvals'
 import performances from './performances'
 import clientVisits from './client-visits'
 /**
@@ -110,6 +111,7 @@ const api = {
     surveys: Object.assign(surveys, surveys),
     assets: Object.assign(assets, assets),
     reprimands: Object.assign(reprimands, reprimands),
+    approvals: Object.assign(approvals, approvals),
     performances: Object.assign(performances, performances),
     clientVisits: Object.assign(clientVisits, clientVisits),
 }

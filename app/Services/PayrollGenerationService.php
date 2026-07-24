@@ -190,6 +190,19 @@ class PayrollGenerationService
                         ->where('user_id', $ownerId)
                         ->whereBetween('work_date', [$start->toDateString(), $end->toDateString()]);
                 },
+                'attendances' => function ($query) use ($ownerId, $start, $end): void {
+                    $query->withoutGlobalScopes()
+                        ->where('user_id', $ownerId)
+                        ->whereBetween('attendance_date', [$start->toDateString(), $end->toDateString()]);
+                },
+                'leaveRequests' => function ($query) use ($ownerId, $start, $end): void {
+                    $query->withoutGlobalScopes()
+                        ->where('user_id', $ownerId)
+                        ->where('leave_type', 'unpaid')
+                        ->where('status', 'approved')
+                        ->whereDate('start_date', '<=', $end->toDateString())
+                        ->whereDate('end_date', '>=', $start->toDateString());
+                },
             ])
             ->orderBy('first_name')
             ->orderBy('last_name')
@@ -209,7 +222,14 @@ class PayrollGenerationService
     ): array {
         $monthlyBaseSalary = (float) ($employee->base_salary ?? 0);
         [$prorationFactor, $workingDays, $payableDays] = $this->prorationDetails($employee, $start, $end);
-        $baseSalary = round($monthlyBaseSalary * $prorationFactor, 2);
+        $isDailyWorker = $employee->employment_type === 'DW';
+        $dailyWage = (float) ($employee->daily_wage ?? 0);
+        $paidAttendanceDays = $isDailyWorker
+            ? $employee->attendances->whereIn('status', ['present', 'late'])->unique('attendance_date')->count()
+            : 0;
+        $baseSalary = $isDailyWorker
+            ? round($dailyWage * $paidAttendanceDays, 2)
+            : round($monthlyBaseSalary * $prorationFactor, 2);
 
         $allowanceGrouped = $employee->allowances
             ->groupBy('name')
@@ -217,9 +237,16 @@ class PayrollGenerationService
             ->sortKeys();
 
         $allowancesTotal = round((float) $allowanceGrouped->sum(), 2);
+        $unpaidLeaveDays = $isDailyWorker ? 0 : $this->unpaidLeaveDays($employee, $start, $end);
+        $activeWorkingDays = max((int) ($setting?->active_working_days ?? 22), 1);
+        $unpaidLeaveDeduction = round(
+            (($monthlyBaseSalary + (float) $employee->allowances->sum('amount')) / $activeWorkingDays) * $unpaidLeaveDays,
+            2,
+        );
 
         // Overtime calculation
-        $overtimeHours = (float) $employee->overtimeRequests->sum('total_hours');
+        $actualOvertimeHours = (float) $employee->overtimeRequests->sum('total_hours');
+        $overtimeHours = $this->payableOvertimeHours($actualOvertimeHours, $setting);
         $hourlyRate = $monthlyBaseSalary / max((int) ($setting->overtime_hour_divisor ?? 173), 1);
         $overtimePay = 0.0;
         if ($overtimeHours > 0) {
@@ -244,7 +271,7 @@ class PayrollGenerationService
 
         $kasbonDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'kasbon');
         $dendaDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'denda');
-        $deductionsTotal = round($kasbonDeduction + $dendaDeduction + $pph21Deduction, 2);
+        $deductionsTotal = round($kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + $pph21Deduction, 2);
         $netSalary = round(max(($baseSalary + $allowancesTotal + $overtimePay + $pph21Allowance) - $deductionsTotal, 0), 2);
 
         return [
@@ -266,6 +293,7 @@ class PayrollGenerationService
             'pph21_company_borne' => $pph21CompanyBorne,
             'kasbon_deduction' => $kasbonDeduction,
             'denda_deduction' => $dendaDeduction,
+            'unpaid_leave_deduction' => $unpaidLeaveDeduction,
             'deductions_total' => $deductionsTotal,
             'net_salary' => $netSalary,
             'allowance_breakdown' => $allowanceGrouped->toArray(),
@@ -391,5 +419,26 @@ class PayrollGenerationService
             ->where('type', $type)
             ->whereBetween('deduction_date', [$start->toDateString(), $end->toDateString()])
             ->sum('amount'), 2);
+    }
+
+    private function payableOvertimeHours(float $actualHours, ?CompanySetting $setting): float
+    {
+        if (($setting?->overtime_calculation_mode ?? 'hourly') !== 'threshold_daily') {
+            return $actualHours;
+        }
+
+        $threshold = max((int) ($setting?->overtime_threshold_hours ?? 8), 1);
+
+        return floor($actualHours / $threshold) * 8;
+    }
+
+    private function unpaidLeaveDays(Employee $employee, Carbon $start, Carbon $end): int
+    {
+        return $employee->leaveRequests->sum(function ($leave) use ($start, $end): int {
+            $leaveStart = Carbon::parse($leave->start_date)->max($start);
+            $leaveEnd = Carbon::parse($leave->end_date)->min($end);
+
+            return $leaveStart->greaterThan($leaveEnd) ? 0 : $leaveStart->diffInDays($leaveEnd) + 1;
+        });
     }
 }

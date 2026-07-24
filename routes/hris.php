@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Hris\AttendanceController;
+use App\Http\Controllers\Hris\ApprovalSettingController;
 use App\Http\Controllers\Hris\AttendanceCorrectionApprovalController;
 use App\Http\Controllers\Hris\AttendanceScheduleController;
 use App\Http\Controllers\Hris\ClientBillingController;
@@ -35,6 +36,8 @@ use App\Http\Controllers\Hris\SurveyController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.access', 'subscription.active'])->prefix('hris')->name('hris.')->group(function () {
+    Route::get('approval-settings', [ApprovalSettingController::class, 'index'])->name('approval-settings.index');
+    Route::put('approval-settings/{type}', [ApprovalSettingController::class, 'update'])->name('approval-settings.update');
     Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
     Route::get('employees/resigned', [EmployeeController::class, 'resigned'])->name('employees.resigned');
     Route::get('sub-companies', [SubCompanyController::class, 'index'])->name('sub-companies.index');
@@ -137,6 +140,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::get('client-visits', [ClientVisitController::class, 'index'])->name('client-visits.index');
     Route::get('attendances/export', [AttendanceController::class, 'export'])->name('attendances.export');
     Route::get('attendances/employees/{employee}/monthly', [AttendanceController::class, 'showMonthly'])->name('attendances.monthly.show');
+    Route::post('attendances/sync-missing-checkouts', [AttendanceController::class, 'syncMissingCheckouts'])->name('attendances.sync-missing-checkouts');
     Route::post('attendances', [AttendanceController::class, 'store'])->name('attendances.store');
     Route::put('attendances/{employeeAttendance}', [AttendanceController::class, 'update'])->name('attendances.update');
     Route::delete('attendances/{employeeAttendance}', [AttendanceController::class, 'destroy'])->name('attendances.destroy');

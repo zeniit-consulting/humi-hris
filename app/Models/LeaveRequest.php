@@ -27,6 +27,7 @@ class LeaveRequest extends Model
         'reason',
         'status',
         'approval_stage',
+        'approval_levels', 'first_approver_employee_id', 'second_approver_employee_id', 'rejection_stage',
         'first_approved_by',
         'first_approved_at',
         'approved_by',
@@ -46,10 +47,13 @@ class LeaveRequest extends Model
             'end_date' => 'date',
             'total_days' => 'decimal:2',
             'approval_stage' => 'integer',
+            'approval_levels' => 'integer', 'rejection_stage' => 'integer',
             'first_approved_at' => 'datetime',
             'approved_at' => 'datetime',
         ];
     }
+
+    protected static function booted(): void { static::creating(fn (self $request) => app(\App\Services\ApprovalWorkflowService::class)->snapshot($request)); }
 
     /**
      * Get employee for this leave request.

@@ -16,7 +16,7 @@ class Employee extends Model
     /** @use HasFactory<\Database\Factories\EmployeeFactory> */
     use BelongsToAccount, HasFactory;
 
-    public const EMPLOYMENT_TYPES = ['FL', 'PKWT', 'PKWTT', 'OS'];
+    public const EMPLOYMENT_TYPES = ['DW', 'FL', 'PKWT', 'PKWTT', 'OS'];
 
     public const TIMEZONES = [
         'Asia/Jakarta' => 'WIB',
@@ -67,6 +67,7 @@ class Employee extends Model
         'position_id',
         'manager_id',
         'base_salary',
+        'daily_wage',
         'address',
         'domicile_address',
         'family_card_number',
@@ -105,6 +106,7 @@ class Employee extends Model
             'pkwtt_activated_at' => 'date',
             'offboarded_at' => 'date',
             'base_salary' => 'decimal:2',
+            'daily_wage' => 'decimal:2',
             'pph21_rate' => 'decimal:2',
             'is_active' => 'boolean',
             'attendance_location_ids' => 'array',

@@ -1,3 +1,4 @@
+import approvalSettings from './approval-settings'
 import employees from './employees'
 import subCompanies from './sub-companies'
 import clientBillings from './client-billings'
@@ -26,6 +27,7 @@ import notifications from './notifications'
 import surveys from './surveys'
 
 const hris = {
+    approvalSettings: Object.assign(approvalSettings, approvalSettings),
     employees: Object.assign(employees, employees),
     subCompanies: Object.assign(subCompanies, subCompanies),
     clientBillings: Object.assign(clientBillings, clientBillings),
