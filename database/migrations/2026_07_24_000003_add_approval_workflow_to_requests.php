@@ -14,8 +14,12 @@ return new class extends Migration {
                 if (! Schema::hasColumn($tableName, 'approval_stage')) {
                     $table->unsignedTinyInteger('approval_stage')->default(0)->after('approval_levels');
                 }
-                $table->foreignId('first_approver_employee_id')->nullable()->constrained('employees')->nullOnDelete();
-                $table->foreignId('second_approver_employee_id')->nullable()->constrained('employees')->nullOnDelete();
+                $table->foreignId('first_approver_employee_id')->nullable();
+                $table->foreign('first_approver_employee_id', "{$tableName}_first_approver_fk")
+                    ->references('id')->on('employees')->nullOnDelete();
+                $table->foreignId('second_approver_employee_id')->nullable();
+                $table->foreign('second_approver_employee_id', "{$tableName}_second_approver_fk")
+                    ->references('id')->on('employees')->nullOnDelete();
                 if (! Schema::hasColumn($tableName, 'first_approved_by')) {
                     $table->foreignId('first_approved_by')->nullable()->constrained('users')->nullOnDelete();
                 }
@@ -29,8 +33,10 @@ return new class extends Migration {
     public function down(): void {
         foreach (['attendance_correction_requests', 'leave_requests', 'overtime_requests', 'shift_change_requests'] as $tableName) {
             Schema::table($tableName, function (Blueprint $table) use ($tableName): void {
-                $table->dropConstrainedForeignId('first_approver_employee_id');
-                $table->dropConstrainedForeignId('second_approver_employee_id');
+                $table->dropForeign("{$tableName}_first_approver_fk");
+                $table->dropColumn('first_approver_employee_id');
+                $table->dropForeign("{$tableName}_second_approver_fk");
+                $table->dropColumn('second_approver_employee_id');
                 if (Schema::hasColumn($tableName, 'first_approved_by')) {
                     $table->dropConstrainedForeignId('first_approved_by');
                 }
