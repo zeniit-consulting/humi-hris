@@ -301,12 +301,13 @@ export default function SubCompaniesIndex() {
 
             <div className="space-y-6 p-4">
                 <div className="grid gap-4 md:grid-cols-4">
-                    <StatCard label="Sub-company" value={stats.total} />
-                    <StatCard label="Aktif" value={stats.active} />
-                    <StatCard label="Lokasi Absen" value={stats.locations} />
+                    <StatCard label="Sub-company" value={stats.total} tone="sky" />
+                    <StatCard label="Aktif" value={stats.active} tone="emerald" />
+                    <StatCard label="Lokasi Absen" value={stats.locations} tone="amber" />
                     <StatCard
                         label="Karyawan Outsourcing"
                         value={stats.outsourced_employees}
+                        tone="violet"
                     />
                 </div>
 
@@ -913,9 +914,10 @@ export default function SubCompaniesIndex() {
     );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, value, tone }: { label: string; value: number; tone: 'sky' | 'emerald' | 'amber' | 'violet' }) {
+    const styles = { sky: 'border-sky-200 bg-sky-50/70 dark:border-sky-950 dark:bg-sky-950/25', emerald: 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-950 dark:bg-emerald-950/25', amber: 'border-amber-200 bg-amber-50/70 dark:border-amber-950 dark:bg-amber-950/25', violet: 'border-violet-200 bg-violet-50/70 dark:border-violet-950 dark:bg-violet-950/25' }[tone];
     return (
-        <Card className="gap-2 py-3">
+        <Card className={`gap-2 py-3 ${styles}`}>
             <CardHeader className="px-4 pb-0">
                 <CardDescription>{label}</CardDescription>
                 <CardTitle className="flex items-center gap-2 text-2xl">

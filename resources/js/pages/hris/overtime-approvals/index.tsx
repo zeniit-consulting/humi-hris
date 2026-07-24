@@ -99,7 +99,7 @@ export default function OvertimeApprovalPage() {
                         ['Disetujui', stats.approved],
                         ['Ditolak', stats.rejected],
                     ].map(([label, value]) => (
-                        <Card key={label} className="gap-2 py-3">
+                        <Card key={label} className={`gap-2 py-3 ${label === 'Menunggu' ? 'border-amber-200 bg-amber-50/70 dark:border-amber-950 dark:bg-amber-950/25' : label === 'Disetujui' ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-950 dark:bg-emerald-950/25' : 'border-rose-200 bg-rose-50/70 dark:border-rose-950 dark:bg-rose-950/25'}`}>
                             <CardHeader className="px-4 pb-0">
                                 <CardDescription>{label}</CardDescription>
                                 <CardTitle className="text-2xl">{value}</CardTitle>

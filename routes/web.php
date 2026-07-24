@@ -375,6 +375,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/surveys', [UserPortalSectionController::class, 'surveys'])->name('portal.surveys');
     Route::get('portal/assets', [UserPortalSectionController::class, 'assets'])->name('portal.assets');
     Route::get('portal/reprimands', [UserPortalSectionController::class, 'reprimands'])->name('portal.reprimands');
+    Route::get('portal/approvals', [UserPortalSectionController::class, 'approvals'])->name('portal.approvals');
     Route::post('portal/api/payrolls/preview-secure', [UserPortalSectionController::class, 'previewPayslip'])->name('portal.api.payrolls.preview-secure');
     Route::post('portal/payroll/export', [UserPortalSectionController::class, 'exportPayslip'])->name('portal.payroll.export');
 });

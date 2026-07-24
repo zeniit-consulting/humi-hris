@@ -21,20 +21,23 @@ class StoreCareerApplicationRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        if (! $this->has('expected_salary')) {
-            return;
+        $normalized = [];
+
+        foreach (['take_home_pay_min', 'take_home_pay_max', 'expected_salary'] as $field) {
+            if (! $this->has($field)) {
+                continue;
+            }
+
+            $digits = preg_replace('/[^\d]/', '', (string) $this->input($field));
+            $normalized[$field] = $digits === '' ? null : $digits;
         }
 
-        $normalized = preg_replace('/[^\d]/', '', (string) $this->input('expected_salary'));
-
-        $this->merge([
-            'expected_salary' => $normalized === '' ? null : $normalized,
-        ]);
-
         if ($this->has('phone')) {
-            $this->merge([
-                'phone' => WhatsAppPhone::normalize((string) $this->input('phone')),
-            ]);
+            $normalized['phone'] = WhatsAppPhone::normalize((string) $this->input('phone'));
+        }
+
+        if ($normalized !== []) {
+            $this->merge($normalized);
         }
     }
 
@@ -54,7 +57,10 @@ class StoreCareerApplicationRequest extends FormRequest
             'last_education' => ['nullable', 'string', 'max:100'],
             'years_experience' => ['nullable', 'numeric', 'min:0', 'max:80'],
             'current_company' => ['nullable', 'string', 'max:160'],
+            'take_home_pay_min' => ['nullable', 'required_with:take_home_pay_max', 'numeric', 'min:0', 'lte:take_home_pay_max'],
+            'take_home_pay_max' => ['nullable', 'required_with:take_home_pay_min', 'numeric', 'min:0', 'gte:take_home_pay_min'],
             'expected_salary' => ['nullable', 'numeric', 'min:0'],
+            'expected_join_date' => ['nullable', 'date'],
             'portfolio_url' => ['nullable', 'url', 'max:255'],
             'linkedin_url' => ['nullable', 'url', 'max:255'],
             'cover_letter' => ['nullable', 'string', 'max:5000'],

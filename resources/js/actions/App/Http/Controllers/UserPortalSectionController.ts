@@ -1458,6 +1458,87 @@ reprimandsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> 
 reprimands.form = reprimandsForm
 
 /**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+export const approvals = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: approvals.url(options),
+    method: 'get',
+})
+
+approvals.definition = {
+    methods: ["get","head"],
+    url: '/portal/approvals',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+approvals.url = (options?: RouteQueryOptions) => {
+    return approvals.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+approvals.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: approvals.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+approvals.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: approvals.url(options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+const approvalsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: approvals.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+approvalsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: approvals.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+approvalsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: approvals.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+approvals.form = approvalsForm
+
+/**
 * @see \App\Http\Controllers\UserPortalSectionController::previewPayslip
 * @see app/Http/Controllers/UserPortalSectionController.php:114
 * @route '/portal/api/payrolls/preview-secure'
@@ -1569,6 +1650,6 @@ exportPayslipForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'pos
 
 exportPayslip.form = exportPayslipForm
 
-const UserPortalSectionController = { attendance, checkIn, checkOut, shiftChange, attendanceRequest, leaves, overtimes, kasbons, reimbursements, payroll, activity, clientVisits, performanceActivity, profile, announcements, surveys, assets, reprimands, previewPayslip, exportPayslip }
+const UserPortalSectionController = { attendance, checkIn, checkOut, shiftChange, attendanceRequest, leaves, overtimes, kasbons, reimbursements, payroll, activity, clientVisits, performanceActivity, profile, announcements, surveys, assets, reprimands, approvals, previewPayslip, exportPayslip }
 
 export default UserPortalSectionController

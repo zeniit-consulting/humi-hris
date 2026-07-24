@@ -20,6 +20,10 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    formatThousandDigits,
+    normalizeDigitInput,
+} from '@/lib/currency-input';
 import { dashboard, home, login } from '@/routes';
 
 type Vacancy = {
@@ -62,7 +66,10 @@ type ApplicationFormData = {
     last_education: string;
     years_experience: string;
     current_company: string;
+    take_home_pay_min: string;
+    take_home_pay_max: string;
     expected_salary: string;
+    expected_join_date: string;
     portfolio_url: string;
     linkedin_url: string;
     cover_letter: string;
@@ -78,7 +85,10 @@ const defaultForm: ApplicationFormData = {
     last_education: '',
     years_experience: '',
     current_company: '',
+    take_home_pay_min: '',
+    take_home_pay_max: '',
     expected_salary: '',
+    expected_join_date: '',
     portfolio_url: '',
     linkedin_url: '',
     cover_letter: '',
@@ -430,25 +440,127 @@ export default function CareerShowPage() {
                                             />
                                         </div>
 
+                                        <div className="grid gap-2 md:col-span-2">
+                                            <Label>Take Home Pay Range</Label>
+                                            <div className="grid gap-3 sm:grid-cols-2">
+                                                <div className="grid gap-2">
+                                                    <Label
+                                                        htmlFor="take_home_pay_min"
+                                                        className="text-xs text-slate-500"
+                                                    >
+                                                        Minimum
+                                                    </Label>
+                                                    <Input
+                                                        id="take_home_pay_min"
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        value={formatThousandDigits(
+                                                            form.data
+                                                                .take_home_pay_min,
+                                                        )}
+                                                        onChange={(event) =>
+                                                            form.setData(
+                                                                'take_home_pay_min',
+                                                                normalizeDigitInput(
+                                                                    event.target
+                                                                        .value,
+                                                                ),
+                                                            )
+                                                        }
+                                                        placeholder="Rp 0"
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            form.errors
+                                                                .take_home_pay_min
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label
+                                                        htmlFor="take_home_pay_max"
+                                                        className="text-xs text-slate-500"
+                                                    >
+                                                        Maksimum
+                                                    </Label>
+                                                    <Input
+                                                        id="take_home_pay_max"
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        value={formatThousandDigits(
+                                                            form.data
+                                                                .take_home_pay_max,
+                                                        )}
+                                                        onChange={(event) =>
+                                                            form.setData(
+                                                                'take_home_pay_max',
+                                                                normalizeDigitInput(
+                                                                    event.target
+                                                                        .value,
+                                                                ),
+                                                            )
+                                                        }
+                                                        placeholder="Rp 0"
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            form.errors
+                                                                .take_home_pay_max
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div className="grid gap-2">
                                             <Label htmlFor="expected_salary">
-                                                Ekspektasi gaji
+                                                Expected Salary
                                             </Label>
                                             <Input
                                                 id="expected_salary"
-                                                value={
-                                                    form.data.expected_salary
-                                                }
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={formatThousandDigits(
+                                                    form.data.expected_salary,
+                                                )}
                                                 onChange={(event) =>
                                                     form.setData(
                                                         'expected_salary',
+                                                        normalizeDigitInput(
+                                                            event.target.value,
+                                                        ),
+                                                    )
+                                                }
+                                                placeholder="Rp 0"
+                                            />
+                                            <InputError
+                                                message={
+                                                    form.errors.expected_salary
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="expected_join_date">
+                                                Expected Join Date
+                                            </Label>
+                                            <Input
+                                                id="expected_join_date"
+                                                type="date"
+                                                value={
+                                                    form.data.expected_join_date
+                                                }
+                                                onChange={(event) =>
+                                                    form.setData(
+                                                        'expected_join_date',
                                                         event.target.value,
                                                     )
                                                 }
                                             />
                                             <InputError
                                                 message={
-                                                    form.errors.expected_salary
+                                                    form.errors
+                                                        .expected_join_date
                                                 }
                                             />
                                         </div>

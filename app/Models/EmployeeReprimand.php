@@ -20,12 +20,15 @@ class EmployeeReprimand extends Model
         'reprimand_number',
         'level',
         'issued_date',
+        'validity_months',
         'incident_date',
         'subject',
         'description',
         'action_plan',
         'status',
         'resolution_notes',
+        'attachment_path',
+        'attachment_name',
     ];
 
     protected function casts(): array
@@ -33,6 +36,7 @@ class EmployeeReprimand extends Model
         return [
             'issued_date' => 'date',
             'incident_date' => 'date',
+            'validity_months' => 'integer',
         ];
     }
 

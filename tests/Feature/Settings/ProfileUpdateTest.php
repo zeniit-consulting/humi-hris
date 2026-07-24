@@ -10,6 +10,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ProfileUpdateTest extends TestCase
@@ -208,5 +209,38 @@ class ProfileUpdateTest extends TestCase
         ]);
 
         $this->assertNotNull(CompanySetting::query()->first());
+    }
+
+    public function test_portal_kasbon_setting_can_be_disabled_and_reloaded(): void
+    {
+        $user = User::factory()->create();
+        CompanySetting::query()->create([
+            'user_id' => $user->id,
+            'name' => 'PT Maju Jaya',
+            'portal_kasbon_enabled' => true,
+            'employee_activation_otp_enabled' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('company.update'), [
+                'name' => 'PT Maju Jaya',
+                'portal_kasbon_enabled' => '0',
+                'employee_activation_otp_enabled' => '1',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('profile.edit'));
+
+        $this->assertDatabaseHas('company_settings', [
+            'user_id' => $user->id,
+            'portal_kasbon_enabled' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('profile.edit'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('settings/profile')
+                ->where('company.portal_kasbon_enabled', false)
+            );
     }
 }

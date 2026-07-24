@@ -39,7 +39,7 @@ type Period = {
 };
 
 type AttendanceRecord = {
-    id: number;
+    id: number | null;
     attendance_date: string;
     timezone: string | null;
     shift_name: string;
@@ -47,6 +47,7 @@ type AttendanceRecord = {
     check_in_at: string | null;
     check_out_at: string | null;
     notes: string | null;
+    is_missing: boolean;
 };
 
 type PageProps = {
@@ -261,7 +262,14 @@ export default function MonthlyAttendancePage() {
                                         </tr>
                                     )}
                                     {attendances.map((row) => (
-                                        <tr key={row.id} className="border-b">
+                                        <tr
+                                            key={row.id ?? row.attendance_date}
+                                            className={
+                                                row.is_missing
+                                                    ? 'border-b bg-red-50/70 dark:bg-red-950/20'
+                                                    : 'border-b'
+                                            }
+                                        >
                                             <td className="px-3 py-3">
                                                 {formatDate(
                                                     row.attendance_date,
@@ -273,7 +281,8 @@ export default function MonthlyAttendancePage() {
                                             <td className="px-3 py-3">
                                                 <Badge
                                                     variant={
-                                                        row.status === 'late'
+                                                        row.status === 'late' ||
+                                                        row.status === 'absent'
                                                             ? 'destructive'
                                                             : row.status ===
                                                                 'present'
@@ -303,7 +312,10 @@ export default function MonthlyAttendancePage() {
                                             </td>
                                             <td className="max-w-[280px] px-3 py-3">
                                                 <span className="line-clamp-2">
-                                                    {row.notes ?? '-'}
+                                                    {row.notes ??
+                                                        (row.is_missing
+                                                            ? 'Tidak ada data kehadiran'
+                                                            : '-')}
                                                 </span>
                                             </td>
                                         </tr>

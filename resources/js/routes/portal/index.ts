@@ -1461,6 +1461,87 @@ reprimandsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> 
 
 reprimands.form = reprimandsForm
 
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+export const approvals = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: approvals.url(options),
+    method: 'get',
+})
+
+approvals.definition = {
+    methods: ["get","head"],
+    url: '/portal/approvals',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+approvals.url = (options?: RouteQueryOptions) => {
+    return approvals.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+approvals.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: approvals.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+approvals.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: approvals.url(options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+const approvalsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: approvals.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+approvalsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: approvals.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\UserPortalSectionController::approvals
+* @see app/Http/Controllers/UserPortalSectionController.php:0
+* @route '/portal/approvals'
+*/
+approvalsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: approvals.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+approvals.form = approvalsForm
+
 const portal = {
     login: Object.assign(login, loginDf2c2a),
     index: Object.assign(index, index),
@@ -1481,6 +1562,7 @@ const portal = {
     surveys: Object.assign(surveys, surveys),
     assets: Object.assign(assets, assets),
     reprimands: Object.assign(reprimands, reprimands),
+    approvals: Object.assign(approvals, approvals),
 }
 
 export default portal

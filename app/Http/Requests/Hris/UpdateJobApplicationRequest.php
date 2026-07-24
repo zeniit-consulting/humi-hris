@@ -23,6 +23,14 @@ class UpdateJobApplicationRequest extends FormRequest
     {
         $normalized = [];
 
+        if ($this->has('take_home_pay_min')) {
+            $normalized['take_home_pay_min'] = $this->normalizeCurrencyInput($this->input('take_home_pay_min'));
+        }
+
+        if ($this->has('take_home_pay_max')) {
+            $normalized['take_home_pay_max'] = $this->normalizeCurrencyInput($this->input('take_home_pay_max'));
+        }
+
         if ($this->has('expected_salary')) {
             $normalized['expected_salary'] = $this->normalizeCurrencyInput($this->input('expected_salary'));
         }
@@ -49,7 +57,10 @@ class UpdateJobApplicationRequest extends FormRequest
             'interviewed_at' => ['nullable', 'date'],
             'interview_notes' => ['nullable', 'string', 'max:5000'],
             'recruiter_notes' => ['nullable', 'string', 'max:5000'],
+            'take_home_pay_min' => ['nullable', 'required_with:take_home_pay_max', 'numeric', 'min:0', 'lte:take_home_pay_max'],
+            'take_home_pay_max' => ['nullable', 'required_with:take_home_pay_min', 'numeric', 'min:0', 'gte:take_home_pay_min'],
             'expected_salary' => ['nullable', 'numeric', 'min:0'],
+            'expected_join_date' => ['nullable', 'date'],
             'offered_salary' => ['nullable', 'numeric', 'min:0'],
             'proposed_start_date' => ['nullable', 'date'],
             'employment_type' => ['nullable', Rule::in(['permanent', 'contract', 'internship', 'freelance'])],

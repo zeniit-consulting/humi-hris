@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Hris;
 
+use App\Support\FixedAllowanceAmount;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -21,10 +22,8 @@ class StoreEmployeeAllowanceRequest extends FormRequest
             return;
         }
 
-        $normalized = preg_replace('/[^\d]/', '', (string) $this->input('amount'));
-
         $this->merge([
-            'amount' => $normalized === '' ? null : $normalized,
+            'amount' => FixedAllowanceAmount::normalize($this->input('amount')),
         ]);
     }
 
@@ -37,7 +36,7 @@ class StoreEmployeeAllowanceRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:100'],
-            'amount' => ['required', 'numeric', 'min:0'],
+            'amount' => ['required', 'numeric', 'min:0', 'max:'.FixedAllowanceAmount::MAX],
             'is_active' => ['sometimes', 'boolean'],
             'effective_start_date' => ['nullable', 'date'],
             'effective_end_date' => ['nullable', 'date', 'after_or_equal:effective_start_date'],

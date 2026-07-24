@@ -154,7 +154,7 @@ class PortalPageTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('portal/reprimands')
-                ->where('pageTitle', 'Reprimand')
+                ->where('pageTitle', 'Teguran')
             );
 
         $this->actingAs($user)

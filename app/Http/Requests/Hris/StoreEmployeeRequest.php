@@ -4,6 +4,7 @@ namespace App\Http\Requests\Hris;
 
 use App\Models\Employee;
 use App\Models\Position;
+use App\Support\FixedAllowanceAmount;
 use App\Support\WhatsAppPhone;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -77,7 +78,7 @@ class StoreEmployeeRequest extends FormRequest
                         return $allowance;
                     }
 
-                    $allowance['amount'] = $this->normalizeCurrencyInput($allowance['amount'] ?? null);
+                    $allowance['amount'] = FixedAllowanceAmount::normalize($allowance['amount'] ?? null);
 
                     return $allowance;
                 })
@@ -199,7 +200,7 @@ class StoreEmployeeRequest extends FormRequest
             'base_salary' => ['nullable', 'numeric', 'min:0'],
             'fixed_allowances' => ['nullable', 'array', 'max:20'],
             'fixed_allowances.*.name' => ['required', 'string', 'max:100'],
-            'fixed_allowances.*.amount' => ['required', 'numeric', 'min:0'],
+            'fixed_allowances.*.amount' => ['required', 'numeric', 'min:0', 'max:'.FixedAllowanceAmount::MAX],
             'address' => ['nullable', 'string', 'max:500'],
             'domicile_address' => ['nullable', 'string', 'max:500'],
             'family_card_number' => ['nullable', 'string', 'max:32'],

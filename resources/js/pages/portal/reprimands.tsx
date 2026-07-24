@@ -108,7 +108,7 @@ export default function PortalReprimandsPage({ pageTitle }: Props) {
                     </span>
                     <div>
                         <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
-                            Reprimand karyawan
+                            Teguran karyawan
                         </p>
                         <h2 className="mt-1 text-xl font-bold tracking-[-0.04em]">
                             Riwayat reprimand

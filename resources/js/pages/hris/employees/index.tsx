@@ -58,6 +58,11 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { browserTimezone } from '@/lib/attendance-timezone';
+import {
+    formatThousandDigits,
+    normalizeDigitInput,
+    normalizeStoredCurrencyValue,
+} from '@/lib/currency-input';
 import employeeRoutes from '@/routes/hris/employees';
 import allowanceRoutes from '@/routes/hris/employees/allowances';
 import bankAccountRoutes from '@/routes/hris/employees/bank-accounts';
@@ -757,17 +762,10 @@ const getInitials = (name: string) => {
         .join('');
 };
 
-const formatThousandDigits = (value: string) => {
-    const digits = value.replace(/[^\d]/g, '');
+const MAX_FIXED_ALLOWANCE_DIGITS = 8;
 
-    if (digits === '') {
-        return '';
-    }
-
-    return new Intl.NumberFormat('id-ID').format(Number(digits));
-};
-
-const normalizeDigitInput = (value: string) => value.replace(/[^\d]/g, '');
+const normalizeFixedAllowanceInput = (value: string) =>
+    normalizeDigitInput(value).slice(0, MAX_FIXED_ALLOWANCE_DIGITS);
 
 const formatDateDisplay = (value: string | null) => {
     if (!value) {
@@ -1158,14 +1156,12 @@ export default function EmployeesIndex() {
                 ? String(employee.position_id)
                 : '',
             manager_id: employee.manager_id ? String(employee.manager_id) : '',
-            base_salary: employee.base_salary
-                ? String(employee.base_salary)
-                : '',
+            base_salary: normalizeStoredCurrencyValue(employee.base_salary),
             fixed_allowances: employee.allowances
                 .filter((allowance) => allowance.is_active)
                 .map((allowance) => ({
                     name: allowance.name,
-                    amount: String(allowance.amount),
+                    amount: normalizeStoredCurrencyValue(allowance.amount),
                 })),
             address: employee.address ?? '',
             domicile_address: employee.domicile_address ?? '',
@@ -1497,7 +1493,10 @@ export default function EmployeesIndex() {
             account_holder_name: bankAccount.account_holder_name,
             branch: bankAccount.branch ?? '',
             currency: bankAccount.currency,
-            fixed_allowance_amount: bankAccount.fixed_allowance_amount ?? '0',
+            fixed_allowance_amount:
+                normalizeStoredCurrencyValue(
+                    bankAccount.fixed_allowance_amount,
+                ) || '0',
             is_primary: bankAccount.is_primary,
         });
         setEditingBankAccount(bankAccount);
@@ -1513,7 +1512,7 @@ export default function EmployeesIndex() {
         allowanceForm.clearErrors();
         allowanceForm.setData({
             name: allowance.name,
-            amount: allowance.amount,
+            amount: normalizeStoredCurrencyValue(allowance.amount),
             is_active: allowance.is_active,
             effective_start_date: allowance.effective_start_date ?? '',
             effective_end_date: allowance.effective_end_date ?? '',
@@ -1856,7 +1855,7 @@ export default function EmployeesIndex() {
 
             <div className="space-y-6 p-4">
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-8">
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-sky-200 bg-sky-50/70 py-3 dark:border-sky-950 dark:bg-sky-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription className="truncate text-[11px] leading-none">
                                 Total Karyawan
@@ -1866,7 +1865,7 @@ export default function EmployeesIndex() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-emerald-200 bg-emerald-50/70 py-3 dark:border-emerald-950 dark:bg-emerald-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription className="truncate text-[11px] leading-none">
                                 Karyawan Aktif
@@ -1876,7 +1875,7 @@ export default function EmployeesIndex() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-violet-200 bg-violet-50/70 py-3 dark:border-violet-950 dark:bg-violet-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription className="truncate text-[11px] leading-none">
                                 FL
@@ -1886,7 +1885,7 @@ export default function EmployeesIndex() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-amber-200 bg-amber-50/70 py-3 dark:border-amber-950 dark:bg-amber-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription className="truncate text-[11px] leading-none">
                                 PKWT
@@ -1896,7 +1895,7 @@ export default function EmployeesIndex() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-indigo-200 bg-indigo-50/70 py-3 dark:border-indigo-950 dark:bg-indigo-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription className="truncate text-[11px] leading-none">
                                 PKWTT
@@ -1906,7 +1905,7 @@ export default function EmployeesIndex() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-rose-200 bg-rose-50/70 py-3 dark:border-rose-950 dark:bg-rose-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription className="truncate text-[11px] leading-none">
                                 OS
@@ -1916,7 +1915,7 @@ export default function EmployeesIndex() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-cyan-200 bg-cyan-50/70 py-3 dark:border-cyan-950 dark:bg-cyan-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription className="truncate text-[11px] leading-none">
                                 Total Divisi
@@ -1926,7 +1925,7 @@ export default function EmployeesIndex() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-fuchsia-200 bg-fuchsia-50/70 py-3 dark:border-fuchsia-950 dark:bg-fuchsia-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription className="truncate text-[11px] leading-none">
                                 Total Jabatan
@@ -4812,6 +4811,7 @@ export default function EmployeesIndex() {
                                                         <Input
                                                             aria-label={`Nominal tunjangan tetap ${index + 1}`}
                                                             inputMode="numeric"
+                                                            maxLength={10}
                                                             value={formatThousandDigits(
                                                                 allowance.amount,
                                                             )}
@@ -4828,7 +4828,7 @@ export default function EmployeesIndex() {
                                                                     ...rows[
                                                                         index
                                                                     ],
-                                                                    amount: normalizeDigitInput(
+                                                                    amount: normalizeFixedAllowanceInput(
                                                                         event
                                                                             .target
                                                                             .value,
@@ -5649,6 +5649,7 @@ export default function EmployeesIndex() {
                                         id="fixed_allowance_amount"
                                         type="text"
                                         inputMode="numeric"
+                                        maxLength={10}
                                         value={formatThousandDigits(
                                             bankAccountForm.data
                                                 .fixed_allowance_amount,
@@ -5656,7 +5657,7 @@ export default function EmployeesIndex() {
                                         onChange={(event) =>
                                             bankAccountForm.setData(
                                                 'fixed_allowance_amount',
-                                                normalizeDigitInput(
+                                                normalizeFixedAllowanceInput(
                                                     event.target.value,
                                                 ),
                                             )
@@ -6150,13 +6151,14 @@ export default function EmployeesIndex() {
                                         id="allowance_amount"
                                         type="text"
                                         inputMode="numeric"
+                                        maxLength={10}
                                         value={formatThousandDigits(
                                             allowanceForm.data.amount,
                                         )}
                                         onChange={(event) =>
                                             allowanceForm.setData(
                                                 'amount',
-                                                normalizeDigitInput(
+                                                normalizeFixedAllowanceInput(
                                                     event.target.value,
                                                 ),
                                             )

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::store
-* @see app/Http/Controllers/Hris/RecruitmentController.php:225
+* @see app/Http/Controllers/Hris/RecruitmentController.php:228
 * @route '/hris/recruitment/vacancies'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::store
-* @see app/Http/Controllers/Hris/RecruitmentController.php:225
+* @see app/Http/Controllers/Hris/RecruitmentController.php:228
 * @route '/hris/recruitment/vacancies'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::store
-* @see app/Http/Controllers/Hris/RecruitmentController.php:225
+* @see app/Http/Controllers/Hris/RecruitmentController.php:228
 * @route '/hris/recruitment/vacancies'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::store
-* @see app/Http/Controllers/Hris/RecruitmentController.php:225
+* @see app/Http/Controllers/Hris/RecruitmentController.php:228
 * @route '/hris/recruitment/vacancies'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::store
-* @see app/Http/Controllers/Hris/RecruitmentController.php:225
+* @see app/Http/Controllers/Hris/RecruitmentController.php:228
 * @route '/hris/recruitment/vacancies'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -57,7 +57,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::update
-* @see app/Http/Controllers/Hris/RecruitmentController.php:243
+* @see app/Http/Controllers/Hris/RecruitmentController.php:246
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 export const update = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -72,7 +72,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::update
-* @see app/Http/Controllers/Hris/RecruitmentController.php:243
+* @see app/Http/Controllers/Hris/RecruitmentController.php:246
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 update.url = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -105,7 +105,7 @@ update.url = (args: { jobVacancy: number | { id: number } } | [jobVacancy: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::update
-* @see app/Http/Controllers/Hris/RecruitmentController.php:243
+* @see app/Http/Controllers/Hris/RecruitmentController.php:246
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 update.put = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -115,7 +115,7 @@ update.put = (args: { jobVacancy: number | { id: number } } | [jobVacancy: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::update
-* @see app/Http/Controllers/Hris/RecruitmentController.php:243
+* @see app/Http/Controllers/Hris/RecruitmentController.php:246
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 const updateForm = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -130,7 +130,7 @@ const updateForm = (args: { jobVacancy: number | { id: number } } | [jobVacancy:
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::update
-* @see app/Http/Controllers/Hris/RecruitmentController.php:243
+* @see app/Http/Controllers/Hris/RecruitmentController.php:246
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 updateForm.put = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -147,7 +147,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::destroy
-* @see app/Http/Controllers/Hris/RecruitmentController.php:273
+* @see app/Http/Controllers/Hris/RecruitmentController.php:276
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 export const destroy = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -162,7 +162,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::destroy
-* @see app/Http/Controllers/Hris/RecruitmentController.php:273
+* @see app/Http/Controllers/Hris/RecruitmentController.php:276
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 destroy.url = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -195,7 +195,7 @@ destroy.url = (args: { jobVacancy: number | { id: number } } | [jobVacancy: numb
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::destroy
-* @see app/Http/Controllers/Hris/RecruitmentController.php:273
+* @see app/Http/Controllers/Hris/RecruitmentController.php:276
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 destroy.delete = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -205,7 +205,7 @@ destroy.delete = (args: { jobVacancy: number | { id: number } } | [jobVacancy: n
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::destroy
-* @see app/Http/Controllers/Hris/RecruitmentController.php:273
+* @see app/Http/Controllers/Hris/RecruitmentController.php:276
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 const destroyForm = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -220,7 +220,7 @@ const destroyForm = (args: { jobVacancy: number | { id: number } } | [jobVacancy
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::destroy
-* @see app/Http/Controllers/Hris/RecruitmentController.php:273
+* @see app/Http/Controllers/Hris/RecruitmentController.php:276
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 destroyForm.delete = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -5,6 +5,8 @@ namespace Tests\Feature\Hris;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -30,10 +32,11 @@ class EmployeeReprimandTest extends TestCase
                 'level' => 'sp1',
                 'issued_date' => '2026-07-07',
                 'incident_date' => '2026-07-06',
+                'validity_months' => 6,
                 'subject' => 'Terlambat tanpa konfirmasi',
                 'description' => 'Karyawan terlambat berulang tanpa pemberitahuan.',
                 'action_plan' => 'Wajib check-in tepat waktu selama 30 hari.',
-                'status' => 'active',
+                'attachment' => UploadedFile::fake()->create('bukti.pdf', 20, 'application/pdf'),
             ])
             ->assertRedirect(route('hris.reprimands.index'));
 
@@ -44,7 +47,9 @@ class EmployeeReprimandTest extends TestCase
             'level' => 'sp1',
             'subject' => 'Terlambat tanpa konfirmasi',
             'status' => 'active',
+            'validity_months' => 6,
         ]);
+        $this->assertDatabaseHas('employee_reprimands', ['attachment_name' => 'bukti.pdf', 'validity_months' => 6]);
 
         $this->actingAs($user)
             ->get(route('hris.reprimands.index'))
@@ -59,6 +64,10 @@ class EmployeeReprimandTest extends TestCase
                 ->where('reprimands.data.0.level', 'sp1')
                 ->where('reprimands.data.0.issued_date', '2026-07-07')
             );
+
+        $this->actingAs($user)->get(route('hris.reprimands.tracking', $employee))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('hris/reprimands/tracking')->has('reprimands', 1)->where('reprimands.0.validity_months', 6)->where('reprimands.0.attachment_name', 'bukti.pdf'));
 
         $reprimandId = (int) \DB::table('employee_reprimands')->value('id');
 

@@ -16,6 +16,13 @@ import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { MapboxLocationMap } from '@/components/mapbox-location-map';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
@@ -115,6 +122,11 @@ export default function Profile({
     const [logoPreview, setLogoPreview] = useState<string | null>(
         company.logo_url,
     );
+    const [portalKasbonEnabled, setPortalKasbonEnabled] = useState(
+        company.portal_kasbon_enabled,
+    );
+    const [employeeActivationOtpEnabled, setEmployeeActivationOtpEnabled] =
+        useState(company.employee_activation_otp_enabled);
     const [primaryLocation, setPrimaryLocation] = useState({
         address: company.location_address ?? '',
         latitude:
@@ -145,6 +157,7 @@ export default function Profile({
                   },
               ],
     );
+    const [mapPickerIndex, setMapPickerIndex] = useState<number | null>(null);
     const avatarPreviewRef = useRef<string | null>(null);
     const uploadedPreviewRef = useRef<string | null>(null);
     const reverseGeocodeRequestRef = useRef(0);
@@ -159,6 +172,16 @@ export default function Profile({
             }
         };
     }, []);
+
+    useEffect(() => {
+        setPortalKasbonEnabled(company.portal_kasbon_enabled);
+        setEmployeeActivationOtpEnabled(
+            company.employee_activation_otp_enabled,
+        );
+    }, [
+        company.employee_activation_otp_enabled,
+        company.portal_kasbon_enabled,
+    ]);
 
     const handlePrimaryLocationSelect = async (
         latitude: number,
@@ -223,6 +246,24 @@ export default function Profile({
                 setIsResolvingAddress(false);
             }
         }
+    };
+
+    const handleAttendanceLocationSelect = (
+        index: number,
+        latitude: number,
+        longitude: number,
+    ) => {
+        setAttendanceLocations((current) =>
+            current.map((location, currentIndex) =>
+                currentIndex === index
+                    ? {
+                          ...location,
+                          latitude: latitude.toFixed(7),
+                          longitude: longitude.toFixed(7),
+                      }
+                    : location,
+            ),
+        );
     };
 
     return (
@@ -391,11 +432,19 @@ export default function Profile({
 
                                 <div className="flex items-start gap-3 rounded-lg border bg-slate-50/60 p-4">
                                     <input
-                                        id="portal_kasbon_enabled"
+                                        type="hidden"
                                         name="portal_kasbon_enabled"
+                                        value={portalKasbonEnabled ? '1' : '0'}
+                                    />
+                                    <input
+                                        id="portal_kasbon_enabled"
                                         type="checkbox"
-                                        value="1"
-                                        defaultChecked={company.portal_kasbon_enabled}
+                                        checked={portalKasbonEnabled}
+                                        onChange={(event) =>
+                                            setPortalKasbonEnabled(
+                                                event.target.checked,
+                                            )
+                                        }
                                         className="mt-1 size-4 rounded border-input accent-primary"
                                     />
                                     <div>
@@ -403,18 +452,32 @@ export default function Profile({
                                             Tampilkan Kasbon di Portal Karyawan
                                         </Label>
                                         <p className="mt-1 text-xs text-slate-500">
-                                            Jika dimatikan, menu, halaman, dan API Kasbon tidak dapat diakses karyawan.
+                                            Jika dimatikan, menu, halaman, dan
+                                            API Kasbon tidak dapat diakses
+                                            karyawan.
                                         </p>
                                     </div>
                                 </div>
 
                                 <div className="flex items-start gap-3 rounded-lg border bg-slate-50/60 p-4">
                                     <input
-                                        id="employee_activation_otp_enabled"
+                                        type="hidden"
                                         name="employee_activation_otp_enabled"
+                                        value={
+                                            employeeActivationOtpEnabled
+                                                ? '1'
+                                                : '0'
+                                        }
+                                    />
+                                    <input
+                                        id="employee_activation_otp_enabled"
                                         type="checkbox"
-                                        value="1"
-                                        defaultChecked={company.employee_activation_otp_enabled}
+                                        checked={employeeActivationOtpEnabled}
+                                        onChange={(event) =>
+                                            setEmployeeActivationOtpEnabled(
+                                                event.target.checked,
+                                            )
+                                        }
                                         className="mt-1 size-4 rounded border-input accent-primary"
                                     />
                                     <div>
@@ -422,7 +485,9 @@ export default function Profile({
                                             Wajibkan OTP Aktivasi Karyawan
                                         </Label>
                                         <p className="mt-1 text-xs text-slate-500">
-                                            Jika dimatikan, karyawan dapat langsung masuk menggunakan kredensial dari email undangan.
+                                            Jika dimatikan, karyawan dapat
+                                            langsung masuk menggunakan
+                                            kredensial dari email undangan.
                                         </p>
                                     </div>
                                 </div>
@@ -985,102 +1050,25 @@ export default function Profile({
                                                             />
                                                         </div>
 
-                                                        <div className="grid gap-2">
-                                                            <Label>
-                                                                Latitude
-                                                            </Label>
-                                                            <Input
-                                                                name={`attendance_locations[${index}][latitude]`}
-                                                                type="number"
-                                                                step="0.0000001"
-                                                                value={String(
-                                                                    location.latitude ??
-                                                                        '',
-                                                                )}
-                                                                onChange={(
-                                                                    event,
-                                                                ) =>
-                                                                    setAttendanceLocations(
-                                                                        (
-                                                                            current,
-                                                                        ) =>
-                                                                            current.map(
-                                                                                (
-                                                                                    item,
-                                                                                    currentIndex,
-                                                                                ) =>
-                                                                                    currentIndex ===
-                                                                                    index
-                                                                                        ? {
-                                                                                              ...item,
-                                                                                              latitude:
-                                                                                                  event
-                                                                                                      .target
-                                                                                                      .value,
-                                                                                          }
-                                                                                        : item,
-                                                                            ),
-                                                                    )
-                                                                }
-                                                                placeholder="-6.2000000"
-                                                            />
-                                                            <InputError
-                                                                className="mt-2"
-                                                                message={
-                                                                    errors[
-                                                                        `attendance_locations.${index}.latitude` as never
-                                                                    ]
-                                                                }
-                                                            />
-                                                        </div>
-
-                                                        <div className="grid gap-2">
-                                                            <Label>
-                                                                Longitude
-                                                            </Label>
-                                                            <Input
-                                                                name={`attendance_locations[${index}][longitude]`}
-                                                                type="number"
-                                                                step="0.0000001"
-                                                                value={String(
-                                                                    location.longitude ??
-                                                                        '',
-                                                                )}
-                                                                onChange={(
-                                                                    event,
-                                                                ) =>
-                                                                    setAttendanceLocations(
-                                                                        (
-                                                                            current,
-                                                                        ) =>
-                                                                            current.map(
-                                                                                (
-                                                                                    item,
-                                                                                    currentIndex,
-                                                                                ) =>
-                                                                                    currentIndex ===
-                                                                                    index
-                                                                                        ? {
-                                                                                              ...item,
-                                                                                              longitude:
-                                                                                                  event
-                                                                                                      .target
-                                                                                                      .value,
-                                                                                          }
-                                                                                        : item,
-                                                                            ),
-                                                                    )
-                                                                }
-                                                                placeholder="106.8166667"
-                                                            />
-                                                            <InputError
-                                                                className="mt-2"
-                                                                message={
-                                                                    errors[
-                                                                        `attendance_locations.${index}.longitude` as never
-                                                                    ]
-                                                                }
-                                                            />
+                                                        <div className="grid gap-3 md:col-span-2">
+                                                            <input type="hidden" name={`attendance_locations[${index}][latitude]`} value={String(location.latitude ?? '')} />
+                                                            <input type="hidden" name={`attendance_locations[${index}][longitude]`} value={String(location.longitude ?? '')} />
+                                                            <div>
+                                                                <Label>Pilih titik lokasi di map</Label>
+                                                                <p className="mt-1 text-xs text-slate-500">Buka peta untuk memilih titik dan mengisi koordinat otomatis.</p>
+                                                            </div>
+                                                            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border bg-white p-3">
+                                                                <div className="grid gap-3 text-sm sm:grid-cols-2 sm:gap-6">
+                                                                <div><p className="text-xs font-medium tracking-wide text-slate-500 uppercase">Latitude</p><p className="mt-1 font-mono text-slate-900">{location.latitude || 'Belum dipilih'}</p></div>
+                                                                <div><p className="text-xs font-medium tracking-wide text-slate-500 uppercase">Longitude</p><p className="mt-1 font-mono text-slate-900">{location.longitude || 'Belum dipilih'}</p></div>
+                                                                </div>
+                                                                <Button type="button" variant="outline" size="sm" onClick={() => setMapPickerIndex(index)}>
+                                                                    <MapPin className="size-4" />
+                                                                    Pilih di Map
+                                                                </Button>
+                                                            </div>
+                                                            <InputError message={errors[`attendance_locations.${index}.latitude` as never]} />
+                                                            <InputError message={errors[`attendance_locations.${index}.longitude` as never]} />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1088,6 +1076,32 @@ export default function Profile({
                                         )}
                                     </div>
                                 </div>
+
+                                <Dialog
+                                    open={mapPickerIndex !== null}
+                                    onOpenChange={(open) => {
+                                        if (!open) setMapPickerIndex(null);
+                                    }}
+                                >
+                                    <DialogContent className="max-w-3xl">
+                                        <DialogHeader>
+                                            <DialogTitle>Pilih titik lokasi absensi</DialogTitle>
+                                            <DialogDescription>Klik peta untuk menyimpan latitude dan longitude pada lokasi ini.</DialogDescription>
+                                        </DialogHeader>
+                                        {mapPickerIndex !== null && attendanceLocations[mapPickerIndex] ? (
+                                            <div className="overflow-hidden rounded-lg border">
+                                                <LocationMapPicker
+                                                    latitude={String(attendanceLocations[mapPickerIndex].latitude ?? '')}
+                                                    longitude={String(attendanceLocations[mapPickerIndex].longitude ?? '')}
+                                                    onSelect={(latitude, longitude) => {
+                                                        handleAttendanceLocationSelect(mapPickerIndex, latitude, longitude);
+                                                        setMapPickerIndex(null);
+                                                    }}
+                                                />
+                                            </div>
+                                        ) : null}
+                                    </DialogContent>
+                                </Dialog>
 
                                 <div className="grid gap-2">
                                     <Label htmlFor="company_logo">

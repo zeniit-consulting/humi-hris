@@ -62,7 +62,7 @@ const menuItems: ActivityItem[] = [
         icon: ClipboardList,
     },
     {
-        title: 'Reprimand',
+        title: 'Teguran',
         description: 'Riwayat teguran dan surat peringatan.',
         hrefKey: 'reprimands',
         fallbackHref: '/portal/reprimands',

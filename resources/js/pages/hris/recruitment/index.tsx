@@ -118,7 +118,10 @@ type Application = {
     last_education: string | null;
     years_experience: string | null;
     current_company: string | null;
+    take_home_pay_min: string | null;
+    take_home_pay_max: string | null;
     expected_salary: string | null;
+    expected_join_date: string | null;
     portfolio_url: string | null;
     linkedin_url: string | null;
     cover_letter: string | null;
@@ -184,7 +187,10 @@ type ApplicationFormData = {
     interviewed_at: string;
     interview_notes: string;
     recruiter_notes: string;
+    take_home_pay_min: string;
+    take_home_pay_max: string;
     expected_salary: string;
+    expected_join_date: string;
     offered_salary: string;
     proposed_start_date: string;
     employment_type: string;
@@ -246,7 +252,10 @@ const defaultApplicationForm: ApplicationFormData = {
     interviewed_at: '',
     interview_notes: '',
     recruiter_notes: '',
+    take_home_pay_min: '',
+    take_home_pay_max: '',
     expected_salary: '',
+    expected_join_date: '',
     offered_salary: '',
     proposed_start_date: '',
     employment_type: '',
@@ -316,6 +325,17 @@ const formatCurrency = (value: string | null) => {
         currency: 'IDR',
         maximumFractionDigits: 0,
     }).format(numericValue);
+};
+
+const formatCurrencyRange = (
+    minimum: string | null,
+    maximum: string | null,
+) => {
+    if (!minimum || !maximum) {
+        return '-';
+    }
+
+    return `${formatCurrency(minimum)} - ${formatCurrency(maximum)}`;
 };
 
 const normalizeDigitInput = (value: string) => value.replace(/[^\d]/g, '');
@@ -456,9 +476,16 @@ export default function RecruitmentPage() {
             interviewed_at: toDateTimeLocal(application.interviewed_at),
             interview_notes: application.interview_notes ?? '',
             recruiter_notes: application.recruiter_notes ?? '',
+            take_home_pay_min: normalizeDigitInput(
+                application.take_home_pay_min ?? '',
+            ),
+            take_home_pay_max: normalizeDigitInput(
+                application.take_home_pay_max ?? '',
+            ),
             expected_salary: normalizeDigitInput(
                 application.expected_salary ?? '',
             ),
+            expected_join_date: application.expected_join_date ?? '',
             offered_salary: normalizeDigitInput(
                 application.offered_salary ?? '',
             ),
@@ -616,7 +643,7 @@ export default function RecruitmentPage() {
                     />
                 )}
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-sky-200 bg-sky-50/70 py-3 dark:border-sky-950 dark:bg-sky-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Total Lowongan</CardDescription>
                             <CardTitle className="text-2xl">
@@ -624,7 +651,7 @@ export default function RecruitmentPage() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-emerald-200 bg-emerald-50/70 py-3 dark:border-emerald-950 dark:bg-emerald-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Lowongan Aktif</CardDescription>
                             <CardTitle className="text-2xl">
@@ -632,7 +659,7 @@ export default function RecruitmentPage() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-violet-200 bg-violet-50/70 py-3 dark:border-violet-950 dark:bg-violet-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Total Kandidat</CardDescription>
                             <CardTitle className="text-2xl">
@@ -640,7 +667,7 @@ export default function RecruitmentPage() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-amber-200 bg-amber-50/70 py-3 dark:border-amber-950 dark:bg-amber-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Sudah Interview</CardDescription>
                             <CardTitle className="text-2xl">
@@ -648,7 +675,7 @@ export default function RecruitmentPage() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-fuchsia-200 bg-fuchsia-50/70 py-3 dark:border-fuchsia-950 dark:bg-fuchsia-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Masuk Offering</CardDescription>
                             <CardTitle className="text-2xl">
@@ -1961,9 +1988,79 @@ export default function RecruitmentPage() {
                                     />
                                 </div>
 
+                                <div className="grid gap-2 md:col-span-2">
+                                    <Label>Take Home Pay Range</Label>
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label
+                                                htmlFor="take_home_pay_min"
+                                                className="text-xs text-muted-foreground"
+                                            >
+                                                Minimum
+                                            </Label>
+                                            <Input
+                                                id="take_home_pay_min"
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={formatThousandDigits(
+                                                    applicationForm.data
+                                                        .take_home_pay_min,
+                                                )}
+                                                onChange={(event) =>
+                                                    applicationForm.setData(
+                                                        'take_home_pay_min',
+                                                        normalizeDigitInput(
+                                                            event.target.value,
+                                                        ),
+                                                    )
+                                                }
+                                                placeholder="Rp 0"
+                                            />
+                                            <InputError
+                                                message={
+                                                    applicationForm.errors
+                                                        .take_home_pay_min
+                                                }
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label
+                                                htmlFor="take_home_pay_max"
+                                                className="text-xs text-muted-foreground"
+                                            >
+                                                Maksimum
+                                            </Label>
+                                            <Input
+                                                id="take_home_pay_max"
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={formatThousandDigits(
+                                                    applicationForm.data
+                                                        .take_home_pay_max,
+                                                )}
+                                                onChange={(event) =>
+                                                    applicationForm.setData(
+                                                        'take_home_pay_max',
+                                                        normalizeDigitInput(
+                                                            event.target.value,
+                                                        ),
+                                                    )
+                                                }
+                                                placeholder="Rp 0"
+                                            />
+                                            <InputError
+                                                message={
+                                                    applicationForm.errors
+                                                        .take_home_pay_max
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="grid gap-2">
                                     <Label htmlFor="expected_salary">
-                                        Ekspektasi gaji
+                                        Expected Salary
                                     </Label>
                                     <Input
                                         id="expected_salary"
@@ -1987,6 +2084,32 @@ export default function RecruitmentPage() {
                                         message={
                                             applicationForm.errors
                                                 .expected_salary
+                                        }
+                                    />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="expected_join_date">
+                                        Expected Join Date
+                                    </Label>
+                                    <Input
+                                        id="expected_join_date"
+                                        type="date"
+                                        value={
+                                            applicationForm.data
+                                                .expected_join_date
+                                        }
+                                        onChange={(event) =>
+                                            applicationForm.setData(
+                                                'expected_join_date',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={
+                                            applicationForm.errors
+                                                .expected_join_date
                                         }
                                     />
                                 </div>
@@ -2236,6 +2359,31 @@ export default function RecruitmentPage() {
                                                       detailApplication.interviewed_at,
                                                   )
                                                 : 'Belum'}
+                                        </p>
+                                        <p>
+                                            <span className="font-medium text-slate-900">
+                                                Take Home Pay Range:
+                                            </span>{' '}
+                                            {formatCurrencyRange(
+                                                detailApplication.take_home_pay_min,
+                                                detailApplication.take_home_pay_max,
+                                            )}
+                                        </p>
+                                        <p>
+                                            <span className="font-medium text-slate-900">
+                                                Expected Salary:
+                                            </span>{' '}
+                                            {formatCurrency(
+                                                detailApplication.expected_salary,
+                                            )}
+                                        </p>
+                                        <p>
+                                            <span className="font-medium text-slate-900">
+                                                Expected Join Date:
+                                            </span>{' '}
+                                            {formatDate(
+                                                detailApplication.expected_join_date,
+                                            )}
                                         </p>
                                         <p>
                                             <span className="font-medium text-slate-900">

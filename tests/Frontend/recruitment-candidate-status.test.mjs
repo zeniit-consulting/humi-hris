@@ -18,3 +18,12 @@ test('candidate tracker updates stage directly from the table', () => {
     assert.match(source, /Diterima/);
     assert.match(source, /updatingApplicationId\s*===\s*application\.id/);
 });
+
+test('candidate tracker captures candidate compensation and join expectations', () => {
+    assert.match(source, /Take Home Pay Range/);
+    assert.match(source, /take_home_pay_min/);
+    assert.match(source, /take_home_pay_max/);
+    assert.match(source, /Expected Salary/);
+    assert.match(source, /expected_join_date/);
+    assert.match(source, /Expected Join Date/);
+});

@@ -195,20 +195,16 @@ export default function EmployeeMasterDataPage() {
     const positionForm = useForm<PositionFormData>(POSITION_DEFAULT);
 
     const availableParentPositions = useMemo(() => {
-        const selectedDivisionId = positionForm.data.division_id;
+        const selectedLevel = Number(positionForm.data.level);
 
         return positionOptions.filter((position) => {
             if (editingPosition && position.id === editingPosition.id) {
                 return false;
             }
 
-            if (selectedDivisionId === '') {
-                return true;
-            }
-
-            return position.division_id === Number(selectedDivisionId);
+            return Number.isFinite(selectedLevel) && position.level !== null && Number(position.level) < selectedLevel;
         });
-    }, [editingPosition, positionForm.data.division_id, positionOptions]);
+    }, [editingPosition, positionForm.data.level, positionOptions]);
 
     const openCreateDivisionDialog = () => {
         setEditingDivision(null);
@@ -366,7 +362,7 @@ export default function EmployeeMasterDataPage() {
                 )}
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-sky-200 bg-sky-50/70 py-3 dark:border-sky-950 dark:bg-sky-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Total Karyawan</CardDescription>
                             <CardTitle className="text-2xl">
@@ -374,7 +370,7 @@ export default function EmployeeMasterDataPage() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-cyan-200 bg-cyan-50/70 py-3 dark:border-cyan-950 dark:bg-cyan-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Total Divisi</CardDescription>
                             <CardTitle className="text-2xl">
@@ -382,7 +378,7 @@ export default function EmployeeMasterDataPage() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-violet-200 bg-violet-50/70 py-3 dark:border-violet-950 dark:bg-violet-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Total Jabatan</CardDescription>
                             <CardTitle className="text-2xl">
@@ -893,40 +889,7 @@ export default function EmployeeMasterDataPage() {
                                         ? '__none'
                                         : positionForm.data.division_id
                                 }
-                                onValueChange={(value) => {
-                                    const divisionId =
-                                        value === '__none' ? '' : value;
-
-                                    positionForm.setData(
-                                        'division_id',
-                                        divisionId,
-                                    );
-
-                                    if (
-                                        divisionId !== '' &&
-                                        positionForm.data.parent_position_id !==
-                                            ''
-                                    ) {
-                                        const selectedParent =
-                                            positionOptions.find(
-                                                (position) =>
-                                                    String(position.id) ===
-                                                    positionForm.data
-                                                        .parent_position_id,
-                                            );
-
-                                        if (
-                                            selectedParent &&
-                                            selectedParent.division_id !==
-                                                Number(divisionId)
-                                        ) {
-                                            positionForm.setData(
-                                                'parent_position_id',
-                                                '',
-                                            );
-                                        }
-                                    }
-                                }}
+                                onValueChange={(value) => positionForm.setData('division_id', value === '__none' ? '' : value)}
                                 placeholder="Pilih divisi"
                                 searchPlaceholder="Cari divisi..."
                                 options={[
@@ -976,6 +939,7 @@ export default function EmployeeMasterDataPage() {
                                 ]}
                                 className="w-full"
                             />
+                            <p className="text-xs text-muted-foreground">Pilih level jabatan terlebih dahulu. Hanya posisi pada level yang lebih tinggi yang dapat menjadi jabatan induk, termasuk dari divisi lain.</p>
                             <InputError
                                 message={positionForm.errors.parent_position_id}
                             />

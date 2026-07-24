@@ -53,6 +53,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::put('manpower-requests/{manpowerRequest}', [ManpowerRequestController::class, 'update'])->name('manpower-requests.update');
     Route::delete('manpower-requests/{manpowerRequest}', [ManpowerRequestController::class, 'destroy'])->name('manpower-requests.destroy');
     Route::get('reprimands', [EmployeeReprimandController::class, 'index'])->name('reprimands.index');
+    Route::get('reprimands/tracking/{employee}', [EmployeeReprimandController::class, 'tracking'])->name('reprimands.tracking');
     Route::post('reprimands', [EmployeeReprimandController::class, 'store'])->name('reprimands.store');
     Route::put('reprimands/{reprimand}', [EmployeeReprimandController::class, 'update'])->name('reprimands.update');
     Route::delete('reprimands/{reprimand}', [EmployeeReprimandController::class, 'destroy'])->name('reprimands.destroy');

@@ -108,7 +108,7 @@ class UserPortalSectionController extends Controller
 
     public function reprimands(Request $request): Response|RedirectResponse
     {
-        return $this->renderForUser($request, 'portal/reprimands', 'Reprimand');
+        return $this->renderForUser($request, 'portal/reprimands', 'Teguran');
     }
 
     public function previewPayslip(Request $request): JsonResponse|RedirectResponse

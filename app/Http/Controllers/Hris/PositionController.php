@@ -89,18 +89,6 @@ class PositionController extends Controller
             ]);
         }
 
-        $divisionId = $validated['division_id'] ?? null;
-
-        if ($divisionId !== null && $parent->division_id !== null && (int) $parent->division_id !== (int) $divisionId) {
-            throw ValidationException::withMessages([
-                'parent_position_id' => 'Sub-jabatan harus berada dalam divisi yang sama dengan jabatan induk.',
-            ]);
-        }
-
-        if (($divisionId === null || $divisionId === '') && $parent->division_id !== null) {
-            $validated['division_id'] = $parent->division_id;
-        }
-
         if ($position !== null && $this->isDescendantOf($parent, $position->id)) {
             throw ValidationException::withMessages([
                 'parent_position_id' => 'Relasi sub-jabatan tidak valid karena menyebabkan siklus hierarki.',

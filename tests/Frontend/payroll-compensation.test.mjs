@@ -22,6 +22,9 @@ test('employee wizard manages multiple fixed allowances', () => {
     assert.match(employeeSource, /Tambah Tunjangan Tetap/);
     assert.match(employeeSource, /Komponen bulanan tanpa batas waktu/);
     assert.match(employeeSource, /selectedEmployee\.allowances\.map/);
+    assert.match(employeeSource, /MAX_FIXED_ALLOWANCE_DIGITS\s*=\s*8/);
+    assert.match(employeeSource, /normalizeStoredCurrencyValue/);
+    assert.match(employeeSource, /normalizeFixedAllowanceInput/);
 });
 
 test('draft payroll manages variable allowances and bonuses separately', () => {

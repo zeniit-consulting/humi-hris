@@ -4,6 +4,7 @@ namespace App\Http\Requests\Hris;
 
 use App\Models\Employee;
 use App\Models\EmployeeBankAccount;
+use App\Support\FixedAllowanceAmount;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -31,7 +32,7 @@ class UpdateEmployeeBankAccountRequest extends FormRequest
 
         if ($this->has('fixed_allowance_amount')) {
             $this->merge([
-                'fixed_allowance_amount' => $this->normalizeCurrencyInput($this->input('fixed_allowance_amount')),
+                'fixed_allowance_amount' => FixedAllowanceAmount::normalize($this->input('fixed_allowance_amount')),
             ]);
         }
     }
@@ -62,19 +63,8 @@ class UpdateEmployeeBankAccountRequest extends FormRequest
             'account_holder_name' => ['required', 'string', 'max:100'],
             'branch' => ['nullable', 'string', 'max:100'],
             'currency' => ['required', 'string', 'size:3'],
-            'fixed_allowance_amount' => ['nullable', 'numeric', 'min:0'],
+            'fixed_allowance_amount' => ['nullable', 'numeric', 'min:0', 'max:'.FixedAllowanceAmount::MAX],
             'is_primary' => ['sometimes', 'boolean'],
         ];
-    }
-
-    private function normalizeCurrencyInput(mixed $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $normalized = preg_replace('/[^\d]/', '', (string) $value);
-
-        return $normalized === '' ? null : $normalized;
     }
 }

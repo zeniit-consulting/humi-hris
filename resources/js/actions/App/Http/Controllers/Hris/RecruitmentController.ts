@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::store
-* @see app/Http/Controllers/Hris/RecruitmentController.php:225
+* @see app/Http/Controllers/Hris/RecruitmentController.php:228
 * @route '/hris/recruitment/vacancies'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::store
-* @see app/Http/Controllers/Hris/RecruitmentController.php:225
+* @see app/Http/Controllers/Hris/RecruitmentController.php:228
 * @route '/hris/recruitment/vacancies'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::store
-* @see app/Http/Controllers/Hris/RecruitmentController.php:225
+* @see app/Http/Controllers/Hris/RecruitmentController.php:228
 * @route '/hris/recruitment/vacancies'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::store
-* @see app/Http/Controllers/Hris/RecruitmentController.php:225
+* @see app/Http/Controllers/Hris/RecruitmentController.php:228
 * @route '/hris/recruitment/vacancies'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::store
-* @see app/Http/Controllers/Hris/RecruitmentController.php:225
+* @see app/Http/Controllers/Hris/RecruitmentController.php:228
 * @route '/hris/recruitment/vacancies'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::update
-* @see app/Http/Controllers/Hris/RecruitmentController.php:243
+* @see app/Http/Controllers/Hris/RecruitmentController.php:246
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 export const update = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -153,7 +153,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::update
-* @see app/Http/Controllers/Hris/RecruitmentController.php:243
+* @see app/Http/Controllers/Hris/RecruitmentController.php:246
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 update.url = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +186,7 @@ update.url = (args: { jobVacancy: number | { id: number } } | [jobVacancy: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::update
-* @see app/Http/Controllers/Hris/RecruitmentController.php:243
+* @see app/Http/Controllers/Hris/RecruitmentController.php:246
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 update.put = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -196,7 +196,7 @@ update.put = (args: { jobVacancy: number | { id: number } } | [jobVacancy: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::update
-* @see app/Http/Controllers/Hris/RecruitmentController.php:243
+* @see app/Http/Controllers/Hris/RecruitmentController.php:246
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 const updateForm = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -211,7 +211,7 @@ const updateForm = (args: { jobVacancy: number | { id: number } } | [jobVacancy:
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::update
-* @see app/Http/Controllers/Hris/RecruitmentController.php:243
+* @see app/Http/Controllers/Hris/RecruitmentController.php:246
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 updateForm.put = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -228,7 +228,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::destroy
-* @see app/Http/Controllers/Hris/RecruitmentController.php:273
+* @see app/Http/Controllers/Hris/RecruitmentController.php:276
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 export const destroy = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -243,7 +243,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::destroy
-* @see app/Http/Controllers/Hris/RecruitmentController.php:273
+* @see app/Http/Controllers/Hris/RecruitmentController.php:276
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 destroy.url = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -276,7 +276,7 @@ destroy.url = (args: { jobVacancy: number | { id: number } } | [jobVacancy: numb
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::destroy
-* @see app/Http/Controllers/Hris/RecruitmentController.php:273
+* @see app/Http/Controllers/Hris/RecruitmentController.php:276
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 destroy.delete = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -286,7 +286,7 @@ destroy.delete = (args: { jobVacancy: number | { id: number } } | [jobVacancy: n
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::destroy
-* @see app/Http/Controllers/Hris/RecruitmentController.php:273
+* @see app/Http/Controllers/Hris/RecruitmentController.php:276
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 const destroyForm = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -301,7 +301,7 @@ const destroyForm = (args: { jobVacancy: number | { id: number } } | [jobVacancy
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::destroy
-* @see app/Http/Controllers/Hris/RecruitmentController.php:273
+* @see app/Http/Controllers/Hris/RecruitmentController.php:276
 * @route '/hris/recruitment/vacancies/{jobVacancy}'
 */
 destroyForm.delete = (args: { jobVacancy: number | { id: number } } | [jobVacancy: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -318,7 +318,7 @@ destroy.form = destroyForm
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::updateApplication
-* @see app/Http/Controllers/Hris/RecruitmentController.php:291
+* @see app/Http/Controllers/Hris/RecruitmentController.php:294
 * @route '/hris/recruitment/applications/{jobApplication}'
 */
 export const updateApplication = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -333,7 +333,7 @@ updateApplication.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::updateApplication
-* @see app/Http/Controllers/Hris/RecruitmentController.php:291
+* @see app/Http/Controllers/Hris/RecruitmentController.php:294
 * @route '/hris/recruitment/applications/{jobApplication}'
 */
 updateApplication.url = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -366,7 +366,7 @@ updateApplication.url = (args: { jobApplication: number | { id: number } } | [jo
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::updateApplication
-* @see app/Http/Controllers/Hris/RecruitmentController.php:291
+* @see app/Http/Controllers/Hris/RecruitmentController.php:294
 * @route '/hris/recruitment/applications/{jobApplication}'
 */
 updateApplication.put = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -376,7 +376,7 @@ updateApplication.put = (args: { jobApplication: number | { id: number } } | [jo
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::updateApplication
-* @see app/Http/Controllers/Hris/RecruitmentController.php:291
+* @see app/Http/Controllers/Hris/RecruitmentController.php:294
 * @route '/hris/recruitment/applications/{jobApplication}'
 */
 const updateApplicationForm = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -391,7 +391,7 @@ const updateApplicationForm = (args: { jobApplication: number | { id: number } }
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::updateApplication
-* @see app/Http/Controllers/Hris/RecruitmentController.php:291
+* @see app/Http/Controllers/Hris/RecruitmentController.php:294
 * @route '/hris/recruitment/applications/{jobApplication}'
 */
 updateApplicationForm.put = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -408,7 +408,7 @@ updateApplication.form = updateApplicationForm
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::offerLetter
-* @see app/Http/Controllers/Hris/RecruitmentController.php:315
+* @see app/Http/Controllers/Hris/RecruitmentController.php:318
 * @route '/hris/recruitment/applications/{jobApplication}/offer-letter'
 */
 export const offerLetter = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -423,7 +423,7 @@ offerLetter.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::offerLetter
-* @see app/Http/Controllers/Hris/RecruitmentController.php:315
+* @see app/Http/Controllers/Hris/RecruitmentController.php:318
 * @route '/hris/recruitment/applications/{jobApplication}/offer-letter'
 */
 offerLetter.url = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -456,7 +456,7 @@ offerLetter.url = (args: { jobApplication: number | { id: number } } | [jobAppli
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::offerLetter
-* @see app/Http/Controllers/Hris/RecruitmentController.php:315
+* @see app/Http/Controllers/Hris/RecruitmentController.php:318
 * @route '/hris/recruitment/applications/{jobApplication}/offer-letter'
 */
 offerLetter.get = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -466,7 +466,7 @@ offerLetter.get = (args: { jobApplication: number | { id: number } } | [jobAppli
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::offerLetter
-* @see app/Http/Controllers/Hris/RecruitmentController.php:315
+* @see app/Http/Controllers/Hris/RecruitmentController.php:318
 * @route '/hris/recruitment/applications/{jobApplication}/offer-letter'
 */
 offerLetter.head = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -476,7 +476,7 @@ offerLetter.head = (args: { jobApplication: number | { id: number } } | [jobAppl
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::offerLetter
-* @see app/Http/Controllers/Hris/RecruitmentController.php:315
+* @see app/Http/Controllers/Hris/RecruitmentController.php:318
 * @route '/hris/recruitment/applications/{jobApplication}/offer-letter'
 */
 const offerLetterForm = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -486,7 +486,7 @@ const offerLetterForm = (args: { jobApplication: number | { id: number } } | [jo
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::offerLetter
-* @see app/Http/Controllers/Hris/RecruitmentController.php:315
+* @see app/Http/Controllers/Hris/RecruitmentController.php:318
 * @route '/hris/recruitment/applications/{jobApplication}/offer-letter'
 */
 offerLetterForm.get = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -496,7 +496,7 @@ offerLetterForm.get = (args: { jobApplication: number | { id: number } } | [jobA
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::offerLetter
-* @see app/Http/Controllers/Hris/RecruitmentController.php:315
+* @see app/Http/Controllers/Hris/RecruitmentController.php:318
 * @route '/hris/recruitment/applications/{jobApplication}/offer-letter'
 */
 offerLetterForm.head = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -513,7 +513,7 @@ offerLetter.form = offerLetterForm
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::initialContract
-* @see app/Http/Controllers/Hris/RecruitmentController.php:348
+* @see app/Http/Controllers/Hris/RecruitmentController.php:351
 * @route '/hris/recruitment/applications/{jobApplication}/initial-contract'
 */
 export const initialContract = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -528,7 +528,7 @@ initialContract.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::initialContract
-* @see app/Http/Controllers/Hris/RecruitmentController.php:348
+* @see app/Http/Controllers/Hris/RecruitmentController.php:351
 * @route '/hris/recruitment/applications/{jobApplication}/initial-contract'
 */
 initialContract.url = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -561,7 +561,7 @@ initialContract.url = (args: { jobApplication: number | { id: number } } | [jobA
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::initialContract
-* @see app/Http/Controllers/Hris/RecruitmentController.php:348
+* @see app/Http/Controllers/Hris/RecruitmentController.php:351
 * @route '/hris/recruitment/applications/{jobApplication}/initial-contract'
 */
 initialContract.get = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -571,7 +571,7 @@ initialContract.get = (args: { jobApplication: number | { id: number } } | [jobA
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::initialContract
-* @see app/Http/Controllers/Hris/RecruitmentController.php:348
+* @see app/Http/Controllers/Hris/RecruitmentController.php:351
 * @route '/hris/recruitment/applications/{jobApplication}/initial-contract'
 */
 initialContract.head = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -581,7 +581,7 @@ initialContract.head = (args: { jobApplication: number | { id: number } } | [job
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::initialContract
-* @see app/Http/Controllers/Hris/RecruitmentController.php:348
+* @see app/Http/Controllers/Hris/RecruitmentController.php:351
 * @route '/hris/recruitment/applications/{jobApplication}/initial-contract'
 */
 const initialContractForm = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -591,7 +591,7 @@ const initialContractForm = (args: { jobApplication: number | { id: number } } |
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::initialContract
-* @see app/Http/Controllers/Hris/RecruitmentController.php:348
+* @see app/Http/Controllers/Hris/RecruitmentController.php:351
 * @route '/hris/recruitment/applications/{jobApplication}/initial-contract'
 */
 initialContractForm.get = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -601,7 +601,7 @@ initialContractForm.get = (args: { jobApplication: number | { id: number } } | [
 
 /**
 * @see \App\Http\Controllers\Hris\RecruitmentController::initialContract
-* @see app/Http/Controllers/Hris/RecruitmentController.php:348
+* @see app/Http/Controllers/Hris/RecruitmentController.php:351
 * @route '/hris/recruitment/applications/{jobApplication}/initial-contract'
 */
 initialContractForm.head = (args: { jobApplication: number | { id: number } } | [jobApplication: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

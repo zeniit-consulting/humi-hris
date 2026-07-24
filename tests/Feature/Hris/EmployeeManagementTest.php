@@ -1088,6 +1088,68 @@ class EmployeeManagementTest extends TestCase
         ]);
     }
 
+    public function test_employee_allowance_preserves_decimal_database_value_when_edited(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+        $allowance = EmployeeAllowance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Tetap',
+            'amount' => 1_000_000,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->put(route('hris.employees.allowances.update', [$employee, $allowance]), [
+                'name' => 'Tunjangan Tetap',
+                'amount' => '1000000.00',
+                'is_active' => true,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('employee_allowances', [
+            'id' => $allowance->id,
+            'amount' => '1000000.00',
+        ]);
+    }
+
+    public function test_employee_allowance_rejects_amount_above_masking_limit(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->post(route('hris.employees.allowances.store', $employee), [
+                'name' => 'Tunjangan Tetap',
+                'amount' => '100.000.000',
+                'is_active' => true,
+            ])
+            ->assertSessionHasErrors('amount');
+    }
+
+    public function test_multiplied_fixed_allowance_data_is_repaired(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+        $allowance = EmployeeAllowance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Tetap',
+            'amount' => 100_000_000,
+            'is_active' => true,
+        ]);
+
+        $migration = require database_path('migrations/2026_07_22_000002_repair_multiplied_fixed_allowance_amounts.php');
+        $migration->up();
+
+        $this->assertDatabaseHas('employee_allowances', [
+            'id' => $allowance->id,
+            'amount' => '1000000.00',
+        ]);
+    }
+
     public function test_level_zero_to_two_position_can_only_be_assigned_to_one_employee()
     {
         $user = User::factory()->create([
@@ -1280,6 +1342,33 @@ class EmployeeManagementTest extends TestCase
             'parent_position_id' => $parent->id,
             'division_id' => $division->id,
             'code' => 'S01',
+        ]);
+    }
+
+    public function test_position_can_use_higher_level_parent_from_another_division(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $executiveDivision = Division::factory()->create(['user_id' => $user->id]);
+        $operationsDivision = Division::factory()->create(['user_id' => $user->id]);
+        $parent = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $executiveDivision->id,
+            'level' => '1',
+        ]);
+
+        $this->actingAs($user)->post(route('hris.positions.store'), [
+            'division_id' => $operationsDivision->id,
+            'parent_position_id' => $parent->id,
+            'code' => 'SUP',
+            'name' => 'Supervisor Operasional',
+            'level' => '3',
+            'is_active' => true,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('positions', [
+            'division_id' => $operationsDivision->id,
+            'parent_position_id' => $parent->id,
+            'level' => '3',
         ]);
     }
 

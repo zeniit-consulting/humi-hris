@@ -89,7 +89,10 @@ class RecruitmentModuleTest extends TestCase
                 'interviewed_at' => '2026-04-10 10:30:00',
                 'interview_notes' => 'Komunikasi baik dan cukup siap.',
                 'recruiter_notes' => 'Lanjut ke offering.',
+                'take_home_pay_min' => '5.500.000',
+                'take_home_pay_max' => '6.000.000',
                 'expected_salary' => '6.500.000',
+                'expected_join_date' => '2026-04-20',
                 'offered_salary' => '6.200.000',
                 'proposed_start_date' => '2026-05-01',
                 'employment_type' => 'permanent',
@@ -99,9 +102,17 @@ class RecruitmentModuleTest extends TestCase
         $this->assertDatabaseHas('job_applications', [
             'id' => $application->id,
             'stage' => 'interviewed',
+            'take_home_pay_min' => '5500000.00',
+            'take_home_pay_max' => '6000000.00',
+            'expected_salary' => '6500000.00',
             'offered_salary' => '6200000.00',
             'employment_type' => 'permanent',
         ]);
+
+        $this->assertSame(
+            '2026-04-20',
+            $application->fresh()->expected_join_date?->format('Y-m-d')
+        );
     }
 
     public function test_admin_can_update_candidate_stage_with_minimal_tracker_payload(): void

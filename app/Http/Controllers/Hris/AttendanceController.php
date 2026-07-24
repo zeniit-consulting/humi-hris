@@ -139,13 +139,55 @@ class AttendanceController extends Controller
         $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth();
         $end = $start->copy()->endOfMonth();
 
-        $rows = EmployeeAttendance::query()
+        $attendanceByDate = EmployeeAttendance::query()
             ->with('shift:id,code,name,start_time,end_time,is_day_off')
             ->where('employee_id', $employee->id)
             ->whereBetween('attendance_date', [$start->toDateString(), $end->toDateString()])
             ->orderBy('attendance_date')
             ->orderBy('id')
-            ->get();
+            ->get()
+            ->keyBy(fn (EmployeeAttendance $attendance) => $attendance->attendance_date->toDateString());
+
+        $scheduleByDate = EmployeeSchedule::query()
+            ->where('employee_id', $employee->id)
+            ->whereBetween('work_date', [$start->toDateString(), $end->toDateString()])
+            ->get(['work_date', 'shift_code'])
+            ->keyBy(fn (EmployeeSchedule $schedule) => $schedule->work_date->toDateString());
+
+        $rows = collect();
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            $dateKey = $date->toDateString();
+            $attendance = $attendanceByDate->get($dateKey);
+
+            $rows->push($attendance ? [
+                'id' => $attendance->id,
+                'attendance_date' => $dateKey,
+                'timezone' => $attendance->timezone,
+                'shift_name' => $attendance->shift?->name
+                    ?? $attendance->shift?->code
+                    ?? $scheduleByDate->get($dateKey)?->shift_code
+                    ?? 'OFF',
+                'status' => $attendance->status,
+                'late_minutes' => $attendance->late_minutes,
+                'late_level' => $attendance->late_level,
+                'check_in_at' => $attendance->check_in_at?->toIso8601String(),
+                'check_out_at' => $attendance->check_out_at?->toIso8601String(),
+                'notes' => $attendance->notes,
+                'is_missing' => false,
+            ] : [
+                'id' => null,
+                'attendance_date' => $dateKey,
+                'timezone' => $employee->timezone,
+                'shift_name' => $scheduleByDate->get($dateKey)?->shift_code ?? 'OFF',
+                'status' => 'absent',
+                'late_minutes' => null,
+                'late_level' => null,
+                'check_in_at' => null,
+                'check_out_at' => null,
+                'notes' => null,
+                'is_missing' => true,
+            ]);
+        }
 
         $summary = $rows
             ->countBy('status');
@@ -173,20 +215,7 @@ class AttendanceController extends Controller
                 'on_leave' => (int) ($summary['on_leave'] ?? 0),
                 'absent' => (int) ($summary['absent'] ?? 0),
             ],
-            'attendances' => $rows->map(fn (EmployeeAttendance $attendance) => [
-                'id' => $attendance->id,
-                'attendance_date' => $attendance->attendance_date->format('Y-m-d'),
-                'timezone' => $attendance->timezone,
-                'shift_name' => $attendance->shift?->name
-                    ?? $attendance->shift?->code
-                    ?? 'OFF',
-                'status' => $attendance->status,
-                'late_minutes' => $attendance->late_minutes,
-                'late_level' => $attendance->late_level,
-                'check_in_at' => $attendance->check_in_at?->toIso8601String(),
-                'check_out_at' => $attendance->check_out_at?->toIso8601String(),
-                'notes' => $attendance->notes,
-            ])->values(),
+            'attendances' => $rows,
         ]);
     }
 

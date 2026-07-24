@@ -97,7 +97,10 @@ class CareerPortalTest extends TestCase
             'last_education' => 'S1',
             'years_experience' => '3',
             'current_company' => 'PT Maju',
-            'expected_salary' => '8000000',
+            'take_home_pay_min' => '5.500.000',
+            'take_home_pay_max' => '6.000.000',
+            'expected_salary' => '8.000.000',
+            'expected_join_date' => '2026-08-03',
             'portfolio_url' => 'https://portfolio.example.com',
             'linkedin_url' => 'https://linkedin.com/in/sinta',
             'cover_letter' => 'Saya siap bergabung.',
@@ -117,8 +120,16 @@ class CareerPortalTest extends TestCase
             'phone' => '6281298765432',
             'stage' => 'applied',
             'employment_type' => 'contract',
+            'take_home_pay_min' => '5500000.00',
+            'take_home_pay_max' => '6000000.00',
+            'expected_salary' => '8000000.00',
             'resume_original_name' => 'cv-sinta.pdf',
         ]);
+
+        $this->assertSame(
+            '2026-08-03',
+            $vacancy->applications()->first()?->expected_join_date?->format('Y-m-d')
+        );
 
         $this->assertNotNull($vacancy->applications()->first()?->resume_path);
 

@@ -243,7 +243,7 @@ export default function ShiftChangeApprovalPage() {
 
             <div className="space-y-4 p-4">
                 <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-amber-200 bg-amber-50/70 py-3 dark:border-amber-950 dark:bg-amber-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Menunggu</CardDescription>
                             <CardTitle className="text-2xl">
@@ -251,7 +251,7 @@ export default function ShiftChangeApprovalPage() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-emerald-200 bg-emerald-50/70 py-3 dark:border-emerald-950 dark:bg-emerald-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Disetujui</CardDescription>
                             <CardTitle className="text-2xl">
@@ -259,7 +259,7 @@ export default function ShiftChangeApprovalPage() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="gap-2 py-3">
+                    <Card className="gap-2 border-rose-200 bg-rose-50/70 py-3 dark:border-rose-950 dark:bg-rose-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription>Ditolak</CardDescription>
                             <CardTitle className="text-2xl">
