@@ -21,7 +21,7 @@ class EnsureAccountNotSuspended
 
         $owner = $user->parent_user_id ? $user->parentUser : $user;
 
-        if (! $owner?->isSuspended()) {
+        if (! $user->isSuspended() && ! $owner?->isSuspended()) {
             return $next($request);
         }
 
@@ -30,6 +30,8 @@ class EnsureAccountNotSuspended
         $request->session()->regenerateToken();
 
         return redirect()->route('login')
-            ->with('status', 'Akun perusahaan Anda sedang dinonaktifkan. Hubungi admin Humi untuk bantuan.');
+            ->with('status', $user->isSuspended()
+                ? 'Akun Anda sudah tidak aktif. Hubungi admin perusahaan untuk bantuan.'
+                : 'Akun perusahaan Anda sedang dinonaktifkan. Hubungi admin Humi untuk bantuan.');
     }
 }

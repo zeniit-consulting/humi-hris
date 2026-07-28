@@ -1,6 +1,17 @@
-import { CheckCircle2, CreditCard, Mail, Phone, Save } from 'lucide-react';
+import {
+    CheckCircle2,
+    BellRing,
+    ChevronDown,
+    CreditCard,
+    FileBadge,
+    Mail,
+    Phone,
+    Save,
+    UserRound,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import {
     formatDate,
     notifyPortal,
@@ -9,6 +20,7 @@ import {
 } from './lib';
 import type { PortalLinkMap } from './lib';
 import { PortalShell } from './shell';
+import { enableAttendancePush } from './lib/firebase-messaging';
 
 // Hallmark · genre: modern-minimal · macrostructure: Long Document · theme: Quiet · enrichment: none
 // Hallmark · compact profile ledger · pre-emit critique: P5 H5 E5 S5 R5 V5
@@ -106,10 +118,72 @@ const formatProfileValue = (value: string | number | null | undefined) => {
     return String(value);
 };
 
+const initials = (value: string) =>
+    value
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join('') || 'HK';
+
+function ProfileAccordion({
+    section,
+    title,
+    description,
+    icon: Icon,
+    isOpen,
+    onOpen,
+    children,
+}: {
+    section: string;
+    title: string;
+    description: string;
+    icon: LucideIcon;
+    isOpen: boolean;
+    onOpen: (section: string) => void;
+    children: ReactNode;
+}) {
+    return (
+        <section className="overflow-hidden rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] shadow-[var(--portal-shadow-raised)]">
+            <button
+                type="button"
+                onClick={() => onOpen(section)}
+                className="portal-pressable portal-focus-ring flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left"
+                aria-expanded={isOpen}
+            >
+                <span className="portal-primary-soft inline-flex size-10 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)]">
+                    <Icon className="portal-primary-text size-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-bold text-[var(--portal-color-ink)]">
+                        {title}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-[var(--portal-color-muted)]">
+                        {description}
+                    </span>
+                </span>
+                <ChevronDown
+                    className={`size-5 shrink-0 text-[var(--portal-color-muted)] transition-transform duration-200 ${
+                        isOpen ? 'rotate-180' : ''
+                    }`}
+                />
+            </button>
+            {isOpen ? (
+                <div className="border-t border-[var(--portal-color-rule)] px-4 py-4">
+                    {children}
+                </div>
+            ) : null}
+        </section>
+    );
+}
+
 export default function PortalProfilePage({ pageTitle }: Props) {
     const [portal, setPortal] = useState<PortalSummary | null>(null);
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isEnablingPush, setIsEnablingPush] = useState(false);
+    const [openSection, setOpenSection] = useState('personal');
 
     const [formProfile, setFormProfile] = useState({
         phone: '',
@@ -283,6 +357,29 @@ export default function PortalProfilePage({ pageTitle }: Props) {
         }));
     };
 
+    const enablePushNotifications = async () => {
+        try {
+            setIsEnablingPush(true);
+            const token = await enableAttendancePush();
+            const response = await requestApi<{
+                test_notification_sent: boolean;
+            }>('/portal/api/push-devices', 'POST', { token });
+            if (!response.data.test_notification_sent) {
+                notifyPortal(
+                    'error',
+                    'Perangkat tersimpan, tetapi notifikasi uji belum terkirim. Periksa konfigurasi Firebase server.',
+                );
+
+                return;
+            }
+            notifyPortal('success', 'Notifikasi uji berhasil dikirim ke perangkat ini.');
+        } catch (error) {
+            notifyPortal('error', error instanceof Error ? error.message : 'Notifikasi belum dapat diaktifkan.');
+        } finally {
+            setIsEnablingPush(false);
+        }
+    };
+
     const bankAccounts = profile?.bank_accounts || [];
     const primaryBank = bankAccounts.find((b) => b.is_primary);
     const personalDetails = profile?.employee
@@ -408,30 +505,40 @@ export default function PortalProfilePage({ pageTitle }: Props) {
             }
         >
             <div className="min-w-0 space-y-3">
-                <section className="rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-ink)] px-4 py-4 text-[var(--portal-color-paper)] shadow-[var(--portal-shadow-material)]">
-                    <p className="font-semibold tracking-[0.16em] text-[var(--portal-color-accent-soft)] text-[var(--portal-text-label)] uppercase">
-                        Profil karyawan
-                    </p>
-                    <h2 className="mt-2 min-w-0 font-bold tracking-[-0.04em] [overflow-wrap:anywhere] text-[var(--portal-text-lg)]">
-                        {portal?.employee?.full_name ?? 'Profil karyawan'}
-                    </h2>
-                    <p className="mt-1 text-[var(--portal-color-accent-soft)] text-[var(--portal-text-sm)]">
-                        {portal?.employee?.position?.name ??
-                            'Posisi belum diisi'}
-                        {' · '}
-                        {portal?.employee?.division?.name ??
-                            'Divisi belum diisi'}
-                    </p>
-                    <div className="mt-3 flex min-w-0 items-center justify-between gap-4 border-t border-[var(--portal-color-accent)] pt-3">
+                <section className="profile-identity-hero overflow-hidden rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-accent-strong)] px-4 py-5 text-[var(--portal-color-paper)] shadow-[var(--portal-shadow-material)]">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <span className="flex size-14 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)] bg-white/15 text-lg font-extrabold text-[var(--portal-color-paper)]">
+                            {initials(
+                                portal?.employee?.full_name ?? 'Humi Karyawan',
+                            )}
+                        </span>
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold tracking-[0.16em] text-[var(--portal-color-paper)] uppercase">
+                                Profil karyawan
+                            </p>
+                            <h2 className="mt-1 truncate text-lg font-bold text-[var(--portal-color-paper)]">
+                                {portal?.employee?.full_name ??
+                                    'Profil karyawan'}
+                            </h2>
+                            <p className="mt-1 truncate text-xs text-[var(--portal-color-paper)]">
+                                {portal?.employee?.position?.name ??
+                                    'Posisi belum diisi'}
+                                {' · '}
+                                {portal?.employee?.division?.name ??
+                                    'Divisi belum diisi'}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="mt-5 flex min-w-0 items-center justify-between gap-4 border-t border-white/20 pt-3">
                         <span className="min-w-0">
-                            <span className="block text-[var(--portal-color-accent-soft)] text-[var(--portal-text-xs)]">
+                            <span className="block text-xs text-[var(--portal-color-paper)]">
                                 Kode karyawan
                             </span>
-                            <span className="mt-1 block truncate font-semibold text-[var(--portal-text-sm)]">
+                            <span className="mt-1 block truncate text-sm font-bold text-[var(--portal-color-paper)]">
                                 {portal?.employee?.employee_code ?? '-'}
                             </span>
                         </span>
-                        <span className="shrink-0 rounded-[var(--portal-radius-pill)] bg-[var(--portal-color-accent)] px-3 py-1.5 font-semibold text-[var(--portal-color-accent-ink)] text-[var(--portal-text-xs)]">
+                        <span className="shrink-0 rounded-[var(--portal-radius-pill)] bg-white/15 px-3 py-1.5 text-xs font-bold text-[var(--portal-color-paper)]">
                             {portal?.employee?.employment_status ?? '-'}
                         </span>
                     </div>
@@ -508,46 +615,80 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     </section>
                 )}
 
-                <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-4 py-4 shadow-[var(--portal-shadow-raised)]">
+                <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] p-4 shadow-[var(--portal-shadow-raised)]">
                     <div className="flex items-center gap-3">
-                        <span className="portal-primary-soft inline-flex size-9 items-center justify-center rounded-lg">
-                            <Phone className="size-4" />
+                        <span className="portal-primary-soft inline-flex size-10 items-center justify-center rounded-[var(--portal-radius-control)]">
+                            <BellRing className="portal-primary-text size-5" />
                         </span>
-                        <div>
-                            <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
-                                Informasi Pribadi
-                            </p>
-                            <h2 className="mt-1 text-lg font-bold tracking-[-0.04em]">
-                                Data Diri & Identitas
-                            </h2>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-[var(--portal-color-ink)]">Pengingat absensi</p>
+                            <p className="mt-0.5 text-xs text-[var(--portal-color-muted)]">Terima pengingat clock in dan clock out 15 menit sebelum jadwal.</p>
                         </div>
                     </div>
+                    <button type="button" onClick={() => void enablePushNotifications()} disabled={isEnablingPush} className="portal-primary-bg portal-pressable portal-focus-ring mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-[var(--portal-radius-control)] px-4 text-sm font-bold disabled:opacity-60">
+                        {isEnablingPush ? 'Mengaktifkan…' : 'Aktifkan notifikasi'}
+                    </button>
+                </section>
 
-                    <details className="mt-3 rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface-raised)] px-3 py-2.5">
-                        <summary className="cursor-pointer font-semibold text-[var(--portal-color-ink)] text-[var(--portal-text-sm)]">
-                            Lihat data tersimpan
-                        </summary>
-                        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-                            {personalDetails.map((item) => (
-                                <div key={item.label} className="min-w-0">
-                                    <dt className="text-[var(--portal-color-muted)] text-[var(--portal-text-xs)]">
-                                        {item.label}
-                                    </dt>
-                                    <dd className="mt-0.5 truncate font-semibold text-[var(--portal-color-ink)] text-[var(--portal-text-sm)]">
-                                        {formatProfileValue(item.value)}
-                                    </dd>
-                                </div>
-                            ))}
-                        </dl>
-                    </details>
+                <ProfileAccordion
+                    section="personal"
+                    title="Data Pribadi"
+                    description="Informasi kepegawaian dan data dasar"
+                    icon={UserRound}
+                    isOpen={openSection === 'personal'}
+                    onOpen={setOpenSection}
+                >
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+                        {personalDetails.slice(0, 14).map((item) => (
+                            <div key={item.label} className="min-w-0">
+                                <dt className="text-xs text-[var(--portal-color-muted)]">
+                                    {item.label}
+                                </dt>
+                                <dd className="mt-0.5 truncate text-sm font-semibold text-[var(--portal-color-ink)]">
+                                    {formatProfileValue(item.value)}
+                                </dd>
+                            </div>
+                        ))}
+                    </dl>
+                </ProfileAccordion>
 
+                <ProfileAccordion
+                    section="identity"
+                    title="Identitas & Kepesertaan"
+                    description="KK, KTP, BPJS, dan SIM"
+                    icon={FileBadge}
+                    isOpen={openSection === 'identity'}
+                    onOpen={setOpenSection}
+                >
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+                        {personalDetails.slice(14, 22).map((item) => (
+                            <div key={item.label} className="min-w-0">
+                                <dt className="text-xs text-[var(--portal-color-muted)]">
+                                    {item.label}
+                                </dt>
+                                <dd className="mt-0.5 truncate text-sm font-semibold text-[var(--portal-color-ink)]">
+                                    {formatProfileValue(item.value)}
+                                </dd>
+                            </div>
+                        ))}
+                    </dl>
+                </ProfileAccordion>
+
+                <ProfileAccordion
+                    section="contact"
+                    title="Kontak & Data Keluarga"
+                    description="Perbarui informasi yang dapat Anda kelola"
+                    icon={Phone}
+                    isOpen={openSection === 'contact'}
+                    onOpen={setOpenSection}
+                >
                     <form
                         onSubmit={handleSaveProfile}
-                        className="mt-4 space-y-3"
+                        className="space-y-3"
                     >
-                        <div className="border-t border-[var(--portal-color-rule)] pt-4">
-                            <p className="font-semibold tracking-[0.14em] text-[var(--portal-color-muted)] text-[var(--portal-text-label)] uppercase">
-                                Perbarui data
+                        <div>
+                            <p className="font-semibold text-[var(--portal-color-ink)] text-sm">
+                                Perbarui data kontak dan keluarga
                             </p>
                             <p className="mt-1 text-[var(--portal-color-muted)] text-[var(--portal-text-sm)]">
                                 Isi informasi yang diperlukan agar profil tetap
@@ -788,24 +929,17 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                             )}
                         </button>
                     </form>
-                </section>
+                </ProfileAccordion>
 
-                <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-4 py-4 shadow-[var(--portal-shadow-raised)]">
-                    <div className="flex items-center gap-3">
-                        <span className="portal-primary-soft inline-flex size-9 items-center justify-center rounded-lg">
-                            <CreditCard className="size-4" />
-                        </span>
-                        <div>
-                            <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
-                                Rekening Bank
-                            </p>
-                            <h2 className="mt-1 text-lg font-bold tracking-[-0.04em]">
-                                Data Bank
-                            </h2>
-                        </div>
-                    </div>
-
-                    <form onSubmit={handleSaveBank} className="mt-4 space-y-3">
+                <ProfileAccordion
+                    section="bank"
+                    title="Rekening Utama"
+                    description="Rekening untuk kebutuhan payroll"
+                    icon={CreditCard}
+                    isOpen={openSection === 'bank'}
+                    onOpen={setOpenSection}
+                >
+                    <form onSubmit={handleSaveBank} className="space-y-3">
                         <div>
                             <label className="block text-sm font-semibold text-slate-900">
                                 Nama Bank
@@ -947,31 +1081,25 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                             </div>
                         </div>
                     ) : null}
-                </section>
+                </ProfileAccordion>
 
-                <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-4 py-4 shadow-[var(--portal-shadow-raised)]">
-                    <div className="flex items-center gap-3">
-                        <span className="inline-flex size-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
-                            <Mail className="size-4" />
-                        </span>
-                        <div>
-                            <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
-                                Email
-                            </p>
-                            <h2 className="mt-1 text-lg font-bold tracking-[-0.04em]">
-                                {profile?.employee.email ||
-                                    'Email tidak terdaftar'}
-                            </h2>
-                        </div>
-                    </div>
-
-                    <div className="mt-4 rounded-[9px] border border-stone-200 bg-stone-50 px-4 py-3">
+                <ProfileAccordion
+                    section="email"
+                    title="Email akun"
+                    description={
+                        profile?.employee.email ?? 'Email tidak terdaftar'
+                    }
+                    icon={Mail}
+                    isOpen={openSection === 'email'}
+                    onOpen={setOpenSection}
+                >
+                    <div className="rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface-raised)] px-4 py-3">
                         <p className="text-sm text-slate-600">
                             Untuk mengubah email, silakan hubungi HR atau
                             administrator sistem.
                         </p>
                     </div>
-                </section>
+                </ProfileAccordion>
             </div>
         </PortalShell>
     );

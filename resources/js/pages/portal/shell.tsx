@@ -94,7 +94,7 @@ export function PortalShell({
                                     <ArrowLeft className="size-4" />
                                 </button>
                             </div>
-                            <h1 className="max-w-[calc(100vw-10rem)] justify-self-center truncate text-center text-xl font-extrabold tracking-[-0.04em] text-slate-950">
+                            <h1 className="max-w-[calc(100vw-10rem)] justify-self-center truncate text-center text-xl font-bold tracking-[0.2em] text-slate-950">
                                 {title}
                             </h1>
                             <div className="min-w-0 justify-self-end">

@@ -245,18 +245,20 @@ export default function PortalAttendancePage({ pageTitle }: Props) {
                     </div>
                 </div>
 
-                <a
-                    href="/portal/shift-change"
-                    className="portal-primary-bg portal-pressable portal-focus-ring mt-4 inline-flex h-12 w-full items-center justify-center rounded-[var(--portal-radius-control)] text-sm font-bold"
-                >
-                    Ubah Jadwal Saya
-                </a>
-                <a
-                    href="/portal/attendance-request"
-                    className="portal-pressable portal-focus-ring mt-2 inline-flex h-12 w-full items-center justify-center rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] text-sm font-bold text-[var(--portal-color-ink)]"
-                >
-                    Request Absensi Manual
-                </a>
+                <div className="mt-4 flex gap-2">
+                    <a
+                        href="/portal/shift-change"
+                        className="portal-primary-bg portal-pressable portal-focus-ring inline-flex h-12 flex-1 items-center justify-center rounded-[var(--portal-radius-control)] px-2 text-center text-sm font-bold"
+                    >
+                        Ubah Jadwal
+                    </a>
+                    <a
+                        href="/portal/attendance-request"
+                        className="portal-pressable portal-focus-ring inline-flex h-12 flex-1 items-center justify-center rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-2 text-center text-sm font-bold text-[var(--portal-color-ink)]"
+                    >
+                        Req Absensi
+                    </a>
+                </div>
             </section>
 
             <section className="portal-material mt-4 rounded-[var(--portal-radius-surface)] border p-4">
@@ -314,14 +316,8 @@ export default function PortalAttendancePage({ pageTitle }: Props) {
                         {attendance.items.map((item) => (
                             <article
                                 key={item.id}
-                                className="relative flex gap-3 border-b border-[var(--portal-color-rule)] py-3 last:border-b-0"
+                                className="border-b border-[var(--portal-color-rule)] py-3 last:border-b-0"
                             >
-                                <div className="flex w-12 shrink-0 flex-col items-center pt-0.5">
-                                    <span className="portal-tabular text-xs font-semibold text-[var(--portal-color-muted)]">
-                                        {formatDate(item.attendance_date)}
-                                    </span>
-                                    <span className="mt-2 size-2 rounded-full bg-[var(--portal-color-accent)]" />
-                                </div>
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">

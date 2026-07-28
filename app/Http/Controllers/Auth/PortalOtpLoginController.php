@@ -43,9 +43,13 @@ class PortalOtpLoginController extends Controller
             ->where('employee_code', $employeeCode)
             ->first();
 
-        $employeePhone = $employee instanceof Employee
-            ? WhatsAppPhone::normalize((string) $employee->phone)
-            : '';
+        if (! $employee instanceof Employee || ! $employee->is_active || $employee->employment_status === 'resigned') {
+            throw ValidationException::withMessages([
+                'employee_code' => 'Akun portal karyawan tidak aktif.',
+            ]);
+        }
+
+        $employeePhone = WhatsAppPhone::normalize((string) $employee->phone);
 
         if ($phone === '' || $employeePhone === '' || ! hash_equals($employeePhone, $phone)) {
             throw ValidationException::withMessages([
@@ -58,6 +62,12 @@ class PortalOtpLoginController extends Controller
         if (! $user) {
             throw ValidationException::withMessages([
                 'phone' => 'Akun portal karyawan belum dapat digunakan.',
+            ]);
+        }
+
+        if ($user->isSuspended()) {
+            throw ValidationException::withMessages([
+                'employee_code' => 'Akun portal karyawan tidak aktif.',
             ]);
         }
 

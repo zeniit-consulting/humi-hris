@@ -53,6 +53,7 @@ class CompanySettingUpdateRequest extends FormRequest
             'location_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'attendance_radius_meters' => ['required', 'integer', 'min:10', 'max:100000'],
             'attendance_locations' => ['nullable', 'array', 'max:20'],
+            'attendance_locations.*.id' => ['nullable', 'string', 'max:100'],
             'attendance_locations.*.name' => ['required_with:attendance_locations', 'string', 'max:150'],
             'attendance_locations.*.address' => ['nullable', 'string', 'max:1000'],
             'attendance_locations.*.latitude' => ['required_with:attendance_locations', 'numeric', 'between:-90,90'],

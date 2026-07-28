@@ -5,8 +5,12 @@
 
 :root {
     --portal-color-paper: oklch(0.985 0.006 195);
+    --portal-color-canvas: oklch(0.955 0.017 205);
     --portal-color-surface: oklch(0.997 0.003 195);
     --portal-color-surface-raised: oklch(0.955 0.014 195);
+    --portal-color-surface-glass: oklch(0.997 0.003 195 / 0.78);
+    --portal-color-surface-glass-strong: oklch(0.997 0.003 195 / 0.9);
+    --portal-color-surface-glass-border: oklch(0.997 0.003 195 / 0.64);
     --portal-color-ink: oklch(0.22 0.025 205);
     --portal-color-ink-soft: oklch(0.34 0.026 205);
     --portal-color-muted: oklch(0.48 0.024 205);
@@ -14,7 +18,9 @@
     --portal-color-accent: oklch(0.46 0.09 195);
     --portal-color-accent-strong: oklch(0.37 0.083 195);
     --portal-color-accent-soft: oklch(0.93 0.035 195);
+    --portal-color-accent-glow: oklch(0.91 0.04 195);
     --portal-color-accent-ink: oklch(0.985 0.006 195);
+    --portal-color-focus: oklch(0.47 0.1 225);
     --portal-color-danger: oklch(0.54 0.19 27);
     --portal-color-danger-ink: oklch(0.985 0.006 195);
     --portal-color-danger-soft: oklch(0.95 0.035 27);
@@ -45,6 +51,7 @@
     --portal-radius-pill: 999px;
     --portal-rule-width: 1px;
     --portal-shadow-raised: 0 1px 2px oklch(0.22 0.025 205 / 0.06);
+    --portal-shadow-float: 0 12px 28px oklch(0.22 0.025 205 / 0.1);
     --portal-shadow-material: 0 12px 32px oklch(0.22 0.025 205 / 0.12);
     --portal-duration-press: 100ms;
     --portal-duration-state: 220ms;

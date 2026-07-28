@@ -104,6 +104,7 @@ export default function Profile({
         location_longitude: string | number | null;
         attendance_radius_meters: number;
         attendance_locations: Array<{
+            id?: string;
             name: string;
             address: string | null;
             latitude: string | number;
@@ -900,6 +901,7 @@ export default function Profile({
                                                     </div>
 
                                                     <div className="grid gap-4 md:grid-cols-2">
+                                                        {location.id ? <input type="hidden" name={`attendance_locations[${index}][id]`} value={location.id} /> : null}
                                                         <div className="grid gap-2">
                                                             <Label>
                                                                 Nama lokasi

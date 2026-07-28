@@ -260,7 +260,12 @@
     .portal-page {
         min-width: 0;
         overflow-wrap: anywhere;
-        background-color: var(--portal-color-paper);
+        background: linear-gradient(
+            160deg,
+            var(--portal-color-canvas) 0%,
+            var(--portal-color-paper) 46%,
+            var(--portal-color-accent-soft) 100%
+        );
         color: var(--portal-color-ink);
         font-family: var(--portal-font-body);
     }
@@ -294,19 +299,19 @@
     }
 
     .portal-pressable:active {
-        transform: scale(0.975);
+        transform: translateY(1px);
         opacity: 0.92;
     }
 
     .portal-focus-ring:focus-visible {
-        outline: 3px solid var(--portal-color-accent);
+        outline: 3px solid var(--portal-color-focus);
         outline-offset: 3px;
     }
 
     .portal-material {
-        background-color: var(--portal-color-material);
-        border-color: var(--portal-color-rule);
-        box-shadow: var(--portal-shadow-material);
+        background-color: var(--portal-color-surface-glass);
+        border-color: var(--portal-color-surface-glass-border);
+        box-shadow: var(--portal-shadow-float);
         backdrop-filter: blur(18px) saturate(145%);
     }
 

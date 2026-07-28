@@ -53,4 +53,25 @@ return [
         'timeout' => (int) env('PAKASIR_TIMEOUT', 15),
     ],
 
+    'firebase' => [
+        'credentials' => env('FIREBASE_CREDENTIALS'),
+        'web' => [
+            'apiKey' => env('VITE_FIREBASE_API_KEY'),
+            'authDomain' => env('VITE_FIREBASE_AUTH_DOMAIN'),
+            'projectId' => env('VITE_FIREBASE_PROJECT_ID'),
+            'storageBucket' => env('VITE_FIREBASE_STORAGE_BUCKET'),
+            'messagingSenderId' => env('VITE_FIREBASE_MESSAGING_SENDER_ID'),
+            'appId' => env('VITE_FIREBASE_APP_ID'),
+        ],
+    ],
+
+    'n8n' => [
+        'staff_invitation' => [
+            'url' => env('N8N_STAFF_INVITATION_WEBHOOK_URL'),
+            'username' => env('N8N_STAFF_INVITATION_USERNAME'),
+            'password' => env('N8N_STAFF_INVITATION_PASSWORD'),
+            'timeout' => (int) env('N8N_STAFF_INVITATION_TIMEOUT', 15),
+        ],
+    ],
+
 ];

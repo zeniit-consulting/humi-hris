@@ -160,6 +160,11 @@ class Employee extends Model
         return $this->belongsTo(Division::class);
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function subCompany(): BelongsTo
     {
         return $this->belongsTo(SubCompany::class);

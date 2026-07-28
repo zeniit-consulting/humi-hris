@@ -1,3 +1,6 @@
+// Hallmark · audience: karyawan · use: melihat status kerja dan melakukan absensi · tone: utilitarian
+// Hallmark · genre: modern-minimal · macrostructure: Operational Workbench · theme: Starline-adapted · anchor: Humi teal
+// Hallmark · pre-emit critique: P4 H5 E4 S5 R4 V4 · contrast: pass (46–50) · responsive: pass (36, 59, 61–69)
 import { Head, Link } from '@inertiajs/react';
 import {
     BellRing,
@@ -392,36 +395,38 @@ export default function PortalPage() {
             <div className="portal-page min-h-screen overflow-x-clip">
                 <PortalToastViewport />
                 <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-32 sm:max-w-xl sm:px-6 md:max-w-2xl">
-                    <header className="flex items-center justify-between gap-4 py-2">
-                        <a
-                            href={links.profile ?? fallbackLinks.profile}
-                            className="portal-pressable portal-focus-ring flex min-h-14 min-w-0 items-center gap-3 rounded-[var(--portal-radius-control)] pr-2"
-                            aria-label="Buka profil"
-                        >
-                            <span className="flex size-12 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)] bg-[var(--portal-color-accent-soft)] font-bold text-[var(--portal-color-accent-strong)]">
-                                {initials(headlineName)}
-                            </span>
-                            <span className="min-w-0 text-left">
-                                <span className="block text-sm text-[var(--portal-color-muted)]">
-                                    Halo, {firstName}
+                    <div className="portal-top-header -mx-4 -mt-[max(1rem,env(safe-area-inset-top))] rounded-b-[var(--portal-radius-surface)] bg-[var(--portal-color-accent-strong)] px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-28 shadow-[var(--portal-shadow-raised)] sm:-mx-6 sm:px-6 sm:pb-32">
+                        <header className="flex items-center justify-between gap-4 py-2">
+                            <a
+                                href={links.profile ?? fallbackLinks.profile}
+                                className="portal-pressable portal-focus-ring flex min-h-14 min-w-0 items-center gap-3 rounded-[var(--portal-radius-control)] pr-2"
+                                aria-label="Buka profil"
+                            >
+                                <span className="flex size-12 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)] bg-white/15 font-bold text-[var(--portal-color-paper)]">
+                                    {initials(headlineName)}
                                 </span>
-                                <span className="portal-display block truncate text-base font-bold">
-                                    {summary?.employee?.position?.name ??
-                                        'Portal karyawan'}
+                                <span className="min-w-0 text-left">
+                                    <span className="block text-base font-bold text-[var(--portal-color-paper)]">
+                                        Halo, {firstName}
+                                    </span>
+                                        <span className="block truncate text-xs font-normal text-[var(--portal-color-paper)]">
+                                        {summary?.employee?.position?.name ??
+                                            'Portal karyawan'}
+                                    </span>
                                 </span>
-                            </span>
-                        </a>
-                        <button
-                            type="button"
-                            onClick={() => setLogoutConfirmOpen(true)}
-                            className="portal-pressable portal-focus-ring flex size-11 shrink-0 items-center justify-center rounded-full border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] text-[var(--portal-color-ink-soft)]"
-                            aria-label="Keluar dari portal"
-                        >
-                            <LogOut className="size-[18px]" />
-                        </button>
-                    </header>
+                            </a>
+                            <button
+                                type="button"
+                                onClick={() => setLogoutConfirmOpen(true)}
+                                className="portal-pressable portal-focus-ring flex size-11 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/10 text-[var(--portal-color-paper)]"
+                                aria-label="Keluar dari portal"
+                            >
+                                <LogOut className="size-[18px]" />
+                            </button>
+                        </header>
+                    </div>
 
-                    <main className="flex-1 pt-4">
+                    <main className="flex-1 pt-0">
                         {isLoading ? <PortalHomeSkeleton /> : null}
 
                         {loadFailed ? (
@@ -447,43 +452,41 @@ export default function PortalPage() {
                         ) : null}
 
                         {!isLoading && !loadFailed ? (
-                            <div className="space-y-8">
+                            <div className="space-y-7 pb-3">
                                 <section
-                                    className="overflow-hidden rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-ink)] text-[var(--portal-color-paper)] shadow-[var(--portal-shadow-raised)]"
+                                    className="-mt-24 overflow-hidden rounded-[var(--portal-radius-surface)] border border-white/70 bg-[var(--portal-color-surface)] shadow-[var(--portal-shadow-float)] sm:-mt-28"
                                     aria-live="polite"
                                 >
-                                    <div className="px-4 pt-4 pb-4 sm:px-5">
-                                        <div className="flex items-center justify-between gap-3 text-sm text-[var(--portal-color-accent-soft)]">
-                                            <span className="flex min-w-0 items-center gap-2 font-semibold">
-                                                <span className="size-2 shrink-0 rounded-full bg-[var(--portal-color-accent)]" />
-                                                Presensi hari ini
-                                            </span>
-                                            <span className="portal-tabular shrink-0 text-xs">
+                                    <div className="border-b border-[var(--portal-color-rule)] bg-[var(--portal-color-accent-soft)] px-4 py-3 sm:px-5">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="portal-tabular min-w-0 truncate text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                                 {summary?.today.formatted}
                                             </span>
+                                            <span className="portal-tabular shrink-0 text-xs font-bold text-[var(--portal-color-accent-strong)]">
+                                                {summary?.quick_action.shift
+                                                    ?.code ?? '—'}
+                                            </span>
                                         </div>
+                                    </div>
 
-                                        <p className="mt-2 max-w-[34rem] text-xs leading-5 text-[var(--portal-color-accent-soft)]">
-                                            {attendanceFocus.description}
-                                        </p>
-
-                                        <dl className="portal-tabular mt-4 grid grid-cols-2 border-y border-[var(--portal-color-ink-soft)]">
-                                            <div className="py-3 pr-3">
-                                                <dt className="text-xs text-[var(--portal-color-accent-soft)]">
-                                                    Masuk
+                                    <div className="px-4 py-4 sm:px-5">
+                                        <dl className="portal-tabular grid grid-cols-2 divide-x divide-[var(--portal-color-rule)]">
+                                            <div className="min-w-0 pr-4">
+                                                <dt className="text-xs font-medium text-[var(--portal-color-muted)]">
+                                                    Jam masuk
                                                 </dt>
-                                                <dd className="portal-display mt-1 text-xl font-bold">
+                                                <dd className="portal-display mt-1 text-3xl font-extrabold tracking-[-0.05em]">
                                                     {formatTime(
                                                         currentAttendance?.check_in_at ??
                                                             null,
                                                     )}
                                                 </dd>
                                             </div>
-                                            <div className="border-l border-[var(--portal-color-ink-soft)] py-3 pl-3">
-                                                <dt className="text-xs text-[var(--portal-color-accent-soft)]">
-                                                    Pulang
+                                            <div className="min-w-0 pl-4">
+                                                <dt className="text-xs font-medium text-[var(--portal-color-muted)]">
+                                                    Jam pulang
                                                 </dt>
-                                                <dd className="portal-display mt-1 text-xl font-bold">
+                                                <dd className="portal-display mt-1 text-3xl font-extrabold tracking-[-0.05em]">
                                                     {formatTime(
                                                         currentAttendance?.check_out_at ??
                                                             null,
@@ -492,89 +495,138 @@ export default function PortalPage() {
                                             </div>
                                         </dl>
 
-                                        <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--portal-color-accent-soft)]">
-                                            <span className="truncate">
-                                                {summary?.quick_action.shift
-                                                    ?.name ?? 'Jadwal reguler'}
+                                        <a
+                                            href={attendanceFocus.href}
+                                            className="portal-pressable portal-focus-ring mt-4 flex min-h-12 items-center justify-between rounded-[var(--portal-radius-control)] bg-[var(--portal-color-accent-strong)] px-4 text-sm font-bold whitespace-nowrap text-[var(--portal-color-accent-ink)]"
+                                        >
+                                            {attendanceFocus.actionLabel}
+                                            <ChevronRight className="size-5" />
+                                        </a>
+                                    </div>
+                                </section>
+
+                                <section aria-labelledby="statistik-karyawan">
+                                    <h2
+                                        id="statistik-karyawan"
+                                        className="portal-display text-[0.95rem] font-extrabold tracking-[-0.04em]"
+                                    >
+                                        Statistik
+                                    </h2>
+                                    <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+                                        <SummaryCard
+                                            label="Cuti tahunan"
+                                            value={`${summary?.cards.annual_leave_days ?? 0} hari`}
+                                            icon={CalendarDays}
+                                        />
+                                        <a
+                                            href={links.payroll}
+                                            className="portal-pressable portal-focus-ring rounded-[var(--portal-radius-control)] border border-white/70 bg-[var(--portal-color-surface-glass)] p-3 shadow-[var(--portal-shadow-raised)]"
+                                        >
+                                            <span className="flex items-center justify-between gap-2 text-[var(--portal-color-muted)]">
+                                                <span className="text-xs font-medium">
+                                                    Payroll
+                                                </span>
+                                                {summary?.cards.payroll_preview
+                                                    .is_saved ? (
+                                                    <CircleCheck className="size-4 text-[var(--portal-color-success)]" />
+                                                ) : (
+                                                    <Clock3 className="size-4 text-[var(--portal-color-warning)]" />
+                                                )}
                                             </span>
-                                            <span className="portal-tabular shrink-0">
-                                                {summary?.quick_action.shift
-                                                    ?.start_time ?? '—'}
-                                                {' – '}
-                                                {summary?.quick_action.shift
-                                                    ?.end_time ?? '—'}
+                                            <span className="mt-3 block text-sm font-bold text-[var(--portal-color-ink)]">
+                                                {summary?.cards.payroll_preview
+                                                    .is_saved
+                                                    ? 'Sudah tersedia'
+                                                    : 'Belum tersedia'}
+                                            </span>
+                                        </a>
+                                        <div className="rounded-[var(--portal-radius-control)] border border-white/70 bg-[var(--portal-color-surface-glass)] p-3 shadow-[var(--portal-shadow-raised)]">
+                                            <span className="flex items-center justify-between gap-2 text-[var(--portal-color-muted)]">
+                                                <span className="text-xs font-medium">
+                                                    Perlu perhatian
+                                                </span>
+                                                <BellRing className="size-4 text-[var(--portal-color-accent-strong)]" />
+                                            </span>
+                                            <span className="portal-tabular mt-3 block text-sm font-bold text-[var(--portal-color-ink)]">
+                                                {attentionItems.length} item
                                             </span>
                                         </div>
                                     </div>
-
-                                    <a
-                                        href={attendanceFocus.href}
-                                        className="portal-pressable portal-focus-ring flex min-h-12 items-center justify-between bg-[var(--portal-color-surface)] px-4 text-sm font-bold whitespace-nowrap text-[var(--portal-color-ink)] sm:px-5"
-                                    >
-                                        {attendanceFocus.actionLabel}
-                                        <ChevronRight className="size-5" />
-                                    </a>
                                 </section>
 
                                 {attentionItems.length > 0 ? (
-                                    <section>
+                                    <section
+                                        id="attention"
+                                        aria-labelledby="perlu-perhatian"
+                                    >
                                         <div className="flex items-end justify-between gap-4">
                                             <div>
-                                                <h2 className="portal-display text-xl font-extrabold">
+                                                <p className="text-xs font-semibold tracking-[0.16em] text-[var(--portal-color-muted)] uppercase">
+                                                    Prioritas
+                                                </p>
+                                                <h2
+                                                    id="perlu-perhatian"
+                                                    className="portal-display mt-1 text-xl font-extrabold tracking-[-0.04em]"
+                                                >
                                                     Perlu perhatian
                                                 </h2>
-                                                <p className="mt-1 text-sm text-[var(--portal-color-muted)]">
-                                                    {attentionItems.length} hal
-                                                    menunggu tindak lanjut.
-                                                </p>
                                             </div>
+                                            <span className="portal-tabular rounded-full bg-[var(--portal-color-accent-soft)] px-2.5 py-1 text-xs font-bold text-[var(--portal-color-accent-strong)]">
+                                                {attentionItems.length}
+                                            </span>
                                         </div>
-                                        <div className="mt-4 divide-y divide-[var(--portal-color-rule)] border-y border-[var(--portal-color-rule)]">
-                                            {attentionItems.map((item) => (
-                                                <a
-                                                    key={item.key}
-                                                    href={item.href}
-                                                    className="portal-pressable portal-focus-ring flex min-h-16 items-center gap-3 py-3"
-                                                >
-                                                    <item.icon className="size-5 shrink-0 text-[var(--portal-color-accent-strong)]" />
-                                                    <span className="min-w-0 flex-1">
-                                                        <span className="block text-xs text-[var(--portal-color-muted)]">
-                                                            {item.label}
+                                        <div className="mt-4 overflow-hidden rounded-[var(--portal-radius-surface)] border border-white/70 bg-[var(--portal-color-surface-glass)] shadow-[var(--portal-shadow-raised)]">
+                                            {attentionItems.map(
+                                                (item, index) => (
+                                                    <a
+                                                        key={item.key}
+                                                        href={item.href}
+                                                        className={`portal-pressable portal-focus-ring flex min-h-16 items-center gap-3 px-4 py-3 ${index > 0 ? 'border-t border-[var(--portal-color-rule)]' : ''}`}
+                                                    >
+                                                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--portal-color-accent-soft)] text-[var(--portal-color-accent-strong)]">
+                                                            <item.icon className="size-5" />
                                                         </span>
-                                                        <span className="mt-0.5 block truncate text-sm font-semibold">
-                                                            {item.title}
+                                                        <span className="min-w-0 flex-1">
+                                                            <span className="block text-xs text-[var(--portal-color-muted)]">
+                                                                {item.label}
+                                                            </span>
+                                                            <span className="mt-0.5 block truncate text-sm font-semibold">
+                                                                {item.title}
+                                                            </span>
                                                         </span>
-                                                    </span>
-                                                    <ChevronRight className="size-4 shrink-0 text-[var(--portal-color-muted)]" />
-                                                </a>
-                                            ))}
+                                                        <ChevronRight className="size-4 shrink-0 text-[var(--portal-color-muted)]" />
+                                                    </a>
+                                                ),
+                                            )}
                                         </div>
                                     </section>
                                 ) : null}
 
-                                <section>
-                                    <h2 className="portal-display text-xl font-extrabold">
-                                        Akses cepat
+                                <section aria-labelledby="quick-menu">
+                                    <h2
+                                        id="quick-menu"
+                                        className="portal-display text-[0.95rem] font-extrabold tracking-[-0.04em]"
+                                    >
+                                        Quick Menu
                                     </h2>
-                                    <div className="portal-horizontal-scroll -mx-4 mt-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
+                                    <div className="portal-horizontal-scroll -mx-4 mt-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
                                         <ul
-                                            aria-label="Menu akses cepat"
-                                            className="flex w-max touch-pan-x snap-x snap-mandatory gap-3"
+                                            aria-label="Quick Menu"
+                                            className="flex w-max gap-3"
                                         >
                                             {visibleQuickLinks.map((item) => {
                                                 const href =
                                                     links[
                                                         item.key as keyof PortalSummary['links']
                                                     ] ?? '#';
-
                                                 return (
                                                     <li
                                                         key={item.key}
-                                                        className="w-28 shrink-0 snap-start"
+                                                        className="w-32 shrink-0"
                                                     >
                                                         <a
                                                             href={href}
-                                                            className="portal-pressable portal-focus-ring flex min-h-24 flex-col items-start justify-between rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface)] p-3 shadow-[var(--portal-shadow-raised)]"
+                                                            className="portal-pressable portal-focus-ring flex min-h-24 flex-col justify-between rounded-[var(--portal-radius-control)] border border-[var(--portal-color-accent)] bg-[var(--portal-color-surface-glass)] p-3.5 shadow-[var(--portal-shadow-raised)]"
                                                         >
                                                             <item.icon className="size-5 text-[var(--portal-color-accent-strong)]" />
                                                             <span className="text-sm font-semibold whitespace-nowrap">
@@ -588,45 +640,19 @@ export default function PortalPage() {
                                     </div>
                                 </section>
 
-                                <section className="border-y border-[var(--portal-color-rule)] py-5">
-                                    <div className="grid grid-cols-2 gap-5">
-                                        <div>
-                                            <p className="text-xs text-[var(--portal-color-muted)]">
-                                                Sisa cuti tahunan
-                                            </p>
-                                            <p className="portal-display portal-tabular mt-2 text-2xl font-extrabold">
-                                                {summary?.cards
-                                                    .annual_leave_days ?? 0}
-                                                <span className="ml-1 text-sm font-medium text-[var(--portal-color-muted)]">
-                                                    hari
-                                                </span>
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-[var(--portal-color-muted)]">
-                                                Payroll periode ini
-                                            </p>
-                                            <p className="mt-2 flex items-center gap-2 text-sm font-semibold">
-                                                {summary?.cards.payroll_preview
-                                                    .is_saved ? (
-                                                    <CircleCheck className="size-4 text-[var(--portal-color-success)]" />
-                                                ) : (
-                                                    <Clock3 className="size-4 text-[var(--portal-color-warning)]" />
-                                                )}
-                                                {summary?.cards.payroll_preview
-                                                    .is_saved
-                                                    ? 'Sudah tersedia'
-                                                    : 'Belum tersedia'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section>
+                                <section aria-labelledby="aktivitas-terbaru">
                                     <div className="flex items-center justify-between gap-4">
-                                        <h2 className="portal-display text-xl font-extrabold">
-                                            Aktivitas terbaru
-                                        </h2>
+                                        <div>
+                                            <p className="text-xs font-semibold tracking-[0.16em] text-[var(--portal-color-muted)] uppercase">
+                                                Riwayat
+                                            </p>
+                                            <h2
+                                                id="aktivitas-terbaru"
+                                                className="portal-display mt-1 text-xl font-extrabold tracking-[-0.04em]"
+                                            >
+                                                Aktivitas terbaru
+                                            </h2>
+                                        </div>
                                         <a
                                             href={
                                                 links.activity ??
@@ -637,15 +663,14 @@ export default function PortalPage() {
                                             Lihat semua
                                         </a>
                                     </div>
-
                                     {summary?.timeline.length ? (
-                                        <ol className="mt-4 space-y-1">
+                                        <ol className="mt-4 overflow-hidden rounded-[var(--portal-radius-surface)] border border-white/70 bg-[var(--portal-color-surface-glass)] px-4 shadow-[var(--portal-shadow-raised)]">
                                             {summary.timeline
                                                 .slice(0, 3)
-                                                .map((item) => (
+                                                .map((item, index) => (
                                                     <li
                                                         key={item.id}
-                                                        className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 py-3"
+                                                        className={`grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 py-3.5 ${index > 0 ? 'border-t border-[var(--portal-color-rule)]' : ''}`}
                                                     >
                                                         <time
                                                             dateTime={item.date}
@@ -672,7 +697,7 @@ export default function PortalPage() {
                                                 ))}
                                         </ol>
                                     ) : (
-                                        <div className="mt-4 flex items-center gap-3 border-y border-[var(--portal-color-rule)] py-5">
+                                        <div className="mt-4 flex items-center gap-3 rounded-[var(--portal-radius-surface)] border border-white/70 bg-[var(--portal-color-surface-glass)] p-4 shadow-[var(--portal-shadow-raised)]">
                                             <History className="size-5 text-[var(--portal-color-muted)]" />
                                             <div className="min-w-0">
                                                 <p className="text-sm font-semibold">
@@ -747,16 +772,43 @@ export default function PortalPage() {
     );
 }
 
+function SummaryCard({
+    label,
+    value,
+    icon: Icon,
+}: {
+    label: string;
+    value: string;
+    icon: LucideIcon;
+}) {
+    return (
+        <div className="rounded-[var(--portal-radius-control)] border border-white/70 bg-[var(--portal-color-surface-glass)] p-3.5 shadow-[var(--portal-shadow-raised)]">
+            <span className="flex items-center justify-between gap-2 text-[var(--portal-color-muted)]">
+                <span className="text-xs font-medium">{label}</span>
+                <Icon className="size-4 text-[var(--portal-color-accent-strong)]" />
+            </span>
+            <span className="portal-tabular mt-3 block text-sm font-bold text-[var(--portal-color-ink)]">
+                {value}
+            </span>
+        </div>
+    );
+}
+
 function PortalHomeSkeleton() {
     return (
-        <div className="space-y-8" aria-label="Memuat portal" aria-busy="true">
-            <div className="h-[25rem] animate-pulse rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-surface-raised)]" />
-            <div className="space-y-3">
-                <div className="h-6 w-40 animate-pulse rounded bg-[var(--portal-color-surface-raised)]" />
-                <div className="h-16 animate-pulse rounded bg-[var(--portal-color-surface-raised)]" />
-            </div>
-            <div className="grid grid-cols-3 gap-2">
+        <div className="space-y-7" aria-label="Memuat portal" aria-busy="true">
+            <div className="h-72 animate-pulse rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-surface-raised)]" />
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {Array.from({ length: 3 }).map((_, index) => (
+                    <div
+                        key={index}
+                        className="h-28 animate-pulse rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface-raised)]"
+                    />
+                ))}
+            </div>
+            <div className="h-44 animate-pulse rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-surface-raised)]" />
+            <div className="grid grid-cols-2 gap-3">
+                {Array.from({ length: 4 }).map((_, index) => (
                     <div
                         key={index}
                         className="h-24 animate-pulse rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface-raised)]"

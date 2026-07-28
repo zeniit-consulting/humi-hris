@@ -1,4 +1,5 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import pushDevices from './push-devices'
 import attendances from './attendances'
 import attendanceRequests from './attendance-requests'
 import leaves from './leaves'
@@ -98,6 +99,7 @@ summary.form = summaryForm
 
 const api = {
     summary: Object.assign(summary, summary),
+    pushDevices: Object.assign(pushDevices, pushDevices),
     attendances: Object.assign(attendances, attendances),
     attendanceRequests: Object.assign(attendanceRequests, attendanceRequests),
     leaves: Object.assign(leaves, leaves),

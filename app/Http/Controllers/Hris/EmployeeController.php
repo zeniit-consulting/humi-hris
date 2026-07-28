@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Hris;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Hris\StoreEmployeeRequest;
 use App\Http\Requests\Hris\UpdateEmployeeRequest;
-use App\Jobs\SendEmployeePortalInvitation;
+use App\Jobs\SendEmployeeInvitationWebhook;
 use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
@@ -16,6 +16,7 @@ use App\Models\SubCompany;
 use App\Models\User;
 use App\Services\EmployeeEmploymentHistoryService;
 use App\Services\UserPortalAccountService;
+use App\Support\WhatsAppPhone;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
@@ -1239,20 +1240,36 @@ class EmployeeController extends Controller
             if (! CompanySetting::employeeActivationOtpEnabledFor($request->user())) {
                 $portalUser->forceFill(['email_verified_at' => now()])->save();
             }
-            SendEmployeePortalInvitation::dispatch(
-                email: $portalUser->email,
-                employeeName: $employee->full_name,
-                username: $employee->employee_code,
-                temporaryPassword: $invitation['password'],
-                loginUrl: route('portal.login'),
-            );
+
+            $employee->loadMissing(['division:id,name', 'position:id,name']);
+            $companyName = CompanySetting::query()
+                ->where('user_id', $request->user()->accountOwnerId())
+                ->value('name')
+                ?: $request->user()->company_name
+                ?: 'Perusahaan';
+            $normalizedPhone = $employee->phone
+                ? WhatsAppPhone::normalize($employee->phone)
+                : '';
+
+            SendEmployeeInvitationWebhook::dispatch([
+                'employee_id' => $employee->employee_code,
+                'company_name' => $companyName,
+                'name' => $employee->full_name,
+                'division' => $employee->division?->name ?? '',
+                'position' => $employee->position?->name ?? '',
+                'email' => $portalUser->email,
+                'phone' => $normalizedPhone,
+                'username' => $employee->employee_code,
+                'temporary_password' => $invitation['password'],
+                'login_url' => route('portal.login'),
+            ]);
         } catch (Throwable $exception) {
             report($exception);
 
-            return back()->with('error', 'Undangan gagal: tidak dapat menjadwalkan email karyawan.');
+            return back()->with('error', 'Undangan gagal: tidak dapat menjadwalkan automation karyawan.');
         }
 
-        return back()->with('success', 'Undangan login portal dijadwalkan untuk dikirim ke email karyawan.');
+        return back()->with('success', 'Undangan login portal dijadwalkan melalui automation.');
     }
 
     public function offboard(
@@ -1301,13 +1318,27 @@ class EmployeeController extends Controller
 
             $employee->directReports()->update(['manager_id' => null]);
 
-            $this->portalUserQuery($employee)
-                ->whereNull('suspended_at')
-                ->update([
-                    'suspended_at' => now(),
-                    'suspension_reason' => 'Employee offboarding: '.$this->offboardingReasonLabel($validated['offboarding_reason']),
-                    'suspended_by' => $request->user()?->id,
-                ]);
+            $portalUsers = $this->portalUserQuery($employee)->get(['id']);
+            $portalUserIds = $portalUsers->modelKeys();
+
+            if ($portalUserIds !== []) {
+                User::query()
+                    ->whereKey($portalUserIds)
+                    ->update([
+                        'suspended_at' => now(),
+                        'suspension_reason' => 'Employee offboarding: '.$this->offboardingReasonLabel($validated['offboarding_reason']),
+                        'suspended_by' => $request->user()?->id,
+                        'remember_token' => null,
+                    ]);
+
+                DB::table('sessions')
+                    ->whereIn('user_id', $portalUserIds)
+                    ->delete();
+
+                foreach ($portalUsers as $portalUser) {
+                    $portalUser->tokens()->delete();
+                }
+            }
         });
 
         return back()->with('success', 'Offboarding karyawan berhasil diproses.');

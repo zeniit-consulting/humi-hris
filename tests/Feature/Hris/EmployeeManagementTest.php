@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Hris;
 
+use App\Jobs\SendEmployeeInvitationWebhook;
 use App\Jobs\SendEmployeePortalInvitation;
+use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAllowance;
@@ -13,6 +15,8 @@ use App\Models\SubCompany;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
@@ -712,7 +716,7 @@ class EmployeeManagementTest extends TestCase
         $this->assertTrue(Hash::check('628123456789', $portalUser->password));
         $this->assertNull($portalUser->email_verified_at);
         $this->assertNull($portalUser->email_otp_code);
-        Queue::assertPushed(SendEmployeePortalInvitation::class);
+        Queue::assertPushed(SendEmployeeInvitationWebhook::class);
         Mail::assertNothingSent();
     }
 
@@ -721,12 +725,31 @@ class EmployeeManagementTest extends TestCase
         Queue::fake();
         Mail::fake();
 
-        $user = User::factory()->create(['email_verified_at' => now()]);
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+            'company_name' => 'Fallback Company Name',
+        ]);
+        CompanySetting::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Humi Test Company',
+        ]);
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Operations',
+        ]);
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'name' => 'Supervisor',
+        ]);
         $employee = Employee::factory()->create([
             'user_id' => $user->id,
-            'employee_code' => 'EMP-QUEUE-01',
-            'first_name' => 'Queue Employee',
-            'email' => 'queued-invitation@example.com',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'employee_code' => 'EMP-N8N-01',
+            'first_name' => 'N8N Employee',
+            'last_name' => null,
+            'email' => 'n8n-invitation@example.com',
             'phone' => '08123456789',
         ]);
 
@@ -736,10 +759,22 @@ class EmployeeManagementTest extends TestCase
             ->assertSessionHas('success');
 
         Queue::assertPushed(
-            SendEmployeePortalInvitation::class,
-            fn (SendEmployeePortalInvitation $job): bool => $job->email === 'queued-invitation@example.com'
-                && $job->queue === 'emails',
+            SendEmployeeInvitationWebhook::class,
+            fn (SendEmployeeInvitationWebhook $job): bool => $job->queue === 'emails'
+                && $job->payload === [
+                    'employee_id' => 'EMP-N8N-01',
+                    'company_name' => 'Humi Test Company',
+                    'name' => 'N8N Employee',
+                    'division' => 'Operations',
+                    'position' => 'Supervisor',
+                    'email' => 'n8n-invitation@example.com',
+                    'phone' => '628123456789',
+                    'username' => 'EMP-N8N-01',
+                    'temporary_password' => '628123456789',
+                    'login_url' => route('portal.login'),
+                ],
         );
+        Queue::assertNotPushed(SendEmployeePortalInvitation::class);
         Mail::assertNothingSent();
     }
 
@@ -767,7 +802,7 @@ class EmployeeManagementTest extends TestCase
             'email' => 'email-only@example.com',
             'phone' => null,
         ]);
-        Queue::assertPushed(SendEmployeePortalInvitation::class);
+        Queue::assertPushed(SendEmployeeInvitationWebhook::class);
         Mail::assertNothingSent();
     }
 
@@ -810,7 +845,17 @@ class EmployeeManagementTest extends TestCase
             'role' => 'user',
             'email' => 'offboarded@example.com',
             'phone' => '628123456789',
+            'remember_token' => 'active-portal-session',
             'suspended_at' => null,
+        ]);
+        $portalUser->createToken('offboarding-test');
+        DB::table('sessions')->insert([
+            'id' => 'offboarding-portal-session',
+            'user_id' => $portalUser->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'PHPUnit',
+            'payload' => 'test-session',
+            'last_activity' => now()->timestamp,
         ]);
 
         $response = $this->actingAs($user)
@@ -850,6 +895,33 @@ class EmployeeManagementTest extends TestCase
 
         $this->assertNotNull($portalUser->fresh()->suspended_at);
         $this->assertSame($user->id, $portalUser->fresh()->suspended_by);
+        $this->assertNull($portalUser->fresh()->remember_token);
+        $this->assertDatabaseMissing('sessions', ['user_id' => $portalUser->id]);
+        $this->assertDatabaseMissing('personal_access_tokens', ['tokenable_id' => $portalUser->id]);
+
+        $this->actingAs($portalUser->fresh())
+            ->get(route('portal.index'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHas('status', 'Akun Anda sudah tidak aktif. Hubungi admin perusahaan untuk bantuan.');
+
+        Auth::guard('web')->logout();
+        $this->flushSession();
+
+        $this->from(route('login'))
+            ->post(route('login'), [
+                'email' => $portalUser->email,
+                'password' => 'password',
+            ])
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+
+        $this->from(route('portal.login'))
+            ->post(route('portal.login.authenticate'), [
+                'employee_code' => $employee->employee_code,
+                'phone' => $employee->phone,
+            ])
+            ->assertRedirect(route('portal.login'))
+            ->assertSessionHasErrors('employee_code');
     }
 
     public function test_offboarding_rejects_date_before_hire_date(): void

@@ -48,7 +48,7 @@ class FortifyServiceProvider extends ServiceProvider
 
             $user = User::query()->where('email', $email)->first();
 
-            if (! $user || ! Hash::check($password, $user->password)) {
+            if (! $user || $user->isSuspended() || ! Hash::check($password, $user->password)) {
                 return null;
             }
 

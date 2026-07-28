@@ -1,6 +1,7 @@
 import PakasirWebhookController from './PakasirWebhookController'
 import ThirdParty from './ThirdParty'
 import Mobile from './Mobile'
+import PortalPushDeviceController from './PortalPushDeviceController'
 import PortalReimbursementController from './PortalReimbursementController'
 import PortalResourceController from './PortalResourceController'
 import PortalApprovalController from './PortalApprovalController'
@@ -11,6 +12,7 @@ const Api = {
     PakasirWebhookController: Object.assign(PakasirWebhookController, PakasirWebhookController),
     ThirdParty: Object.assign(ThirdParty, ThirdParty),
     Mobile: Object.assign(Mobile, Mobile),
+    PortalPushDeviceController: Object.assign(PortalPushDeviceController, PortalPushDeviceController),
     PortalReimbursementController: Object.assign(PortalReimbursementController, PortalReimbursementController),
     PortalResourceController: Object.assign(PortalResourceController, PortalResourceController),
     PortalApprovalController: Object.assign(PortalApprovalController, PortalApprovalController),

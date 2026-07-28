@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\PortalClientVisitController;
 use App\Http\Controllers\Api\PortalPerformanceController;
 use App\Http\Controllers\Api\PortalReimbursementController;
 use App\Http\Controllers\Api\PortalResourceController;
+use App\Http\Controllers\Api\PortalPushDeviceController;
 use App\Http\Controllers\Api\PortalApprovalController;
 use App\Http\Controllers\Auth\EmailActivationController;
 use App\Http\Controllers\Auth\PortalOtpLoginController;
@@ -48,6 +49,30 @@ if (config('docs.domain')) {
 if (config('docs.fallback_path')) {
     Route::get('docs', DocsManualController::class)->name('docs.manual.preview');
 }
+
+Route::get('firebase-messaging-sw.js', function () {
+    $config = array_filter(config('services.firebase.web'));
+    $firebaseConfig = json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+    return response(<<<JS
+importScripts('https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/12.16.0/firebase-messaging-compat.js');
+firebase.initializeApp({$firebaseConfig});
+const messaging = firebase.messaging();
+messaging.onBackgroundMessage((payload) => {
+  const notification = payload.notification || {};
+  self.registration.showNotification(notification.title || 'Humi', {
+    body: notification.body || 'Ada pengingat baru.',
+    icon: '/icons/icon-192.png',
+    data: { url: payload.data?.url || '/portal/attendance' },
+  });
+});
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow(event.notification.data?.url || '/portal/attendance'));
+});
+JS, 200, ['Content-Type' => 'application/javascript; charset=UTF-8', 'Cache-Control' => 'no-store']);
+})->name('firebase.messaging.service-worker');
 
 Route::get('robots.txt', function () {
     $baseUrl = rtrim((string) config('app.url'), '/');
@@ -324,6 +349,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->prefi
 Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group(function () {
     Route::get('portal', UserPortalController::class)->name('portal.index');
     Route::get('portal/api/summary', [PortalController::class, 'summary'])->name('portal.api.summary');
+    Route::post('portal/api/push-devices', [PortalPushDeviceController::class, 'store'])->name('portal.api.push-devices.store');
+    Route::delete('portal/api/push-devices', [PortalPushDeviceController::class, 'destroy'])->name('portal.api.push-devices.destroy');
     Route::get('portal/api/attendances', [AttendanceController::class, 'index'])->name('portal.api.attendances.index');
     Route::post('portal/api/attendances', [AttendanceController::class, 'store'])->name('portal.api.attendances.store');
     Route::put('portal/api/attendances/{employeeAttendance}', [AttendanceController::class, 'update'])->name('portal.api.attendances.update');

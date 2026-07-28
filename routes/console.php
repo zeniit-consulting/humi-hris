@@ -100,6 +100,7 @@ Schedule::command('approval:remind-pending --hours=24')->dailyAt('09:15');
 Schedule::command('employee:remind-incomplete-profile')->dailyAt('09:30');
 Schedule::command('kasbon:remind-balance')->twiceMonthly(1, 15, '09:00');
 Schedule::command('attendance:auto-clock-out')->dailyAt('22:00');
+Schedule::command('attendance:send-fcm-reminders')->everyMinute()->withoutOverlapping();
 
 // Automation: expire subscriptions past their active period
 Schedule::command('subscription:expire')->dailyAt('00:30');
