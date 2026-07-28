@@ -52,7 +52,7 @@ export async function enableAttendancePush(): Promise<string> {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') throw new Error('Izin notifikasi belum diberikan.');
     const firebaseRegistration = await withTimeout(
-        navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        navigator.serviceWorker.register('/firebase-messaging-worker', {
             scope: '/firebase-cloud-messaging-push-scope/',
             updateViaCache: 'none',
         }),

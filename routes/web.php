@@ -10,12 +10,12 @@ use App\Http\Controllers\Api\Mobile\V1\PayrollController;
 use App\Http\Controllers\Api\Mobile\V1\PortalController;
 use App\Http\Controllers\Api\Mobile\V1\ProfileController as MobileProfileController;
 use App\Http\Controllers\Api\Mobile\V1\ShiftChangeRequestController;
+use App\Http\Controllers\Api\PortalApprovalController;
 use App\Http\Controllers\Api\PortalClientVisitController;
 use App\Http\Controllers\Api\PortalPerformanceController;
+use App\Http\Controllers\Api\PortalPushDeviceController;
 use App\Http\Controllers\Api\PortalReimbursementController;
 use App\Http\Controllers\Api\PortalResourceController;
-use App\Http\Controllers\Api\PortalPushDeviceController;
-use App\Http\Controllers\Api\PortalApprovalController;
 use App\Http\Controllers\Auth\EmailActivationController;
 use App\Http\Controllers\Auth\PortalOtpLoginController;
 use App\Http\Controllers\BillingController;
@@ -50,7 +50,7 @@ if (config('docs.fallback_path')) {
     Route::get('docs', DocsManualController::class)->name('docs.manual.preview');
 }
 
-Route::get('firebase-messaging-sw.js', function () {
+Route::get('firebase-messaging-worker', function () {
     $config = array_filter(config('services.firebase.web'));
     $firebaseConfig = json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
