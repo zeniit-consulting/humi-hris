@@ -7,6 +7,7 @@ use App\Http\Requests\Hris\StoreEmployeeDocumentRequest;
 use App\Http\Requests\Hris\UpdateEmployeeDocumentRequest;
 use App\Models\Employee;
 use App\Models\EmployeeDocument;
+use App\Support\R2Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -105,13 +106,7 @@ class EmployeeDocumentController extends Controller
 
     private function storeFile(UploadedFile $file, int $employeeId): array
     {
-        $r2Config = config('filesystems.disks.r2');
-        $disk = filled($r2Config['key'] ?? null)
-            && filled($r2Config['secret'] ?? null)
-            && filled($r2Config['bucket'] ?? null)
-            && filled($r2Config['endpoint'] ?? null)
-            ? 'r2'
-            : 'local';
+        $disk = R2Storage::isConfigured() ? 'r2' : 'local';
         $path = $file->store("employee-documents/{$employeeId}", $disk);
 
         return [

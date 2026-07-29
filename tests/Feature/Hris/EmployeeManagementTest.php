@@ -1986,7 +1986,7 @@ class EmployeeManagementTest extends TestCase
 
     public function test_employee_document_can_be_uploaded_and_downloaded(): void
     {
-        Storage::fake('local');
+        Storage::fake('r2');
 
         $user = User::factory()->create([
             'email_verified_at' => now(),
@@ -2008,7 +2008,7 @@ class EmployeeManagementTest extends TestCase
         $document = EmployeeDocument::query()->firstOrFail();
 
         $this->assertSame('ktp', $document->document_type);
-        Storage::disk('local')->assertExists($document->file_path);
+        Storage::disk('r2')->assertExists($document->file_path);
 
         $response = $this->actingAs($user)->get(route('hris.employees.documents.download', [
             'employee' => $employee,
@@ -2021,7 +2021,7 @@ class EmployeeManagementTest extends TestCase
 
     public function test_employee_document_can_be_updated_and_deleted(): void
     {
-        Storage::fake('local');
+        Storage::fake('r2');
 
         $user = User::factory()->create([
             'email_verified_at' => now(),
@@ -2036,9 +2036,9 @@ class EmployeeManagementTest extends TestCase
             'employee_id' => $employee->id,
             'document_type' => 'npwp',
             'document_number' => '09.111.222.3-444.000',
-            'file_disk' => 'local',
+            'file_disk' => 'r2',
             'file_path' => UploadedFile::fake()->create('npwp.pdf', 100, 'application/pdf')
-                ->store("employee-documents/{$employee->id}", 'local'),
+                ->store("employee-documents/{$employee->id}", 'r2'),
             'file_original_name' => 'npwp.pdf',
         ]);
 
@@ -2058,8 +2058,8 @@ class EmployeeManagementTest extends TestCase
 
         $this->assertSame('09.111.222.3-555.000', $document->document_number);
         $this->assertNotSame($oldPath, $document->file_path);
-        Storage::disk('local')->assertMissing($oldPath);
-        Storage::disk('local')->assertExists($document->file_path);
+        Storage::disk('r2')->assertMissing($oldPath);
+        Storage::disk('r2')->assertExists($document->file_path);
 
         $path = $document->file_path;
 
@@ -2071,7 +2071,7 @@ class EmployeeManagementTest extends TestCase
         $this->assertDatabaseMissing('employee_documents', [
             'id' => $document->id,
         ]);
-        Storage::disk('local')->assertMissing($path);
+        Storage::disk('r2')->assertMissing($path);
     }
 
     public function test_employee_document_compliance_status_is_reported_correctly(): void
