@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Mobile\V1\Concerns\InteractsWithSelfService;
 use App\Http\Controllers\Controller;
 use App\Models\AttendanceCorrectionRequest;
 use App\Models\User;
+use App\Services\MissingClockOutRequestPolicy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -46,6 +47,7 @@ class AttendanceCorrectionRequestController extends Controller
         $timezone = $this->deviceTimezone($request, $employee->timezone);
 
         $validated = $request->validate([
+            'request_type' => ['nullable', Rule::in(['manual_attendance', 'missing_clock_out'])],
             'attendance_date' => ['required', 'date', 'before_or_equal:today'],
             'shift_id' => ['nullable', 'integer', Rule::exists('work_shifts', 'id')->where('user_id', $ownerId)],
             'check_in_at' => ['nullable', 'date'],
@@ -53,21 +55,48 @@ class AttendanceCorrectionRequestController extends Controller
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 
-        if (empty($validated['check_in_at']) && empty($validated['check_out_at'])) {
+        $requestType = $validated['request_type'] ?? 'manual_attendance';
+        $attendance = null;
+
+        if ($requestType === 'missing_clock_out') {
+            if (empty($validated['check_out_at'])) {
+                return $this->error('Jam pulang wajib diisi untuk pengajuan lupa absen pulang.', 422);
+            }
+
+            if (! empty($validated['check_in_at'])) {
+                return $this->error('Pengajuan lupa absen pulang tidak dapat mengubah jam masuk.', 422);
+            }
+
+            $attendance = app(MissingClockOutRequestPolicy::class)->assertEligible(
+                $ownerId,
+                $employee->id,
+                $validated['attendance_date'],
+                $timezone,
+            );
+        } elseif (empty($validated['check_in_at']) && empty($validated['check_out_at'])) {
             return $this->error('Jam masuk atau jam pulang wajib diisi.');
         }
 
         $this->normalizeAttendanceTimestamps($validated, $timezone);
 
+        if (
+            $attendance !== null
+            && ! empty($validated['check_out_at'])
+            && Carbon::parse($validated['check_out_at'])->lt($attendance->check_in_at)
+        ) {
+            return $this->error('Jam pulang tidak boleh sebelum jam masuk.', 422);
+        }
+
         $attendanceRequest = AttendanceCorrectionRequest::query()->create([
             'user_id' => $ownerId,
             'employee_id' => $employee->id,
             'attendance_date' => $validated['attendance_date'],
-            'timezone' => $timezone,
-            'shift_id' => $validated['shift_id'] ?? null,
+            'timezone' => $attendance?->timezone ?? $timezone,
+            'shift_id' => $validated['shift_id'] ?? $attendance?->shift_id,
             'check_in_at' => $validated['check_in_at'] ?? null,
             'check_out_at' => $validated['check_out_at'] ?? null,
             'reason' => $validated['reason'],
+            'request_type' => $requestType,
             'status' => 'pending',
         ]);
 
@@ -102,6 +131,7 @@ class AttendanceCorrectionRequestController extends Controller
             'check_in_at' => $this->localTimestamp($request->check_in_at, $sourceTimezone),
             'check_out_at' => $this->localTimestamp($request->check_out_at, $sourceTimezone),
             'reason' => $request->reason,
+            'request_type' => $request->request_type ?? 'manual_attendance',
             'status' => $request->status,
             'rejection_reason' => $request->rejection_reason,
         ];
