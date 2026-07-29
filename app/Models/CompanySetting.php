@@ -38,6 +38,8 @@ class CompanySetting extends Model
         'overtime_threshold_hours',
         'active_working_days',
         'auto_deduct_leave_for_missing_checkout',
+        'missing_clock_out_request_days',
+        'attendance_revision_cutoff_day',
         'overtime_multiplier_hour1',
         'overtime_multiplier_subsequent',
     ];
@@ -55,6 +57,7 @@ class CompanySetting extends Model
             'overtime_threshold_hours' => 'integer',
             'active_working_days' => 'integer',
             'auto_deduct_leave_for_missing_checkout' => 'boolean',
+            'missing_clock_out_request_days' => 'integer',
             'overtime_multiplier_hour1' => 'float',
             'overtime_multiplier_subsequent' => 'float',
         ];

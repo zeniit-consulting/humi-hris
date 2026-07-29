@@ -22,6 +22,7 @@ class AttendanceCorrectionRequest extends Model
         'check_in_at',
         'check_out_at',
         'reason',
+        'request_type',
         'status',
         'approval_levels', 'approval_stage', 'first_approver_employee_id', 'second_approver_employee_id', 'first_approved_by', 'first_approved_at', 'rejection_stage',
         'approved_by',
