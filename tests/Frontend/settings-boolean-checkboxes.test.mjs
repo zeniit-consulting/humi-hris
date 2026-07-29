@@ -34,3 +34,10 @@ test('company settings do not submit a blank attendance location by default', ()
         /const \[attendanceLocations, setAttendanceLocations\] = useState\(\s*company\.attendance_locations\.length > 0\s*\? company\.attendance_locations\s*:\s*\[\],/s,
     );
 });
+
+test('profile avatar preview synchronizes with the R2 URL returned after save', () => {
+    assert.match(
+        source,
+        /useEffect\(\(\) => \{\s*setAvatarPreview\(\s*\(auth\.user\.avatar as string \| null \| undefined\) \?\? null,\s*\);\s*\}, \[auth\.user\.avatar\]\);/s,
+    );
+});

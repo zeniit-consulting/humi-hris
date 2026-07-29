@@ -171,6 +171,12 @@ export default function Profile({
     }, []);
 
     useEffect(() => {
+        setAvatarPreview(
+            (auth.user.avatar as string | null | undefined) ?? null,
+        );
+    }, [auth.user.avatar]);
+
+    useEffect(() => {
         setPortalKasbonEnabled(company.portal_kasbon_enabled);
         setEmployeeActivationOtpEnabled(
             company.employee_activation_otp_enabled,
