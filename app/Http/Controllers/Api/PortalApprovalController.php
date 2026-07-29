@@ -52,6 +52,23 @@ class PortalApprovalController extends Controller
     }
     private function requestFor(string $type, int $id): AttendanceCorrectionRequest|LeaveRequest|OvertimeRequest|ShiftChangeRequest { return match ($type) { 'attendance' => AttendanceCorrectionRequest::findOrFail($id), 'leave' => LeaveRequest::findOrFail($id), 'overtime' => OvertimeRequest::findOrFail($id), 'shift_change' => ShiftChangeRequest::findOrFail($id), default => abort(404) }; }
     private function employee(User $user): ?Employee { return Employee::query()->where(function ($query) use ($user) { if ($user->email) $query->where('email', $user->email); if ($user->phone) $query->orWhere('phone', $user->phone); })->first(); }
-    private function approveAttendance(AttendanceCorrectionRequest $item, User $actor): void { EmployeeAttendance::query()->updateOrCreate(['employee_id' => $item->employee_id, 'attendance_date' => $item->attendance_date], ['user_id' => $item->user_id, 'shift_id' => $item->shift_id, 'status' => 'present', 'check_in_at' => $item->check_in_at, 'check_out_at' => $item->check_out_at]); $item->update(['status' => 'approved', 'approved_by' => $actor->id, 'approved_at' => now()]); }
+    private function approveAttendance(AttendanceCorrectionRequest $item, User $actor): void
+    {
+        $attendance = EmployeeAttendance::query()->firstOrNew([
+            'employee_id' => $item->employee_id,
+            'attendance_date' => $item->attendance_date,
+        ]);
+
+        $attendance->fill([
+            'user_id' => $item->user_id,
+            'shift_id' => $item->shift_id ?? $attendance->shift_id,
+            'status' => 'present',
+            'check_in_at' => $item->check_in_at ?? $attendance->check_in_at,
+            'check_out_at' => $item->check_out_at ?? $attendance->check_out_at,
+        ]);
+        $attendance->save();
+
+        $item->update(['status' => 'approved', 'approved_by' => $actor->id, 'approved_at' => now()]);
+    }
     private function approveShift(ShiftChangeRequest $item, User $actor): void { $shift = WorkShift::findOrFail($item->requested_shift_id); EmployeeSchedule::query()->updateOrCreate(['employee_id' => $item->employee_id, 'work_date' => $item->requested_date], ['user_id' => $item->user_id, 'shift_code' => $shift->code, 'start_time' => $shift->start_time, 'end_time' => $shift->end_time, 'is_day_off' => $shift->is_day_off]); $item->update(['status' => 'approved', 'approved_by' => $actor->id, 'approved_at' => now()]); }
 }
