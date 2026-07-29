@@ -3,10 +3,12 @@
 namespace Tests\Feature\Hris;
 
 use App\Models\CompanySetting;
+use App\Models\AttendanceCorrectionRequest;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeLeaveBalance;
 use App\Models\User;
+use App\Services\MissingCheckoutLeaveSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -41,5 +43,33 @@ class MissingCheckoutLeaveSyncTest extends TestCase
         ]);
         $this->assertNotNull(EmployeeAttendance::query()->firstOrFail()->check_out_at);
         $this->assertSame(1.0, (float) EmployeeLeaveBalance::query()->firstOrFail()->used_days);
+    }
+
+    public function test_sync_keeps_a_pending_missing_clock_out_request_for_approval(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-02-10',
+            'status' => 'present',
+            'check_in_at' => '2026-02-10 08:00:00',
+            'check_out_at' => null,
+        ]);
+        $request = AttendanceCorrectionRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-02-10',
+            'request_type' => 'missing_clock_out',
+            'check_out_at' => '2026-02-10 17:00:00',
+            'reason' => 'Lupa absen pulang.',
+            'status' => 'pending',
+        ]);
+
+        app(MissingCheckoutLeaveSyncService::class)->sync($user->id, '2026-02-10');
+
+        $this->assertSame('pending', $request->fresh()->status);
+        $this->assertNotNull(EmployeeAttendance::query()->firstOrFail()->check_out_at);
     }
 }
