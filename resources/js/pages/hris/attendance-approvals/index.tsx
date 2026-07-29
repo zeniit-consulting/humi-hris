@@ -57,8 +57,13 @@ type AttendanceRequestRow = {
     check_in_at: string | null;
     check_out_at: string | null;
     reason: string | null;
+    request_type: 'manual_attendance' | 'missing_clock_out';
     status: string;
     rejection_reason: string | null;
+};
+const requestTypeLabels: Record<AttendanceRequestRow['request_type'], string> = {
+    manual_attendance: 'Lupa Absen',
+    missing_clock_out: 'Lupa Absen Pulang',
 };
 type PageProps = {
     requests: Paginator<AttendanceRequestRow>;
@@ -315,6 +320,9 @@ export default function AttendanceApprovalPage() {
                                                 <div className="text-xs text-muted-foreground">
                                                     {formatShift(row.shift)}
                                                 </div>
+                                                <div className="mt-1 text-xs font-medium text-primary">
+                                                    {requestTypeLabels[row.request_type]}
+                                                </div>
                                             </td>
                                             <td className="px-3 py-3">
                                                 Masuk{' '}
@@ -445,10 +453,14 @@ export default function AttendanceApprovalPage() {
                                 <strong>Tanggal:</strong>{' '}
                                 {detailRow.attendance_date}
                             </p>
-                            <p>
-                                <strong>Shift:</strong>{' '}
-                                {formatShift(detailRow.shift)}
-                            </p>
+                                <p>
+                                    <strong>Shift:</strong>{' '}
+                                    {formatShift(detailRow.shift)}
+                                </p>
+                                <p>
+                                    <strong>Kategori:</strong>{' '}
+                                    {requestTypeLabels[detailRow.request_type]}
+                                </p>
                             <p>
                                 <strong>Jam:</strong> Masuk{' '}
                                 {formatAttendanceTime(

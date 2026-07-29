@@ -6,12 +6,14 @@ use App\Http\Controllers\Api\Concerns\InteractsWithMobileApiResponse;
 use App\Http\Controllers\Api\Mobile\V1\Concerns\InteractsWithSelfService;
 use App\Http\Controllers\Controller;
 use App\Models\AttendanceCorrectionRequest;
+use App\Models\EmployeeAttendance;
 use App\Models\User;
 use App\Services\MissingClockOutRequestPolicy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AttendanceCorrectionRequestController extends Controller
 {
@@ -35,6 +37,7 @@ class AttendanceCorrectionRequestController extends Controller
 
         return $this->success([
             'items' => $requests->map(fn (AttendanceCorrectionRequest $request) => $this->payload($request, $timezone))->values(),
+            'eligible_missing_clock_out_dates' => $this->eligibleMissingClockOutDates($user->accountOwnerId(), $employee->id, $timezone),
         ]);
     }
 
@@ -181,5 +184,45 @@ class AttendanceCorrectionRequestController extends Controller
         }
 
         return Carbon::parse($value, config('app.timezone'))->setTimezone($timezone)->toIso8601String();
+    }
+
+    /** @return array<int, array{attendance_date: string, shift: array{id: int, code: string, name: string, start_time: string|null, end_time: string|null, is_day_off: bool}|null}> */
+    private function eligibleMissingClockOutDates(int $ownerId, int $employeeId, string $timezone): array
+    {
+        return EmployeeAttendance::query()
+            ->with('shift:id,code,name,start_time,end_time,is_day_off')
+            ->where('user_id', $ownerId)
+            ->where('employee_id', $employeeId)
+            ->whereNotNull('check_in_at')
+            ->whereNull('check_out_at')
+            ->latest('attendance_date')
+            ->get()
+            ->filter(function (EmployeeAttendance $attendance) use ($ownerId, $employeeId, $timezone): bool {
+                try {
+                    app(MissingClockOutRequestPolicy::class)->assertEligible(
+                        $ownerId,
+                        $employeeId,
+                        $attendance->attendance_date->toDateString(),
+                        $timezone,
+                    );
+
+                    return true;
+                } catch (ValidationException) {
+                    return false;
+                }
+            })
+            ->map(fn (EmployeeAttendance $attendance): array => [
+                'attendance_date' => $attendance->attendance_date->toDateString(),
+                'shift' => $attendance->shift ? [
+                    'id' => $attendance->shift->id,
+                    'code' => $attendance->shift->code,
+                    'name' => $attendance->shift->name,
+                    'start_time' => $attendance->shift->start_time,
+                    'end_time' => $attendance->shift->end_time,
+                    'is_day_off' => $attendance->shift->is_day_off,
+                ] : null,
+            ])
+            ->values()
+            ->all();
     }
 }

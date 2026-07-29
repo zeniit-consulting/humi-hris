@@ -145,6 +145,7 @@ class AttendanceCorrectionApprovalController extends Controller
             'check_in_at' => $request->check_in_at?->toIso8601String(),
             'check_out_at' => $request->check_out_at?->toIso8601String(),
             'reason' => $request->reason,
+            'request_type' => $request->request_type ?? 'manual_attendance',
             'status' => $request->status,
             'approved_by' => $request->approver?->name,
             'approved_at' => $request->approved_at?->toIso8601String(),
