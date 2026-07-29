@@ -178,7 +178,7 @@ The React form posts `PATCH /settings/attendance`, renders a number input for th
 
 - [ ] **Step 4: Re-run backend settings tests and typecheck the page.**
 
-Run: `php artisan test tests/Feature/Settings/AttendanceSettingTest.php && npm run types`
+Run: `php artisan test tests/Feature/Settings/AttendanceSettingTest.php && npm run types:check`
 
 Expected: PASS.
 
@@ -326,7 +326,7 @@ Keep `shift_id`, `timezone`, `status`, and notes consistent with the existing ad
 
 - [ ] **Step 4: Re-run approval tests and TypeScript checking.**
 
-Run: `php artisan test tests/Feature/Hris/MissingClockOutApprovalTest.php tests/Feature/Hris/ApprovalSettingsTest.php && npm run types`
+Run: `php artisan test tests/Feature/Hris/MissingClockOutApprovalTest.php tests/Feature/Hris/ApprovalSettingsTest.php && npm run types:check`
 
 Expected: PASS.
 
@@ -434,7 +434,7 @@ If the test failed, preserve the request row and its status while allowing atten
 
 - [ ] **Step 4: Run the complete focused verification set.**
 
-Run: `php artisan test tests/Feature/Hris/MissingClockOutRequestPolicyTest.php tests/Feature/Hris/MissingClockOutApprovalTest.php tests/Feature/Hris/MissingCheckoutLeaveSyncTest.php tests/Feature/Settings/AttendanceSettingTest.php tests/Feature/PortalPageTest.php && node --test tests/Frontend/portal-attendance-request.test.mjs && npm run types && npm run build`
+Run: `php artisan test tests/Feature/Hris/MissingClockOutRequestPolicyTest.php tests/Feature/Hris/MissingClockOutApprovalTest.php tests/Feature/Hris/MissingCheckoutLeaveSyncTest.php tests/Feature/Settings/AttendanceSettingTest.php tests/Feature/PortalPageTest.php && node --test tests/Frontend/portal-attendance-request.test.mjs && npm run types:check && npm run build`
 
 Expected: all tests pass; record unrelated pre-existing failures separately rather than changing unrelated code.
 

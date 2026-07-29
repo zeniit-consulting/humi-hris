@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\CompanySettingController;
+use App\Http\Controllers\Settings\AttendanceSettingController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\PayrollSettingController;
 use App\Http\Controllers\Settings\ProfileController;
@@ -15,6 +16,8 @@ Route::middleware(['auth', 'account.not_suspended', 'admin.access'])->group(func
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('settings/company', [CompanySettingController::class, 'update'])->name('company.update');
+    Route::get('settings/attendance', [AttendanceSettingController::class, 'edit'])->name('settings.attendance.edit');
+    Route::patch('settings/attendance', [AttendanceSettingController::class, 'update'])->name('settings.attendance.update');
     Route::get('settings/payroll', [PayrollSettingController::class, 'edit'])->name('settings.payroll.edit');
     Route::patch('settings/payroll', [PayrollSettingController::class, 'update'])->name('settings.payroll.update');
     Route::get('settings/users', [SubUserController::class, 'index'])->name('settings.users.index');
