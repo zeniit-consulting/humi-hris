@@ -1,9 +1,64 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Workbench · tone: professional · theme: Quiet · anchor: Humi teal
+ * Hallmark · H2 knobs: ratio=6/6, proof=product UI, divider=negative space · N5 knobs: width=content, backdrop=blur+saturate, anchor=top-centred
+ * Hallmark · F4 knobs: numbering=01/02/03, layout=horizontal-flow, connector=line · F5 knobs: callouts=margin-labels, frame=plain, anchor=image-led
+ * Hallmark · Ft5 knobs: sentence=38ch, wordmark=under-sentence, rule=hairline · enrichment: tier-A product UI composition
+ * Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5
+ */
 /* Hallmark · macrostructure: Map / Diagram · genre: modern-minimal · tone: technical · theme: Quiet · anchor: Humi teal · enrichment: live map
  * Hallmark · nav: existing portal header · footer: none · check-in: full-screen map + unified bottom card · contrast: pass (46-50) · slop: pass (51-60) · mobile: pass (36, 59, 61-69)
  * Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5
  */
 
 :root {
+    --landing-color-paper: oklch(0.985 0.006 195);
+    --landing-color-surface: oklch(0.997 0.003 195);
+    --landing-color-surface-soft: oklch(0.955 0.017 205);
+    --landing-color-surface-strong: oklch(0.925 0.027 195);
+    --landing-color-ink: oklch(0.22 0.025 205);
+    --landing-color-ink-soft: oklch(0.34 0.026 205);
+    --landing-color-muted: oklch(0.48 0.024 205);
+    --landing-color-rule: oklch(0.86 0.018 195);
+    --landing-color-accent: oklch(0.4 0.082 195);
+    --landing-color-accent-hover: oklch(0.34 0.076 195);
+    --landing-color-accent-soft: oklch(0.93 0.035 195);
+    --landing-color-accent-ink: oklch(0.985 0.006 195);
+    --landing-color-focus: oklch(0.47 0.1 225);
+    --landing-color-success: oklch(0.45 0.1 160);
+    --landing-color-warning: oklch(0.58 0.12 78);
+    --landing-color-danger: oklch(0.54 0.19 27);
+    --landing-font-display: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    --landing-font-body: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    --landing-space-2xs: 0.25rem;
+    --landing-space-xs: 0.5rem;
+    --landing-space-sm: 0.75rem;
+    --landing-space-md: 1rem;
+    --landing-space-lg: 1.5rem;
+    --landing-space-xl: 2rem;
+    --landing-space-2xl: 3rem;
+    --landing-space-3xl: 5rem;
+    --landing-space-4xl: 7rem;
+    --landing-text-xs: 0.75rem;
+    --landing-text-sm: 0.875rem;
+    --landing-text-base: 1rem;
+    --landing-text-lg: 1.25rem;
+    --landing-text-xl: 1.5625rem;
+    --landing-text-2xl: 1.953125rem;
+    --landing-text-display: clamp(2.5rem, 5vw, 4.75rem);
+    --landing-text-display-small: clamp(2rem, 4vw, 3.5rem);
+    --landing-radius-control: 999px;
+    --landing-radius-card: 1rem;
+    --landing-radius-panel: 1.5rem;
+    --landing-rule-width: 1px;
+    --landing-shadow-float: 0 18px 55px oklch(0.22 0.025 205 / 0.1);
+    --landing-shadow-panel: 0 30px 90px oklch(0.22 0.025 205 / 0.12);
+    --landing-duration-press: 100ms;
+    --landing-duration-state: 180ms;
+    --landing-duration-panel: 240ms;
+    --landing-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --landing-ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+    --landing-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --landing-z-sticky: 200;
+
     --portal-color-paper: oklch(0.985 0.006 195);
     --portal-color-canvas: oklch(0.955 0.017 205);
     --portal-color-surface: oklch(0.997 0.003 195);
@@ -62,4 +117,25 @@
     --portal-z-sticky: 200;
     --portal-z-modal: 400;
     --portal-z-toast: 500;
+}
+
+.dark {
+    --landing-color-paper: oklch(0.19 0.024 205);
+    --landing-color-surface: oklch(0.23 0.026 205);
+    --landing-color-surface-soft: oklch(0.27 0.027 205);
+    --landing-color-surface-strong: oklch(0.31 0.03 205);
+    --landing-color-ink: oklch(0.94 0.014 195);
+    --landing-color-ink-soft: oklch(0.79 0.02 195);
+    --landing-color-muted: oklch(0.66 0.02 195);
+    --landing-color-rule: oklch(0.36 0.027 205);
+    --landing-color-accent: oklch(0.73 0.1 185);
+    --landing-color-accent-hover: oklch(0.78 0.1 185);
+    --landing-color-accent-soft: oklch(0.3 0.055 190);
+    --landing-color-accent-ink: oklch(0.18 0.024 205);
+    --landing-color-focus: oklch(0.75 0.12 215);
+    --landing-color-success: oklch(0.72 0.11 160);
+    --landing-color-warning: oklch(0.76 0.12 78);
+    --landing-color-danger: oklch(0.7 0.17 27);
+    --landing-shadow-float: 0 18px 55px oklch(0.08 0.02 205 / 0.22);
+    --landing-shadow-panel: 0 30px 90px oklch(0.08 0.02 205 / 0.3);
 }

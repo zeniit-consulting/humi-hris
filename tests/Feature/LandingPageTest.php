@@ -16,8 +16,24 @@ class LandingPageTest extends TestCase
             ->assertCookieMissing('landing_variant')
             ->assertInertia(fn (Assert $page) => $page
                 ->component('welcome')
+                ->where('canRegister', true)
                 ->missing('landingVariant')
             );
+    }
+
+    public function test_landing_page_uses_workbench_copy_and_current_brand_assets(): void
+    {
+        $source = file_get_contents(resource_path('js/pages/welcome.tsx'));
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString(
+            'Kelola orang, waktu, dan payroll dalam satu',
+            $source,
+        );
+        $this->assertStringContainsString('sistem.', $source);
+        $this->assertStringContainsString('/logo-light.png', $source);
+        $this->assertStringNotContainsString('Efisiensi proses HR', $source);
+        $this->assertStringNotContainsString('Akurasi data', $source);
     }
 
     public function test_landing_v2_variant_is_available(): void

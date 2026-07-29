@@ -1,117 +1,75 @@
 import { Link, usePage } from '@inertiajs/react';
+import type { LucideIcon } from 'lucide-react';
 import {
     ArrowRight,
+    Banknote,
     Building2,
-    CalendarClock,
-    ChartColumn,
+    CalendarCheck2,
+    Check,
     CheckCircle2,
-    CircleDollarSign,
-    Clock,
+    ChevronDown,
+    Clock3,
     Factory,
+    FileCheck2,
     Fingerprint,
-    FileSpreadsheet,
-    NotebookPen,
-    Shield,
-    Sparkles,
+    LayoutDashboard,
+    MessageCircle,
+    ShieldCheck,
     Store,
     Users,
+    WalletCards,
 } from 'lucide-react';
+import { useState } from 'react';
+import AppLogoIcon from '@/components/app-logo-icon';
 import SeoHead from '@/components/seo-head';
 import { dashboard, login, register } from '@/routes';
 
-const modules = [
-    {
-        icon: NotebookPen,
-        title: 'Rekrutmen Terpadu',
-        description:
-            'Kelola lowongan, tahapan seleksi, dan kandidat dalam satu alur yang terstruktur.',
-    },
-    {
-        icon: Users,
-        title: 'Data Karyawan',
-        description:
-            'Database personal, jabatan, dokumen, dan riwayat kerja terpusat dalam satu dashboard.',
-    },
-    {
-        icon: CalendarClock,
-        title: 'Absensi Real-time',
-        description:
-            'Kehadiran, lembur, cuti, dan jadwal shift terpantau real-time dari web maupun mobile.',
-    },
-    {
-        icon: CircleDollarSign,
-        title: 'Payroll Otomatis',
-        description:
-            'Generate payroll otomatis dengan komponen gaji, kasbon, denda, dan tunjangan fleksibel.',
-    },
-    {
-        icon: ChartColumn,
-        title: 'Analitik SDM',
-        description:
-            'Tren produktivitas, turnover, dan efektivitas tenaga kerja dalam visualisasi yang intuitif.',
-    },
-    {
-        icon: Fingerprint,
-        title: 'Approval Berlapis',
-        description:
-            'Workflow approval lintas jabatan dengan SLA dan notifikasi otomatis tanpa bottleneck.',
-    },
-];
+type WelcomeProps = {
+    canRegister?: boolean;
+};
 
-const stats = [
-    { label: 'Efisiensi proses HR', value: '70%' },
-    { label: 'Waktu proses payroll', value: '< 10 mnt' },
-    { label: 'Akurasi data', value: '99.9%' },
-];
+type ProductArea = {
+    id: 'employees' | 'attendance' | 'approvals' | 'payroll';
+    label: string;
+    title: string;
+    description: string;
+    icon: LucideIcon;
+    facts: string[];
+    status: string;
+};
 
-const benefits = [
-    'Implementasi cepat tanpa perlu training lama',
-    'Mendukung struktur multi divisi dan jabatan bertingkat',
-    'Mengurangi kesalahan manual pada perhitungan payroll',
-    'Akses berbasis role dengan audit log lengkap',
-];
+type WorkflowStepData = {
+    marker: string;
+    title: string;
+    description: string;
+    icon: LucideIcon;
+};
 
-const segmentCards = [
-    {
-        icon: Building2,
-        title: 'Outsourcing',
-        description:
-            'Kontrol sub-company, lokasi klien, manpower request, absensi lapangan, payroll, dan billing klien.',
-        href: '/hris-outsourcing',
-        cta: 'Lihat solusi outsourcing',
-    },
-    {
-        icon: Store,
-        title: 'Retail & F&B',
-        description:
-            'Atur shift outlet, absensi, cuti, lembur, kasbon, dan payroll tim cabang dengan alur sederhana.',
-        href: '/hris-retail-fnb',
-        cta: 'Lihat solusi retail',
-    },
-    {
-        icon: Factory,
-        title: 'Manufaktur Shift',
-        description:
-            'Pantau roster, koreksi absensi, lembur, payroll, dan performance untuk tim produksi.',
-        href: '/hris-manufaktur-shift',
-        cta: 'Lihat solusi manufaktur',
-    },
-];
+type IndustrySolutionData = {
+    title: string;
+    description: string;
+    href: string;
+    cta: string;
+    icon: LucideIcon;
+};
 
-const gtmOffers = [
-    'Gratis setup 30 karyawan pertama',
-    'Import data karyawan dari Excel',
-    'Payroll pertama didampingi',
-    'Demo WhatsApp 15 menit',
-];
+type PricingPlanData = {
+    name: string;
+    price: string;
+    period?: string;
+    description: string;
+    features: string[];
+    lockedFeatures?: string[];
+    recommended?: boolean;
+    cta: string;
+};
 
-const fmt = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
+type Faq = {
+    question: string;
+    answer: string;
+};
 
-const PRICE_CORE = 2900;
+const PRICE_BASIC = 2900;
 const PRICE_PLUS = 7500;
 const WHATSAPP_CONTACT_URL =
     'https://wa.me/6285710999144?text=Halo%20Humi%2C%20saya%20ingin%20konsultasi%20tentang%20HRIS.';
@@ -121,7 +79,123 @@ const SEO_DESCRIPTION =
 const SEO_KEYWORDS =
     'software HRIS Indonesia, aplikasi HRIS, HR management system, aplikasi absensi karyawan, software payroll Indonesia, manajemen karyawan, aplikasi cuti karyawan, portal karyawan';
 
-const coreFeaturesIncluded = [
+const currency = new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+});
+
+const productAreas: ProductArea[] = [
+    {
+        id: 'employees',
+        label: 'Data karyawan',
+        title: 'Satu sumber data untuk seluruh tim.',
+        description:
+            'Profil, jabatan, kontrak, dokumen, dan struktur organisasi tersimpan dalam catatan yang sama untuk HR dan manajemen.',
+        icon: Users,
+        status: 'Data terpusat',
+        facts: [
+            'Profil dan dokumen karyawan',
+            'Posisi serta struktur organisasi',
+            'Riwayat kontrak dan pekerjaan',
+        ],
+    },
+    {
+        id: 'attendance',
+        label: 'Absensi & jadwal',
+        title: 'Kehadiran mengikuti pola kerja perusahaan.',
+        description:
+            'Atur shift, lokasi, jadwal, dan koreksi absensi tanpa memisahkan data operasional dari profil karyawan.',
+        icon: Fingerprint,
+        status: 'Terhubung ke jadwal',
+        facts: [
+            'Absensi web dan mobile',
+            'Jadwal serta pola kerja',
+            'Koreksi dan riwayat kehadiran',
+        ],
+    },
+    {
+        id: 'approvals',
+        label: 'Cuti & approval',
+        title: 'Pengajuan bergerak di jalur yang jelas.',
+        description:
+            'Cuti, izin, lembur, kasbon, dan reimbursement dapat ditinjau berdasarkan peran serta kebutuhan perusahaan.',
+        icon: FileCheck2,
+        status: 'Siap ditinjau',
+        facts: [
+            'Pengajuan mandiri dari portal',
+            'Approval sesuai peran',
+            'Riwayat keputusan tersimpan',
+        ],
+    },
+    {
+        id: 'payroll',
+        label: 'Payroll',
+        title: 'Payroll memakai data yang sudah disetujui.',
+        description:
+            'Komponen gaji, tunjangan, potongan, kasbon, dan data kehadiran bertemu sebelum slip gaji diterbitkan.',
+        icon: WalletCards,
+        status: 'Siap diproses',
+        facts: [
+            'Komponen payroll fleksibel',
+            'Slip gaji untuk karyawan',
+            'Riwayat dan laporan payroll',
+        ],
+    },
+];
+
+const workflowSteps: WorkflowStepData[] = [
+    {
+        marker: '01',
+        title: 'Data menjadi sumber yang sama',
+        description:
+            'Profil, posisi, jadwal, dan kebijakan kerja tersimpan dalam satu basis operasional.',
+        icon: Users,
+    },
+    {
+        marker: '02',
+        title: 'Aktivitas harian tercatat',
+        description:
+            'Absensi, cuti, lembur, koreksi, dan approval bergerak dalam alur yang dapat ditinjau.',
+        icon: CalendarCheck2,
+    },
+    {
+        marker: '03',
+        title: 'Payroll siap diproses',
+        description:
+            'Data yang telah disetujui menjadi dasar payroll, slip gaji, dan laporan manajemen.',
+        icon: WalletCards,
+    },
+];
+
+const industrySolutions: IndustrySolutionData[] = [
+    {
+        icon: Building2,
+        title: 'Outsourcing',
+        description:
+            'Kelola sub-company, lokasi klien, manpower request, absensi lapangan, payroll, dan billing klien.',
+        href: '/hris-outsourcing',
+        cta: 'Lihat solusi outsourcing',
+    },
+    {
+        icon: Store,
+        title: 'Retail & F&B',
+        description:
+            'Susun shift outlet, absensi, cuti, lembur, kasbon, dan payroll untuk tim cabang.',
+        href: '/hris-retail-fnb',
+        cta: 'Lihat solusi retail',
+    },
+    {
+        icon: Factory,
+        title: 'Manufaktur shift',
+        description:
+            'Pantau roster, koreksi absensi, lembur, payroll, dan performa tim produksi.',
+        href: '/hris-manufaktur-shift',
+        cta: 'Lihat solusi manufaktur',
+    },
+];
+
+const basicFeatures = [
     'Manajemen Karyawan',
     'Kehadiran & Absensi',
     'Jadwal Kerja',
@@ -133,74 +207,573 @@ const coreFeaturesIncluded = [
     'Struktur Organisasi',
 ];
 
-const coreFeatureLocked = ['Rekrutmen', 'Kasbon', 'Asset Management'];
+const plusFeatures = [
+    ...basicFeatures,
+    'Rekrutmen',
+    'Kasbon',
+    'Asset Management',
+];
 
-const plusFeatures = [...coreFeaturesIncluded, ...coreFeatureLocked];
-
-const pricingPlans = [
+const pricingPlans: PricingPlanData[] = [
     {
         name: 'Free Trial',
         price: 'Gratis',
         description:
-            'Coba sistem maksimal 30 hari sebelum memilih paket berbayar untuk operasional harian.',
-        highlight: false,
-        badge: '30 HARI',
+            'Uji alur HR harian sebelum menentukan paket untuk operasional perusahaan.',
         cta: 'Mulai Trial',
         features: [
-            'Manajemen Karyawan',
-            'Kehadiran & Absensi',
-            'Jadwal Kerja',
-            'Cuti & Izin',
-            'Lembur',
-            'Notifikasi',
-            'Survey',
-            'Struktur Organisasi',
-            'Maks. 10 karyawan',
-            'Maks. 30 hari',
+            'Maksimal 10 karyawan',
+            'Masa trial 30 hari',
+            'Fitur operasional inti',
+            'Portal karyawan',
         ],
-        lockedFeatures: coreFeatureLocked,
+        lockedFeatures: ['Rekrutmen', 'Kasbon', 'Asset Management'],
     },
     {
         name: 'Basic',
-        price: fmt.format(PRICE_CORE),
+        price: currency.format(PRICE_BASIC),
         period: '/karyawan/bulan',
         description:
-            'Paket minimum setelah trial untuk operasional HR harian yang sudah siap dipakai.',
-        highlight: false,
-        cta: 'Pilih Paket Basic',
-        features: coreFeaturesIncluded,
-        lockedFeatures: coreFeatureLocked,
+            'Untuk perusahaan yang ingin menjalankan administrasi dan payroll dalam satu sistem.',
+        cta: 'Pilih Basic',
+        features: basicFeatures,
+        lockedFeatures: ['Rekrutmen', 'Kasbon', 'Asset Management'],
     },
     {
         name: 'Plus',
-        price: fmt.format(PRICE_PLUS),
+        price: currency.format(PRICE_PLUS),
         period: '/karyawan/bulan',
         description:
-            'Paket paling lengkap untuk tim yang butuh rekrutmen, kasbon, dan asset management.',
-        highlight: true,
-        badge: 'REKOMENDASI',
-        cta: 'Pilih Paket Plus',
+            'Untuk tim yang membutuhkan alur HR lengkap, dari rekrutmen sampai pengelolaan aset.',
+        cta: 'Pilih Plus',
         features: plusFeatures,
+        recommended: true,
     },
 ];
 
-export default function Welcome({
-    canRegister = true,
+const faqs: Faq[] = [
+    {
+        question: 'Apa yang bisa dicoba selama masa trial?',
+        answer: 'Trial memberi akses ke fitur operasional inti Humi untuk maksimal 10 karyawan selama 30 hari. Tim Anda bisa menilai alur data karyawan, kehadiran, jadwal, cuti, lembur, notifikasi, survey, dan portal karyawan.',
+    },
+    {
+        question: 'Berapa lama proses setup Humi?',
+        answer: 'Waktu setup mengikuti jumlah karyawan, kelengkapan data, dan aturan kerja perusahaan. Tim Humi membantu menyiapkan struktur awal agar proses import dan konfigurasi lebih terarah.',
+    },
+    {
+        question: 'Apakah data karyawan lama bisa diimpor?',
+        answer: 'Bisa. Data karyawan dapat disiapkan dari file Excel, lalu diperiksa kembali sebelum digunakan sebagai basis data operasional di Humi.',
+    },
+    {
+        question: 'Apakah Humi cocok untuk bisnis dengan sistem shift?',
+        answer: 'Ya. Humi mendukung jadwal dan pola kerja yang dibutuhkan operasional outsourcing, retail dan F&B, serta manufaktur shift.',
+    },
+    {
+        question: 'Apa yang terjadi setelah trial selesai?',
+        answer: 'Anda dapat memilih paket Basic atau Plus sesuai modul yang dibutuhkan. Invoice dibuat setelah konfirmasi, sehingga pilihan paket tetap berada di tangan perusahaan.',
+    },
+];
+
+const primaryActionClass =
+    'inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-[var(--landing-radius-control)] bg-[var(--landing-color-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--landing-color-accent-ink)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] aria-disabled:pointer-events-none aria-disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none';
+
+const secondaryActionClass =
+    'inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-[var(--landing-radius-control)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] px-5 py-2.5 text-sm font-semibold text-[var(--landing-color-ink)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] aria-disabled:pointer-events-none aria-disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none';
+
+function LandingNav({
+    hasUser,
+    trialHref,
 }: {
-    canRegister?: boolean;
+    hasUser: boolean;
+    trialHref: string;
 }) {
+    return (
+        <div className="fixed inset-x-0 top-3 z-[var(--landing-z-sticky)] px-3 sm:top-4 sm:px-6">
+            <nav
+                aria-label="Navigasi utama"
+                className="mx-auto flex w-fit max-w-full items-center gap-2 rounded-[var(--landing-radius-control)] border border-[var(--landing-color-rule)] bg-[color-mix(in_oklch,var(--landing-color-surface)_88%,transparent)] p-1.5 shadow-[var(--landing-shadow-float)] backdrop-blur-xl backdrop-saturate-125"
+            >
+                <Link
+                    href="/"
+                    aria-label="Humi — halaman utama"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-[var(--landing-radius-control)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)]"
+                >
+                    <AppLogoIcon
+                        width={32}
+                        height={32}
+                        className="size-8 object-contain"
+                        alt="Humi"
+                    />
+                </Link>
+
+                <div className="hidden items-center lg:flex">
+                    {[
+                        ['Produk', '#product'],
+                        ['Solusi', '#solutions'],
+                        ['Harga', '#pricing'],
+                        ['Berita', '/berita'],
+                    ].map(([label, href]) => (
+                        <Link
+                            key={href}
+                            href={href}
+                            className="inline-flex min-h-11 items-center rounded-[var(--landing-radius-control)] px-3 text-sm font-medium whitespace-nowrap text-[var(--landing-color-ink-soft)] hover:text-[var(--landing-color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)]"
+                        >
+                            {label}
+                        </Link>
+                    ))}
+                </div>
+
+                {!hasUser ? (
+                    <Link
+                        href={login()}
+                        className="hidden min-h-11 items-center rounded-[var(--landing-radius-control)] px-3 text-sm font-medium whitespace-nowrap text-[var(--landing-color-ink-soft)] hover:text-[var(--landing-color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] sm:inline-flex"
+                    >
+                        Masuk
+                    </Link>
+                ) : null}
+
+                <Link href={trialHref} className={primaryActionClass}>
+                    <span className="sm:hidden">
+                        {hasUser ? 'Dashboard' : 'Mulai Trial'}
+                    </span>
+                    <span className="hidden sm:inline">
+                        {hasUser ? 'Buka Dashboard' : 'Mulai Trial Gratis'}
+                    </span>
+                    <ArrowRight
+                        className="size-4 shrink-0"
+                        aria-hidden="true"
+                    />
+                </Link>
+            </nav>
+        </div>
+    );
+}
+
+function HeroWorkbench() {
+    return (
+        <figure
+            aria-label="Ringkasan alur operasional Humi"
+            className="min-w-0 rounded-[var(--landing-radius-panel)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] p-3 shadow-[var(--landing-shadow-panel)] sm:p-5"
+        >
+            <figcaption className="flex items-center justify-between gap-4 border-b border-[var(--landing-color-rule)] pb-4">
+                <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-[var(--landing-radius-card)] bg-[var(--landing-color-accent-soft)] text-[var(--landing-color-accent)]">
+                        <LayoutDashboard
+                            className="size-5"
+                            aria-hidden="true"
+                        />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--landing-color-ink)]">
+                            Operasional hari ini
+                        </p>
+                        <p className="truncate text-xs text-[var(--landing-color-muted)]">
+                            Kehadiran, approval, dan payroll terhubung
+                        </p>
+                    </div>
+                </div>
+                <span className="hidden items-center gap-2 text-xs font-medium whitespace-nowrap text-[var(--landing-color-ink-soft)] sm:inline-flex">
+                    <span
+                        className="size-2 rounded-full bg-[var(--landing-color-success)]"
+                        aria-hidden="true"
+                    />
+                    Sistem aktif
+                </span>
+            </figcaption>
+
+            <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+                <div className="min-w-0 rounded-[var(--landing-radius-card)] bg-[var(--landing-color-surface-soft)] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-[var(--landing-color-ink)]">
+                            Kehadiran
+                        </p>
+                        <span className="text-xs whitespace-nowrap text-[var(--landing-color-muted)]">
+                            Hari ini
+                        </span>
+                    </div>
+                    <div className="mt-5 space-y-4">
+                        {[
+                            {
+                                label: 'Shift pagi',
+                                status: 'Berjalan',
+                                icon: Clock3,
+                            },
+                            {
+                                label: 'Absensi lapangan',
+                                status: 'Tercatat',
+                                icon: Fingerprint,
+                            },
+                            {
+                                label: 'Koreksi kehadiran',
+                                status: 'Ditinjau',
+                                icon: FileCheck2,
+                            },
+                        ].map((item) => (
+                            <div
+                                key={item.label}
+                                className="flex min-w-0 items-center gap-3"
+                            >
+                                <item.icon
+                                    className="size-4 shrink-0 text-[var(--landing-color-accent)]"
+                                    aria-hidden="true"
+                                />
+                                <span className="min-w-0 flex-1 truncate text-xs font-medium text-[var(--landing-color-ink-soft)]">
+                                    {item.label}
+                                </span>
+                                <span className="text-xs whitespace-nowrap text-[var(--landing-color-muted)]">
+                                    {item.status}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="grid min-w-0 gap-3">
+                    <div className="rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] p-4">
+                        <FileCheck2
+                            className="size-5 text-[var(--landing-color-accent)]"
+                            aria-hidden="true"
+                        />
+                        <p className="mt-4 text-xs text-[var(--landing-color-muted)]">
+                            Approval
+                        </p>
+                        <p className="mt-1 text-base font-semibold text-[var(--landing-color-ink)]">
+                            Perlu ditinjau
+                        </p>
+                    </div>
+                    <div className="rounded-[var(--landing-radius-card)] bg-[var(--landing-color-accent)] p-4 text-[var(--landing-color-accent-ink)]">
+                        <Banknote className="size-5" aria-hidden="true" />
+                        <p className="mt-4 text-xs text-[var(--landing-color-accent-ink)] opacity-75">
+                            Payroll
+                        </p>
+                        <p className="mt-1 text-base font-semibold">
+                            Siap diproses
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-3 flex flex-col gap-3 rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                    <ShieldCheck
+                        className="size-4 shrink-0 text-[var(--landing-color-accent)]"
+                        aria-hidden="true"
+                    />
+                    <p className="text-xs leading-5 text-[var(--landing-color-ink-soft)]">
+                        Data harian tetap terhubung ke profil dan riwayat
+                        karyawan.
+                    </p>
+                </div>
+                <span className="text-xs font-semibold whitespace-nowrap text-[var(--landing-color-accent)]">
+                    Satu alur data
+                </span>
+            </div>
+        </figure>
+    );
+}
+
+function WorkflowStep({
+    step,
+    isLast,
+}: {
+    step: WorkflowStepData;
+    isLast: boolean;
+}) {
+    return (
+        <li className="relative min-w-0 pb-8 last:pb-0 md:pb-0">
+            {!isLast ? (
+                <span
+                    className="absolute top-12 bottom-0 left-5 w-px bg-[var(--landing-color-rule)] md:top-5 md:right-0 md:bottom-auto md:left-12 md:h-px md:w-auto"
+                    aria-hidden="true"
+                />
+            ) : null}
+            <div className="relative flex min-w-0 gap-4 md:block md:pr-8">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--landing-color-rule)] bg-[var(--landing-color-paper)] text-xs font-semibold text-[var(--landing-color-accent)]">
+                    {step.marker}
+                </div>
+                <div className="min-w-0 md:mt-8">
+                    <step.icon
+                        className="hidden size-5 text-[var(--landing-color-accent)] md:block"
+                        aria-hidden="true"
+                    />
+                    <h3 className="text-base font-semibold text-[var(--landing-color-ink)] md:mt-4">
+                        {step.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-[var(--landing-color-ink-soft)]">
+                        {step.description}
+                    </p>
+                </div>
+            </div>
+        </li>
+    );
+}
+
+function ProductWorkbench() {
+    const [activeAreaId, setActiveAreaId] =
+        useState<ProductArea['id']>('employees');
+    const activeArea =
+        productAreas.find((area) => area.id === activeAreaId) ??
+        productAreas[0];
+
+    return (
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] lg:gap-10">
+            <div
+                className="grid min-w-0 grid-cols-2 gap-2 lg:grid-cols-1"
+                aria-label="Area produk Humi"
+            >
+                {productAreas.map((area) => {
+                    const isActive = activeArea.id === area.id;
+
+                    return (
+                        <button
+                            key={area.id}
+                            type="button"
+                            aria-pressed={isActive}
+                            onClick={() => setActiveAreaId(area.id)}
+                            className={
+                                isActive
+                                    ? 'flex min-h-14 min-w-0 items-center gap-3 rounded-[var(--landing-radius-card)] bg-[var(--landing-color-ink)] px-3 py-3 text-left text-[var(--landing-color-paper)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] disabled:cursor-not-allowed disabled:opacity-50 sm:px-4'
+                                    : 'flex min-h-14 min-w-0 items-center gap-3 rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] px-3 py-3 text-left text-[var(--landing-color-ink)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none sm:px-4'
+                            }
+                        >
+                            <area.icon
+                                className="size-5 shrink-0"
+                                aria-hidden="true"
+                            />
+                            <span className="min-w-0 flex-1 truncate text-xs font-semibold sm:text-sm">
+                                {area.label}
+                            </span>
+                            {isActive ? (
+                                <span className="hidden text-xs font-medium whitespace-nowrap opacity-70 sm:inline">
+                                    Aktif
+                                </span>
+                            ) : null}
+                        </button>
+                    );
+                })}
+            </div>
+
+            <div
+                aria-live="polite"
+                className="min-w-0 rounded-[var(--landing-radius-panel)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] p-5 shadow-[var(--landing-shadow-panel)] sm:p-8"
+            >
+                <div className="flex flex-col gap-6 border-b border-[var(--landing-color-rule)] pb-8 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                        <div className="flex size-11 items-center justify-center rounded-[var(--landing-radius-card)] bg-[var(--landing-color-accent-soft)] text-[var(--landing-color-accent)]">
+                            <activeArea.icon
+                                className="size-5"
+                                aria-hidden="true"
+                            />
+                        </div>
+                        <h3 className="mt-6 max-w-xl text-[length:var(--landing-text-2xl)] leading-tight font-semibold tracking-[-0.025em] [overflow-wrap:anywhere] text-[var(--landing-color-ink)]">
+                            {activeArea.title}
+                        </h3>
+                        <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--landing-color-ink-soft)] sm:text-base">
+                            {activeArea.description}
+                        </p>
+                    </div>
+                    <span className="inline-flex min-h-9 w-fit items-center gap-2 rounded-[var(--landing-radius-control)] bg-[var(--landing-color-accent-soft)] px-3 text-xs font-semibold whitespace-nowrap text-[var(--landing-color-accent)]">
+                        <CheckCircle2 className="size-4" aria-hidden="true" />
+                        {activeArea.status}
+                    </span>
+                </div>
+
+                <div className="mt-8 grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                    {activeArea.facts.map((fact, index) => (
+                        <div
+                            key={fact}
+                            className="min-w-0 rounded-[var(--landing-radius-card)] bg-[var(--landing-color-surface-soft)] p-4"
+                        >
+                            <span className="text-xs font-semibold text-[var(--landing-color-accent)]">
+                                {String(index + 1).padStart(2, '0')}
+                            </span>
+                            <p className="mt-5 text-sm leading-6 font-medium text-[var(--landing-color-ink)]">
+                                {fact}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function IndustrySolution({ solution }: { solution: IndustrySolutionData }) {
+    return (
+        <Link
+            href={solution.href}
+            className="group grid min-w-0 gap-5 border-t border-[var(--landing-color-rule)] py-6 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--landing-color-focus)] sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
+        >
+            <solution.icon
+                className="size-6 text-[var(--landing-color-accent)]"
+                aria-hidden="true"
+            />
+            <div className="min-w-0">
+                <h3 className="text-lg font-semibold text-[var(--landing-color-ink)]">
+                    {solution.title}
+                </h3>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--landing-color-ink-soft)]">
+                    {solution.description}
+                </p>
+            </div>
+            <span className="inline-flex items-center gap-2 text-sm font-semibold whitespace-nowrap text-[var(--landing-color-accent)]">
+                {solution.cta}
+                <ArrowRight
+                    className="size-4 transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] group-hover:translate-x-1 motion-reduce:transform-none motion-reduce:transition-none"
+                    aria-hidden="true"
+                />
+            </span>
+        </Link>
+    );
+}
+
+function PlanFeatures({
+    plan,
+    compact = false,
+}: {
+    plan: PricingPlanData;
+    compact?: boolean;
+}) {
+    const visibleFeatures = compact ? plan.features.slice(0, 4) : plan.features;
+
+    return (
+        <ul className="mt-6 grid gap-3">
+            {visibleFeatures.map((feature) => (
+                <li
+                    key={feature}
+                    className="flex items-start gap-3 text-sm text-[var(--landing-color-ink-soft)]"
+                >
+                    <Check
+                        className="mt-0.5 size-4 shrink-0 text-[var(--landing-color-accent)]"
+                        aria-hidden="true"
+                    />
+                    <span>{feature}</span>
+                </li>
+            ))}
+            {plan.lockedFeatures?.slice(0, compact ? 1 : 3).map((feature) => (
+                <li
+                    key={feature}
+                    className="flex items-start gap-3 text-sm text-[var(--landing-color-muted)]"
+                >
+                    <ShieldCheck
+                        className="mt-0.5 size-4 shrink-0"
+                        aria-hidden="true"
+                    />
+                    <span>{feature} tersedia di Plus</span>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+function PricingPlan({
+    plan,
+    trialHref,
+    compact = false,
+}: {
+    plan: PricingPlanData;
+    trialHref: string;
+    compact?: boolean;
+}) {
+    return (
+        <article
+            className={
+                plan.recommended
+                    ? 'flex h-full min-w-0 flex-col rounded-[var(--landing-radius-panel)] bg-[var(--landing-color-ink)] p-6 text-[var(--landing-color-paper)] shadow-[var(--landing-shadow-panel)] sm:p-8'
+                    : 'flex min-w-0 flex-col border-t border-[var(--landing-color-rule)] py-6 first:border-t-0 lg:first:border-t'
+            }
+        >
+            <div className="flex items-center justify-between gap-4">
+                <h3 className="text-xl font-semibold">{plan.name}</h3>
+                {plan.recommended ? (
+                    <span className="inline-flex min-h-8 items-center rounded-[var(--landing-radius-control)] bg-[var(--landing-color-accent-soft)] px-3 text-xs font-semibold whitespace-nowrap text-[var(--landing-color-accent)]">
+                        Rekomendasi
+                    </span>
+                ) : null}
+            </div>
+            <p
+                className={
+                    plan.recommended
+                        ? 'mt-3 max-w-xl text-sm leading-6 text-[var(--landing-color-paper)] opacity-70'
+                        : 'mt-3 max-w-xl text-sm leading-6 text-[var(--landing-color-ink-soft)]'
+                }
+            >
+                {plan.description}
+            </p>
+
+            <div className="mt-6 flex flex-wrap items-end gap-x-2 gap-y-1 tabular-nums">
+                <span className="text-3xl font-semibold tracking-[-0.04em]">
+                    {plan.price}
+                </span>
+                {plan.period ? (
+                    <span
+                        className={
+                            plan.recommended
+                                ? 'pb-1 text-xs text-[var(--landing-color-paper)] opacity-70'
+                                : 'pb-1 text-xs text-[var(--landing-color-muted)]'
+                        }
+                    >
+                        {plan.period}
+                    </span>
+                ) : null}
+            </div>
+
+            <div className={plan.recommended ? 'flex-1' : undefined}>
+                <PlanFeatures plan={plan} compact={compact} />
+            </div>
+
+            <Link
+                href={trialHref}
+                className={
+                    plan.recommended
+                        ? 'mt-8 inline-flex min-h-11 items-center justify-center rounded-[var(--landing-radius-control)] bg-[var(--landing-color-paper)] px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-[var(--landing-color-ink)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] active:translate-y-0 aria-disabled:pointer-events-none aria-disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none'
+                        : `${secondaryActionClass} mt-8`
+                }
+            >
+                {plan.cta}
+            </Link>
+        </article>
+    );
+}
+
+function FaqItem({ faq }: { faq: Faq }) {
+    return (
+        <details className="group border-t border-[var(--landing-color-rule)]">
+            <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 py-4 text-left text-base font-semibold text-[var(--landing-color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] [&::-webkit-details-marker]:hidden">
+                <span>{faq.question}</span>
+                <ChevronDown
+                    className="size-5 shrink-0 transition-transform duration-[var(--landing-duration-state)] ease-[var(--landing-ease-in-out)] group-open:rotate-180 motion-reduce:transform-none motion-reduce:transition-none"
+                    aria-hidden="true"
+                />
+            </summary>
+            <p className="max-w-3xl pb-6 text-sm leading-7 text-[var(--landing-color-ink-soft)] sm:text-base">
+                {faq.answer}
+            </p>
+        </details>
+    );
+}
+
+export default function Welcome({ canRegister = true }: WelcomeProps) {
     const { auth, appUrl } = usePage().props as {
         auth: { user?: unknown };
         appUrl: string;
     };
     const siteUrl = appUrl.replace(/\/$/, '');
+    const hasUser = Boolean(auth.user);
+    const trialHref = hasUser
+        ? dashboard().url
+        : canRegister
+          ? register().url
+          : login().url;
+    const trialLabel = hasUser ? 'Buka Dashboard' : 'Mulai Trial Gratis';
+
     const structuredData = [
         {
             '@context': 'https://schema.org',
             '@type': 'Organization',
             name: 'Humi',
             url: siteUrl,
-            logo: `${siteUrl}/logo.png`,
+            logo: `${siteUrl}/logo-light.png`,
             contactPoint: {
                 '@type': 'ContactPoint',
                 contactType: 'sales',
@@ -226,11 +799,11 @@ export default function Welcome({
             description: SEO_DESCRIPTION,
             offers: {
                 '@type': 'Offer',
-                price: String(PRICE_CORE),
+                price: String(PRICE_BASIC),
                 priceCurrency: 'IDR',
                 category: 'subscription',
             },
-            featureList: modules.map((module) => module.title),
+            featureList: productAreas.map((area) => area.label),
         },
     ];
 
@@ -242,662 +815,264 @@ export default function Welcome({
                 keywords={SEO_KEYWORDS}
                 canonicalPath="/"
                 structuredData={structuredData}
-            >
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link
-                    rel="preconnect"
-                    href="https://fonts.gstatic.com"
-                    crossOrigin="anonymous"
-                />
-                <link
-                    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-                    rel="stylesheet"
-                />
-            </SeoHead>
+            />
 
-            <div
-                className="min-h-screen bg-white text-slate-900"
-                style={{
-                    fontFamily:
-                        'Inter, ui-sans-serif, system-ui, -apple-system, sans-serif',
-                }}
-            >
-                {/* Header */}
-                <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/80 backdrop-blur-md">
-                    <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-                        <Link href="/" className="flex items-center gap-2">
-                            <img
-                                src="/logo.png"
-                                alt="Humi"
-                                className="h-8 w-auto"
-                            />
-                        </Link>
-
-                        <nav className="hidden items-center gap-1 md:flex">
-                            <Link
-                                href="/features"
-                                className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
-                            >
-                                Fitur
-                            </Link>
-                            <Link
-                                href="/berita"
-                                className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
-                            >
-                                Berita
-                            </Link>
-                            <a
-                                href="#segments"
-                                className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
-                            >
-                                Solusi
-                            </a>
-                            <a
-                                href="#pricing"
-                                className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
-                            >
-                                Harga
-                            </a>
-                            <Link
-                                href="/contact"
-                                className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
-                            >
-                                Kontak
-                            </Link>
-                        </nav>
-
-                        <div className="flex items-center gap-2">
-                            {auth.user ? (
-                                <Link
-                                    href={dashboard()}
-                                    className="inline-flex items-center gap-1.5 rounded-full bg-[#0d4d52] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0a3e42]"
-                                >
-                                    Dashboard
-                                    <ArrowRight className="h-3.5 w-3.5" />
-                                </Link>
-                            ) : (
-                                <>
-                                    <Link
-                                        href={login()}
-                                        className="hidden rounded-full px-4 py-2 text-sm font-medium text-slate-700 transition hover:text-[#14a8b0] sm:inline-flex"
-                                    >
-                                        Masuk
-                                    </Link>
-                                    {canRegister && (
-                                        <Link
-                                            href={register()}
-                                            className="inline-flex items-center gap-1.5 rounded-full bg-[#0d4d52] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0a3e42]"
-                                        >
-                                            Coba Gratis
-                                            <ArrowRight className="h-3.5 w-3.5" />
-                                        </Link>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </header>
+            <div className="min-h-screen overflow-x-clip bg-[var(--landing-color-paper)] font-[family-name:var(--landing-font-body)] text-[var(--landing-color-ink)]">
+                <LandingNav hasUser={hasUser} trialHref={trialHref} />
 
                 <main>
-                    {/* Hero Section */}
-                    <section className="relative overflow-hidden">
-                        <div className="absolute inset-0 -z-10">
-                            <div className="absolute top-0 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-gradient-to-br from-[#14a8b0]/10 to-transparent blur-3xl" />
-                        </div>
-
-                        <div className="mx-auto max-w-6xl px-6 pt-20 pb-20 text-center md:pt-28">
-                            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
-                                <Sparkles className="h-3 w-3 text-[#14a8b0]" />
-                                Platform HRIS untuk bisnis modern
-                            </div>
-
-                            <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">
-                                Kelola tim Anda{' '}
-                                <span className="text-[#14a8b0]">
-                                    dengan lebih sederhana
-                                </span>
-                            </h1>
-
-                            <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg">
-                                Humi adalah HRIS terpadu untuk perusahaan
-                                modern. Otomatisasi absensi, cuti, payroll, dan
-                                approval dalam satu platform yang mudah
-                                digunakan.
-                            </p>
-
-                            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                                <Link
-                                    href={auth.user ? dashboard() : login()}
-                                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0d4d52] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0a3e42] sm:w-auto"
-                                >
-                                    {auth.user
-                                        ? 'Buka Dashboard'
-                                        : 'Mulai Sekarang'}
-                                    <ArrowRight className="h-4 w-4" />
-                                </Link>
-                                <a
-                                    href="#segments"
-                                    className="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 sm:w-auto"
-                                >
-                                    Lihat Solusi
-                                </a>
-                            </div>
-
-                            {/* Stats */}
-                            <div className="mx-auto mt-16 grid max-w-3xl grid-cols-3 gap-4 border-t border-slate-100 pt-10">
-                                {stats.map((stat) => (
-                                    <div
-                                        key={stat.label}
-                                        className="text-center"
+                    <section className="flex min-h-[clamp(38rem,76dvh,54rem)] items-center pt-28 pb-36 sm:pt-32 sm:pb-44">
+                        <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-14 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-16">
+                            <div className="min-w-0">
+                                <h1 className="max-w-[13ch] min-w-0 font-[family-name:var(--landing-font-display)] text-[length:var(--landing-text-display)] leading-[0.98] font-semibold tracking-[-0.04em] [overflow-wrap:anywhere] text-[var(--landing-color-ink)]">
+                                    Kelola orang, waktu, dan payroll dalam satu
+                                    sistem.
+                                </h1>
+                                <p className="mt-7 max-w-[60ch] text-base leading-7 text-[var(--landing-color-ink-soft)] sm:text-lg sm:leading-8">
+                                    Humi menyatukan data karyawan, absensi,
+                                    jadwal, approval, dan payroll agar tim HR
+                                    dan operasional bekerja dari data yang sama.
+                                </p>
+                                <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
+                                    <Link
+                                        href={trialHref}
+                                        className={primaryActionClass}
                                     >
-                                        <p className="text-2xl font-bold text-[#0d4d52] md:text-3xl">
-                                            {stat.value}
-                                        </p>
-                                        <p className="mt-1 text-xs text-slate-500 md:text-sm">
-                                            {stat.label}
-                                        </p>
-                                    </div>
+                                        {trialLabel}
+                                        <ArrowRight
+                                            className="size-4"
+                                            aria-hidden="true"
+                                        />
+                                    </Link>
+                                    <a
+                                        href={WHATSAPP_CONTACT_URL}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={secondaryActionClass}
+                                    >
+                                        <MessageCircle
+                                            className="size-4"
+                                            aria-hidden="true"
+                                        />
+                                        Konsultasi WhatsApp
+                                    </a>
+                                </div>
+                                <p className="mt-5 flex items-center gap-2 text-xs leading-5 text-[var(--landing-color-muted)]">
+                                    <CheckCircle2
+                                        className="size-4 shrink-0 text-[var(--landing-color-success)]"
+                                        aria-hidden="true"
+                                    />
+                                    Trial 30 hari untuk maksimal 10 karyawan.
+                                </p>
+                            </div>
+
+                            <HeroWorkbench />
+                        </div>
+                    </section>
+
+                    <section className="bg-[var(--landing-color-surface)] py-20 sm:py-24">
+                        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+                            <header className="max-w-3xl pb-12 sm:pb-16">
+                                <h2 className="text-[length:var(--landing-text-display-small)] leading-tight font-semibold tracking-[-0.035em] [overflow-wrap:anywhere] text-[var(--landing-color-ink)]">
+                                    Satu alur dari data karyawan sampai payroll.
+                                </h2>
+                                <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--landing-color-ink-soft)]">
+                                    Humi menjaga proses HR tetap terhubung,
+                                    sehingga tim tidak perlu menyusun ulang data
+                                    yang sama di setiap tahap.
+                                </p>
+                            </header>
+
+                            <ol className="grid min-w-0 gap-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                                {workflowSteps.map((step, index) => (
+                                    <WorkflowStep
+                                        key={step.marker}
+                                        step={step}
+                                        isLast={
+                                            index === workflowSteps.length - 1
+                                        }
+                                    />
+                                ))}
+                            </ol>
+                        </div>
+                    </section>
+
+                    <section id="product" className="py-20 sm:py-28">
+                        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+                            <header className="max-w-3xl pb-12 sm:pb-16">
+                                <h2 className="text-[length:var(--landing-text-display-small)] leading-tight font-semibold tracking-[-0.035em] [overflow-wrap:anywhere] text-[var(--landing-color-ink)]">
+                                    Buka satu area. Lihat hubungannya dengan
+                                    area lain.
+                                </h2>
+                                <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--landing-color-ink-soft)]">
+                                    Pilih bagian produk untuk melihat bagaimana
+                                    Humi menyimpan konteks dari aktivitas harian
+                                    hingga penggajian.
+                                </p>
+                            </header>
+
+                            <ProductWorkbench />
+                        </div>
+                    </section>
+
+                    <section
+                        id="solutions"
+                        className="bg-[var(--landing-color-surface)] py-20 sm:py-28"
+                    >
+                        <div className="mx-auto grid max-w-7xl min-w-0 gap-12 px-5 sm:px-8 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] lg:gap-20">
+                            <header className="min-w-0 lg:pt-6">
+                                <h2 className="text-[length:var(--landing-text-display-small)] leading-tight font-semibold tracking-[-0.035em] [overflow-wrap:anywhere] text-[var(--landing-color-ink)]">
+                                    Dibentuk untuk operasional yang berbeda.
+                                </h2>
+                                <p className="mt-5 max-w-xl text-base leading-7 text-[var(--landing-color-ink-soft)]">
+                                    Pilih konteks perusahaan untuk melihat alur
+                                    Humi yang paling relevan dengan cara tim
+                                    Anda bekerja.
+                                </p>
+                            </header>
+
+                            <div className="min-w-0">
+                                {industrySolutions.map((solution) => (
+                                    <IndustrySolution
+                                        key={solution.href}
+                                        solution={solution}
+                                    />
                                 ))}
                             </div>
                         </div>
                     </section>
 
-                    <section
-                        id="segments"
-                        className="border-t border-slate-100 py-20"
-                    >
-                        <div className="mx-auto max-w-6xl px-6">
-                            <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr]">
-                                <div>
-                                    <p className="text-xs font-semibold tracking-[0.12em] text-[#14a8b0] uppercase">
-                                        Solusi per industri
-                                    </p>
-                                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-                                        Mulai dari segmen yang paling butuh
-                                        kontrol operasional.
-                                    </h2>
-                                    <p className="mt-4 text-base leading-7 text-slate-600">
-                                        Humi paling kuat untuk perusahaan lokal
-                                        yang punya shift, lokasi kerja,
-                                        approval, dan payroll rutin. Pilih
-                                        solusi sesuai tipe operasional
-                                        perusahaan.
-                                    </p>
-                                    <div className="mt-6 grid gap-3">
-                                        {gtmOffers.map((offer) => (
-                                            <div
-                                                key={offer}
-                                                className="flex items-start gap-3"
-                                            >
-                                                <FileSpreadsheet className="mt-0.5 h-5 w-5 shrink-0 text-[#14a8b0]" />
-                                                <span className="text-sm font-medium text-slate-700">
-                                                    {offer}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                    <section id="pricing" className="py-20 sm:py-28">
+                        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+                            <header className="max-w-3xl pb-12 sm:pb-16">
+                                <h2 className="text-[length:var(--landing-text-display-small)] leading-tight font-semibold tracking-[-0.035em] [overflow-wrap:anywhere] text-[var(--landing-color-ink)]">
+                                    Mulai kecil. Tambah modul saat dibutuhkan.
+                                </h2>
+                                <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--landing-color-ink-soft)]">
+                                    Coba alur inti lebih dulu, lalu pilih paket
+                                    berdasarkan kebutuhan operasional tim.
+                                </p>
+                            </header>
 
-                                <div className="grid gap-4">
-                                    {segmentCards.map((segment) => (
-                                        <Link
-                                            key={segment.href}
-                                            href={segment.href}
-                                            className="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-[#14a8b0]/50 hover:shadow-[0_18px_46px_rgba(15,23,42,0.08)]"
-                                        >
-                                            <div className="flex items-start gap-4">
-                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#14a8b0]/10 text-[#0d4d52]">
-                                                    <segment.icon className="h-5 w-5" />
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <h3 className="font-semibold text-slate-950">
-                                                        {segment.title}
-                                                    </h3>
-                                                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                                                        {segment.description}
-                                                    </p>
-                                                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#0d4d52]">
-                                                        {segment.cta}
-                                                        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </Link>
+                            <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-stretch">
+                                <div className="min-w-0 lg:pr-8">
+                                    {pricingPlans.slice(0, 2).map((plan) => (
+                                        <PricingPlan
+                                            key={plan.name}
+                                            plan={plan}
+                                            trialHref={trialHref}
+                                            compact
+                                        />
                                     ))}
                                 </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Features Section */}
-                    <section
-                        id="features"
-                        className="border-t border-slate-100 bg-slate-50/50 py-20"
-                    >
-                        <div className="mx-auto max-w-6xl px-6">
-                            <div className="mx-auto max-w-2xl text-center">
-                                <p className="text-xs font-semibold tracking-[0.12em] text-[#14a8b0] uppercase">
-                                    Fitur Utama
-                                </p>
-                                <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-                                    Semua yang Anda butuhkan untuk HR
-                                </h2>
-                                <p className="mt-4 text-base text-slate-600">
-                                    Modul lengkap dari rekrutmen hingga payroll
-                                    dalam satu platform terintegrasi.
-                                </p>
+                                <PricingPlan
+                                    plan={pricingPlans[2]}
+                                    trialHref={trialHref}
+                                />
                             </div>
 
-                            <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 sm:grid-cols-2 lg:grid-cols-3">
-                                {modules.map((module) => (
-                                    <article
-                                        key={module.title}
-                                        className="bg-white p-8 transition hover:bg-slate-50"
-                                    >
-                                        <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#14a8b0]/10 text-[#0d4d52]">
-                                            <module.icon className="h-5 w-5" />
-                                        </div>
-                                        <h3 className="mt-5 text-lg font-semibold text-slate-900">
-                                            {module.title}
-                                        </h3>
-                                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                                            {module.description}
-                                        </p>
-                                    </article>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Benefits Section */}
-                    <section id="benefits" className="py-20">
-                        <div className="mx-auto max-w-6xl px-6">
-                            <div className="grid items-center gap-12 lg:grid-cols-2">
-                                <div>
-                                    <p className="text-xs font-semibold tracking-[0.12em] text-[#14a8b0] uppercase">
-                                        Mengapa Humi
-                                    </p>
-                                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-                                        Dirancang untuk tim modern yang ingin
-                                        bergerak cepat
-                                    </h2>
-                                    <p className="mt-4 text-base leading-relaxed text-slate-600">
-                                        Humi membantu tim HR mengurangi
-                                        pekerjaan manual sehingga fokus pada
-                                        strategi pengembangan SDM yang lebih
-                                        bernilai.
-                                    </p>
-
-                                    <div className="mt-8 space-y-3">
-                                        {benefits.map((benefit) => (
-                                            <div
-                                                key={benefit}
-                                                className="flex items-start gap-3"
-                                            >
-                                                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#14a8b0]" />
-                                                <span className="text-sm text-slate-700">
-                                                    {benefit}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="relative">
-                                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                                        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-8 w-8 rounded-full bg-[#14a8b0]/10" />
-                                                <div>
-                                                    <p className="text-sm font-semibold text-slate-900">
-                                                        Dashboard Karyawan
-                                                    </p>
-                                                    <p className="text-xs text-slate-500">
-                                                        Hari ini, 09:30
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                                                Active
-                                            </span>
-                                        </div>
-
-                                        <div className="mt-4 space-y-3">
-                                            <div className="rounded-xl bg-slate-50 p-3">
-                                                <div className="flex items-center justify-between">
-                                                    <p className="text-xs text-slate-600">
-                                                        Total Karyawan
-                                                    </p>
-                                                    <Users className="h-3.5 w-3.5 text-[#14a8b0]" />
-                                                </div>
-                                                <p className="mt-1 text-xl font-bold text-slate-900">
-                                                    248
-                                                </p>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="rounded-xl bg-slate-50 p-3">
-                                                    <div className="flex items-center justify-between">
-                                                        <p className="text-xs text-slate-600">
-                                                            Hadir
-                                                        </p>
-                                                        <Clock className="h-3.5 w-3.5 text-emerald-600" />
-                                                    </div>
-                                                    <p className="mt-1 text-lg font-bold text-slate-900">
-                                                        232
-                                                    </p>
-                                                </div>
-                                                <div className="rounded-xl bg-slate-50 p-3">
-                                                    <div className="flex items-center justify-between">
-                                                        <p className="text-xs text-slate-600">
-                                                            Cuti
-                                                        </p>
-                                                        <CalendarClock className="h-3.5 w-3.5 text-amber-600" />
-                                                    </div>
-                                                    <p className="mt-1 text-lg font-bold text-slate-900">
-                                                        12
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div className="rounded-xl bg-gradient-to-br from-[#0d4d52] to-[#14a8b0] p-4 text-white">
-                                                <p className="text-xs tracking-wider uppercase opacity-80">
-                                                    Payroll Bulan Ini
-                                                </p>
-                                                <p className="mt-1 text-xl font-bold">
-                                                    Rp 1.2M
-                                                </p>
-                                                <p className="mt-1 text-xs opacity-80">
-                                                    Siap diproses
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="absolute -top-4 -right-4 -z-10 h-full w-full rounded-2xl bg-[#14a8b0]/10" />
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Security & Trust Section */}
-                    <section className="border-t border-slate-100 bg-slate-50/50 py-16">
-                        <div className="mx-auto max-w-6xl px-6">
-                            <div className="grid gap-8 md:grid-cols-3">
-                                <div>
-                                    <Shield className="h-6 w-6 text-[#14a8b0]" />
-                                    <h3 className="mt-4 text-base font-semibold text-slate-900">
-                                        Keamanan Tinggi
-                                    </h3>
-                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                                        Akses berbasis role, enkripsi data, dan
-                                        audit log untuk menjaga keamanan
-                                        informasi karyawan.
-                                    </p>
-                                </div>
-                                <div>
-                                    <Clock className="h-6 w-6 text-[#14a8b0]" />
-                                    <h3 className="mt-4 text-base font-semibold text-slate-900">
-                                        Setup Cepat
-                                    </h3>
-                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                                        Implementasi dalam hitungan hari, tim HR
-                                        bisa langsung onboarding karyawan baru.
-                                    </p>
-                                </div>
-                                <div>
-                                    <Sparkles className="h-6 w-6 text-[#14a8b0]" />
-                                    <h3 className="mt-4 text-base font-semibold text-slate-900">
-                                        Selalu Update
-                                    </h3>
-                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                                        Fitur baru dan peningkatan keamanan
-                                        rutin tanpa downtime di sisi pengguna.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Pricing Section */}
-                    <section id="pricing" className="py-20">
-                        <div className="mx-auto max-w-6xl px-6">
-                            <div className="mx-auto max-w-2xl text-center">
-                                <p className="text-xs font-semibold tracking-[0.12em] text-[#14a8b0] uppercase">
-                                    Pricing
-                                </p>
-                                <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-                                    Harga yang mengikuti skala tim Anda
-                                </h2>
-                                <p className="mt-4 text-base text-slate-600">
-                                    Paket dan fitur di bawah ini disamakan
-                                    dengan halaman billing agar calon pelanggan
-                                    melihat penawaran yang sama.
-                                </p>
-                            </div>
-
-                            <div className="mt-12 grid items-stretch gap-6 lg:grid-cols-3">
-                                {pricingPlans.map((plan) => (
-                                    <article
-                                        key={plan.name}
-                                        className={
-                                            plan.highlight
-                                                ? 'relative flex h-full flex-col overflow-hidden rounded-3xl border border-[#0d4d52] bg-[#0d4d52] p-8 text-white shadow-[0_24px_80px_rgba(13,77,82,0.22)]'
-                                                : 'flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-8 text-slate-900'
-                                        }
-                                    >
-                                        <div className="flex min-h-7 items-start">
-                                            {plan.badge ? (
-                                                <span
-                                                    className={
-                                                        plan.highlight
-                                                            ? 'inline-flex rounded-full bg-white/14 px-3 py-1 text-xs font-semibold tracking-[0.12em] text-white uppercase'
-                                                            : 'inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tracking-[0.12em] text-slate-700 uppercase'
-                                                    }
-                                                >
-                                                    {plan.badge}
-                                                </span>
-                                            ) : null}
-                                        </div>
-
-                                        <div className="mt-4 min-h-[132px]">
-                                            <h3 className="text-2xl font-bold tracking-tight">
-                                                {plan.name}
-                                            </h3>
-                                            <p
-                                                className={
-                                                    plan.highlight
-                                                        ? 'mt-3 text-sm leading-relaxed text-white/78'
-                                                        : 'mt-3 text-sm leading-relaxed text-slate-600'
-                                                }
-                                            >
-                                                {plan.description}
-                                            </p>
-                                        </div>
-
-                                        <div className="mt-8 flex items-end gap-2">
-                                            <span className="text-4xl font-bold tracking-[-0.05em]">
-                                                {plan.price}
-                                            </span>
-                                            {plan.period ? (
-                                                <span
-                                                    className={
-                                                        plan.highlight
-                                                            ? 'pb-1 text-sm text-white/72'
-                                                            : 'pb-1 text-sm text-slate-500'
-                                                    }
-                                                >
-                                                    {plan.period}
-                                                </span>
-                                            ) : null}
-                                        </div>
-
-                                        <ul className="mt-8 flex-1 space-y-3">
-                                            {plan.features.map((feature) => (
-                                                <li
-                                                    key={feature}
-                                                    className="flex items-start gap-3"
-                                                >
-                                                    <CheckCircle2
-                                                        className={
-                                                            plan.highlight
-                                                                ? 'mt-0.5 h-5 w-5 shrink-0 text-[#7ae5e0]'
-                                                                : 'mt-0.5 h-5 w-5 shrink-0 text-[#14a8b0]'
-                                                        }
-                                                    />
-                                                    <span
-                                                        className={
-                                                            plan.highlight
-                                                                ? 'text-sm text-white/88'
-                                                                : 'text-sm text-slate-700'
-                                                        }
-                                                    >
-                                                        {feature}
-                                                    </span>
-                                                </li>
-                                            ))}
-                                            {plan.lockedFeatures?.map(
-                                                (feature) => (
-                                                    <li
-                                                        key={feature}
-                                                        className="flex items-start gap-3"
-                                                    >
-                                                        <Shield
-                                                            className={
-                                                                plan.highlight
-                                                                    ? 'mt-0.5 h-5 w-5 shrink-0 text-white/55'
-                                                                    : 'mt-0.5 h-5 w-5 shrink-0 text-slate-400'
-                                                            }
-                                                        />
-                                                        <span
-                                                            className={
-                                                                plan.highlight
-                                                                    ? 'text-sm text-white/60'
-                                                                    : 'text-sm text-slate-500'
-                                                            }
-                                                        >
-                                                            {feature}
-                                                        </span>
-                                                    </li>
-                                                ),
-                                            )}
-                                        </ul>
-
-                                        <div className="mt-8 pt-2">
-                                            <Link
-                                                href={
-                                                    auth.user
-                                                        ? dashboard()
-                                                        : canRegister
-                                                          ? register()
-                                                          : login()
-                                                }
-                                                className={
-                                                    plan.highlight
-                                                        ? 'inline-flex w-full items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#0d4d52] transition hover:bg-slate-100'
-                                                        : 'inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-100'
-                                                }
-                                            >
-                                                {plan.cta}
-                                            </Link>
-                                        </div>
-                                    </article>
-                                ))}
-                            </div>
-
-                            <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 px-6 py-5 text-center text-sm text-slate-600">
-                                <Sparkles className="mr-1 inline size-4 text-[#14a8b0]" />
-                                Harga belum termasuk PPN. Pembayaran via
-                                transfer bank. Invoice dibuat setelah
+                            <p className="mt-8 text-xs leading-6 text-[var(--landing-color-muted)]">
+                                Harga belum termasuk PPN. Pembayaran melalui
+                                transfer bank dan invoice dibuat setelah
                                 konfirmasi.
+                            </p>
+                        </div>
+                    </section>
+
+                    <section className="bg-[var(--landing-color-surface)] py-20 sm:py-28">
+                        <div className="mx-auto grid max-w-7xl min-w-0 gap-12 px-5 sm:px-8 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] lg:gap-20">
+                            <header className="min-w-0">
+                                <h2 className="text-[length:var(--landing-text-display-small)] leading-tight font-semibold tracking-[-0.035em] [overflow-wrap:anywhere] text-[var(--landing-color-ink)]">
+                                    Pertanyaan sebelum memulai.
+                                </h2>
+                                <p className="mt-5 max-w-lg text-base leading-7 text-[var(--landing-color-ink-soft)]">
+                                    Jawaban singkat tentang trial, setup, import
+                                    data, dan penggunaan Humi untuk sistem kerja
+                                    shift.
+                                </p>
+                            </header>
+
+                            <div className="min-w-0 border-b border-[var(--landing-color-rule)]">
+                                {faqs.map((faq) => (
+                                    <FaqItem key={faq.question} faq={faq} />
+                                ))}
                             </div>
                         </div>
                     </section>
 
-                    {/* CTA Section */}
-                    <section className="pb-20">
-                        <div className="mx-auto max-w-4xl px-6">
-                            <div className="rounded-3xl bg-gradient-to-br from-[#0d4d52] to-[#14a8b0] px-8 py-12 text-center text-white md:px-12 md:py-16">
-                                <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                                    Siap mengelola HR dengan lebih baik?
+                    <section className="py-20 sm:py-28">
+                        <div className="mx-auto max-w-5xl px-5 sm:px-8">
+                            <div className="rounded-[var(--landing-radius-panel)] bg-[var(--landing-color-ink)] px-6 py-10 text-[var(--landing-color-paper)] sm:px-10 sm:py-14">
+                                <h2 className="max-w-[18ch] text-[length:var(--landing-text-display-small)] leading-tight font-semibold tracking-[-0.035em] [overflow-wrap:anywhere]">
+                                    Siapkan operasi HR yang bisa ditelusuri dari
+                                    awal sampai payroll.
                                 </h2>
-                                <p className="mx-auto mt-4 max-w-xl text-base opacity-90">
-                                    Mulai trial 30 hari hari ini. Setelah itu
-                                    lanjutkan dengan paket Basic atau Plus.
-                                </p>
-
-                                <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                                <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
                                     <Link
-                                        href={
-                                            auth.user
-                                                ? dashboard()
-                                                : canRegister
-                                                  ? register()
-                                                  : login()
-                                        }
-                                        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#0d4d52] transition hover:bg-slate-100 sm:w-auto"
+                                        href={trialHref}
+                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--landing-radius-control)] bg-[var(--landing-color-paper)] px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-[var(--landing-color-ink)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] active:translate-y-0 aria-disabled:pointer-events-none aria-disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none"
                                     >
-                                        {auth.user
-                                            ? 'Lanjut ke Dashboard'
-                                            : 'Coba Gratis Sekarang'}
-                                        <ArrowRight className="h-4 w-4" />
+                                        {trialLabel}
+                                        <ArrowRight
+                                            className="size-4"
+                                            aria-hidden="true"
+                                        />
                                     </Link>
-                                    {!auth.user && (
-                                        <Link
-                                            href={login()}
-                                            className="inline-flex w-full items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10 sm:w-auto"
-                                        >
-                                            Sudah punya akun? Masuk
-                                        </Link>
-                                    )}
+                                    <a
+                                        href={WHATSAPP_CONTACT_URL}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex min-h-11 items-center text-sm font-semibold whitespace-nowrap text-[var(--landing-color-paper)] underline decoration-[var(--landing-color-paper)]/40 underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--landing-color-focus)] aria-disabled:pointer-events-none aria-disabled:opacity-50"
+                                    >
+                                        Diskusikan kebutuhan via WhatsApp
+                                    </a>
                                 </div>
                             </div>
                         </div>
                     </section>
                 </main>
 
-                {/* Footer */}
-                <footer className="border-t border-slate-100">
-                    <div className="mx-auto max-w-6xl px-6 py-10">
-                        <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-                            <div className="flex items-center gap-2">
-                                <img
-                                    src="/logo.png"
+                <footer className="bg-[var(--landing-color-ink)] px-5 py-14 text-[var(--landing-color-paper)] sm:px-8 sm:py-20">
+                    <div className="mx-auto max-w-7xl">
+                        <p className="max-w-[38ch] min-w-0 text-3xl leading-tight font-semibold tracking-[-0.035em] [overflow-wrap:anywhere] sm:text-5xl">
+                            Data yang sama. Keputusan yang lebih mudah
+                            ditelusuri.
+                        </p>
+                        <div className="mt-12 flex flex-col gap-7 border-t border-[var(--landing-color-paper)]/20 pt-7 sm:flex-row sm:items-center sm:justify-between">
+                            <Link
+                                href="/"
+                                aria-label="Humi — halaman utama"
+                                className="w-fit rounded-[var(--landing-radius-card)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--landing-color-focus)]"
+                            >
+                                <AppLogoIcon
+                                    width={40}
+                                    height={40}
+                                    className="size-10 object-contain"
                                     alt="Humi"
-                                    className="h-7 w-auto"
                                 />
-                            </div>
-
-                            <p className="text-xs text-slate-500">
-                                &copy; {new Date().getFullYear()} Humi. All
-                                rights reserved.
-                            </p>
-
-                            <div className="flex gap-4 text-xs text-slate-500">
+                            </Link>
+                            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-[var(--landing-color-paper)] opacity-70">
                                 <Link
                                     href="/features"
-                                    className="transition hover:text-slate-900"
+                                    className="min-h-11 content-center whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)]"
                                 >
                                     Fitur
                                 </Link>
                                 <Link
                                     href="/berita"
-                                    className="transition hover:text-slate-900"
+                                    className="min-h-11 content-center whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)]"
                                 >
                                     Berita
                                 </Link>
-                                <a
-                                    href="#pricing"
-                                    className="transition hover:text-slate-900"
-                                >
-                                    Harga
-                                </a>
                                 <Link
                                     href="/contact"
-                                    className="transition hover:text-slate-900"
+                                    className="min-h-11 content-center whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)]"
                                 >
                                     Kontak
                                 </Link>
+                                <span className="whitespace-nowrap">
+                                    © {new Date().getFullYear()} Humi
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -908,12 +1083,14 @@ export default function Welcome({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Hubungi Humi via WhatsApp"
-                    className="fixed right-5 bottom-5 z-50 inline-flex size-16 items-center justify-center rounded-full bg-white shadow-[0_18px_46px_rgba(15,23,42,0.24)] ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-[0_22px_60px_rgba(15,23,42,0.28)] focus-visible:ring-4 focus-visible:ring-[#25d366]/30 focus-visible:outline-none md:right-8 md:bottom-8"
+                    className="fixed right-4 bottom-4 z-[var(--landing-z-sticky)] inline-flex size-12 items-center justify-center rounded-full border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] shadow-[var(--landing-shadow-float)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none sm:right-6 sm:bottom-6 sm:size-14"
                 >
                     <img
                         src="/icons/whatsapp.webp"
                         alt=""
-                        className="size-14 object-contain"
+                        width={56}
+                        height={56}
+                        className="size-11 object-contain sm:size-12"
                     />
                 </a>
             </div>
