@@ -152,15 +152,7 @@ export default function Profile({
     const [attendanceLocations, setAttendanceLocations] = useState(
         company.attendance_locations.length > 0
             ? company.attendance_locations
-            : [
-                  {
-                      name: '',
-                      address: '',
-                      latitude: '',
-                      longitude: '',
-                      radius_meters: company.attendance_radius_meters ?? 100,
-                  },
-              ],
+            : [],
     );
     const [mapPickerIndex, setMapPickerIndex] = useState<number | null>(null);
     const avatarPreviewRef = useRef<string | null>(null);

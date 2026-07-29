@@ -27,3 +27,10 @@ test('company boolean settings are inside the company settings form', () => {
     assert.ok(kasbonField > companyForm);
     assert.ok(otpField > companyForm);
 });
+
+test('company settings do not submit a blank attendance location by default', () => {
+    assert.match(
+        source,
+        /const \[attendanceLocations, setAttendanceLocations\] = useState\(\s*company\.attendance_locations\.length > 0\s*\? company\.attendance_locations\s*:\s*\[\],/s,
+    );
+});
