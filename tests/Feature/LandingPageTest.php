@@ -23,7 +23,11 @@ class LandingPageTest extends TestCase
 
     public function test_landing_page_uses_reference_hero_and_dashboard_preview_asset(): void
     {
-        $source = file_get_contents(resource_path('js/pages/welcome.tsx'));
+        $source = implode("\n", [
+            file_get_contents(resource_path('js/pages/welcome.tsx')),
+            file_get_contents(resource_path('js/components/landing-nav.tsx')),
+            file_get_contents(resource_path('js/components/front-hero-typography.ts')),
+        ]);
 
         $this->assertIsString($source);
         $this->assertStringContainsString('Kelola tim Anda', $source);
@@ -36,16 +40,15 @@ class LandingPageTest extends TestCase
         $this->assertStringContainsString('&lt; 10 mnt', $source);
         $this->assertStringContainsString('99.9%', $source);
         $this->assertStringContainsString('/humi-dashboard-preview.webp', $source);
-        $this->assertStringContainsString('rounded-[15%]', $source);
+        $this->assertStringContainsString('rounded-[2%]', $source);
         $this->assertStringContainsString('bg-white', $source);
         $this->assertStringContainsString('/humi-wordmark.png', $source);
         $this->assertStringContainsString('fixed inset-x-0 top-0', $source);
         $this->assertStringContainsString('mx-auto flex h-18 w-full', $source);
         $this->assertStringNotContainsString('w-fit max-w-full', $source);
-        $this->assertStringContainsString(
-            'text-[clamp(2.75rem,5.8vw,6.25rem)]',
-            $source,
-        );
+        $this->assertStringContainsString('text-[40px]', $source);
+        $this->assertStringContainsString('leading-[56px]', $source);
+        $this->assertStringContainsString('whitespace-nowrap', $source);
         $this->assertStringNotContainsString('text-[clamp(3.25rem,7.3vw,8rem)]', $source);
     }
 
