@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Employee;
 use App\Models\FcmDeviceToken;
 use App\Models\User;
 use App\Services\FcmNotificationService;
@@ -37,5 +38,38 @@ class FcmPushDeviceTest extends TestCase
             ->assertJsonPath('success', true);
 
         $this->assertDatabaseMissing('fcm_device_tokens', ['token' => $token]);
+    }
+
+    public function test_portal_profile_reports_whether_push_notifications_are_already_active(): void
+    {
+        $owner = User::factory()->create(['email_verified_at' => now()]);
+        $portalUser = User::factory()->create([
+            'email' => 'portal+push@local.portal',
+            'phone' => '081234567890',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $owner->id,
+            'phone' => '081234567890',
+        ]);
+
+        $this->actingAs($portalUser)
+            ->getJson('/portal/api/profile')
+            ->assertOk()
+            ->assertJsonPath('data.has_push_notification_device', false);
+
+        FcmDeviceToken::query()->create([
+            'user_id' => $portalUser->id,
+            'token' => str_repeat('b', 180),
+            'last_seen_at' => now(),
+        ]);
+
+        $this->actingAs($portalUser)
+            ->getJson('/portal/api/profile')
+            ->assertOk()
+            ->assertJsonPath('data.has_push_notification_device', true);
     }
 }

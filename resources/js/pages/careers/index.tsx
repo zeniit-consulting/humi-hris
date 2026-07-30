@@ -2,6 +2,10 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, ArrowRight, Briefcase, MapPin, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import {
+    frontHeroSubtitleClass,
+    frontHeroTitleClass,
+} from '@/components/front-hero-typography';
 import SeoHead from '@/components/seo-head';
 import { Button } from '@/components/ui/button';
 import {
@@ -168,16 +172,18 @@ export default function CareersIndexPage() {
                 </header>
 
                 <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-                    <section className="mb-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-sky-700 px-6 py-10 text-white shadow-xl shadow-slate-900/10">
-                        <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs tracking-[0.24em] text-sky-100 uppercase">
+                    <section className="mb-8 rounded-3xl border border-slate-200 bg-slate-50 px-6 py-10 shadow-xl shadow-slate-900/5">
+                        <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs tracking-[0.24em] text-[#0c8c5e] uppercase">
                             <Briefcase className="size-3.5" />
                             Lowongan Aktif
                         </p>
-                        <h1 className="max-w-3xl text-3xl font-semibold tracking-tight md:text-4xl">
+                        <h1 className={`max-w-3xl ${frontHeroTitleClass}`}>
                             Bergabung dengan tim yang sedang membangun operasi
                             HR modern.
                         </h1>
-                        <p className="mt-3 max-w-2xl text-sm leading-6 text-sky-50/90 md:text-base">
+                        <p
+                            className={`mt-3 max-w-2xl ${frontHeroSubtitleClass}`}
+                        >
                             Semua lowongan di halaman ini terhubung langsung ke
                             modul rekrutmen, jadi kandidat bisa isi data dan tim
                             HR bisa lanjutkan proses interview sampai offering.

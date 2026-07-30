@@ -16,6 +16,10 @@ import {
     Smartphone,
     Users,
 } from 'lucide-react';
+import {
+    frontHeroSubtitleClass,
+    frontHeroTitleClass,
+} from '@/components/front-hero-typography';
 import SeoHead from '@/components/seo-head';
 import { dashboard, login, register } from '@/routes';
 
@@ -421,10 +425,14 @@ export default function IndustryLanding({
                         />
                         <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
                             <div className="flex flex-col justify-center">
-                                <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl md:text-6xl">
+                                <h1
+                                    className={`max-w-3xl ${frontHeroTitleClass}`}
+                                >
                                     {industry.headline}
                                 </h1>
-                                <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 md:text-lg">
+                                <p
+                                    className={`mt-6 max-w-2xl ${frontHeroSubtitleClass}`}
+                                >
                                     {industry.supporting}
                                 </p>
                                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">

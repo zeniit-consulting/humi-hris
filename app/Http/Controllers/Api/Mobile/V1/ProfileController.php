@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Concerns\InteractsWithMobileApiResponse;
 use App\Http\Controllers\Api\Mobile\V1\Concerns\InteractsWithSelfService;
 use App\Http\Controllers\Controller;
 use App\Models\EmployeeBankAccount;
+use App\Models\FcmDeviceToken;
 use App\Models\User;
 use App\Services\EmployeeProfileCompletionService;
 use Illuminate\Http\JsonResponse;
@@ -68,6 +69,9 @@ class ProfileController extends Controller
             ],
             'bank_accounts' => $bankAccounts,
             'profile_completion' => $completionService->summarize($employee),
+            'has_push_notification_device' => FcmDeviceToken::query()
+                ->where('user_id', $user->id)
+                ->exists(),
         ], 'Profile data retrieved successfully.');
     }
 

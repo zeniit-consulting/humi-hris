@@ -8,9 +8,18 @@ const source = await readFile(
 );
 
 test('dashboard keeps the approved compact density contract', () => {
-    assert.match(source, /space-y-\[14px\] p-3 sm:p-4/);
-    assert.match(source, /grid gap-\[14px\] md:grid-cols-2 xl:grid-cols-5/);
-    assert.match(source, /grid gap-\[14px\] xl:grid-cols-3/);
+    assert.match(source, /space-y-6 p-4/);
+    assert.match(source, /Selamat datang, \{userName\}/);
+    assert.doesNotMatch(source, /Action Queue/);
+    assert.match(source, /Pending actions/);
+    assert.match(source, /actionQueue\.items\.map/);
+    assert.match(source, /border-rose-200 bg-rose-50\/70/);
+    assert.match(source, /grid gap-4 sm:grid-cols-2 xl:grid-cols-8/);
+    assert.match(source, /Total Karyawan/);
+    assert.match(source, /Karyawan Aktif/);
+    assert.match(source, /Total Divisi/);
+    assert.match(source, /Total Jabatan/);
+    assert.match(source, /grid gap-4 xl:grid-cols-3/);
     assert.match(source, /h-36/);
     assert.match(source, /max-h-64[^"\n]*overflow-y-auto/);
 });

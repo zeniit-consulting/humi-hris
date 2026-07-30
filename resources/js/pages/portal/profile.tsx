@@ -16,11 +16,12 @@ import {
     formatDate,
     notifyPortal,
     requestApi,
+    shouldShowAttendanceNotificationSetup,
     translatePortalError,
 } from './lib';
 import type { PortalLinkMap } from './lib';
-import { PortalShell } from './shell';
 import { enableAttendancePush } from './lib/firebase-messaging';
+import { PortalShell } from './shell';
 
 // Hallmark · genre: modern-minimal · macrostructure: Long Document · theme: Quiet · enrichment: none
 // Hallmark · compact profile ledger · pre-emit critique: P5 H5 E5 S5 R5 V5
@@ -81,6 +82,7 @@ type ProfileData = {
             description: string;
         }>;
     };
+    has_push_notification_device: boolean;
 };
 
 type PortalSummary = {
@@ -372,6 +374,11 @@ export default function PortalProfilePage({ pageTitle }: Props) {
 
                 return;
             }
+            setProfile((current) =>
+                current
+                    ? { ...current, has_push_notification_device: true }
+                    : current,
+            );
             notifyPortal('success', 'Notifikasi uji berhasil dikirim ke perangkat ini.');
         } catch (error) {
             notifyPortal('error', error instanceof Error ? error.message : 'Notifikasi belum dapat diaktifkan.');
@@ -382,6 +389,10 @@ export default function PortalProfilePage({ pageTitle }: Props) {
 
     const bankAccounts = profile?.bank_accounts || [];
     const primaryBank = bankAccounts.find((b) => b.is_primary);
+    const showAttendanceNotificationSetup =
+        shouldShowAttendanceNotificationSetup(
+            profile?.has_push_notification_device ?? false,
+        );
     const personalDetails = profile?.employee
         ? [
               {
@@ -615,20 +626,34 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     </section>
                 )}
 
-                <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] p-4 shadow-[var(--portal-shadow-raised)]">
-                    <div className="flex items-center gap-3">
-                        <span className="portal-primary-soft inline-flex size-10 items-center justify-center rounded-[var(--portal-radius-control)]">
-                            <BellRing className="portal-primary-text size-5" />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-[var(--portal-color-ink)]">Pengingat absensi</p>
-                            <p className="mt-0.5 text-xs text-[var(--portal-color-muted)]">Terima pengingat clock in dan clock out 15 menit sebelum jadwal.</p>
+                {showAttendanceNotificationSetup ? (
+                    <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] p-4 shadow-[var(--portal-shadow-raised)]">
+                        <div className="flex items-center gap-3">
+                            <span className="portal-primary-soft inline-flex size-10 items-center justify-center rounded-[var(--portal-radius-control)]">
+                                <BellRing className="portal-primary-text size-5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-[var(--portal-color-ink)]">
+                                    Pengingat absensi
+                                </p>
+                                <p className="mt-0.5 text-xs text-[var(--portal-color-muted)]">
+                                    Terima pengingat clock in dan clock out 15
+                                    menit sebelum jadwal.
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                    <button type="button" onClick={() => void enablePushNotifications()} disabled={isEnablingPush} className="portal-primary-bg portal-pressable portal-focus-ring mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-[var(--portal-radius-control)] px-4 text-sm font-bold disabled:opacity-60">
-                        {isEnablingPush ? 'Mengaktifkan…' : 'Aktifkan notifikasi'}
-                    </button>
-                </section>
+                        <button
+                            type="button"
+                            onClick={() => void enablePushNotifications()}
+                            disabled={isEnablingPush}
+                            className="portal-primary-bg portal-pressable portal-focus-ring mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-[var(--portal-radius-control)] px-4 text-sm font-bold disabled:opacity-60"
+                        >
+                            {isEnablingPush
+                                ? 'Mengaktifkan…'
+                                : 'Aktifkan notifikasi'}
+                        </button>
+                    </section>
+                ) : null}
 
                 <ProfileAccordion
                     section="personal"

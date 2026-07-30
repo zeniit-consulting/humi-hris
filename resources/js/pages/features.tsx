@@ -15,6 +15,10 @@ import {
     Store,
     Users,
 } from 'lucide-react';
+import {
+    frontHeroSubtitleClass,
+    frontHeroTitleClass,
+} from '@/components/front-hero-typography';
 import SeoHead from '@/components/seo-head';
 import { login, register } from '@/routes';
 
@@ -171,11 +175,15 @@ export default function Features() {
                                 <p className="text-xs font-semibold tracking-[0.12em] text-[#14a8b0] uppercase">
                                     Fitur Humi HRIS
                                 </p>
-                                <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
+                                <h1
+                                    className={`mt-4 max-w-3xl ${frontHeroTitleClass}`}
+                                >
                                     Satu sistem untuk menjalankan operasional HR
                                     dari awal sampai evaluasi.
                                 </h1>
-                                <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
+                                <p
+                                    className={`mt-5 max-w-2xl ${frontHeroSubtitleClass}`}
+                                >
                                     Humi menyatukan data karyawan, absensi,
                                     cuti, lembur, payroll, rekrutmen, aset, dan
                                     performa dalam alur kerja yang mudah dipakai
