@@ -2,25 +2,29 @@ import { Link, usePage } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
 import {
     ArrowRight,
-    Banknote,
     Building2,
     CalendarCheck2,
     Check,
     CheckCircle2,
     ChevronDown,
-    Clock3,
     Factory,
     FileCheck2,
     Fingerprint,
-    LayoutDashboard,
-    MessageCircle,
     ShieldCheck,
     Store,
     Users,
     WalletCards,
 } from 'lucide-react';
 import { useState } from 'react';
-import AppLogoIcon from '@/components/app-logo-icon';
+import {
+    frontHeroSubtitleClass,
+    frontHeroTealTextClass,
+    frontHeroTitleClass,
+} from '@/components/front-hero-typography';
+import {
+    LandingNav,
+    landingSecondaryActionClass,
+} from '@/components/landing-nav';
 import SeoHead from '@/components/seo-head';
 import { dashboard, login, register } from '@/routes';
 
@@ -273,204 +277,6 @@ const faqs: Faq[] = [
         answer: 'Anda dapat memilih paket Basic atau Plus sesuai modul yang dibutuhkan. Invoice dibuat setelah konfirmasi, sehingga pilihan paket tetap berada di tangan perusahaan.',
     },
 ];
-
-const primaryActionClass =
-    'inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-[var(--landing-radius-control)] bg-[var(--landing-color-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--landing-color-accent-ink)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] aria-disabled:pointer-events-none aria-disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none';
-
-const secondaryActionClass =
-    'inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-[var(--landing-radius-control)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] px-5 py-2.5 text-sm font-semibold text-[var(--landing-color-ink)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] aria-disabled:pointer-events-none aria-disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none';
-
-function LandingNav({
-    hasUser,
-    trialHref,
-}: {
-    hasUser: boolean;
-    trialHref: string;
-}) {
-    return (
-        <div className="fixed inset-x-0 top-3 z-[var(--landing-z-sticky)] px-3 sm:top-4 sm:px-6">
-            <nav
-                aria-label="Navigasi utama"
-                className="mx-auto flex w-fit max-w-full items-center gap-2 rounded-[var(--landing-radius-control)] border border-[var(--landing-color-rule)] bg-[color-mix(in_oklch,var(--landing-color-surface)_88%,transparent)] p-1.5 shadow-[var(--landing-shadow-float)] backdrop-blur-xl backdrop-saturate-125"
-            >
-                <Link
-                    href="/"
-                    aria-label="Humi — halaman utama"
-                    className="flex size-11 shrink-0 items-center justify-center rounded-[var(--landing-radius-control)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)]"
-                >
-                    <AppLogoIcon
-                        width={32}
-                        height={32}
-                        className="size-8 object-contain"
-                        alt="Humi"
-                    />
-                </Link>
-
-                <div className="hidden items-center lg:flex">
-                    {[
-                        ['Produk', '#product'],
-                        ['Solusi', '#solutions'],
-                        ['Harga', '#pricing'],
-                        ['Berita', '/berita'],
-                    ].map(([label, href]) => (
-                        <Link
-                            key={href}
-                            href={href}
-                            className="inline-flex min-h-11 items-center rounded-[var(--landing-radius-control)] px-3 text-sm font-medium whitespace-nowrap text-[var(--landing-color-ink-soft)] hover:text-[var(--landing-color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)]"
-                        >
-                            {label}
-                        </Link>
-                    ))}
-                </div>
-
-                {!hasUser ? (
-                    <Link
-                        href={login()}
-                        className="hidden min-h-11 items-center rounded-[var(--landing-radius-control)] px-3 text-sm font-medium whitespace-nowrap text-[var(--landing-color-ink-soft)] hover:text-[var(--landing-color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] sm:inline-flex"
-                    >
-                        Masuk
-                    </Link>
-                ) : null}
-
-                <Link href={trialHref} className={primaryActionClass}>
-                    <span className="sm:hidden">
-                        {hasUser ? 'Dashboard' : 'Mulai Trial'}
-                    </span>
-                    <span className="hidden sm:inline">
-                        {hasUser ? 'Buka Dashboard' : 'Mulai Trial Gratis'}
-                    </span>
-                    <ArrowRight
-                        className="size-4 shrink-0"
-                        aria-hidden="true"
-                    />
-                </Link>
-            </nav>
-        </div>
-    );
-}
-
-function HeroWorkbench() {
-    return (
-        <figure
-            aria-label="Ringkasan alur operasional Humi"
-            className="min-w-0 rounded-[var(--landing-radius-panel)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] p-3 shadow-[var(--landing-shadow-panel)] sm:p-5"
-        >
-            <figcaption className="flex items-center justify-between gap-4 border-b border-[var(--landing-color-rule)] pb-4">
-                <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-[var(--landing-radius-card)] bg-[var(--landing-color-accent-soft)] text-[var(--landing-color-accent)]">
-                        <LayoutDashboard
-                            className="size-5"
-                            aria-hidden="true"
-                        />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-[var(--landing-color-ink)]">
-                            Operasional hari ini
-                        </p>
-                        <p className="truncate text-xs text-[var(--landing-color-muted)]">
-                            Kehadiran, approval, dan payroll terhubung
-                        </p>
-                    </div>
-                </div>
-                <span className="hidden items-center gap-2 text-xs font-medium whitespace-nowrap text-[var(--landing-color-ink-soft)] sm:inline-flex">
-                    <span
-                        className="size-2 rounded-full bg-[var(--landing-color-success)]"
-                        aria-hidden="true"
-                    />
-                    Sistem aktif
-                </span>
-            </figcaption>
-
-            <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-                <div className="min-w-0 rounded-[var(--landing-radius-card)] bg-[var(--landing-color-surface-soft)] p-4">
-                    <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-[var(--landing-color-ink)]">
-                            Kehadiran
-                        </p>
-                        <span className="text-xs whitespace-nowrap text-[var(--landing-color-muted)]">
-                            Hari ini
-                        </span>
-                    </div>
-                    <div className="mt-5 space-y-4">
-                        {[
-                            {
-                                label: 'Shift pagi',
-                                status: 'Berjalan',
-                                icon: Clock3,
-                            },
-                            {
-                                label: 'Absensi lapangan',
-                                status: 'Tercatat',
-                                icon: Fingerprint,
-                            },
-                            {
-                                label: 'Koreksi kehadiran',
-                                status: 'Ditinjau',
-                                icon: FileCheck2,
-                            },
-                        ].map((item) => (
-                            <div
-                                key={item.label}
-                                className="flex min-w-0 items-center gap-3"
-                            >
-                                <item.icon
-                                    className="size-4 shrink-0 text-[var(--landing-color-accent)]"
-                                    aria-hidden="true"
-                                />
-                                <span className="min-w-0 flex-1 truncate text-xs font-medium text-[var(--landing-color-ink-soft)]">
-                                    {item.label}
-                                </span>
-                                <span className="text-xs whitespace-nowrap text-[var(--landing-color-muted)]">
-                                    {item.status}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="grid min-w-0 gap-3">
-                    <div className="rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] p-4">
-                        <FileCheck2
-                            className="size-5 text-[var(--landing-color-accent)]"
-                            aria-hidden="true"
-                        />
-                        <p className="mt-4 text-xs text-[var(--landing-color-muted)]">
-                            Approval
-                        </p>
-                        <p className="mt-1 text-base font-semibold text-[var(--landing-color-ink)]">
-                            Perlu ditinjau
-                        </p>
-                    </div>
-                    <div className="rounded-[var(--landing-radius-card)] bg-[var(--landing-color-accent)] p-4 text-[var(--landing-color-accent-ink)]">
-                        <Banknote className="size-5" aria-hidden="true" />
-                        <p className="mt-4 text-xs text-[var(--landing-color-accent-ink)] opacity-75">
-                            Payroll
-                        </p>
-                        <p className="mt-1 text-base font-semibold">
-                            Siap diproses
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-3 flex flex-col gap-3 rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                    <ShieldCheck
-                        className="size-4 shrink-0 text-[var(--landing-color-accent)]"
-                        aria-hidden="true"
-                    />
-                    <p className="text-xs leading-5 text-[var(--landing-color-ink-soft)]">
-                        Data harian tetap terhubung ke profil dan riwayat
-                        karyawan.
-                    </p>
-                </div>
-                <span className="text-xs font-semibold whitespace-nowrap text-[var(--landing-color-accent)]">
-                    Satu alur data
-                </span>
-            </div>
-        </figure>
-    );
-}
 
 function WorkflowStep({
     step,
@@ -727,7 +533,7 @@ function PricingPlan({
                 className={
                     plan.recommended
                         ? 'mt-8 inline-flex min-h-11 items-center justify-center rounded-[var(--landing-radius-control)] bg-[var(--landing-color-paper)] px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-[var(--landing-color-ink)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] active:translate-y-0 aria-disabled:pointer-events-none aria-disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none'
-                        : `${secondaryActionClass} mt-8`
+                        : `${landingSecondaryActionClass} mt-8`
                 }
             >
                 {plan.cta}
@@ -773,7 +579,7 @@ export default function Welcome({ canRegister = true }: WelcomeProps) {
             '@type': 'Organization',
             name: 'Humi',
             url: siteUrl,
-            logo: `${siteUrl}/logo-light.png`,
+            logo: `${siteUrl}/humi-wordmark.png`,
             contactPoint: {
                 '@type': 'ContactPoint',
                 contactType: 'sales',
@@ -821,52 +627,81 @@ export default function Welcome({ canRegister = true }: WelcomeProps) {
                 <LandingNav hasUser={hasUser} trialHref={trialHref} />
 
                 <main>
-                    <section className="flex min-h-[clamp(38rem,76dvh,54rem)] items-center pt-28 pb-36 sm:pt-32 sm:pb-44">
-                        <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-14 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-16">
-                            <div className="min-w-0">
-                                <h1 className="max-w-[13ch] min-w-0 font-[family-name:var(--landing-font-display)] text-[length:var(--landing-text-display)] leading-[0.98] font-semibold tracking-[-0.04em] [overflow-wrap:anywhere] text-[var(--landing-color-ink)]">
-                                    Kelola orang, waktu, dan payroll dalam satu
-                                    sistem.
+                    <section className="pt-24 pb-14 sm:pt-28 sm:pb-20">
+                        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+                            <div className="mx-auto max-w-6xl text-center">
+                                <h1
+                                    className={`mx-auto max-w-none whitespace-nowrap ${frontHeroTitleClass}`}
+                                >
+                                    Kelola tim Anda{' '}
+                                    <span className={frontHeroTealTextClass}>
+                                        dengan lebih sederhana
+                                    </span>
                                 </h1>
-                                <p className="mt-7 max-w-[60ch] text-base leading-7 text-[var(--landing-color-ink-soft)] sm:text-lg sm:leading-8">
-                                    Humi menyatukan data karyawan, absensi,
-                                    jadwal, approval, dan payroll agar tim HR
-                                    dan operasional bekerja dari data yang sama.
+                                <p
+                                    className={`mx-auto mt-6 max-w-3xl ${frontHeroSubtitleClass}`}
+                                >
+                                    Humi adalah HRIS terpadu untuk perusahaan
+                                    modern. Otomatisasi absensi, cuti, payroll,
+                                    dan approval dalam satu platform yang mudah
+                                    digunakan.
                                 </p>
-                                <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
+                                <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
                                     <Link
                                         href={trialHref}
-                                        className={primaryActionClass}
+                                        className="inline-flex min-h-14 items-center justify-center gap-3 rounded-full bg-[var(--landing-color-accent)] px-8 text-lg font-bold text-[var(--landing-color-accent-ink)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none"
                                     >
                                         {trialLabel}
                                         <ArrowRight
-                                            className="size-4"
+                                            className="size-5"
                                             aria-hidden="true"
                                         />
                                     </Link>
                                     <a
-                                        href={WHATSAPP_CONTACT_URL}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className={secondaryActionClass}
+                                        href="#solutions"
+                                        className="inline-flex min-h-14 items-center justify-center rounded-full border border-[var(--landing-color-rule)] bg-white px-8 text-lg font-bold text-[var(--landing-color-ink-soft)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px hover:text-[var(--landing-color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none"
                                     >
-                                        <MessageCircle
-                                            className="size-4"
-                                            aria-hidden="true"
-                                        />
-                                        Konsultasi WhatsApp
+                                        Lihat Solusi
                                     </a>
                                 </div>
-                                <p className="mt-5 flex items-center gap-2 text-xs leading-5 text-[var(--landing-color-muted)]">
-                                    <CheckCircle2
-                                        className="size-4 shrink-0 text-[var(--landing-color-success)]"
-                                        aria-hidden="true"
-                                    />
-                                    Trial 30 hari untuk maksimal 10 karyawan.
-                                </p>
                             </div>
 
-                            <HeroWorkbench />
+                            <div className="mx-auto mt-16 grid max-w-5xl gap-8 border-t border-[var(--landing-color-rule)] pt-8 text-center md:grid-cols-3">
+                                <div>
+                                    <p className="text-4xl font-bold text-[var(--landing-color-accent)] sm:text-5xl">
+                                        70%
+                                    </p>
+                                    <p className="mt-3 text-lg text-[var(--landing-color-muted)]">
+                                        Efisiensi proses HR
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-4xl font-bold text-[var(--landing-color-accent)] sm:text-5xl">
+                                        &lt; 10 mnt
+                                    </p>
+                                    <p className="mt-3 text-lg text-[var(--landing-color-muted)]">
+                                        Waktu proses payroll
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-4xl font-bold text-[var(--landing-color-accent)] sm:text-5xl">
+                                        99.9%
+                                    </p>
+                                    <p className="mt-3 text-lg text-[var(--landing-color-muted)]">
+                                        Akurasi data
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mx-auto mt-12 max-w-6xl overflow-hidden rounded-[2%] border border-[var(--landing-color-rule)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]">
+                                <img
+                                    src="/humi-dashboard-preview.webp"
+                                    width={2000}
+                                    height={1250}
+                                    alt="Preview dashboard Humi"
+                                    className="w-full object-cover"
+                                />
+                            </div>
                         </div>
                     </section>
 
@@ -1042,12 +877,13 @@ export default function Welcome({ canRegister = true }: WelcomeProps) {
                             <Link
                                 href="/"
                                 aria-label="Humi — halaman utama"
-                                className="w-fit rounded-[var(--landing-radius-card)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--landing-color-focus)]"
+                                className="w-fit rounded-[var(--landing-radius-card)] bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--landing-color-focus)]"
                             >
-                                <AppLogoIcon
-                                    width={40}
-                                    height={40}
-                                    className="size-10 object-contain"
+                                <img
+                                    src="/humi-wordmark.png"
+                                    width={122}
+                                    height={32}
+                                    className="h-8 w-[7.625rem] object-contain"
                                     alt="Humi"
                                 />
                             </Link>

@@ -8,6 +8,7 @@ import {
     Send,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { frontHeroTitleClass } from '@/components/front-hero-typography';
 import InputError from '@/components/input-error';
 import SeoHead from '@/components/seo-head';
 import { Button } from '@/components/ui/button';
@@ -199,16 +200,16 @@ export default function CareerShowPage() {
 
                     <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
                         <div className="space-y-6">
-                            <section className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-sky-700 px-6 py-10 text-white shadow-xl shadow-slate-900/10">
+                            <section className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-10 shadow-xl shadow-slate-900/5">
                                 <div className="mb-4 flex flex-wrap gap-2 text-xs">
-                                    <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1">
+                                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[#0c8c5e]">
                                         {employmentTypeLabels[
                                             vacancy.employment_type ?? ''
                                         ] ??
                                             vacancy.employment_type ??
                                             'Umum'}
                                     </span>
-                                    <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1">
+                                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[#0c8c5e]">
                                         {workplaceTypeLabels[
                                             vacancy.workplace_type ?? ''
                                         ] ??
@@ -216,10 +217,10 @@ export default function CareerShowPage() {
                                             'Fleksibel'}
                                     </span>
                                 </div>
-                                <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                                <h1 className={frontHeroTitleClass}>
                                     {vacancy.title}
                                 </h1>
-                                <div className="mt-4 grid gap-3 text-sm text-sky-50/90 md:grid-cols-2">
+                                <div className="mt-4 grid gap-3 text-sm text-[rgb(35,41,51)] md:grid-cols-2">
                                     <div className="flex items-center gap-2">
                                         <MapPin className="size-4" />
                                         {vacancy.location ??

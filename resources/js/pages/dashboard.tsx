@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Building2,
@@ -221,8 +221,12 @@ export default function Dashboard({
     contractReminders: ContractReminders;
     outsourcing: OutsourcingSummary;
 }) {
+    const { auth } = usePage().props as {
+        auth?: { user?: { name?: string | null } | null };
+    };
     const [outsourcingOpen, setOutsourcingOpen] = useState(true);
     const maxEmployees = Math.max(stats.active_employees, 1);
+    const userName = auth?.user?.name?.trim() || 'User';
     const rangeOptions: Array<{
         value: DashboardFilters['range'];
         label: string;
@@ -254,36 +258,37 @@ export default function Dashboard({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
 
-            <div className="space-y-[14px] p-3 sm:p-4">
-                <Card className="gap-0 border-rose-200 bg-rose-50/70 py-0">
-                    <CardHeader className="px-3 py-3 sm:px-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-6 p-4">
+                <Card>
+                    <CardHeader>
+                        <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
-                                <CardTitle>Action Queue</CardTitle>
+                                <CardTitle>
+                                    Selamat datang, {userName}
+                                </CardTitle>
                                 <CardDescription>
-                                    Pekerjaan operasional yang perlu ditangani.
+                                    Pantau kondisi tim, kehadiran, dan pekerjaan
+                                    HR hari ini dari satu dashboard.
                                 </CardDescription>
                             </div>
-                            <div className="rounded-md border border-rose-200 bg-white/70 px-2.5 py-1.5 text-xs">
-                                <span className="font-semibold">
-                                    {actionQueue.total}
-                                </span>{' '}
-                                pending
-                            </div>
+                            {actionQueue.total > 0 && (
+                                <div className="rounded-md border border-rose-200 bg-rose-50/70 px-3 py-2 text-sm text-rose-700 dark:border-rose-950 dark:bg-rose-950/25 dark:text-rose-300">
+                                    <span className="font-semibold">
+                                        {actionQueue.total}
+                                    </span>{' '}
+                                    Pending actions
+                                </div>
+                            )}
                         </div>
                     </CardHeader>
-                    <CardContent className="px-3 pb-3 sm:px-4">
-                        {actionQueue.items.length === 0 ? (
-                            <div className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
-                                Tidak ada action pending.
-                            </div>
-                        ) : (
+                    {actionQueue.items.length > 0 && (
+                        <CardContent>
                             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                                 {actionQueue.items.map((item) => (
                                     <Link
                                         key={item.key}
                                         href={item.href}
-                                        className="flex min-h-11 items-center justify-between gap-3 rounded-md border border-rose-200 bg-white/80 px-3 py-2 transition-colors hover:bg-white"
+                                        className="flex min-h-11 items-center justify-between gap-3 rounded-md border border-rose-200 bg-rose-50/70 px-3 py-2 text-rose-700 transition-colors hover:bg-rose-100 dark:border-rose-950 dark:bg-rose-950/25 dark:text-rose-300 dark:hover:bg-rose-950/40"
                                     >
                                         <p className="truncate text-sm font-medium">
                                             {item.label}
@@ -292,98 +297,106 @@ export default function Dashboard({
                                             <span className="text-lg font-semibold tabular-nums">
                                                 {item.count}
                                             </span>
-                                            <AlertTriangle
-                                                className={`size-4 ${
-                                                    item.severity === 'high'
-                                                        ? 'text-destructive'
-                                                        : 'text-amber-600'
-                                                }`}
-                                            />
+                                            <AlertTriangle className="size-4" />
                                         </div>
                                     </Link>
                                 ))}
                             </div>
-                        )}
-                    </CardContent>
+                        </CardContent>
+                    )}
                 </Card>
 
-                <div className="grid gap-[14px] md:grid-cols-2 xl:grid-cols-5">
-                    <Card className="gap-1 border-l-2 border-l-sky-500 bg-sky-50/30 py-2">
-                        <CardHeader className="px-3 pb-0">
-                            <CardDescription>Total Employees</CardDescription>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-8">
+                    <Card className="gap-2 border-sky-200 bg-sky-50/70 py-3 dark:border-sky-950 dark:bg-sky-950/25">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Total Karyawan
+                            </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.total_employees}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-3 pt-0 pb-1">
-                            <p className="text-xs text-muted-foreground">
-                                Active: {stats.active_employees}
-                            </p>
-                        </CardContent>
                     </Card>
 
-                    <Card className="gap-1 border-l-2 border-l-emerald-500 bg-emerald-50/30 py-2">
-                        <CardHeader className="px-3 pb-0">
-                            <CardDescription>Present Today</CardDescription>
+                    <Card className="gap-2 border-emerald-200 bg-emerald-50/70 py-3 dark:border-emerald-950 dark:bg-emerald-950/25">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Karyawan Aktif
+                            </CardDescription>
+                            <CardTitle className="text-2xl">
+                                {stats.active_employees}
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+
+                    <Card className="gap-2 border-violet-200 bg-violet-50/70 py-3 dark:border-violet-950 dark:bg-violet-950/25">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Hadir Hari Ini
+                            </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.present_today}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-3 pt-0 pb-1">
-                            <p className="text-xs text-muted-foreground">
-                                Late: {stats.late_today}
-                            </p>
-                        </CardContent>
                     </Card>
 
-                    <Card className="gap-1 border-l-2 border-l-amber-500 bg-amber-50/30 py-2">
-                        <CardHeader className="px-3 pb-0">
-                            <CardDescription>On Leave</CardDescription>
+                    <Card className="gap-2 border-amber-200 bg-amber-50/70 py-3 dark:border-amber-950 dark:bg-amber-950/25">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Terlambat
+                            </CardDescription>
+                            <CardTitle className="text-2xl">
+                                {stats.late_today}
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+
+                    <Card className="gap-2 border-indigo-200 bg-indigo-50/70 py-3 dark:border-indigo-950 dark:bg-indigo-950/25">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Cuti
+                            </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.on_leave_today}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-3 pt-0 pb-1">
-                            <p className="text-xs text-muted-foreground">
-                                Absent: {stats.absent_today}
-                            </p>
-                        </CardContent>
                     </Card>
 
-                    <Card className="gap-1 border-l-2 border-l-violet-500 bg-violet-50/30 py-2">
-                        <CardHeader className="px-3 pb-0">
-                            <CardDescription>Open Positions</CardDescription>
-                            <CardTitle className="text-2xl">
-                                {stats.open_positions}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="px-3 pt-0 pb-1">
-                            <p className="text-xs text-muted-foreground">
-                                Published vacancies
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="gap-1 border-l-2 border-l-rose-500 bg-rose-50/30 py-2">
-                        <CardHeader className="px-3 pb-0">
-                            <CardDescription>
-                                Monthly Payroll Burn
+                    <Card className="gap-2 border-rose-200 bg-rose-50/70 py-3 dark:border-rose-950 dark:bg-rose-950/25">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Absen
                             </CardDescription>
                             <CardTitle className="text-2xl">
-                                {formatRupiahCompact(
-                                    stats.monthly_payroll_burn,
-                                )}
+                                {stats.absent_today}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-3 pt-0 pb-1">
-                            <p className="text-xs text-muted-foreground">
-                                Current period net salary
-                            </p>
-                        </CardContent>
+                    </Card>
+
+                    <Card className="gap-2 border-cyan-200 bg-cyan-50/70 py-3 dark:border-cyan-950 dark:bg-cyan-950/25">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Total Divisi
+                            </CardDescription>
+                            <CardTitle className="text-2xl">
+                                {stats.total_divisions}
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+
+                    <Card className="gap-2 border-fuchsia-200 bg-fuchsia-50/70 py-3 dark:border-fuchsia-950 dark:bg-fuchsia-950/25">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Total Jabatan
+                            </CardDescription>
+                            <CardTitle className="text-2xl">
+                                {stats.total_positions}
+                            </CardTitle>
+                        </CardHeader>
                     </Card>
                 </div>
 
-                <div className="grid gap-[14px] xl:grid-cols-3">
+                <div className="grid gap-4 xl:grid-cols-3">
                     <Card className="gap-0 py-0">
                         <CardHeader className="px-4 py-3">
                             <div className="flex items-start justify-between gap-3">
@@ -633,7 +646,7 @@ export default function Dashboard({
                     </div>
 
                     <CollapsibleContent>
-                        <div className="space-y-[14px] border-t p-3 sm:p-4">
+                        <div className="space-y-4 border-t p-4">
                             <div className="flex flex-wrap items-end gap-2">
                                 <div className="grid w-full gap-1.5 sm:w-[180px]">
                                     <Label htmlFor="outsourcing-period">
@@ -710,7 +723,7 @@ export default function Dashboard({
                                 </Button>
                             </div>
 
-                            <div className="grid gap-[14px] md:grid-cols-2 xl:grid-cols-4">
+                            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                                 <OutsourcingStat
                                     icon={Building2}
                                     label="Klien Aktif"

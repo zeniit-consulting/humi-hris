@@ -1,0 +1,397 @@
+{
+  "title": "Humi Mobile API",
+  "version": "v1",
+  "base_url": "https://{domain}/api/mobile/v1",
+  "format": "application/json",
+  "authentication": {
+    "type": "Laravel Sanctum Bearer token",
+    "header": "Authorization: Bearer {access_token}",
+    "notes": [
+      "Gunakan endpoint login untuk mendapatkan access_token.",
+      "Endpoint selain login membutuhkan token.",
+      "Gunakan /auth/login untuk admin atau staff internal.",
+      "Gunakan /auth/portal-login untuk aplikasi mobile portal karyawan dengan ID karyawan dan nomor WhatsApp terdaftar."
+    ]
+  },
+  "response_envelope": {
+    "success": true,
+    "message": "Pesan hasil proses.",
+    "data": {}
+  },
+  "error_response": {
+    "success": false,
+    "message": "Penjelasan kesalahan.",
+    "errors": {
+      "field_name": [
+        "Pesan validasi."
+      ]
+    }
+  },
+  "endpoints": [
+    {
+      "name": "Login",
+      "method": "POST",
+      "path": "/auth/login",
+      "auth_required": false,
+      "body": {
+        "email": "admin@company.com",
+        "password": "password",
+        "device_name": "android-employee-app",
+        "revoke_other_tokens": true
+      },
+      "required_fields": ["email", "password"],
+      "response_data": {
+        "token_type": "Bearer",
+        "access_token": "1|sanctum-token",
+        "user": {
+          "id": 1,
+          "name": "Nama Pengguna",
+          "email": "admin@company.com",
+          "role": "admin",
+          "parent_user_id": null,
+          "account_owner_id": 1,
+          "email_verified_at": "2026-07-29 10:00:00",
+          "created_at": "2026-01-01 10:00:00"
+        }
+      }
+    },
+    {
+      "name": "Login portal karyawan",
+      "method": "POST",
+      "path": "/auth/portal-login",
+      "auth_required": false,
+      "description": "Login aplikasi mobile portal karyawan menggunakan ID karyawan dan nomor WhatsApp yang sama seperti portal web.",
+      "body": {
+        "employee_code": "EMP001",
+        "phone": "0812-3456-7890",
+        "device_name": "android-portal-app",
+        "revoke_other_tokens": true
+      },
+      "required_fields": ["employee_code", "phone"],
+      "response_data": {
+        "token_type": "Bearer",
+        "access_token": "1|sanctum-token",
+        "user": {
+          "id": 10,
+          "name": "Nama Karyawan",
+          "email": "employee@company.com",
+          "role": "user",
+          "parent_user_id": 1,
+          "account_owner_id": 1,
+          "email_verified_at": "2026-07-30 10:00:00",
+          "created_at": "2026-01-01 10:00:00"
+        },
+        "employee": {
+          "id": 25,
+          "employee_code": "EMP001",
+          "full_name": "Nama Karyawan",
+          "phone": "6281234567890"
+        }
+      }
+    },
+    {
+      "name": "Logout",
+      "method": "POST",
+      "path": "/auth/logout",
+      "auth_required": true,
+      "body": {},
+      "response_data": null
+    },
+    {
+      "name": "Profil pengguna yang sedang login",
+      "method": "GET",
+      "path": "/auth/me",
+      "auth_required": true,
+      "response_data": "Objek user dengan struktur yang sama seperti response login.user."
+    },
+    {
+      "name": "Ringkasan dashboard admin",
+      "method": "GET",
+      "path": "/dashboard/summary",
+      "auth_required": true
+    },
+    {
+      "name": "Ringkasan portal karyawan",
+      "method": "GET",
+      "path": "/portal/summary",
+      "auth_required": true,
+      "query_parameters": {
+        "timezone": "Opsional. IANA timezone perangkat, misalnya Asia/Makassar."
+      }
+    },
+    {
+      "name": "Opsi master data",
+      "method": "GET",
+      "path": "/master/options",
+      "auth_required": true,
+      "description": "Menyediakan pilihan master yang diperlukan formulir mobile."
+    },
+    {
+      "name": "Daftar karyawan",
+      "method": "GET",
+      "path": "/employees",
+      "auth_required": true
+    },
+    {
+      "name": "Detail karyawan",
+      "method": "GET",
+      "path": "/employees/{employee_id}",
+      "auth_required": true,
+      "path_parameters": {
+        "employee_id": "ID karyawan"
+      }
+    },
+    {
+      "name": "Daftar presensi",
+      "method": "GET",
+      "path": "/attendances",
+      "auth_required": true,
+      "query_parameters": {
+        "employee_id": "Opsional. Filter ID karyawan.",
+        "date": "Opsional. Format YYYY-MM-DD.",
+        "timezone": "Opsional. IANA timezone perangkat."
+      }
+    },
+    {
+      "name": "Buat presensi",
+      "method": "POST",
+      "path": "/attendances",
+      "auth_required": true,
+      "body": {
+        "employee_id": 1,
+        "shift_id": 1,
+        "attendance_date": "2026-07-29",
+        "status": "present",
+        "check_in_at": "2026-07-29T08:00:00+08:00",
+        "check_in_latitude": -8.6505,
+        "check_in_longitude": 115.2167,
+        "check_out_at": null,
+        "check_out_latitude": null,
+        "check_out_longitude": null,
+        "notes": "Clock in dari aplikasi mobile"
+      },
+      "required_fields": ["employee_id", "attendance_date", "status"],
+      "validation": {
+        "status": ["present", "late", "on_leave", "absent"],
+        "check_in_latitude": "-90 sampai 90",
+        "check_in_longitude": "-180 sampai 180",
+        "notes": "maksimum 255 karakter"
+      }
+    },
+    {
+      "name": "Ubah presensi",
+      "method": "PUT",
+      "path": "/attendances/{attendance_id}",
+      "auth_required": true,
+      "path_parameters": {
+        "attendance_id": "ID presensi"
+      },
+      "body": "Gunakan struktur body yang sama seperti Buat presensi."
+    },
+    {
+      "name": "Hapus presensi",
+      "method": "DELETE",
+      "path": "/attendances/{attendance_id}",
+      "auth_required": true
+    },
+    {
+      "name": "Daftar pengajuan cuti",
+      "method": "GET",
+      "path": "/leaves",
+      "auth_required": true
+    },
+    {
+      "name": "Buat pengajuan cuti",
+      "method": "POST",
+      "path": "/leaves",
+      "auth_required": true,
+      "body": {
+        "employee_id": 1,
+        "leave_type": "annual",
+        "start_date": "2026-08-01",
+        "end_date": "2026-08-02",
+        "reason": "Keperluan keluarga",
+        "status": "pending",
+        "rejection_reason": null
+      },
+      "required_fields": ["employee_id", "leave_type", "start_date", "end_date", "status"],
+      "validation": {
+        "leave_type": ["annual", "sick", "unpaid", "other"],
+        "status": ["pending", "approved", "rejected", "cancelled"]
+      }
+    },
+    {
+      "name": "Ubah pengajuan cuti",
+      "method": "PUT",
+      "path": "/leaves/{leave_id}",
+      "auth_required": true,
+      "body": "Gunakan struktur body yang sama seperti Buat pengajuan cuti."
+    },
+    {
+      "name": "Hapus pengajuan cuti",
+      "method": "DELETE",
+      "path": "/leaves/{leave_id}",
+      "auth_required": true
+    },
+    {
+      "name": "Daftar pengajuan lembur",
+      "method": "GET",
+      "path": "/overtimes",
+      "auth_required": true
+    },
+    {
+      "name": "Buat pengajuan lembur",
+      "method": "POST",
+      "path": "/overtimes",
+      "auth_required": true,
+      "body": {
+        "employee_id": 1,
+        "work_date": "2026-07-29",
+        "start_time": "18:00",
+        "end_time": "21:00",
+        "break_minutes": 0,
+        "reason": "Menyelesaikan laporan",
+        "status": "pending",
+        "notes": null
+      },
+      "required_fields": ["employee_id", "work_date", "start_time", "end_time", "status"],
+      "validation": {
+        "status": ["pending", "approved", "rejected"],
+        "break_minutes": "0 sampai 480"
+      }
+    },
+    {
+      "name": "Ubah pengajuan lembur",
+      "method": "PUT",
+      "path": "/overtimes/{overtime_id}",
+      "auth_required": true,
+      "body": "Gunakan struktur body yang sama seperti Buat pengajuan lembur."
+    },
+    {
+      "name": "Hapus pengajuan lembur",
+      "method": "DELETE",
+      "path": "/overtimes/{overtime_id}",
+      "auth_required": true
+    },
+    {
+      "name": "Daftar kasbon",
+      "method": "GET",
+      "path": "/kasbons",
+      "auth_required": true,
+      "query_parameters": {
+        "period": "Opsional. Format YYYY-MM."
+      }
+    },
+    {
+      "name": "Buat kasbon",
+      "method": "POST",
+      "path": "/kasbons",
+      "auth_required": true,
+      "body": {
+        "employee_id": 1,
+        "amount": 500000,
+        "deduction_date": "2026-08-25",
+        "period": "2026-08",
+        "notes": "Kasbon karyawan"
+      },
+      "required_fields": ["employee_id", "amount", "deduction_date"],
+      "validation": {
+        "amount": "minimum 0.01",
+        "period": "format YYYY-MM"
+      }
+    },
+    {
+      "name": "Ubah kasbon",
+      "method": "PUT",
+      "path": "/kasbons/{kasbon_id}",
+      "auth_required": true,
+      "body": "Gunakan struktur body yang sama seperti Buat kasbon."
+    },
+    {
+      "name": "Hapus kasbon",
+      "method": "DELETE",
+      "path": "/kasbons/{kasbon_id}",
+      "auth_required": true
+    },
+    {
+      "name": "Pratinjau payroll",
+      "method": "GET",
+      "path": "/payrolls/preview",
+      "auth_required": true,
+      "query_parameters": {
+        "period": "Wajib. Format YYYY-MM.",
+        "employee_scope": "Opsional: all atau parent_only.",
+        "service_fee_total": "Opsional. Nilai service fee yang akan dibagikan."
+      }
+    },
+    {
+      "name": "Generate payroll",
+      "method": "POST",
+      "path": "/payrolls/generate",
+      "auth_required": true,
+      "body": {
+        "period": "2026-07",
+        "employee_scope": "all",
+        "excluded_employee_ids": [2, 3],
+        "service_fee_total": 10000000
+      },
+      "required_fields": ["period"],
+      "validation": {
+        "employee_scope": ["all", "parent_only"],
+        "period": "format YYYY-MM"
+      }
+    },
+    {
+      "name": "Simpan payroll draft",
+      "method": "POST",
+      "path": "/payrolls/{payroll_run_id}/save",
+      "auth_required": true,
+      "path_parameters": {
+        "payroll_run_id": "ID payroll run"
+      },
+      "body": "Payload item payroll mengikuti data hasil endpoint preview atau generate."
+    },
+    {
+      "name": "Riwayat payroll",
+      "method": "GET",
+      "path": "/payrolls/history",
+      "auth_required": true,
+      "query_parameters": {
+        "period": "Opsional. Format YYYY-MM."
+      }
+    },
+    {
+      "name": "Profil karyawan",
+      "method": "GET",
+      "path": "/profile",
+      "auth_required": true
+    },
+    {
+      "name": "Ubah profil karyawan",
+      "method": "PUT",
+      "path": "/profile",
+      "auth_required": true,
+      "body": {
+        "phone": "081234567890",
+        "address": "Alamat domisili"
+      },
+      "required_fields": ["phone", "address"],
+      "validation": {
+        "phone": "Format Indonesia, diawali +62 atau 0, 9-12 angka setelah prefix.",
+        "address": "maksimum 500 karakter"
+      }
+    },
+    {
+      "name": "Ubah rekening bank",
+      "method": "PUT",
+      "path": "/profile/bank-account",
+      "auth_required": true,
+      "body": "Gunakan field rekening yang dikirim oleh endpoint GET /profile sebagai acuan."
+    }
+  ],
+  "implementation_notes": [
+    "Resource diakses sesuai cakupan akun pemilik perusahaan atau sub-user yang terkait.",
+    "Gunakan ISO 8601 beserta offset timezone untuk field waktu presensi, misalnya 2026-07-29T08:00:00+08:00.",
+    "Mobile app karyawan berbasis OTP, pengajuan koreksi absensi, perubahan jadwal, dan registrasi perangkat FCM belum diekspos melalui route /api/mobile/v1 pada dokumentasi ini."
+  ]
+}

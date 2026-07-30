@@ -9,6 +9,10 @@ import {
     NotebookPen,
     Users,
 } from 'lucide-react';
+import {
+    frontHeroSubtitleClass,
+    frontHeroTitleClass,
+} from '@/components/front-hero-typography';
 import SeoHead from '@/components/seo-head';
 import { dashboard, login, register } from '@/routes';
 
@@ -234,17 +238,21 @@ export default function MintlifyLanding({
                 </header>
 
                 <main>
-                    <section className="relative overflow-hidden bg-[#0c8c5e] text-white">
+                    <section className="relative overflow-hidden bg-[var(--landing-color-paper)]">
                         <CloudLandscape />
                         <div className="relative mx-auto max-w-[1200px] px-5 pt-20 pb-28 text-center md:pt-24 md:pb-36">
-                            <p className="mx-auto inline-flex items-center gap-2 text-[13px] font-medium tracking-[0.65px] uppercase">
-                                <span className="size-1.5 rounded-[2px] bg-white" />
+                            <p className="mx-auto inline-flex items-center gap-2 text-[13px] font-medium tracking-[0.65px] text-[#0c8c5e] uppercase">
+                                <span className="size-1.5 rounded-[2px] bg-[#0c8c5e]" />
                                 Platform HRIS untuk bisnis modern
                             </p>
-                            <h1 className="mx-auto mt-6 max-w-4xl text-[42px] leading-[1.1] font-semibold md:text-[57px]">
+                            <h1
+                                className={`mx-auto mt-6 max-w-4xl ${frontHeroTitleClass}`}
+                            >
                                 Kelola tim Anda dengan lebih sederhana
                             </h1>
-                            <p className="mx-auto mt-5 max-w-2xl text-[18px] leading-[1.5] text-white/80">
+                            <p
+                                className={`mx-auto mt-5 max-w-2xl ${frontHeroSubtitleClass}`}
+                            >
                                 Humi menyatukan data karyawan, absensi, cuti,
                                 payroll, approval, dan portal karyawan dalam
                                 satu platform yang mudah digunakan.

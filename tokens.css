@@ -26,8 +26,8 @@
     --landing-color-success: oklch(0.45 0.1 160);
     --landing-color-warning: oklch(0.58 0.12 78);
     --landing-color-danger: oklch(0.54 0.19 27);
-    --landing-font-display: 'Geist', ui-sans-serif, system-ui, sans-serif;
-    --landing-font-body: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    --landing-font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --landing-font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --landing-space-2xs: 0.25rem;
     --landing-space-xs: 0.5rem;
     --landing-space-sm: 0.75rem;
@@ -85,9 +85,8 @@
     --portal-color-success-soft: oklch(0.94 0.035 160);
     --portal-color-scrim: oklch(0.15 0.02 205 / 0.48);
     --portal-color-material: oklch(0.997 0.003 195 / 0.82);
-    --portal-font-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
-    --portal-font-body:
-        'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --portal-font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --portal-font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --portal-space-3xs: 0.125rem;
     --portal-space-2xs: 0.25rem;
     --portal-space-xs: 0.5rem;

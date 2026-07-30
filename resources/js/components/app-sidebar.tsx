@@ -59,7 +59,7 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
 
     return [
         {
-            title: 'SDM',
+            title: 'Organisasi',
             items: [
                 {
                     title: 'Karyawan',
@@ -72,14 +72,9 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     icon: Building2,
                 },
                 {
-                    title: 'Manpower Request',
-                    href: '/hris/manpower-requests',
-                    icon: ClipboardList,
-                },
-                {
-                    title: 'Teguran',
-                    href: '/hris/reprimands',
-                    icon: ScrollText,
+                    title: 'Struktur Organisasi',
+                    href: '/hris/organization-chart',
+                    icon: GitBranch,
                 },
                 {
                     title: 'Rekrutmen',
@@ -88,25 +83,14 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     ...locked('recruitment'),
                 },
                 {
-                    title: 'Struktur Organisasi',
-                    href: '/hris/organization-chart',
-                    icon: GitBranch,
-                },
-                {
-                    title: 'Notifikasi',
-                    href: '/hris/notifications',
-                    icon: BellRing,
-                },
-                {
-                    title: 'Survey',
-                    href: '/hris/surveys',
+                    title: 'Manpower Request',
+                    href: '/hris/manpower-requests',
                     icon: ClipboardList,
                 },
                 {
-                    title: 'Performance',
-                    href: '/hris/performances',
-                    icon: TrendingUp,
-                    ...locked('performance'),
+                    title: 'Teguran',
+                    href: '/hris/reprimands',
+                    icon: ScrollText,
                 },
             ],
         },
@@ -119,14 +103,14 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     icon: CalendarDays,
                 },
                 {
-                    title: 'Kunjungan Client',
-                    href: '/hris/client-visits',
-                    icon: MapPinned,
-                },
-                {
                     title: 'Jadwal Kerja',
                     href: schedulesIndex(),
                     icon: CalendarRange,
+                },
+                {
+                    title: 'Kunjungan Client',
+                    href: '/hris/client-visits',
+                    icon: MapPinned,
                 },
                 {
                     title: 'Cuti',
@@ -149,6 +133,11 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     icon: CalendarDays,
                 },
                 {
+                    title: 'Approval Jadwal',
+                    href: '/hris/shift-change-requests',
+                    icon: CalendarSync,
+                },
+                {
                     title: 'Approval Cuti',
                     href: '/hris/leave-approvals',
                     icon: CalendarClock,
@@ -157,11 +146,6 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     title: 'Approval Lembur',
                     href: '/hris/overtime-approvals',
                     icon: Timer,
-                },
-                {
-                    title: 'Approval Jadwal',
-                    href: '/hris/shift-change-requests',
-                    icon: CalendarSync,
                 },
                 {
                     title: 'Pengaturan Approval',
@@ -180,11 +164,6 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     ...locked('payroll'),
                 },
                 {
-                    title: 'Billing Klien',
-                    href: '/hris/client-billings',
-                    icon: ReceiptText,
-                },
-                {
                     title: 'Kasbon',
                     href: kasbonsIndex(),
                     icon: HandCoins,
@@ -194,6 +173,37 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     title: 'Reimbursement',
                     href: '/hris/reimbursements',
                     icon: ReceiptText,
+                },
+                {
+                    title: 'Billing Klien',
+                    href: '/hris/client-billings',
+                    icon: ReceiptText,
+                },
+                {
+                    title: 'Laporan',
+                    href: reportsIndex(),
+                    icon: FileText,
+                },
+            ],
+        },
+        {
+            title: 'Operasional',
+            items: [
+                {
+                    title: 'Notifikasi',
+                    href: '/hris/notifications',
+                    icon: BellRing,
+                },
+                {
+                    title: 'Survey',
+                    href: '/hris/surveys',
+                    icon: ClipboardList,
+                },
+                {
+                    title: 'Performance',
+                    href: '/hris/performances',
+                    icon: TrendingUp,
+                    ...locked('performance'),
                 },
                 {
                     title: 'Asset Management',
@@ -206,11 +216,6 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
                     href: '/hris/assets/procurement-requests',
                     icon: ShoppingCart,
                     ...locked('assets'),
-                },
-                {
-                    title: 'Laporan',
-                    href: reportsIndex(),
-                    icon: FileText,
                 },
             ],
         },
@@ -244,26 +249,34 @@ export function AppSidebar() {
             : buildNavGroups(subscription?.locked_features ?? []);
 
     if (permissions?.can_manage_subscribers) {
-        mainNavGroups.push({
-            title: 'Platform',
-            items: [
-                {
-                    title: 'Subscriber',
-                    href: '/admin/subscribers',
-                    icon: ShieldCheck,
-                },
-                {
-                    title: 'Invoice',
-                    href: '/admin/invoices',
-                    icon: FileText,
-                },
-                {
-                    title: 'Audit Log',
-                    href: '/admin/audit-logs',
-                    icon: ScrollText,
-                },
-            ],
-        });
+        const platformItems: NavItem[] = [
+            {
+                title: 'Subscriber',
+                href: '/admin/subscribers',
+                icon: ShieldCheck,
+            },
+            {
+                title: 'Invoice',
+                href: '/admin/invoices',
+                icon: FileText,
+            },
+            {
+                title: 'Audit Log',
+                href: '/admin/audit-logs',
+                icon: ScrollText,
+            },
+        ];
+
+        if (mainNavGroups.length >= 5) {
+            mainNavGroups[mainNavGroups.length - 1].items.push(
+                ...platformItems,
+            );
+        } else {
+            mainNavGroups.push({
+                title: 'Platform',
+                items: platformItems,
+            });
+        }
     }
 
     return (

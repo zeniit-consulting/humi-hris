@@ -7,8 +7,13 @@ import {
     Clock,
     HelpCircle,
 } from 'lucide-react';
+import {
+    frontHeroSubtitleClass,
+    frontHeroTitleClass,
+} from '@/components/front-hero-typography';
+import { LandingNav } from '@/components/landing-nav';
 import SeoHead from '@/components/seo-head';
-import { login } from '@/routes';
+import { dashboard, register } from '@/routes';
 
 type ArticleSection = {
     heading: string;
@@ -58,6 +63,7 @@ type PageProps = {
     article: Article;
     relatedArticles: ArticleSummary[];
     appUrl: string;
+    auth: { user?: unknown };
 };
 
 const formatDate = (value: string) =>
@@ -67,17 +73,13 @@ const formatDate = (value: string) =>
         year: 'numeric',
     }).format(new Date(`${value}T00:00:00+08:00`));
 
-const navLinks = [
-    { label: 'Fitur', href: '/features' },
-    { label: 'Solusi', href: '/#segments' },
-    { label: 'Berita', href: '/berita' },
-    { label: 'Kontak', href: '/contact' },
-];
-
 export default function NewsShow() {
-    const { article, relatedArticles, appUrl } = usePage<PageProps>().props;
+    const { article, relatedArticles, appUrl, auth } =
+        usePage<PageProps>().props;
     const siteUrl = appUrl.replace(/\/$/, '');
     const articleUrl = `${siteUrl}/berita/${article.slug}`;
+    const hasUser = Boolean(auth.user);
+    const trialHref = hasUser ? dashboard().url : register().url;
     const structuredData = [
         {
             '@context': 'https://schema.org',
@@ -153,40 +155,9 @@ export default function NewsShow() {
             />
 
             <div className="min-h-screen bg-white text-slate-950">
-                <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 backdrop-blur">
-                    <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-                        <Link href="/" className="flex items-center gap-2">
-                            <img
-                                src="/logo.png"
-                                alt="Humi"
-                                className="h-8 w-auto"
-                            />
-                        </Link>
-                        <nav className="hidden items-center gap-1 text-sm font-medium text-slate-600 md:flex">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className={
-                                        link.href === '/berita'
-                                            ? 'rounded-full bg-slate-100 px-4 py-2 text-slate-950'
-                                            : 'rounded-full px-4 py-2 transition hover:bg-slate-50 hover:text-slate-950'
-                                    }
-                                >
-                                    {link.label}
-                                </Link>
-                            ))}
-                        </nav>
-                        <Link
-                            href={login()}
-                            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
-                        >
-                            Masuk
-                        </Link>
-                    </div>
-                </header>
+                <LandingNav hasUser={hasUser} trialHref={trialHref} />
 
-                <main>
+                <main className="pt-18">
                     <article>
                         <section className="border-b border-slate-100 bg-slate-50/60">
                             <div className="mx-auto max-w-4xl px-6 py-12 md:py-16">
@@ -212,10 +183,14 @@ export default function NewsShow() {
                                     </span>
                                 </div>
 
-                                <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-950 md:text-6xl">
+                                <h1
+                                    className={`mt-6 ${frontHeroTitleClass}`}
+                                >
                                     {article.title}
                                 </h1>
-                                <p className="mt-6 text-lg leading-8 text-slate-600 md:text-xl">
+                                <p
+                                    className={`mt-6 ${frontHeroSubtitleClass}`}
+                                >
                                     {article.hero_summary}
                                 </p>
                             </div>

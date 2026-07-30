@@ -58,6 +58,79 @@ class MobileApiTest extends TestCase
             ->assertJsonPath('data.email', $user->email);
     }
 
+    public function test_mobile_portal_employee_can_login_with_employee_code_and_registered_whatsapp_number(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'employee_code' => 'EMP001',
+            'first_name' => 'Portal',
+            'last_name' => 'Mobile',
+            'email' => 'portal-mobile@example.test',
+            'phone' => '0812-3456-7890',
+        ]);
+
+        $loginResponse = $this->postJson('/api/mobile/v1/auth/portal-login', [
+            'employee_code' => 'emp001',
+            'phone' => '0812-3456-7890',
+            'device_name' => 'android-portal-test',
+        ]);
+
+        $loginResponse
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.token_type', 'Bearer')
+            ->assertJsonPath('data.user.role', 'user')
+            ->assertJsonPath('data.user.parent_user_id', $owner->id)
+            ->assertJsonPath('data.employee.id', $employee->id)
+            ->assertJsonStructure([
+                'data' => [
+                    'access_token',
+                    'user' => ['id', 'name', 'email', 'role', 'account_owner_id'],
+                    'employee' => ['id', 'employee_code', 'full_name'],
+                ],
+            ]);
+
+        $portalUser = User::query()
+            ->where('role', 'user')
+            ->where('email', 'portal-mobile@example.test')
+            ->firstOrFail();
+
+        $this->assertSame('6281234567890', $portalUser->phone);
+        $this->assertNotNull($portalUser->email_verified_at);
+        $this->assertNotNull($portalUser->phone_verified_at);
+
+        $this->withHeader('Authorization', 'Bearer '.$loginResponse->json('data.access_token'))
+            ->getJson('/api/mobile/v1/portal/summary')
+            ->assertOk()
+            ->assertJsonPath('data.employee.id', $employee->id);
+    }
+
+    public function test_mobile_portal_employee_login_rejects_unmatched_whatsapp_number(): void
+    {
+        $owner = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $owner->id,
+            'employee_code' => 'EMP001',
+            'phone' => '081234567890',
+        ]);
+
+        $this->postJson('/api/mobile/v1/auth/portal-login', [
+            'employee_code' => 'EMP001',
+            'phone' => '081299999999',
+            'device_name' => 'android-portal-test',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('errors.phone.0', 'ID karyawan atau nomor WhatsApp tidak cocok.');
+    }
+
     public function test_mobile_api_requires_sanctum_token_for_protected_endpoints(): void
     {
         $this->getJson('/api/mobile/v1/employees')

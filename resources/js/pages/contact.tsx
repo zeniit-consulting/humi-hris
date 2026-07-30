@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     Building2,
@@ -9,8 +9,13 @@ import {
     Phone,
     ShieldCheck,
 } from 'lucide-react';
+import {
+    frontHeroSubtitleClass,
+    frontHeroTitleClass,
+} from '@/components/front-hero-typography';
+import { LandingNav } from '@/components/landing-nav';
 import SeoHead from '@/components/seo-head';
-import { login, register } from '@/routes';
+import { dashboard, register } from '@/routes';
 
 const WHATSAPP_CONTACT_URL =
     'https://wa.me/6285710999144?text=Halo%20Humi%2C%20saya%20ingin%20konsultasi%20tentang%20HRIS.';
@@ -56,6 +61,11 @@ const industryOptions = [
 ];
 
 export default function Contact() {
+    const { auth } = usePage().props as {
+        auth: { user?: unknown };
+    };
+    const hasUser = Boolean(auth.user);
+    const trialHref = hasUser ? dashboard().url : register().url;
     const structuredData = {
         '@context': 'https://schema.org',
         '@type': 'ContactPage',
@@ -81,53 +91,24 @@ export default function Contact() {
             />
 
             <div className="min-h-screen bg-white text-slate-900">
-                <header className="border-b border-slate-100 bg-white">
-                    <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-                        <Link href="/" className="flex items-center gap-2">
-                            <img
-                                src="/logo.png"
-                                alt="Humi"
-                                className="h-8 w-auto"
-                            />
-                        </Link>
-                        <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
-                            <Link
-                                href="/features"
-                                className="transition hover:text-slate-900"
-                            >
-                                Fitur
-                            </Link>
-                            <Link
-                                href="/berita"
-                                className="transition hover:text-slate-900"
-                            >
-                                Berita
-                            </Link>
-                            <Link href="/contact" className="text-[#0d4d52]">
-                                Kontak
-                            </Link>
-                        </nav>
-                        <Link
-                            href={login()}
-                            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
-                        >
-                            Masuk
-                        </Link>
-                    </div>
-                </header>
+                <LandingNav hasUser={hasUser} trialHref={trialHref} />
 
-                <main>
+                <main className="pt-18">
                     <section className="border-b border-slate-100">
                         <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[1fr_0.9fr] lg:py-20">
                             <div>
                                 <p className="text-xs font-semibold tracking-[0.12em] text-[#14a8b0] uppercase">
                                     Kontak Humi
                                 </p>
-                                <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
+                                <h1
+                                    className={`mt-4 max-w-3xl ${frontHeroTitleClass}`}
+                                >
                                     Diskusikan kebutuhan HRIS perusahaan Anda
                                     dengan tim Humi.
                                 </h1>
-                                <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
+                                <p
+                                    className={`mt-5 max-w-2xl ${frontHeroSubtitleClass}`}
+                                >
                                     Kami bantu memetakan kebutuhan data
                                     karyawan, absensi, cuti, lembur, payroll,
                                     rekrutmen, dan portal karyawan agar

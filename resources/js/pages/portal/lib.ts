@@ -62,6 +62,10 @@ export const notifyPortalAfterRedirect = (
     );
 };
 
+export const shouldShowAttendanceNotificationSetup = (
+    hasPushNotificationDevice: boolean,
+) => !hasPushNotificationDevice;
+
 export const deviceTimezone = () =>
     Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
 

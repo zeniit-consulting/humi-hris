@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::login
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:17
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:20
 * @route '/api/mobile/v1/auth/login'
 */
 export const login = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ login.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::login
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:17
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:20
 * @route '/api/mobile/v1/auth/login'
 */
 login.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ login.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::login
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:17
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:20
 * @route '/api/mobile/v1/auth/login'
 */
 login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::login
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:17
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:20
 * @route '/api/mobile/v1/auth/login'
 */
 const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::login
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:17
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:20
 * @route '/api/mobile/v1/auth/login'
 */
 loginForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -56,8 +56,64 @@ loginForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => (
 login.form = loginForm
 
 /**
+* @see \App\Http\Controllers\Api\Mobile\V1\AuthController::portalLogin
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:62
+* @route '/api/mobile/v1/auth/portal-login'
+*/
+export const portalLogin = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: portalLogin.url(options),
+    method: 'post',
+})
+
+portalLogin.definition = {
+    methods: ["post"],
+    url: '/api/mobile/v1/auth/portal-login',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\AuthController::portalLogin
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:62
+* @route '/api/mobile/v1/auth/portal-login'
+*/
+portalLogin.url = (options?: RouteQueryOptions) => {
+    return portalLogin.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\AuthController::portalLogin
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:62
+* @route '/api/mobile/v1/auth/portal-login'
+*/
+portalLogin.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: portalLogin.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\AuthController::portalLogin
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:62
+* @route '/api/mobile/v1/auth/portal-login'
+*/
+const portalLoginForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: portalLogin.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\AuthController::portalLogin
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:62
+* @route '/api/mobile/v1/auth/portal-login'
+*/
+portalLoginForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: portalLogin.url(options),
+    method: 'post',
+})
+
+portalLogin.form = portalLoginForm
+
+/**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::logout
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:67
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:142
 * @route '/api/mobile/v1/auth/logout'
 */
 export const logout = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -72,7 +128,7 @@ logout.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::logout
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:67
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:142
 * @route '/api/mobile/v1/auth/logout'
 */
 logout.url = (options?: RouteQueryOptions) => {
@@ -81,7 +137,7 @@ logout.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::logout
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:67
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:142
 * @route '/api/mobile/v1/auth/logout'
 */
 logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -91,7 +147,7 @@ logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::logout
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:67
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:142
 * @route '/api/mobile/v1/auth/logout'
 */
 const logoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -101,7 +157,7 @@ const logoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::logout
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:67
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:142
 * @route '/api/mobile/v1/auth/logout'
 */
 logoutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -113,7 +169,7 @@ logout.form = logoutForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::me
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:59
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:134
 * @route '/api/mobile/v1/auth/me'
 */
 export const me = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -128,7 +184,7 @@ me.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::me
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:59
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:134
 * @route '/api/mobile/v1/auth/me'
 */
 me.url = (options?: RouteQueryOptions) => {
@@ -137,7 +193,7 @@ me.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::me
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:59
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:134
 * @route '/api/mobile/v1/auth/me'
 */
 me.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -147,7 +203,7 @@ me.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::me
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:59
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:134
 * @route '/api/mobile/v1/auth/me'
 */
 me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -157,7 +213,7 @@ me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::me
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:59
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:134
 * @route '/api/mobile/v1/auth/me'
 */
 const meForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -167,7 +223,7 @@ const meForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::me
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:59
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:134
 * @route '/api/mobile/v1/auth/me'
 */
 meForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -177,7 +233,7 @@ meForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AuthController::me
-* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:59
+* @see app/Http/Controllers/Api/Mobile/V1/AuthController.php:134
 * @route '/api/mobile/v1/auth/me'
 */
 meForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -194,6 +250,7 @@ me.form = meForm
 
 const auth = {
     login: Object.assign(login, login),
+    portalLogin: Object.assign(portalLogin, portalLogin),
     logout: Object.assign(logout, logout),
     me: Object.assign(me, me),
 }
