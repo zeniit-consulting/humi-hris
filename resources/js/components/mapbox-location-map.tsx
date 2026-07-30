@@ -78,6 +78,10 @@ const createMarkerElement = (
     isPulsing = false,
 ) => {
     const marker = document.createElement('div');
+    const markerAsset =
+        variant === 'user'
+            ? '/map-marker-employee.png'
+            : '/map-marker-office.png';
     marker.className = [
         'mapbox-location-marker',
         `mapbox-location-marker-${variant}`,
@@ -85,6 +89,11 @@ const createMarkerElement = (
     ]
         .filter(Boolean)
         .join(' ');
+    marker.style.backgroundImage = 'url("' + markerAsset + '")';
+    marker.setAttribute(
+        'aria-label',
+        variant === 'user' ? 'Lokasi karyawan' : 'Lokasi kantor',
+    );
 
     return marker;
 };
@@ -368,7 +377,7 @@ export function MapboxLocationMap({
 
             const marker = new mapboxgl.Marker({
                 element: createMarkerElement('office'),
-                anchor: 'center',
+                anchor: 'bottom',
             })
                 .setLngLat([location.longitude, location.latitude])
                 .setPopup(popup)
@@ -385,7 +394,7 @@ export function MapboxLocationMap({
             );
             const marker = new mapboxgl.Marker({
                 element: createMarkerElement('user', isUserPulsing),
-                anchor: 'center',
+                anchor: 'bottom',
             })
                 .setLngLat([userLocation.longitude, userLocation.latitude])
                 .setPopup(popup)
@@ -397,7 +406,7 @@ export function MapboxLocationMap({
         if (selectedLocation) {
             const marker = new mapboxgl.Marker({
                 element: createMarkerElement('selected'),
-                anchor: 'center',
+                anchor: 'bottom',
             })
                 .setLngLat([
                     selectedLocation.longitude,

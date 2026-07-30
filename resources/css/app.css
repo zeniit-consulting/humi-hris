@@ -343,30 +343,28 @@
 
     .mapbox-location-marker {
         position: relative;
-        height: 20px;
-        width: 20px;
-        border-radius: 9999px;
-        border: 3px solid white;
-        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.22);
+        height: 48px;
+        width: 32px;
+        background-position: center bottom;
+        background-repeat: no-repeat;
+        background-size: contain;
+        filter: drop-shadow(0 8px 10px rgba(15, 23, 42, 0.24));
         cursor: pointer;
     }
 
     .mapbox-location-marker-office {
-        background: #0f766e;
+        height: 50px;
+        width: 32px;
     }
 
     .mapbox-location-marker-user {
-        height: 22px;
-        width: 22px;
-        background: #0284c7;
+        height: 48px;
+        width: 34px;
     }
 
     .mapbox-location-marker-selected {
-        height: 22px;
-        width: 22px;
-        background: #0f766e;
-        border-width: 4px;
-        box-shadow: 0 12px 24px rgba(15, 118, 110, 0.35);
+        height: 50px;
+        width: 32px;
     }
 
     .mapbox-location-marker-pulse::after {
