@@ -52,27 +52,32 @@ export function LandingNav({
                     ))}
                 </div>
 
-                {!hasUser ? (
-                    <Link
-                        href={login()}
-                        className="hidden min-h-11 items-center rounded-[var(--landing-radius-control)] px-3 text-sm font-medium whitespace-nowrap text-[var(--landing-color-ink-soft)] hover:text-[var(--landing-color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] sm:inline-flex"
-                    >
-                        Masuk
-                    </Link>
-                ) : null}
+                <div className="landing-nav-actions flex shrink-0 items-center gap-2">
+                    {!hasUser ? (
+                        <Link
+                            href={login()}
+                            className="inline-flex min-h-11 items-center rounded-[var(--landing-radius-control)] px-3 text-sm font-medium whitespace-nowrap text-[var(--landing-color-ink-soft)] hover:text-[var(--landing-color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)]"
+                        >
+                            Masuk
+                        </Link>
+                    ) : null}
 
-                <Link href={trialHref} className={landingPrimaryActionClass}>
-                    <span className="sm:hidden">
-                        {hasUser ? 'Dashboard' : 'Mulai Trial'}
-                    </span>
-                    <span className="hidden sm:inline">
-                        {hasUser ? 'Buka Dashboard' : 'Mulai Trial Gratis'}
-                    </span>
-                    <ArrowRight
-                        className="size-4 shrink-0"
-                        aria-hidden="true"
-                    />
-                </Link>
+                    <Link
+                        href={trialHref}
+                        className={landingPrimaryActionClass}
+                    >
+                        <span className="sm:hidden">
+                            {hasUser ? 'Dashboard' : 'Mulai Trial'}
+                        </span>
+                        <span className="hidden sm:inline">
+                            {hasUser ? 'Buka Dashboard' : 'Mulai Trial Gratis'}
+                        </span>
+                        <ArrowRight
+                            className="size-4 shrink-0"
+                            aria-hidden="true"
+                        />
+                    </Link>
+                </div>
             </nav>
         </header>
     );

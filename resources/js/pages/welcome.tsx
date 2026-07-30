@@ -447,10 +447,18 @@ function PlanFeatures({
             {visibleFeatures.map((feature) => (
                 <li
                     key={feature}
-                    className="flex items-start gap-3 text-sm text-[var(--landing-color-ink-soft)]"
+                    className={
+                        plan.recommended
+                            ? 'flex items-start gap-3 text-sm text-white'
+                            : 'flex items-start gap-3 text-sm text-[var(--landing-color-ink-soft)]'
+                    }
                 >
                     <Check
-                        className="mt-0.5 size-4 shrink-0 text-[var(--landing-color-accent)]"
+                        className={
+                            plan.recommended
+                                ? 'mt-0.5 size-4 shrink-0 text-white'
+                                : 'mt-0.5 size-4 shrink-0 text-[var(--landing-color-accent)]'
+                        }
                         aria-hidden="true"
                     />
                     <span>{feature}</span>
@@ -459,7 +467,11 @@ function PlanFeatures({
             {plan.lockedFeatures?.slice(0, compact ? 1 : 3).map((feature) => (
                 <li
                     key={feature}
-                    className="flex items-start gap-3 text-sm text-[var(--landing-color-muted)]"
+                    className={
+                        plan.recommended
+                            ? 'flex items-start gap-3 text-sm text-white/70'
+                            : 'flex items-start gap-3 text-sm text-[var(--landing-color-muted)]'
+                    }
                 >
                     <ShieldCheck
                         className="mt-0.5 size-4 shrink-0"
@@ -485,8 +497,8 @@ function PricingPlan({
         <article
             className={
                 plan.recommended
-                    ? 'flex h-full min-w-0 flex-col rounded-[var(--landing-radius-panel)] bg-[var(--landing-color-ink)] p-6 text-[var(--landing-color-paper)] shadow-[var(--landing-shadow-panel)] sm:p-8'
-                    : 'flex min-w-0 flex-col border-t border-[var(--landing-color-rule)] py-6 first:border-t-0 lg:first:border-t'
+                    ? 'flex h-full min-w-0 flex-col rounded-[var(--landing-radius-panel)] bg-[var(--landing-color-ink)] p-6 text-white shadow-[var(--landing-shadow-panel)] sm:p-8'
+                    : 'flex h-full min-w-0 flex-col border-t border-[var(--landing-color-rule)] py-6 first:border-t-0 lg:first:border-t'
             }
         >
             <div className="flex items-center justify-between gap-4">
@@ -500,7 +512,7 @@ function PricingPlan({
             <p
                 className={
                     plan.recommended
-                        ? 'mt-3 max-w-xl text-sm leading-6 text-[var(--landing-color-paper)] opacity-70'
+                        ? 'mt-3 max-w-xl text-sm leading-6 text-white/70'
                         : 'mt-3 max-w-xl text-sm leading-6 text-[var(--landing-color-ink-soft)]'
                 }
             >
@@ -515,7 +527,7 @@ function PricingPlan({
                     <span
                         className={
                             plan.recommended
-                                ? 'pb-1 text-xs text-[var(--landing-color-paper)] opacity-70'
+                                ? 'pb-1 text-xs text-white/70'
                                 : 'pb-1 text-xs text-[var(--landing-color-muted)]'
                         }
                     >
@@ -789,21 +801,15 @@ export default function Welcome({ canRegister = true }: WelcomeProps) {
                                 </p>
                             </header>
 
-                            <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-stretch">
-                                <div className="min-w-0 lg:pr-8">
-                                    {pricingPlans.slice(0, 2).map((plan) => (
-                                        <PricingPlan
-                                            key={plan.name}
-                                            plan={plan}
-                                            trialHref={trialHref}
-                                            compact
-                                        />
-                                    ))}
-                                </div>
-                                <PricingPlan
-                                    plan={pricingPlans[2]}
-                                    trialHref={trialHref}
-                                />
+                            <div className="grid min-w-0 items-stretch gap-6 md:grid-cols-3">
+                                {pricingPlans.map((plan) => (
+                                    <PricingPlan
+                                        key={plan.name}
+                                        plan={plan}
+                                        trialHref={trialHref}
+                                        compact={plan.name !== 'Plus'}
+                                    />
+                                ))}
                             </div>
 
                             <p className="mt-8 text-xs leading-6 text-[var(--landing-color-muted)]">
@@ -867,13 +873,61 @@ export default function Welcome({ canRegister = true }: WelcomeProps) {
                     </section>
                 </main>
 
-                <footer className="bg-[var(--landing-color-ink)] px-5 py-14 text-[var(--landing-color-paper)] sm:px-8 sm:py-20">
+                <footer className="bg-[var(--landing-color-accent-soft)] px-5 py-14 text-[var(--landing-color-ink)] sm:px-8 sm:py-20">
                     <div className="mx-auto max-w-7xl">
-                        <p className="max-w-[38ch] min-w-0 text-3xl leading-tight font-semibold tracking-[-0.035em] [overflow-wrap:anywhere] sm:text-5xl">
+                        <p className="max-w-[38ch] min-w-0 text-3xl leading-tight font-semibold tracking-[-0.035em] [overflow-wrap:anywhere] text-[var(--landing-color-ink)] sm:text-5xl">
                             Data yang sama. Keputusan yang lebih mudah
                             ditelusuri.
                         </p>
-                        <div className="mt-12 flex flex-col gap-7 border-t border-[var(--landing-color-paper)]/20 pt-7 sm:flex-row sm:items-center sm:justify-between">
+                        <nav
+                            aria-label="Tautan footer"
+                            className="landing-footer-links mt-10 grid max-w-3xl grid-cols-2 gap-x-10 gap-y-4 text-sm font-medium text-[var(--landing-color-ink-soft)] sm:grid-cols-4"
+                        >
+                            <a
+                                href="#product"
+                                className="hover:text-[var(--landing-color-ink)]"
+                            >
+                                Produk
+                            </a>
+                            <a
+                                href="#solutions"
+                                className="hover:text-[var(--landing-color-ink)]"
+                            >
+                                Solusi
+                            </a>
+                            <a
+                                href="#pricing"
+                                className="hover:text-[var(--landing-color-ink)]"
+                            >
+                                Harga
+                            </a>
+                            <Link
+                                href="/features"
+                                className="hover:text-[var(--landing-color-ink)]"
+                            >
+                                Fitur
+                            </Link>
+                            <Link
+                                href="/berita"
+                                className="hover:text-[var(--landing-color-ink)]"
+                            >
+                                Berita
+                            </Link>
+                            <Link
+                                href="/careers"
+                                className="hover:text-[var(--landing-color-ink)]"
+                            >
+                                Karier
+                            </Link>
+                            <Link
+                                href="/contact"
+                                className="hover:text-[var(--landing-color-ink)]"
+                            >
+                                Kontak
+                            </Link>
+                        </nav>
+
+                        <div className="mt-12 flex flex-col gap-7 border-t border-[var(--landing-color-ink)]/15 pt-7 sm:flex-row sm:items-center sm:justify-between">
                             <Link
                                 href="/"
                                 aria-label="Humi — halaman utama"
@@ -887,25 +941,7 @@ export default function Welcome({ canRegister = true }: WelcomeProps) {
                                     alt="Humi"
                                 />
                             </Link>
-                            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-[var(--landing-color-paper)] opacity-70">
-                                <Link
-                                    href="/features"
-                                    className="min-h-11 content-center whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)]"
-                                >
-                                    Fitur
-                                </Link>
-                                <Link
-                                    href="/berita"
-                                    className="min-h-11 content-center whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)]"
-                                >
-                                    Berita
-                                </Link>
-                                <Link
-                                    href="/contact"
-                                    className="min-h-11 content-center whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)]"
-                                >
-                                    Kontak
-                                </Link>
+                            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-[var(--landing-color-ink-soft)]">
                                 <span className="whitespace-nowrap">
                                     © {new Date().getFullYear()} Humi
                                 </span>
