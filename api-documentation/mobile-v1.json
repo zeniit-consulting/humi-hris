@@ -120,6 +120,57 @@
       }
     },
     {
+      "name": "Kebijakan lokasi absensi karyawan",
+      "method": "GET",
+      "path": "/portal/attendance-policy",
+      "auth_required": true,
+      "description": "Mengambil mode WFA/onsite dan lokasi kantor yang berlaku untuk karyawan yang sedang login, termasuk koordinat dan radius.",
+      "response_data": {
+        "mode": "onsite",
+        "employee": {
+          "id": 25,
+          "employee_code": "EMP001",
+          "timezone": "Asia/Makassar"
+        },
+        "locations": [
+          {
+            "id": "primary",
+            "name": "Kantor Pusat",
+            "address": "Jl. Sudirman No. 1",
+            "latitude": -6.2,
+            "longitude": 106.8166667,
+            "radius_meters": 100
+          }
+        ]
+      }
+    },
+    {
+      "name": "Cek lokasi perangkat terhadap radius absensi",
+      "method": "POST",
+      "path": "/portal/attendance-location/check",
+      "auth_required": true,
+      "body": {
+        "latitude": -6.2,
+        "longitude": 106.8166667
+      },
+      "required_fields": ["latitude", "longitude"],
+      "response_data": {
+        "mode": "onsite",
+        "device_location": {
+          "latitude": -6.2,
+          "longitude": 106.8166667
+        },
+        "is_within_radius": true,
+        "nearest_location": {
+          "name": "Kantor Pusat",
+          "distance_meters": 0,
+          "radius_meters": 100,
+          "is_within_radius": true
+        },
+        "locations": "Daftar lokasi dengan distance_meters dan is_within_radius."
+      }
+    },
+    {
       "name": "Opsi master data",
       "method": "GET",
       "path": "/master/options",

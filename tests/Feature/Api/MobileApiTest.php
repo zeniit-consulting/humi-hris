@@ -794,6 +794,122 @@ class MobileApiTest extends TestCase
             ->assertJsonPath('data.attendance_policy.mode', 'wfa');
     }
 
+    public function test_mobile_portal_returns_attendance_location_policy_for_employee(): void
+    {
+        $owner = User::factory()->create(['email_verified_at' => now()]);
+        $portalUser = User::factory()->create([
+            'email' => 'location-policy@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'email' => $portalUser->email,
+            'employee_code' => 'EMP-LOC-001',
+        ]);
+
+        CompanySetting::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Humi',
+            'location_name' => 'Kantor Pusat',
+            'location_address' => 'Jl. Sudirman No. 1',
+            'location_latitude' => -6.2000000,
+            'location_longitude' => 106.8166667,
+            'attendance_radius_meters' => 150,
+        ]);
+
+        Sanctum::actingAs($portalUser, ['mobile']);
+
+        $this->getJson('/api/mobile/v1/portal/attendance-policy')
+            ->assertOk()
+            ->assertJsonPath('data.mode', 'onsite')
+            ->assertJsonPath('data.employee.id', $employee->id)
+            ->assertJsonPath('data.locations.0.name', 'Kantor Pusat')
+            ->assertJsonPath('data.locations.0.latitude', -6.2)
+            ->assertJsonPath('data.locations.0.longitude', 106.8166667)
+            ->assertJsonPath('data.locations.0.radius_meters', 150);
+    }
+
+    public function test_mobile_portal_checks_device_location_against_attendance_radius(): void
+    {
+        $owner = User::factory()->create(['email_verified_at' => now()]);
+        $portalUser = User::factory()->create([
+            'email' => 'location-check@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+        Employee::factory()->create([
+            'user_id' => $owner->id,
+            'email' => $portalUser->email,
+        ]);
+
+        CompanySetting::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Humi',
+            'location_name' => 'Kantor Pusat',
+            'location_latitude' => -6.2000000,
+            'location_longitude' => 106.8166667,
+            'attendance_radius_meters' => 100,
+        ]);
+
+        Sanctum::actingAs($portalUser, ['mobile']);
+
+        $this->postJson('/api/mobile/v1/portal/attendance-location/check', [
+            'latitude' => -6.2000000,
+            'longitude' => 106.8166667,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.is_within_radius', true)
+            ->assertJsonPath('data.nearest_location.name', 'Kantor Pusat')
+            ->assertJsonPath('data.nearest_location.distance_meters', 0)
+            ->assertJsonPath('data.locations.0.is_within_radius', true);
+
+        $this->postJson('/api/mobile/v1/portal/attendance-location/check', [
+            'latitude' => -6.2050000,
+            'longitude' => 106.8166667,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.is_within_radius', false)
+            ->assertJsonPath('data.locations.0.is_within_radius', false)
+            ->assertJsonPath('data.nearest_location.radius_meters', 100);
+    }
+
+    public function test_onsite_mobile_clock_in_requires_device_coordinates_when_location_is_configured(): void
+    {
+        $owner = User::factory()->create(['email_verified_at' => now()]);
+        $portalUser = User::factory()->create([
+            'email' => 'location-required@example.com',
+            'parent_user_id' => $owner->id,
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'email' => $portalUser->email,
+        ]);
+
+        CompanySetting::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Humi',
+            'location_latitude' => -6.2000000,
+            'location_longitude' => 106.8166667,
+            'attendance_radius_meters' => 100,
+        ]);
+
+        Sanctum::actingAs($portalUser, ['mobile']);
+
+        $this->postJson('/api/mobile/v1/attendances', [
+            'employee_id' => $employee->id,
+            'attendance_date' => today()->toDateString(),
+            'status' => 'present',
+            'check_in_at' => today()->setTime(8, 0)->toIso8601String(),
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Koordinat perangkat wajib dikirim untuk absensi onsite.');
+    }
+
     public function test_self_service_clock_in_detects_shift_when_today_schedule_is_missing(): void
     {
         $owner = User::factory()->create([

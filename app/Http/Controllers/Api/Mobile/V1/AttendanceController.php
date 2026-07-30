@@ -18,6 +18,7 @@ use App\Services\AttendanceStatusService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 class AttendanceController extends Controller
@@ -98,6 +99,76 @@ class AttendanceController extends Controller
                 'total' => $paginator->total(),
             ],
         ]);
+    }
+
+    public function attendancePolicy(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $employee = $this->resolveRequiredSelfServiceEmployee($user);
+
+        return $this->success(
+            $this->attendancePolicyPayload($user, $employee),
+            'Kebijakan lokasi absensi berhasil diambil.',
+        );
+    }
+
+    public function checkLocation(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+        ]);
+
+        /** @var User $user */
+        $user = $request->user();
+        $employee = $this->resolveRequiredSelfServiceEmployee($user);
+        $latitude = (float) $validated['latitude'];
+        $longitude = (float) $validated['longitude'];
+        $policy = $this->attendancePolicyPayload($user, $employee);
+
+        if ($policy['mode'] === 'wfa') {
+            return $this->success([
+                'mode' => 'wfa',
+                'device_location' => [
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                ],
+                'is_within_radius' => true,
+                'nearest_location' => null,
+                'locations' => [],
+            ], 'Lokasi valid untuk karyawan WFA.');
+        }
+
+        $locations = collect($policy['locations'])
+            ->map(function (array $location) use ($latitude, $longitude): array {
+                $distance = $this->calculateDistanceMeters(
+                    $latitude,
+                    $longitude,
+                    (float) $location['latitude'],
+                    (float) $location['longitude'],
+                );
+
+                return [
+                    ...$location,
+                    'distance_meters' => (int) round($distance),
+                    'is_within_radius' => $distance <= (int) $location['radius_meters'],
+                ];
+            })
+            ->sortBy('distance_meters')
+            ->values();
+        $nearestLocation = $locations->first();
+
+        return $this->success([
+            'mode' => 'onsite',
+            'device_location' => [
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+            ],
+            'is_within_radius' => $locations->contains('is_within_radius', true),
+            'nearest_location' => $nearestLocation,
+            'locations' => $locations,
+        ], 'Lokasi absensi berhasil diperiksa.');
     }
 
     public function store(StoreAttendanceRequest $request, AttendanceStatusService $statusService): JsonResponse
@@ -455,6 +526,10 @@ class AttendanceController extends Controller
         }
 
         if ($latitude === null || $longitude === null) {
+            if ($this->attendanceLocationsForEmployee($user, $employee)->isNotEmpty()) {
+                abort(422, 'Koordinat perangkat wajib dikirim untuk absensi onsite.');
+            }
+
             return;
         }
 
@@ -523,6 +598,92 @@ class AttendanceController extends Controller
         if (! $isInsideAnyLocation) {
             abort(422, 'Lokasi Anda berada di luar radius absensi yang diizinkan.');
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function attendancePolicyPayload(User $user, Employee $employee): array
+    {
+        $locations = $this->attendanceLocationsForEmployee($user, $employee);
+
+        return [
+            'mode' => $employee->is_wfa ? 'wfa' : 'onsite',
+            'employee' => [
+                'id' => $employee->id,
+                'employee_code' => $employee->employee_code,
+                'timezone' => $employee->timezone,
+            ],
+            'locations' => $locations->values(),
+        ];
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function attendanceLocationsForEmployee(User $user, Employee $employee): Collection
+    {
+        if ($employee->is_wfa) {
+            return collect();
+        }
+
+        if ($employee->sub_company_id !== null) {
+            return SubCompanyAttendanceLocation::query()
+                ->where('user_id', $user->accountOwnerId())
+                ->where('sub_company_id', $employee->sub_company_id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get()
+                ->map(fn (SubCompanyAttendanceLocation $location): array => [
+                    'id' => (string) $location->id,
+                    'name' => $location->name,
+                    'address' => $location->address,
+                    'latitude' => (float) $location->latitude,
+                    'longitude' => (float) $location->longitude,
+                    'radius_meters' => (int) $location->radius_meters,
+                ])
+                ->values();
+        }
+
+        $setting = CompanySetting::query()
+            ->where('user_id', $user->accountOwnerId())
+            ->first();
+
+        if (! $setting) {
+            return collect();
+        }
+
+        if (! empty($employee->attendance_location_ids)) {
+            $locations = collect($setting->attendance_locations ?? [])
+                ->whereIn('id', $employee->attendance_location_ids)
+                ->map(fn (array $location): array => [
+                    'id' => (string) ($location['id'] ?? ''),
+                    'name' => $location['name'] ?? 'Lokasi absensi',
+                    'address' => $location['address'] ?? null,
+                    'latitude' => isset($location['latitude']) ? (float) $location['latitude'] : null,
+                    'longitude' => isset($location['longitude']) ? (float) $location['longitude'] : null,
+                    'radius_meters' => (int) ($location['radius_meters'] ?? ($setting->attendance_radius_meters ?? 100)),
+                ])
+                ->filter(fn (array $location): bool => $location['latitude'] !== null && $location['longitude'] !== null)
+                ->values();
+
+            if ($locations->isNotEmpty()) {
+                return $locations;
+            }
+        }
+
+        if ($setting->location_latitude === null || $setting->location_longitude === null) {
+            return collect();
+        }
+
+        return collect([[
+            'id' => 'primary',
+            'name' => $setting->location_name ?: 'Lokasi utama',
+            'address' => $setting->location_address,
+            'latitude' => (float) $setting->location_latitude,
+            'longitude' => (float) $setting->location_longitude,
+            'radius_meters' => (int) ($setting->attendance_radius_meters ?? 100),
+        ]]);
     }
 
     private function calculateDistanceMeters(

@@ -57,6 +57,8 @@ Route::prefix('mobile/v1')->name('mobile.v1.')->group(function (): void {
         Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
 
         Route::get('attendances', [AttendanceController::class, 'index'])->name('attendances.index');
+        Route::get('portal/attendance-policy', [AttendanceController::class, 'attendancePolicy'])->name('portal.attendance-policy');
+        Route::post('portal/attendance-location/check', [AttendanceController::class, 'checkLocation'])->name('portal.attendance-location.check');
         Route::post('attendances', [AttendanceController::class, 'store'])->name('attendances.store');
         Route::put('attendances/{employeeAttendance}', [AttendanceController::class, 'update'])->name('attendances.update');
         Route::delete('attendances/{employeeAttendance}', [AttendanceController::class, 'destroy'])->name('attendances.destroy');
