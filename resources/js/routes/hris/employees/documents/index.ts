@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::store
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:17
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:18
 * @route '/hris/employees/{employee}/documents'
 */
 export const store = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::store
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:17
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:18
 * @route '/hris/employees/{employee}/documents'
 */
 store.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ store.url = (args: { employee: number | { id: number } } | [employee: number | {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::store
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:17
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:18
 * @route '/hris/employees/{employee}/documents'
 */
 store.post = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ store.post = (args: { employee: number | { id: number } } | [employee: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::store
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:17
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:18
 * @route '/hris/employees/{employee}/documents'
 */
 const storeForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ const storeForm = (args: { employee: number | { id: number } } | [employee: numb
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::store
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:17
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:18
 * @route '/hris/employees/{employee}/documents'
 */
 storeForm.post = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -81,7 +81,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::update
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:35
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:36
 * @route '/hris/employees/{employee}/documents/{employeeDocument}'
 */
 export const update = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -96,7 +96,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::update
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:35
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:36
 * @route '/hris/employees/{employee}/documents/{employeeDocument}'
 */
 update.url = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions) => {
@@ -126,7 +126,7 @@ update.url = (args: { employee: number | { id: number }, employeeDocument: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::update
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:35
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:36
 * @route '/hris/employees/{employee}/documents/{employeeDocument}'
 */
 update.put = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -136,7 +136,7 @@ update.put = (args: { employee: number | { id: number }, employeeDocument: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::update
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:35
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:36
 * @route '/hris/employees/{employee}/documents/{employeeDocument}'
 */
 const updateForm = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -151,7 +151,7 @@ const updateForm = (args: { employee: number | { id: number }, employeeDocument:
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::update
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:35
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:36
 * @route '/hris/employees/{employee}/documents/{employeeDocument}'
 */
 updateForm.put = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -168,7 +168,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::destroy
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:81
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:82
 * @route '/hris/employees/{employee}/documents/{employeeDocument}'
 */
 export const destroy = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -183,7 +183,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::destroy
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:81
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:82
 * @route '/hris/employees/{employee}/documents/{employeeDocument}'
 */
 destroy.url = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions) => {
@@ -213,7 +213,7 @@ destroy.url = (args: { employee: number | { id: number }, employeeDocument: numb
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::destroy
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:81
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:82
 * @route '/hris/employees/{employee}/documents/{employeeDocument}'
 */
 destroy.delete = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -223,7 +223,7 @@ destroy.delete = (args: { employee: number | { id: number }, employeeDocument: n
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::destroy
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:81
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:82
 * @route '/hris/employees/{employee}/documents/{employeeDocument}'
 */
 const destroyForm = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -238,7 +238,7 @@ const destroyForm = (args: { employee: number | { id: number }, employeeDocument
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::destroy
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:81
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:82
 * @route '/hris/employees/{employee}/documents/{employeeDocument}'
 */
 destroyForm.delete = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -255,7 +255,7 @@ destroy.form = destroyForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::download
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:90
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:91
 * @route '/hris/employees/{employee}/documents/{employeeDocument}/download'
 */
 export const download = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -270,7 +270,7 @@ download.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::download
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:90
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:91
 * @route '/hris/employees/{employee}/documents/{employeeDocument}/download'
 */
 download.url = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions) => {
@@ -300,7 +300,7 @@ download.url = (args: { employee: number | { id: number }, employeeDocument: num
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::download
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:90
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:91
 * @route '/hris/employees/{employee}/documents/{employeeDocument}/download'
 */
 download.get = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -310,7 +310,7 @@ download.get = (args: { employee: number | { id: number }, employeeDocument: num
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::download
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:90
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:91
 * @route '/hris/employees/{employee}/documents/{employeeDocument}/download'
 */
 download.head = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -320,7 +320,7 @@ download.head = (args: { employee: number | { id: number }, employeeDocument: nu
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::download
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:90
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:91
 * @route '/hris/employees/{employee}/documents/{employeeDocument}/download'
 */
 const downloadForm = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -330,7 +330,7 @@ const downloadForm = (args: { employee: number | { id: number }, employeeDocumen
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::download
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:90
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:91
 * @route '/hris/employees/{employee}/documents/{employeeDocument}/download'
 */
 downloadForm.get = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -340,7 +340,7 @@ downloadForm.get = (args: { employee: number | { id: number }, employeeDocument:
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeDocumentController::download
-* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:90
+* @see app/Http/Controllers/Hris/EmployeeDocumentController.php:91
 * @route '/hris/employees/{employee}/documents/{employeeDocument}/download'
 */
 downloadForm.head = (args: { employee: number | { id: number }, employeeDocument: number | { id: number } } | [employee: number | { id: number }, employeeDocument: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
