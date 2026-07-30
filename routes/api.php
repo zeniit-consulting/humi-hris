@@ -41,6 +41,9 @@ Route::prefix('third-party/v1')->name('third-party.v1.')->group(function (): voi
 
 Route::prefix('mobile/v1')->name('mobile.v1.')->group(function (): void {
     Route::post('auth/login', [AuthController::class, 'login'])->name('auth.login');
+    Route::post('auth/portal-login', [AuthController::class, 'portalLogin'])
+        ->middleware('throttle:10,1')
+        ->name('auth.portal-login');
 
     Route::middleware('auth:sanctum,web')->group(function (): void {
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
