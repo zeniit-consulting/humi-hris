@@ -4,6 +4,7 @@ import {
     ArrowDown,
     ArrowUp,
     ArrowUpDown,
+    ChevronDown,
     Download,
     Eye,
     Filter,
@@ -881,6 +882,7 @@ export default function EmployeesIndex() {
     ];
 
     const [filterState, setFilterState] = useState<Filters>(filters);
+    const [filtersOpen, setFiltersOpen] = useState(true);
 
     const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
     const [employeeExportDialogOpen, setEmployeeExportDialogOpen] =
@@ -1947,14 +1949,32 @@ export default function EmployeesIndex() {
                 </div>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Filter Karyawan</CardTitle>
-                        <CardDescription>
-                            Cari berdasarkan nama, kode, email, divisi, atau
-                            status.
-                        </CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between gap-3">
+                        <div>
+                            <CardTitle>Filter Karyawan</CardTitle>
+                            <CardDescription>
+                                Cari berdasarkan nama, kode, email, divisi, atau
+                                status.
+                            </CardDescription>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            aria-expanded={filtersOpen}
+                            aria-controls="employee-filters"
+                            onClick={() => setFiltersOpen((open) => !open)}
+                        >
+                            {filtersOpen ? 'Sembunyikan' : 'Tampilkan'}
+                            <ChevronDown
+                                className={`size-4 transition-transform ${
+                                    filtersOpen ? 'rotate-180' : ''
+                                }`}
+                            />
+                        </Button>
                     </CardHeader>
-                    <CardContent>
+                    {filtersOpen ? (
+                        <CardContent id="employee-filters">
                         <form
                             onSubmit={submitFilters}
                             className={
@@ -2118,7 +2138,8 @@ export default function EmployeesIndex() {
                                 </Button>
                             </div>
                         </form>
-                    </CardContent>
+                        </CardContent>
+                    ) : null}
                 </Card>
 
                 <Card>
