@@ -43,7 +43,7 @@ class PortalOtpLoginController extends Controller
             ->where('employee_code', $employeeCode)
             ->first();
 
-        if (! $employee instanceof Employee || ! $employee->is_active || $employee->employment_status === 'resigned') {
+        if (! $employee instanceof Employee || ! $employee->is_active || $employee->employment_status === 'resigned' || $employee->offboarded_at !== null) {
             throw ValidationException::withMessages([
                 'employee_code' => 'Akun portal karyawan tidak aktif.',
             ]);

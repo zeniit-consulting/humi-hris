@@ -43,15 +43,23 @@ type Paginator<T> = {
 type SurveyQuestion = {
     id: string;
     question: string;
-    type: string;
+    type: SurveyQuestionType;
+    options: string[];
 };
+
+type SurveyQuestionType =
+    | 'text'
+    | 'long_text'
+    | 'date'
+    | 'numeric'
+    | 'checkbox'
+    | 'radio';
 
 type SurveyRow = {
     id: number;
     title: string;
     description: string | null;
     questions: SurveyQuestion[];
-    questions_text: string;
     status: string;
     is_anonymous: boolean;
     starts_at: string | null;
@@ -67,7 +75,7 @@ type EmployeeOption = {
 type SurveyForm = {
     title: string;
     description: string;
-    questions_text: string;
+    questions: SurveyQuestion[];
     status: string;
     is_anonymous: boolean;
     starts_at: string;
@@ -76,7 +84,7 @@ type SurveyForm = {
 
 type ResponseForm = {
     employee_id: string;
-    answers: string[];
+    answers: Array<string | string[]>;
 };
 
 type PageProps = {
@@ -94,7 +102,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const defaultSurveyForm: SurveyForm = {
     title: '',
     description: '',
-    questions_text: '',
+    questions: [{ id: 'q1', question: '', type: 'text', options: [] }],
     status: 'draft',
     is_anonymous: false,
     starts_at: '',
@@ -154,11 +162,78 @@ export default function SurveyIndex() {
         surveyForm.setData({
             title: row.title,
             description: row.description ?? '',
-            questions_text: row.questions_text,
+            questions: row.questions.map((question, index) => ({
+                id: question.id || `q${index + 1}`,
+                question: question.question,
+                type: (question.type as SurveyQuestionType) || 'text',
+                options: question.options ?? [],
+            })),
             status: row.status,
             is_anonymous: row.is_anonymous,
             starts_at: row.starts_at ?? '',
             ends_at: row.ends_at ?? '',
+        });
+    };
+
+    const addQuestion = () => {
+        surveyForm.setData('questions', [
+            ...surveyForm.data.questions,
+            {
+                id: `q${surveyForm.data.questions.length + 1}`,
+                question: '',
+                type: 'text',
+                options: [],
+            },
+        ]);
+    };
+
+    const updateQuestion = (
+        index: number,
+        updates: Partial<SurveyQuestion>,
+    ) => {
+        surveyForm.setData(
+            'questions',
+            surveyForm.data.questions.map((question, questionIndex) =>
+                questionIndex === index ? { ...question, ...updates } : question,
+            ),
+        );
+    };
+
+    const removeQuestion = (index: number) => {
+        if (surveyForm.data.questions.length === 1) {
+            return;
+        }
+
+        surveyForm.setData(
+            'questions',
+            surveyForm.data.questions.filter(
+                (_, questionIndex) => questionIndex !== index,
+            ),
+        );
+    };
+
+    const addQuestionOption = (index: number) => {
+        const question = surveyForm.data.questions[index];
+        updateQuestion(index, { options: [...question.options, ''] });
+    };
+
+    const updateQuestionOption = (
+        questionIndex: number,
+        optionIndex: number,
+        value: string,
+    ) => {
+        const question = surveyForm.data.questions[questionIndex];
+        updateQuestion(questionIndex, {
+            options: question.options.map((option, index) =>
+                index === optionIndex ? value : option,
+            ),
+        });
+    };
+
+    const removeQuestionOption = (questionIndex: number, optionIndex: number) => {
+        const question = surveyForm.data.questions[questionIndex];
+        updateQuestion(questionIndex, {
+            options: question.options.filter((_, index) => index !== optionIndex),
         });
     };
 
@@ -184,6 +259,26 @@ export default function SurveyIndex() {
                 setRespondingTo(null);
             },
         });
+    };
+
+    const updateResponseAnswer = (
+        index: number,
+        value: string | string[],
+    ) => {
+        const next = [...responseForm.data.answers];
+        next[index] = value;
+        responseForm.setData('answers', next);
+    };
+
+    const toggleResponseCheckbox = (index: number, option: string) => {
+        const current = responseForm.data.answers[index];
+        const selected = Array.isArray(current) ? current : [];
+        updateResponseAnswer(
+            index,
+            selected.includes(option)
+                ? selected.filter((value) => value !== option)
+                : [...selected, option],
+        );
     };
 
     return (
@@ -423,28 +518,126 @@ export default function SurveyIndex() {
                                                     <Label>
                                                         {question.question}
                                                     </Label>
-                                                    <textarea
-                                                        className="min-h-20 rounded-md border bg-background px-3 py-2 text-sm"
-                                                        value={
-                                                            responseForm.data
-                                                                .answers[
-                                                                index
-                                                            ] ?? ''
-                                                        }
-                                                        onChange={(event) => {
-                                                            const next = [
-                                                                ...responseForm
-                                                                    .data
-                                                                    .answers,
-                                                            ];
-                                                            next[index] =
-                                                                event.target.value;
-                                                            responseForm.setData(
-                                                                'answers',
-                                                                next,
-                                                            );
-                                                        }}
-                                                    />
+                                                    {question.type ===
+                                                    'long_text' ? (
+                                                        <textarea
+                                                            className="min-h-20 rounded-md border bg-background px-3 py-2 text-sm"
+                                                            value={String(
+                                                                responseForm.data
+                                                                    .answers[
+                                                                    index
+                                                                ] ?? '',
+                                                            )}
+                                                            onChange={(event) =>
+                                                                updateResponseAnswer(
+                                                                    index,
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                    ) : question.type ===
+                                                      'checkbox' ? (
+                                                        <div className="grid gap-2">
+                                                            {question.options.map(
+                                                                (option) => {
+                                                                    const selected =
+                                                                        Array.isArray(
+                                                                            responseForm
+                                                                                .data
+                                                                                .answers[
+                                                                                index
+                                                                            ],
+                                                                        ) &&
+                                                                        (
+                                                                            responseForm
+                                                                                .data
+                                                                                .answers[
+                                                                                index
+                                                                            ] as string[]
+                                                                        ).includes(
+                                                                            option,
+                                                                        );
+                                                                    return (
+                                                                        <label
+                                                                            key={option}
+                                                                            className="flex items-center gap-2 text-sm"
+                                                                        >
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={selected}
+                                                                                onChange={() =>
+                                                                                    toggleResponseCheckbox(
+                                                                                        index,
+                                                                                        option,
+                                                                                    )
+                                                                                }
+                                                                            />
+                                                                            {option}
+                                                                        </label>
+                                                                    );
+                                                                },
+                                                            )}
+                                                        </div>
+                                                    ) : question.type ===
+                                                      'radio' ? (
+                                                        <div className="grid gap-2">
+                                                            {question.options.map(
+                                                                (option) => (
+                                                                    <label
+                                                                        key={option}
+                                                                        className="flex items-center gap-2 text-sm"
+                                                                    >
+                                                                        <input
+                                                                            type="radio"
+                                                                            name={`response-${respondingTo.id}-${index}`}
+                                                                            value={option}
+                                                                            checked={
+                                                                                responseForm
+                                                                                    .data
+                                                                                    .answers[
+                                                                                    index
+                                                                                ] ===
+                                                                                option
+                                                                            }
+                                                                            onChange={() =>
+                                                                                updateResponseAnswer(
+                                                                                    index,
+                                                                                    option,
+                                                                                )
+                                                                            }
+                                                                        />
+                                                                        {option}
+                                                                    </label>
+                                                                ),
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <Input
+                                                            type={
+                                                                question.type ===
+                                                                'date'
+                                                                    ? 'date'
+                                                                    : question.type ===
+                                                                        'numeric'
+                                                                      ? 'number'
+                                                                      : 'text'
+                                                            }
+                                                            value={String(
+                                                                responseForm.data
+                                                                    .answers[
+                                                                    index
+                                                                ] ?? '',
+                                                            )}
+                                                            onChange={(event) =>
+                                                                updateResponseAnswer(
+                                                                    index,
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                    )}
                                                 </div>
                                             ),
                                         )}
@@ -486,8 +679,8 @@ export default function SurveyIndex() {
                                 <Plus className="size-4" />
                                 {editing ? 'Edit survey' : 'Buat survey'}
                             </DialogTitle>
-                            <DialogDescription>
-                                Tulis satu pertanyaan per baris. Jawaban disimpan sebagai teks.
+                        <DialogDescription>
+                                Susun pertanyaan seperti Google Forms dengan tipe jawaban yang sesuai.
                             </DialogDescription>
                         </DialogHeader>
                         <form className="grid gap-4" onSubmit={submitSurvey}>
@@ -514,17 +707,184 @@ export default function SurveyIndex() {
                                 />
                                 <InputError message={surveyForm.errors.description} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="questions">Pertanyaan</Label>
-                                <textarea
-                                    id="questions"
-                                    className="min-h-32 rounded-md border bg-background px-3 py-2 text-sm"
-                                    value={surveyForm.data.questions_text}
-                                    onChange={(event) =>
-                                        surveyForm.setData('questions_text', event.target.value)
-                                    }
+                            <div className="grid gap-3">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <Label>Pertanyaan</Label>
+                                        <p className="text-xs text-muted-foreground">
+                                            Tambahkan satu atau lebih pertanyaan.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={addQuestion}
+                                    >
+                                        <Plus className="size-4" />
+                                        Tambah pertanyaan
+                                    </Button>
+                                </div>
+                                {surveyForm.data.questions.map(
+                                    (question, index) => (
+                                        <div
+                                            key={question.id}
+                                            className="grid gap-3 rounded-lg border bg-muted/20 p-4"
+                                        >
+                                            <div className="flex items-center justify-between gap-3">
+                                                <p className="text-sm font-semibold">
+                                                    Pertanyaan {index + 1}
+                                                </p>
+                                                <Button
+                                                    type="button"
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    disabled={
+                                                        surveyForm.data.questions
+                                                            .length === 1
+                                                    }
+                                                    onClick={() =>
+                                                        removeQuestion(index)
+                                                    }
+                                                    aria-label={`Hapus pertanyaan ${index + 1}`}
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </Button>
+                                            </div>
+                                            <Input
+                                                placeholder="Tulis pertanyaan"
+                                                value={question.question}
+                                                onChange={(event) =>
+                                                    updateQuestion(index, {
+                                                        question:
+                                                            event.target.value,
+                                                    })
+                                                }
+                                            />
+                                            <select
+                                                className="h-9 rounded-md border bg-background px-3 text-sm"
+                                                value={question.type}
+                                                onChange={(event) =>
+                                                    updateQuestion(index, {
+                                                        type: event.target
+                                                            .value as SurveyQuestionType,
+                                                        options:
+                                                            event.target.value ===
+                                                            'checkbox' ||
+                                                            event.target.value ===
+                                                                'radio'
+                                                                ? question.options
+                                                                    .length > 0
+                                                                    ? question.options
+                                                                    : ['']
+                                                                : [],
+                                                    })
+                                                }
+                                            >
+                                                <option value="text">
+                                                    Text input
+                                                </option>
+                                                <option value="long_text">
+                                                    Long text input
+                                                </option>
+                                                <option value="date">
+                                                    Date input
+                                                </option>
+                                                <option value="numeric">
+                                                    Numeric input
+                                                </option>
+                                                <option value="checkbox">
+                                                    Checkbox option
+                                                </option>
+                                                <option value="radio">
+                                                    Radio button option
+                                                </option>
+                                            </select>
+                                            {question.type === 'checkbox' ||
+                                            question.type === 'radio' ? (
+                                                <div className="grid gap-2 rounded-md border bg-background p-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <Label className="text-xs">
+                                                            Opsi jawaban
+                                                        </Label>
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                addQuestionOption(
+                                                                    index,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Plus className="size-4" />
+                                                            Tambah opsi
+                                                        </Button>
+                                                    </div>
+                                                    {question.options.map(
+                                                        (option, optionIndex) => (
+                                                            <div
+                                                                key={`${question.id}-option-${optionIndex}`}
+                                                                className="flex gap-2"
+                                                            >
+                                                                <Input
+                                                                    value={option}
+                                                                    placeholder={`Opsi ${optionIndex + 1}`}
+                                                                    onChange={(event) =>
+                                                                        updateQuestionOption(
+                                                                            index,
+                                                                            optionIndex,
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                />
+                                                                <Button
+                                                                    type="button"
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    onClick={() =>
+                                                                        removeQuestionOption(
+                                                                            index,
+                                                                            optionIndex,
+                                                                        )
+                                                                    }
+                                                                    aria-label="Hapus opsi"
+                                                                >
+                                                                    <Trash2 className="size-4" />
+                                                                </Button>
+                                                            </div>
+                                                        ),
+                                                    )}
+                                                </div>
+                                            ) : null}
+                                            <InputError
+                                                message={
+                                                    (surveyForm.errors as Record<
+                                                        string,
+                                                        string | undefined
+                                                    >)[
+                                                        `questions.${index}.question`
+                                                    ]
+                                                }
+                                            />
+                                            <InputError
+                                                message={
+                                                    (surveyForm.errors as Record<
+                                                        string,
+                                                        string | undefined
+                                                    >)[
+                                                        `questions.${index}.options`
+                                                    ]
+                                                }
+                                            />
+                                        </div>
+                                    ),
+                                )}
+                                <InputError
+                                    message={surveyForm.errors.questions}
                                 />
-                                <InputError message={surveyForm.errors.questions_text} />
                             </div>
                             <div className="grid gap-3 md:grid-cols-2">
                                 <FieldSelect

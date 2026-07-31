@@ -15,6 +15,10 @@ use Inertia\Response;
 
 class SurveyController extends Controller
 {
+    private const QUESTION_TYPES = ['text', 'long_text', 'date', 'numeric', 'checkbox', 'radio'];
+
+    private const OPTION_TYPES = ['checkbox', 'radio'];
+
     public function index(Request $request): Response
     {
         $validated = $request->validate([
@@ -36,7 +40,15 @@ class SurveyController extends Controller
                 'id' => $survey->id,
                 'title' => $survey->title,
                 'description' => $survey->description,
-                'questions' => $survey->questions ?? [],
+                'questions' => collect($survey->questions ?? [])
+                    ->map(fn (array $question) => [
+                        'id' => $question['id'] ?? null,
+                        'question' => $question['question'] ?? '',
+                        'type' => $question['type'] ?? 'text',
+                        'options' => array_values($question['options'] ?? []),
+                    ])
+                    ->values()
+                    ->all(),
                 'questions_text' => collect($survey->questions ?? [])->pluck('question')->implode("\n"),
                 'status' => $survey->status,
                 'is_anonymous' => $survey->is_anonymous,
@@ -97,8 +109,30 @@ class SurveyController extends Controller
                 Rule::exists('employees', 'id')->where('user_id', $ownerId),
             ],
             'answers' => ['required', 'array', 'min:1'],
-            'answers.*' => ['nullable', 'string', 'max:2000'],
         ]);
+
+        $answers = $validated['answers'];
+        foreach ($survey->questions ?? [] as $index => $question) {
+            $type = $question['type'] ?? 'text';
+            $rules = in_array($type, ['checkbox'], true)
+                ? ['nullable', 'array']
+                : ($type === 'numeric'
+                    ? ['nullable', 'numeric']
+                    : ($type === 'date'
+                        ? ['nullable', 'date_format:Y-m-d']
+                        : ['nullable', 'string', 'max:2000']));
+
+            $answer = $answers[$index] ?? null;
+            validator(['answer' => $answer], ['answer' => $rules])->validate();
+
+            if ($type === 'checkbox' && is_array($answer)) {
+                validator(['answer' => $answer], ['answer.*' => ['string', 'max:2000']])->validate();
+            } elseif ($type === 'radio' && $answer !== null && $answer !== '') {
+                validator(['answer' => $answer], [
+                    'answer' => [Rule::in(array_values($question['options'] ?? []))],
+                ])->validate();
+            }
+        }
 
         EmployeeSurveyResponse::query()->updateOrCreate(
             [
@@ -107,7 +141,7 @@ class SurveyController extends Controller
             ],
             [
                 'user_id' => $ownerId,
-                'answers' => $validated['answers'],
+                'answers' => array_values($answers),
                 'submitted_at' => now(),
             ],
         );
@@ -123,22 +157,55 @@ class SurveyController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'questions_text' => ['required', 'string', 'max:5000'],
+            'questions' => ['nullable', 'array', 'min:1'],
+            'questions.*.question' => ['required', 'string', 'max:500'],
+            'questions.*.type' => ['required', Rule::in(self::QUESTION_TYPES)],
+            'questions.*.options' => ['nullable', 'array'],
+            'questions.*.options.*' => ['string', 'max:255'],
+            'questions_text' => ['nullable', 'string', 'max:5000'],
             'status' => ['required', Rule::in(['draft', 'active', 'closed'])],
             'is_anonymous' => ['boolean'],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
         ]);
 
-        $questions = collect(preg_split('/\r\n|\r|\n/', $validated['questions_text']))
-            ->map(fn (string $question) => trim($question))
-            ->filter()
+        $questions = $validated['questions'] ?? null;
+
+        if ($questions === null && filled($validated['questions_text'] ?? null)) {
+            $questions = collect(preg_split('/\r\n|\r|\n/', $validated['questions_text']))
+                ->map(fn (string $question) => trim($question))
+                ->filter()
+                ->values()
+                ->map(fn (string $question) => [
+                    'question' => $question,
+                    'type' => 'text',
+                ])
+                ->all();
+        }
+
+        $questions = collect($questions ?? [])
             ->values()
-            ->map(fn (string $question, int $index) => [
-                'id' => 'q'.($index + 1),
-                'question' => $question,
-                'type' => 'text',
-            ])
+            ->map(function (array $question, int $index): array {
+                $type = $question['type'];
+                $options = collect($question['options'] ?? [])
+                    ->map(fn (string $option) => trim($option))
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                if (in_array($type, self::OPTION_TYPES, true) && $options === []) {
+                    throw ValidationException::withMessages([
+                        "questions.{$index}.options" => 'Tambahkan minimal satu opsi jawaban.',
+                    ]);
+                }
+
+                return [
+                    'id' => 'q'.($index + 1),
+                    'question' => trim($question['question']),
+                    'type' => $type,
+                    'options' => in_array($type, self::OPTION_TYPES, true) ? $options : [],
+                ];
+            })
             ->all();
 
         if ($questions === []) {

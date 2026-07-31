@@ -104,6 +104,30 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_offboarded_employee_portal_user_cannot_login_with_password(): void
+    {
+        $owner = User::factory()->create();
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'email' => 'offboarded@example.test',
+            'is_active' => false,
+            'employment_status' => 'resigned',
+        ]);
+        User::factory()->create([
+            'role' => 'user',
+            'parent_user_id' => $owner->id,
+            'email' => $employee->email,
+            'suspended_at' => null,
+        ]);
+
+        $this->post(route('login.store'), [
+            'email' => $employee->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+    }
+
     public function test_unactivated_users_are_redirected_to_activation_screen_after_login(): void
     {
         $user = User::factory()->unactivated()->create();

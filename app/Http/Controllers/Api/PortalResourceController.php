@@ -13,6 +13,7 @@ use App\Models\NotificationAnnouncement;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PortalResourceController extends Controller
 {
@@ -103,6 +104,7 @@ class PortalResourceController extends Controller
                             'id' => $question['id'] ?? null,
                             'question' => $question['question'] ?? '',
                             'type' => $question['type'] ?? 'text',
+                            'options' => array_values($question['options'] ?? []),
                         ])
                         ->values(),
                     'has_responded' => $response !== null,
@@ -127,8 +129,29 @@ class PortalResourceController extends Controller
 
         $validated = $request->validate([
             'answers' => ['required', 'array', 'min:1'],
-            'answers.*' => ['nullable', 'string', 'max:2000'],
         ]);
+
+        $answers = $validated['answers'];
+        foreach ($survey->questions ?? [] as $index => $question) {
+            $type = $question['type'] ?? 'text';
+            $rules = match ($type) {
+                'checkbox' => ['nullable', 'array'],
+                'numeric' => ['nullable', 'numeric'],
+                'date' => ['nullable', 'date_format:Y-m-d'],
+                default => ['nullable', 'string', 'max:2000'],
+            };
+            $answer = $answers[$index] ?? null;
+            validator(['answer' => $answer], ['answer' => $rules])->validate();
+
+            $options = array_values($question['options'] ?? []);
+            if ($type === 'checkbox' && is_array($answer)) {
+                validator(['answer' => $answer], [
+                    'answer.*' => ['string', 'max:255', Rule::in($options)],
+                ])->validate();
+            } elseif ($type === 'radio' && $answer !== null && $answer !== '') {
+                validator(['answer' => $answer], ['answer' => [Rule::in($options)]])->validate();
+            }
+        }
 
         EmployeeSurveyResponse::query()->updateOrCreate(
             [
@@ -137,7 +160,7 @@ class PortalResourceController extends Controller
             ],
             [
                 'user_id' => $user->accountOwnerId(),
-                'answers' => array_values($validated['answers']),
+                'answers' => array_values($answers),
                 'submitted_at' => now(),
             ],
         );

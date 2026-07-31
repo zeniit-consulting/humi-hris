@@ -31,10 +31,11 @@ type Survey = {
         id: string | null;
         question: string;
         type: string;
+        options: string[];
     }>;
     has_responded: boolean;
     submitted_at: string | null;
-    answers: string[];
+    answers: Array<string | string[]>;
 };
 
 type SurveyPayload = {
@@ -47,7 +48,7 @@ export default function PortalSurveysPage({ pageTitle }: Props) {
     const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(
         null,
     );
-    const [answers, setAnswers] = useState<string[]>([]);
+    const [answers, setAnswers] = useState<Array<string | string[]>>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const selectedSurvey = useMemo(
@@ -139,6 +140,25 @@ export default function PortalSurveysPage({ pageTitle }: Props) {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const updateAnswer = (index: number, value: string | string[]) => {
+        setAnswers((current) =>
+            current.map((answer, answerIndex) =>
+                answerIndex === index ? value : answer,
+            ),
+        );
+    };
+
+    const toggleCheckboxAnswer = (index: number, option: string) => {
+        const current = answers[index];
+        const selected = Array.isArray(current) ? current : [];
+        updateAnswer(
+            index,
+            selected.includes(option)
+                ? selected.filter((value) => value !== option)
+                : [...selected, option],
+        );
     };
 
     return (
@@ -245,22 +265,75 @@ export default function PortalSurveysPage({ pageTitle }: Props) {
                                 <label className="block text-sm font-semibold text-slate-900">
                                     {index + 1}. {question.question}
                                 </label>
-                                <textarea
-                                    value={answers[index] ?? ''}
-                                    onChange={(event) =>
-                                        setAnswers((current) =>
-                                            current.map(
-                                                (answer, answerIndex) =>
-                                                    answerIndex === index
-                                                        ? event.target.value
-                                                        : answer,
-                                            ),
-                                        )
-                                    }
-                                    disabled={selectedSurvey.has_responded}
-                                    className="mt-2 min-h-24 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none disabled:opacity-70"
-                                    placeholder="Tulis jawaban Anda"
-                                />
+                                    {question.type === 'long_text' ? (
+                                        <textarea
+                                            value={String(answers[index] ?? '')}
+                                            onChange={(event) =>
+                                                updateAnswer(index, event.target.value)
+                                            }
+                                            disabled={selectedSurvey.has_responded}
+                                            className="mt-2 min-h-24 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none disabled:opacity-70"
+                                            placeholder="Tulis jawaban Anda"
+                                        />
+                                    ) : question.type === 'checkbox' ? (
+                                        <div className="mt-2 grid gap-2">
+                                            {question.options.map((option) => (
+                                                <label
+                                                    key={option}
+                                                    className="flex items-center gap-2 text-sm text-slate-700"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={
+                                                            Array.isArray(answers[index]) &&
+                                                            (answers[index] as string[]).includes(option)
+                                                        }
+                                                        onChange={() =>
+                                                            toggleCheckboxAnswer(index, option)
+                                                        }
+                                                        disabled={selectedSurvey.has_responded}
+                                                    />
+                                                    {option}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    ) : question.type === 'radio' ? (
+                                        <div className="mt-2 grid gap-2">
+                                            {question.options.map((option) => (
+                                                <label
+                                                    key={option}
+                                                    className="flex items-center gap-2 text-sm text-slate-700"
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name={`survey-${selectedSurvey.id}-${index}`}
+                                                        value={option}
+                                                        checked={answers[index] === option}
+                                                        onChange={() => updateAnswer(index, option)}
+                                                        disabled={selectedSurvey.has_responded}
+                                                    />
+                                                    {option}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <input
+                                            type={
+                                                question.type === 'date'
+                                                    ? 'date'
+                                                    : question.type === 'numeric'
+                                                      ? 'number'
+                                                      : 'text'
+                                            }
+                                            value={String(answers[index] ?? '')}
+                                            onChange={(event) =>
+                                                updateAnswer(index, event.target.value)
+                                            }
+                                            disabled={selectedSurvey.has_responded}
+                                            className="mt-2 h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none disabled:opacity-70"
+                                            placeholder="Tulis jawaban Anda"
+                                        />
+                                    )}
                             </div>
                         ))}
 

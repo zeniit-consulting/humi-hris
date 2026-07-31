@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -49,6 +50,17 @@ class FortifyServiceProvider extends ServiceProvider
             $user = User::query()->where('email', $email)->first();
 
             if (! $user || $user->isSuspended() || ! Hash::check($password, $user->password)) {
+                return null;
+            }
+
+            if ($user->role === 'user' && Employee::query()
+                ->where('user_id', $user->accountOwnerId())
+                ->where('email', $user->email)
+                ->where(fn ($query) => $query
+                    ->where('is_active', false)
+                    ->orWhere('employment_status', 'resigned')
+                    ->orWhereNotNull('offboarded_at'))
+                ->exists()) {
                 return null;
             }
 
