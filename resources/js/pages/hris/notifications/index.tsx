@@ -1,7 +1,17 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { BellRing, Filter, Pencil, Plus, Trash2 } from 'lucide-react';
+import Dropzone from 'dropzone';
+import {
+    BellRing,
+    FileText,
+    Filter,
+    Pencil,
+    Plus,
+    Trash2,
+    UploadCloud,
+    X,
+} from 'lucide-react';
 import type { FormEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,6 +51,8 @@ type NotificationRow = {
     status: string;
     publish_at: string | null;
     expires_at: string | null;
+    attachment_name: string | null;
+    attachment_url: string | null;
 };
 
 type NotificationForm = {
@@ -51,6 +63,7 @@ type NotificationForm = {
     status: string;
     publish_at: string;
     expires_at: string;
+    attachment: File | null;
 };
 
 type PageProps = {
@@ -74,6 +87,7 @@ const defaultForm: NotificationForm = {
     status: 'draft',
     publish_at: '',
     expires_at: '',
+    attachment: null,
 };
 
 export default function NotificationIndex() {
@@ -101,18 +115,22 @@ export default function NotificationIndex() {
 
         const options = {
             preserveScroll: true,
+            forceFormData: true,
             onSuccess: () => {
                 resetForm();
                 setNotificationDialogOpen(false);
             },
         };
 
-        if (editing) {
-            form.put(`/hris/notifications/${editing.id}`, options);
-            return;
-        }
-
-        form.post('/hris/notifications', options);
+        form.transform((data) =>
+            editing ? { ...data, _method: 'put' } : data,
+        );
+        form.post(
+            editing
+                ? `/hris/notifications/${editing.id}`
+                : '/hris/notifications',
+            options,
+        );
     };
 
     const startEdit = (row: NotificationRow) => {
@@ -126,6 +144,7 @@ export default function NotificationIndex() {
             status: row.status,
             publish_at: row.publish_at ?? '',
             expires_at: row.expires_at ?? '',
+            attachment: null,
         });
     };
 
@@ -252,6 +271,16 @@ export default function NotificationIndex() {
                                                     <p className="line-clamp-2 text-muted-foreground">
                                                         {row.message}
                                                     </p>
+                                                    {row.attachment_url ? (
+                                                        <a
+                                                            href={row.attachment_url}
+                                                            className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                                                        >
+                                                            <FileText className="size-3.5" />
+                                                            {row.attachment_name ??
+                                                                'Lihat dokumen'}
+                                                        </a>
+                                                    ) : null}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     {row.audience}
@@ -395,6 +424,17 @@ export default function NotificationIndex() {
                                     <InputError message={form.errors.expires_at} />
                                 </div>
                             </div>
+                            <div className="grid gap-2">
+                                <Label>Dokumen lampiran</Label>
+                                <NotificationAttachmentDropzone
+                                    file={form.data.attachment}
+                                    existingName={editing?.attachment_name ?? null}
+                                    error={form.errors.attachment}
+                                    onChange={(file) =>
+                                        form.setData('attachment', file)
+                                    }
+                                />
+                            </div>
                             <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
                                 {editing ? (
                                     <Button type="button" variant="outline" onClick={resetForm}>
@@ -410,6 +450,109 @@ export default function NotificationIndex() {
                 </Dialog>
             </div>
         </AppLayout>
+    );
+}
+
+function NotificationAttachmentDropzone({
+    file,
+    existingName,
+    error,
+    onChange,
+}: {
+    file: File | null;
+    existingName: string | null;
+    error?: string;
+    onChange: (file: File | null) => void;
+}) {
+    const dropzoneRef = useRef<HTMLDivElement>(null);
+    const dropzoneInstance = useRef<Dropzone | null>(null);
+    const onChangeRef = useRef(onChange);
+
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
+
+    useEffect(() => {
+        if (!dropzoneRef.current) {
+            return;
+        }
+
+        const dropzone = new Dropzone(dropzoneRef.current, {
+            url: '/',
+            autoProcessQueue: false,
+            clickable: true,
+            previewsContainer: false,
+            acceptedFiles: '.pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx',
+            maxFiles: 1,
+            maxFilesize: 10,
+        });
+        dropzone.on('addedfile', (addedFile) => {
+            if (dropzone.files.length > 1) {
+                dropzone.removeFile(dropzone.files[0]);
+            }
+            onChangeRef.current(addedFile);
+        });
+        dropzoneInstance.current = dropzone;
+
+        return () => {
+            dropzone.destroy();
+            dropzoneInstance.current = null;
+        };
+    }, []);
+
+    const clearFile = (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.stopPropagation();
+        dropzoneInstance.current?.removeAllFiles(true);
+        onChange(null);
+    };
+
+    return (
+        <div className="grid gap-2">
+            <div
+                ref={dropzoneRef}
+                className="cursor-pointer rounded-lg border-2 border-dashed border-muted-foreground/25 px-5 py-6 text-center transition-colors hover:border-primary/60 hover:bg-muted/30"
+            >
+                {file ? (
+                    <div className="flex items-center justify-center gap-3 text-left">
+                        <FileText className="size-8 text-primary" />
+                        <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">
+                                {file.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB · Klik
+                                untuk mengganti
+                            </p>
+                        </div>
+                        <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            onClick={clearFile}
+                            aria-label="Hapus lampiran"
+                        >
+                            <X className="size-4" />
+                        </Button>
+                    </div>
+                ) : (
+                    <>
+                        <UploadCloud className="mx-auto size-8 text-muted-foreground" />
+                        <p className="mt-2 text-sm font-medium">
+                            Tarik dokumen ke sini atau klik untuk memilih
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            PDF, JPG, PNG, DOC, DOCX, XLS, XLSX · Maksimal 10 MB
+                        </p>
+                        {existingName ? (
+                            <p className="mt-2 text-xs text-primary">
+                                File saat ini: {existingName}
+                            </p>
+                        ) : null}
+                    </>
+                )}
+            </div>
+            <InputError message={error} />
+        </div>
     );
 }
 

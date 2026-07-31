@@ -229,6 +229,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications', [NotificationController::class, 'store'])->name('notifications.store');
     Route::put('notifications/{notification}', [NotificationController::class, 'update'])->name('notifications.update');
+    Route::get('notifications/{notification}/download', [NotificationController::class, 'download'])->name('notifications.download');
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     Route::get('surveys', [SurveyController::class, 'index'])->name('surveys.index');

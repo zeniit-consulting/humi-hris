@@ -19,6 +19,10 @@ class NotificationAnnouncement extends Model
         'status',
         'publish_at',
         'expires_at',
+        'attachment_path',
+        'attachment_name',
+        'attachment_mime_type',
+        'attachment_size',
     ];
 
     protected function casts(): array
