@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::index
-* @see app/Http/Controllers/Hris/NotificationController.php:15
+* @see app/Http/Controllers/Hris/NotificationController.php:18
 * @route '/hris/notifications'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::index
-* @see app/Http/Controllers/Hris/NotificationController.php:15
+* @see app/Http/Controllers/Hris/NotificationController.php:18
 * @route '/hris/notifications'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::index
-* @see app/Http/Controllers/Hris/NotificationController.php:15
+* @see app/Http/Controllers/Hris/NotificationController.php:18
 * @route '/hris/notifications'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::index
-* @see app/Http/Controllers/Hris/NotificationController.php:15
+* @see app/Http/Controllers/Hris/NotificationController.php:18
 * @route '/hris/notifications'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::index
-* @see app/Http/Controllers/Hris/NotificationController.php:15
+* @see app/Http/Controllers/Hris/NotificationController.php:18
 * @route '/hris/notifications'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::index
-* @see app/Http/Controllers/Hris/NotificationController.php:15
+* @see app/Http/Controllers/Hris/NotificationController.php:18
 * @route '/hris/notifications'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::index
-* @see app/Http/Controllers/Hris/NotificationController.php:15
+* @see app/Http/Controllers/Hris/NotificationController.php:18
 * @route '/hris/notifications'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::store
-* @see app/Http/Controllers/Hris/NotificationController.php:58
+* @see app/Http/Controllers/Hris/NotificationController.php:65
 * @route '/hris/notifications'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::store
-* @see app/Http/Controllers/Hris/NotificationController.php:58
+* @see app/Http/Controllers/Hris/NotificationController.php:65
 * @route '/hris/notifications'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::store
-* @see app/Http/Controllers/Hris/NotificationController.php:58
+* @see app/Http/Controllers/Hris/NotificationController.php:65
 * @route '/hris/notifications'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::store
-* @see app/Http/Controllers/Hris/NotificationController.php:58
+* @see app/Http/Controllers/Hris/NotificationController.php:65
 * @route '/hris/notifications'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::store
-* @see app/Http/Controllers/Hris/NotificationController.php:58
+* @see app/Http/Controllers/Hris/NotificationController.php:65
 * @route '/hris/notifications'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::update
-* @see app/Http/Controllers/Hris/NotificationController.php:65
+* @see app/Http/Controllers/Hris/NotificationController.php:75
 * @route '/hris/notifications/{notification}'
 */
 export const update = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -153,7 +153,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::update
-* @see app/Http/Controllers/Hris/NotificationController.php:65
+* @see app/Http/Controllers/Hris/NotificationController.php:75
 * @route '/hris/notifications/{notification}'
 */
 update.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +186,7 @@ update.url = (args: { notification: number | { id: number } } | [notification: n
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::update
-* @see app/Http/Controllers/Hris/NotificationController.php:65
+* @see app/Http/Controllers/Hris/NotificationController.php:75
 * @route '/hris/notifications/{notification}'
 */
 update.put = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -196,7 +196,7 @@ update.put = (args: { notification: number | { id: number } } | [notification: n
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::update
-* @see app/Http/Controllers/Hris/NotificationController.php:65
+* @see app/Http/Controllers/Hris/NotificationController.php:75
 * @route '/hris/notifications/{notification}'
 */
 const updateForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -211,7 +211,7 @@ const updateForm = (args: { notification: number | { id: number } } | [notificat
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::update
-* @see app/Http/Controllers/Hris/NotificationController.php:65
+* @see app/Http/Controllers/Hris/NotificationController.php:75
 * @route '/hris/notifications/{notification}'
 */
 updateForm.put = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -227,8 +227,113 @@ updateForm.put = (args: { notification: number | { id: number } } | [notificatio
 update.form = updateForm
 
 /**
+* @see \App\Http\Controllers\Hris\NotificationController::download
+* @see app/Http/Controllers/Hris/NotificationController.php:91
+* @route '/hris/notifications/{notification}/download'
+*/
+export const download = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: download.url(args, options),
+    method: 'get',
+})
+
+download.definition = {
+    methods: ["get","head"],
+    url: '/hris/notifications/{notification}/download',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Hris\NotificationController::download
+* @see app/Http/Controllers/Hris/NotificationController.php:91
+* @route '/hris/notifications/{notification}/download'
+*/
+download.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { notification: args }
+    }
+
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { notification: args.id }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            notification: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        notification: typeof args.notification === 'object'
+        ? args.notification.id
+        : args.notification,
+    }
+
+    return download.definition.url
+            .replace('{notification}', parsedArgs.notification.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\NotificationController::download
+* @see app/Http/Controllers/Hris/NotificationController.php:91
+* @route '/hris/notifications/{notification}/download'
+*/
+download.get = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: download.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\NotificationController::download
+* @see app/Http/Controllers/Hris/NotificationController.php:91
+* @route '/hris/notifications/{notification}/download'
+*/
+download.head = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: download.url(args, options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\NotificationController::download
+* @see app/Http/Controllers/Hris/NotificationController.php:91
+* @route '/hris/notifications/{notification}/download'
+*/
+const downloadForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: download.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\NotificationController::download
+* @see app/Http/Controllers/Hris/NotificationController.php:91
+* @route '/hris/notifications/{notification}/download'
+*/
+downloadForm.get = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: download.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\NotificationController::download
+* @see app/Http/Controllers/Hris/NotificationController.php:91
+* @route '/hris/notifications/{notification}/download'
+*/
+downloadForm.head = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: download.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+download.form = downloadForm
+
+/**
 * @see \App\Http\Controllers\Hris\NotificationController::destroy
-* @see app/Http/Controllers/Hris/NotificationController.php:72
+* @see app/Http/Controllers/Hris/NotificationController.php:83
 * @route '/hris/notifications/{notification}'
 */
 export const destroy = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -243,7 +348,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::destroy
-* @see app/Http/Controllers/Hris/NotificationController.php:72
+* @see app/Http/Controllers/Hris/NotificationController.php:83
 * @route '/hris/notifications/{notification}'
 */
 destroy.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -276,7 +381,7 @@ destroy.url = (args: { notification: number | { id: number } } | [notification: 
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::destroy
-* @see app/Http/Controllers/Hris/NotificationController.php:72
+* @see app/Http/Controllers/Hris/NotificationController.php:83
 * @route '/hris/notifications/{notification}'
 */
 destroy.delete = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -286,7 +391,7 @@ destroy.delete = (args: { notification: number | { id: number } } | [notificatio
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::destroy
-* @see app/Http/Controllers/Hris/NotificationController.php:72
+* @see app/Http/Controllers/Hris/NotificationController.php:83
 * @route '/hris/notifications/{notification}'
 */
 const destroyForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -301,7 +406,7 @@ const destroyForm = (args: { notification: number | { id: number } } | [notifica
 
 /**
 * @see \App\Http\Controllers\Hris\NotificationController::destroy
-* @see app/Http/Controllers/Hris/NotificationController.php:72
+* @see app/Http/Controllers/Hris/NotificationController.php:83
 * @route '/hris/notifications/{notification}'
 */
 destroyForm.delete = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -316,6 +421,6 @@ destroyForm.delete = (args: { notification: number | { id: number } } | [notific
 
 destroy.form = destroyForm
 
-const NotificationController = { index, store, update, destroy }
+const NotificationController = { index, store, update, download, destroy }
 
 export default NotificationController

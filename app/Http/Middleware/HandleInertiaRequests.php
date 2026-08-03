@@ -59,6 +59,32 @@ class HandleInertiaRequests extends Middleware
 
                 return Storage::disk('public')->url($setting->logo_path);
             },
+            'companyFeatures' => function () use ($request): array {
+                $defaults = [
+                    'show_sub_company_menu' => true,
+                    'show_manpower_request_menu' => true,
+                    'show_outsourcing_dashboard' => true,
+                ];
+
+                if (! $request->user()) {
+                    return $defaults;
+                }
+
+                $setting = CompanySetting::query()
+                    ->select([
+                        'show_sub_company_menu',
+                        'show_manpower_request_menu',
+                        'show_outsourcing_dashboard',
+                    ])
+                    ->where('user_id', $request->user()->accountOwnerId())
+                    ->first();
+
+                return [
+                    'show_sub_company_menu' => (bool) ($setting?->show_sub_company_menu ?? true),
+                    'show_manpower_request_menu' => (bool) ($setting?->show_manpower_request_menu ?? true),
+                    'show_outsourcing_dashboard' => (bool) ($setting?->show_outsourcing_dashboard ?? true),
+                ];
+            },
             'auth' => [
                 'user' => function () use ($request) {
                     $user = $request->user();

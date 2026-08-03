@@ -2,6 +2,10 @@ import { Camera, FileText, LoaderCircle, Plus, Receipt, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
+    formatThousandDigits,
+    normalizeDigitInput,
+} from '@/lib/currency-input';
+import {
     formatCurrency,
     formatDate,
     notifyPortal,
@@ -292,12 +296,15 @@ export default function PortalReimbursementsPage({ pageTitle }: Props) {
                                 <input
                                     required
                                     min="1"
-                                    type="number"
-                                    value={form.amount}
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={formatThousandDigits(form.amount)}
                                     onChange={(e) =>
                                         setForm((p) => ({
                                             ...p,
-                                            amount: e.target.value,
+                                            amount: normalizeDigitInput(
+                                                e.target.value,
+                                            ),
                                         }))
                                     }
                                     className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::index
-* @see app/Http/Controllers/Hris/SurveyController.php:18
+* @see app/Http/Controllers/Hris/SurveyController.php:22
 * @route '/hris/surveys'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::index
-* @see app/Http/Controllers/Hris/SurveyController.php:18
+* @see app/Http/Controllers/Hris/SurveyController.php:22
 * @route '/hris/surveys'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::index
-* @see app/Http/Controllers/Hris/SurveyController.php:18
+* @see app/Http/Controllers/Hris/SurveyController.php:22
 * @route '/hris/surveys'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::index
-* @see app/Http/Controllers/Hris/SurveyController.php:18
+* @see app/Http/Controllers/Hris/SurveyController.php:22
 * @route '/hris/surveys'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::index
-* @see app/Http/Controllers/Hris/SurveyController.php:18
+* @see app/Http/Controllers/Hris/SurveyController.php:22
 * @route '/hris/surveys'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::index
-* @see app/Http/Controllers/Hris/SurveyController.php:18
+* @see app/Http/Controllers/Hris/SurveyController.php:22
 * @route '/hris/surveys'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::index
-* @see app/Http/Controllers/Hris/SurveyController.php:18
+* @see app/Http/Controllers/Hris/SurveyController.php:22
 * @route '/hris/surveys'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::store
-* @see app/Http/Controllers/Hris/SurveyController.php:68
+* @see app/Http/Controllers/Hris/SurveyController.php:80
 * @route '/hris/surveys'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::store
-* @see app/Http/Controllers/Hris/SurveyController.php:68
+* @see app/Http/Controllers/Hris/SurveyController.php:80
 * @route '/hris/surveys'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::store
-* @see app/Http/Controllers/Hris/SurveyController.php:68
+* @see app/Http/Controllers/Hris/SurveyController.php:80
 * @route '/hris/surveys'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::store
-* @see app/Http/Controllers/Hris/SurveyController.php:68
+* @see app/Http/Controllers/Hris/SurveyController.php:80
 * @route '/hris/surveys'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::store
-* @see app/Http/Controllers/Hris/SurveyController.php:68
+* @see app/Http/Controllers/Hris/SurveyController.php:80
 * @route '/hris/surveys'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::update
-* @see app/Http/Controllers/Hris/SurveyController.php:75
+* @see app/Http/Controllers/Hris/SurveyController.php:87
 * @route '/hris/surveys/{survey}'
 */
 export const update = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -153,7 +153,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::update
-* @see app/Http/Controllers/Hris/SurveyController.php:75
+* @see app/Http/Controllers/Hris/SurveyController.php:87
 * @route '/hris/surveys/{survey}'
 */
 update.url = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +186,7 @@ update.url = (args: { survey: number | { id: number } } | [survey: number | { id
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::update
-* @see app/Http/Controllers/Hris/SurveyController.php:75
+* @see app/Http/Controllers/Hris/SurveyController.php:87
 * @route '/hris/surveys/{survey}'
 */
 update.put = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -196,7 +196,7 @@ update.put = (args: { survey: number | { id: number } } | [survey: number | { id
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::update
-* @see app/Http/Controllers/Hris/SurveyController.php:75
+* @see app/Http/Controllers/Hris/SurveyController.php:87
 * @route '/hris/surveys/{survey}'
 */
 const updateForm = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -211,7 +211,7 @@ const updateForm = (args: { survey: number | { id: number } } | [survey: number 
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::update
-* @see app/Http/Controllers/Hris/SurveyController.php:75
+* @see app/Http/Controllers/Hris/SurveyController.php:87
 * @route '/hris/surveys/{survey}'
 */
 updateForm.put = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -228,7 +228,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::destroy
-* @see app/Http/Controllers/Hris/SurveyController.php:82
+* @see app/Http/Controllers/Hris/SurveyController.php:94
 * @route '/hris/surveys/{survey}'
 */
 export const destroy = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -243,7 +243,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::destroy
-* @see app/Http/Controllers/Hris/SurveyController.php:82
+* @see app/Http/Controllers/Hris/SurveyController.php:94
 * @route '/hris/surveys/{survey}'
 */
 destroy.url = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -276,7 +276,7 @@ destroy.url = (args: { survey: number | { id: number } } | [survey: number | { i
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::destroy
-* @see app/Http/Controllers/Hris/SurveyController.php:82
+* @see app/Http/Controllers/Hris/SurveyController.php:94
 * @route '/hris/surveys/{survey}'
 */
 destroy.delete = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -286,7 +286,7 @@ destroy.delete = (args: { survey: number | { id: number } } | [survey: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::destroy
-* @see app/Http/Controllers/Hris/SurveyController.php:82
+* @see app/Http/Controllers/Hris/SurveyController.php:94
 * @route '/hris/surveys/{survey}'
 */
 const destroyForm = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -301,7 +301,7 @@ const destroyForm = (args: { survey: number | { id: number } } | [survey: number
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::destroy
-* @see app/Http/Controllers/Hris/SurveyController.php:82
+* @see app/Http/Controllers/Hris/SurveyController.php:94
 * @route '/hris/surveys/{survey}'
 */
 destroyForm.delete = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -318,7 +318,7 @@ destroy.form = destroyForm
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::respond
-* @see app/Http/Controllers/Hris/SurveyController.php:89
+* @see app/Http/Controllers/Hris/SurveyController.php:101
 * @route '/hris/surveys/{survey}/responses'
 */
 export const respond = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -333,7 +333,7 @@ respond.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::respond
-* @see app/Http/Controllers/Hris/SurveyController.php:89
+* @see app/Http/Controllers/Hris/SurveyController.php:101
 * @route '/hris/surveys/{survey}/responses'
 */
 respond.url = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -366,7 +366,7 @@ respond.url = (args: { survey: number | { id: number } } | [survey: number | { i
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::respond
-* @see app/Http/Controllers/Hris/SurveyController.php:89
+* @see app/Http/Controllers/Hris/SurveyController.php:101
 * @route '/hris/surveys/{survey}/responses'
 */
 respond.post = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -376,7 +376,7 @@ respond.post = (args: { survey: number | { id: number } } | [survey: number | { 
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::respond
-* @see app/Http/Controllers/Hris/SurveyController.php:89
+* @see app/Http/Controllers/Hris/SurveyController.php:101
 * @route '/hris/surveys/{survey}/responses'
 */
 const respondForm = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -386,7 +386,7 @@ const respondForm = (args: { survey: number | { id: number } } | [survey: number
 
 /**
 * @see \App\Http\Controllers\Hris\SurveyController::respond
-* @see app/Http/Controllers/Hris/SurveyController.php:89
+* @see app/Http/Controllers/Hris/SurveyController.php:101
 * @route '/hris/surveys/{survey}/responses'
 */
 respondForm.post = (args: { survey: number | { id: number } } | [survey: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

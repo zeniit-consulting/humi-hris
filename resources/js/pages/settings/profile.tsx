@@ -97,6 +97,9 @@ export default function Profile({
         details: string | null;
         portal_kasbon_enabled: boolean;
         employee_activation_otp_enabled: boolean;
+        show_sub_company_menu: boolean;
+        show_manpower_request_menu: boolean;
+        show_outsourcing_dashboard: boolean;
         logo_url: string | null;
         location_name: string | null;
         location_address: string | null;
@@ -132,6 +135,15 @@ export default function Profile({
     );
     const [employeeActivationOtpEnabled, setEmployeeActivationOtpEnabled] =
         useState(company.employee_activation_otp_enabled);
+    const [showSubCompanyMenu, setShowSubCompanyMenu] = useState(
+        company.show_sub_company_menu,
+    );
+    const [showManpowerRequestMenu, setShowManpowerRequestMenu] = useState(
+        company.show_manpower_request_menu,
+    );
+    const [showOutsourcingDashboard, setShowOutsourcingDashboard] = useState(
+        company.show_outsourcing_dashboard,
+    );
     const [primaryLocation, setPrimaryLocation] = useState({
         address: company.location_address ?? '',
         latitude:
@@ -181,9 +193,15 @@ export default function Profile({
         setEmployeeActivationOtpEnabled(
             company.employee_activation_otp_enabled,
         );
+        setShowSubCompanyMenu(company.show_sub_company_menu);
+        setShowManpowerRequestMenu(company.show_manpower_request_menu);
+        setShowOutsourcingDashboard(company.show_outsourcing_dashboard);
     }, [
         company.employee_activation_otp_enabled,
         company.portal_kasbon_enabled,
+        company.show_manpower_request_menu,
+        company.show_outsourcing_dashboard,
+        company.show_sub_company_menu,
     ]);
 
     const handlePrimaryLocationSelect = async (
@@ -642,6 +660,94 @@ export default function Profile({
                                             <p className="mt-1 text-xs text-slate-500">
                                                 Jika dimatikan, karyawan dapat langsung masuk menggunakan kredensial dari email undangan.
                                             </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-3 rounded-lg border bg-slate-50/60 p-4">
+                                    <div>
+                                        <p className="text-sm font-medium text-slate-900">
+                                            Outsourcing
+                                        </p>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            Atur menu dan ringkasan outsourcing yang ditampilkan di aplikasi.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid gap-3 border-t pt-3">
+                                        <div className="flex items-start gap-3">
+                                            <input
+                                                type="hidden"
+                                                name="show_sub_company_menu"
+                                                value={showSubCompanyMenu ? '1' : '0'}
+                                            />
+                                            <input
+                                                id="show_sub_company_menu"
+                                                type="checkbox"
+                                                checked={showSubCompanyMenu}
+                                                onChange={(event) =>
+                                                    setShowSubCompanyMenu(event.target.checked)
+                                                }
+                                                className="mt-1 size-4 rounded border-input accent-primary"
+                                            />
+                                            <div>
+                                                <Label htmlFor="show_sub_company_menu">
+                                                    Tampilkan menu Sub Company
+                                                </Label>
+                                                <p className="mt-1 text-xs text-slate-500">
+                                                    Sembunyikan menu ini jika perusahaan tidak menggunakan pengelolaan sub-company.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3 border-t pt-3">
+                                            <input
+                                                type="hidden"
+                                                name="show_manpower_request_menu"
+                                                value={showManpowerRequestMenu ? '1' : '0'}
+                                            />
+                                            <input
+                                                id="show_manpower_request_menu"
+                                                type="checkbox"
+                                                checked={showManpowerRequestMenu}
+                                                onChange={(event) =>
+                                                    setShowManpowerRequestMenu(event.target.checked)
+                                                }
+                                                className="mt-1 size-4 rounded border-input accent-primary"
+                                            />
+                                            <div>
+                                                <Label htmlFor="show_manpower_request_menu">
+                                                    Tampilkan menu Manpower Request
+                                                </Label>
+                                                <p className="mt-1 text-xs text-slate-500">
+                                                    Sembunyikan menu permintaan tenaga kerja dari sidebar.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3 border-t pt-3">
+                                            <input
+                                                type="hidden"
+                                                name="show_outsourcing_dashboard"
+                                                value={showOutsourcingDashboard ? '1' : '0'}
+                                            />
+                                            <input
+                                                id="show_outsourcing_dashboard"
+                                                type="checkbox"
+                                                checked={showOutsourcingDashboard}
+                                                onChange={(event) =>
+                                                    setShowOutsourcingDashboard(event.target.checked)
+                                                }
+                                                className="mt-1 size-4 rounded border-input accent-primary"
+                                            />
+                                            <div>
+                                                <Label htmlFor="show_outsourcing_dashboard">
+                                                    Tampilkan card Outsourcing di Dashboard
+                                                </Label>
+                                                <p className="mt-1 text-xs text-slate-500">
+                                                    Sembunyikan seluruh ringkasan operasional outsourcing dari dashboard utama.
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

@@ -882,7 +882,7 @@ export default function EmployeesIndex() {
     ];
 
     const [filterState, setFilterState] = useState<Filters>(filters);
-    const [filtersOpen, setFiltersOpen] = useState(true);
+    const [filtersOpen, setFiltersOpen] = useState(false);
 
     const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
     const [employeeExportDialogOpen, setEmployeeExportDialogOpen] =

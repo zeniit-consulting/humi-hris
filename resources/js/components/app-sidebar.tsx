@@ -52,47 +52,65 @@ import { index as reportsIndex } from '@/routes/hris/reports';
 import { index as schedulesIndex } from '@/routes/hris/schedules';
 import type { NavGroup, NavItem } from '@/types';
 
-function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
+type CompanyFeatures = {
+    show_sub_company_menu?: boolean;
+    show_manpower_request_menu?: boolean;
+};
+
+function buildNavGroups(
+    lockedFeatures: string[],
+    companyFeatures: CompanyFeatures = {},
+): NavGroup[] {
     const locked = (key: string): Pick<NavItem, 'locked'> => ({
         locked: lockedFeatures.includes(key),
     });
 
+    const organizationItems: NavItem[] = [
+        {
+            title: 'Karyawan',
+            href: employeesIndex(),
+            icon: UsersRound,
+        },
+        ...(companyFeatures.show_sub_company_menu === false
+            ? []
+            : [
+                  {
+                      title: 'Sub Company',
+                      href: '/hris/sub-companies',
+                      icon: Building2,
+                  } satisfies NavItem,
+              ]),
+        {
+            title: 'Struktur Organisasi',
+            href: '/hris/organization-chart',
+            icon: GitBranch,
+        },
+        {
+            title: 'Rekrutmen',
+            href: '/hris/recruitment',
+            icon: Briefcase,
+            ...locked('recruitment'),
+        },
+        ...(companyFeatures.show_manpower_request_menu === false
+            ? []
+            : [
+                  {
+                      title: 'Manpower Request',
+                      href: '/hris/manpower-requests',
+                      icon: ClipboardList,
+                  } satisfies NavItem,
+              ]),
+        {
+            title: 'Teguran',
+            href: '/hris/reprimands',
+            icon: ScrollText,
+        },
+    ];
+
     return [
         {
             title: 'Organisasi',
-            items: [
-                {
-                    title: 'Karyawan',
-                    href: employeesIndex(),
-                    icon: UsersRound,
-                },
-                {
-                    title: 'Sub Company',
-                    href: '/hris/sub-companies',
-                    icon: Building2,
-                },
-                {
-                    title: 'Struktur Organisasi',
-                    href: '/hris/organization-chart',
-                    icon: GitBranch,
-                },
-                {
-                    title: 'Rekrutmen',
-                    href: '/hris/recruitment',
-                    icon: Briefcase,
-                    ...locked('recruitment'),
-                },
-                {
-                    title: 'Manpower Request',
-                    href: '/hris/manpower-requests',
-                    icon: ClipboardList,
-                },
-                {
-                    title: 'Teguran',
-                    href: '/hris/reprimands',
-                    icon: ScrollText,
-                },
-            ],
+            items: organizationItems,
         },
         {
             title: 'Waktu Kerja',
@@ -224,10 +242,11 @@ function buildNavGroups(lockedFeatures: string[]): NavGroup[] {
 
 export function AppSidebar() {
     const { isCurrentUrl } = useCurrentUrl();
-    const { subscription, permissions } = usePage().props as {
+    const { subscription, permissions, companyFeatures } = usePage().props as {
         auth?: { user?: { role?: string } | null };
         subscription?: { locked_features?: string[] };
         permissions?: { can_manage_subscribers?: boolean };
+        companyFeatures?: CompanyFeatures;
     };
     const { auth } = usePage().props as {
         auth?: { user?: { role?: string } | null };
@@ -246,7 +265,10 @@ export function AppSidebar() {
                       ],
                   },
               ]
-            : buildNavGroups(subscription?.locked_features ?? []);
+            : buildNavGroups(
+                  subscription?.locked_features ?? [],
+                  companyFeatures,
+              );
 
     if (permissions?.can_manage_subscribers) {
         const platformItems: NavItem[] = [

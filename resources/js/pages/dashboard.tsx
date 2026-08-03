@@ -62,6 +62,7 @@ type DashboardStats = {
     attrition_ytd: number;
     resigned_ytd: number;
     today_attendance_rate: number;
+    gender: Record<string, number>;
 };
 
 type ActionQueueItem = {
@@ -221,11 +222,36 @@ export default function Dashboard({
     contractReminders: ContractReminders;
     outsourcing: OutsourcingSummary;
 }) {
-    const { auth } = usePage().props as {
+    const { auth, companyFeatures } = usePage().props as {
         auth?: { user?: { name?: string | null } | null };
+        companyFeatures?: { show_outsourcing_dashboard?: boolean };
     };
     const [outsourcingOpen, setOutsourcingOpen] = useState(true);
-    const maxEmployees = Math.max(stats.active_employees, 1);
+    const maxAttendanceValue = Math.max(
+        ...attendanceChart.flatMap((day) => [
+            day.present,
+            day.late,
+            day.on_leave,
+            day.absent,
+        ]),
+        1,
+    );
+    const genderEntries = [
+        { key: 'male', label: 'Laki-laki', color: '#0f766e' },
+        { key: 'female', label: 'Perempuan', color: '#14b8a6' },
+        { key: 'other', label: 'Lainnya', color: '#f59e0b' },
+        { key: 'unknown', label: 'Belum diisi', color: '#cbd5e1' },
+    ].map((item) => ({ ...item, total: stats.gender[item.key] ?? 0 }));
+    const genderTotal = genderEntries.reduce((total, item) => total + item.total, 0);
+    let genderOffset = 0;
+    const genderGradient = genderEntries
+        .map((item) => {
+            const start = genderTotal > 0 ? (genderOffset / genderTotal) * 100 : 0;
+            genderOffset += item.total;
+            const end = genderTotal > 0 ? (genderOffset / genderTotal) * 100 : 0;
+            return `${item.color} ${start}% ${end}%`;
+        })
+        .join(', ');
     const userName = auth?.user?.name?.trim() || 'User';
     const rangeOptions: Array<{
         value: DashboardFilters['range'];
@@ -511,7 +537,8 @@ export default function Dashboard({
                     </Card>
                 </div>
 
-                <Card className="gap-0 py-0">
+                <div className="grid gap-4 lg:grid-cols-12">
+                <Card className="gap-0 py-0 lg:col-span-9">
                     <CardHeader className="px-4 py-3">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <CardTitle>Chart Kehadiran</CardTitle>
@@ -569,58 +596,55 @@ export default function Dashboard({
                         </div>
 
                         <div className="overflow-x-auto">
-                            <div className="flex min-w-[720px] items-end gap-2">
-                                {attendanceChart.map((day) => (
-                                    <div
-                                        key={day.date}
-                                        className="flex flex-1 flex-col items-center gap-1.5"
-                                    >
-                                        <div className="flex h-36 w-full max-w-16 items-end overflow-hidden rounded-md border bg-muted/20">
-                                            <div className="flex h-full w-full flex-col justify-end">
-                                                <div
-                                                    className="bg-slate-300"
-                                                    style={{
-                                                        height: `${(day.absent / maxEmployees) * 100}%`,
-                                                    }}
-                                                    title={`Absen: ${day.absent}`}
-                                                />
-                                                <div
-                                                    className="bg-blue-500"
-                                                    style={{
-                                                        height: `${(day.on_leave / maxEmployees) * 100}%`,
-                                                    }}
-                                                    title={`Cuti: ${day.on_leave}`}
-                                                />
-                                                <div
-                                                    className="bg-amber-500"
-                                                    style={{
-                                                        height: `${(day.late / maxEmployees) * 100}%`,
-                                                    }}
-                                                    title={`Terlambat: ${day.late}`}
-                                                />
-                                                <div
-                                                    className="bg-emerald-500"
-                                                    style={{
-                                                        height: `${(day.present / maxEmployees) * 100}%`,
-                                                    }}
-                                                    title={`Hadir: ${day.present}`}
-                                                />
-                                            </div>
-                                        </div>
-                                        <p className="text-xs font-medium">
-                                            {day.label}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {day.attendance_rate}%
-                                        </p>
-                                    </div>
-                                ))}
+                            <div className="min-w-[680px]">
+                                <svg viewBox="0 0 760 240" className="h-56 w-full" role="img" aria-label="Line chart kehadiran">
+                                    {[0, 1, 2, 3, 4].map((line) => {
+                                        const y = 24 + line * 42;
+                                        return <line key={line} x1="36" x2="744" y1={y} y2={y} stroke="currentColor" className="text-border" strokeDasharray="4 4" />;
+                                    })}
+                                    {[
+                                        { key: 'present', color: '#10b981', label: 'Hadir' },
+                                        { key: 'late', color: '#f59e0b', label: 'Terlambat' },
+                                        { key: 'on_leave', color: '#3b82f6', label: 'Cuti' },
+                                        { key: 'absent', color: '#94a3b8', label: 'Absen' },
+                                    ].map((series) => {
+                                        const points = attendanceChart.map((day, index) => {
+                                            const x = attendanceChart.length === 1 ? 380 : 36 + (index / (attendanceChart.length - 1)) * 708;
+                                            const y = 204 - (Number(day[series.key as keyof AttendancePoint]) / maxAttendanceValue) * 180;
+                                            return `${x},${y}`;
+                                        }).join(' ');
+                                        return <polyline key={series.key} points={points} fill="none" stroke={series.color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />;
+                                    })}
+                                </svg>
+                                <div className="flex justify-between gap-2 px-6 text-xs text-muted-foreground">
+                                    {attendanceChart.map((day) => <span key={day.date}>{day.label}</span>)}
+                                </div>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
+                <Card className="lg:col-span-3">
+                    <CardHeader>
+                        <CardTitle>Gender Karyawan</CardTitle>
+                        <CardDescription>Distribusi karyawan aktif.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="mx-auto size-44 rounded-full" style={{ background: `conic-gradient(${genderGradient || '#e2e8f0 0 100%'})` }}>
+                            <div className="flex size-full items-center justify-center p-8">
+                                <div className="flex size-full items-center justify-center rounded-full bg-card text-center">
+                                    <div><p className="text-2xl font-bold">{genderTotal}</p><p className="text-xs text-muted-foreground">Karyawan</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-5 space-y-2 text-sm">
+                            {genderEntries.map((item) => <div key={item.key} className="flex items-center justify-between gap-2"><span className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full" style={{ backgroundColor: item.color }} />{item.label}</span><span className="font-semibold">{item.total}</span></div>)}
+                        </div>
+                    </CardContent>
+                </Card>
+                </div>
 
-                <Collapsible
+                {companyFeatures?.show_outsourcing_dashboard !== false ? (
+                    <Collapsible
                     open={outsourcingOpen}
                     onOpenChange={setOutsourcingOpen}
                     className="rounded-lg border bg-card text-card-foreground shadow-xs"
@@ -910,7 +934,8 @@ export default function Dashboard({
                             </div>
                         </div>
                     </CollapsibleContent>
-                </Collapsible>
+                    </Collapsible>
+                ) : null}
             </div>
         </AppLayout>
     );

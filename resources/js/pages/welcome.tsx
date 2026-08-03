@@ -873,77 +873,123 @@ export default function Welcome({ canRegister = true }: WelcomeProps) {
                     </section>
                 </main>
 
-                <footer className="bg-[var(--landing-color-accent-soft)] px-5 py-14 text-[var(--landing-color-ink)] sm:px-8 sm:py-20">
+                <footer className="bg-[var(--landing-color-ink)] px-5 py-14 text-[var(--landing-color-paper)] sm:px-8 sm:py-20">
                     <div className="mx-auto max-w-7xl">
-                        <p className="max-w-[38ch] min-w-0 text-3xl leading-tight font-semibold tracking-[-0.035em] [overflow-wrap:anywhere] text-[var(--landing-color-ink)] sm:text-5xl">
-                            Data yang sama. Keputusan yang lebih mudah
-                            ditelusuri.
-                        </p>
-                        <nav
-                            aria-label="Tautan footer"
-                            className="landing-footer-links mt-10 grid max-w-3xl grid-cols-2 gap-x-10 gap-y-4 text-sm font-medium text-[var(--landing-color-ink-soft)] sm:grid-cols-4"
-                        >
-                            <a
-                                href="#product"
-                                className="hover:text-[var(--landing-color-ink)]"
-                            >
-                                Produk
-                            </a>
-                            <a
-                                href="#solutions"
-                                className="hover:text-[var(--landing-color-ink)]"
-                            >
-                                Solusi
-                            </a>
-                            <a
-                                href="#pricing"
-                                className="hover:text-[var(--landing-color-ink)]"
-                            >
-                                Harga
-                            </a>
-                            <Link
-                                href="/features"
-                                className="hover:text-[var(--landing-color-ink)]"
-                            >
-                                Fitur
-                            </Link>
-                            <Link
-                                href="/berita"
-                                className="hover:text-[var(--landing-color-ink)]"
-                            >
-                                Berita
-                            </Link>
-                            <Link
-                                href="/careers"
-                                className="hover:text-[var(--landing-color-ink)]"
-                            >
-                                Karier
-                            </Link>
-                            <Link
-                                href="/contact"
-                                className="hover:text-[var(--landing-color-ink)]"
-                            >
-                                Kontak
-                            </Link>
-                        </nav>
+                        <div className="grid gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-20">
+                            <div className="min-w-0">
+                                <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.16em] text-[var(--landing-color-accent)] uppercase">
+                                    <span
+                                        className="size-2 rounded-full bg-[var(--landing-color-accent)]"
+                                        aria-hidden="true"
+                                    />
+                                    Humi HRIS
+                                </span>
+                                <p className="mt-6 max-w-[16ch] text-4xl leading-[1.05] font-semibold tracking-[-0.045em] [overflow-wrap:anywhere] sm:text-6xl">
+                                    Data yang sama. Keputusan yang lebih mudah.
+                                </p>
+                                <p className="mt-6 max-w-[36ch] text-sm leading-6 text-[var(--landing-color-paper)]/70">
+                                    Satukan operasi HR harian dalam satu sistem
+                                    yang rapi, mudah ditelusuri, dan siap
+                                    digunakan tim.
+                                </p>
+                            </div>
 
-                        <div className="mt-12 flex flex-col gap-7 border-t border-[var(--landing-color-ink)]/15 pt-7 sm:flex-row sm:items-center sm:justify-between">
+                            <nav
+                                aria-label="Tautan footer"
+                                className="grid min-w-0 grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3"
+                            >
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold tracking-[0.14em] text-[var(--landing-color-accent)] uppercase">
+                                        Produk
+                                    </p>
+                                    <div className="mt-5 grid gap-3 text-sm font-medium text-[var(--landing-color-paper)]">
+                                        <a
+                                            href="#product"
+                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
+                                        >
+                                            Produk
+                                        </a>
+                                        <Link
+                                            href="/features"
+                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
+                                        >
+                                            Fitur
+                                        </Link>
+                                        <a
+                                            href="#pricing"
+                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
+                                        >
+                                            Harga
+                                        </a>
+                                    </div>
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold tracking-[0.14em] text-[var(--landing-color-accent)] uppercase">
+                                        Jelajahi
+                                    </p>
+                                    <div className="mt-5 grid gap-3 text-sm font-medium text-[var(--landing-color-paper)]">
+                                        <a
+                                            href="#solutions"
+                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
+                                        >
+                                            Solusi
+                                        </a>
+                                        <Link
+                                            href="/berita"
+                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
+                                        >
+                                            Berita
+                                        </Link>
+                                        <Link
+                                            href="/careers"
+                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
+                                        >
+                                            Karier
+                                        </Link>
+                                    </div>
+                                </div>
+                                <div className="col-span-2 min-w-0 sm:col-span-1">
+                                    <p className="text-xs font-semibold tracking-[0.14em] text-[var(--landing-color-accent)] uppercase">
+                                        Mulai
+                                    </p>
+                                    <div className="mt-5 grid gap-3 text-sm font-medium text-[var(--landing-color-paper)]">
+                                        <Link
+                                            href={trialHref}
+                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
+                                        >
+                                            {trialLabel}
+                                        </Link>
+                                        <Link
+                                            href="/contact"
+                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
+                                        >
+                                            Kontak kami
+                                        </Link>
+                                    </div>
+                                </div>
+                            </nav>
+                        </div>
+
+                        <div className="mt-14 flex flex-col gap-6 border-t border-[var(--landing-color-paper)]/15 pt-6 sm:flex-row sm:items-end sm:justify-between">
                             <Link
                                 href="/"
                                 aria-label="Humi — halaman utama"
-                                className="w-fit rounded-[var(--landing-radius-card)] bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--landing-color-focus)]"
+                                className="inline-flex size-14 items-center justify-center rounded-[var(--landing-radius-card)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--landing-color-focus)]"
                             >
                                 <img
-                                    src="/humi-wordmark.png"
-                                    width={122}
-                                    height={32}
-                                    className="h-8 w-[7.625rem] object-contain"
+                                    src="/humi-mark-footer.png"
+                                    width={64}
+                                    height={64}
+                                    className="size-14 object-contain"
                                     alt="Humi"
                                 />
                             </Link>
-                            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-[var(--landing-color-ink-soft)]">
+                            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-[var(--landing-color-paper)]/70">
                                 <span className="whitespace-nowrap">
                                     © {new Date().getFullYear()} Humi
+                                </span>
+                                <span className="whitespace-nowrap">
+                                    HR lebih rapi, tim lebih siap.
                                 </span>
                             </div>
                         </div>

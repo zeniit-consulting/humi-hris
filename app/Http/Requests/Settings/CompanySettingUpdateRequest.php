@@ -25,6 +25,9 @@ class CompanySettingUpdateRequest extends FormRequest
             'attendance_locations' => $this->input('attendance_locations', []),
             'portal_kasbon_enabled' => $this->boolean('portal_kasbon_enabled'),
             'employee_activation_otp_enabled' => $this->boolean('employee_activation_otp_enabled'),
+            'show_sub_company_menu' => $this->boolean('show_sub_company_menu'),
+            'show_manpower_request_menu' => $this->boolean('show_manpower_request_menu'),
+            'show_outsourcing_dashboard' => $this->boolean('show_outsourcing_dashboard'),
         ];
 
         if ($this->has('auto_deduct_leave_for_missing_checkout')) {
@@ -46,6 +49,9 @@ class CompanySettingUpdateRequest extends FormRequest
             'details' => ['nullable', 'string', 'max:3000'],
             'portal_kasbon_enabled' => ['required', 'boolean'],
             'employee_activation_otp_enabled' => ['required', 'boolean'],
+            'show_sub_company_menu' => ['required', 'boolean'],
+            'show_manpower_request_menu' => ['required', 'boolean'],
+            'show_outsourcing_dashboard' => ['required', 'boolean'],
             'auto_deduct_leave_for_missing_checkout' => ['sometimes', 'boolean'],
             'location_name' => ['nullable', 'string', 'max:150'],
             'location_address' => ['nullable', 'string', 'max:1000'],

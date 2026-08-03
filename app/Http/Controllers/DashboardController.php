@@ -101,6 +101,14 @@ class DashboardController extends Controller
             ? round((($presentToday + $lateToday) / $activeEmployees) * 100, 1)
             : 0;
 
+        $genderStats = Employee::query()
+            ->where('is_active', true)
+            ->selectRaw("COALESCE(NULLIF(gender, ''), 'unknown') as gender, COUNT(*) as total")
+            ->groupBy('gender')
+            ->pluck('total', 'gender')
+            ->map(fn ($total): int => (int) $total)
+            ->all();
+
         $dailyRaw = EmployeeAttendance::query()
             ->selectRaw('attendance_date, status, COUNT(*) as total')
             ->whereBetween('attendance_date', [$startDate->toDateString(), $today->toDateString()])
@@ -166,6 +174,7 @@ class DashboardController extends Controller
                 'attrition_ytd' => $attritionYtd,
                 'resigned_ytd' => $resignedYtd,
                 'today_attendance_rate' => $todayRate,
+                'gender' => $genderStats,
             ],
             'attendanceChart' => $attendanceChart,
             'actionQueue' => $this->actionQueue($ownerId, $today),

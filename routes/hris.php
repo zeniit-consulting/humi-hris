@@ -219,6 +219,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::delete('overtimes/{overtime}', [OvertimeController::class, 'destroy'])->name('overtimes.destroy');
 
     Route::get('reimbursements', [ReimbursementController::class, 'index'])->name('reimbursements.index');
+    Route::get('reimbursements/export', [ReimbursementController::class, 'export'])->name('reimbursements.export');
     Route::post('reimbursements/{reimbursement}/approve', [ReimbursementController::class, 'approve'])->name('reimbursements.approve');
     Route::post('reimbursements/{reimbursement}/reject', [ReimbursementController::class, 'reject'])->name('reimbursements.reject');
     Route::post('reimbursements/{reimbursement}/status', [ReimbursementController::class, 'updateStatus'])->name('reimbursements.status');

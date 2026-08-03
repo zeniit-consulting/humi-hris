@@ -25,7 +25,6 @@ import {
     formatThousandDigits,
     normalizeDigitInput,
 } from '@/lib/currency-input';
-import { dashboard, home, login } from '@/routes';
 
 type Vacancy = {
     id: number;
@@ -132,7 +131,7 @@ const stripText = (value: string | null, maxLength = 155) => {
 };
 
 export default function CareerShowPage() {
-    const { vacancy, flash, auth } = usePage<PageProps>().props;
+    const { vacancy, flash } = usePage<PageProps>().props;
     const form = useForm<ApplicationFormData>(defaultForm);
 
     const submitForm = (event: FormEvent<HTMLFormElement>) => {
@@ -157,59 +156,51 @@ export default function CareerShowPage() {
                 type="article"
             />
 
-            <div className="min-h-screen bg-[#f5f7fb] text-slate-900">
-                <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
-                    <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+            <div className="min-h-screen bg-[var(--landing-color-paper)] font-[family-name:var(--landing-font-body)] text-[var(--landing-color-ink)]">
+                <header className="border-b border-[var(--landing-color-rule)] bg-[color-mix(in_oklch,var(--landing-color-paper)_94%,transparent)] backdrop-blur-xl">
+                    <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
                         <div>
                             <Link
                                 href={vacancy.list_url}
-                                className="text-lg font-semibold tracking-tight"
+                                className="text-lg font-semibold tracking-[-0.03em] text-[var(--landing-color-ink)]"
                             >
-                                ZENI Careers
+                                Humi Careers
                             </Link>
-                            <p className="text-sm text-slate-500">
-                                Detail lowongan dan form pengajuan kandidat.
+                            <p className="text-sm text-[var(--landing-color-muted)]">
+                                Temukan peran yang cocok untuk langkah berikutnya.
                             </p>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" asChild>
+                        <div className="flex shrink-0 items-center gap-2">
+                            <Button variant="ghost" asChild>
                                 <Link href={vacancy.list_url}>
                                     <ArrowLeft className="size-4" />
-                                    Semua lowongan
-                                </Link>
-                            </Button>
-                            <Button variant="outline" asChild>
-                                <Link href={home()}>Beranda</Link>
-                            </Button>
-                            <Button asChild>
-                                <Link href={auth.user ? dashboard() : login()}>
-                                    {auth.user ? 'Dashboard' : 'Masuk HRIS'}
+                                    <span className="hidden sm:inline">Semua lowongan</span>
                                 </Link>
                             </Button>
                         </div>
                     </div>
                 </header>
 
-                <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+                <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-12">
                     {flash?.success ? (
-                        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                        <div className="mb-6 rounded-[var(--landing-radius-card)] border border-[var(--landing-color-success)]/25 bg-[var(--landing-color-success)]/10 px-4 py-3 text-sm text-[var(--landing-color-success)]">
                             {flash.success}
                         </div>
                     ) : null}
 
-                    <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+                    <div className="grid gap-8 xl:grid-cols-[minmax(0,0.95fr)_minmax(28rem,0.8fr)] xl:items-start xl:gap-12">
                         <div className="space-y-6">
-                            <section className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-10 shadow-xl shadow-slate-900/5">
-                                <div className="mb-4 flex flex-wrap gap-2 text-xs">
-                                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[#0c8c5e]">
+                            <section className="rounded-[var(--landing-radius-panel)] bg-[var(--landing-color-ink)] px-6 py-8 text-[var(--landing-color-paper)] shadow-[var(--landing-shadow-panel)] sm:px-8 sm:py-10">
+                                <div className="mb-5 flex flex-wrap gap-2 text-xs font-semibold">
+                                    <span className="rounded-[var(--landing-radius-control)] bg-[var(--landing-color-accent)] px-3 py-1.5 text-[var(--landing-color-accent-ink)]">
                                         {employmentTypeLabels[
                                             vacancy.employment_type ?? ''
                                         ] ??
                                             vacancy.employment_type ??
                                             'Umum'}
                                     </span>
-                                    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[#0c8c5e]">
+                                    <span className="rounded-[var(--landing-radius-control)] border border-[var(--landing-color-paper)]/20 px-3 py-1.5 text-[var(--landing-color-paper)]">
                                         {workplaceTypeLabels[
                                             vacancy.workplace_type ?? ''
                                         ] ??
@@ -217,10 +208,10 @@ export default function CareerShowPage() {
                                             'Fleksibel'}
                                     </span>
                                 </div>
-                                <h1 className={frontHeroTitleClass}>
+                                <h1 className={`${frontHeroTitleClass} max-w-[16ch] !text-[var(--landing-color-paper)]`}>
                                     {vacancy.title}
                                 </h1>
-                                <div className="mt-4 grid gap-3 text-sm text-[rgb(35,41,51)] md:grid-cols-2">
+                                <div className="mt-6 grid gap-3 text-sm text-[var(--landing-color-paper)]/75 md:grid-cols-2">
                                     <div className="flex items-center gap-2">
                                         <MapPin className="size-4" />
                                         {vacancy.location ??
@@ -240,7 +231,7 @@ export default function CareerShowPage() {
                                         Closing {vacancy.closing_date ?? '-'}
                                     </div>
                                 </div>
-                                <div className="mt-5 rounded-2xl bg-white/10 px-4 py-3 text-sm">
+                                <div className="mt-6 rounded-[var(--landing-radius-card)] border border-[var(--landing-color-paper)]/15 bg-[var(--landing-color-paper)]/5 px-4 py-3 text-sm text-[var(--landing-color-paper)]/75">
                                     Rentang kompensasi:{' '}
                                     <strong>
                                         {formatCurrency(vacancy.min_salary)} -{' '}
@@ -249,51 +240,61 @@ export default function CareerShowPage() {
                                 </div>
                             </section>
 
-                            <Card>
+                            <Card className="border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] shadow-none">
                                 <CardHeader>
                                     <CardTitle>Deskripsi Posisi</CardTitle>
                                 </CardHeader>
-                                <CardContent className="text-sm leading-6 whitespace-pre-line text-slate-600">
+                                <CardContent className="text-sm leading-7 whitespace-pre-line text-[var(--landing-color-ink-soft)]">
                                     {vacancy.description ??
                                         'Belum ada deskripsi.'}
                                 </CardContent>
                             </Card>
 
-                            <Card>
+                            <Card className="border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] shadow-none">
                                 <CardHeader>
                                     <CardTitle>Kualifikasi</CardTitle>
                                 </CardHeader>
-                                <CardContent className="text-sm leading-6 whitespace-pre-line text-slate-600">
+                                <CardContent className="text-sm leading-7 whitespace-pre-line text-[var(--landing-color-ink-soft)]">
                                     {vacancy.requirements ??
                                         'Belum ada detail kualifikasi.'}
                                 </CardContent>
                             </Card>
 
-                            <Card>
+                            <Card className="border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] shadow-none">
                                 <CardHeader>
                                     <CardTitle>Benefit</CardTitle>
                                 </CardHeader>
-                                <CardContent className="text-sm leading-6 whitespace-pre-line text-slate-600">
+                                <CardContent className="text-sm leading-7 whitespace-pre-line text-[var(--landing-color-ink-soft)]">
                                     {vacancy.benefits ??
                                         'Benefit akan dijelaskan pada tahap selanjutnya.'}
                                 </CardContent>
                             </Card>
                         </div>
 
-                        <Card className="h-fit">
+                        <Card className="h-fit border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] shadow-[var(--landing-shadow-panel)] xl:sticky xl:top-6">
                             <CardHeader>
-                                <CardTitle>Kirim Lamaran</CardTitle>
+                                <div className="mb-2 inline-flex w-fit items-center rounded-[var(--landing-radius-control)] bg-[var(--landing-color-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--landing-color-accent)]">
+                                    Langkah terakhir
+                                </div>
+                                <CardTitle className="text-2xl tracking-[-0.03em]">Kirim lamaran</CardTitle>
                                 <CardDescription>
-                                    Isi data kandidat untuk lowongan ini. Tim HR
-                                    akan memproses lamaran Anda dari modul
-                                    rekrutmen internal.
+                                    Ceritakan sedikit tentang diri Anda. Data ini
+                                    hanya digunakan untuk proses rekrutmen Humi.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <form
                                     onSubmit={submitForm}
-                                    className="space-y-4"
+                                    className="space-y-6"
                                 >
+                                    <div className="border-b border-[var(--landing-color-rule)] pb-5">
+                                        <p className="text-sm font-semibold text-[var(--landing-color-ink)]">
+                                            Data utama
+                                        </p>
+                                        <p className="mt-1 text-xs leading-5 text-[var(--landing-color-muted)]">
+                                            Isi informasi yang paling mudah kami gunakan untuk menghubungi Anda.
+                                        </p>
+                                    </div>
                                     <div className="grid gap-4 md:grid-cols-2">
                                         <div className="grid gap-2 md:col-span-2">
                                             <Label htmlFor="full_name">
@@ -580,7 +581,7 @@ export default function CareerShowPage() {
                                                     )
                                                 }
                                                 rows={3}
-                                                className="min-h-24 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none"
+                                                className="min-h-24 rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] px-3 py-2 text-sm text-[var(--landing-color-ink)] shadow-none outline-none focus-visible:border-[var(--landing-color-focus)] focus-visible:ring-2 focus-visible:ring-[var(--landing-color-focus)]/20"
                                             />
                                             <InputError
                                                 message={form.errors.address}
@@ -643,7 +644,7 @@ export default function CareerShowPage() {
                                                     )
                                                 }
                                                 rows={5}
-                                                className="min-h-32 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none"
+                                                className="min-h-32 rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] px-3 py-2 text-sm text-[var(--landing-color-ink)] shadow-none outline-none focus-visible:border-[var(--landing-color-focus)] focus-visible:ring-2 focus-visible:ring-[var(--landing-color-focus)]/20"
                                             />
                                             <InputError
                                                 message={

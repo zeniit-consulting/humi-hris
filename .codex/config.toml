@@ -1,0 +1,5 @@
+[mcp_servers.needmcp]
+url = "https://needmcp.com/mcp"
+
+[mcp_servers.needmcp.http_headers]
+X-API-Key = "sk-need-IFMf2QaY9RsJblYSEEht"

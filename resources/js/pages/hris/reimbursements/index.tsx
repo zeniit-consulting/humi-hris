@@ -2,8 +2,10 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     Check,
     ExternalLink,
-    Filter,
-    RotateCcw,
+    ArrowDown,
+    ArrowUp,
+    ArrowUpDown,
+    FileSpreadsheet,
     WalletCards,
     X,
 } from 'lucide-react';
@@ -52,11 +54,12 @@ type Row = {
 };
 type PageProps = {
     requests: { data: Row[]; total: number };
-    filters: { status: string; employee_id: string };
-    statusOptions: string[];
-    employees: Array<{ id: number; label: string }>;
+    period: string;
+    sort: { by: SortKey; direction: SortDirection };
     stats: Record<string, number>;
 };
+type SortKey = 'employee' | 'title' | 'amount' | 'receipt' | 'status' | 'created_at';
+type SortDirection = 'asc' | 'desc';
 type RejectTarget = Row | null;
 const pageUrl = '/hris/reimbursements';
 const breadcrumbs: BreadcrumbItem[] = [
@@ -69,6 +72,13 @@ const labels: Record<string, string> = {
     processing: 'Diproses Finance',
     paid: 'Dibayar',
 };
+const statStyles: Record<string, string> = {
+    pending: 'border-amber-200 bg-amber-50/70',
+    approved: 'border-emerald-200 bg-emerald-50/70',
+    processing: 'border-sky-200 bg-sky-50/70',
+    paid: 'border-teal-200 bg-teal-50/70',
+    rejected: 'border-rose-200 bg-rose-50/70',
+};
 const money = (value: string) =>
     new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -76,21 +86,65 @@ const money = (value: string) =>
         maximumFractionDigits: 0,
     }).format(Number(value));
 
+const periodOptions = Array.from({ length: 12 }, (_, index) => {
+    const date = new Date();
+    date.setDate(1);
+    date.setMonth(date.getMonth() - index);
+
+    return {
+        value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+        label: new Intl.DateTimeFormat('id-ID', {
+            month: 'long',
+            year: 'numeric',
+        }).format(date),
+    };
+});
+
+function SortableHeader({
+    label,
+    sortKey,
+    activeSort,
+    direction,
+    onSort,
+}: {
+    label: string;
+    sortKey: SortKey;
+    activeSort: SortKey;
+    direction: SortDirection;
+    onSort: (key: SortKey) => void;
+}) {
+    const active = activeSort === sortKey;
+    const SortIcon = !active
+        ? ArrowUpDown
+        : direction === 'asc'
+          ? ArrowUp
+          : ArrowDown;
+
+    return (
+        <th
+            className="px-3 py-2"
+            aria-sort={
+                active ? (direction === 'asc' ? 'ascending' : 'descending') : 'none'
+            }
+        >
+            <button
+                type="button"
+                onClick={() => onSort(sortKey)}
+                className="inline-flex min-h-8 items-center gap-1 rounded-sm font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                title={`Urutkan berdasarkan ${label}`}
+            >
+                {label}
+                <SortIcon className={`size-3.5 ${active ? 'text-primary' : 'text-muted-foreground'}`} />
+            </button>
+        </th>
+    );
+}
+
 export default function ReimbursementsPage() {
-    const { requests, filters, statusOptions, employees, stats } =
+    const { requests, period, sort, stats } =
         usePage<PageProps>().props;
-    const [status, setStatus] = useState(filters.status);
-    const [employeeId, setEmployeeId] = useState(filters.employee_id);
     const [rejectRow, setRejectRow] = useState<RejectTarget>(null);
     const rejectForm = useForm({ rejection_reason: '' });
-    const apply = (event: FormEvent) => {
-        event.preventDefault();
-        router.get(
-            pageUrl,
-            { status, employee_id: employeeId },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
-    };
     const reject = (event: FormEvent) => {
         event.preventDefault();
         if (!rejectRow) return;
@@ -108,6 +162,16 @@ export default function ReimbursementsPage() {
             { status: nextStatus },
             { preserveScroll: true },
         );
+    const toggleSort = (sortKey: SortKey) => {
+        const direction: SortDirection =
+            sort.by === sortKey && sort.direction === 'asc' ? 'desc' : 'asc';
+        router.get(
+            pageUrl,
+            { period, sort_by: sortKey, sort_dir: direction },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+    };
+    const exportUrl = `${pageUrl}/export?period=${period}&sort_by=${sort.by}&sort_dir=${sort.direction}`;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -121,7 +185,10 @@ export default function ReimbursementsPage() {
                         'paid',
                         'rejected',
                     ].map((key) => (
-                        <Card key={key} className="gap-1 py-3">
+                        <Card
+                            key={key}
+                            className={`gap-1 py-3 ${statStyles[key] ?? ''}`}
+                        >
                             <CardHeader className="px-4 pb-0">
                                 <CardDescription>{labels[key]}</CardDescription>
                                 <CardTitle className="text-2xl">
@@ -132,105 +199,67 @@ export default function ReimbursementsPage() {
                     ))}
                 </div>
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Filter reimbursement</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <form
-                            onSubmit={apply}
-                            className="grid gap-3 md:grid-cols-[220px_260px_auto]"
-                        >
-                            <div className="grid gap-2">
-                                <Label>Status</Label>
-                                <Select
-                                    value={status || '__all'}
-                                    onValueChange={(v) =>
-                                        setStatus(v === '__all' ? '' : v)
-                                    }
+                    <CardHeader className="flex flex-row items-start justify-between gap-3">
+                        <div>
+                            <CardTitle>Daftar reimbursement</CardTitle>
+                            <CardDescription>
+                                Total data: {requests.total}
+                            </CardDescription>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                            <Select
+                                value={period}
+                                onValueChange={(value) =>
+                                    router.get(
+                                        pageUrl,
+                                        {
+                                            period: value,
+                                            sort_by: sort.by,
+                                            sort_dir: sort.direction,
+                                        },
+                                        {
+                                            preserveState: true,
+                                            preserveScroll: true,
+                                            replace: true,
+                                        },
+                                    )
+                                }
+                            >
+                                <SelectTrigger
+                                    className="w-[190px]"
+                                    aria-label="Filter periode reimbursement"
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Semua status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="__all">
-                                            Semua status
+                                    <SelectValue placeholder="Pilih periode" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {periodOptions.map((option) => (
+                                        <SelectItem
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
                                         </SelectItem>
-                                        {statusOptions.map((item) => (
-                                            <SelectItem key={item} value={item}>
-                                                {labels[item] ?? item}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label>Karyawan</Label>
-                                <Select
-                                    value={employeeId || '__all'}
-                                    onValueChange={(v) =>
-                                        setEmployeeId(v === '__all' ? '' : v)
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Semua karyawan" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="__all">
-                                            Semua karyawan
-                                        </SelectItem>
-                                        {employees.map((item) => (
-                                            <SelectItem
-                                                key={item.id}
-                                                value={String(item.id)}
-                                            >
-                                                {item.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="flex items-end gap-2">
-                                <Button type="submit">
-                                    <Filter className="size-4" />
-                                    Terapkan
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => {
-                                        setStatus('pending');
-                                        setEmployeeId('');
-                                        router.get(
-                                            pageUrl,
-                                            { status: 'pending' },
-                                            { replace: true },
-                                        );
-                                    }}
-                                >
-                                    <RotateCcw className="size-4" />
-                                    Reset
-                                </Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Daftar reimbursement</CardTitle>
-                        <CardDescription>
-                            Total data: {requests.total}
-                        </CardDescription>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Button variant="outline" asChild>
+                                <a href={exportUrl}>
+                                    <FileSpreadsheet className="size-4" />
+                                    Export Excel
+                                </a>
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[1050px] text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
-                                        <th className="px-3 py-2">Karyawan</th>
-                                        <th className="px-3 py-2">Pengajuan</th>
-                                        <th className="px-3 py-2">Nominal</th>
-                                        <th className="px-3 py-2">Nota</th>
-                                        <th className="px-3 py-2">Status</th>
+                                        <SortableHeader label="Karyawan" sortKey="employee" activeSort={sort.by} direction={sort.direction} onSort={toggleSort} />
+                                        <SortableHeader label="Pengajuan" sortKey="title" activeSort={sort.by} direction={sort.direction} onSort={toggleSort} />
+                                        <SortableHeader label="Nominal" sortKey="amount" activeSort={sort.by} direction={sort.direction} onSort={toggleSort} />
+                                        <SortableHeader label="Nota" sortKey="receipt" activeSort={sort.by} direction={sort.direction} onSort={toggleSort} />
+                                        <SortableHeader label="Status" sortKey="status" activeSort={sort.by} direction={sort.direction} onSort={toggleSort} />
                                         <th className="px-3 py-2">Aksi</th>
                                     </tr>
                                 </thead>
