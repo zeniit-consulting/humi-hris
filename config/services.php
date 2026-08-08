@@ -65,6 +65,12 @@ return [
         ],
     ],
 
+    'web_push' => [
+        'subject' => env('WEB_PUSH_VAPID_SUBJECT', env('APP_URL')),
+        'public_key' => env('WEB_PUSH_VAPID_PUBLIC_KEY'),
+        'private_key' => env('WEB_PUSH_VAPID_PRIVATE_KEY'),
+    ],
+
     'n8n' => [
         'staff_invitation' => [
             'url' => env('N8N_STAFF_INVITATION_WEBHOOK_URL'),

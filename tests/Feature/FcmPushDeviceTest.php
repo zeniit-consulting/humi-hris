@@ -72,4 +72,28 @@ class FcmPushDeviceTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.has_push_notification_device', true);
     }
+
+    public function test_portal_user_can_register_a_web_push_subscription(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $subscription = [
+            'endpoint' => 'https://web.push.apple.com/example-subscription',
+            'keys' => [
+                'p256dh' => str_repeat('p', 87),
+                'auth' => str_repeat('a', 22),
+            ],
+        ];
+
+        $this->actingAs($user)
+            ->postJson('/portal/api/web-push-subscriptions', $subscription)
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('web_push_subscriptions', [
+            'user_id' => $user->id,
+            'endpoint' => $subscription['endpoint'],
+            'p256dh' => $subscription['keys']['p256dh'],
+            'auth' => $subscription['keys']['auth'],
+        ]);
+    }
 }

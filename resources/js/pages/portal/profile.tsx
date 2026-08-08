@@ -21,6 +21,11 @@ import {
 } from './lib';
 import type { PortalLinkMap } from './lib';
 import { enableAttendancePush } from './lib/firebase-messaging';
+import {
+    enableWebPush,
+    serializeWebPushSubscription,
+    webPushIsSupported,
+} from './lib/web-push';
 import { PortalShell } from './shell';
 
 // Hallmark · genre: modern-minimal · macrostructure: Long Document · theme: Quiet · enrichment: none
@@ -362,10 +367,17 @@ export default function PortalProfilePage({ pageTitle }: Props) {
     const enablePushNotifications = async () => {
         try {
             setIsEnablingPush(true);
-            const token = await enableAttendancePush();
-            const response = await requestApi<{
-                test_notification_sent: boolean;
-            }>('/portal/api/push-devices', 'POST', { token });
+            const response = webPushIsSupported()
+                ? await requestApi<{ test_notification_sent: boolean }>(
+                      '/portal/api/web-push-subscriptions',
+                      'POST',
+                      serializeWebPushSubscription(await enableWebPush()),
+                  )
+                : await requestApi<{ test_notification_sent: boolean }>(
+                      '/portal/api/push-devices',
+                      'POST',
+                      { token: await enableAttendancePush() },
+                  );
             if (!response.data.test_notification_sent) {
                 notifyPortal(
                     'error',

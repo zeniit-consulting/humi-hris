@@ -351,6 +351,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/api/summary', [PortalController::class, 'summary'])->name('portal.api.summary');
     Route::post('portal/api/push-devices', [PortalPushDeviceController::class, 'store'])->name('portal.api.push-devices.store');
     Route::delete('portal/api/push-devices', [PortalPushDeviceController::class, 'destroy'])->name('portal.api.push-devices.destroy');
+    Route::post('portal/api/web-push-subscriptions', [PortalPushDeviceController::class, 'storeWebPushSubscription'])->name('portal.api.web-push-subscriptions.store');
+    Route::delete('portal/api/web-push-subscriptions', [PortalPushDeviceController::class, 'destroyWebPushSubscription'])->name('portal.api.web-push-subscriptions.destroy');
     Route::get('portal/api/attendances', [AttendanceController::class, 'index'])->name('portal.api.attendances.index');
     Route::post('portal/api/attendances', [AttendanceController::class, 'store'])->name('portal.api.attendances.store');
     Route::put('portal/api/attendances/{employeeAttendance}', [AttendanceController::class, 'update'])->name('portal.api.attendances.update');
