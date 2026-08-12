@@ -28,11 +28,22 @@ class EmployeeEmploymentHistory extends Model
         'old_position_name',
         'new_position_name',
         'notes',
+        'old_contract_duration_months', 'new_contract_duration_months',
+        'old_contract_end_date', 'new_contract_end_date',
+        'old_base_salary', 'new_base_salary', 'old_daily_wage', 'new_daily_wage',
     ];
 
     protected function casts(): array
     {
-        return ['effective_date' => 'date'];
+        return [
+            'effective_date' => 'date',
+            'old_contract_end_date' => 'date',
+            'new_contract_end_date' => 'date',
+            'old_base_salary' => 'decimal:2',
+            'new_base_salary' => 'decimal:2',
+            'old_daily_wage' => 'decimal:2',
+            'new_daily_wage' => 'decimal:2',
+        ];
     }
 
     public function employee(): BelongsTo

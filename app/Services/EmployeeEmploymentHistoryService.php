@@ -27,6 +27,8 @@ class EmployeeEmploymentHistoryService
         $oldPositionId = $before['position_id'] ?? null;
 
         if ((int) $oldDivisionId === (int) $employee->division_id && (int) $oldPositionId === (int) $employee->position_id) {
+            $this->recordFinancialAndContractChanges($employee, $before, $effectiveDate, $notes, $actor);
+
             return;
         }
 
@@ -50,6 +52,42 @@ class EmployeeEmploymentHistoryService
             'new_position_name' => $newPosition?->name,
             'notes' => $notes,
         ]);
+
+        $this->recordFinancialAndContractChanges($employee, $before, $effectiveDate, $notes, $actor);
+    }
+
+    /** @param array<string, mixed> $before */
+    private function recordFinancialAndContractChanges(Employee $employee, array $before, string $effectiveDate, ?string $notes, User $actor): void
+    {
+        $oldContractDuration = $before['contract_duration_months'] ?? null;
+        $oldContractEndDate = $before['contract_end_date'] ?? null;
+        $newContractEndDate = $employee->contract_end_date?->toDateString();
+
+        if ((int) $oldContractDuration !== (int) $employee->contract_duration_months || (string) $oldContractEndDate !== (string) $newContractEndDate) {
+            $this->create($employee, $actor, [
+                'event_type' => 'contract_change',
+                'effective_date' => $effectiveDate,
+                'old_contract_duration_months' => $oldContractDuration,
+                'new_contract_duration_months' => $employee->contract_duration_months,
+                'old_contract_end_date' => $oldContractEndDate,
+                'new_contract_end_date' => $newContractEndDate,
+                'notes' => $notes,
+            ]);
+        }
+
+        $oldBaseSalary = $before['base_salary'] ?? null;
+        $oldDailyWage = $before['daily_wage'] ?? null;
+        if ((float) $oldBaseSalary !== (float) $employee->base_salary || (float) $oldDailyWage !== (float) $employee->daily_wage) {
+            $this->create($employee, $actor, [
+                'event_type' => 'salary_change',
+                'effective_date' => $effectiveDate,
+                'old_base_salary' => $oldBaseSalary,
+                'new_base_salary' => $employee->base_salary,
+                'old_daily_wage' => $oldDailyWage,
+                'new_daily_wage' => $employee->daily_wage,
+                'notes' => $notes,
+            ]);
+        }
     }
 
     public function recordPkwttActivation(Employee $employee, string $oldStatus, string $effectiveDate, ?string $notes, User $actor): void

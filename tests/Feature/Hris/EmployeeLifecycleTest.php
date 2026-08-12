@@ -114,6 +114,76 @@ class EmployeeLifecycleTest extends TestCase
         ]);
     }
 
+    public function test_contract_update_records_pkwt_history(): void
+    {
+        [$user, $division, $position] = $this->employeeContext('4');
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'employment_type' => 'PKWT',
+            'contract_duration_months' => 12,
+            'contract_end_date' => '2026-12-31',
+        ]);
+
+        $this->actingAs($user)->put(route('hris.employees.update', $employee), [
+            ...$this->payload($division, $position),
+            'employee_code' => $employee->employee_code,
+            'full_name' => $employee->full_name,
+            'employment_type' => 'PKWT',
+            'contract_duration_months' => 18,
+            'contract_end_date' => '2027-08-31',
+            'change_effective_date' => '2026-07-01',
+            'change_notes' => 'Perpanjangan kontrak.',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('employee_employment_histories', [
+            'employee_id' => $employee->id,
+            'event_type' => 'contract_change',
+            'old_contract_duration_months' => 12,
+            'new_contract_duration_months' => 18,
+            'old_contract_end_date' => '2026-12-31 00:00:00',
+            'new_contract_end_date' => '2027-08-31 00:00:00',
+            'effective_date' => '2026-07-01 00:00:00',
+            'notes' => 'Perpanjangan kontrak.',
+            'created_by_user_id' => $user->id,
+        ]);
+    }
+
+    public function test_salary_update_records_salary_history(): void
+    {
+        [$user, $division, $position] = $this->employeeContext('4');
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'base_salary' => 5_000_000,
+            'daily_wage' => 200_000,
+        ]);
+
+        $this->actingAs($user)->put(route('hris.employees.update', $employee), [
+            ...$this->payload($division, $position),
+            'employee_code' => $employee->employee_code,
+            'full_name' => $employee->full_name,
+            'base_salary' => '6.000.000',
+            'daily_wage' => '250.000',
+            'change_effective_date' => '2026-07-01',
+            'change_notes' => 'Penyesuaian gaji tahunan.',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('employee_employment_histories', [
+            'employee_id' => $employee->id,
+            'event_type' => 'salary_change',
+            'old_base_salary' => '5000000.00',
+            'new_base_salary' => '6000000.00',
+            'old_daily_wage' => '200000.00',
+            'new_daily_wage' => '250000.00',
+            'effective_date' => '2026-07-01 00:00:00',
+            'notes' => 'Penyesuaian gaji tahunan.',
+            'created_by_user_id' => $user->id,
+        ]);
+    }
+
     /** @return array{User, Division, Position} */
     private function employeeContext(string $level): array
     {

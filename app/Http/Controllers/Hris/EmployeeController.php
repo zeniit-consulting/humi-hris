@@ -281,6 +281,14 @@ class EmployeeController extends Controller
                         'old_position_name' => $history->old_position_name,
                         'new_position_name' => $history->new_position_name,
                         'notes' => $history->notes,
+                        'old_contract_duration_months' => $history->old_contract_duration_months,
+                        'new_contract_duration_months' => $history->new_contract_duration_months,
+                        'old_contract_end_date' => $history->old_contract_end_date?->format('Y-m-d'),
+                        'new_contract_end_date' => $history->new_contract_end_date?->format('Y-m-d'),
+                        'old_base_salary' => $history->old_base_salary,
+                        'new_base_salary' => $history->new_base_salary,
+                        'old_daily_wage' => $history->old_daily_wage,
+                        'new_daily_wage' => $history->new_daily_wage,
                         'created_by_name' => $history->createdBy?->name,
                     ])
                     ->values(),
@@ -1121,7 +1129,11 @@ class EmployeeController extends Controller
 
         try {
             $employee = DB::transaction(function () use ($employee, $request, $validated, $effectiveDate, $changeNotes, $historyService, $fixedAllowances, $shouldSyncFixedAllowances): Employee {
-                $before = $employee->only(['employment_status', 'division_id', 'position_id']);
+                $before = $employee->only([
+                    'employment_status', 'division_id', 'position_id',
+                    'contract_duration_months', 'contract_end_date',
+                    'base_salary', 'daily_wage',
+                ]);
 
                 $employee->update([
                     ...$validated,

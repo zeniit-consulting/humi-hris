@@ -187,6 +187,14 @@ type EmployeeEmploymentHistory = {
     new_division_name: string | null;
     old_position_name: string | null;
     new_position_name: string | null;
+    old_contract_duration_months: number | null;
+    new_contract_duration_months: number | null;
+    old_contract_end_date: string | null;
+    new_contract_end_date: string | null;
+    old_base_salary: string | null;
+    new_base_salary: string | null;
+    old_daily_wage: string | null;
+    new_daily_wage: string | null;
     notes: string | null;
     created_by_name: string | null;
 };
@@ -759,6 +767,8 @@ const employmentHistoryLabels: Record<string, string> = {
     demotion: 'Demosi',
     position_change: 'Perubahan Jabatan',
     pkwtt_activation: 'Aktivasi PKWTT',
+    contract_change: 'Perubahan PKWT',
+    salary_change: 'Perubahan Gaji',
 };
 
 const getInitials = (name: string) => {
@@ -2977,6 +2987,21 @@ export default function EmployeesIndex() {
                                                         {history.new_division_name ??
                                                             '-'}
                                                     </p>
+                                                )}
+                                                {history.event_type === 'contract_change' && (
+                                                    <p>
+                                                        Kontrak: {history.old_contract_duration_months ?? '-'} bulan ({formatDateDisplay(history.old_contract_end_date)}) → {history.new_contract_duration_months ?? '-'} bulan ({formatDateDisplay(history.new_contract_end_date)})
+                                                    </p>
+                                                )}
+                                                {history.event_type === 'salary_change' && (
+                                                    <>
+                                                        <p>
+                                                            Gaji pokok: {formatCurrencyDisplay(history.old_base_salary)} → {formatCurrencyDisplay(history.new_base_salary)}
+                                                        </p>
+                                                        <p>
+                                                            Upah harian: {formatCurrencyDisplay(history.old_daily_wage)} → {formatCurrencyDisplay(history.new_daily_wage)}
+                                                        </p>
+                                                    </>
                                                 )}
                                                 {history.notes && (
                                                     <p className="text-muted-foreground">
