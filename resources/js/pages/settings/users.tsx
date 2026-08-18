@@ -368,8 +368,7 @@ export default function SettingsUsersPage({
                                                             router.delete(
                                                                 `/settings/users/${subUser.id}`,
                                                                 {
-                                                                    preserveScroll:
-                                                                        true,
+                                                                    preserveScroll: true,
                                                                 },
                                                             );
                                                         }}

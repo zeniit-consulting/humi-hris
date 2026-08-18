@@ -19,7 +19,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Password({ promptMode = false }: { promptMode?: boolean }) {
+export default function Password({
+    promptMode = false,
+}: {
+    promptMode?: boolean;
+}) {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
@@ -33,7 +37,9 @@ export default function Password({ promptMode = false }: { promptMode?: boolean 
                 <div className="space-y-6">
                     {promptMode ? (
                         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                            Anda menggunakan password awal dari nomor telepon. Demi keamanan, disarankan ubah password sekarang. Jika belum ingin, Anda bisa melewati langkah ini.
+                            Anda menggunakan password awal dari nomor telepon.
+                            Demi keamanan, disarankan ubah password sekarang.
+                            Jika belum ingin, Anda bisa melewati langkah ini.
                         </div>
                     ) : null}
 
@@ -79,7 +85,7 @@ export default function Password({ promptMode = false }: { promptMode?: boolean 
                                         type="password"
                                         className="mt-1 block w-full"
                                         autoComplete="current-password"
-                                         placeholder="Kata sandi saat ini"
+                                        placeholder="Kata sandi saat ini"
                                     />
 
                                     <InputError
@@ -136,7 +142,11 @@ export default function Password({ promptMode = false }: { promptMode?: boolean 
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            onClick={() => router.post('/settings/password/skip')}
+                                            onClick={() =>
+                                                router.post(
+                                                    '/settings/password/skip',
+                                                )
+                                            }
                                         >
                                             Lewati nanti
                                         </Button>

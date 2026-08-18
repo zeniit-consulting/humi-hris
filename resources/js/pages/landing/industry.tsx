@@ -20,6 +20,8 @@ import {
     frontHeroSubtitleClass,
     frontHeroTitleClass,
 } from '@/components/front-hero-typography';
+import { LandingFooter } from '@/components/landing-footer';
+import { LandingNav } from '@/components/landing-nav';
 import SeoHead from '@/components/seo-head';
 import { dashboard, login, register } from '@/routes';
 
@@ -359,64 +361,44 @@ export default function IndustryLanding({
                 structuredData={structuredData}
             />
 
-            <div className="min-h-screen bg-white text-slate-950">
-                <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 backdrop-blur">
-                    <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-                        <Link href="/" className="flex items-center gap-2">
-                            <img
-                                src="/logo.png"
-                                alt="Humi"
-                                className="h-8 w-auto"
-                            />
-                        </Link>
-                        <nav className="hidden items-center gap-1 text-sm font-medium text-slate-600 lg:flex">
+            <div className="min-h-screen overflow-x-clip bg-[var(--landing-color-paper)] font-[family-name:var(--landing-font-body)] text-[var(--landing-color-ink)]">
+                <LandingNav
+                    hasUser={Boolean(auth.user)}
+                    trialHref={primaryHref.url}
+                />
+
+                {/* Sub-navigation bar for industry solutions */}
+                <div className="sticky top-18 z-30 border-b border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)]/90 backdrop-blur-md">
+                    <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-2.5 sm:px-8">
+                        <div className="flex items-center gap-1 overflow-x-auto text-xs sm:text-sm">
                             {segmentLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
                                     className={
                                         link.href === industry.path
-                                            ? 'rounded-full bg-slate-100 px-4 py-2 text-slate-950'
-                                            : 'rounded-full px-4 py-2 transition hover:bg-slate-50 hover:text-slate-950'
+                                            ? 'rounded-full bg-[var(--landing-color-accent-soft)] px-3.5 py-1.5 font-semibold whitespace-nowrap text-[var(--landing-color-accent)]'
+                                            : 'rounded-full px-3.5 py-1.5 font-medium whitespace-nowrap text-[var(--landing-color-ink-soft)] transition-colors hover:bg-[var(--landing-color-surface-soft)] hover:text-[var(--landing-color-ink)]'
                                     }
                                 >
                                     {link.label}
                                 </Link>
                             ))}
-                            <Link
-                                href="/features"
-                                className="rounded-full px-4 py-2 transition hover:bg-slate-50 hover:text-slate-950"
-                            >
-                                Fitur
-                            </Link>
-                            <Link
-                                href="/berita"
-                                className="rounded-full px-4 py-2 transition hover:bg-slate-50 hover:text-slate-950"
-                            >
-                                Berita
-                            </Link>
-                            <Link
-                                href="/contact"
-                                className="rounded-full px-4 py-2 transition hover:bg-slate-50 hover:text-slate-950"
-                            >
-                                Kontak
-                            </Link>
-                        </nav>
+                        </div>
                         <a
                             href={waUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-                            style={{ backgroundColor: industry.accent }}
+                            className="hidden items-center gap-1.5 text-xs font-semibold text-[var(--landing-color-accent)] hover:underline sm:inline-flex"
                         >
-                            Demo
-                            <ArrowRight className="h-4 w-4" />
+                            Konsultasi WhatsApp
+                            <ArrowRight className="size-3.5" />
                         </a>
                     </div>
-                </header>
+                </div>
 
                 <main>
-                    <section className="relative overflow-hidden border-b border-slate-100">
+                    <section className="relative overflow-hidden border-b border-[var(--landing-color-rule)]">
                         <div
                             className="absolute inset-x-0 top-0 -z-10 h-[620px]"
                             style={{
@@ -791,6 +773,11 @@ export default function IndustryLanding({
                         </div>
                     </section>
                 </main>
+
+                <LandingFooter
+                    hasUser={Boolean(auth.user)}
+                    trialHref={primaryHref.url}
+                />
             </div>
         </>
     );

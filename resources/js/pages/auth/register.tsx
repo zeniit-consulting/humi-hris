@@ -35,10 +35,7 @@ export default function Register() {
             description="Lengkapi data berikut untuk membuat akun baru"
         >
             <Head title="Daftar" />
-            <form
-                onSubmit={handleSubmit}
-                className="flex flex-col gap-6"
-            >
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                 <div className="grid gap-6">
                     <div className="grid gap-2">
                         <Label htmlFor="name">Nama</Label>
@@ -73,10 +70,7 @@ export default function Register() {
                             name="company_name"
                             value={form.data.company_name}
                             onChange={(event) =>
-                                form.setData(
-                                    'company_name',
-                                    event.target.value,
-                                )
+                                form.setData('company_name', event.target.value)
                             }
                             placeholder="PT Contoh Sejahtera"
                         />

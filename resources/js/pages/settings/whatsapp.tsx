@@ -54,15 +54,26 @@ export default function WhatsappSettingsPage({
                     />
 
                     <div className="rounded-lg border p-4 text-sm">
-                        <p className="font-medium text-slate-900">Provider aktif</p>
+                        <p className="font-medium text-slate-900">
+                            Provider aktif
+                        </p>
                         <p className="mt-2 text-slate-600">
-                            Provider: <span className="font-medium">{sessionSnapshot?.provider ?? 'waha'}</span>
+                            Provider:{' '}
+                            <span className="font-medium">
+                                {sessionSnapshot?.provider ?? 'waha'}
+                            </span>
                         </p>
                         <p className="text-slate-600">
-                            Status: <span className="font-medium">{sessionSnapshot?.status ?? 'Tidak diketahui'}</span>
+                            Status:{' '}
+                            <span className="font-medium">
+                                {sessionSnapshot?.status ?? 'Tidak diketahui'}
+                            </span>
                         </p>
                         <p className="text-slate-600">
-                            Base URL: <span className="font-medium">{sessionSnapshot?.base_url ?? '-'}</span>
+                            Base URL:{' '}
+                            <span className="font-medium">
+                                {sessionSnapshot?.base_url ?? '-'}
+                            </span>
                         </p>
                     </div>
 
@@ -93,7 +104,9 @@ export default function WhatsappSettingsPage({
                                 id="whatsapp_phone"
                                 type="tel"
                                 value={form.data.phone}
-                                onChange={(event) => form.setData('phone', event.target.value)}
+                                onChange={(event) =>
+                                    form.setData('phone', event.target.value)
+                                }
                                 placeholder="081234567890"
                             />
                             <InputError message={form.errors.phone} />
@@ -105,7 +118,9 @@ export default function WhatsappSettingsPage({
                                 id="whatsapp_message"
                                 className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 value={form.data.message}
-                                onChange={(event) => form.setData('message', event.target.value)}
+                                onChange={(event) =>
+                                    form.setData('message', event.target.value)
+                                }
                             />
                             <InputError message={form.errors.message} />
                         </div>

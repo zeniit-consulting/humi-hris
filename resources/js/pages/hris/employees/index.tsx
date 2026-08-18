@@ -1985,169 +1985,180 @@ export default function EmployeesIndex() {
                     </CardHeader>
                     {filtersOpen ? (
                         <CardContent id="employee-filters">
-                        <form
-                            onSubmit={submitFilters}
-                            className={
-                                isResignedList
-                                    ? 'grid gap-3 md:grid-cols-[1fr_220px_220px_auto_auto]'
-                                    : 'grid gap-3 md:grid-cols-[1fr_220px_220px_220px_auto_auto]'
-                            }
-                        >
-                            <div className="grid gap-2">
-                                <Label htmlFor="search">Pencarian</Label>
-                                <div className="relative">
-                                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        id="search"
-                                        value={filterState.search}
-                                        onChange={(event) =>
-                                            setFilterState((current) => ({
-                                                ...current,
-                                                search: event.target.value,
-                                            }))
-                                        }
-                                        className="pl-9"
-                                        placeholder="Nama, email, atau kode karyawan"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="division-filter">Divisi</Label>
-                                <SearchableSelect
-                                    id="division-filter"
-                                    value={
-                                        filterState.division_id === ''
-                                            ? '__all'
-                                            : filterState.division_id
-                                    }
-                                    onValueChange={(value) =>
-                                        setFilterState((current) => ({
-                                            ...current,
-                                            division_id:
-                                                value === '__all' ? '' : value,
-                                        }))
-                                    }
-                                    placeholder="Semua divisi"
-                                    searchPlaceholder="Cari divisi..."
-                                    options={[
-                                        {
-                                            value: '__all',
-                                            label: 'Semua divisi',
-                                        },
-                                        ...divisions.data.map((division) => ({
-                                            value: String(division.id),
-                                            label: division.name,
-                                        })),
-                                    ]}
-                                    className="w-full"
-                                />
-                            </div>
-
-                            {!isResignedList && (
+                            <form
+                                onSubmit={submitFilters}
+                                className={
+                                    isResignedList
+                                        ? 'grid gap-3 md:grid-cols-[1fr_220px_220px_auto_auto]'
+                                        : 'grid gap-3 md:grid-cols-[1fr_220px_220px_220px_auto_auto]'
+                                }
+                            >
                                 <div className="grid gap-2">
-                                    <Label htmlFor="status-filter">
-                                        Status
+                                    <Label htmlFor="search">Pencarian</Label>
+                                    <div className="relative">
+                                        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                        <Input
+                                            id="search"
+                                            value={filterState.search}
+                                            onChange={(event) =>
+                                                setFilterState((current) => ({
+                                                    ...current,
+                                                    search: event.target.value,
+                                                }))
+                                            }
+                                            className="pl-9"
+                                            placeholder="Nama, email, atau kode karyawan"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="division-filter">
+                                        Divisi
                                     </Label>
-                                    <Select
+                                    <SearchableSelect
+                                        id="division-filter"
                                         value={
-                                            filterState.status === ''
+                                            filterState.division_id === ''
                                                 ? '__all'
-                                                : filterState.status
+                                                : filterState.division_id
                                         }
                                         onValueChange={(value) =>
                                             setFilterState((current) => ({
                                                 ...current,
-                                                status:
+                                                division_id:
                                                     value === '__all'
                                                         ? ''
                                                         : value,
                                             }))
                                         }
-                                    >
-                                        <SelectTrigger
-                                            id="status-filter"
-                                            className="w-full"
-                                        >
-                                            <SelectValue placeholder="Semua status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="__all">
-                                                Semua status
-                                            </SelectItem>
-                                            {options.employment_statuses.map(
-                                                (status) => (
-                                                    <SelectItem
-                                                        key={status}
-                                                        value={status}
-                                                    >
-                                                        {statusLabels[status] ??
-                                                            status}
-                                                    </SelectItem>
-                                                ),
-                                            )}
-                                        </SelectContent>
-                                    </Select>
+                                        placeholder="Semua divisi"
+                                        searchPlaceholder="Cari divisi..."
+                                        options={[
+                                            {
+                                                value: '__all',
+                                                label: 'Semua divisi',
+                                            },
+                                            ...divisions.data.map(
+                                                (division) => ({
+                                                    value: String(division.id),
+                                                    label: division.name,
+                                                }),
+                                            ),
+                                        ]}
+                                        className="w-full"
+                                    />
                                 </div>
-                            )}
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="sub-company-filter">
-                                    Sub Company
-                                </Label>
-                                <SearchableSelect
-                                    id="sub-company-filter"
-                                    value={
-                                        filterState.sub_company_id === ''
-                                            ? '__all'
-                                            : filterState.sub_company_id
-                                    }
-                                    onValueChange={(value) =>
-                                        setFilterState((current) => ({
-                                            ...current,
-                                            sub_company_id:
-                                                value === '__all' ? '' : value,
-                                        }))
-                                    }
-                                    placeholder="Semua perusahaan"
-                                    searchPlaceholder="Cari sub-company..."
-                                    options={[
-                                        {
-                                            value: '__all',
-                                            label: 'Semua perusahaan',
-                                        },
-                                        {
-                                            value: '__internal',
-                                            label: 'Tanpa Sub Company',
-                                        },
-                                        ...subCompanyOptions.map((company) => ({
-                                            value: String(company.id),
-                                            label: `${company.code} - ${company.name}`,
-                                        })),
-                                    ]}
-                                    className="w-full"
-                                />
-                            </div>
+                                {!isResignedList && (
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="status-filter">
+                                            Status
+                                        </Label>
+                                        <Select
+                                            value={
+                                                filterState.status === ''
+                                                    ? '__all'
+                                                    : filterState.status
+                                            }
+                                            onValueChange={(value) =>
+                                                setFilterState((current) => ({
+                                                    ...current,
+                                                    status:
+                                                        value === '__all'
+                                                            ? ''
+                                                            : value,
+                                                }))
+                                            }
+                                        >
+                                            <SelectTrigger
+                                                id="status-filter"
+                                                className="w-full"
+                                            >
+                                                <SelectValue placeholder="Semua status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__all">
+                                                    Semua status
+                                                </SelectItem>
+                                                {options.employment_statuses.map(
+                                                    (status) => (
+                                                        <SelectItem
+                                                            key={status}
+                                                            value={status}
+                                                        >
+                                                            {statusLabels[
+                                                                status
+                                                            ] ?? status}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
 
-                            <div className="flex items-end">
-                                <Button type="submit" className="w-full">
-                                    <Filter className="size-4" />
-                                    Terapkan
-                                </Button>
-                            </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="sub-company-filter">
+                                        Sub Company
+                                    </Label>
+                                    <SearchableSelect
+                                        id="sub-company-filter"
+                                        value={
+                                            filterState.sub_company_id === ''
+                                                ? '__all'
+                                                : filterState.sub_company_id
+                                        }
+                                        onValueChange={(value) =>
+                                            setFilterState((current) => ({
+                                                ...current,
+                                                sub_company_id:
+                                                    value === '__all'
+                                                        ? ''
+                                                        : value,
+                                            }))
+                                        }
+                                        placeholder="Semua perusahaan"
+                                        searchPlaceholder="Cari sub-company..."
+                                        options={[
+                                            {
+                                                value: '__all',
+                                                label: 'Semua perusahaan',
+                                            },
+                                            {
+                                                value: '__internal',
+                                                label: 'Tanpa Sub Company',
+                                            },
+                                            ...subCompanyOptions.map(
+                                                (company) => ({
+                                                    value: String(company.id),
+                                                    label: `${company.code} - ${company.name}`,
+                                                }),
+                                            ),
+                                        ]}
+                                        className="w-full"
+                                    />
+                                </div>
 
-                            <div className="flex items-end">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-full"
-                                    onClick={resetFilters}
-                                >
-                                    <RotateCcw className="size-4" />
-                                    Reset
-                                </Button>
-                            </div>
-                        </form>
+                                <div className="flex items-end">
+                                    <Button type="submit" className="w-full">
+                                        <Filter className="size-4" />
+                                        Terapkan
+                                    </Button>
+                                </div>
+
+                                <div className="flex items-end">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full"
+                                        onClick={resetFilters}
+                                    >
+                                        <RotateCcw className="size-4" />
+                                        Reset
+                                    </Button>
+                                </div>
+                            </form>
                         </CardContent>
                     ) : null}
                 </Card>
@@ -2390,7 +2401,8 @@ export default function EmployeesIndex() {
                                                 </td>
                                                 <td className="px-2 py-2">
                                                     {formatCurrencyDisplay(
-                                                        employee.employment_type === 'DW'
+                                                        employee.employment_type ===
+                                                            'DW'
                                                             ? employee.daily_wage
                                                             : employee.base_salary,
                                                     )}
@@ -2988,18 +3000,48 @@ export default function EmployeesIndex() {
                                                             '-'}
                                                     </p>
                                                 )}
-                                                {history.event_type === 'contract_change' && (
+                                                {history.event_type ===
+                                                    'contract_change' && (
                                                     <p>
-                                                        Kontrak: {history.old_contract_duration_months ?? '-'} bulan ({formatDateDisplay(history.old_contract_end_date)}) → {history.new_contract_duration_months ?? '-'} bulan ({formatDateDisplay(history.new_contract_end_date)})
+                                                        Kontrak:{' '}
+                                                        {history.old_contract_duration_months ??
+                                                            '-'}{' '}
+                                                        bulan (
+                                                        {formatDateDisplay(
+                                                            history.old_contract_end_date,
+                                                        )}
+                                                        ) →{' '}
+                                                        {history.new_contract_duration_months ??
+                                                            '-'}{' '}
+                                                        bulan (
+                                                        {formatDateDisplay(
+                                                            history.new_contract_end_date,
+                                                        )}
+                                                        )
                                                     </p>
                                                 )}
-                                                {history.event_type === 'salary_change' && (
+                                                {history.event_type ===
+                                                    'salary_change' && (
                                                     <>
                                                         <p>
-                                                            Gaji pokok: {formatCurrencyDisplay(history.old_base_salary)} → {formatCurrencyDisplay(history.new_base_salary)}
+                                                            Gaji pokok:{' '}
+                                                            {formatCurrencyDisplay(
+                                                                history.old_base_salary,
+                                                            )}{' '}
+                                                            →{' '}
+                                                            {formatCurrencyDisplay(
+                                                                history.new_base_salary,
+                                                            )}
                                                         </p>
                                                         <p>
-                                                            Upah harian: {formatCurrencyDisplay(history.old_daily_wage)} → {formatCurrencyDisplay(history.new_daily_wage)}
+                                                            Upah harian:{' '}
+                                                            {formatCurrencyDisplay(
+                                                                history.old_daily_wage,
+                                                            )}{' '}
+                                                            →{' '}
+                                                            {formatCurrencyDisplay(
+                                                                history.new_daily_wage,
+                                                            )}
                                                         </p>
                                                     </>
                                                 )}
@@ -4780,7 +4822,8 @@ export default function EmployeesIndex() {
 
                                 <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                     <Label htmlFor="base_salary">
-                                        {employeeForm.data.employment_type === 'DW'
+                                        {employeeForm.data.employment_type ===
+                                        'DW'
                                             ? 'Gaji Pokok (tidak digunakan)'
                                             : 'Gaji Pokok'}
                                     </Label>
@@ -4812,18 +4855,39 @@ export default function EmployeesIndex() {
 
                                 {employeeForm.data.employment_type === 'DW' && (
                                     <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="daily_wage">Upah Harian</Label>
+                                        <Label htmlFor="daily_wage">
+                                            Upah Harian
+                                        </Label>
                                         <div className="space-y-1">
                                             <Input
                                                 id="daily_wage"
                                                 type="text"
                                                 inputMode="numeric"
-                                                value={formatThousandDigits(employeeForm.data.daily_wage)}
-                                                onChange={(event) => employeeForm.setData('daily_wage', normalizeDigitInput(event.target.value))}
+                                                value={formatThousandDigits(
+                                                    employeeForm.data
+                                                        .daily_wage,
+                                                )}
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'daily_wage',
+                                                        normalizeDigitInput(
+                                                            event.target.value,
+                                                        ),
+                                                    )
+                                                }
                                                 placeholder="150.000"
                                             />
-                                            <p className="text-xs text-muted-foreground">Payroll dihitung dari absensi hadir atau terlambat dikali upah harian.</p>
-                                            <InputError message={employeeForm.errors.daily_wage} />
+                                            <p className="text-xs text-muted-foreground">
+                                                Payroll dihitung dari absensi
+                                                hadir atau terlambat dikali upah
+                                                harian.
+                                            </p>
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .daily_wage
+                                                }
+                                            />
                                         </div>
                                     </div>
                                 )}
@@ -4838,7 +4902,10 @@ export default function EmployeesIndex() {
                                             type="number"
                                             min="0"
                                             step="0.01"
-                                            value={employeeForm.data.service_fee_points}
+                                            value={
+                                                employeeForm.data
+                                                    .service_fee_points
+                                            }
                                             onChange={(event) =>
                                                 employeeForm.setData(
                                                     'service_fee_points',
@@ -4848,9 +4915,16 @@ export default function EmployeesIndex() {
                                             placeholder="Contoh: 1"
                                         />
                                         <p className="text-xs text-muted-foreground">
-                                            Digunakan untuk pembagian proporsional bonus Service Fee pada payroll.
+                                            Digunakan untuk pembagian
+                                            proporsional bonus Service Fee pada
+                                            payroll.
                                         </p>
-                                        <InputError message={employeeForm.errors.service_fee_points} />
+                                        <InputError
+                                            message={
+                                                employeeForm.errors
+                                                    .service_fee_points
+                                            }
+                                        />
                                     </div>
                                 </div>
 

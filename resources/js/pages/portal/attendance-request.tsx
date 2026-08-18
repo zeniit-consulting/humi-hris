@@ -67,9 +67,10 @@ const formatShift = (shift: ShiftPayload | null): string => {
 export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
     const [portal, setPortal] = useState<PortalSummary | null>(null);
     const [items, setItems] = useState<AttendanceRequestPayload['items']>([]);
-    const [eligibleMissingClockOutDates, setEligibleMissingClockOutDates] = useState<
-        AttendanceRequestPayload['eligible_missing_clock_out_dates']
-    >([]);
+    const [eligibleMissingClockOutDates, setEligibleMissingClockOutDates] =
+        useState<AttendanceRequestPayload['eligible_missing_clock_out_dates']>(
+            [],
+        );
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [form, setForm] = useState({
@@ -150,10 +151,9 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
         const checkInAt =
             form.request_type === 'missing_clock_out'
                 ? null
-                :
-            form.attendance_date && form.check_in_time
-                ? `${form.attendance_date}T${form.check_in_time}:00`
-                : null;
+                : form.attendance_date && form.check_in_time
+                  ? `${form.attendance_date}T${form.check_in_time}:00`
+                  : null;
         const checkOutAt =
             form.attendance_date && form.check_out_time
                 ? `${form.attendance_date}T${form.check_out_time}:00`
@@ -289,7 +289,8 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
                                 onChange={(event) =>
                                     setForm((current) => ({
                                         ...current,
-                                        request_type: event.target.value as RequestType,
+                                        request_type: event.target
+                                            .value as RequestType,
                                         attendance_date: '',
                                         check_in_time: '',
                                         check_out_time: '',
@@ -297,8 +298,12 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
                                 }
                                 className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
                             >
-                                <option value="manual_attendance">Lupa Absen</option>
-                                <option value="missing_clock_out">Lupa Absen Pulang</option>
+                                <option value="manual_attendance">
+                                    Lupa Absen
+                                </option>
+                                <option value="missing_clock_out">
+                                    Lupa Absen Pulang
+                                </option>
                             </select>
                             {form.request_type === 'missing_clock_out' ? (
                                 <select
@@ -312,12 +317,22 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
                                     className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
                                     required
                                 >
-                                    <option value="">Pilih tanggal absensi</option>
-                                    {eligibleMissingClockOutDates.map((item) => (
-                                        <option key={item.attendance_date} value={item.attendance_date}>
-                                            {formatDate(item.attendance_date)} · {formatShift(item.shift)}
-                                        </option>
-                                    ))}
+                                    <option value="">
+                                        Pilih tanggal absensi
+                                    </option>
+                                    {eligibleMissingClockOutDates.map(
+                                        (item) => (
+                                            <option
+                                                key={item.attendance_date}
+                                                value={item.attendance_date}
+                                            >
+                                                {formatDate(
+                                                    item.attendance_date,
+                                                )}{' '}
+                                                · {formatShift(item.shift)}
+                                            </option>
+                                        ),
+                                    )}
                                 </select>
                             ) : (
                                 <input
@@ -334,38 +349,41 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
                                 />
                             )}
                             {form.request_type === 'manual_attendance' ? (
-                            <select
-                                value={form.shift_id}
-                                onChange={(event) =>
-                                    setForm((current) => ({
-                                        ...current,
-                                        shift_id: event.target.value,
-                                    }))
-                                }
-                                className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
-                            >
-                                <option value="">Tanpa shift</option>
-                                {portal?.shift_options.map((shift) => (
-                                    <option key={shift.id} value={shift.id}>
-                                        {formatShift(shift)}
-                                    </option>
-                                ))}
-                            </select>
-                            ) : null}
-                            <div className={`grid gap-3 ${form.request_type === 'missing_clock_out' ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                                {form.request_type === 'manual_attendance' ? (
-                                <input
-                                    type="time"
-                                    value={form.check_in_time}
+                                <select
+                                    value={form.shift_id}
                                     onChange={(event) =>
                                         setForm((current) => ({
                                             ...current,
-                                            check_in_time: event.target.value,
+                                            shift_id: event.target.value,
                                         }))
                                     }
                                     className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
-                                    aria-label="Jam masuk"
-                                />
+                                >
+                                    <option value="">Tanpa shift</option>
+                                    {portal?.shift_options.map((shift) => (
+                                        <option key={shift.id} value={shift.id}>
+                                            {formatShift(shift)}
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : null}
+                            <div
+                                className={`grid gap-3 ${form.request_type === 'missing_clock_out' ? 'grid-cols-1' : 'grid-cols-2'}`}
+                            >
+                                {form.request_type === 'manual_attendance' ? (
+                                    <input
+                                        type="time"
+                                        value={form.check_in_time}
+                                        onChange={(event) =>
+                                            setForm((current) => ({
+                                                ...current,
+                                                check_in_time:
+                                                    event.target.value,
+                                            }))
+                                        }
+                                        className="h-12 w-full rounded-[10px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
+                                        aria-label="Jam masuk"
+                                    />
                                 ) : null}
                                 <input
                                     type="time"
@@ -421,7 +439,11 @@ export default function PortalAttendanceRequestPage({ pageTitle }: Props) {
                                             {formatDate(item.attendance_date)}
                                         </p>
                                         <p className="mt-1 text-xs font-semibold text-[var(--portal-color-primary)]">
-                                            {requestTypeLabels[item.request_type]}
+                                            {
+                                                requestTypeLabels[
+                                                    item.request_type
+                                                ]
+                                            }
                                         </p>
                                         <p className="mt-1 text-sm text-slate-500">
                                             {formatShift(item.shift)}

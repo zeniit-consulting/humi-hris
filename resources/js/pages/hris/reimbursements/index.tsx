@@ -58,7 +58,13 @@ type PageProps = {
     sort: { by: SortKey; direction: SortDirection };
     stats: Record<string, number>;
 };
-type SortKey = 'employee' | 'title' | 'amount' | 'receipt' | 'status' | 'created_at';
+type SortKey =
+    | 'employee'
+    | 'title'
+    | 'amount'
+    | 'receipt'
+    | 'status'
+    | 'created_at';
 type SortDirection = 'asc' | 'desc';
 type RejectTarget = Row | null;
 const pageUrl = '/hris/reimbursements';
@@ -124,7 +130,11 @@ function SortableHeader({
         <th
             className="px-3 py-2"
             aria-sort={
-                active ? (direction === 'asc' ? 'ascending' : 'descending') : 'none'
+                active
+                    ? direction === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                    : 'none'
             }
         >
             <button
@@ -134,15 +144,16 @@ function SortableHeader({
                 title={`Urutkan berdasarkan ${label}`}
             >
                 {label}
-                <SortIcon className={`size-3.5 ${active ? 'text-primary' : 'text-muted-foreground'}`} />
+                <SortIcon
+                    className={`size-3.5 ${active ? 'text-primary' : 'text-muted-foreground'}`}
+                />
             </button>
         </th>
     );
 }
 
 export default function ReimbursementsPage() {
-    const { requests, period, sort, stats } =
-        usePage<PageProps>().props;
+    const { requests, period, sort, stats } = usePage<PageProps>().props;
     const [rejectRow, setRejectRow] = useState<RejectTarget>(null);
     const rejectForm = useForm({ rejection_reason: '' });
     const reject = (event: FormEvent) => {
@@ -255,11 +266,41 @@ export default function ReimbursementsPage() {
                             <table className="w-full min-w-[1050px] text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
-                                        <SortableHeader label="Karyawan" sortKey="employee" activeSort={sort.by} direction={sort.direction} onSort={toggleSort} />
-                                        <SortableHeader label="Pengajuan" sortKey="title" activeSort={sort.by} direction={sort.direction} onSort={toggleSort} />
-                                        <SortableHeader label="Nominal" sortKey="amount" activeSort={sort.by} direction={sort.direction} onSort={toggleSort} />
-                                        <SortableHeader label="Nota" sortKey="receipt" activeSort={sort.by} direction={sort.direction} onSort={toggleSort} />
-                                        <SortableHeader label="Status" sortKey="status" activeSort={sort.by} direction={sort.direction} onSort={toggleSort} />
+                                        <SortableHeader
+                                            label="Karyawan"
+                                            sortKey="employee"
+                                            activeSort={sort.by}
+                                            direction={sort.direction}
+                                            onSort={toggleSort}
+                                        />
+                                        <SortableHeader
+                                            label="Pengajuan"
+                                            sortKey="title"
+                                            activeSort={sort.by}
+                                            direction={sort.direction}
+                                            onSort={toggleSort}
+                                        />
+                                        <SortableHeader
+                                            label="Nominal"
+                                            sortKey="amount"
+                                            activeSort={sort.by}
+                                            direction={sort.direction}
+                                            onSort={toggleSort}
+                                        />
+                                        <SortableHeader
+                                            label="Nota"
+                                            sortKey="receipt"
+                                            activeSort={sort.by}
+                                            direction={sort.direction}
+                                            onSort={toggleSort}
+                                        />
+                                        <SortableHeader
+                                            label="Status"
+                                            sortKey="status"
+                                            activeSort={sort.by}
+                                            direction={sort.direction}
+                                            onSort={toggleSort}
+                                        />
                                         <th className="px-3 py-2">Aksi</th>
                                     </tr>
                                 </thead>

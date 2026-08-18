@@ -273,7 +273,9 @@ export default function NotificationIndex() {
                                                     </p>
                                                     {row.attachment_url ? (
                                                         <a
-                                                            href={row.attachment_url}
+                                                            href={
+                                                                row.attachment_url
+                                                            }
                                                             className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
                                                         >
                                                             <FileText className="size-3.5" />
@@ -348,10 +350,13 @@ export default function NotificationIndex() {
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <Plus className="size-4" />
-                                {editing ? 'Edit notifikasi' : 'Buat notifikasi'}
+                                {editing
+                                    ? 'Edit notifikasi'
+                                    : 'Buat notifikasi'}
                             </DialogTitle>
                             <DialogDescription>
-                                Siapkan pengumuman untuk portal, WhatsApp, atau email.
+                                Siapkan pengumuman untuk portal, WhatsApp, atau
+                                email.
                             </DialogDescription>
                         </DialogHeader>
                         <form className="grid gap-4" onSubmit={submit}>
@@ -361,7 +366,10 @@ export default function NotificationIndex() {
                                     id="title"
                                     value={form.data.title}
                                     onChange={(event) =>
-                                        form.setData('title', event.target.value)
+                                        form.setData(
+                                            'title',
+                                            event.target.value,
+                                        )
                                     }
                                 />
                                 <InputError message={form.errors.title} />
@@ -373,7 +381,10 @@ export default function NotificationIndex() {
                                     className="min-h-28 rounded-md border bg-background px-3 py-2 text-sm"
                                     value={form.data.message}
                                     onChange={(event) =>
-                                        form.setData('message', event.target.value)
+                                        form.setData(
+                                            'message',
+                                            event.target.value,
+                                        )
                                     }
                                 />
                                 <InputError message={form.errors.message} />
@@ -383,19 +394,25 @@ export default function NotificationIndex() {
                                     label="Audience"
                                     value={form.data.audience}
                                     options={audienceOptions}
-                                    onChange={(value) => form.setData('audience', value)}
+                                    onChange={(value) =>
+                                        form.setData('audience', value)
+                                    }
                                 />
                                 <FieldSelect
                                     label="Channel"
                                     value={form.data.channel}
                                     options={channelOptions}
-                                    onChange={(value) => form.setData('channel', value)}
+                                    onChange={(value) =>
+                                        form.setData('channel', value)
+                                    }
                                 />
                                 <FieldSelect
                                     label="Status"
                                     value={form.data.status}
                                     options={statusOptions}
-                                    onChange={(value) => form.setData('status', value)}
+                                    onChange={(value) =>
+                                        form.setData('status', value)
+                                    }
                                 />
                             </div>
                             <div className="grid gap-3 md:grid-cols-2">
@@ -406,10 +423,15 @@ export default function NotificationIndex() {
                                         type="datetime-local"
                                         value={form.data.publish_at}
                                         onChange={(event) =>
-                                            form.setData('publish_at', event.target.value)
+                                            form.setData(
+                                                'publish_at',
+                                                event.target.value,
+                                            )
                                         }
                                     />
-                                    <InputError message={form.errors.publish_at} />
+                                    <InputError
+                                        message={form.errors.publish_at}
+                                    />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="expires_at">Berakhir</Label>
@@ -418,17 +440,24 @@ export default function NotificationIndex() {
                                         type="datetime-local"
                                         value={form.data.expires_at}
                                         onChange={(event) =>
-                                            form.setData('expires_at', event.target.value)
+                                            form.setData(
+                                                'expires_at',
+                                                event.target.value,
+                                            )
                                         }
                                     />
-                                    <InputError message={form.errors.expires_at} />
+                                    <InputError
+                                        message={form.errors.expires_at}
+                                    />
                                 </div>
                             </div>
                             <div className="grid gap-2">
                                 <Label>Dokumen lampiran</Label>
                                 <NotificationAttachmentDropzone
                                     file={form.data.attachment}
-                                    existingName={editing?.attachment_name ?? null}
+                                    existingName={
+                                        editing?.attachment_name ?? null
+                                    }
                                     error={form.errors.attachment}
                                     onChange={(file) =>
                                         form.setData('attachment', file)
@@ -437,7 +466,11 @@ export default function NotificationIndex() {
                             </div>
                             <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
                                 {editing ? (
-                                    <Button type="button" variant="outline" onClick={resetForm}>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={resetForm}
+                                    >
                                         Batal
                                     </Button>
                                 ) : null}

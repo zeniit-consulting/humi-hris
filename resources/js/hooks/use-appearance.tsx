@@ -31,7 +31,9 @@ const getCookie = (name: string): string | null => {
     const cookies = document.cookie.split('; ');
     const value = cookies.find((cookie) => cookie.startsWith(`${name}=`));
 
-    return value ? decodeURIComponent(value.split('=').slice(1).join('=')) : null;
+    return value
+        ? decodeURIComponent(value.split('=').slice(1).join('='))
+        : null;
 };
 
 const normalizeAppearance = (value: string | null): Appearance => {

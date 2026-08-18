@@ -7,21 +7,25 @@ const urlBase64ToUint8Array = (value: string) => {
     const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
     const rawData = window.atob(base64);
 
-    return Uint8Array.from([...rawData].map((character) => character.charCodeAt(0)));
+    return Uint8Array.from(
+        [...rawData].map((character) => character.charCodeAt(0)),
+    );
 };
 
 export const webPushIsSupported = () =>
     Boolean(
         vapidPublicKey &&
-            window.isSecureContext &&
-            'serviceWorker' in navigator &&
-            'PushManager' in window &&
-            'Notification' in window,
+        window.isSecureContext &&
+        'serviceWorker' in navigator &&
+        'PushManager' in window &&
+        'Notification' in window,
     );
 
 export async function enableWebPush(): Promise<PushSubscription> {
     if (!webPushIsSupported() || !vapidPublicKey) {
-        throw new Error('Web Push Safari belum dikonfigurasi atau tidak didukung.');
+        throw new Error(
+            'Web Push Safari belum dikonfigurasi atau tidak didukung.',
+        );
     }
 
     const permission = await Notification.requestPermission();

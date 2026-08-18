@@ -449,9 +449,7 @@ export default function ShiftChangeApprovalPage() {
                                                 {row.requested_date_label}
                                             </td>
                                             <td className="px-3 py-3">
-                                                {formatShift(
-                                                    row.current_shift,
-                                                )}
+                                                {formatShift(row.current_shift)}
                                             </td>
                                             <td className="px-3 py-3 font-medium">
                                                 {formatShift(
@@ -580,9 +578,7 @@ export default function ShiftChangeApprovalPage() {
                                         Shift saat ini
                                     </p>
                                     <p className="mt-1 font-semibold">
-                                        {formatShift(
-                                            detailRow.current_shift,
-                                        )}
+                                        {formatShift(detailRow.current_shift)}
                                     </p>
                                 </div>
                                 <div className="rounded-lg border p-3">
@@ -590,9 +586,7 @@ export default function ShiftChangeApprovalPage() {
                                         Shift diminta
                                     </p>
                                     <p className="mt-1 font-semibold">
-                                        {formatShift(
-                                            detailRow.requested_shift,
-                                        )}
+                                        {formatShift(detailRow.requested_shift)}
                                     </p>
                                 </div>
                             </div>

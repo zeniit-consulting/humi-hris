@@ -2,7 +2,13 @@ import { Activity, CheckSquare, Clock3, House, User } from 'lucide-react';
 import type { PortalLinkMap } from './lib';
 
 type PortalNavbarProps = {
-    active: 'home' | 'attendance' | 'activity' | 'payroll' | 'profile' | 'approvals';
+    active:
+        | 'home'
+        | 'attendance'
+        | 'activity'
+        | 'payroll'
+        | 'profile'
+        | 'approvals';
     links: PortalLinkMap;
 };
 

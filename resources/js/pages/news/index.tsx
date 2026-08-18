@@ -11,6 +11,7 @@ import {
     frontHeroSubtitleClass,
     frontHeroTitleClass,
 } from '@/components/front-hero-typography';
+import { LandingFooter } from '@/components/landing-footer';
 import { LandingNav } from '@/components/landing-nav';
 import SeoHead from '@/components/seo-head';
 import { dashboard, register } from '@/routes';
@@ -268,6 +269,8 @@ export default function NewsIndex() {
                         </div>
                     </section>
                 </main>
+
+                <LandingFooter hasUser={hasUser} trialHref={trialHref} />
             </div>
         </>
     );

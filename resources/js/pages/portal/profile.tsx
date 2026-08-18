@@ -391,9 +391,17 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     ? { ...current, has_push_notification_device: true }
                     : current,
             );
-            notifyPortal('success', 'Notifikasi uji berhasil dikirim ke perangkat ini.');
+            notifyPortal(
+                'success',
+                'Notifikasi uji berhasil dikirim ke perangkat ini.',
+            );
         } catch (error) {
-            notifyPortal('error', error instanceof Error ? error.message : 'Notifikasi belum dapat diaktifkan.');
+            notifyPortal(
+                'error',
+                error instanceof Error
+                    ? error.message
+                    : 'Notifikasi belum dapat diaktifkan.',
+            );
         } finally {
             setIsEnablingPush(false);
         }
@@ -719,12 +727,9 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     isOpen={openSection === 'contact'}
                     onOpen={setOpenSection}
                 >
-                    <form
-                        onSubmit={handleSaveProfile}
-                        className="space-y-3"
-                    >
+                    <form onSubmit={handleSaveProfile} className="space-y-3">
                         <div>
-                            <p className="font-semibold text-[var(--portal-color-ink)] text-sm">
+                            <p className="text-sm font-semibold text-[var(--portal-color-ink)]">
                                 Perbarui data kontak dan keluarga
                             </p>
                             <p className="mt-1 text-[var(--portal-color-muted)] text-[var(--portal-text-sm)]">

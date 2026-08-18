@@ -61,10 +61,11 @@ type AttendanceRequestRow = {
     status: string;
     rejection_reason: string | null;
 };
-const requestTypeLabels: Record<AttendanceRequestRow['request_type'], string> = {
-    manual_attendance: 'Lupa Absen',
-    missing_clock_out: 'Lupa Absen Pulang',
-};
+const requestTypeLabels: Record<AttendanceRequestRow['request_type'], string> =
+    {
+        manual_attendance: 'Lupa Absen',
+        missing_clock_out: 'Lupa Absen Pulang',
+    };
 type PageProps = {
     requests: Paginator<AttendanceRequestRow>;
     employees: EmployeeOption[];
@@ -154,7 +155,10 @@ export default function AttendanceApprovalPage() {
                         ['Disetujui', stats.approved],
                         ['Ditolak', stats.rejected],
                     ].map(([label, value]) => (
-                        <Card key={label} className={`gap-2 py-3 ${label === 'Menunggu' ? 'border-amber-200 bg-amber-50/70 dark:border-amber-950 dark:bg-amber-950/25' : label === 'Disetujui' ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-950 dark:bg-emerald-950/25' : 'border-rose-200 bg-rose-50/70 dark:border-rose-950 dark:bg-rose-950/25'}`}>
+                        <Card
+                            key={label}
+                            className={`gap-2 py-3 ${label === 'Menunggu' ? 'border-amber-200 bg-amber-50/70 dark:border-amber-950 dark:bg-amber-950/25' : label === 'Disetujui' ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-950 dark:bg-emerald-950/25' : 'border-rose-200 bg-rose-50/70 dark:border-rose-950 dark:bg-rose-950/25'}`}
+                        >
                             <CardHeader className="px-4 pb-0">
                                 <CardDescription>{label}</CardDescription>
                                 <CardTitle className="text-2xl">
@@ -321,7 +325,11 @@ export default function AttendanceApprovalPage() {
                                                     {formatShift(row.shift)}
                                                 </div>
                                                 <div className="mt-1 text-xs font-medium text-primary">
-                                                    {requestTypeLabels[row.request_type]}
+                                                    {
+                                                        requestTypeLabels[
+                                                            row.request_type
+                                                        ]
+                                                    }
                                                 </div>
                                             </td>
                                             <td className="px-3 py-3">
@@ -453,14 +461,14 @@ export default function AttendanceApprovalPage() {
                                 <strong>Tanggal:</strong>{' '}
                                 {detailRow.attendance_date}
                             </p>
-                                <p>
-                                    <strong>Shift:</strong>{' '}
-                                    {formatShift(detailRow.shift)}
-                                </p>
-                                <p>
-                                    <strong>Kategori:</strong>{' '}
-                                    {requestTypeLabels[detailRow.request_type]}
-                                </p>
+                            <p>
+                                <strong>Shift:</strong>{' '}
+                                {formatShift(detailRow.shift)}
+                            </p>
+                            <p>
+                                <strong>Kategori:</strong>{' '}
+                                {requestTypeLabels[detailRow.request_type]}
+                            </p>
                             <p>
                                 <strong>Jam:</strong> Masuk{' '}
                                 {formatAttendanceTime(

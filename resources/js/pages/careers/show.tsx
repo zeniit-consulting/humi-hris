@@ -167,7 +167,8 @@ export default function CareerShowPage() {
                                 Humi Careers
                             </Link>
                             <p className="text-sm text-[var(--landing-color-muted)]">
-                                Temukan peran yang cocok untuk langkah berikutnya.
+                                Temukan peran yang cocok untuk langkah
+                                berikutnya.
                             </p>
                         </div>
 
@@ -175,7 +176,9 @@ export default function CareerShowPage() {
                             <Button variant="ghost" asChild>
                                 <Link href={vacancy.list_url}>
                                     <ArrowLeft className="size-4" />
-                                    <span className="hidden sm:inline">Semua lowongan</span>
+                                    <span className="hidden sm:inline">
+                                        Semua lowongan
+                                    </span>
                                 </Link>
                             </Button>
                         </div>
@@ -208,7 +211,9 @@ export default function CareerShowPage() {
                                             'Fleksibel'}
                                     </span>
                                 </div>
-                                <h1 className={`${frontHeroTitleClass} max-w-[16ch] !text-[var(--landing-color-paper)]`}>
+                                <h1
+                                    className={`${frontHeroTitleClass} max-w-[16ch] !text-[var(--landing-color-paper)]`}
+                                >
                                     {vacancy.title}
                                 </h1>
                                 <div className="mt-6 grid gap-3 text-sm text-[var(--landing-color-paper)]/75 md:grid-cols-2">
@@ -276,10 +281,13 @@ export default function CareerShowPage() {
                                 <div className="mb-2 inline-flex w-fit items-center rounded-[var(--landing-radius-control)] bg-[var(--landing-color-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--landing-color-accent)]">
                                     Langkah terakhir
                                 </div>
-                                <CardTitle className="text-2xl tracking-[-0.03em]">Kirim lamaran</CardTitle>
+                                <CardTitle className="text-2xl tracking-[-0.03em]">
+                                    Kirim lamaran
+                                </CardTitle>
                                 <CardDescription>
-                                    Ceritakan sedikit tentang diri Anda. Data ini
-                                    hanya digunakan untuk proses rekrutmen Humi.
+                                    Ceritakan sedikit tentang diri Anda. Data
+                                    ini hanya digunakan untuk proses rekrutmen
+                                    Humi.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -292,7 +300,8 @@ export default function CareerShowPage() {
                                             Data utama
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-[var(--landing-color-muted)]">
-                                            Isi informasi yang paling mudah kami gunakan untuk menghubungi Anda.
+                                            Isi informasi yang paling mudah kami
+                                            gunakan untuk menghubungi Anda.
                                         </p>
                                     </div>
                                     <div className="grid gap-4 md:grid-cols-2">

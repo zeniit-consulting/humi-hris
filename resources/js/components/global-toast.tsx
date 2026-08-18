@@ -83,7 +83,8 @@ export default function GlobalToast() {
 
     useEffect(() => {
         const unbindStart = router.on('start', (event) => {
-            lastVisitMethodRef.current = event.detail.visit.method.toLowerCase();
+            lastVisitMethodRef.current =
+                event.detail.visit.method.toLowerCase();
         });
         const unbindSuccess = router.on('success', (event) => {
             const method = lastVisitMethodRef.current;
@@ -99,7 +100,10 @@ export default function GlobalToast() {
         });
 
         const unbindError = router.on('error', () => {
-            pushToast('error', 'Terjadi kesalahan. Silakan periksa input data.');
+            pushToast(
+                'error',
+                'Terjadi kesalahan. Silakan periksa input data.',
+            );
         });
 
         const unbindException = router.on('exception', () => {

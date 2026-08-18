@@ -282,45 +282,53 @@ function ApprovalTable({
                                     </td>
                                     <td className="px-3 py-3">
                                         <Badge>
-                                            {row.approval_label ?? statusLabels[row.status] ??
+                                            {row.approval_label ??
+                                                statusLabels[row.status] ??
                                                 row.status}
                                         </Badge>
                                     </td>
                                     <td className="px-3 py-3">
-                                        {status === 'pending' && row.can_approve !== false && (
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        router.post(
-                                                            approveUrls[type](
-                                                                row.id,
-                                                            ),
-                                                            undefined,
-                                                            {
-                                                                preserveScroll: true,
-                                                            },
-                                                        )
-                                                    }
-                                                >
-                                                    <Check className="size-4" />
-                                                    Setujui
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    onClick={() =>
-                                                        onReject({ type, row })
-                                                    }
-                                                >
-                                                    <X className="size-4" />
-                                                    Tolak
-                                                </Button>
-                                            </div>
-                                        )}
-                                        {status === 'pending' && row.can_approve === false && (
-                                            <span className="text-xs text-muted-foreground">Menunggu approver berikutnya</span>
-                                        )}
+                                        {status === 'pending' &&
+                                            row.can_approve !== false && (
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            router.post(
+                                                                approveUrls[
+                                                                    type
+                                                                ](row.id),
+                                                                undefined,
+                                                                {
+                                                                    preserveScroll: true,
+                                                                },
+                                                            )
+                                                        }
+                                                    >
+                                                        <Check className="size-4" />
+                                                        Setujui
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        onClick={() =>
+                                                            onReject({
+                                                                type,
+                                                                row,
+                                                            })
+                                                        }
+                                                    >
+                                                        <X className="size-4" />
+                                                        Tolak
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        {status === 'pending' &&
+                                            row.can_approve === false && (
+                                                <span className="text-xs text-muted-foreground">
+                                                    Menunggu approver berikutnya
+                                                </span>
+                                            )}
                                     </td>
                                 </tr>
                             ))}

@@ -25,5 +25,6 @@ export const storeProcurementRequest = {
 };
 
 export const updateProcurementRequestStatus = {
-    url: (requestId: number) => `${baseUrl}/procurement-requests/${requestId}/status`,
+    url: (requestId: number) =>
+        `${baseUrl}/procurement-requests/${requestId}/status`,
 };

@@ -21,8 +21,10 @@ import {
     frontHeroTealTextClass,
     frontHeroTitleClass,
 } from '@/components/front-hero-typography';
+import { LandingFooter } from '@/components/landing-footer';
 import {
     LandingNav,
+    landingPrimaryActionClass,
     landingSecondaryActionClass,
 } from '@/components/landing-nav';
 import SeoHead from '@/components/seo-head';
@@ -498,7 +500,7 @@ function PricingPlan({
             className={
                 plan.recommended
                     ? 'flex h-full min-w-0 flex-col rounded-[var(--landing-radius-panel)] bg-[var(--landing-color-ink)] p-6 text-white shadow-[var(--landing-shadow-panel)] sm:p-8'
-                    : 'flex h-full min-w-0 flex-col border-t border-[var(--landing-color-rule)] py-6 first:border-t-0 lg:first:border-t'
+                    : 'flex h-full min-w-0 flex-col rounded-[var(--landing-radius-panel)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] p-6 text-[var(--landing-color-ink)] shadow-sm sm:p-8'
             }
         >
             <div className="flex items-center justify-between gap-4">
@@ -536,7 +538,7 @@ function PricingPlan({
                 ) : null}
             </div>
 
-            <div className={plan.recommended ? 'flex-1' : undefined}>
+            <div className="flex-1">
                 <PlanFeatures plan={plan} compact={compact} />
             </div>
 
@@ -639,11 +641,11 @@ export default function Welcome({ canRegister = true }: WelcomeProps) {
                 <LandingNav hasUser={hasUser} trialHref={trialHref} />
 
                 <main>
-                    <section className="pt-24 pb-14 sm:pt-28 sm:pb-20">
+                    <section className="pt-28 pb-14 sm:pt-32 sm:pb-20">
                         <div className="mx-auto max-w-7xl px-5 sm:px-8">
-                            <div className="mx-auto max-w-6xl text-center">
+                            <div className="mx-auto max-w-4xl text-center">
                                 <h1
-                                    className={`mx-auto max-w-none whitespace-nowrap ${frontHeroTitleClass}`}
+                                    className={`mx-auto ${frontHeroTitleClass}`}
                                 >
                                     Kelola tim Anda{' '}
                                     <span className={frontHeroTealTextClass}>
@@ -651,61 +653,61 @@ export default function Welcome({ canRegister = true }: WelcomeProps) {
                                     </span>
                                 </h1>
                                 <p
-                                    className={`mx-auto mt-6 max-w-3xl ${frontHeroSubtitleClass}`}
+                                    className={`mx-auto mt-6 max-w-2xl ${frontHeroSubtitleClass}`}
                                 >
                                     Humi adalah HRIS terpadu untuk perusahaan
                                     modern. Otomatisasi absensi, cuti, payroll,
                                     dan approval dalam satu platform yang mudah
                                     digunakan.
                                 </p>
-                                <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                                <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
                                     <Link
                                         href={trialHref}
-                                        className="inline-flex min-h-14 items-center justify-center gap-3 rounded-full bg-[var(--landing-color-accent)] px-8 text-lg font-bold text-[var(--landing-color-accent-ink)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none"
+                                        className={landingPrimaryActionClass}
                                     >
                                         {trialLabel}
                                         <ArrowRight
-                                            className="size-5"
+                                            className="size-4"
                                             aria-hidden="true"
                                         />
                                     </Link>
                                     <a
                                         href="#solutions"
-                                        className="inline-flex min-h-14 items-center justify-center rounded-full border border-[var(--landing-color-rule)] bg-white px-8 text-lg font-bold text-[var(--landing-color-ink-soft)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px hover:text-[var(--landing-color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none"
+                                        className={landingSecondaryActionClass}
                                     >
                                         Lihat Solusi
                                     </a>
                                 </div>
                             </div>
 
-                            <div className="mx-auto mt-16 grid max-w-5xl gap-8 border-t border-[var(--landing-color-rule)] pt-8 text-center md:grid-cols-3">
-                                <div>
-                                    <p className="text-4xl font-bold text-[var(--landing-color-accent)] sm:text-5xl">
+                            <div className="mx-auto mt-14 grid max-w-4xl gap-4 sm:grid-cols-3">
+                                <div className="rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] p-5 text-center shadow-xs">
+                                    <p className="text-3xl font-bold tracking-tight text-[var(--landing-color-accent)] sm:text-4xl">
                                         70%
                                     </p>
-                                    <p className="mt-3 text-lg text-[var(--landing-color-muted)]">
+                                    <p className="mt-2 text-sm font-medium text-[var(--landing-color-muted)]">
                                         Efisiensi proses HR
                                     </p>
                                 </div>
-                                <div>
-                                    <p className="text-4xl font-bold text-[var(--landing-color-accent)] sm:text-5xl">
+                                <div className="rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] p-5 text-center shadow-xs">
+                                    <p className="text-3xl font-bold tracking-tight text-[var(--landing-color-accent)] sm:text-4xl">
                                         &lt; 10 mnt
                                     </p>
-                                    <p className="mt-3 text-lg text-[var(--landing-color-muted)]">
+                                    <p className="mt-2 text-sm font-medium text-[var(--landing-color-muted)]">
                                         Waktu proses payroll
                                     </p>
                                 </div>
-                                <div>
-                                    <p className="text-4xl font-bold text-[var(--landing-color-accent)] sm:text-5xl">
+                                <div className="rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] p-5 text-center shadow-xs">
+                                    <p className="text-3xl font-bold tracking-tight text-[var(--landing-color-accent)] sm:text-4xl">
                                         99.9%
                                     </p>
-                                    <p className="mt-3 text-lg text-[var(--landing-color-muted)]">
+                                    <p className="mt-2 text-sm font-medium text-[var(--landing-color-muted)]">
                                         Akurasi data
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="mx-auto mt-12 max-w-6xl overflow-hidden rounded-[2%] border border-[var(--landing-color-rule)] shadow-[0_24px_80px_rgba(15,23,42,0.10)]">
+                            <div className="mx-auto mt-12 max-w-6xl overflow-hidden rounded-[var(--landing-radius-panel)] border border-[var(--landing-color-rule)] shadow-[var(--landing-shadow-panel)]">
                                 <img
                                     src="/humi-dashboard-preview.webp"
                                     width={2000}
@@ -873,128 +875,7 @@ export default function Welcome({ canRegister = true }: WelcomeProps) {
                     </section>
                 </main>
 
-                <footer className="bg-[var(--landing-color-ink)] px-5 py-14 text-[var(--landing-color-paper)] sm:px-8 sm:py-20">
-                    <div className="mx-auto max-w-7xl">
-                        <div className="grid gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-20">
-                            <div className="min-w-0">
-                                <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.16em] text-[var(--landing-color-accent)] uppercase">
-                                    <span
-                                        className="size-2 rounded-full bg-[var(--landing-color-accent)]"
-                                        aria-hidden="true"
-                                    />
-                                    Humi HRIS
-                                </span>
-                                <p className="mt-6 max-w-[16ch] text-4xl leading-[1.05] font-semibold tracking-[-0.045em] [overflow-wrap:anywhere] sm:text-6xl">
-                                    Data yang sama. Keputusan yang lebih mudah.
-                                </p>
-                                <p className="mt-6 max-w-[36ch] text-sm leading-6 text-[var(--landing-color-paper)]/70">
-                                    Satukan operasi HR harian dalam satu sistem
-                                    yang rapi, mudah ditelusuri, dan siap
-                                    digunakan tim.
-                                </p>
-                            </div>
-
-                            <nav
-                                aria-label="Tautan footer"
-                                className="grid min-w-0 grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3"
-                            >
-                                <div className="min-w-0">
-                                    <p className="text-xs font-semibold tracking-[0.14em] text-[var(--landing-color-accent)] uppercase">
-                                        Produk
-                                    </p>
-                                    <div className="mt-5 grid gap-3 text-sm font-medium text-[var(--landing-color-paper)]">
-                                        <a
-                                            href="#product"
-                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
-                                        >
-                                            Produk
-                                        </a>
-                                        <Link
-                                            href="/features"
-                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
-                                        >
-                                            Fitur
-                                        </Link>
-                                        <a
-                                            href="#pricing"
-                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
-                                        >
-                                            Harga
-                                        </a>
-                                    </div>
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-xs font-semibold tracking-[0.14em] text-[var(--landing-color-accent)] uppercase">
-                                        Jelajahi
-                                    </p>
-                                    <div className="mt-5 grid gap-3 text-sm font-medium text-[var(--landing-color-paper)]">
-                                        <a
-                                            href="#solutions"
-                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
-                                        >
-                                            Solusi
-                                        </a>
-                                        <Link
-                                            href="/berita"
-                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
-                                        >
-                                            Berita
-                                        </Link>
-                                        <Link
-                                            href="/careers"
-                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
-                                        >
-                                            Karier
-                                        </Link>
-                                    </div>
-                                </div>
-                                <div className="col-span-2 min-w-0 sm:col-span-1">
-                                    <p className="text-xs font-semibold tracking-[0.14em] text-[var(--landing-color-accent)] uppercase">
-                                        Mulai
-                                    </p>
-                                    <div className="mt-5 grid gap-3 text-sm font-medium text-[var(--landing-color-paper)]">
-                                        <Link
-                                            href={trialHref}
-                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
-                                        >
-                                            {trialLabel}
-                                        </Link>
-                                        <Link
-                                            href="/contact"
-                                            className="whitespace-nowrap hover:text-[var(--landing-color-accent)]"
-                                        >
-                                            Kontak kami
-                                        </Link>
-                                    </div>
-                                </div>
-                            </nav>
-                        </div>
-
-                        <div className="mt-14 flex flex-col gap-6 border-t border-[var(--landing-color-paper)]/15 pt-6 sm:flex-row sm:items-end sm:justify-between">
-                            <Link
-                                href="/"
-                                aria-label="Humi — halaman utama"
-                                className="inline-flex size-14 items-center justify-center rounded-[var(--landing-radius-card)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--landing-color-focus)]"
-                            >
-                                <img
-                                    src="/humi-mark-footer.png"
-                                    width={64}
-                                    height={64}
-                                    className="size-14 object-contain"
-                                    alt="Humi"
-                                />
-                            </Link>
-                            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-[var(--landing-color-paper)]/70">
-                                <span className="whitespace-nowrap">
-                                    © {new Date().getFullYear()} Humi
-                                </span>
-                                <span className="whitespace-nowrap">
-                                    HR lebih rapi, tim lebih siap.
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+                <LandingFooter hasUser={hasUser} trialHref={trialHref} />
 
                 <a
                     href={WHATSAPP_CONTACT_URL}

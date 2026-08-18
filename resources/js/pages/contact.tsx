@@ -11,9 +11,15 @@ import {
 } from 'lucide-react';
 import {
     frontHeroSubtitleClass,
+    frontHeroTealTextClass,
     frontHeroTitleClass,
 } from '@/components/front-hero-typography';
-import { LandingNav } from '@/components/landing-nav';
+import { LandingFooter } from '@/components/landing-footer';
+import {
+    LandingNav,
+    landingPrimaryActionClass,
+    landingSecondaryActionClass,
+} from '@/components/landing-nav';
 import SeoHead from '@/components/seo-head';
 import { dashboard, register } from '@/routes';
 
@@ -66,6 +72,8 @@ export default function Contact() {
     };
     const hasUser = Boolean(auth.user);
     const trialHref = hasUser ? dashboard().url : register().url;
+    const trialLabel = hasUser ? 'Buka Dashboard' : 'Mulai Trial Gratis';
+
     const structuredData = {
         '@context': 'https://schema.org',
         '@type': 'ContactPage',
@@ -90,24 +98,30 @@ export default function Contact() {
                 structuredData={structuredData}
             />
 
-            <div className="min-h-screen bg-white text-slate-900">
+            <div className="min-h-screen overflow-x-clip bg-[var(--landing-color-paper)] font-[family-name:var(--landing-font-body)] text-[var(--landing-color-ink)]">
                 <LandingNav hasUser={hasUser} trialHref={trialHref} />
 
-                <main className="pt-18">
-                    <section className="border-b border-slate-100">
-                        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[1fr_0.9fr] lg:py-20">
+                <main>
+                    <section className="pt-28 pb-16 sm:pt-32 sm:pb-20">
+                        <div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 lg:grid-cols-[1fr_0.9fr] lg:items-center">
                             <div>
-                                <p className="text-xs font-semibold tracking-[0.12em] text-[#14a8b0] uppercase">
+                                <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-[var(--landing-color-accent)] uppercase">
+                                    <span
+                                        className="size-2 rounded-full bg-[var(--landing-color-accent)]"
+                                        aria-hidden="true"
+                                    />
                                     Kontak Humi
-                                </p>
+                                </span>
                                 <h1
-                                    className={`mt-4 max-w-3xl ${frontHeroTitleClass}`}
+                                    className={`mt-4 max-w-2xl ${frontHeroTitleClass}`}
                                 >
-                                    Diskusikan kebutuhan HRIS perusahaan Anda
-                                    dengan tim Humi.
+                                    Diskusikan kebutuhan HRIS{' '}
+                                    <span className={frontHeroTealTextClass}>
+                                        dengan tim ahli kami.
+                                    </span>
                                 </h1>
                                 <p
-                                    className={`mt-5 max-w-2xl ${frontHeroSubtitleClass}`}
+                                    className={`mt-5 max-w-xl ${frontHeroSubtitleClass}`}
                                 >
                                     Kami bantu memetakan kebutuhan data
                                     karyawan, absensi, cuti, lembur, payroll,
@@ -119,33 +133,35 @@ export default function Contact() {
                                         href={WHATSAPP_CONTACT_URL}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0d4d52] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0a3e42]"
+                                        className={landingPrimaryActionClass}
                                     >
                                         Chat WhatsApp
-                                        <ArrowRight className="h-4 w-4" />
+                                        <ArrowRight className="size-4" />
                                     </a>
                                     <Link
-                                        href={register()}
-                                        className="inline-flex items-center justify-center rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+                                        href={trialHref}
+                                        className={landingSecondaryActionClass}
                                     >
-                                        Mulai Trial
+                                        {trialLabel}
                                     </Link>
                                 </div>
                             </div>
 
-                            <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-                                <Building2 className="h-7 w-7 text-[#0d4d52]" />
-                                <h2 className="mt-4 text-xl font-semibold text-slate-950">
-                                    Yang bisa dibahas
+                            <aside className="rounded-[var(--landing-radius-panel)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] p-6 shadow-[var(--landing-shadow-panel)] sm:p-8">
+                                <div className="flex size-12 items-center justify-center rounded-[var(--landing-radius-card)] bg-[var(--landing-color-accent-soft)] text-[var(--landing-color-accent)]">
+                                    <Building2 className="size-6" />
+                                </div>
+                                <h2 className="mt-5 text-xl font-semibold text-[var(--landing-color-ink)]">
+                                    Yang bisa dibahas dalam sesi konsultasi
                                 </h2>
                                 <ul className="mt-5 space-y-3">
                                     {checklist.map((item) => (
                                         <li
                                             key={item}
-                                            className="flex items-start gap-3 text-sm text-slate-700"
+                                            className="flex items-start gap-3 text-sm text-[var(--landing-color-ink-soft)]"
                                         >
-                                            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#14a8b0]" />
-                                            {item}
+                                            <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-[var(--landing-color-accent)]" />
+                                            <span>{item}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -153,100 +169,116 @@ export default function Contact() {
                         </div>
                     </section>
 
-                    <section className="bg-slate-50/60 py-16">
-                        <div className="mx-auto grid max-w-6xl gap-5 px-6 md:grid-cols-2">
+                    <section className="bg-[var(--landing-color-surface)] py-20 sm:py-24">
+                        <div className="mx-auto grid max-w-7xl gap-6 px-5 sm:px-8 md:grid-cols-2">
                             {contactOptions.map((option) => (
                                 <article
                                     key={option.title}
-                                    className="rounded-2xl border border-slate-200 bg-white p-6"
+                                    className="flex flex-col justify-between rounded-[var(--landing-radius-panel)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-paper)] p-7 shadow-xs"
                                 >
-                                    <option.icon className="h-7 w-7 text-[#0d4d52]" />
-                                    <h2 className="mt-4 text-xl font-semibold text-slate-950">
-                                        {option.title}
-                                    </h2>
-                                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                                        {option.description}
-                                    </p>
-                                    <p className="mt-5 font-semibold text-slate-950">
-                                        {option.value}
-                                    </p>
-                                    <a
-                                        href={option.href}
-                                        target={
-                                            option.href.startsWith('http')
-                                                ? '_blank'
-                                                : undefined
-                                        }
-                                        rel={
-                                            option.href.startsWith('http')
-                                                ? 'noopener noreferrer'
-                                                : undefined
-                                        }
-                                        className="mt-5 inline-flex items-center gap-2 rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
-                                    >
-                                        {option.label}
-                                        <ArrowRight className="h-4 w-4" />
-                                    </a>
+                                    <div>
+                                        <div className="flex size-12 items-center justify-center rounded-[var(--landing-radius-card)] bg-[var(--landing-color-accent-soft)] text-[var(--landing-color-accent)]">
+                                            <option.icon className="size-6" />
+                                        </div>
+                                        <h2 className="mt-5 text-xl font-semibold text-[var(--landing-color-ink)]">
+                                            {option.title}
+                                        </h2>
+                                        <p className="mt-2 text-sm leading-6 text-[var(--landing-color-ink-soft)]">
+                                            {option.description}
+                                        </p>
+                                        <p className="mt-5 text-lg font-semibold text-[var(--landing-color-ink)]">
+                                            {option.value}
+                                        </p>
+                                    </div>
+                                    <div className="mt-6 border-t border-[var(--landing-color-rule)] pt-4">
+                                        <a
+                                            href={option.href}
+                                            target={
+                                                option.href.startsWith('http')
+                                                    ? '_blank'
+                                                    : undefined
+                                            }
+                                            rel={
+                                                option.href.startsWith('http')
+                                                    ? 'noopener noreferrer'
+                                                    : undefined
+                                            }
+                                            className={
+                                                landingSecondaryActionClass
+                                            }
+                                        >
+                                            {option.label}
+                                            <ArrowRight className="size-4" />
+                                        </a>
+                                    </div>
                                 </article>
                             ))}
                         </div>
                     </section>
 
-                    <section className="border-y border-slate-100 py-14">
-                        <div className="mx-auto grid max-w-6xl gap-6 px-6 md:grid-cols-[0.8fr_1.2fr]">
+                    <section className="py-20 sm:py-24">
+                        <div className="mx-auto grid max-w-7xl gap-10 px-5 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
                             <div>
-                                <h2 className="text-2xl font-bold tracking-tight text-slate-950">
+                                <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-[var(--landing-color-accent)] uppercase">
+                                    Solusi Industri
+                                </span>
+                                <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--landing-color-ink)] sm:text-4xl">
                                     Ingin demo yang lebih spesifik?
                                 </h2>
-                                <p className="mt-3 text-sm leading-6 text-slate-600">
+                                <p className="mt-3 text-sm leading-6 text-[var(--landing-color-ink-soft)]">
                                     Buka halaman sesuai tipe perusahaan agar
                                     diskusi langsung masuk ke masalah
                                     operasional utama.
                                 </p>
                             </div>
-                            <div className="grid gap-3 sm:grid-cols-3">
+                            <div className="grid gap-4 sm:grid-cols-3">
                                 {industryOptions.map((option) => (
                                     <Link
                                         key={option.href}
                                         href={option.href}
-                                        className="rounded-2xl border border-slate-200 bg-white p-5 text-sm font-semibold text-slate-800 transition hover:border-[#14a8b0]/60"
+                                        className="group rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] p-5 text-sm font-semibold text-[var(--landing-color-ink)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px"
                                     >
-                                        {option.label}
-                                        <ArrowRight className="mt-4 h-4 w-4 text-[#0d4d52]" />
+                                        <p className="text-base font-semibold">
+                                            {option.label}
+                                        </p>
+                                        <span className="mt-4 inline-flex items-center gap-1.5 text-xs text-[var(--landing-color-accent)]">
+                                            Lihat Solusi
+                                            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
+                                        </span>
                                     </Link>
                                 ))}
                             </div>
                         </div>
                     </section>
 
-                    <section className="py-16">
-                        <div className="mx-auto grid max-w-6xl gap-6 px-6 md:grid-cols-3">
-                            <div className="rounded-2xl border border-slate-200 p-5">
-                                <Clock className="h-6 w-6 text-[#14a8b0]" />
-                                <h2 className="mt-4 font-semibold text-slate-950">
-                                    Waktu respon
-                                </h2>
-                                <p className="mt-2 text-sm leading-6 text-slate-600">
+                    <section className="border-t border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] py-20 sm:py-24">
+                        <div className="mx-auto grid max-w-7xl gap-6 px-5 sm:px-8 md:grid-cols-3">
+                            <div className="rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-paper)] p-6">
+                                <Clock className="size-6 text-[var(--landing-color-accent)]" />
+                                <h3 className="mt-4 font-semibold text-[var(--landing-color-ink)]">
+                                    Waktu respon cepat
+                                </h3>
+                                <p className="mt-2 text-sm leading-6 text-[var(--landing-color-ink-soft)]">
                                     Tim akan merespon inquiry bisnis pada jam
                                     kerja secepat mungkin.
                                 </p>
                             </div>
-                            <div className="rounded-2xl border border-slate-200 p-5">
-                                <ShieldCheck className="h-6 w-6 text-[#14a8b0]" />
-                                <h2 className="mt-4 font-semibold text-slate-950">
-                                    Konsultasi aman
-                                </h2>
-                                <p className="mt-2 text-sm leading-6 text-slate-600">
+                            <div className="rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-paper)] p-6">
+                                <ShieldCheck className="size-6 text-[var(--landing-color-accent)]" />
+                                <h3 className="mt-4 font-semibold text-[var(--landing-color-ink)]">
+                                    Konsultasi aman & rahasia
+                                </h3>
+                                <p className="mt-2 text-sm leading-6 text-[var(--landing-color-ink-soft)]">
                                     Detail kebutuhan perusahaan dipakai hanya
                                     untuk pemetaan solusi HRIS.
                                 </p>
                             </div>
-                            <div className="rounded-2xl border border-slate-200 p-5">
-                                <Phone className="h-6 w-6 text-[#14a8b0]" />
-                                <h2 className="mt-4 font-semibold text-slate-950">
-                                    Demo terarah
-                                </h2>
-                                <p className="mt-2 text-sm leading-6 text-slate-600">
+                            <div className="rounded-[var(--landing-radius-card)] border border-[var(--landing-color-rule)] bg-[var(--landing-color-paper)] p-6">
+                                <Phone className="size-6 text-[var(--landing-color-accent)]" />
+                                <h3 className="mt-4 font-semibold text-[var(--landing-color-ink)]">
+                                    Demo terarah & relevan
+                                </h3>
+                                <p className="mt-2 text-sm leading-6 text-[var(--landing-color-ink-soft)]">
                                     Demo difokuskan ke modul yang paling relevan
                                     untuk operasional Anda.
                                 </p>
@@ -254,6 +286,24 @@ export default function Contact() {
                         </div>
                     </section>
                 </main>
+
+                <LandingFooter hasUser={hasUser} trialHref={trialHref} />
+
+                <a
+                    href={WHATSAPP_CONTACT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Hubungi Humi via WhatsApp"
+                    className="fixed right-4 bottom-4 z-[var(--landing-z-sticky)] inline-flex size-12 items-center justify-center rounded-full border border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] shadow-[var(--landing-shadow-float)] transition-transform duration-[var(--landing-duration-press)] ease-[var(--landing-ease-out)] hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none sm:right-6 sm:bottom-6 sm:size-14"
+                >
+                    <img
+                        src="/icons/whatsapp.webp"
+                        alt=""
+                        width={56}
+                        height={56}
+                        className="size-11 object-contain sm:size-12"
+                    />
+                </a>
             </div>
         </>
     );

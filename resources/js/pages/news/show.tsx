@@ -11,6 +11,7 @@ import {
     frontHeroSubtitleClass,
     frontHeroTitleClass,
 } from '@/components/front-hero-typography';
+import { LandingFooter } from '@/components/landing-footer';
 import { LandingNav } from '@/components/landing-nav';
 import SeoHead from '@/components/seo-head';
 import { dashboard, register } from '@/routes';
@@ -183,14 +184,10 @@ export default function NewsShow() {
                                     </span>
                                 </div>
 
-                                <h1
-                                    className={`mt-6 ${frontHeroTitleClass}`}
-                                >
+                                <h1 className={`mt-6 ${frontHeroTitleClass}`}>
                                     {article.title}
                                 </h1>
-                                <p
-                                    className={`mt-6 ${frontHeroSubtitleClass}`}
-                                >
+                                <p className={`mt-6 ${frontHeroSubtitleClass}`}>
                                     {article.hero_summary}
                                 </p>
                             </div>
@@ -342,6 +339,8 @@ export default function NewsShow() {
                         </section>
                     ) : null}
                 </main>
+
+                <LandingFooter hasUser={hasUser} trialHref={trialHref} />
             </div>
         </>
     );

@@ -446,7 +446,9 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                         <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
                                             <span>Cuti tanpa gaji</span>
                                             <span className="font-semibold">
-                                                {formatCurrency(slip.unpaid_leave_deduction)}
+                                                {formatCurrency(
+                                                    slip.unpaid_leave_deduction,
+                                                )}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between rounded-[10px] bg-rose-50 px-4 py-3">

@@ -351,7 +351,9 @@ function UpgradeDialog({
                     <div className="space-y-1.5">
                         <Label>Metode Pembayaran</Label>
                         <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-sm">
-                            <span>{paymentMethodLabel(data.payment_method)}</span>
+                            <span>
+                                {paymentMethodLabel(data.payment_method)}
+                            </span>
                             <Badge variant="secondary">Default</Badge>
                         </div>
                         <InputError message={errors.payment_method} />
@@ -704,8 +706,12 @@ function InvoiceTable({
                                                     size="sm"
                                                     variant="outline"
                                                     className="h-8 w-8 p-0"
-                                                    disabled={!inv.payment_number}
-                                                    asChild={!!inv.payment_number}
+                                                    disabled={
+                                                        !inv.payment_number
+                                                    }
+                                                    asChild={
+                                                        !!inv.payment_number
+                                                    }
                                                     title="Bayar invoice"
                                                 >
                                                     {inv.payment_number ? (

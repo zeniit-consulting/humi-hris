@@ -1,5 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 import pushDevices from './push-devices'
+import webPushSubscriptions from './web-push-subscriptions'
 import attendances from './attendances'
 import attendanceRequests from './attendance-requests'
 import leaves from './leaves'
@@ -100,6 +101,7 @@ summary.form = summaryForm
 const api = {
     summary: Object.assign(summary, summary),
     pushDevices: Object.assign(pushDevices, pushDevices),
+    webPushSubscriptions: Object.assign(webPushSubscriptions, webPushSubscriptions),
     attendances: Object.assign(attendances, attendances),
     attendanceRequests: Object.assign(attendanceRequests, attendanceRequests),
     leaves: Object.assign(leaves, leaves),

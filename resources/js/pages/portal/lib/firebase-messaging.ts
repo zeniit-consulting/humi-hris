@@ -1,5 +1,10 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getMessaging, getToken, isSupported, onMessage } from 'firebase/messaging';
+import {
+    getMessaging,
+    getToken,
+    isSupported,
+    onMessage,
+} from 'firebase/messaging';
 
 const config = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -15,13 +20,19 @@ const withTimeout = async <T>(promise: Promise<T>, label: string): Promise<T> =>
         promise,
         new Promise<never>((_, reject) => {
             window.setTimeout(
-                () => reject(new Error(`${label} memakan waktu terlalu lama. Coba refresh halaman, lalu periksa izin notifikasi browser.`)),
+                () =>
+                    reject(
+                        new Error(
+                            `${label} memakan waktu terlalu lama. Coba refresh halaman, lalu periksa izin notifikasi browser.`,
+                        ),
+                    ),
                 15_000,
             );
         }),
     ]);
 
-const firebaseApp = () => (getApps().length > 0 ? getApp() : initializeApp(config));
+const firebaseApp = () =>
+    getApps().length > 0 ? getApp() : initializeApp(config);
 
 let stopForegroundListener: (() => void) | null = null;
 
@@ -39,7 +50,9 @@ const waitUntilActive = async (
         worker.addEventListener('statechange', () => {
             if (worker.state === 'activated') resolve(registration);
             if (worker.state === 'redundant') {
-                reject(new Error('Service worker notifikasi gagal diaktifkan.'));
+                reject(
+                    new Error('Service worker notifikasi gagal diaktifkan.'),
+                );
             }
         });
     });
@@ -47,10 +60,13 @@ const waitUntilActive = async (
 
 export async function enableAttendancePush(): Promise<string> {
     if (!(await isSupported()) || !import.meta.env.VITE_FCM_VAPID_KEY) {
-        throw new Error('Notifikasi browser tidak didukung atau belum dikonfigurasi.');
+        throw new Error(
+            'Notifikasi browser tidak didukung atau belum dikonfigurasi.',
+        );
     }
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') throw new Error('Izin notifikasi belum diberikan.');
+    if (permission !== 'granted')
+        throw new Error('Izin notifikasi belum diberikan.');
     const firebaseRegistration = await withTimeout(
         navigator.serviceWorker.register('/firebase-messaging-worker', {
             scope: '/firebase-cloud-messaging-push-scope/',
@@ -74,11 +90,14 @@ export async function enableAttendancePush(): Promise<string> {
 
     stopForegroundListener?.();
     stopForegroundListener = onMessage(messaging, (payload) => {
-        void registration.showNotification(payload.notification?.title ?? 'Humi', {
-            body: payload.notification?.body ?? 'Ada pengingat baru.',
-            icon: '/icons/icon-192.png',
-            data: { url: payload.data?.url ?? '/portal/attendance' },
-        });
+        void registration.showNotification(
+            payload.notification?.title ?? 'Humi',
+            {
+                body: payload.notification?.body ?? 'Ada pengingat baru.',
+                icon: '/icons/icon-192.png',
+                data: { url: payload.data?.url ?? '/portal/attendance' },
+            },
+        );
     });
 
     return token;

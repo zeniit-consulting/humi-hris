@@ -19,7 +19,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Pengaturan Absensi', href: '/settings/attendance' },
 ];
 
-export default function AttendanceSettings({ settings }: { settings: Settings }) {
+export default function AttendanceSettings({
+    settings,
+}: {
+    settings: Settings;
+}) {
     const form = useForm(settings);
 
     return (
@@ -37,7 +41,9 @@ export default function AttendanceSettings({ settings }: { settings: Settings })
                         className="space-y-5"
                         onSubmit={(event) => {
                             event.preventDefault();
-                            form.patch('/settings/attendance', { preserveScroll: true });
+                            form.patch('/settings/attendance', {
+                                preserveScroll: true,
+                            });
                         }}
                     >
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -50,7 +56,9 @@ export default function AttendanceSettings({ settings }: { settings: Settings })
                                     type="number"
                                     min="0"
                                     max="31"
-                                    value={form.data.missing_clock_out_request_days}
+                                    value={
+                                        form.data.missing_clock_out_request_days
+                                    }
                                     onChange={(event) =>
                                         form.setData(
                                             'missing_clock_out_request_days',
@@ -59,9 +67,15 @@ export default function AttendanceSettings({ settings }: { settings: Settings })
                                     }
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    Default 2. Absensi tanggal 1 dapat diajukan sampai tanggal 3.
+                                    Default 2. Absensi tanggal 1 dapat diajukan
+                                    sampai tanggal 3.
                                 </p>
-                                <InputError message={form.errors.missing_clock_out_request_days} />
+                                <InputError
+                                    message={
+                                        form.errors
+                                            .missing_clock_out_request_days
+                                    }
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -71,7 +85,9 @@ export default function AttendanceSettings({ settings }: { settings: Settings })
                                 <select
                                     id="attendance_revision_cutoff_day"
                                     className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                    value={form.data.attendance_revision_cutoff_day}
+                                    value={
+                                        form.data.attendance_revision_cutoff_day
+                                    }
                                     onChange={(event) =>
                                         form.setData(
                                             'attendance_revision_cutoff_day',
@@ -80,20 +96,33 @@ export default function AttendanceSettings({ settings }: { settings: Settings })
                                     }
                                 >
                                     {Array.from({ length: 28 }, (_, index) => (
-                                        <option key={index + 1} value={String(index + 1)}>
+                                        <option
+                                            key={index + 1}
+                                            value={String(index + 1)}
+                                        >
                                             Tanggal {index + 1}
                                         </option>
                                     ))}
-                                    <option value="end_of_month">Akhir Bulan</option>
+                                    <option value="end_of_month">
+                                        Akhir Bulan
+                                    </option>
                                 </select>
                                 <p className="text-xs text-muted-foreground">
-                                    Sistem memakai batas yang lebih cepat antara H+N dan cut-off ini.
+                                    Sistem memakai batas yang lebih cepat antara
+                                    H+N dan cut-off ini.
                                 </p>
-                                <InputError message={form.errors.attendance_revision_cutoff_day} />
+                                <InputError
+                                    message={
+                                        form.errors
+                                            .attendance_revision_cutoff_day
+                                    }
+                                />
                             </div>
                         </div>
 
-                        <Button disabled={form.processing}>Simpan Pengaturan</Button>
+                        <Button disabled={form.processing}>
+                            Simpan Pengaturan
+                        </Button>
                     </form>
                 </div>
             </SettingsLayout>

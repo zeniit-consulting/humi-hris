@@ -126,12 +126,12 @@ export default function PortalActivityPage({ pageTitle }: Props) {
             <div className="min-w-0 space-y-5">
                 <section aria-labelledby="field-action-title">
                     <div className="mb-3 flex min-w-0 flex-col gap-1">
-                        <p className="text-[var(--portal-text-label)] font-semibold tracking-[0.14em] text-[var(--portal-color-muted)] uppercase">
+                        <p className="font-semibold tracking-[0.14em] text-[var(--portal-color-muted)] text-[var(--portal-text-label)] uppercase">
                             Langkah utama
                         </p>
                         <h3
                             id="field-action-title"
-                            className="min-w-0 text-[var(--portal-text-heading)] font-bold tracking-[-0.03em] text-[var(--portal-color-ink)] [overflow-wrap:anywhere]"
+                            className="min-w-0 font-bold tracking-[-0.03em] [overflow-wrap:anywhere] text-[var(--portal-color-ink)] text-[var(--portal-text-heading)]"
                         >
                             Kerja di lokasi
                         </h3>
@@ -143,21 +143,24 @@ export default function PortalActivityPage({ pageTitle }: Props) {
                     >
                         <span className="flex min-w-0 items-start justify-between gap-4">
                             <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)] bg-[var(--portal-color-accent)] text-[var(--portal-color-accent-ink)]">
-                                <MapPinned className="size-5" aria-hidden="true" />
+                                <MapPinned
+                                    className="size-5"
+                                    aria-hidden="true"
+                                />
                             </span>
-                            <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[var(--portal-text-label)] font-semibold">
+                            <span className="inline-flex shrink-0 items-center gap-1 font-semibold whitespace-nowrap text-[var(--portal-text-label)]">
                                 Mulai visit
                                 <ArrowUpRight
-                                    className="size-4 transition-transform duration-[var(--portal-duration-press)] motion-reduce:transition-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                                    className="size-4 transition-transform duration-[var(--portal-duration-press)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none"
                                     aria-hidden="true"
                                 />
                             </span>
                         </span>
                         <span className="mt-5 min-w-0">
-                            <span className="block text-[var(--portal-text-heading)] font-bold tracking-[-0.03em]">
+                            <span className="block font-bold tracking-[-0.03em] text-[var(--portal-text-heading)]">
                                 {clientVisit.title}
                             </span>
-                            <span className="mt-1 block max-w-[34ch] text-[var(--portal-text-body)] leading-6 text-[var(--portal-color-accent-soft)]">
+                            <span className="mt-1 block max-w-[34ch] leading-6 text-[var(--portal-color-accent-soft)] text-[var(--portal-text-body)]">
                                 {clientVisit.description}
                             </span>
                         </span>
@@ -168,39 +171,41 @@ export default function PortalActivityPage({ pageTitle }: Props) {
                     <div className="mb-3 flex min-w-0 flex-col gap-1">
                         <h3
                             id="update-title"
-                            className="min-w-0 text-[var(--portal-text-heading)] font-bold tracking-[-0.03em] text-[var(--portal-color-ink)] [overflow-wrap:anywhere]"
+                            className="min-w-0 font-bold tracking-[-0.03em] [overflow-wrap:anywhere] text-[var(--portal-color-ink)] text-[var(--portal-text-heading)]"
                         >
                             Menu lainnya
                         </h3>
                     </div>
 
                     <div className="min-w-0 overflow-hidden rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] shadow-[var(--portal-shadow-subtle)]">
-                        {[performance, personalActivity, reprimand].map((item, index) => (
-                            <a
-                                key={item.title}
-                                href={item.href}
-                                className={`portal-pressable portal-focus-ring group flex min-h-20 min-w-0 items-center gap-3 px-4 py-3 ${index < 2 ? 'border-b border-[var(--portal-color-rule)]' : ''}`}
-                            >
-                                <span className="portal-primary-soft inline-flex size-10 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)]">
-                                    <item.icon
-                                        className="portal-primary-text size-5"
+                        {[performance, personalActivity, reprimand].map(
+                            (item, index) => (
+                                <a
+                                    key={item.title}
+                                    href={item.href}
+                                    className={`portal-pressable portal-focus-ring group flex min-h-20 min-w-0 items-center gap-3 px-4 py-3 ${index < 2 ? 'border-b border-[var(--portal-color-rule)]' : ''}`}
+                                >
+                                    <span className="portal-primary-soft inline-flex size-10 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)]">
+                                        <item.icon
+                                            className="portal-primary-text size-5"
+                                            aria-hidden="true"
+                                        />
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                        <span className="block truncate font-bold tracking-[-0.02em] text-[var(--portal-color-ink)] text-[var(--portal-text-body)]">
+                                            {item.title}
+                                        </span>
+                                        <span className="mt-0.5 block truncate text-[var(--portal-color-muted)] text-[var(--portal-text-small)]">
+                                            {item.description}
+                                        </span>
+                                    </span>
+                                    <ArrowUpRight
+                                        className="size-4 shrink-0 text-[var(--portal-color-accent-strong)] transition-transform duration-[var(--portal-duration-press)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none"
                                         aria-hidden="true"
                                     />
-                                </span>
-                                <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-[var(--portal-text-body)] font-bold tracking-[-0.02em] text-[var(--portal-color-ink)]">
-                                        {item.title}
-                                    </span>
-                                    <span className="mt-0.5 block truncate text-[var(--portal-text-small)] text-[var(--portal-color-muted)]">
-                                        {item.description}
-                                    </span>
-                                </span>
-                                <ArrowUpRight
-                                    className="size-4 shrink-0 text-[var(--portal-color-accent-strong)] transition-transform duration-[var(--portal-duration-press)] motion-reduce:transition-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                                    aria-hidden="true"
-                                />
-                            </a>
-                        ))}
+                                </a>
+                            ),
+                        )}
                     </div>
                 </section>
             </div>

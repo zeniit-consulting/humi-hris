@@ -409,7 +409,7 @@ export default function PortalPage() {
                                     <span className="block text-base font-bold text-[var(--portal-color-paper)]">
                                         Halo, {firstName}
                                     </span>
-                                        <span className="block truncate text-xs font-normal text-[var(--portal-color-paper)]">
+                                    <span className="block truncate text-xs font-normal text-[var(--portal-color-paper)]">
                                         {summary?.employee?.position?.name ??
                                             'Portal karyawan'}
                                     </span>

@@ -295,7 +295,10 @@ export default function AssetProcurementRequestsPage() {
                                 ke inventory.
                             </CardDescription>
                         </div>
-                        <Button type="button" onClick={() => setDialogOpen(true)}>
+                        <Button
+                            type="button"
+                            onClick={() => setDialogOpen(true)}
+                        >
                             <Plus className="size-4" />
                             Buat Request
                         </Button>
@@ -380,9 +383,7 @@ export default function AssetProcurementRequestsPage() {
                                             <th className="px-3 py-2">
                                                 Status
                                             </th>
-                                            <th className="px-3 py-2">
-                                                Asset
-                                            </th>
+                                            <th className="px-3 py-2">Asset</th>
                                             <th className="px-3 py-2 text-right">
                                                 Aksi
                                             </th>
@@ -410,7 +411,8 @@ export default function AssetProcurementRequestsPage() {
                                                     </div>
                                                     <p>{request.item_name}</p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        {request.category ?? '-'}{' '}
+                                                        {request.category ??
+                                                            '-'}{' '}
                                                         · Dibutuhkan{' '}
                                                         {request.needed_by ??
                                                             '-'}
@@ -440,7 +442,8 @@ export default function AssetProcurementRequestsPage() {
                                                         {formatCurrency(
                                                             Number(
                                                                 request.estimated_unit_price,
-                                                            ) * request.quantity,
+                                                            ) *
+                                                                request.quantity,
                                                         )}
                                                     </p>
                                                 </td>
@@ -513,7 +516,10 @@ export default function AssetProcurementRequestsPage() {
                                                                 </Button>
                                                             </>
                                                         )}
-                                                        {['pending', 'approved'].includes(
+                                                        {[
+                                                            'pending',
+                                                            'approved',
+                                                        ].includes(
                                                             request.status,
                                                         ) && (
                                                             <Button
@@ -565,7 +571,9 @@ export default function AssetProcurementRequestsPage() {
                                     key={`${link.label}-${index}`}
                                     asChild={link.url !== null}
                                     size="sm"
-                                    variant={link.active ? 'default' : 'outline'}
+                                    variant={
+                                        link.active ? 'default' : 'outline'
+                                    }
                                     disabled={link.url === null}
                                 >
                                     {link.url ? (
@@ -881,7 +889,10 @@ export default function AssetProcurementRequestsPage() {
                             >
                                 Batal
                             </Button>
-                            <Button type="submit" disabled={statusForm.processing}>
+                            <Button
+                                type="submit"
+                                disabled={statusForm.processing}
+                            >
                                 Terima
                             </Button>
                         </div>

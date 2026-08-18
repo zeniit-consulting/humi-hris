@@ -30,7 +30,8 @@ export default function DeleteUser() {
                 <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
                     <p className="font-medium">Peringatan</p>
                     <p className="text-sm">
-                        Tindakan ini tidak dapat dibatalkan. Lanjutkan dengan hati-hati.
+                        Tindakan ini tidak dapat dibatalkan. Lanjutkan dengan
+                        hati-hati.
                     </p>
                 </div>
 

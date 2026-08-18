@@ -202,7 +202,11 @@ export default function EmployeeMasterDataPage() {
                 return false;
             }
 
-            return Number.isFinite(selectedLevel) && position.level !== null && Number(position.level) < selectedLevel;
+            return (
+                Number.isFinite(selectedLevel) &&
+                position.level !== null &&
+                Number(position.level) < selectedLevel
+            );
         });
     }, [editingPosition, positionForm.data.level, positionOptions]);
 
@@ -889,7 +893,12 @@ export default function EmployeeMasterDataPage() {
                                         ? '__none'
                                         : positionForm.data.division_id
                                 }
-                                onValueChange={(value) => positionForm.setData('division_id', value === '__none' ? '' : value)}
+                                onValueChange={(value) =>
+                                    positionForm.setData(
+                                        'division_id',
+                                        value === '__none' ? '' : value,
+                                    )
+                                }
                                 placeholder="Pilih divisi"
                                 searchPlaceholder="Cari divisi..."
                                 options={[
@@ -939,7 +948,12 @@ export default function EmployeeMasterDataPage() {
                                 ]}
                                 className="w-full"
                             />
-                            <p className="text-xs text-muted-foreground">Pilih level jabatan terlebih dahulu. Hanya posisi pada level yang lebih tinggi yang dapat menjadi jabatan induk, termasuk dari divisi lain.</p>
+                            <p className="text-xs text-muted-foreground">
+                                Pilih level jabatan terlebih dahulu. Hanya
+                                posisi pada level yang lebih tinggi yang dapat
+                                menjadi jabatan induk, termasuk dari divisi
+                                lain.
+                            </p>
                             <InputError
                                 message={positionForm.errors.parent_position_id}
                             />

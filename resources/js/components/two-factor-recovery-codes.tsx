@@ -61,7 +61,8 @@ export default function TwoFactorRecoveryCodes({
                 </CardTitle>
                 <CardDescription>
                     Kode pemulihan membantu Anda masuk kembali jika kehilangan
-                    perangkat 2FA. Simpan kode ini di password manager yang aman.
+                    perangkat 2FA. Simpan kode ini di password manager yang
+                    aman.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -76,7 +77,8 @@ export default function TwoFactorRecoveryCodes({
                             className="size-4"
                             aria-hidden="true"
                         />
-                        {codesAreVisible ? 'Sembunyikan' : 'Lihat'} kode pemulihan
+                        {codesAreVisible ? 'Sembunyikan' : 'Lihat'} kode
+                        pemulihan
                     </Button>
 
                     {canRegenerateCodes && (

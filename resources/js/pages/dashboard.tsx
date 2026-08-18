@@ -242,13 +242,18 @@ export default function Dashboard({
         { key: 'other', label: 'Lainnya', color: '#f59e0b' },
         { key: 'unknown', label: 'Belum diisi', color: '#cbd5e1' },
     ].map((item) => ({ ...item, total: stats.gender[item.key] ?? 0 }));
-    const genderTotal = genderEntries.reduce((total, item) => total + item.total, 0);
+    const genderTotal = genderEntries.reduce(
+        (total, item) => total + item.total,
+        0,
+    );
     let genderOffset = 0;
     const genderGradient = genderEntries
         .map((item) => {
-            const start = genderTotal > 0 ? (genderOffset / genderTotal) * 100 : 0;
+            const start =
+                genderTotal > 0 ? (genderOffset / genderTotal) * 100 : 0;
             genderOffset += item.total;
-            const end = genderTotal > 0 ? (genderOffset / genderTotal) * 100 : 0;
+            const end =
+                genderTotal > 0 ? (genderOffset / genderTotal) * 100 : 0;
             return `${item.color} ${start}% ${end}%`;
         })
         .join(', ');
@@ -538,402 +543,526 @@ export default function Dashboard({
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-12">
-                <Card className="gap-0 py-0 lg:col-span-9">
-                    <CardHeader className="px-4 py-3">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                            <CardTitle>Chart Kehadiran</CardTitle>
-                            <div className="flex flex-wrap gap-1.5">
-                                {rangeOptions.map((option) => (
-                                    <Button
-                                        key={option.value}
-                                        type="button"
-                                        size="sm"
-                                        variant={
-                                            filters.range === option.value
-                                                ? 'default'
-                                                : 'outline'
-                                        }
-                                        onClick={() =>
-                                            router.get(
-                                                dashboard.url(),
-                                                { range: option.value },
-                                                {
-                                                    preserveState: true,
-                                                    preserveScroll: true,
-                                                    replace: true,
-                                                },
-                                            )
-                                        }
+                    <Card className="gap-0 py-0 lg:col-span-9">
+                        <CardHeader className="px-4 py-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <CardTitle>Chart Kehadiran</CardTitle>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {rangeOptions.map((option) => (
+                                        <Button
+                                            key={option.value}
+                                            type="button"
+                                            size="sm"
+                                            variant={
+                                                filters.range === option.value
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
+                                            onClick={() =>
+                                                router.get(
+                                                    dashboard.url(),
+                                                    { range: option.value },
+                                                    {
+                                                        preserveState: true,
+                                                        preserveScroll: true,
+                                                        replace: true,
+                                                    },
+                                                )
+                                            }
+                                        >
+                                            {option.label}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                            <CardDescription>
+                                Komposisi hadir, terlambat, cuti, dan absen per
+                                hari.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="px-4 pb-4">
+                            <div className="mb-3 flex flex-wrap gap-1.5 text-xs">
+                                <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
+                                    <span className="size-2 rounded-full bg-emerald-500" />
+                                    Hadir
+                                </div>
+                                <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
+                                    <span className="size-2 rounded-full bg-amber-500" />
+                                    Terlambat
+                                </div>
+                                <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
+                                    <span className="size-2 rounded-full bg-blue-500" />
+                                    Cuti
+                                </div>
+                                <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
+                                    <span className="size-2 rounded-full bg-slate-300" />
+                                    Absen
+                                </div>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <div className="min-w-[680px]">
+                                    <svg
+                                        viewBox="0 0 760 240"
+                                        className="h-56 w-full"
+                                        role="img"
+                                        aria-label="Line chart kehadiran"
                                     >
-                                        {option.label}
-                                    </Button>
+                                        {[0, 1, 2, 3, 4].map((line) => {
+                                            const y = 24 + line * 42;
+                                            return (
+                                                <line
+                                                    key={line}
+                                                    x1="36"
+                                                    x2="744"
+                                                    y1={y}
+                                                    y2={y}
+                                                    stroke="currentColor"
+                                                    className="text-border"
+                                                    strokeDasharray="4 4"
+                                                />
+                                            );
+                                        })}
+                                        {[
+                                            {
+                                                key: 'present',
+                                                color: '#10b981',
+                                                label: 'Hadir',
+                                            },
+                                            {
+                                                key: 'late',
+                                                color: '#f59e0b',
+                                                label: 'Terlambat',
+                                            },
+                                            {
+                                                key: 'on_leave',
+                                                color: '#3b82f6',
+                                                label: 'Cuti',
+                                            },
+                                            {
+                                                key: 'absent',
+                                                color: '#94a3b8',
+                                                label: 'Absen',
+                                            },
+                                        ].map((series) => {
+                                            const points = attendanceChart
+                                                .map((day, index) => {
+                                                    const x =
+                                                        attendanceChart.length ===
+                                                        1
+                                                            ? 380
+                                                            : 36 +
+                                                              (index /
+                                                                  (attendanceChart.length -
+                                                                      1)) *
+                                                                  708;
+                                                    const y =
+                                                        204 -
+                                                        (Number(
+                                                            day[
+                                                                series.key as keyof AttendancePoint
+                                                            ],
+                                                        ) /
+                                                            maxAttendanceValue) *
+                                                            180;
+                                                    return `${x},${y}`;
+                                                })
+                                                .join(' ');
+                                            return (
+                                                <polyline
+                                                    key={series.key}
+                                                    points={points}
+                                                    fill="none"
+                                                    stroke={series.color}
+                                                    strokeWidth="3"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                />
+                                            );
+                                        })}
+                                    </svg>
+                                    <div className="flex justify-between gap-2 px-6 text-xs text-muted-foreground">
+                                        {attendanceChart.map((day) => (
+                                            <span key={day.date}>
+                                                {day.label}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                            <CardTitle>Gender Karyawan</CardTitle>
+                            <CardDescription>
+                                Distribusi karyawan aktif.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div
+                                className="mx-auto size-44 rounded-full"
+                                style={{
+                                    background: `conic-gradient(${genderGradient || '#e2e8f0 0 100%'})`,
+                                }}
+                            >
+                                <div className="flex size-full items-center justify-center p-8">
+                                    <div className="flex size-full items-center justify-center rounded-full bg-card text-center">
+                                        <div>
+                                            <p className="text-2xl font-bold">
+                                                {genderTotal}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Karyawan
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-5 space-y-2 text-sm">
+                                {genderEntries.map((item) => (
+                                    <div
+                                        key={item.key}
+                                        className="flex items-center justify-between gap-2"
+                                    >
+                                        <span className="inline-flex items-center gap-2">
+                                            <span
+                                                className="size-2.5 rounded-full"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                }}
+                                            />
+                                            {item.label}
+                                        </span>
+                                        <span className="font-semibold">
+                                            {item.total}
+                                        </span>
+                                    </div>
                                 ))}
                             </div>
-                        </div>
-                        <CardDescription>
-                            Komposisi hadir, terlambat, cuti, dan absen per
-                            hari.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="px-4 pb-4">
-                        <div className="mb-3 flex flex-wrap gap-1.5 text-xs">
-                            <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
-                                <span className="size-2 rounded-full bg-emerald-500" />
-                                Hadir
-                            </div>
-                            <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
-                                <span className="size-2 rounded-full bg-amber-500" />
-                                Terlambat
-                            </div>
-                            <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
-                                <span className="size-2 rounded-full bg-blue-500" />
-                                Cuti
-                            </div>
-                            <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
-                                <span className="size-2 rounded-full bg-slate-300" />
-                                Absen
-                            </div>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                            <div className="min-w-[680px]">
-                                <svg viewBox="0 0 760 240" className="h-56 w-full" role="img" aria-label="Line chart kehadiran">
-                                    {[0, 1, 2, 3, 4].map((line) => {
-                                        const y = 24 + line * 42;
-                                        return <line key={line} x1="36" x2="744" y1={y} y2={y} stroke="currentColor" className="text-border" strokeDasharray="4 4" />;
-                                    })}
-                                    {[
-                                        { key: 'present', color: '#10b981', label: 'Hadir' },
-                                        { key: 'late', color: '#f59e0b', label: 'Terlambat' },
-                                        { key: 'on_leave', color: '#3b82f6', label: 'Cuti' },
-                                        { key: 'absent', color: '#94a3b8', label: 'Absen' },
-                                    ].map((series) => {
-                                        const points = attendanceChart.map((day, index) => {
-                                            const x = attendanceChart.length === 1 ? 380 : 36 + (index / (attendanceChart.length - 1)) * 708;
-                                            const y = 204 - (Number(day[series.key as keyof AttendancePoint]) / maxAttendanceValue) * 180;
-                                            return `${x},${y}`;
-                                        }).join(' ');
-                                        return <polyline key={series.key} points={points} fill="none" stroke={series.color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />;
-                                    })}
-                                </svg>
-                                <div className="flex justify-between gap-2 px-6 text-xs text-muted-foreground">
-                                    {attendanceChart.map((day) => <span key={day.date}>{day.label}</span>)}
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="lg:col-span-3">
-                    <CardHeader>
-                        <CardTitle>Gender Karyawan</CardTitle>
-                        <CardDescription>Distribusi karyawan aktif.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="mx-auto size-44 rounded-full" style={{ background: `conic-gradient(${genderGradient || '#e2e8f0 0 100%'})` }}>
-                            <div className="flex size-full items-center justify-center p-8">
-                                <div className="flex size-full items-center justify-center rounded-full bg-card text-center">
-                                    <div><p className="text-2xl font-bold">{genderTotal}</p><p className="text-xs text-muted-foreground">Karyawan</p></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="mt-5 space-y-2 text-sm">
-                            {genderEntries.map((item) => <div key={item.key} className="flex items-center justify-between gap-2"><span className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full" style={{ backgroundColor: item.color }} />{item.label}</span><span className="font-semibold">{item.total}</span></div>)}
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {companyFeatures?.show_outsourcing_dashboard !== false ? (
                     <Collapsible
-                    open={outsourcingOpen}
-                    onOpenChange={setOutsourcingOpen}
-                    className="rounded-lg border bg-card text-card-foreground shadow-xs"
-                >
-                    <div className="flex flex-col gap-2 p-3 md:flex-row md:items-center md:justify-between md:px-4">
-                        <div>
-                            <h2 className="text-base font-semibold">
-                                Operasional Outsourcing
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Headcount, absensi, manpower demand, invoice
-                                klien, payroll cost, dan margin.
-                            </p>
-                        </div>
-                        <CollapsibleTrigger asChild>
-                            <Button type="button" variant="outline" size="sm">
-                                <ChevronDown
-                                    className={`size-4 transition-transform ${outsourcingOpen ? 'rotate-180' : ''}`}
-                                />
-                                {outsourcingOpen ? 'Sembunyikan' : 'Tampilkan'}
-                            </Button>
-                        </CollapsibleTrigger>
-                    </div>
-
-                    <CollapsibleContent>
-                        <div className="space-y-4 border-t p-4">
-                            <div className="flex flex-wrap items-end gap-2">
-                                <div className="grid w-full gap-1.5 sm:w-[180px]">
-                                    <Label htmlFor="outsourcing-period">
-                                        Periode
-                                    </Label>
-                                    <Input
-                                        id="outsourcing-period"
-                                        type="month"
-                                        value={filters.outsourcing_period}
-                                        onChange={(event) =>
-                                            applyOutsourcingFilter({
-                                                outsourcing_period:
-                                                    event.target.value,
-                                            })
-                                        }
-                                    />
-                                </div>
-                                <div className="grid w-full gap-1.5 sm:w-[280px]">
-                                    <Label htmlFor="outsourcing-client">
-                                        Sub-company
-                                    </Label>
-                                    <Select
-                                        value={
-                                            filters.outsourcing_sub_company_id ||
-                                            '__all'
-                                        }
-                                        onValueChange={(value) =>
-                                            applyOutsourcingFilter({
-                                                outsourcing_sub_company_id:
-                                                    value === '__all'
-                                                        ? ''
-                                                        : value,
-                                            })
-                                        }
-                                    >
-                                        <SelectTrigger id="outsourcing-client">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="__all">
-                                                Semua sub-company
-                                            </SelectItem>
-                                            {outsourcing.subCompanies.map(
-                                                (company) => (
-                                                    <SelectItem
-                                                        key={company.id}
-                                                        value={String(
-                                                            company.id,
-                                                        )}
-                                                    >
-                                                        {company.label}
-                                                    </SelectItem>
-                                                ),
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                        open={outsourcingOpen}
+                        onOpenChange={setOutsourcingOpen}
+                        className="rounded-lg border bg-card text-card-foreground shadow-xs"
+                    >
+                        <div className="flex flex-col gap-2 p-3 md:flex-row md:items-center md:justify-between md:px-4">
+                            <div>
+                                <h2 className="text-base font-semibold">
+                                    Operasional Outsourcing
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Headcount, absensi, manpower demand, invoice
+                                    klien, payroll cost, dan margin.
+                                </p>
+                            </div>
+                            <CollapsibleTrigger asChild>
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() =>
-                                        router.get(
-                                            dashboard.url(),
-                                            { range: filters.range },
-                                            {
-                                                replace: true,
-                                                preserveScroll: true,
-                                            },
-                                        )
-                                    }
+                                    size="sm"
                                 >
-                                    <Filter className="size-4" />
-                                    Reset
+                                    <ChevronDown
+                                        className={`size-4 transition-transform ${outsourcingOpen ? 'rotate-180' : ''}`}
+                                    />
+                                    {outsourcingOpen
+                                        ? 'Sembunyikan'
+                                        : 'Tampilkan'}
                                 </Button>
-                            </div>
-
-                            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                                <OutsourcingStat
-                                    icon={Building2}
-                                    label="Klien Aktif"
-                                    value={outsourcing.stats.active_clients}
-                                    description={`${outsourcing.stats.outsourced_employees} karyawan outsourcing`}
-                                />
-                                <OutsourcingStat
-                                    icon={UsersRound}
-                                    label="Karyawan Internal"
-                                    value={outsourcing.stats.internal_employees}
-                                    description="Tidak terikat sub-company"
-                                />
-                                <OutsourcingStat
-                                    icon={CalendarDays}
-                                    label="Kehadiran Hari Ini"
-                                    value={`${outsourcing.stats.attendance_rate}%`}
-                                    description={`${outsourcing.stats.present_today} hadir, ${outsourcing.stats.absent_today} absen`}
-                                />
-                                <OutsourcingStat
-                                    icon={UsersRound}
-                                    label="Kebutuhan Tenaga"
-                                    value={outsourcing.stats.remaining_manpower}
-                                    description={`${outsourcing.stats.manpower_requests} request open/diproses`}
-                                />
-                                <OutsourcingStat
-                                    icon={ReceiptText}
-                                    label="Total Tagihan Klien"
-                                    value={formatRupiahCompact(
-                                        outsourcing.stats.billed_amount,
-                                    )}
-                                    description={`${formatRupiahCompact(outsourcing.stats.paid_amount)} paid`}
-                                />
-                                <OutsourcingStat
-                                    icon={ReceiptText}
-                                    label="Outstanding"
-                                    value={formatRupiahCompact(
-                                        outsourcing.stats.outstanding_amount,
-                                    )}
-                                    description="Draft + terkirim"
-                                />
-                                <OutsourcingStat
-                                    icon={WalletCards}
-                                    label="Payroll Cost"
-                                    value={formatRupiahCompact(
-                                        outsourcing.stats.payroll_cost,
-                                    )}
-                                    description="Payroll reguler atau fallback gaji pokok"
-                                />
-                                <OutsourcingStat
-                                    icon={WalletCards}
-                                    label="Gross Margin"
-                                    value={formatRupiahCompact(
-                                        outsourcing.stats.gross_margin,
-                                    )}
-                                    description="Tagihan klien - payroll cost"
-                                />
-                            </div>
-
-                            <div className="overflow-x-auto rounded-md border">
-                                <table className="w-full min-w-[1250px] text-sm">
-                                    <thead>
-                                        <tr className="border-b bg-muted/30 text-left">
-                                            <th className="px-3 py-2">
-                                                Sub-company
-                                            </th>
-                                            <th className="px-3 py-2">
-                                                SLA Score
-                                            </th>
-                                            <th className="px-3 py-2">
-                                                Headcount
-                                            </th>
-                                            <th className="px-3 py-2">
-                                                Attendance
-                                            </th>
-                                            <th className="px-3 py-2">
-                                                Manpower Gap
-                                            </th>
-                                            <th className="px-3 py-2">
-                                                Invoice
-                                            </th>
-                                            <th className="px-3 py-2">
-                                                Outstanding
-                                            </th>
-                                            <th className="px-3 py-2">
-                                                Payroll Cost
-                                            </th>
-                                            <th className="px-3 py-2">
-                                                Margin
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {outsourcing.perClient.length === 0 && (
-                                            <tr>
-                                                <td
-                                                    colSpan={9}
-                                                    className="px-3 py-5 text-center text-muted-foreground"
-                                                >
-                                                    Belum ada sub-company.
-                                                </td>
-                                            </tr>
-                                        )}
-                                        {outsourcing.perClient.map((client) => (
-                                            <tr
-                                                key={client.id}
-                                                className="border-b align-top last:border-0"
-                                            >
-                                                <td className="px-3 py-2 font-medium">
-                                                    {client.label}
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {client.active
-                                                            ? 'Aktif'
-                                                            : 'Nonaktif'}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    <div
-                                                        className={`inline-flex rounded px-2 py-1 text-xs font-semibold ${
-                                                            client.sla_score >=
-                                                            75
-                                                                ? 'bg-emerald-50 text-emerald-700'
-                                                                : client.sla_score >=
-                                                                    50
-                                                                  ? 'bg-amber-50 text-amber-700'
-                                                                  : 'bg-rose-50 text-rose-700'
-                                                        }`}
-                                                    >
-                                                        {client.sla_score}
-                                                    </div>
-                                                    <div className="mt-1 text-xs text-muted-foreground">
-                                                        {client.sla_breaches
-                                                            .length === 0
-                                                            ? 'On track'
-                                                            : client.sla_breaches.join(
-                                                                  ', ',
-                                                              )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    {client.employees}
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    {client.attendance_rate}%
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {client.present_today}{' '}
-                                                        hadir,{' '}
-                                                        {client.absent_today}{' '}
-                                                        absen
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    {client.remaining_manpower}
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    {formatRupiahCompact(
-                                                        client.invoice_total,
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    {formatRupiahCompact(
-                                                        client.outstanding_invoice,
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    {formatRupiahCompact(
-                                                        client.payroll_cost,
-                                                    )}
-                                                </td>
-                                                <td
-                                                    className={`px-3 py-2 font-semibold ${
-                                                        client.margin < 0
-                                                            ? 'text-destructive'
-                                                            : 'text-emerald-600'
-                                                    }`}
-                                                >
-                                                    {formatRupiahCompact(
-                                                        client.margin,
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            </CollapsibleTrigger>
                         </div>
-                    </CollapsibleContent>
+
+                        <CollapsibleContent>
+                            <div className="space-y-4 border-t p-4">
+                                <div className="flex flex-wrap items-end gap-2">
+                                    <div className="grid w-full gap-1.5 sm:w-[180px]">
+                                        <Label htmlFor="outsourcing-period">
+                                            Periode
+                                        </Label>
+                                        <Input
+                                            id="outsourcing-period"
+                                            type="month"
+                                            value={filters.outsourcing_period}
+                                            onChange={(event) =>
+                                                applyOutsourcingFilter({
+                                                    outsourcing_period:
+                                                        event.target.value,
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                    <div className="grid w-full gap-1.5 sm:w-[280px]">
+                                        <Label htmlFor="outsourcing-client">
+                                            Sub-company
+                                        </Label>
+                                        <Select
+                                            value={
+                                                filters.outsourcing_sub_company_id ||
+                                                '__all'
+                                            }
+                                            onValueChange={(value) =>
+                                                applyOutsourcingFilter({
+                                                    outsourcing_sub_company_id:
+                                                        value === '__all'
+                                                            ? ''
+                                                            : value,
+                                                })
+                                            }
+                                        >
+                                            <SelectTrigger id="outsourcing-client">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__all">
+                                                    Semua sub-company
+                                                </SelectItem>
+                                                {outsourcing.subCompanies.map(
+                                                    (company) => (
+                                                        <SelectItem
+                                                            key={company.id}
+                                                            value={String(
+                                                                company.id,
+                                                            )}
+                                                        >
+                                                            {company.label}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() =>
+                                            router.get(
+                                                dashboard.url(),
+                                                { range: filters.range },
+                                                {
+                                                    replace: true,
+                                                    preserveScroll: true,
+                                                },
+                                            )
+                                        }
+                                    >
+                                        <Filter className="size-4" />
+                                        Reset
+                                    </Button>
+                                </div>
+
+                                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                    <OutsourcingStat
+                                        icon={Building2}
+                                        label="Klien Aktif"
+                                        value={outsourcing.stats.active_clients}
+                                        description={`${outsourcing.stats.outsourced_employees} karyawan outsourcing`}
+                                    />
+                                    <OutsourcingStat
+                                        icon={UsersRound}
+                                        label="Karyawan Internal"
+                                        value={
+                                            outsourcing.stats.internal_employees
+                                        }
+                                        description="Tidak terikat sub-company"
+                                    />
+                                    <OutsourcingStat
+                                        icon={CalendarDays}
+                                        label="Kehadiran Hari Ini"
+                                        value={`${outsourcing.stats.attendance_rate}%`}
+                                        description={`${outsourcing.stats.present_today} hadir, ${outsourcing.stats.absent_today} absen`}
+                                    />
+                                    <OutsourcingStat
+                                        icon={UsersRound}
+                                        label="Kebutuhan Tenaga"
+                                        value={
+                                            outsourcing.stats.remaining_manpower
+                                        }
+                                        description={`${outsourcing.stats.manpower_requests} request open/diproses`}
+                                    />
+                                    <OutsourcingStat
+                                        icon={ReceiptText}
+                                        label="Total Tagihan Klien"
+                                        value={formatRupiahCompact(
+                                            outsourcing.stats.billed_amount,
+                                        )}
+                                        description={`${formatRupiahCompact(outsourcing.stats.paid_amount)} paid`}
+                                    />
+                                    <OutsourcingStat
+                                        icon={ReceiptText}
+                                        label="Outstanding"
+                                        value={formatRupiahCompact(
+                                            outsourcing.stats
+                                                .outstanding_amount,
+                                        )}
+                                        description="Draft + terkirim"
+                                    />
+                                    <OutsourcingStat
+                                        icon={WalletCards}
+                                        label="Payroll Cost"
+                                        value={formatRupiahCompact(
+                                            outsourcing.stats.payroll_cost,
+                                        )}
+                                        description="Payroll reguler atau fallback gaji pokok"
+                                    />
+                                    <OutsourcingStat
+                                        icon={WalletCards}
+                                        label="Gross Margin"
+                                        value={formatRupiahCompact(
+                                            outsourcing.stats.gross_margin,
+                                        )}
+                                        description="Tagihan klien - payroll cost"
+                                    />
+                                </div>
+
+                                <div className="overflow-x-auto rounded-md border">
+                                    <table className="w-full min-w-[1250px] text-sm">
+                                        <thead>
+                                            <tr className="border-b bg-muted/30 text-left">
+                                                <th className="px-3 py-2">
+                                                    Sub-company
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    SLA Score
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Headcount
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Attendance
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Manpower Gap
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Invoice
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Outstanding
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Payroll Cost
+                                                </th>
+                                                <th className="px-3 py-2">
+                                                    Margin
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {outsourcing.perClient.length ===
+                                                0 && (
+                                                <tr>
+                                                    <td
+                                                        colSpan={9}
+                                                        className="px-3 py-5 text-center text-muted-foreground"
+                                                    >
+                                                        Belum ada sub-company.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            {outsourcing.perClient.map(
+                                                (client) => (
+                                                    <tr
+                                                        key={client.id}
+                                                        className="border-b align-top last:border-0"
+                                                    >
+                                                        <td className="px-3 py-2 font-medium">
+                                                            {client.label}
+                                                            <div className="text-xs text-muted-foreground">
+                                                                {client.active
+                                                                    ? 'Aktif'
+                                                                    : 'Nonaktif'}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            <div
+                                                                className={`inline-flex rounded px-2 py-1 text-xs font-semibold ${
+                                                                    client.sla_score >=
+                                                                    75
+                                                                        ? 'bg-emerald-50 text-emerald-700'
+                                                                        : client.sla_score >=
+                                                                            50
+                                                                          ? 'bg-amber-50 text-amber-700'
+                                                                          : 'bg-rose-50 text-rose-700'
+                                                                }`}
+                                                            >
+                                                                {
+                                                                    client.sla_score
+                                                                }
+                                                            </div>
+                                                            <div className="mt-1 text-xs text-muted-foreground">
+                                                                {client
+                                                                    .sla_breaches
+                                                                    .length ===
+                                                                0
+                                                                    ? 'On track'
+                                                                    : client.sla_breaches.join(
+                                                                          ', ',
+                                                                      )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            {client.employees}
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            {
+                                                                client.attendance_rate
+                                                            }
+                                                            %
+                                                            <div className="text-xs text-muted-foreground">
+                                                                {
+                                                                    client.present_today
+                                                                }{' '}
+                                                                hadir,{' '}
+                                                                {
+                                                                    client.absent_today
+                                                                }{' '}
+                                                                absen
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            {
+                                                                client.remaining_manpower
+                                                            }
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            {formatRupiahCompact(
+                                                                client.invoice_total,
+                                                            )}
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            {formatRupiahCompact(
+                                                                client.outstanding_invoice,
+                                                            )}
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            {formatRupiahCompact(
+                                                                client.payroll_cost,
+                                                            )}
+                                                        </td>
+                                                        <td
+                                                            className={`px-3 py-2 font-semibold ${
+                                                                client.margin <
+                                                                0
+                                                                    ? 'text-destructive'
+                                                                    : 'text-emerald-600'
+                                                            }`}
+                                                        >
+                                                            {formatRupiahCompact(
+                                                                client.margin,
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ),
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </CollapsibleContent>
                     </Collapsible>
                 ) : null}
             </div>

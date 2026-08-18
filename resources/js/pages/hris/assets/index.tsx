@@ -329,7 +329,10 @@ export default function AssetsPage() {
             <Head title="Asset Management" />
 
             {isLocked && (
-                <LockedFeatureBanner featureName="Asset Management" planRequired="plus" />
+                <LockedFeatureBanner
+                    featureName="Asset Management"
+                    planRequired="plus"
+                />
             )}
 
             <div className="space-y-4 p-4">

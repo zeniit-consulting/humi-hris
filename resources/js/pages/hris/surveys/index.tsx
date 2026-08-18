@@ -194,7 +194,9 @@ export default function SurveyIndex() {
         surveyForm.setData(
             'questions',
             surveyForm.data.questions.map((question, questionIndex) =>
-                questionIndex === index ? { ...question, ...updates } : question,
+                questionIndex === index
+                    ? { ...question, ...updates }
+                    : question,
             ),
         );
     };
@@ -230,10 +232,15 @@ export default function SurveyIndex() {
         });
     };
 
-    const removeQuestionOption = (questionIndex: number, optionIndex: number) => {
+    const removeQuestionOption = (
+        questionIndex: number,
+        optionIndex: number,
+    ) => {
         const question = surveyForm.data.questions[questionIndex];
         updateQuestion(questionIndex, {
-            options: question.options.filter((_, index) => index !== optionIndex),
+            options: question.options.filter(
+                (_, index) => index !== optionIndex,
+            ),
         });
     };
 
@@ -261,10 +268,7 @@ export default function SurveyIndex() {
         });
     };
 
-    const updateResponseAnswer = (
-        index: number,
-        value: string | string[],
-    ) => {
+    const updateResponseAnswer = (index: number, value: string | string[]) => {
         const next = [...responseForm.data.answers];
         next[index] = value;
         responseForm.setData('answers', next);
@@ -523,7 +527,8 @@ export default function SurveyIndex() {
                                                         <textarea
                                                             className="min-h-20 rounded-md border bg-background px-3 py-2 text-sm"
                                                             value={String(
-                                                                responseForm.data
+                                                                responseForm
+                                                                    .data
                                                                     .answers[
                                                                     index
                                                                 ] ?? '',
@@ -560,12 +565,16 @@ export default function SurveyIndex() {
                                                                         );
                                                                     return (
                                                                         <label
-                                                                            key={option}
+                                                                            key={
+                                                                                option
+                                                                            }
                                                                             className="flex items-center gap-2 text-sm"
                                                                         >
                                                                             <input
                                                                                 type="checkbox"
-                                                                                checked={selected}
+                                                                                checked={
+                                                                                    selected
+                                                                                }
                                                                                 onChange={() =>
                                                                                     toggleResponseCheckbox(
                                                                                         index,
@@ -573,7 +582,9 @@ export default function SurveyIndex() {
                                                                                     )
                                                                                 }
                                                                             />
-                                                                            {option}
+                                                                            {
+                                                                                option
+                                                                            }
                                                                         </label>
                                                                     );
                                                                 },
@@ -585,13 +596,17 @@ export default function SurveyIndex() {
                                                             {question.options.map(
                                                                 (option) => (
                                                                     <label
-                                                                        key={option}
+                                                                        key={
+                                                                            option
+                                                                        }
                                                                         className="flex items-center gap-2 text-sm"
                                                                     >
                                                                         <input
                                                                             type="radio"
                                                                             name={`response-${respondingTo.id}-${index}`}
-                                                                            value={option}
+                                                                            value={
+                                                                                option
+                                                                            }
                                                                             checked={
                                                                                 responseForm
                                                                                     .data
@@ -624,7 +639,8 @@ export default function SurveyIndex() {
                                                                       : 'text'
                                                             }
                                                             value={String(
-                                                                responseForm.data
+                                                                responseForm
+                                                                    .data
                                                                     .answers[
                                                                     index
                                                                 ] ?? '',
@@ -679,8 +695,9 @@ export default function SurveyIndex() {
                                 <Plus className="size-4" />
                                 {editing ? 'Edit survey' : 'Buat survey'}
                             </DialogTitle>
-                        <DialogDescription>
-                                Susun pertanyaan seperti Google Forms dengan tipe jawaban yang sesuai.
+                            <DialogDescription>
+                                Susun pertanyaan seperti Google Forms dengan
+                                tipe jawaban yang sesuai.
                             </DialogDescription>
                         </DialogHeader>
                         <form className="grid gap-4" onSubmit={submitSurvey}>
@@ -690,7 +707,10 @@ export default function SurveyIndex() {
                                     id="title"
                                     value={surveyForm.data.title}
                                     onChange={(event) =>
-                                        surveyForm.setData('title', event.target.value)
+                                        surveyForm.setData(
+                                            'title',
+                                            event.target.value,
+                                        )
                                     }
                                 />
                                 <InputError message={surveyForm.errors.title} />
@@ -702,17 +722,23 @@ export default function SurveyIndex() {
                                     className="min-h-20 rounded-md border bg-background px-3 py-2 text-sm"
                                     value={surveyForm.data.description}
                                     onChange={(event) =>
-                                        surveyForm.setData('description', event.target.value)
+                                        surveyForm.setData(
+                                            'description',
+                                            event.target.value,
+                                        )
                                     }
                                 />
-                                <InputError message={surveyForm.errors.description} />
+                                <InputError
+                                    message={surveyForm.errors.description}
+                                />
                             </div>
                             <div className="grid gap-3">
                                 <div className="flex items-center justify-between gap-3">
                                     <div>
                                         <Label>Pertanyaan</Label>
                                         <p className="text-xs text-muted-foreground">
-                                            Tambahkan satu atau lebih pertanyaan.
+                                            Tambahkan satu atau lebih
+                                            pertanyaan.
                                         </p>
                                     </div>
                                     <Button
@@ -740,7 +766,8 @@ export default function SurveyIndex() {
                                                     size="icon"
                                                     variant="ghost"
                                                     disabled={
-                                                        surveyForm.data.questions
+                                                        surveyForm.data
+                                                            .questions
                                                             .length === 1
                                                     }
                                                     onClick={() =>
@@ -769,12 +796,16 @@ export default function SurveyIndex() {
                                                         type: event.target
                                                             .value as SurveyQuestionType,
                                                         options:
-                                                            event.target.value ===
-                                                            'checkbox' ||
-                                                            event.target.value ===
+                                                            event.target
+                                                                .value ===
+                                                                'checkbox' ||
+                                                            event.target
+                                                                .value ===
                                                                 'radio'
-                                                                ? question.options
-                                                                    .length > 0
+                                                                ? question
+                                                                      .options
+                                                                      .length >
+                                                                  0
                                                                     ? question.options
                                                                     : ['']
                                                                 : [],
@@ -822,15 +853,22 @@ export default function SurveyIndex() {
                                                         </Button>
                                                     </div>
                                                     {question.options.map(
-                                                        (option, optionIndex) => (
+                                                        (
+                                                            option,
+                                                            optionIndex,
+                                                        ) => (
                                                             <div
                                                                 key={`${question.id}-option-${optionIndex}`}
                                                                 className="flex gap-2"
                                                             >
                                                                 <Input
-                                                                    value={option}
+                                                                    value={
+                                                                        option
+                                                                    }
                                                                     placeholder={`Opsi ${optionIndex + 1}`}
-                                                                    onChange={(event) =>
+                                                                    onChange={(
+                                                                        event,
+                                                                    ) =>
                                                                         updateQuestionOption(
                                                                             index,
                                                                             optionIndex,
@@ -861,20 +899,24 @@ export default function SurveyIndex() {
                                             ) : null}
                                             <InputError
                                                 message={
-                                                    (surveyForm.errors as Record<
-                                                        string,
-                                                        string | undefined
-                                                    >)[
+                                                    (
+                                                        surveyForm.errors as Record<
+                                                            string,
+                                                            string | undefined
+                                                        >
+                                                    )[
                                                         `questions.${index}.question`
                                                     ]
                                                 }
                                             />
                                             <InputError
                                                 message={
-                                                    (surveyForm.errors as Record<
-                                                        string,
-                                                        string | undefined
-                                                    >)[
+                                                    (
+                                                        surveyForm.errors as Record<
+                                                            string,
+                                                            string | undefined
+                                                        >
+                                                    )[
                                                         `questions.${index}.options`
                                                     ]
                                                 }
@@ -891,14 +933,19 @@ export default function SurveyIndex() {
                                     label="Status"
                                     value={surveyForm.data.status}
                                     options={statusOptions}
-                                    onChange={(value) => surveyForm.setData('status', value)}
+                                    onChange={(value) =>
+                                        surveyForm.setData('status', value)
+                                    }
                                 />
                                 <label className="flex items-center gap-2 self-end rounded-md border px-3 py-2 text-sm">
                                     <input
                                         type="checkbox"
                                         checked={surveyForm.data.is_anonymous}
                                         onChange={(event) =>
-                                            surveyForm.setData('is_anonymous', event.target.checked)
+                                            surveyForm.setData(
+                                                'is_anonymous',
+                                                event.target.checked,
+                                            )
                                         }
                                     />
                                     Anonim
@@ -912,10 +959,15 @@ export default function SurveyIndex() {
                                         type="datetime-local"
                                         value={surveyForm.data.starts_at}
                                         onChange={(event) =>
-                                            surveyForm.setData('starts_at', event.target.value)
+                                            surveyForm.setData(
+                                                'starts_at',
+                                                event.target.value,
+                                            )
                                         }
                                     />
-                                    <InputError message={surveyForm.errors.starts_at} />
+                                    <InputError
+                                        message={surveyForm.errors.starts_at}
+                                    />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="ends_at">Selesai</Label>
@@ -924,15 +976,24 @@ export default function SurveyIndex() {
                                         type="datetime-local"
                                         value={surveyForm.data.ends_at}
                                         onChange={(event) =>
-                                            surveyForm.setData('ends_at', event.target.value)
+                                            surveyForm.setData(
+                                                'ends_at',
+                                                event.target.value,
+                                            )
                                         }
                                     />
-                                    <InputError message={surveyForm.errors.ends_at} />
+                                    <InputError
+                                        message={surveyForm.errors.ends_at}
+                                    />
                                 </div>
                             </div>
                             <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
                                 {editing ? (
-                                    <Button type="button" variant="outline" onClick={resetSurveyForm}>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={resetSurveyForm}
+                                    >
                                         Batal
                                     </Button>
                                 ) : null}

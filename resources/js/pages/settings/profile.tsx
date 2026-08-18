@@ -617,23 +617,30 @@ export default function Profile({
                                         <input
                                             type="hidden"
                                             name="portal_kasbon_enabled"
-                                            value={portalKasbonEnabled ? '1' : '0'}
+                                            value={
+                                                portalKasbonEnabled ? '1' : '0'
+                                            }
                                         />
                                         <input
                                             id="portal_kasbon_enabled"
                                             type="checkbox"
                                             checked={portalKasbonEnabled}
                                             onChange={(event) =>
-                                                setPortalKasbonEnabled(event.target.checked)
+                                                setPortalKasbonEnabled(
+                                                    event.target.checked,
+                                                )
                                             }
                                             className="mt-1 size-4 rounded border-input accent-primary"
                                         />
                                         <div>
                                             <Label htmlFor="portal_kasbon_enabled">
-                                                Tampilkan Kasbon di Portal Karyawan
+                                                Tampilkan Kasbon di Portal
+                                                Karyawan
                                             </Label>
                                             <p className="mt-1 text-xs text-slate-500">
-                                                Jika dimatikan, menu, halaman, dan API Kasbon tidak dapat diakses karyawan.
+                                                Jika dimatikan, menu, halaman,
+                                                dan API Kasbon tidak dapat
+                                                diakses karyawan.
                                             </p>
                                         </div>
                                     </div>
@@ -642,14 +649,22 @@ export default function Profile({
                                         <input
                                             type="hidden"
                                             name="employee_activation_otp_enabled"
-                                            value={employeeActivationOtpEnabled ? '1' : '0'}
+                                            value={
+                                                employeeActivationOtpEnabled
+                                                    ? '1'
+                                                    : '0'
+                                            }
                                         />
                                         <input
                                             id="employee_activation_otp_enabled"
                                             type="checkbox"
-                                            checked={employeeActivationOtpEnabled}
+                                            checked={
+                                                employeeActivationOtpEnabled
+                                            }
                                             onChange={(event) =>
-                                                setEmployeeActivationOtpEnabled(event.target.checked)
+                                                setEmployeeActivationOtpEnabled(
+                                                    event.target.checked,
+                                                )
                                             }
                                             className="mt-1 size-4 rounded border-input accent-primary"
                                         />
@@ -658,7 +673,9 @@ export default function Profile({
                                                 Wajibkan OTP Aktivasi Karyawan
                                             </Label>
                                             <p className="mt-1 text-xs text-slate-500">
-                                                Jika dimatikan, karyawan dapat langsung masuk menggunakan kredensial dari email undangan.
+                                                Jika dimatikan, karyawan dapat
+                                                langsung masuk menggunakan
+                                                kredensial dari email undangan.
                                             </p>
                                         </div>
                                     </div>
@@ -670,7 +687,8 @@ export default function Profile({
                                             Outsourcing
                                         </p>
                                         <p className="mt-1 text-xs text-slate-500">
-                                            Atur menu dan ringkasan outsourcing yang ditampilkan di aplikasi.
+                                            Atur menu dan ringkasan outsourcing
+                                            yang ditampilkan di aplikasi.
                                         </p>
                                     </div>
 
@@ -679,14 +697,20 @@ export default function Profile({
                                             <input
                                                 type="hidden"
                                                 name="show_sub_company_menu"
-                                                value={showSubCompanyMenu ? '1' : '0'}
+                                                value={
+                                                    showSubCompanyMenu
+                                                        ? '1'
+                                                        : '0'
+                                                }
                                             />
                                             <input
                                                 id="show_sub_company_menu"
                                                 type="checkbox"
                                                 checked={showSubCompanyMenu}
                                                 onChange={(event) =>
-                                                    setShowSubCompanyMenu(event.target.checked)
+                                                    setShowSubCompanyMenu(
+                                                        event.target.checked,
+                                                    )
                                                 }
                                                 className="mt-1 size-4 rounded border-input accent-primary"
                                             />
@@ -695,7 +719,9 @@ export default function Profile({
                                                     Tampilkan menu Sub Company
                                                 </Label>
                                                 <p className="mt-1 text-xs text-slate-500">
-                                                    Sembunyikan menu ini jika perusahaan tidak menggunakan pengelolaan sub-company.
+                                                    Sembunyikan menu ini jika
+                                                    perusahaan tidak menggunakan
+                                                    pengelolaan sub-company.
                                                 </p>
                                             </div>
                                         </div>
@@ -704,23 +730,33 @@ export default function Profile({
                                             <input
                                                 type="hidden"
                                                 name="show_manpower_request_menu"
-                                                value={showManpowerRequestMenu ? '1' : '0'}
+                                                value={
+                                                    showManpowerRequestMenu
+                                                        ? '1'
+                                                        : '0'
+                                                }
                                             />
                                             <input
                                                 id="show_manpower_request_menu"
                                                 type="checkbox"
-                                                checked={showManpowerRequestMenu}
+                                                checked={
+                                                    showManpowerRequestMenu
+                                                }
                                                 onChange={(event) =>
-                                                    setShowManpowerRequestMenu(event.target.checked)
+                                                    setShowManpowerRequestMenu(
+                                                        event.target.checked,
+                                                    )
                                                 }
                                                 className="mt-1 size-4 rounded border-input accent-primary"
                                             />
                                             <div>
                                                 <Label htmlFor="show_manpower_request_menu">
-                                                    Tampilkan menu Manpower Request
+                                                    Tampilkan menu Manpower
+                                                    Request
                                                 </Label>
                                                 <p className="mt-1 text-xs text-slate-500">
-                                                    Sembunyikan menu permintaan tenaga kerja dari sidebar.
+                                                    Sembunyikan menu permintaan
+                                                    tenaga kerja dari sidebar.
                                                 </p>
                                             </div>
                                         </div>
@@ -729,23 +765,35 @@ export default function Profile({
                                             <input
                                                 type="hidden"
                                                 name="show_outsourcing_dashboard"
-                                                value={showOutsourcingDashboard ? '1' : '0'}
+                                                value={
+                                                    showOutsourcingDashboard
+                                                        ? '1'
+                                                        : '0'
+                                                }
                                             />
                                             <input
                                                 id="show_outsourcing_dashboard"
                                                 type="checkbox"
-                                                checked={showOutsourcingDashboard}
+                                                checked={
+                                                    showOutsourcingDashboard
+                                                }
                                                 onChange={(event) =>
-                                                    setShowOutsourcingDashboard(event.target.checked)
+                                                    setShowOutsourcingDashboard(
+                                                        event.target.checked,
+                                                    )
                                                 }
                                                 className="mt-1 size-4 rounded border-input accent-primary"
                                             />
                                             <div>
                                                 <Label htmlFor="show_outsourcing_dashboard">
-                                                    Tampilkan card Outsourcing di Dashboard
+                                                    Tampilkan card Outsourcing
+                                                    di Dashboard
                                                 </Label>
                                                 <p className="mt-1 text-xs text-slate-500">
-                                                    Sembunyikan seluruh ringkasan operasional outsourcing dari dashboard utama.
+                                                    Sembunyikan seluruh
+                                                    ringkasan operasional
+                                                    outsourcing dari dashboard
+                                                    utama.
                                                 </p>
                                             </div>
                                         </div>
@@ -1005,7 +1053,15 @@ export default function Profile({
                                                     </div>
 
                                                     <div className="grid gap-4 md:grid-cols-2">
-                                                        {location.id ? <input type="hidden" name={`attendance_locations[${index}][id]`} value={location.id} /> : null}
+                                                        {location.id ? (
+                                                            <input
+                                                                type="hidden"
+                                                                name={`attendance_locations[${index}][id]`}
+                                                                value={
+                                                                    location.id
+                                                                }
+                                                            />
+                                                        ) : null}
                                                         <div className="grid gap-2">
                                                             <Label>
                                                                 Nama lokasi
@@ -1151,24 +1207,87 @@ export default function Profile({
                                                         </div>
 
                                                         <div className="grid gap-3 md:col-span-2">
-                                                            <input type="hidden" name={`attendance_locations[${index}][latitude]`} value={String(location.latitude ?? '')} />
-                                                            <input type="hidden" name={`attendance_locations[${index}][longitude]`} value={String(location.longitude ?? '')} />
+                                                            <input
+                                                                type="hidden"
+                                                                name={`attendance_locations[${index}][latitude]`}
+                                                                value={String(
+                                                                    location.latitude ??
+                                                                        '',
+                                                                )}
+                                                            />
+                                                            <input
+                                                                type="hidden"
+                                                                name={`attendance_locations[${index}][longitude]`}
+                                                                value={String(
+                                                                    location.longitude ??
+                                                                        '',
+                                                                )}
+                                                            />
                                                             <div>
-                                                                <Label>Pilih titik lokasi di map</Label>
-                                                                <p className="mt-1 text-xs text-slate-500">Buka peta untuk memilih titik dan mengisi koordinat otomatis.</p>
+                                                                <Label>
+                                                                    Pilih titik
+                                                                    lokasi di
+                                                                    map
+                                                                </Label>
+                                                                <p className="mt-1 text-xs text-slate-500">
+                                                                    Buka peta
+                                                                    untuk
+                                                                    memilih
+                                                                    titik dan
+                                                                    mengisi
+                                                                    koordinat
+                                                                    otomatis.
+                                                                </p>
                                                             </div>
                                                             <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border bg-white p-3">
                                                                 <div className="grid gap-3 text-sm sm:grid-cols-2 sm:gap-6">
-                                                                <div><p className="text-xs font-medium tracking-wide text-slate-500 uppercase">Latitude</p><p className="mt-1 font-mono text-slate-900">{location.latitude || 'Belum dipilih'}</p></div>
-                                                                <div><p className="text-xs font-medium tracking-wide text-slate-500 uppercase">Longitude</p><p className="mt-1 font-mono text-slate-900">{location.longitude || 'Belum dipilih'}</p></div>
+                                                                    <div>
+                                                                        <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                                                            Latitude
+                                                                        </p>
+                                                                        <p className="mt-1 font-mono text-slate-900">
+                                                                            {location.latitude ||
+                                                                                'Belum dipilih'}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                                                            Longitude
+                                                                        </p>
+                                                                        <p className="mt-1 font-mono text-slate-900">
+                                                                            {location.longitude ||
+                                                                                'Belum dipilih'}
+                                                                        </p>
+                                                                    </div>
                                                                 </div>
-                                                                <Button type="button" variant="outline" size="sm" onClick={() => setMapPickerIndex(index)}>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        setMapPickerIndex(
+                                                                            index,
+                                                                        )
+                                                                    }
+                                                                >
                                                                     <MapPin className="size-4" />
                                                                     Pilih di Map
                                                                 </Button>
                                                             </div>
-                                                            <InputError message={errors[`attendance_locations.${index}.latitude` as never]} />
-                                                            <InputError message={errors[`attendance_locations.${index}.longitude` as never]} />
+                                                            <InputError
+                                                                message={
+                                                                    errors[
+                                                                        `attendance_locations.${index}.latitude` as never
+                                                                    ]
+                                                                }
+                                                            />
+                                                            <InputError
+                                                                message={
+                                                                    errors[
+                                                                        `attendance_locations.${index}.longitude` as never
+                                                                    ]
+                                                                }
+                                                            />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1185,16 +1304,38 @@ export default function Profile({
                                 >
                                     <DialogContent className="max-w-3xl">
                                         <DialogHeader>
-                                            <DialogTitle>Pilih titik lokasi absensi</DialogTitle>
-                                            <DialogDescription>Klik peta untuk menyimpan latitude dan longitude pada lokasi ini.</DialogDescription>
+                                            <DialogTitle>
+                                                Pilih titik lokasi absensi
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Klik peta untuk menyimpan
+                                                latitude dan longitude pada
+                                                lokasi ini.
+                                            </DialogDescription>
                                         </DialogHeader>
-                                        {mapPickerIndex !== null && attendanceLocations[mapPickerIndex] ? (
+                                        {mapPickerIndex !== null &&
+                                        attendanceLocations[mapPickerIndex] ? (
                                             <div className="overflow-hidden rounded-lg border">
                                                 <LocationMapPicker
-                                                    latitude={String(attendanceLocations[mapPickerIndex].latitude ?? '')}
-                                                    longitude={String(attendanceLocations[mapPickerIndex].longitude ?? '')}
-                                                    onSelect={(latitude, longitude) => {
-                                                        handleAttendanceLocationSelect(mapPickerIndex, latitude, longitude);
+                                                    latitude={String(
+                                                        attendanceLocations[
+                                                            mapPickerIndex
+                                                        ].latitude ?? '',
+                                                    )}
+                                                    longitude={String(
+                                                        attendanceLocations[
+                                                            mapPickerIndex
+                                                        ].longitude ?? '',
+                                                    )}
+                                                    onSelect={(
+                                                        latitude,
+                                                        longitude,
+                                                    ) => {
+                                                        handleAttendanceLocationSelect(
+                                                            mapPickerIndex,
+                                                            latitude,
+                                                            longitude,
+                                                        );
                                                         setMapPickerIndex(null);
                                                     }}
                                                 />

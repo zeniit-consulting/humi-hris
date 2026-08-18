@@ -1,8 +1,8 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PortalPushDeviceController::store
-* @see app/Http/Controllers/Api/PortalPushDeviceController.php:65
-* @route '/portal/api/push-devices'
+* @see app/Http/Controllers/Api/PortalPushDeviceController.php:15
+* @route '/portal/api/web-push-subscriptions'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(options),
@@ -11,13 +11,13 @@ export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
 
 store.definition = {
     methods: ["post"],
-    url: '/portal/api/push-devices',
+    url: '/portal/api/web-push-subscriptions',
 } satisfies RouteDefinition<["post"]>
 
 /**
 * @see \App\Http\Controllers\Api\PortalPushDeviceController::store
-* @see app/Http/Controllers/Api/PortalPushDeviceController.php:65
-* @route '/portal/api/push-devices'
+* @see app/Http/Controllers/Api/PortalPushDeviceController.php:15
+* @route '/portal/api/web-push-subscriptions'
 */
 store.url = (options?: RouteQueryOptions) => {
     return store.definition.url + queryParams(options)
@@ -25,8 +25,8 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PortalPushDeviceController::store
-* @see app/Http/Controllers/Api/PortalPushDeviceController.php:65
-* @route '/portal/api/push-devices'
+* @see app/Http/Controllers/Api/PortalPushDeviceController.php:15
+* @route '/portal/api/web-push-subscriptions'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(options),
@@ -35,8 +35,8 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PortalPushDeviceController::store
-* @see app/Http/Controllers/Api/PortalPushDeviceController.php:65
-* @route '/portal/api/push-devices'
+* @see app/Http/Controllers/Api/PortalPushDeviceController.php:15
+* @route '/portal/api/web-push-subscriptions'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: store.url(options),
@@ -45,8 +45,8 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Api\PortalPushDeviceController::store
-* @see app/Http/Controllers/Api/PortalPushDeviceController.php:65
-* @route '/portal/api/push-devices'
+* @see app/Http/Controllers/Api/PortalPushDeviceController.php:15
+* @route '/portal/api/web-push-subscriptions'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: store.url(options),
@@ -57,8 +57,8 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Api\PortalPushDeviceController::destroy
-* @see app/Http/Controllers/Api/PortalPushDeviceController.php:90
-* @route '/portal/api/push-devices'
+* @see app/Http/Controllers/Api/PortalPushDeviceController.php:49
+* @route '/portal/api/web-push-subscriptions'
 */
 export const destroy = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(options),
@@ -67,13 +67,13 @@ export const destroy = (options?: RouteQueryOptions): RouteDefinition<'delete'> 
 
 destroy.definition = {
     methods: ["delete"],
-    url: '/portal/api/push-devices',
+    url: '/portal/api/web-push-subscriptions',
 } satisfies RouteDefinition<["delete"]>
 
 /**
 * @see \App\Http\Controllers\Api\PortalPushDeviceController::destroy
-* @see app/Http/Controllers/Api/PortalPushDeviceController.php:90
-* @route '/portal/api/push-devices'
+* @see app/Http/Controllers/Api/PortalPushDeviceController.php:49
+* @route '/portal/api/web-push-subscriptions'
 */
 destroy.url = (options?: RouteQueryOptions) => {
     return destroy.definition.url + queryParams(options)
@@ -81,8 +81,8 @@ destroy.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PortalPushDeviceController::destroy
-* @see app/Http/Controllers/Api/PortalPushDeviceController.php:90
-* @route '/portal/api/push-devices'
+* @see app/Http/Controllers/Api/PortalPushDeviceController.php:49
+* @route '/portal/api/web-push-subscriptions'
 */
 destroy.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(options),
@@ -91,8 +91,8 @@ destroy.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\PortalPushDeviceController::destroy
-* @see app/Http/Controllers/Api/PortalPushDeviceController.php:90
-* @route '/portal/api/push-devices'
+* @see app/Http/Controllers/Api/PortalPushDeviceController.php:49
+* @route '/portal/api/web-push-subscriptions'
 */
 const destroyForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: destroy.url({
@@ -106,8 +106,8 @@ const destroyForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =
 
 /**
 * @see \App\Http\Controllers\Api\PortalPushDeviceController::destroy
-* @see app/Http/Controllers/Api/PortalPushDeviceController.php:90
-* @route '/portal/api/push-devices'
+* @see app/Http/Controllers/Api/PortalPushDeviceController.php:49
+* @route '/portal/api/web-push-subscriptions'
 */
 destroyForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
     action: destroy.url({
@@ -121,9 +121,9 @@ destroyForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> 
 
 destroy.form = destroyForm
 
-const pushDevices = {
+const webPushSubscriptions = {
     store: Object.assign(store, store),
     destroy: Object.assign(destroy, destroy),
 }
 
-export default pushDevices
+export default webPushSubscriptions

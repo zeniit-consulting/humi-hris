@@ -860,7 +860,9 @@ export default function PayrollPage() {
                                                 Kasbon
                                             </th>
                                             <th className="px-3 py-2">Denda</th>
-                                            <th className="px-3 py-2">Cuti Tanpa Gaji</th>
+                                            <th className="px-3 py-2">
+                                                Cuti Tanpa Gaji
+                                            </th>
                                             <th className="px-3 py-2">
                                                 Total Potongan
                                             </th>
@@ -1077,7 +1079,9 @@ export default function PayrollPage() {
                                                     )}
                                                 </td>
                                                 <td className="px-3 py-3">
-                                                    {formatCurrency(item.unpaid_leave_deduction)}
+                                                    {formatCurrency(
+                                                        item.unpaid_leave_deduction,
+                                                    )}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     {formatCurrency(
@@ -1279,27 +1283,33 @@ export default function PayrollPage() {
                                         onChange={(event) =>
                                             generateForm.setData(
                                                 'service_fee_total',
-                                                normalizeDigitInput(event.target.value),
+                                                normalizeDigitInput(
+                                                    event.target.value,
+                                                ),
                                             )
                                         }
                                         placeholder="Contoh: 10.000.000"
                                     />
                                     <p className="text-xs text-muted-foreground">
                                         Opsional. Nominal dibagikan proporsional
-                                        kepada staf dengan poin Service Fee lebih
-                                        dari 0 dan dicatat sebagai bonus payroll.
+                                        kepada staf dengan poin Service Fee
+                                        lebih dari 0 dan dicatat sebagai bonus
+                                        payroll.
                                     </p>
                                 </div>
                                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                                     {employeeOptions
                                         .filter(
                                             (employee) =>
-                                                Number(employee.service_fee_points) >
-                                                0,
+                                                Number(
+                                                    employee.service_fee_points,
+                                                ) > 0,
                                         )
                                         .map((employee) => (
                                             <span key={employee.id}>
-                                                {employee.label}: {employee.service_fee_points} poin
+                                                {employee.label}:{' '}
+                                                {employee.service_fee_points}{' '}
+                                                poin
                                             </span>
                                         ))}
                                 </div>
