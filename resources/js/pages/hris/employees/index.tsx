@@ -2808,126 +2808,245 @@ export default function EmployeesIndex() {
                                     Generate Kontrak
                                 </Button>
                             </div>
-                            <div className="grid gap-2 rounded-md border p-3">
-                                <p>Email: {detailEmployee.email ?? '-'}</p>
-                                <p>Telepon: {detailEmployee.phone ?? '-'}</p>
-                                <p>
-                                    Pendidikan Terakhir:{' '}
-                                    {detailEmployee.last_education ?? '-'}
-                                </p>
-                                <p>
-                                    Status Perkawinan:{' '}
-                                    {detailEmployee.marital_status
-                                        ? (maritalStatusLabels[
-                                              detailEmployee.marital_status
-                                          ] ?? detailEmployee.marital_status)
-                                        : '-'}
-                                </p>
-                                <p>
-                                    Jumlah Anak:{' '}
-                                    {detailEmployee.children_count ?? '-'}
-                                </p>
-                                <p>
-                                    No. KK:{' '}
-                                    {detailEmployee.family_card_number ?? '-'}
-                                </p>
-                                <p>
-                                    No. KTP: {detailEmployee.ktp_number ?? '-'}
-                                </p>
-                                <p>
-                                    Nama Ibu Kandung:{' '}
-                                    {detailEmployee.biological_mother_name ??
-                                        '-'}
-                                </p>
-                                <p>
-                                    Alamat KTP: {detailEmployee.address ?? '-'}
-                                </p>
-                                <p>
-                                    Alamat Domisili:{' '}
-                                    {detailEmployee.domicile_address ?? '-'}
-                                </p>
-                                <p>
-                                    Golongan Darah:{' '}
-                                    {detailEmployee.blood_type ?? '-'}
-                                </p>
-                                <p>Agama: {detailEmployee.religion ?? '-'}</p>
-                                <p>NPWP: {detailEmployee.npwp_number ?? '-'}</p>
-                                <p>
-                                    Kontak Darurat:{' '}
-                                    {detailEmployee.emergency_contact_name
-                                        ? `${detailEmployee.emergency_contact_name} - ${detailEmployee.emergency_contact_phone ?? '-'} (${detailEmployee.emergency_contact_relationship ?? '-'})`
-                                        : '-'}
-                                </p>
-                                <p>
-                                    Divisi:{' '}
-                                    {detailEmployee.division?.name ?? '-'}
-                                </p>
-                                <p>
-                                    Perusahaan:{' '}
-                                    {detailEmployee.sub_company?.name ?? '-'}
-                                </p>
-                                <p>
-                                    Zona Waktu Utama:{' '}
-                                    {detailEmployee.timezone ?? '-'}
-                                </p>
-                                <p>
-                                    Tipe Karyawan:{' '}
-                                    {typeLabels[
-                                        detailEmployee.employment_type
-                                    ] ?? detailEmployee.employment_type}
-                                </p>
-                                <p>
-                                    Jabatan:{' '}
-                                    {detailEmployee.position?.name ?? '-'}
-                                </p>
-                                <p>
-                                    Status:{' '}
-                                    {statusLabels[
-                                        detailEmployee.employment_status
-                                    ] ?? detailEmployee.employment_status}
-                                </p>
+                            <dl className="grid grid-cols-1 gap-x-4 gap-y-4 rounded-md border p-4 sm:grid-cols-2">
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Email
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.email ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Telepon
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.phone ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Pendidikan Terakhir
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.last_education ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Status Perkawinan
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.marital_status
+                                            ? (maritalStatusLabels[
+                                                  detailEmployee.marital_status
+                                              ] ??
+                                              detailEmployee.marital_status)
+                                            : '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Jumlah Anak
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.children_count ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        No. KK
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.family_card_number ??
+                                            '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        No. KTP
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.ktp_number ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Nama Ibu Kandung
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.biological_mother_name ??
+                                            '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Alamat KTP
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.address ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Alamat Domisili
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.domicile_address ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Golongan Darah
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.blood_type ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Agama
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.religion ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        NPWP
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.npwp_number ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Kontak Darurat
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.emergency_contact_name
+                                            ? `${detailEmployee.emergency_contact_name} - ${detailEmployee.emergency_contact_phone ?? '-'} (${detailEmployee.emergency_contact_relationship ?? '-'})`
+                                            : '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Divisi
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.division?.name ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Perusahaan
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.sub_company?.name ??
+                                            '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Zona Waktu Utama
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.timezone ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Tipe Karyawan
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {typeLabels[
+                                            detailEmployee.employment_type
+                                        ] ?? detailEmployee.employment_type}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Jabatan
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.position?.name ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Status
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {statusLabels[
+                                            detailEmployee.employment_status
+                                        ] ?? detailEmployee.employment_status}
+                                    </dd>
+                                </div>
                                 {detailEmployee.employment_type === 'PKWT' && (
-                                    <p>
-                                        Kontrak berakhir:{' '}
-                                        {formatDateDisplay(
-                                            detailEmployee.contract_end_date,
-                                        )}
-                                        {detailEmployee.contract_duration_months
-                                            ? ` (${detailEmployee.contract_duration_months} bulan)`
-                                            : ''}
-                                    </p>
+                                    <div className="flex flex-col">
+                                        <dt className="text-sm text-muted-foreground">
+                                            Kontrak Berakhir
+                                        </dt>
+                                        <dd className="text-sm font-medium">
+                                            {formatDateDisplay(
+                                                detailEmployee.contract_end_date,
+                                            )}
+                                            {detailEmployee.contract_duration_months
+                                                ? ` (${detailEmployee.contract_duration_months} bulan)`
+                                                : ''}
+                                        </dd>
+                                    </div>
                                 )}
                                 {detailEmployee.employment_type === 'PKWTT' && (
-                                    <p>
-                                        Probation:{' '}
-                                        {detailEmployee.probation_duration_months ??
-                                            0}{' '}
-                                        bulan, sampai{' '}
-                                        {formatDateDisplay(
-                                            detailEmployee.probation_end_date,
-                                        )}
-                                    </p>
+                                    <div className="flex flex-col">
+                                        <dt className="text-sm text-muted-foreground">
+                                            Probation
+                                        </dt>
+                                        <dd className="text-sm font-medium">
+                                            {detailEmployee.probation_duration_months ??
+                                                0}{' '}
+                                            bulan, sampai{' '}
+                                            {formatDateDisplay(
+                                                detailEmployee.probation_end_date,
+                                            )}
+                                        </dd>
+                                    </div>
                                 )}
-                                <p>
-                                    Tanggal Offboarding:{' '}
-                                    {formatDateDisplay(
-                                        detailEmployee.offboarded_at,
-                                    )}
-                                </p>
-                                <p>
-                                    Alasan Offboarding:{' '}
-                                    {detailEmployee.offboarding_reason
-                                        ? (offboardingReasonLabels[
-                                              detailEmployee.offboarding_reason
-                                          ] ??
-                                          detailEmployee.offboarding_reason)
-                                        : '-'}
-                                </p>
-                                <p>
-                                    Catatan Offboarding:{' '}
-                                    {detailEmployee.offboarding_notes ?? '-'}
-                                </p>
-                            </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Tanggal Offboarding
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {formatDateDisplay(
+                                            detailEmployee.offboarded_at,
+                                        )}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Alasan Offboarding
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.offboarding_reason
+                                            ? (offboardingReasonLabels[
+                                                  detailEmployee
+                                                      .offboarding_reason
+                                              ] ??
+                                              detailEmployee.offboarding_reason)
+                                            : '-'}
+                                    </dd>
+                                </div>
+                                <div className="col-span-1 flex flex-col sm:col-span-2">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Catatan Offboarding
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {detailEmployee.offboarding_notes ??
+                                            '-'}
+                                    </dd>
+                                </div>
+                            </dl>
                             <div className="flex flex-col gap-3 rounded-md border p-3">
                                 <p className="font-medium">
                                     Histori Kepegawaian
