@@ -78,6 +78,9 @@ class Employee extends Model
         'religion',
         'bpjs_kesehatan_number',
         'bpjs_ketenagakerjaan_number',
+        'bpjs_kesehatan_enabled',
+        'bpjs_ketenagakerjaan_enabled',
+        'bpjs_jp_enabled',
         'sim_a_number',
         'sim_b_number',
         'sim_c_number',
@@ -113,6 +116,9 @@ class Employee extends Model
             'is_active' => 'boolean',
             'attendance_location_ids' => 'array',
             'is_wfa' => 'boolean',
+            'bpjs_kesehatan_enabled' => 'boolean',
+            'bpjs_ketenagakerjaan_enabled' => 'boolean',
+            'bpjs_jp_enabled' => 'boolean',
         ];
     }
 

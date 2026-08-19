@@ -55,6 +55,9 @@ class OvertimeController extends Controller
                     ? $overtime->employee->employee_code.' - '.$overtime->employee->full_name
                     : '-',
                 'work_date' => $overtime->work_date->format('Y-m-d'),
+                'is_event' => $overtime->is_event,
+                'event_name' => $overtime->event_name,
+                'event_nominal' => $overtime->event_nominal,
                 'start_time' => $this->normalizeTime($overtime->start_time),
                 'end_time' => $this->normalizeTime($overtime->end_time),
                 'break_minutes' => $overtime->break_minutes,
@@ -69,6 +72,9 @@ class OvertimeController extends Controller
             ->orderBy('last_name')
             ->get(['id', 'employee_code', 'first_name', 'last_name']);
 
+        $setting = \App\Models\CompanySetting::query()->where('user_id', $ownerId)->first();
+        $overtimeEvents = $setting->overtime_events ?? [];
+
         return Inertia::render('hris/overtimes/index', [
             'overtimes' => $overtimes,
             'employees' => $employees->map(fn (Employee $employee) => [
@@ -81,6 +87,7 @@ class OvertimeController extends Controller
                 'pending' => OvertimeRequest::query()->where('status', 'pending')->count(),
                 'approved' => OvertimeRequest::query()->where('status', 'approved')->count(),
             ],
+            'overtimeEvents' => $overtimeEvents,
         ]);
     }
 
@@ -199,12 +206,25 @@ class OvertimeController extends Controller
     {
         $validated = $request->validated();
 
+        $eventNominal = null;
+        if (($validated['is_event'] ?? false) && ! empty($validated['event_name'])) {
+            $setting = \App\Models\CompanySetting::query()->where('user_id', $request->user()->accountOwnerId())->first();
+            $events = $setting->overtime_events ?? [];
+            foreach ($events as $event) {
+                if (($event['name'] ?? '') === $validated['event_name']) {
+                    $eventNominal = $event['nominal'] ?? 0;
+                    break;
+                }
+            }
+        }
+
         $overtime = OvertimeRequest::create([
             ...$validated,
+            'event_nominal' => $eventNominal,
             'break_minutes' => (int) ($validated['break_minutes'] ?? 0),
             'total_hours' => $this->calculateTotalHours(
-                $validated['start_time'],
-                $validated['end_time'],
+                $validated['start_time'] ?? null,
+                $validated['end_time'] ?? null,
                 (int) ($validated['break_minutes'] ?? 0)
             ),
             'approved_at' => $validated['status'] === 'approved' ? now() : null,
@@ -228,12 +248,25 @@ class OvertimeController extends Controller
         $validated = $request->validated();
         $oldStatus = $overtime->status; // capture before update
 
+        $eventNominal = null;
+        if (($validated['is_event'] ?? false) && ! empty($validated['event_name'])) {
+            $setting = \App\Models\CompanySetting::query()->where('user_id', $request->user()->accountOwnerId())->first();
+            $events = $setting->overtime_events ?? [];
+            foreach ($events as $event) {
+                if (($event['name'] ?? '') === $validated['event_name']) {
+                    $eventNominal = $event['nominal'] ?? 0;
+                    break;
+                }
+            }
+        }
+
         $overtime->update([
             ...$validated,
+            'event_nominal' => $eventNominal,
             'break_minutes' => (int) ($validated['break_minutes'] ?? 0),
             'total_hours' => $this->calculateTotalHours(
-                $validated['start_time'],
-                $validated['end_time'],
+                $validated['start_time'] ?? null,
+                $validated['end_time'] ?? null,
                 (int) ($validated['break_minutes'] ?? 0)
             ),
             'approved_at' => $validated['status'] === 'approved' ? ($overtime->approved_at ?? now()) : null,
@@ -326,8 +359,12 @@ class OvertimeController extends Controller
     /**
      * Calculate overtime total hours.
      */
-    private function calculateTotalHours(string $startTime, string $endTime, int $breakMinutes): float
+    private function calculateTotalHours(?string $startTime, ?string $endTime, int $breakMinutes): float
     {
+        if (! $startTime || ! $endTime) {
+            return 0;
+        }
+
         $start = Carbon::createFromFormat('H:i', $startTime);
         $end = Carbon::createFromFormat('H:i', $endTime);
 

@@ -20,6 +20,10 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ScheduleController extends Controller
 {
@@ -406,6 +410,162 @@ class ScheduleController extends Controller
         }
 
         return $days;
+    }
+
+    /**
+     * Download Excel template for importing schedules.
+     */
+    public function importTemplate(Request $request): StreamedResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $month = $request->query('month', now()->format('Y-m'));
+        $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+        $daysInMonth = $end->day;
+
+        $employees = Employee::query()
+            ->where('user_id', $ownerId)
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Template Jadwal');
+
+        $sheet->setCellValue('A1', 'Employee ID');
+        $sheet->setCellValue('B1', 'Employee Name');
+        $sheet->setCellValue('C1', 'Bulan');
+        $sheet->setCellValue('D1', $month);
+
+        $sheet->setCellValue('A2', 'ID');
+        $sheet->setCellValue('B2', 'Nama');
+
+        $col = 3;
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $sheet->setCellValue([$col, 2], $day);
+            $col++;
+        }
+
+        $row = 3;
+        foreach ($employees as $employee) {
+            $sheet->setCellValue([1, $row], $employee->id);
+            $sheet->setCellValue([2, $row], $employee->full_name);
+            $row++;
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Template_Jadwal_'.$month.'.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
+        ]);
+    }
+
+    /**
+     * Import schedules from Excel.
+     */
+    public function import(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
+        ]);
+
+        $ownerId = $request->user()->accountOwnerId();
+        
+        $shifts = WorkShift::query()->where('user_id', $ownerId)->get();
+        $shiftByCode = [];
+        $shiftByName = [];
+        foreach ($shifts as $shift) {
+            $data = [
+                'code' => $shift->code,
+                'start_time' => $this->normalizeTime($shift->start_time),
+                'end_time' => $this->normalizeTime($shift->end_time),
+                'is_day_off' => $shift->is_day_off,
+            ];
+            $shiftByCode[strtolower($shift->code)] = $data;
+            $shiftByName[strtolower($shift->name)] = $data;
+        }
+
+        $file = $request->file('file');
+        $spreadsheet = IOFactory::load($file->getPathname());
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $month = $sheet->getCell('D1')->getValue();
+        if (! $month || ! preg_match('/^\d{4}-\d{2}$/', $month)) {
+            return back()->withErrors(['file' => 'Format bulan di D1 tidak valid (harus YYYY-MM).']);
+        }
+
+        $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $daysInMonth = $start->copy()->endOfMonth()->day;
+
+        $highestRow = $sheet->getHighestDataRow();
+
+        $rows = [];
+        $errors = [];
+        $now = now();
+
+        for ($row = 3; $row <= $highestRow; $row++) {
+            $employeeId = $sheet->getCell([1, $row])->getValue();
+            if (! $employeeId) {
+                continue;
+            }
+
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $col = 2 + $day;
+                $shiftInput = $sheet->getCell([$col, $row])->getValue();
+
+                if (empty($shiftInput)) {
+                    continue;
+                }
+
+                $shiftInputStr = strtolower(trim((string) $shiftInput));
+                $template = null;
+
+                if (isset($shiftByCode[$shiftInputStr])) {
+                    $template = $shiftByCode[$shiftInputStr];
+                } elseif (isset($shiftByName[$shiftInputStr])) {
+                    $template = $shiftByName[$shiftInputStr];
+                }
+
+                if (! $template) {
+                    $errors[] = "Baris {$row}, Tanggal {$day}: Shift '{$shiftInput}' tidak valid.";
+                    continue;
+                }
+
+                $rows[] = [
+                    'user_id' => $ownerId,
+                    'employee_id' => $employeeId,
+                    'work_date' => $start->copy()->addDays($day - 1)->toDateString(),
+                    'shift_code' => $template['code'],
+                    'start_time' => $template['start_time'],
+                    'end_time' => $template['end_time'],
+                    'is_day_off' => $template['is_day_off'],
+                    'notes' => 'Imported via Excel',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+
+        if (! empty($errors)) {
+            return back()->withErrors(['file' => implode(' ', array_slice($errors, 0, 5)) . (count($errors) > 5 ? ' ...dan lainnya.' : '')]);
+        }
+
+        if (! empty($rows)) {
+            foreach (array_chunk($rows, 500) as $chunk) {
+                EmployeeSchedule::query()->upsert(
+                    $chunk,
+                    ['employee_id', 'work_date'],
+                    ['shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at']
+                );
+            }
+        }
+
+        return back();
     }
 
     /**

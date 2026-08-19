@@ -155,6 +155,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::put('schedules/shifts/{workShift}', [ScheduleController::class, 'updateShift'])->name('schedules.shifts.update');
     Route::delete('schedules/shifts/{workShift}', [ScheduleController::class, 'destroyShift'])->name('schedules.shifts.destroy');
     Route::post('schedules/roster', [ScheduleController::class, 'roster'])->name('schedules.roster');
+    Route::get('schedules/import/template', [ScheduleController::class, 'importTemplate'])->name('schedules.import.template');
+    Route::post('schedules/import', [ScheduleController::class, 'import'])->name('schedules.import');
     Route::get('shift-change-requests', [ShiftChangeApprovalController::class, 'index'])->name('shift-change-requests.index');
     Route::post('shift-change-requests/{shiftChangeRequest}/approve', [ShiftChangeApprovalController::class, 'approve'])->name('shift-change-requests.approve');
     Route::post('shift-change-requests/{shiftChangeRequest}/reject', [ShiftChangeApprovalController::class, 'reject'])->name('shift-change-requests.reject');

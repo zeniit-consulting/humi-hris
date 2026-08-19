@@ -71,6 +71,9 @@ class MasterController extends Controller
             ])
             ->values();
 
+        $setting = \App\Models\CompanySetting::query()->where('user_id', request()->user()->accountOwnerId())->first();
+        $overtimeEvents = $setting->overtime_events ?? [];
+
         return $this->success([
             'divisions' => $divisions,
             'positions' => $positions,
@@ -80,6 +83,7 @@ class MasterController extends Controller
                 'leave_statuses' => ['pending', 'approved', 'rejected', 'cancelled'],
                 'leave_types' => ['annual', 'sick', 'unpaid', 'other'],
                 'overtime_statuses' => ['pending', 'approved', 'rejected'],
+                'overtime_events' => $overtimeEvents,
                 'employment_statuses' => ['active', 'probation', 'on_leave', 'resigned'],
                 'employment_types' => ['daily_worker', 'permanent', 'contract', 'internship', 'freelance'],
                 'marital_statuses' => ['single', 'married', 'divorced', 'widowed'],

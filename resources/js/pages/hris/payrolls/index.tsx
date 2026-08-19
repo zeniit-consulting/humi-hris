@@ -92,6 +92,16 @@ type PayrollItem = {
     pph21_allowance: string | number;
     pph21_deduction: string | number;
     pph21_company_borne: string | number;
+    bpjs_kesehatan_company?: string | number;
+    bpjs_kesehatan_employee?: string | number;
+    bpjs_jkk_company?: string | number;
+    bpjs_jkm_company?: string | number;
+    bpjs_jht_company?: string | number;
+    bpjs_jht_employee?: string | number;
+    bpjs_jp_company?: string | number;
+    bpjs_jp_employee?: string | number;
+    bpjs_total_company?: string | number;
+    bpjs_total_employee?: string | number;
     kasbon_deduction: string;
     denda_deduction: string;
     unpaid_leave_deduction: string;

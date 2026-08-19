@@ -39,6 +39,16 @@ type PayrollPayload = {
         pph21_allowance: string | number;
         pph21_deduction: string | number;
         pph21_company_borne: string | number;
+        bpjs_kesehatan_company?: string | number;
+        bpjs_kesehatan_employee?: string | number;
+        bpjs_jkk_company?: string | number;
+        bpjs_jkm_company?: string | number;
+        bpjs_jht_company?: string | number;
+        bpjs_jht_employee?: string | number;
+        bpjs_jp_company?: string | number;
+        bpjs_jp_employee?: string | number;
+        bpjs_total_company?: string | number;
+        bpjs_total_employee?: string | number;
         kasbon_deduction: string | number;
         denda_deduction: string | number;
         unpaid_leave_deduction: string | number;
@@ -425,6 +435,30 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                                 )}
                                             </span>
                                         </div>
+                                        {Number(slip.bpjs_kesehatan_employee ?? 0) > 0 && (
+                                            <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                <span>BPJS Kesehatan (Karyawan 1%)</span>
+                                                <span className="font-semibold text-rose-700">
+                                                    {formatCurrency(slip.bpjs_kesehatan_employee)}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {Number(slip.bpjs_jht_employee ?? 0) > 0 && (
+                                            <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                <span>BPJS TK JHT (Karyawan 2%)</span>
+                                                <span className="font-semibold text-rose-700">
+                                                    {formatCurrency(slip.bpjs_jht_employee)}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {Number(slip.bpjs_jp_employee ?? 0) > 0 && (
+                                            <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                <span>BPJS TK JP (Karyawan 1%)</span>
+                                                <span className="font-semibold text-rose-700">
+                                                    {formatCurrency(slip.bpjs_jp_employee)}
+                                                </span>
+                                            </div>
+                                        )}
                                         {portal?.features?.kasbon !== false && (
                                             <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
                                                 <span>Kasbon</span>

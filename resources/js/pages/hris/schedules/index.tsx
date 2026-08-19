@@ -8,6 +8,8 @@ import {
     Save,
     Trash2,
     WandSparkles,
+    Upload,
+    Download,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import ActionIconButton from '@/components/action-icon-button';
@@ -183,6 +185,7 @@ export default function SchedulePage() {
     const [filterState, setFilterState] = useState<Filters>(filters);
     const [quickDialogOpen, setQuickDialogOpen] = useState(false);
     const [rosterDialogOpen, setRosterDialogOpen] = useState(false);
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
     const [shiftListDialogOpen, setShiftListDialogOpen] = useState(false);
     const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
     const [editingShift, setEditingShift] = useState<ShiftOption | null>(null);
@@ -246,6 +249,10 @@ export default function SchedulePage() {
         pattern: [],
     });
 
+    const importForm = useForm({
+        file: null as File | null,
+    });
+
     const quickScheduleForm = useForm<QuickScheduleFormData>({
         employee_id: filters.employee_id,
         work_date: `${filters.month}-01`,
@@ -294,6 +301,25 @@ export default function SchedulePage() {
             preserveState: true,
             preserveScroll: true,
             replace: true,
+        });
+    };
+
+    const downloadTemplate = () => {
+        window.open(
+            `/hris/schedules/import/template?month=${filterState.month}`,
+            '_blank',
+        );
+    };
+
+    const submitImport = (e: React.FormEvent) => {
+        e.preventDefault();
+        importForm.post('/hris/schedules/import', {
+            preserveScroll: true,
+            onSuccess: () => {
+                setImportDialogOpen(false);
+                importForm.reset();
+                applyFilter();
+            },
         });
     };
 
@@ -582,6 +608,14 @@ export default function SchedulePage() {
                             >
                                 <Plus className="size-4" />
                                 Kelola Shift
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setImportDialogOpen(true)}
+                            >
+                                <Upload className="size-4" />
+                                Import Jadwal
                             </Button>
                             <Button
                                 type="button"
@@ -1553,6 +1587,64 @@ export default function SchedulePage() {
                             Simpan Jam Kerja
                         </Button>
                     </div>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Import Jadwal</DialogTitle>
+                        <DialogDescription>
+                            Download template dan isi jadwal karyawan untuk
+                            bulan {filterState.month}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={submitImport} className="grid gap-4 py-4">
+                        <div className="flex flex-col gap-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={downloadTemplate}
+                                className="w-full"
+                            >
+                                <Download className="mr-2 size-4" />
+                                Download Template
+                            </Button>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="file_import">File Excel</Label>
+                            <Input
+                                id="file_import"
+                                type="file"
+                                accept=".xlsx,.xls,.csv"
+                                onChange={(e) =>
+                                    importForm.setData(
+                                        'file',
+                                        e.target.files?.[0] ?? null,
+                                    )
+                                }
+                            />
+                            <InputError message={importForm.errors.file} />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setImportDialogOpen(false)}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={
+                                    importForm.processing ||
+                                    !importForm.data.file
+                                }
+                            >
+                                <Upload className="mr-2 size-4" />
+                                Import
+                            </Button>
+                        </div>
+                    </form>
                 </DialogContent>
             </Dialog>
         </AppLayout>

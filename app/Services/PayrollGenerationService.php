@@ -294,19 +294,28 @@ class PayrollGenerationService
         );
 
         // Overtime calculation
-        $actualOvertimeHours = (float) $employee->overtimeRequests->sum('total_hours');
+        $eventOvertimePay = (float) $employee->overtimeRequests->where('is_event', true)->sum('event_nominal');
+        $actualOvertimeHours = (float) $employee->overtimeRequests->where('is_event', false)->sum('total_hours');
         $overtimeHours = $this->payableOvertimeHours($actualOvertimeHours, $setting);
-        $hourlyRate = $monthlyBaseSalary / max((int) ($setting->overtime_hour_divisor ?? 173), 1);
-        $overtimePay = 0.0;
+        $overtimePay = $eventOvertimePay;
         if ($overtimeHours > 0) {
-            $multiplierHour1 = (float) ($setting->overtime_multiplier_hour1 ?? 1.5);
-            $multiplierSubsequent = (float) ($setting->overtime_multiplier_subsequent ?? 2.0);
-            $firstHour = min($overtimeHours, 1.0);
-            $remainingHours = max($overtimeHours - 1.0, 0.0);
-            $overtimePay = round(
-                ($firstHour * $multiplierHour1 + $remainingHours * $multiplierSubsequent) * $hourlyRate,
-                2
-            );
+            $isFixedRate = ($setting?->overtime_rate_type ?? 'formula') === 'fixed'
+                && (float) ($setting?->overtime_fixed_rate_per_hour ?? 0) > 0;
+
+            if ($isFixedRate) {
+                $fixedRate = (float) $setting->overtime_fixed_rate_per_hour;
+                $overtimePay += round($overtimeHours * $fixedRate, 2);
+            } else {
+                $hourlyRate = $monthlyBaseSalary / max((int) ($setting?->overtime_hour_divisor ?? 173), 1);
+                $multiplierHour1 = (float) ($setting?->overtime_multiplier_hour1 ?? 1.5);
+                $multiplierSubsequent = (float) ($setting?->overtime_multiplier_subsequent ?? 2.0);
+                $firstHour = min($overtimeHours, 1.0);
+                $remainingHours = max($overtimeHours - 1.0, 0.0);
+                $overtimePay += round(
+                    ($firstHour * $multiplierHour1 + $remainingHours * $multiplierSubsequent) * $hourlyRate,
+                    2
+                );
+            }
         }
 
         $pph21Method = (string) ($employee->pph21_method ?? 'gross');
@@ -318,9 +327,32 @@ class PayrollGenerationService
             $monthlyTax,
         );
 
+        // BPJS calculation: applies when company has BPJS enabled and employee has bpjs active and configured
+        $bpjsWageBase = $monthlyBaseSalary + (float) $employee->allowances->sum('amount');
+        $hasBpjsKes = (bool) ($setting?->bpjs_kesehatan_enabled ?? false)
+            && (bool) ($employee->bpjs_kesehatan_enabled ?? false)
+            && (! empty($employee->bpjs_kesehatan_number) || $employee->bpjs_kesehatan_enabled === true && ($setting?->bpjs_kesehatan_enabled ?? false));
+        $hasBpjsTk = (bool) ($setting?->bpjs_ketenagakerjaan_enabled ?? false)
+            && (bool) ($employee->bpjs_ketenagakerjaan_enabled ?? false);
+
+        $bpjs = \App\Support\BpjsCalculator::calculate(
+            calculationBase: $bpjsWageBase,
+            bpjsKesEnabled: (bool) ($setting?->bpjs_kesehatan_enabled ?? false),
+            bpjsTkEnabled: (bool) ($setting?->bpjs_ketenagakerjaan_enabled ?? false),
+            empBpjsKesEnabled: (bool) ($employee->bpjs_kesehatan_enabled ?? false),
+            empBpjsTkEnabled: (bool) ($employee->bpjs_ketenagakerjaan_enabled ?? false),
+            empBpjsJpEnabled: (bool) ($employee->bpjs_jp_enabled ?? false),
+            jkkRate: (float) ($setting?->bpjs_jkk_rate ?? 0.240),
+            kesWageCap: (float) ($setting?->bpjs_kesehatan_wage_cap ?? 12_000_000),
+            jpWageCap: (float) ($setting?->bpjs_jp_wage_cap ?? 10_042_300),
+        );
+
         $kasbonDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'kasbon');
         $dendaDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'denda');
-        $deductionsTotal = round($kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + $pph21Deduction, 2);
+        $deductionsTotal = round(
+            $kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + $pph21Deduction + $bpjs['bpjs_total_employee'],
+            2
+        );
         $netSalary = round(max(($baseSalary + $allowancesTotal + $overtimePay + $pph21Allowance) - $deductionsTotal, 0), 2);
 
         return [
@@ -340,6 +372,16 @@ class PayrollGenerationService
             'pph21_allowance' => $pph21Allowance,
             'pph21_deduction' => $pph21Deduction,
             'pph21_company_borne' => $pph21CompanyBorne,
+            'bpjs_kesehatan_company' => $bpjs['bpjs_kesehatan_company'],
+            'bpjs_kesehatan_employee' => $bpjs['bpjs_kesehatan_employee'],
+            'bpjs_jkk_company' => $bpjs['bpjs_jkk_company'],
+            'bpjs_jkm_company' => $bpjs['bpjs_jkm_company'],
+            'bpjs_jht_company' => $bpjs['bpjs_jht_company'],
+            'bpjs_jht_employee' => $bpjs['bpjs_jht_employee'],
+            'bpjs_jp_company' => $bpjs['bpjs_jp_company'],
+            'bpjs_jp_employee' => $bpjs['bpjs_jp_employee'],
+            'bpjs_total_company' => $bpjs['bpjs_total_company'],
+            'bpjs_total_employee' => $bpjs['bpjs_total_employee'],
             'kasbon_deduction' => $kasbonDeduction,
             'denda_deduction' => $dendaDeduction,
             'unpaid_leave_deduction' => $unpaidLeaveDeduction,

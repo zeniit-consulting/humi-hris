@@ -239,7 +239,7 @@ class AttendanceController extends Controller
         $this->normalizeAttendanceTimestamps($validated, $timezone);
         $validated = array_merge($validated, $statusService->resolveStatusAttributes($validated, $ownerId, $timezone));
 
-        EmployeeAttendance::updateOrCreate(
+        $attendance = EmployeeAttendance::updateOrCreate(
             [
                 'employee_id' => $validated['employee_id'],
                 'attendance_date' => $validated['attendance_date'],
@@ -254,6 +254,8 @@ class AttendanceController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ]
         );
+
+        app(\App\Services\AutoOvertimeService::class)->syncFromAttendance($attendance, $ownerId, $timezone);
 
         return back();
     }
@@ -270,6 +272,8 @@ class AttendanceController extends Controller
         $validated = array_merge($validated, $statusService->resolveStatusAttributes($validated, $request->user()->accountOwnerId(), $timezone));
 
         $employeeAttendance->update($validated);
+
+        app(\App\Services\AutoOvertimeService::class)->syncFromAttendance($employeeAttendance, $request->user()->accountOwnerId(), $timezone);
 
         return back();
     }

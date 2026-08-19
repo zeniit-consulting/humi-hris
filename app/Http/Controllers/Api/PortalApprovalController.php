@@ -67,6 +67,7 @@ class PortalApprovalController extends Controller
             'check_out_at' => $item->check_out_at ?? $attendance->check_out_at,
         ]);
         $attendance->save();
+        app(\App\Services\AutoOvertimeService::class)->syncFromAttendance($attendance, (int) $item->user_id);
 
         $item->update(['status' => 'approved', 'approved_by' => $actor->id, 'approved_at' => now()]);
     }

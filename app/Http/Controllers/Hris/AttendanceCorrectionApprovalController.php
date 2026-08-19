@@ -97,6 +97,8 @@ class AttendanceCorrectionApprovalController extends Controller
             ]);
             $attendance->save();
 
+            app(\App\Services\AutoOvertimeService::class)->syncFromAttendance($attendance, $ownerId, $attendance->timezone);
+
             $attendanceRequest->update([
                 'status' => 'approved',
                 'approved_by' => $request->user()->id,

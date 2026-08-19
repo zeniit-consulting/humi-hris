@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:103
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
 * @route '/portal/api/overtimes/{overtime}'
 */
 export const update = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -153,7 +153,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:103
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
 * @route '/portal/api/overtimes/{overtime}'
 */
 update.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +186,7 @@ update.url = (args: { overtime: number | { id: number } } | [overtime: number | 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:103
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
 * @route '/portal/api/overtimes/{overtime}'
 */
 update.put = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -196,7 +196,7 @@ update.put = (args: { overtime: number | { id: number } } | [overtime: number | 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:103
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
 * @route '/portal/api/overtimes/{overtime}'
 */
 const updateForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -211,7 +211,7 @@ const updateForm = (args: { overtime: number | { id: number } } | [overtime: num
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:103
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
 * @route '/portal/api/overtimes/{overtime}'
 */
 updateForm.put = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -228,7 +228,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
 * @route '/portal/api/overtimes/{overtime}'
 */
 export const destroy = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -243,7 +243,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
 * @route '/portal/api/overtimes/{overtime}'
 */
 destroy.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -276,7 +276,7 @@ destroy.url = (args: { overtime: number | { id: number } } | [overtime: number |
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
 * @route '/portal/api/overtimes/{overtime}'
 */
 destroy.delete = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -286,7 +286,7 @@ destroy.delete = (args: { overtime: number | { id: number } } | [overtime: numbe
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
 * @route '/portal/api/overtimes/{overtime}'
 */
 const destroyForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -301,7 +301,7 @@ const destroyForm = (args: { overtime: number | { id: number } } | [overtime: nu
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
 * @route '/portal/api/overtimes/{overtime}'
 */
 destroyForm.delete = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

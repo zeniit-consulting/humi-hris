@@ -139,6 +139,16 @@ class PayrollController extends Controller
                     'pph21_allowance' => $item->pph21_allowance,
                     'pph21_deduction' => $item->pph21_deduction,
                     'pph21_company_borne' => $item->pph21_company_borne,
+                    'bpjs_kesehatan_company' => $item->bpjs_kesehatan_company,
+                    'bpjs_kesehatan_employee' => $item->bpjs_kesehatan_employee,
+                    'bpjs_jkk_company' => $item->bpjs_jkk_company,
+                    'bpjs_jkm_company' => $item->bpjs_jkm_company,
+                    'bpjs_jht_company' => $item->bpjs_jht_company,
+                    'bpjs_jht_employee' => $item->bpjs_jht_employee,
+                    'bpjs_jp_company' => $item->bpjs_jp_company,
+                    'bpjs_jp_employee' => $item->bpjs_jp_employee,
+                    'bpjs_total_company' => $item->bpjs_total_company,
+                    'bpjs_total_employee' => $item->bpjs_total_employee,
                     'kasbon_deduction' => $item->kasbon_deduction,
                     'denda_deduction' => $item->denda_deduction,
                     'unpaid_leave_deduction' => $item->unpaid_leave_deduction,
@@ -247,6 +257,14 @@ class PayrollController extends Controller
             'pph21_company_borne' => ['nullable', 'numeric', 'min:0'],
             'kasbon_deduction' => ['nullable', 'numeric', 'min:0'],
             'denda_deduction' => ['nullable', 'numeric', 'min:0'],
+            'bpjs_kesehatan_company' => ['nullable', 'numeric', 'min:0'],
+            'bpjs_kesehatan_employee' => ['nullable', 'numeric', 'min:0'],
+            'bpjs_jkk_company' => ['nullable', 'numeric', 'min:0'],
+            'bpjs_jkm_company' => ['nullable', 'numeric', 'min:0'],
+            'bpjs_jht_company' => ['nullable', 'numeric', 'min:0'],
+            'bpjs_jht_employee' => ['nullable', 'numeric', 'min:0'],
+            'bpjs_jp_company' => ['nullable', 'numeric', 'min:0'],
+            'bpjs_jp_employee' => ['nullable', 'numeric', 'min:0'],
             'variable_allowances' => ['nullable', 'array', 'max:20'],
             'variable_allowances.*.name' => ['required', 'string', 'max:100'],
             'variable_allowances.*.amount' => ['required', 'numeric', 'min:0'],
@@ -280,11 +298,28 @@ class PayrollController extends Controller
             ]);
         }
 
+        $bpjsTotalCompany = round(
+            (float) $payrollItem->bpjs_kesehatan_company
+            + (float) $payrollItem->bpjs_jkk_company
+            + (float) $payrollItem->bpjs_jkm_company
+            + (float) $payrollItem->bpjs_jht_company
+            + (float) $payrollItem->bpjs_jp_company,
+            2
+        );
+
+        $bpjsTotalEmployee = round(
+            (float) $payrollItem->bpjs_kesehatan_employee
+            + (float) $payrollItem->bpjs_jht_employee
+            + (float) $payrollItem->bpjs_jp_employee,
+            2
+        );
+
         $deductionsTotal = round(
             (float) $payrollItem->pph21_deduction
             + (float) $payrollItem->kasbon_deduction
             + (float) $payrollItem->denda_deduction
-            + (float) $payrollItem->unpaid_leave_deduction,
+            + (float) $payrollItem->unpaid_leave_deduction
+            + $bpjsTotalEmployee,
             2
         );
         $netSalary = round(max(
@@ -297,6 +332,8 @@ class PayrollController extends Controller
         ), 2);
 
         $payrollItem->forceFill([
+            'bpjs_total_company' => $bpjsTotalCompany,
+            'bpjs_total_employee' => $bpjsTotalEmployee,
             'deductions_total' => $deductionsTotal,
             'net_salary' => $netSalary,
         ])->save();

@@ -28,8 +28,10 @@ class StoreOvertimeRequest extends FormRequest
         return [
             'employee_id' => ['required', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'work_date' => ['required', 'date'],
-            'start_time' => ['required', 'date_format:H:i'],
-            'end_time' => ['required', 'date_format:H:i'],
+            'is_event' => ['nullable', 'boolean'],
+            'event_name' => ['nullable', 'required_if:is_event,true', 'string', 'max:255'],
+            'start_time' => ['nullable', 'required_if:is_event,false', 'date_format:H:i'],
+            'end_time' => ['nullable', 'required_if:is_event,false', 'date_format:H:i'],
             'break_minutes' => ['nullable', 'integer', 'min:0', 'max:480'],
             'reason' => ['nullable', 'string', 'max:1000'],
             'status' => ['required', Rule::in(['pending', 'approved', 'rejected'])],

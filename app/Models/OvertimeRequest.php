@@ -27,6 +27,7 @@ class OvertimeRequest extends Model
         'total_hours',
         'reason',
         'status',
+        'is_event', 'event_name', 'event_nominal',
         'approval_levels', 'approval_stage', 'first_approver_employee_id', 'second_approver_employee_id', 'first_approved_by', 'first_approved_at', 'rejection_stage',
         'approved_by',
         'approved_at',
@@ -44,6 +45,8 @@ class OvertimeRequest extends Model
             'work_date' => 'date',
             'total_hours' => 'decimal:2',
             'break_minutes' => 'integer',
+            'is_event' => 'boolean',
+            'event_nominal' => 'decimal:2',
             'approved_at' => 'datetime',
             'first_approved_at' => 'datetime', 'approval_levels' => 'integer', 'approval_stage' => 'integer', 'rejection_stage' => 'integer',
         ];

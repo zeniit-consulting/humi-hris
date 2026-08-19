@@ -38,6 +38,8 @@ class CompanySetting extends Model
         'employee_code_next_number',
         'overtime_hour_divisor',
         'overtime_calculation_mode',
+        'overtime_rate_type',
+        'overtime_fixed_rate_per_hour',
         'overtime_threshold_hours',
         'active_working_days',
         'auto_deduct_leave_for_missing_checkout',
@@ -45,6 +47,14 @@ class CompanySetting extends Model
         'attendance_revision_cutoff_day',
         'overtime_multiplier_hour1',
         'overtime_multiplier_subsequent',
+        'overtime_events',
+        'auto_overtime_from_attendance',
+        'auto_overtime_min_minutes',
+        'bpjs_kesehatan_enabled',
+        'bpjs_ketenagakerjaan_enabled',
+        'bpjs_kesehatan_wage_cap',
+        'bpjs_jp_wage_cap',
+        'bpjs_jkk_rate',
     ];
 
     protected function casts(): array
@@ -61,11 +71,20 @@ class CompanySetting extends Model
             'show_outsourcing_dashboard' => 'boolean',
             'overtime_hour_divisor' => 'float',
             'overtime_threshold_hours' => 'integer',
+            'overtime_fixed_rate_per_hour' => 'float',
             'active_working_days' => 'integer',
             'auto_deduct_leave_for_missing_checkout' => 'boolean',
             'missing_clock_out_request_days' => 'integer',
             'overtime_multiplier_hour1' => 'float',
             'overtime_multiplier_subsequent' => 'float',
+            'overtime_events' => 'array',
+            'auto_overtime_from_attendance' => 'boolean',
+            'auto_overtime_min_minutes' => 'integer',
+            'bpjs_kesehatan_enabled' => 'boolean',
+            'bpjs_ketenagakerjaan_enabled' => 'boolean',
+            'bpjs_kesehatan_wage_cap' => 'decimal:2',
+            'bpjs_jp_wage_cap' => 'decimal:2',
+            'bpjs_jkk_rate' => 'float',
         ];
     }
 

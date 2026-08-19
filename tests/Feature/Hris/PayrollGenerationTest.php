@@ -1142,4 +1142,65 @@ class PayrollGenerationTest extends TestCase
 
         $this->assertTrue($run->refresh()->is_saved);
     }
+
+    public function test_bpjs_kesehatan_and_ketenagakerjaan_are_calculated_accurately(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        CompanySetting::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Perusahaan Uji BPJS',
+            'bpjs_kesehatan_enabled' => true,
+            'bpjs_ketenagakerjaan_enabled' => true,
+            'bpjs_jkk_rate' => 0.24,
+            'bpjs_kesehatan_wage_cap' => 12_000_000,
+            'bpjs_jp_wage_cap' => 10_042_300,
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 10_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_number' => '00012345678',
+            'bpjs_ketenagakerjaan_number' => '1234567890',
+            'bpjs_kesehatan_enabled' => true,
+            'bpjs_ketenagakerjaan_enabled' => true,
+            'bpjs_jp_enabled' => true,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-05'])
+            ->assertRedirect();
+
+        // Calculations for Rp 10.000.000:
+        // BPJS Kes Company (4%): 400.000, Employee (1%): 100.000
+        // BPJS JKK (0.24%): 24.000, JKM (0.3%): 30.000
+        // BPJS JHT Company (3.7%): 370.000, Employee (2%): 200.000
+        // BPJS JP Company (2%): 200.000, Employee (1%): 100.000
+        // Total BPJS Employee Deduction: 100.000 + 200.000 + 100.000 = 400.000
+        // Total BPJS Company: 400.000 + 24.000 + 30.000 + 370.000 + 200.000 = 1.024.000
+        // Net Salary: 10.000.000 - 400.000 = 9.600.000
+
+        $this->assertDatabaseHas('payroll_items', [
+            'employee_id' => $employee->id,
+            'base_salary' => 10000000.00,
+            'bpjs_kesehatan_company' => 400000.00,
+            'bpjs_kesehatan_employee' => 100000.00,
+            'bpjs_jkk_company' => 24000.00,
+            'bpjs_jkm_company' => 30000.00,
+            'bpjs_jht_company' => 370000.00,
+            'bpjs_jht_employee' => 200000.00,
+            'bpjs_jp_company' => 200000.00,
+            'bpjs_jp_employee' => 100000.00,
+            'bpjs_total_company' => 1024000.00,
+            'bpjs_total_employee' => 400000.00,
+            'deductions_total' => 400000.00,
+            'net_salary' => 9600000.00,
+        ]);
+    }
 }

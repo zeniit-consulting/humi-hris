@@ -137,9 +137,8 @@ class UserPortalAccountService
                 'name' => $employee->full_name,
                 'email' => $employee->email ?: $this->portalPlaceholderEmail($employee, (string) $normalizedPhone),
                 'phone' => $normalizedPhone,
-                'password' => $resetPasswordToDefault && $invitationPassword
-                    ? $invitationPassword
-                    : ($resetPasswordToDefault && $normalizedPhone
+                'password' => $invitationPassword
+                    ?: ($normalizedPhone
                         ? UserPassword::defaultFromPhone($normalizedPhone)
                         : str()->random(32)),
                 'role' => 'user',

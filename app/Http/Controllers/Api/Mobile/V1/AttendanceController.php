@@ -15,6 +15,7 @@ use App\Models\SubCompanyAttendanceLocation;
 use App\Models\User;
 use App\Models\WorkShift;
 use App\Services\AttendanceStatusService;
+use App\Services\AutoOvertimeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -247,6 +248,8 @@ class AttendanceController extends Controller
 
         $attendance = EmployeeAttendance::query()->create($payload);
 
+        app(AutoOvertimeService::class)->syncFromAttendance($attendance, $user->accountOwnerId(), $timezone);
+
         $attendance->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes']);
 
         return $this->success($this->payload($attendance, $timezone), 'Absensi berhasil disimpan.', 201);
@@ -294,6 +297,9 @@ class AttendanceController extends Controller
         $validated['timezone'] = $employeeAttendance->timezone ?: $timezone;
 
         $employeeAttendance->update($validated);
+
+        app(AutoOvertimeService::class)->syncFromAttendance($employeeAttendance, $user->accountOwnerId(), $timezone);
+
         $employeeAttendance->refresh()->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes']);
 
         return $this->success($this->payload($employeeAttendance, $timezone), 'Absensi berhasil diperbarui.');

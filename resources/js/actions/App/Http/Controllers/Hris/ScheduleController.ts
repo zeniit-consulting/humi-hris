@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::index
-* @see app/Http/Controllers/Hris/ScheduleController.php:29
+* @see app/Http/Controllers/Hris/ScheduleController.php:33
 * @route '/hris/schedules'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::index
-* @see app/Http/Controllers/Hris/ScheduleController.php:29
+* @see app/Http/Controllers/Hris/ScheduleController.php:33
 * @route '/hris/schedules'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::index
-* @see app/Http/Controllers/Hris/ScheduleController.php:29
+* @see app/Http/Controllers/Hris/ScheduleController.php:33
 * @route '/hris/schedules'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::index
-* @see app/Http/Controllers/Hris/ScheduleController.php:29
+* @see app/Http/Controllers/Hris/ScheduleController.php:33
 * @route '/hris/schedules'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::index
-* @see app/Http/Controllers/Hris/ScheduleController.php:29
+* @see app/Http/Controllers/Hris/ScheduleController.php:33
 * @route '/hris/schedules'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::index
-* @see app/Http/Controllers/Hris/ScheduleController.php:29
+* @see app/Http/Controllers/Hris/ScheduleController.php:33
 * @route '/hris/schedules'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::index
-* @see app/Http/Controllers/Hris/ScheduleController.php:29
+* @see app/Http/Controllers/Hris/ScheduleController.php:33
 * @route '/hris/schedules'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::store
-* @see app/Http/Controllers/Hris/ScheduleController.php:68
+* @see app/Http/Controllers/Hris/ScheduleController.php:72
 * @route '/hris/schedules'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::store
-* @see app/Http/Controllers/Hris/ScheduleController.php:68
+* @see app/Http/Controllers/Hris/ScheduleController.php:72
 * @route '/hris/schedules'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::store
-* @see app/Http/Controllers/Hris/ScheduleController.php:68
+* @see app/Http/Controllers/Hris/ScheduleController.php:72
 * @route '/hris/schedules'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::store
-* @see app/Http/Controllers/Hris/ScheduleController.php:68
+* @see app/Http/Controllers/Hris/ScheduleController.php:72
 * @route '/hris/schedules'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::store
-* @see app/Http/Controllers/Hris/ScheduleController.php:68
+* @see app/Http/Controllers/Hris/ScheduleController.php:72
 * @route '/hris/schedules'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroySchedule
-* @see app/Http/Controllers/Hris/ScheduleController.php:267
+* @see app/Http/Controllers/Hris/ScheduleController.php:271
 * @route '/hris/schedules/{employeeSchedule}'
 */
 export const destroySchedule = (args: { employeeSchedule: number | { id: number } } | [employeeSchedule: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -153,7 +153,7 @@ destroySchedule.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroySchedule
-* @see app/Http/Controllers/Hris/ScheduleController.php:267
+* @see app/Http/Controllers/Hris/ScheduleController.php:271
 * @route '/hris/schedules/{employeeSchedule}'
 */
 destroySchedule.url = (args: { employeeSchedule: number | { id: number } } | [employeeSchedule: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +186,7 @@ destroySchedule.url = (args: { employeeSchedule: number | { id: number } } | [em
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroySchedule
-* @see app/Http/Controllers/Hris/ScheduleController.php:267
+* @see app/Http/Controllers/Hris/ScheduleController.php:271
 * @route '/hris/schedules/{employeeSchedule}'
 */
 destroySchedule.delete = (args: { employeeSchedule: number | { id: number } } | [employeeSchedule: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -196,7 +196,7 @@ destroySchedule.delete = (args: { employeeSchedule: number | { id: number } } | 
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroySchedule
-* @see app/Http/Controllers/Hris/ScheduleController.php:267
+* @see app/Http/Controllers/Hris/ScheduleController.php:271
 * @route '/hris/schedules/{employeeSchedule}'
 */
 const destroyScheduleForm = (args: { employeeSchedule: number | { id: number } } | [employeeSchedule: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -211,7 +211,7 @@ const destroyScheduleForm = (args: { employeeSchedule: number | { id: number } }
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroySchedule
-* @see app/Http/Controllers/Hris/ScheduleController.php:267
+* @see app/Http/Controllers/Hris/ScheduleController.php:271
 * @route '/hris/schedules/{employeeSchedule}'
 */
 destroyScheduleForm.delete = (args: { employeeSchedule: number | { id: number } } | [employeeSchedule: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -228,7 +228,7 @@ destroySchedule.form = destroyScheduleForm
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::syncHolidays
-* @see app/Http/Controllers/Hris/ScheduleController.php:277
+* @see app/Http/Controllers/Hris/ScheduleController.php:281
 * @route '/hris/schedules/holidays/sync'
 */
 export const syncHolidays = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -243,7 +243,7 @@ syncHolidays.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::syncHolidays
-* @see app/Http/Controllers/Hris/ScheduleController.php:277
+* @see app/Http/Controllers/Hris/ScheduleController.php:281
 * @route '/hris/schedules/holidays/sync'
 */
 syncHolidays.url = (options?: RouteQueryOptions) => {
@@ -252,7 +252,7 @@ syncHolidays.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::syncHolidays
-* @see app/Http/Controllers/Hris/ScheduleController.php:277
+* @see app/Http/Controllers/Hris/ScheduleController.php:281
 * @route '/hris/schedules/holidays/sync'
 */
 syncHolidays.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -262,7 +262,7 @@ syncHolidays.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::syncHolidays
-* @see app/Http/Controllers/Hris/ScheduleController.php:277
+* @see app/Http/Controllers/Hris/ScheduleController.php:281
 * @route '/hris/schedules/holidays/sync'
 */
 const syncHolidaysForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -272,7 +272,7 @@ const syncHolidaysForm = (options?: RouteQueryOptions): RouteFormDefinition<'pos
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::syncHolidays
-* @see app/Http/Controllers/Hris/ScheduleController.php:277
+* @see app/Http/Controllers/Hris/ScheduleController.php:281
 * @route '/hris/schedules/holidays/sync'
 */
 syncHolidaysForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -284,7 +284,7 @@ syncHolidays.form = syncHolidaysForm
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::storeShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:197
+* @see app/Http/Controllers/Hris/ScheduleController.php:201
 * @route '/hris/schedules/shifts'
 */
 export const storeShift = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -299,7 +299,7 @@ storeShift.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::storeShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:197
+* @see app/Http/Controllers/Hris/ScheduleController.php:201
 * @route '/hris/schedules/shifts'
 */
 storeShift.url = (options?: RouteQueryOptions) => {
@@ -308,7 +308,7 @@ storeShift.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::storeShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:197
+* @see app/Http/Controllers/Hris/ScheduleController.php:201
 * @route '/hris/schedules/shifts'
 */
 storeShift.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -318,7 +318,7 @@ storeShift.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::storeShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:197
+* @see app/Http/Controllers/Hris/ScheduleController.php:201
 * @route '/hris/schedules/shifts'
 */
 const storeShiftForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -328,7 +328,7 @@ const storeShiftForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::storeShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:197
+* @see app/Http/Controllers/Hris/ScheduleController.php:201
 * @route '/hris/schedules/shifts'
 */
 storeShiftForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -340,7 +340,7 @@ storeShift.form = storeShiftForm
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::updateShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:227
+* @see app/Http/Controllers/Hris/ScheduleController.php:231
 * @route '/hris/schedules/shifts/{workShift}'
 */
 export const updateShift = (args: { workShift: number | { id: number } } | [workShift: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -355,7 +355,7 @@ updateShift.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::updateShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:227
+* @see app/Http/Controllers/Hris/ScheduleController.php:231
 * @route '/hris/schedules/shifts/{workShift}'
 */
 updateShift.url = (args: { workShift: number | { id: number } } | [workShift: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -388,7 +388,7 @@ updateShift.url = (args: { workShift: number | { id: number } } | [workShift: nu
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::updateShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:227
+* @see app/Http/Controllers/Hris/ScheduleController.php:231
 * @route '/hris/schedules/shifts/{workShift}'
 */
 updateShift.put = (args: { workShift: number | { id: number } } | [workShift: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -398,7 +398,7 @@ updateShift.put = (args: { workShift: number | { id: number } } | [workShift: nu
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::updateShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:227
+* @see app/Http/Controllers/Hris/ScheduleController.php:231
 * @route '/hris/schedules/shifts/{workShift}'
 */
 const updateShiftForm = (args: { workShift: number | { id: number } } | [workShift: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -413,7 +413,7 @@ const updateShiftForm = (args: { workShift: number | { id: number } } | [workShi
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::updateShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:227
+* @see app/Http/Controllers/Hris/ScheduleController.php:231
 * @route '/hris/schedules/shifts/{workShift}'
 */
 updateShiftForm.put = (args: { workShift: number | { id: number } } | [workShift: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -430,7 +430,7 @@ updateShift.form = updateShiftForm
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroyShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:249
+* @see app/Http/Controllers/Hris/ScheduleController.php:253
 * @route '/hris/schedules/shifts/{workShift}'
 */
 export const destroyShift = (args: { workShift: number | { id: number } } | [workShift: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -445,7 +445,7 @@ destroyShift.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroyShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:249
+* @see app/Http/Controllers/Hris/ScheduleController.php:253
 * @route '/hris/schedules/shifts/{workShift}'
 */
 destroyShift.url = (args: { workShift: number | { id: number } } | [workShift: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -478,7 +478,7 @@ destroyShift.url = (args: { workShift: number | { id: number } } | [workShift: n
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroyShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:249
+* @see app/Http/Controllers/Hris/ScheduleController.php:253
 * @route '/hris/schedules/shifts/{workShift}'
 */
 destroyShift.delete = (args: { workShift: number | { id: number } } | [workShift: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -488,7 +488,7 @@ destroyShift.delete = (args: { workShift: number | { id: number } } | [workShift
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroyShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:249
+* @see app/Http/Controllers/Hris/ScheduleController.php:253
 * @route '/hris/schedules/shifts/{workShift}'
 */
 const destroyShiftForm = (args: { workShift: number | { id: number } } | [workShift: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -503,7 +503,7 @@ const destroyShiftForm = (args: { workShift: number | { id: number } } | [workSh
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::destroyShift
-* @see app/Http/Controllers/Hris/ScheduleController.php:249
+* @see app/Http/Controllers/Hris/ScheduleController.php:253
 * @route '/hris/schedules/shifts/{workShift}'
 */
 destroyShiftForm.delete = (args: { workShift: number | { id: number } } | [workShift: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -520,7 +520,7 @@ destroyShift.form = destroyShiftForm
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::roster
-* @see app/Http/Controllers/Hris/ScheduleController.php:116
+* @see app/Http/Controllers/Hris/ScheduleController.php:120
 * @route '/hris/schedules/roster'
 */
 export const roster = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -535,7 +535,7 @@ roster.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::roster
-* @see app/Http/Controllers/Hris/ScheduleController.php:116
+* @see app/Http/Controllers/Hris/ScheduleController.php:120
 * @route '/hris/schedules/roster'
 */
 roster.url = (options?: RouteQueryOptions) => {
@@ -544,7 +544,7 @@ roster.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::roster
-* @see app/Http/Controllers/Hris/ScheduleController.php:116
+* @see app/Http/Controllers/Hris/ScheduleController.php:120
 * @route '/hris/schedules/roster'
 */
 roster.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -554,7 +554,7 @@ roster.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::roster
-* @see app/Http/Controllers/Hris/ScheduleController.php:116
+* @see app/Http/Controllers/Hris/ScheduleController.php:120
 * @route '/hris/schedules/roster'
 */
 const rosterForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -564,7 +564,7 @@ const rosterForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::roster
-* @see app/Http/Controllers/Hris/ScheduleController.php:116
+* @see app/Http/Controllers/Hris/ScheduleController.php:120
 * @route '/hris/schedules/roster'
 */
 rosterForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -574,6 +574,143 @@ rosterForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 roster.form = rosterForm
 
-const ScheduleController = { index, store, destroySchedule, syncHolidays, storeShift, updateShift, destroyShift, roster }
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importTemplate
+* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @route '/hris/schedules/import/template'
+*/
+export const importTemplate = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: importTemplate.url(options),
+    method: 'get',
+})
+
+importTemplate.definition = {
+    methods: ["get","head"],
+    url: '/hris/schedules/import/template',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importTemplate
+* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @route '/hris/schedules/import/template'
+*/
+importTemplate.url = (options?: RouteQueryOptions) => {
+    return importTemplate.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importTemplate
+* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @route '/hris/schedules/import/template'
+*/
+importTemplate.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: importTemplate.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importTemplate
+* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @route '/hris/schedules/import/template'
+*/
+importTemplate.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: importTemplate.url(options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importTemplate
+* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @route '/hris/schedules/import/template'
+*/
+const importTemplateForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: importTemplate.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importTemplate
+* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @route '/hris/schedules/import/template'
+*/
+importTemplateForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: importTemplate.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importTemplate
+* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @route '/hris/schedules/import/template'
+*/
+importTemplateForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: importTemplate.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+importTemplate.form = importTemplateForm
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importMethod
+* @see app/Http/Controllers/Hris/ScheduleController.php:471
+* @route '/hris/schedules/import'
+*/
+export const importMethod = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: importMethod.url(options),
+    method: 'post',
+})
+
+importMethod.definition = {
+    methods: ["post"],
+    url: '/hris/schedules/import',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importMethod
+* @see app/Http/Controllers/Hris/ScheduleController.php:471
+* @route '/hris/schedules/import'
+*/
+importMethod.url = (options?: RouteQueryOptions) => {
+    return importMethod.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importMethod
+* @see app/Http/Controllers/Hris/ScheduleController.php:471
+* @route '/hris/schedules/import'
+*/
+importMethod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: importMethod.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importMethod
+* @see app/Http/Controllers/Hris/ScheduleController.php:471
+* @route '/hris/schedules/import'
+*/
+const importMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: importMethod.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::importMethod
+* @see app/Http/Controllers/Hris/ScheduleController.php:471
+* @route '/hris/schedules/import'
+*/
+importMethodForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: importMethod.url(options),
+    method: 'post',
+})
+
+importMethod.form = importMethodForm
+
+const ScheduleController = { index, store, destroySchedule, syncHolidays, storeShift, updateShift, destroyShift, roster, importTemplate, importMethod, import: importMethod }
 
 export default ScheduleController
