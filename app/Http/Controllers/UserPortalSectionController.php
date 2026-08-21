@@ -194,6 +194,24 @@ class UserPortalSectionController extends Controller
             ? $run->items->where('employee_id', $employee->id)->values()
             : collect();
 
+        $eventOvertimes = collect();
+        if ($run && $run->period_start && $run->period_end) {
+            $eventOvertimes = \App\Models\OvertimeRequest::query()
+                ->where('employee_id', $employee->id)
+                ->where('is_event', true)
+                ->where('status', 'approved')
+                ->whereBetween('work_date', [$run->period_start->toDateString(), $run->period_end->toDateString()])
+                ->orderBy('work_date')
+                ->get()
+                ->map(fn ($ot) => [
+                    'id' => $ot->id,
+                    'event_name' => $ot->event_name,
+                    'event_nominal' => (float) ($ot->event_nominal ?? 0),
+                    'total_hours' => (float) $ot->total_hours,
+                    'work_date' => $ot->work_date?->format('Y-m-d'),
+                ]);
+        }
+
         return [
             'period' => $period,
             'run' => $run ? [
@@ -212,6 +230,9 @@ class UserPortalSectionController extends Controller
                     : '-',
                 'base_salary' => $item->base_salary,
                 'allowances_total' => $item->allowances_total,
+                'overtime_hours' => $item->overtime_hours,
+                'overtime_pay' => $item->overtime_pay,
+                'event_overtimes' => $eventOvertimes,
                 'pph21_method' => $item->pph21_method,
                 'pph21_rate' => $item->pph21_rate,
                 'pph21_allowance' => $item->pph21_allowance,

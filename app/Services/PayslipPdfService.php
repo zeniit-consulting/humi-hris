@@ -52,14 +52,28 @@ class PayslipPdfService
             ],
         );
 
+        $employee = $slip->employee?->loadMissing(['division:id,name', 'position:id,name']);
+
+        $eventOvertimes = collect();
+        if ($employee && $run->period_start && $run->period_end) {
+            $eventOvertimes = \App\Models\OvertimeRequest::query()
+                ->where('employee_id', $employee->id)
+                ->where('is_event', true)
+                ->where('status', 'approved')
+                ->whereBetween('work_date', [$run->period_start->toDateString(), $run->period_end->toDateString()])
+                ->orderBy('work_date')
+                ->get();
+        }
+
         return [
             'documentTitle' => $documentTitle,
             'companyName' => $companySetting->name,
             'companyDetails' => $companySetting->details ?: '-',
             'companyLogoPath' => public_path('logo-color.png'),
-            'employee' => $slip->employee?->loadMissing(['division:id,name', 'position:id,name']),
+            'employee' => $employee,
             'run' => $run,
             'slip' => $slip,
+            'eventOvertimes' => $eventOvertimes,
             'periodLabel' => $run->period_start?->locale('id')->translatedFormat('F Y') ?? $run->period,
         ];
     }

@@ -34,6 +34,15 @@ type PayrollPayload = {
         employee_label: string;
         base_salary: string | number;
         allowances_total: string | number;
+        overtime_hours?: string | number;
+        overtime_pay?: string | number;
+        event_overtimes?: Array<{
+            id: number;
+            event_name: string;
+            event_nominal: number;
+            total_hours: number;
+            work_date: string;
+        }>;
         pph21_method: string | null;
         pph21_rate: string | number;
         pph21_allowance: string | number;
@@ -397,6 +406,40 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                                 </span>
                                             </div>
                                         ))}
+                                        {Number(slip.overtime_pay ?? 0) > 0 && (
+                                            <div className="space-y-1.5 rounded-[10px] bg-stone-50 px-4 py-3">
+                                                <div className="flex items-center justify-between">
+                                                    <span>
+                                                        Upah Lembur
+                                                        {Number(slip.overtime_hours ?? 0) > 0 && (
+                                                            <span className="text-xs text-slate-500 ml-1">
+                                                                ({Number(slip.overtime_hours).toFixed(1)} jam)
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                    <span className="font-semibold">
+                                                        {formatCurrency(slip.overtime_pay)}
+                                                    </span>
+                                                </div>
+                                                {slip.event_overtimes && slip.event_overtimes.length > 0 && (
+                                                    <div className="pt-1.5 border-t border-stone-200/80 space-y-1">
+                                                        {slip.event_overtimes.map((ev) => (
+                                                            <div key={ev.id} className="flex items-center justify-between text-xs text-slate-600 pl-2">
+                                                                <span>
+                                                                    • {ev.event_name}
+                                                                    {ev.total_hours > 0 && (
+                                                                        <span className="text-slate-400 ml-1">({ev.total_hours} jam)</span>
+                                                                    )}
+                                                                </span>
+                                                                <span className="font-medium text-slate-700">
+                                                                    {formatCurrency(ev.event_nominal)}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="flex items-center justify-between rounded-[10px] bg-emerald-50 px-4 py-3">
                                             <span>Total tunjangan</span>
                                             <span className="portal-primary-text font-semibold">

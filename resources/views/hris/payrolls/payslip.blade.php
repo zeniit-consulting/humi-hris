@@ -243,6 +243,30 @@
                                         <td>Rp {{ number_format((float) $amount, 0, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
+                                @if ((float) ($slip->overtime_pay ?? 0) > 0)
+                                    <tr>
+                                        <td>
+                                            Lembur
+                                            @if ((float) ($slip->overtime_hours ?? 0) > 0)
+                                                <small class="muted">({{ number_format((float) $slip->overtime_hours, 1) }} jam)</small>
+                                            @endif
+                                        </td>
+                                        <td>Rp {{ number_format((float) $slip->overtime_pay, 0, ',', '.') }}</td>
+                                    </tr>
+                                    @if (isset($eventOvertimes) && $eventOvertimes->count() > 0)
+                                        @foreach ($eventOvertimes as $otEvent)
+                                            <tr>
+                                                <td style="padding-left: 8px !important; color: #475569;">
+                                                    • {{ $otEvent->event_name }}
+                                                    @if ((float) $otEvent->total_hours > 0)
+                                                        <small>({{ number_format((float) $otEvent->total_hours, 1) }} jam)</small>
+                                                    @endif
+                                                </td>
+                                                <td style="color: #475569;">Rp {{ number_format((float) ($otEvent->event_nominal ?? 0), 0, ',', '.') }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                @endif
                                 @if ((float) ($slip->pph21_allowance ?? 0) > 0)
                                     <tr>
                                         <td>Tunjangan PPh21</td>
@@ -256,18 +280,48 @@
                         <h2 class="panel-title">Deduction & Tax</h2>
                         <table class="money-table">
                             <tbody>
-                                <tr>
-                                    <td>PPh21</td>
-                                    <td>(Rp {{ number_format((float) ($slip->pph21_deduction ?? 0), 0, ',', '.') }})</td>
-                                </tr>
-                                <tr>
-                                    <td>Kasbon</td>
-                                    <td>(Rp {{ number_format((float) $slip->kasbon_deduction, 0, ',', '.') }})</td>
-                                </tr>
-                                <tr>
-                                    <td>Denda</td>
-                                    <td>(Rp {{ number_format((float) $slip->denda_deduction, 0, ',', '.') }})</td>
-                                </tr>
+                                @if ((float) ($slip->pph21_deduction ?? 0) > 0)
+                                    <tr>
+                                        <td>PPh21</td>
+                                        <td>(Rp {{ number_format((float) $slip->pph21_deduction, 0, ',', '.') }})</td>
+                                    </tr>
+                                @endif
+                                @if ((float) ($slip->bpjs_kesehatan_employee ?? 0) > 0)
+                                    <tr>
+                                        <td>BPJS Kesehatan (1%)</td>
+                                        <td>(Rp {{ number_format((float) $slip->bpjs_kesehatan_employee, 0, ',', '.') }})</td>
+                                    </tr>
+                                @endif
+                                @if ((float) ($slip->bpjs_jht_employee ?? 0) > 0)
+                                    <tr>
+                                        <td>BPJS Ketenagakerjaan (JHT 2%)</td>
+                                        <td>(Rp {{ number_format((float) $slip->bpjs_jht_employee, 0, ',', '.') }})</td>
+                                    </tr>
+                                @endif
+                                @if ((float) ($slip->bpjs_jp_employee ?? 0) > 0)
+                                    <tr>
+                                        <td>BPJS Ketenagakerjaan (JP 1%)</td>
+                                        <td>(Rp {{ number_format((float) $slip->bpjs_jp_employee, 0, ',', '.') }})</td>
+                                    </tr>
+                                @endif
+                                @if ((float) ($slip->kasbon_deduction ?? 0) > 0)
+                                    <tr>
+                                        <td>Kasbon</td>
+                                        <td>(Rp {{ number_format((float) $slip->kasbon_deduction, 0, ',', '.') }})</td>
+                                    </tr>
+                                @endif
+                                @if ((float) ($slip->denda_deduction ?? 0) > 0)
+                                    <tr>
+                                        <td>Denda</td>
+                                        <td>(Rp {{ number_format((float) $slip->denda_deduction, 0, ',', '.') }})</td>
+                                    </tr>
+                                @endif
+                                @if ((float) ($slip->unpaid_leave_deduction ?? 0) > 0)
+                                    <tr>
+                                        <td>Potongan Unpaid Leave</td>
+                                        <td>(Rp {{ number_format((float) $slip->unpaid_leave_deduction, 0, ',', '.') }})</td>
+                                    </tr>
+                                @endif
                             </tbody>
                         </table>
                     </td>
@@ -275,7 +329,7 @@
             </table>
             <div class="summary">
                 Total Penghasilan
-                <strong>Rp {{ number_format((float) $slip->base_salary + (float) $slip->allowances_total + (float) ($slip->pph21_allowance ?? 0), 0, ',', '.') }}</strong>
+                <strong>Rp {{ number_format((float) $slip->base_salary + (float) $slip->allowances_total + (float) ($slip->overtime_pay ?? 0) + (float) ($slip->pph21_allowance ?? 0), 0, ',', '.') }}</strong>
             </div>
             <div class="summary">
                 Total Potongan
