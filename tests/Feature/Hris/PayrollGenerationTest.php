@@ -356,12 +356,15 @@ class PayrollGenerationTest extends TestCase
             'user_id' => $user->id,
             'first_name' => 'Dio Restu Saputra',
             'last_name' => null,
+            'hire_date' => '2026-01-01',
             'base_salary' => 6_500_000,
             'pph21_method' => 'gross_up',
             'pph21_rate' => 84_250,
             'ptkp_category' => 'K/1',
             'is_active' => true,
             'employment_status' => 'active',
+            'bpjs_kesehatan_enabled' => false,
+            'bpjs_ketenagakerjaan_enabled' => false,
         ]);
 
         EmployeeAllowance::query()->create([
@@ -1201,6 +1204,98 @@ class PayrollGenerationTest extends TestCase
             'bpjs_total_employee' => 400000.00,
             'deductions_total' => 400000.00,
             'net_salary' => 9600000.00,
+        ]);
+    }
+
+    public function test_position_based_overtime_events_hourly_and_fixed_rates_are_calculated_in_payroll(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $position = \App\Models\Position::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Store Manager',
+        ]);
+
+        CompanySetting::query()->create([
+            'user_id' => $user->id,
+            'overtime_events' => [
+                [
+                    'code' => 'OT_STORE_SM',
+                    'name' => 'OT Store SM',
+                    'nominal' => 20000,
+                    'unit' => 'jam',
+                    'position_ids' => [$position->id],
+                ],
+                [
+                    'code' => 'LOAD',
+                    'name' => 'Loading in-out event',
+                    'nominal' => 150000,
+                    'unit' => 'kegiatan',
+                    'position_ids' => [$position->id],
+                ],
+            ],
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'position_id' => $position->id,
+            'hire_date' => '2026-01-01',
+            'base_salary' => 5000000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_enabled' => false,
+            'bpjs_ketenagakerjaan_enabled' => false,
+        ]);
+
+        // 1. Submit event overtime per jam (4 hours @ Rp 20.000 = Rp 80.000)
+        $this->actingAs($user)->post(route('hris.overtimes.store'), [
+            'employee_id' => $employee->id,
+            'work_date' => '2026-06-05',
+            'is_event' => true,
+            'event_name' => 'OT Store SM',
+            'start_time' => '18:00',
+            'end_time' => '22:00',
+            'break_minutes' => 0,
+            'status' => 'approved',
+            'reason' => 'Tutup toko bulanan',
+        ])->assertRedirect();
+
+        // 2. Submit event overtime flat / per kegiatan (Rp 150.000)
+        $this->actingAs($user)->post(route('hris.overtimes.store'), [
+            'employee_id' => $employee->id,
+            'work_date' => '2026-06-06',
+            'is_event' => true,
+            'event_name' => 'Loading in-out event',
+            'start_time' => '18:00',
+            'end_time' => '22:00',
+            'break_minutes' => 0,
+            'status' => 'approved',
+            'reason' => 'Loading barang bazaar',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('overtime_requests', [
+            'employee_id' => $employee->id,
+            'event_name' => 'OT Store SM',
+            'event_nominal' => 80000.00,
+            'total_hours' => 4.00,
+        ]);
+
+        $this->assertDatabaseHas('overtime_requests', [
+            'employee_id' => $employee->id,
+            'event_name' => 'Loading in-out event',
+            'event_nominal' => 150000.00,
+        ]);
+
+        // Generate payroll for 2026-06
+        $this->actingAs($user)->post(route('hris.payrolls.generate'), ['period' => '2026-06'])
+            ->assertRedirect();
+
+        // Total overtime pay = 80.000 + 150.000 = 230.000
+        // Net salary = 5.000.000 + 230.000 = 5.230.000
+        $this->assertDatabaseHas('payroll_items', [
+            'employee_id' => $employee->id,
+            'base_salary' => 5000000.00,
+            'overtime_pay' => 230000.00,
+            'net_salary' => 5230000.00,
         ]);
     }
 }

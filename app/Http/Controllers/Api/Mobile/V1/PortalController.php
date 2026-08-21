@@ -423,6 +423,16 @@ class PortalController extends Controller
             'features' => [
                 'kasbon' => CompanySetting::portalKasbonEnabledFor($user),
             ],
+            'overtime_events' => collect($companySetting?->overtime_events ?? [])
+                ->filter(function (array $event) use ($employee) {
+                    $positionIds = $event['position_ids'] ?? [];
+                    if (empty($positionIds)) {
+                        return true;
+                    }
+                    return $employee && in_array((int) $employee->position_id, array_map('intval', (array) $positionIds), true);
+                })
+                ->values()
+                ->all(),
             'links' => array_filter([
                 'attendance' => route('portal.attendance'),
                 'schedules' => route('portal.attendance'),

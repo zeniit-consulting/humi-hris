@@ -68,9 +68,10 @@ class OvertimeController extends Controller
             ]);
 
         $employees = Employee::query()
+            ->with('position:id,code,name')
             ->orderBy('first_name')
             ->orderBy('last_name')
-            ->get(['id', 'employee_code', 'first_name', 'last_name']);
+            ->get(['id', 'employee_code', 'first_name', 'last_name', 'position_id']);
 
         $setting = \App\Models\CompanySetting::query()->where('user_id', $ownerId)->first();
         $overtimeEvents = $setting->overtime_events ?? [];
@@ -79,7 +80,8 @@ class OvertimeController extends Controller
             'overtimes' => $overtimes,
             'employees' => $employees->map(fn (Employee $employee) => [
                 'id' => $employee->id,
-                'label' => $employee->employee_code.' - '.$employee->full_name,
+                'label' => $employee->employee_code.' - '.$employee->full_name.($employee->position ? ' ('.$employee->position->name.')' : ''),
+                'position_id' => $employee->position_id,
             ]),
             'filters' => $filters,
             'statusOptions' => ['pending', 'approved', 'rejected'],
@@ -207,12 +209,24 @@ class OvertimeController extends Controller
         $validated = $request->validated();
 
         $eventNominal = null;
+        $totalHours = $this->calculateTotalHours(
+            $validated['start_time'] ?? null,
+            $validated['end_time'] ?? null,
+            (int) ($validated['break_minutes'] ?? 0)
+        );
+
         if (($validated['is_event'] ?? false) && ! empty($validated['event_name'])) {
             $setting = \App\Models\CompanySetting::query()->where('user_id', $request->user()->accountOwnerId())->first();
             $events = $setting->overtime_events ?? [];
             foreach ($events as $event) {
                 if (($event['name'] ?? '') === $validated['event_name']) {
-                    $eventNominal = $event['nominal'] ?? 0;
+                    $baseRate = (float) ($event['nominal'] ?? 0);
+                    $unit = $event['unit'] ?? 'kegiatan';
+                    if ($unit === 'jam') {
+                        $eventNominal = round($baseRate * (float) $totalHours, 2);
+                    } else {
+                        $eventNominal = $baseRate;
+                    }
                     break;
                 }
             }
@@ -222,11 +236,7 @@ class OvertimeController extends Controller
             ...$validated,
             'event_nominal' => $eventNominal,
             'break_minutes' => (int) ($validated['break_minutes'] ?? 0),
-            'total_hours' => $this->calculateTotalHours(
-                $validated['start_time'] ?? null,
-                $validated['end_time'] ?? null,
-                (int) ($validated['break_minutes'] ?? 0)
-            ),
+            'total_hours' => $totalHours,
             'approved_at' => $validated['status'] === 'approved' ? now() : null,
             'approved_by' => $validated['status'] === 'approved' ? $request->user()?->id : null,
         ]);
@@ -248,13 +258,25 @@ class OvertimeController extends Controller
         $validated = $request->validated();
         $oldStatus = $overtime->status; // capture before update
 
+        $totalHours = $this->calculateTotalHours(
+            $validated['start_time'] ?? null,
+            $validated['end_time'] ?? null,
+            (int) ($validated['break_minutes'] ?? 0)
+        );
+
         $eventNominal = null;
         if (($validated['is_event'] ?? false) && ! empty($validated['event_name'])) {
             $setting = \App\Models\CompanySetting::query()->where('user_id', $request->user()->accountOwnerId())->first();
             $events = $setting->overtime_events ?? [];
             foreach ($events as $event) {
                 if (($event['name'] ?? '') === $validated['event_name']) {
-                    $eventNominal = $event['nominal'] ?? 0;
+                    $baseRate = (float) ($event['nominal'] ?? 0);
+                    $unit = $event['unit'] ?? 'kegiatan';
+                    if ($unit === 'jam') {
+                        $eventNominal = round($baseRate * (float) $totalHours, 2);
+                    } else {
+                        $eventNominal = $baseRate;
+                    }
                     break;
                 }
             }
@@ -264,11 +286,7 @@ class OvertimeController extends Controller
             ...$validated,
             'event_nominal' => $eventNominal,
             'break_minutes' => (int) ($validated['break_minutes'] ?? 0),
-            'total_hours' => $this->calculateTotalHours(
-                $validated['start_time'] ?? null,
-                $validated['end_time'] ?? null,
-                (int) ($validated['break_minutes'] ?? 0)
-            ),
+            'total_hours' => $totalHours,
             'approved_at' => $validated['status'] === 'approved' ? ($overtime->approved_at ?? now()) : null,
             'approved_by' => $validated['status'] === 'approved' ? ($overtime->approved_by ?? $request->user()?->id) : null,
         ]);

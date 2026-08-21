@@ -10,6 +10,20 @@ import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
 import type { BreadcrumbItem } from '@/types';
 
+export type OvertimeEventItem = {
+    code?: string;
+    name: string;
+    nominal: number;
+    unit?: 'kegiatan' | 'hari' | 'jam' | 'kehadiran';
+    position_ids?: number[];
+};
+
+type PositionOption = {
+    id: number;
+    code: string;
+    name: string;
+};
+
 type Settings = {
     active_working_days: number;
     auto_deduct_leave_for_missing_checkout: boolean;
@@ -20,7 +34,7 @@ type Settings = {
     overtime_hour_divisor: number;
     overtime_multiplier_hour1: number;
     overtime_multiplier_subsequent: number;
-    overtime_events: { name: string; nominal: number }[];
+    overtime_events: OvertimeEventItem[];
     auto_overtime_from_attendance: boolean;
     auto_overtime_min_minutes: number;
     bpjs_kesehatan_enabled: boolean;
@@ -35,10 +49,22 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Pengaturan Payroll & Lembur', href: '/settings/payroll' },
 ];
 
-export default function PayrollSettings({ settings }: { settings: Settings }) {
+export default function PayrollSettings({
+    settings,
+    positions = [],
+}: {
+    settings: Settings;
+    positions?: PositionOption[];
+}) {
     const form = useForm({
         ...settings,
-        overtime_events: settings.overtime_events ?? [],
+        overtime_events: (settings.overtime_events ?? []).map((e) => ({
+            code: e.code ?? '',
+            name: e.name ?? '',
+            nominal: Number(e.nominal ?? 0),
+            unit: e.unit ?? 'kegiatan',
+            position_ids: e.position_ids ?? [],
+        })),
         overtime_fixed_rate_per_hour:
             settings.overtime_fixed_rate_per_hour ?? '',
         auto_deduct_leave_for_missing_checkout:
@@ -309,15 +335,14 @@ export default function PayrollSettings({ settings }: { settings: Settings }) {
                             )}
                         </div>
 
-                        <div className="space-y-3 rounded-lg border bg-slate-50 p-4">
+                        <div className="space-y-4 rounded-lg border bg-slate-50 p-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h3 className="text-sm font-semibold">
-                                        Daftar Lembur Event
+                                        Daftar Event Lembur & Insentif per Jabatan
                                     </h3>
                                     <p className="text-xs text-muted-foreground">
-                                        Tambahkan jenis kegiatan luar jam kerja
-                                        beserta nominal bayarannya.
+                                        Atur kode komponen, tarif, satuan (kegiatan, jam, hari, kehadiran), serta batasan jabatan karyawan yang dapat mengajukan.
                                     </p>
                                 </div>
                                 <Button
@@ -327,7 +352,7 @@ export default function PayrollSettings({ settings }: { settings: Settings }) {
                                     onClick={() =>
                                         form.setData('overtime_events', [
                                             ...form.data.overtime_events,
-                                            { name: '', nominal: 0 },
+                                            { code: '', name: '', nominal: 0, unit: 'kegiatan', position_ids: [] },
                                         ])
                                     }
                                     className="h-8 gap-1.5 text-xs"
@@ -342,99 +367,144 @@ export default function PayrollSettings({ settings }: { settings: Settings }) {
                                         (event, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-start gap-2"
+                                                className="rounded-lg border bg-white p-3 shadow-xs space-y-3"
                                             >
-                                                <div className="flex-1 space-y-1">
-                                                    <Input
-                                                        placeholder="Nama Kegiatan (misal: Jaga Stand Akhir Pekan)"
-                                                        value={event.name}
-                                                        required
-                                                        onChange={(e) => {
+                                                <div className="flex items-center justify-between border-b pb-2">
+                                                    <span className="text-xs font-semibold text-muted-foreground">
+                                                        Event #{index + 1}
+                                                    </span>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
                                                             const newEvents = [
-                                                                ...form.data
-                                                                    .overtime_events,
+                                                                ...form.data.overtime_events,
                                                             ];
-                                                            newEvents[
-                                                                index
-                                                            ].name =
-                                                                e.target.value;
-                                                            form.setData(
-                                                                'overtime_events',
-                                                                newEvents,
-                                                            );
+                                                            newEvents.splice(index, 1);
+                                                            form.setData('overtime_events', newEvents);
                                                         }}
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            (
-                                                                form.errors as Record<
-                                                                    string,
-                                                                    string
-                                                                >
-                                                            )[
-                                                                `overtime_events.${index}.name`
-                                                            ]
-                                                        }
-                                                    />
+                                                        className="h-7 text-xs text-rose-500 hover:bg-rose-50 hover:text-rose-600 gap-1"
+                                                    >
+                                                        <Trash2 className="size-3.5" />
+                                                        Hapus
+                                                    </Button>
                                                 </div>
-                                                <div className="w-1/3 space-y-1">
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Nominal (Rp)"
-                                                        min="0"
-                                                        value={event.nominal}
-                                                        required
-                                                        onChange={(e) => {
-                                                            const newEvents = [
-                                                                ...form.data
-                                                                    .overtime_events,
-                                                            ];
-                                                            newEvents[
-                                                                index
-                                                            ].nominal = Number(
-                                                                e.target.value,
-                                                            );
-                                                            form.setData(
-                                                                'overtime_events',
-                                                                newEvents,
-                                                            );
-                                                        }}
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            (
-                                                                form.errors as Record<
-                                                                    string,
-                                                                    string
-                                                                >
-                                                            )[
-                                                                `overtime_events.${index}.nominal`
-                                                            ]
-                                                        }
-                                                    />
+
+                                                <div className="grid gap-3 sm:grid-cols-12">
+                                                    <div className="sm:col-span-3 space-y-1">
+                                                        <Label className="text-xs">Kode</Label>
+                                                        <Input
+                                                            placeholder="Contoh: OT_STORE_SM"
+                                                            value={event.code ?? ''}
+                                                            onChange={(e) => {
+                                                                const newEvents = [...form.data.overtime_events];
+                                                                newEvents[index].code = e.target.value.toUpperCase();
+                                                                form.setData('overtime_events', newEvents);
+                                                            }}
+                                                        />
+                                                    </div>
+
+                                                    <div className="sm:col-span-4 space-y-1">
+                                                        <Label className="text-xs">Nama Kegiatan / Komponen</Label>
+                                                        <Input
+                                                            placeholder="Contoh: OT Store - Store Manager"
+                                                            value={event.name}
+                                                            required
+                                                            onChange={(e) => {
+                                                                const newEvents = [...form.data.overtime_events];
+                                                                newEvents[index].name = e.target.value;
+                                                                form.setData('overtime_events', newEvents);
+                                                            }}
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                (form.errors as Record<string, string>)[
+                                                                    `overtime_events.${index}.name`
+                                                                ]
+                                                            }
+                                                        />
+                                                    </div>
+
+                                                    <div className="sm:col-span-3 space-y-1">
+                                                        <Label className="text-xs">Tarif (Rp)</Label>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Contoh: 15385"
+                                                            min="0"
+                                                            value={event.nominal}
+                                                            required
+                                                            onChange={(e) => {
+                                                                const newEvents = [...form.data.overtime_events];
+                                                                newEvents[index].nominal = Number(e.target.value);
+                                                                form.setData('overtime_events', newEvents);
+                                                            }}
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                (form.errors as Record<string, string>)[
+                                                                    `overtime_events.${index}.nominal`
+                                                                ]
+                                                            }
+                                                        />
+                                                    </div>
+
+                                                    <div className="sm:col-span-2 space-y-1">
+                                                        <Label className="text-xs">Satuan</Label>
+                                                        <select
+                                                            className="h-9 w-full rounded-md border border-input bg-background px-2.5 text-xs outline-none"
+                                                            value={event.unit ?? 'kegiatan'}
+                                                            onChange={(e) => {
+                                                                const newEvents = [...form.data.overtime_events];
+                                                                newEvents[index].unit = e.target.value as OvertimeEventItem['unit'];
+                                                                form.setData('overtime_events', newEvents);
+                                                            }}
+                                                        >
+                                                            <option value="kegiatan">kegiatan</option>
+                                                            <option value="jam">jam (hitung durasi)</option>
+                                                            <option value="hari">hari</option>
+                                                            <option value="kehadiran">kehadiran</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => {
-                                                        const newEvents = [
-                                                            ...form.data
-                                                                .overtime_events,
-                                                        ];
-                                                        newEvents.splice(
-                                                            index,
-                                                            1,
-                                                        );
-                                                        form.setData(
-                                                            'overtime_events',
-                                                            newEvents,
-                                                        );
-                                                    }}
-                                                    className="text-rose-500 hover:bg-rose-50 hover:text-rose-600"
-                                                >
-                                                    <Trash2 className="size-4" />
-                                                </Button>
+
+                                                <div className="space-y-1.5 pt-1">
+                                                    <Label className="text-xs text-slate-700">
+                                                        Berlaku untuk Jabatan (Kosongkan jika berlaku untuk Semua Jabatan):
+                                                    </Label>
+                                                    <div className="flex flex-wrap gap-2 pt-0.5">
+                                                        {positions.map((pos) => {
+                                                            const isSelected = (event.position_ids ?? []).includes(pos.id);
+                                                            return (
+                                                                <button
+                                                                    key={pos.id}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const currentIds = event.position_ids ?? [];
+                                                                        const nextIds = isSelected
+                                                                            ? currentIds.filter((id) => id !== pos.id)
+                                                                            : [...currentIds, pos.id];
+                                                                        const newEvents = [...form.data.overtime_events];
+                                                                        newEvents[index].position_ids = nextIds;
+                                                                        form.setData('overtime_events', newEvents);
+                                                                    }}
+                                                                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs transition-colors cursor-pointer border ${
+                                                                        isSelected
+                                                                            ? 'bg-primary text-primary-foreground border-primary'
+                                                                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                                                                    }`}
+                                                                >
+                                                                    {pos.name}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                        {positions.length === 0 && (
+                                                            <p className="text-xs text-muted-foreground italic">
+                                                                Belum ada master data jabatan. Event berlaku umum.
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         ),
                                     )}

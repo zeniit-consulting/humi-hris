@@ -16,15 +16,27 @@ type Props = {
     pageTitle: string;
 };
 
+type OvertimeEventItem = {
+    code?: string;
+    name: string;
+    nominal: number;
+    unit?: 'kegiatan' | 'hari' | 'jam' | 'kehadiran';
+    position_ids?: number[];
+};
+
 type PortalSummary = {
-    employee: { id: number } | null;
+    employee: { id: number; position_id?: number | null } | null;
     links: PortalLinkMap;
+    overtime_events?: OvertimeEventItem[];
 };
 
 type OvertimePayload = {
     items: Array<{
         id: number;
         work_date: string;
+        is_event?: boolean;
+        event_name?: string | null;
+        event_nominal?: number | null;
         start_time: string | null;
         end_time: string | null;
         break_minutes: number;
@@ -39,6 +51,8 @@ export default function PortalOvertimesPage({ pageTitle }: Props) {
     const [items, setItems] = useState<OvertimePayload['items']>([]);
     const [form, setForm] = useState({
         work_date: '',
+        is_event: false,
+        event_name: '',
         start_time: '',
         end_time: '',
         break_minutes: '0',
@@ -70,12 +84,36 @@ export default function PortalOvertimesPage({ pageTitle }: Props) {
     };
 
     useEffect(() => {
-        const timeoutId = window.setTimeout(() => {
-            void loadData();
-        }, 0);
-
-        return () => window.clearTimeout(timeoutId);
+        loadData();
     }, []);
+
+    const overtimeEvents = portal?.overtime_events ?? [];
+    const selectedEvent = overtimeEvents.find((e) => e.name === form.event_name);
+
+    const calculateHours = (startTime: string, endTime: string, breakMins: string) => {
+        if (!startTime || !endTime) return 0;
+        const [startH, startM] = startTime.split(':').map(Number);
+        const [endH, endM] = endTime.split(':').map(Number);
+        if (isNaN(startH) || isNaN(startM) || isNaN(endH) || isNaN(endM)) return 0;
+        let startMinutes = startH * 60 + startM;
+        let endMinutes = endH * 60 + endM;
+        if (endMinutes <= startMinutes) {
+            endMinutes += 24 * 60;
+        }
+        const netMinutes = Math.max(endMinutes - startMinutes - (Number(breakMins) || 0), 0);
+        return Math.round((netMinutes / 60) * 100) / 100;
+    };
+
+    const calculatedHours = calculateHours(form.start_time, form.end_time, form.break_minutes);
+
+    const estimatedEventNominal = (() => {
+        if (!form.is_event || !selectedEvent) return 0;
+        const baseNominal = Number(selectedEvent.nominal ?? 0);
+        if (selectedEvent.unit === 'jam') {
+            return Math.round(baseNominal * calculatedHours);
+        }
+        return baseNominal;
+    })();
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -88,6 +126,8 @@ export default function PortalOvertimesPage({ pageTitle }: Props) {
             await requestApi('/portal/api/overtimes', 'POST', {
                 employee_id: portal.employee.id,
                 work_date: form.work_date,
+                is_event: form.is_event,
+                event_name: form.is_event ? form.event_name : null,
                 start_time: form.start_time,
                 end_time: form.end_time,
                 break_minutes: Number(form.break_minutes || 0),
@@ -97,6 +137,8 @@ export default function PortalOvertimesPage({ pageTitle }: Props) {
 
             setForm({
                 work_date: '',
+                is_event: false,
+                event_name: '',
                 start_time: '',
                 end_time: '',
                 break_minutes: '0',
@@ -148,6 +190,67 @@ export default function PortalOvertimesPage({ pageTitle }: Props) {
                 </div>
 
                 <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+                    {/* Event Overtime Toggle */}
+                    <div className="rounded-[10px] border border-stone-200 bg-stone-50 p-3 space-y-2">
+                        <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-800">
+                            <input
+                                type="checkbox"
+                                checked={form.is_event}
+                                onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setForm((current) => ({
+                                        ...current,
+                                        is_event: checked,
+                                        event_name: checked ? current.event_name : '',
+                                    }));
+                                }}
+                                className="size-4 rounded border-stone-300"
+                            />
+                            <span>Lembur Event / Kegiatan Khusus (Sesuai Jabatan)</span>
+                        </label>
+
+                        {form.is_event && (
+                            <div className="pt-2 border-t border-stone-200 space-y-2">
+                                <select
+                                    value={form.event_name}
+                                    onChange={(e) =>
+                                        setForm((current) => ({
+                                            ...current,
+                                            event_name: e.target.value,
+                                        }))
+                                    }
+                                    className="h-11 w-full rounded-[8px] border border-stone-200 bg-white px-3 text-sm outline-none"
+                                    required={form.is_event}
+                                >
+                                    <option value="">-- Pilih Event Lembur --</option>
+                                    {overtimeEvents.map((ev, idx) => (
+                                        <option key={idx} value={ev.name}>
+                                            {ev.code ? `[${ev.code}] ` : ''}{ev.name} — Rp {Number(ev.nominal).toLocaleString('id-ID')} / {ev.unit ?? 'kegiatan'}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {selectedEvent && (
+                                    <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-900 border border-emerald-200">
+                                        <div>
+                                            <p className="font-semibold">{selectedEvent.name}</p>
+                                            <p className="text-emerald-700">
+                                                Rp {Number(selectedEvent.nominal).toLocaleString('id-ID')} / {selectedEvent.unit ?? 'kegiatan'}
+                                                {selectedEvent.unit === 'jam' && ` × ${calculatedHours} jam`}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] uppercase text-emerald-600 block">Estimasi Upah</span>
+                                            <span className="text-sm font-bold text-emerald-900">
+                                                Rp {estimatedEventNominal.toLocaleString('id-ID')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
                     <input
                         type="date"
                         value={form.work_date}
@@ -237,12 +340,24 @@ export default function PortalOvertimesPage({ pageTitle }: Props) {
                             >
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
-                                        <p className="text-sm font-semibold text-slate-900">
-                                            {formatDate(item.work_date)}
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm font-semibold text-slate-900">
+                                                {formatDate(item.work_date)}
+                                            </p>
+                                            {item.is_event && (
+                                                <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[11px] font-medium text-purple-700">
+                                                    {item.event_name || 'Event'}
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className="mt-1 text-sm text-slate-500">
                                             {item.start_time} - {item.end_time}{' '}
                                             · {item.total_hours} jam
+                                            {item.is_event && item.event_nominal !== null && item.event_nominal !== undefined && (
+                                                <span className="ml-1.5 font-medium text-emerald-600">
+                                                    (Rp {Number(item.event_nominal).toLocaleString('id-ID')})
+                                                </span>
+                                            )}
                                         </p>
                                         {item.reason ? (
                                             <p className="mt-2 text-sm text-slate-600">

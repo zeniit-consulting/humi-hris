@@ -283,7 +283,7 @@ export const store = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:124
 * @route '/api/mobile/v1/overtimes/{overtime}'
 */
 const update65de6934cedaf072cb04235584a096d9 = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -298,7 +298,7 @@ update65de6934cedaf072cb04235584a096d9.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:124
 * @route '/api/mobile/v1/overtimes/{overtime}'
 */
 update65de6934cedaf072cb04235584a096d9.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -331,7 +331,7 @@ update65de6934cedaf072cb04235584a096d9.url = (args: { overtime: number | { id: n
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:124
 * @route '/api/mobile/v1/overtimes/{overtime}'
 */
 update65de6934cedaf072cb04235584a096d9.put = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -341,7 +341,7 @@ update65de6934cedaf072cb04235584a096d9.put = (args: { overtime: number | { id: n
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:124
 * @route '/api/mobile/v1/overtimes/{overtime}'
 */
 const update65de6934cedaf072cb04235584a096d9Form = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -356,7 +356,7 @@ const update65de6934cedaf072cb04235584a096d9Form = (args: { overtime: number | {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:124
 * @route '/api/mobile/v1/overtimes/{overtime}'
 */
 update65de6934cedaf072cb04235584a096d9Form.put = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -372,7 +372,7 @@ update65de6934cedaf072cb04235584a096d9Form.put = (args: { overtime: number | { i
 update65de6934cedaf072cb04235584a096d9.form = update65de6934cedaf072cb04235584a096d9Form
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:124
 * @route '/portal/api/overtimes/{overtime}'
 */
 const update94a26eae2636bc900f7cbcf2e424008d = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -387,7 +387,7 @@ update94a26eae2636bc900f7cbcf2e424008d.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:124
 * @route '/portal/api/overtimes/{overtime}'
 */
 update94a26eae2636bc900f7cbcf2e424008d.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -420,7 +420,7 @@ update94a26eae2636bc900f7cbcf2e424008d.url = (args: { overtime: number | { id: n
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:124
 * @route '/portal/api/overtimes/{overtime}'
 */
 update94a26eae2636bc900f7cbcf2e424008d.put = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -430,7 +430,7 @@ update94a26eae2636bc900f7cbcf2e424008d.put = (args: { overtime: number | { id: n
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:124
 * @route '/portal/api/overtimes/{overtime}'
 */
 const update94a26eae2636bc900f7cbcf2e424008dForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -445,7 +445,7 @@ const update94a26eae2636bc900f7cbcf2e424008dForm = (args: { overtime: number | {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::update
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:116
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:124
 * @route '/portal/api/overtimes/{overtime}'
 */
 update94a26eae2636bc900f7cbcf2e424008dForm.put = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -467,7 +467,7 @@ export const update = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:177
 * @route '/api/mobile/v1/overtimes/{overtime}'
 */
 const destroy65de6934cedaf072cb04235584a096d9 = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -482,7 +482,7 @@ destroy65de6934cedaf072cb04235584a096d9.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:177
 * @route '/api/mobile/v1/overtimes/{overtime}'
 */
 destroy65de6934cedaf072cb04235584a096d9.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -515,7 +515,7 @@ destroy65de6934cedaf072cb04235584a096d9.url = (args: { overtime: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:177
 * @route '/api/mobile/v1/overtimes/{overtime}'
 */
 destroy65de6934cedaf072cb04235584a096d9.delete = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -525,7 +525,7 @@ destroy65de6934cedaf072cb04235584a096d9.delete = (args: { overtime: number | { i
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:177
 * @route '/api/mobile/v1/overtimes/{overtime}'
 */
 const destroy65de6934cedaf072cb04235584a096d9Form = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -540,7 +540,7 @@ const destroy65de6934cedaf072cb04235584a096d9Form = (args: { overtime: number | 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:177
 * @route '/api/mobile/v1/overtimes/{overtime}'
 */
 destroy65de6934cedaf072cb04235584a096d9Form.delete = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -556,7 +556,7 @@ destroy65de6934cedaf072cb04235584a096d9Form.delete = (args: { overtime: number |
 destroy65de6934cedaf072cb04235584a096d9.form = destroy65de6934cedaf072cb04235584a096d9Form
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:177
 * @route '/portal/api/overtimes/{overtime}'
 */
 const destroy94a26eae2636bc900f7cbcf2e424008d = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -571,7 +571,7 @@ destroy94a26eae2636bc900f7cbcf2e424008d.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:177
 * @route '/portal/api/overtimes/{overtime}'
 */
 destroy94a26eae2636bc900f7cbcf2e424008d.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -604,7 +604,7 @@ destroy94a26eae2636bc900f7cbcf2e424008d.url = (args: { overtime: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:177
 * @route '/portal/api/overtimes/{overtime}'
 */
 destroy94a26eae2636bc900f7cbcf2e424008d.delete = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -614,7 +614,7 @@ destroy94a26eae2636bc900f7cbcf2e424008d.delete = (args: { overtime: number | { i
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:177
 * @route '/portal/api/overtimes/{overtime}'
 */
 const destroy94a26eae2636bc900f7cbcf2e424008dForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -629,7 +629,7 @@ const destroy94a26eae2636bc900f7cbcf2e424008dForm = (args: { overtime: number | 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\OvertimeController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:161
+* @see app/Http/Controllers/Api/Mobile/V1/OvertimeController.php:177
 * @route '/portal/api/overtimes/{overtime}'
 */
 destroy94a26eae2636bc900f7cbcf2e424008dForm.delete = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

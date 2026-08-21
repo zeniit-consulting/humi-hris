@@ -59,6 +59,15 @@ type Paginator<T> = {
 type EmployeeOption = {
     id: number;
     label: string;
+    position_id?: number | null;
+};
+
+export type OvertimeEventOption = {
+    code?: string;
+    name: string;
+    nominal: number;
+    unit?: 'kegiatan' | 'hari' | 'jam' | 'kehadiran';
+    position_ids?: number[];
 };
 
 type OvertimeRow = {
@@ -66,6 +75,9 @@ type OvertimeRow = {
     employee_id: number;
     employee_label: string;
     work_date: string;
+    is_event: boolean;
+    event_name: string | null;
+    event_nominal: number | string | null;
     start_time: string;
     end_time: string;
     break_minutes: number;
@@ -78,6 +90,8 @@ type OvertimeRow = {
 type OvertimeFormData = {
     employee_id: string;
     work_date: string;
+    is_event: boolean;
+    event_name: string;
     start_time: string;
     end_time: string;
     break_minutes: string;
@@ -101,6 +115,7 @@ type PageProps = {
         pending: number;
         approved: number;
     };
+    overtimeEvents: OvertimeEventOption[];
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -113,6 +128,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 const defaultForm: OvertimeFormData = {
     employee_id: '',
     work_date: '',
+    is_event: false,
+    event_name: '',
     start_time: '18:00',
     end_time: '20:00',
     break_minutes: '0',
@@ -128,7 +145,7 @@ const statusLabelMap: Record<string, string> = {
 };
 
 export default function OvertimePage() {
-    const { overtimes, employees, filters, statusOptions, stats } =
+    const { overtimes, employees, filters, statusOptions, stats, overtimeEvents = [] } =
         usePage<PageProps>().props;
 
     const [filterState, setFilterState] = useState<Filters>(filters);
@@ -141,6 +158,48 @@ export default function OvertimePage() {
     useEffect(() => {
         setFilterState(filters);
     }, [filters]);
+
+    const selectedEmployee = employees.find(
+        (e) => String(e.id) === String(form.data.employee_id),
+    );
+
+    const availableEvents = overtimeEvents.filter((ev) => {
+        if (!ev.position_ids || ev.position_ids.length === 0) {
+            return true;
+        }
+        if (!selectedEmployee?.position_id) {
+            return false;
+        }
+        return ev.position_ids.map(Number).includes(Number(selectedEmployee.position_id));
+    });
+
+    const selectedEvent = overtimeEvents.find((e) => e.name === form.data.event_name);
+
+    // Calculate duration in hours
+    const calculateHours = (startTime: string, endTime: string, breakMins: string) => {
+        if (!startTime || !endTime) return 0;
+        const [startH, startM] = startTime.split(':').map(Number);
+        const [endH, endM] = endTime.split(':').map(Number);
+        if (isNaN(startH) || isNaN(startM) || isNaN(endH) || isNaN(endM)) return 0;
+        let startMinutes = startH * 60 + startM;
+        let endMinutes = endH * 60 + endM;
+        if (endMinutes <= startMinutes) {
+            endMinutes += 24 * 60; // Next day
+        }
+        const netMinutes = Math.max(endMinutes - startMinutes - (Number(breakMins) || 0), 0);
+        return Math.round((netMinutes / 60) * 100) / 100;
+    };
+
+    const calculatedHours = calculateHours(form.data.start_time, form.data.end_time, form.data.break_minutes);
+
+    const estimatedEventNominal = (() => {
+        if (!form.data.is_event || !selectedEvent) return 0;
+        const baseNominal = Number(selectedEvent.nominal ?? 0);
+        if (selectedEvent.unit === 'jam') {
+            return Math.round(baseNominal * calculatedHours);
+        }
+        return baseNominal;
+    })();
 
     const openCreate = () => {
         setEditingRow(null);
@@ -155,6 +214,8 @@ export default function OvertimePage() {
         form.setData({
             employee_id: String(row.employee_id),
             work_date: row.work_date,
+            is_event: Boolean(row.is_event),
+            event_name: row.event_name ?? '',
             start_time: row.start_time,
             end_time: row.end_time,
             break_minutes: String(row.break_minutes),
@@ -400,9 +461,11 @@ export default function OvertimePage() {
                                     <tr className="border-b text-left">
                                         <th className="px-3 py-2">Karyawan</th>
                                         <th className="px-3 py-2">Tanggal</th>
+                                        <th className="px-3 py-2">Tipe / Event</th>
                                         <th className="px-3 py-2">Jam</th>
                                         <th className="px-3 py-2">Break</th>
                                         <th className="px-3 py-2">Total</th>
+                                        <th className="px-3 py-2">Nominal</th>
                                         <th className="px-3 py-2">Status</th>
                                         <th className="px-3 py-2">Aksi</th>
                                     </tr>
@@ -411,7 +474,7 @@ export default function OvertimePage() {
                                     {overtimes.data.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={7}
+                                                colSpan={9}
                                                 className="px-3 py-6 text-center text-muted-foreground"
                                             >
                                                 Belum ada data lembur.
@@ -423,11 +486,22 @@ export default function OvertimePage() {
                                             key={row.id}
                                             className="border-b align-top"
                                         >
-                                            <td className="px-3 py-3">
+                                            <td className="px-3 py-3 font-medium">
                                                 {row.employee_label}
                                             </td>
                                             <td className="px-3 py-3">
                                                 {row.work_date}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {row.is_event ? (
+                                                    <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-700 ring-1 ring-purple-600/20 ring-inset">
+                                                        {row.event_name || 'Lembur Event'}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">
+                                                        Reguler
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="px-3 py-3">
                                                 {row.start_time} -{' '}
@@ -438,6 +512,15 @@ export default function OvertimePage() {
                                             </td>
                                             <td className="px-3 py-3">
                                                 {row.total_hours} jam
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {row.is_event && row.event_nominal !== null ? (
+                                                    <span className="font-semibold text-emerald-600">
+                                                        Rp {Number(row.event_nominal).toLocaleString('id-ID')}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">-</span>
+                                                )}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <Badge
@@ -536,20 +619,25 @@ export default function OvertimePage() {
                     </DialogHeader>
                     {detailRow && (
                         <div className="grid gap-2 text-sm">
-                            <p>Karyawan: {detailRow.employee_label}</p>
-                            <p>Tanggal: {detailRow.work_date}</p>
+                            <p><strong>Karyawan:</strong> {detailRow.employee_label}</p>
+                            <p><strong>Tanggal:</strong> {detailRow.work_date}</p>
+                            <p><strong>Tipe:</strong> {detailRow.is_event ? `Event (${detailRow.event_name})` : 'Reguler'}</p>
+                            {detailRow.is_event && detailRow.event_nominal !== null && (
+                                <p><strong>Nominal Upah:</strong> Rp {Number(detailRow.event_nominal).toLocaleString('id-ID')}</p>
+                            )}
                             <p>
-                                Jam: {detailRow.start_time} -{' '}
+                                <strong>Jam:</strong> {detailRow.start_time} -{' '}
                                 {detailRow.end_time}
                             </p>
-                            <p>Break: {detailRow.break_minutes} menit</p>
-                            <p>Total: {detailRow.total_hours} jam</p>
+                            <p><strong>Break:</strong> {detailRow.break_minutes} menit</p>
+                            <p><strong>Total:</strong> {detailRow.total_hours} jam</p>
                             <p>
-                                Status:{' '}
+                                <strong>Status:</strong>{' '}
                                 {statusLabelMap[detailRow.status] ??
                                     detailRow.status}
                             </p>
-                            <p>Alasan: {detailRow.reason ?? '-'}</p>
+                            <p><strong>Alasan:</strong> {detailRow.reason ?? '-'}</p>
+                            {detailRow.notes && <p><strong>Catatan:</strong> {detailRow.notes}</p>}
                         </div>
                     )}
                 </DialogContent>
@@ -572,7 +660,7 @@ export default function OvertimePage() {
                             {editingRow ? 'Edit Lembur' : 'Tambah Lembur'}
                         </DialogTitle>
                         <DialogDescription>
-                            Input detail lembur karyawan.
+                            Input detail pengajuan lembur karyawan.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -589,12 +677,10 @@ export default function OvertimePage() {
                                         ? '__none'
                                         : form.data.employee_id
                                 }
-                                onValueChange={(value) =>
-                                    form.setData(
-                                        'employee_id',
-                                        value === '__none' ? '' : value,
-                                    )
-                                }
+                                onValueChange={(value) => {
+                                    const nextEmployeeId = value === '__none' ? '' : value;
+                                    form.setData('employee_id', nextEmployeeId);
+                                }}
                                 placeholder="Pilih karyawan"
                                 searchPlaceholder="Cari karyawan..."
                                 options={[
@@ -607,6 +693,74 @@ export default function OvertimePage() {
                                 className="w-full"
                             />
                             <InputError message={form.errors.employee_id} />
+                        </div>
+
+                        {/* Event Overtime Toggle */}
+                        <div className="grid gap-2 md:col-span-2 rounded-lg border bg-slate-50/80 p-3">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={form.data.is_event}
+                                    onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        form.setData((prev) => ({
+                                            ...prev,
+                                            is_event: checked,
+                                            event_name: checked ? prev.event_name : '',
+                                        }));
+                                    }}
+                                    className="rounded border-gray-300 text-primary focus:ring-primary size-4"
+                                />
+                                <span className="text-sm font-semibold">Lembur Event / Kegiatan Khusus (Sesuai Jabatan)</span>
+                            </label>
+
+                            {form.data.is_event && (
+                                <div className="mt-2 space-y-3 pt-2 border-t">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="event_name">Pilih Event / Komponen Lembur</Label>
+                                        <Select
+                                            value={form.data.event_name}
+                                            onValueChange={(val) => form.setData('event_name', val)}
+                                        >
+                                            <SelectTrigger id="event_name" className="w-full bg-white">
+                                                <SelectValue placeholder="-- Pilih Event Lembur --" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {availableEvents.length === 0 ? (
+                                                    <SelectItem value="__empty" disabled>
+                                                        Tidak ada event lembur untuk jabatan ini
+                                                    </SelectItem>
+                                                ) : (
+                                                    availableEvents.map((ev, idx) => (
+                                                        <SelectItem key={idx} value={ev.name}>
+                                                            {ev.code ? `[${ev.code}] ` : ''}{ev.name} — Rp {Number(ev.nominal).toLocaleString('id-ID')} / {ev.unit ?? 'kegiatan'}
+                                                        </SelectItem>
+                                                    ))
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError message={form.errors.event_name} />
+                                    </div>
+
+                                    {selectedEvent && (
+                                        <div className="rounded-md bg-blue-50/80 p-3 text-xs text-blue-900 flex justify-between items-center">
+                                            <div>
+                                                <p className="font-semibold">{selectedEvent.name}</p>
+                                                <p className="text-blue-700">
+                                                    Tarif: Rp {Number(selectedEvent.nominal).toLocaleString('id-ID')} / {selectedEvent.unit ?? 'kegiatan'}
+                                                    {selectedEvent.unit === 'jam' && ` × ${calculatedHours} jam`}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-[10px] uppercase tracking-wider text-blue-600 block">Estimasi Nominal</span>
+                                                <span className="text-sm font-bold text-blue-950">
+                                                    Rp {estimatedEventNominal.toLocaleString('id-ID')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div className="grid gap-2">

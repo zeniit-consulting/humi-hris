@@ -14,9 +14,23 @@ class PayrollSettingController extends Controller
 {
     public function edit(Request $request): Response
     {
+        $ownerId = $request->user()->accountOwnerId();
         $setting = $this->settingFor($request);
 
+        $positions = \App\Models\Position::query()
+            ->where('user_id', $ownerId)
+            ->orderBy('level')
+            ->orderBy('name')
+            ->get(['id', 'code', 'name'])
+            ->map(fn ($p) => [
+                'id' => $p->id,
+                'code' => $p->code,
+                'name' => $p->name,
+            ])
+            ->values();
+
         return Inertia::render('settings/payroll', [
+            'positions' => $positions,
             'settings' => [
                 'active_working_days' => $setting->active_working_days ?? 22,
                 'auto_deduct_leave_for_missing_checkout' => (bool) ($setting->auto_deduct_leave_for_missing_checkout ?? false),
