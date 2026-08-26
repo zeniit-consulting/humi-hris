@@ -246,6 +246,16 @@ type Employee = {
     religion: string | null;
     bpjs_kesehatan_number: string | null;
     bpjs_ketenagakerjaan_number: string | null;
+    bpjs_kesehatan_enabled?: boolean;
+    bpjs_ketenagakerjaan_enabled?: boolean;
+    bpjs_jkk_enabled?: boolean;
+    bpjs_jkm_enabled?: boolean;
+    bpjs_jht_enabled?: boolean;
+    bpjs_jp_enabled?: boolean;
+    bpjs_kesehatan_class?: string | null;
+    private_insurance_enabled?: boolean;
+    private_insurance_name?: string | null;
+    private_insurance_nominal?: string | number | null;
     sim_a_number: string | null;
     sim_b_number: string | null;
     sim_c_number: string | null;
@@ -337,6 +347,16 @@ type EmployeeFormData = {
     religion: string;
     bpjs_kesehatan_number: string;
     bpjs_ketenagakerjaan_number: string;
+    bpjs_kesehatan_enabled: boolean;
+    bpjs_ketenagakerjaan_enabled: boolean;
+    bpjs_jkk_enabled: boolean;
+    bpjs_jkm_enabled: boolean;
+    bpjs_jht_enabled: boolean;
+    bpjs_jp_enabled: boolean;
+    bpjs_kesehatan_class: string;
+    private_insurance_enabled: boolean;
+    private_insurance_name: string;
+    private_insurance_nominal: string;
     sim_a_number: string;
     sim_b_number: string;
     sim_c_number: string;
@@ -573,6 +593,16 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     religion: '',
     bpjs_kesehatan_number: '',
     bpjs_ketenagakerjaan_number: '',
+    bpjs_kesehatan_enabled: true,
+    bpjs_ketenagakerjaan_enabled: true,
+    bpjs_jkk_enabled: true,
+    bpjs_jkm_enabled: true,
+    bpjs_jht_enabled: true,
+    bpjs_jp_enabled: true,
+    bpjs_kesehatan_class: 'I',
+    private_insurance_enabled: false,
+    private_insurance_name: '',
+    private_insurance_nominal: '0',
     sim_a_number: '',
     sim_b_number: '',
     sim_c_number: '',
@@ -1194,6 +1224,16 @@ export default function EmployeesIndex() {
             bpjs_kesehatan_number: employee.bpjs_kesehatan_number ?? '',
             bpjs_ketenagakerjaan_number:
                 employee.bpjs_ketenagakerjaan_number ?? '',
+            bpjs_kesehatan_enabled: employee.bpjs_kesehatan_enabled ?? true,
+            bpjs_ketenagakerjaan_enabled: employee.bpjs_ketenagakerjaan_enabled ?? true,
+            bpjs_jkk_enabled: employee.bpjs_jkk_enabled ?? true,
+            bpjs_jkm_enabled: employee.bpjs_jkm_enabled ?? true,
+            bpjs_jht_enabled: employee.bpjs_jht_enabled ?? true,
+            bpjs_jp_enabled: employee.bpjs_jp_enabled ?? true,
+            bpjs_kesehatan_class: employee.bpjs_kesehatan_class ?? 'I',
+            private_insurance_enabled: employee.private_insurance_enabled ?? false,
+            private_insurance_name: employee.private_insurance_name ?? '',
+            private_insurance_nominal: normalizeStoredCurrencyValue(employee.private_insurance_nominal),
             sim_a_number: employee.sim_a_number ?? '',
             sim_b_number: employee.sim_b_number ?? '',
             sim_c_number: employee.sim_c_number ?? '',
@@ -5457,15 +5497,58 @@ export default function EmployeesIndex() {
                                                     employeeForm.errors
                                                         .bpjs_kesehatan_number
                                                 }
+                                                placeholder="Nomor kartu BPJS Kesehatan"
+                                            />
+                                            <div className="flex flex-wrap items-center gap-4">
+                                                <div className="flex items-center gap-2">
+                                                    <Label htmlFor="bpjs_kesehatan_class" className="text-xs text-muted-foreground whitespace-nowrap">
+                                                        Kelas BPJS Kes:
+                                                    </Label>
+                                                    <select
+                                                        id="bpjs_kesehatan_class"
+                                                        value={employeeForm.data.bpjs_kesehatan_class || 'I'}
+                                                        onChange={(e) =>
+                                                            employeeForm.setData(
+                                                                'bpjs_kesehatan_class',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="h-8 rounded-md border border-input bg-transparent px-2.5 text-xs shadow-xs outline-none"
+                                                    >
+                                                        <option value="I">Kelas I</option>
+                                                        <option value="II">Kelas II</option>
+                                                        <option value="III">Kelas III</option>
+                                                    </select>
+                                                </div>
+                                                <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={employeeForm.data.bpjs_kesehatan_enabled}
+                                                        onChange={(e) =>
+                                                            employeeForm.setData(
+                                                                'bpjs_kesehatan_enabled',
+                                                                e.target.checked,
+                                                            )
+                                                        }
+                                                        className="size-3.5 rounded border-input"
+                                                    />
+                                                    <span>Aktif dipotong iuran</span>
+                                                </label>
+                                            </div>
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .bpjs_kesehatan_number
+                                                }
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="bpjs_ketenagakerjaan_number">
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="bpjs_ketenagakerjaan_number" className="pt-2">
                                             BPJS Tenaga Kerja
                                         </Label>
-                                        <div className="space-y-1">
+                                        <div className="space-y-2">
                                             <Input
                                                 id="bpjs_ketenagakerjaan_number"
                                                 value={
@@ -5478,14 +5561,141 @@ export default function EmployeesIndex() {
                                                         event.target.value,
                                                     )
                                                 }
-                                                placeholder="Opsional"
+                                                placeholder="Nomor kartu BPJS TK / KPJ"
                                             />
+                                            <div className="rounded-md border bg-slate-50/50 p-2.5 space-y-1.5">
+                                                <span className="text-xs font-medium text-slate-700 block">
+                                                    Program BPJS Ketenagakerjaan yang Diikuti:
+                                                </span>
+                                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={employeeForm.data.bpjs_jkk_enabled}
+                                                            onChange={(e) =>
+                                                                employeeForm.setData(
+                                                                    'bpjs_jkk_enabled',
+                                                                    e.target.checked,
+                                                                )
+                                                            }
+                                                            className="size-3.5 rounded border-input"
+                                                        />
+                                                        <span>JKK</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={employeeForm.data.bpjs_jkm_enabled}
+                                                            onChange={(e) =>
+                                                                employeeForm.setData(
+                                                                    'bpjs_jkm_enabled',
+                                                                    e.target.checked,
+                                                                )
+                                                            }
+                                                            className="size-3.5 rounded border-input"
+                                                        />
+                                                        <span>JKM</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={employeeForm.data.bpjs_jht_enabled}
+                                                            onChange={(e) =>
+                                                                employeeForm.setData(
+                                                                    'bpjs_jht_enabled',
+                                                                    e.target.checked,
+                                                                )
+                                                            }
+                                                            className="size-3.5 rounded border-input"
+                                                        />
+                                                        <span>JHT</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={employeeForm.data.bpjs_jp_enabled}
+                                                            onChange={(e) =>
+                                                                employeeForm.setData(
+                                                                    'bpjs_jp_enabled',
+                                                                    e.target.checked,
+                                                                )
+                                                            }
+                                                            className="size-3.5 rounded border-input"
+                                                        />
+                                                        <span>JP</span>
+                                                    </label>
+                                                </div>
+                                            </div>
                                             <InputError
                                                 message={
                                                     employeeForm.errors
                                                         .bpjs_ketenagakerjaan_number
                                                 }
                                             />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="private_insurance_enabled" className="pt-2">
+                                            Asuransi Swasta
+                                        </Label>
+                                        <div className="space-y-2">
+                                            <label className="flex items-center gap-2 text-xs font-medium text-slate-800 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    id="private_insurance_enabled"
+                                                    checked={employeeForm.data.private_insurance_enabled}
+                                                    onChange={(e) =>
+                                                        employeeForm.setData(
+                                                            'private_insurance_enabled',
+                                                            e.target.checked,
+                                                        )
+                                                    }
+                                                    className="size-4 rounded border-input"
+                                                />
+                                                <span>Gunakan Asuransi Swasta Tambahan</span>
+                                            </label>
+
+                                            {employeeForm.data.private_insurance_enabled && (
+                                                <div className="grid gap-2 rounded-md border bg-slate-50/50 p-2.5 sm:grid-cols-2">
+                                                    <div>
+                                                        <Label htmlFor="emp_private_insurance_name" className="text-xs text-muted-foreground">
+                                                            Nama Asuransi
+                                                        </Label>
+                                                        <Input
+                                                            id="emp_private_insurance_name"
+                                                            value={employeeForm.data.private_insurance_name}
+                                                            onChange={(e) =>
+                                                                employeeForm.setData(
+                                                                    'private_insurance_name',
+                                                                    e.target.value,
+                                                                )
+                                                            }
+                                                            placeholder="Contoh: Prudential / Allianz"
+                                                            className="mt-1 h-8 text-xs"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label htmlFor="emp_private_insurance_nominal" className="text-xs text-muted-foreground">
+                                                            Nominal Potongan Premi (Rp)
+                                                        </Label>
+                                                        <Input
+                                                            id="emp_private_insurance_nominal"
+                                                            type="number"
+                                                            min="0"
+                                                            value={employeeForm.data.private_insurance_nominal}
+                                                            onChange={(e) =>
+                                                                employeeForm.setData(
+                                                                    'private_insurance_nominal',
+                                                                    e.target.value,
+                                                                )
+                                                            }
+                                                            placeholder="0"
+                                                            className="mt-1 h-8 text-xs"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

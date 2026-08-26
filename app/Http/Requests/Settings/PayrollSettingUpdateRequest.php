@@ -18,6 +18,11 @@ class PayrollSettingUpdateRequest extends FormRequest
             'auto_overtime_from_attendance' => $this->boolean('auto_overtime_from_attendance'),
             'bpjs_kesehatan_enabled' => $this->boolean('bpjs_kesehatan_enabled'),
             'bpjs_ketenagakerjaan_enabled' => $this->boolean('bpjs_ketenagakerjaan_enabled'),
+            'bpjs_jkk_enabled' => $this->boolean('bpjs_jkk_enabled'),
+            'bpjs_jkm_enabled' => $this->boolean('bpjs_jkm_enabled'),
+            'bpjs_jht_enabled' => $this->boolean('bpjs_jht_enabled'),
+            'bpjs_jp_enabled' => $this->boolean('bpjs_jp_enabled'),
+            'private_insurance_enabled' => $this->boolean('private_insurance_enabled'),
         ]);
     }
 
@@ -44,6 +49,14 @@ class PayrollSettingUpdateRequest extends FormRequest
             'auto_overtime_min_minutes' => ['sometimes', 'integer', 'min:1', 'max:480'],
             'bpjs_kesehatan_enabled' => ['sometimes', 'boolean'],
             'bpjs_ketenagakerjaan_enabled' => ['sometimes', 'boolean'],
+            'bpjs_jkk_enabled' => ['sometimes', 'boolean'],
+            'bpjs_jkm_enabled' => ['sometimes', 'boolean'],
+            'bpjs_jht_enabled' => ['sometimes', 'boolean'],
+            'bpjs_jp_enabled' => ['sometimes', 'boolean'],
+            'bpjs_kesehatan_default_class' => ['sometimes', 'in:I,II,III'],
+            'private_insurance_enabled' => ['sometimes', 'boolean'],
+            'private_insurance_name' => ['nullable', 'string', 'max:100'],
+            'private_insurance_nominal' => ['nullable', 'numeric', 'min:0'],
             'bpjs_kesehatan_wage_cap' => ['sometimes', 'numeric', 'min:0'],
             'bpjs_jp_wage_cap' => ['sometimes', 'numeric', 'min:0'],
             'bpjs_jkk_rate' => ['sometimes', 'numeric', 'min:0', 'max:100'],

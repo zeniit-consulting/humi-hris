@@ -335,16 +335,39 @@ class PayrollGenerationService
         $hasBpjsTk = (bool) ($setting?->bpjs_ketenagakerjaan_enabled ?? false)
             && (bool) ($employee->bpjs_ketenagakerjaan_enabled ?? false);
 
+        $empBpjsJkk = (bool) ($setting?->bpjs_jkk_enabled ?? true) && (bool) ($employee->bpjs_jkk_enabled ?? true);
+        $empBpjsJkm = (bool) ($setting?->bpjs_jkm_enabled ?? true) && (bool) ($employee->bpjs_jkm_enabled ?? true);
+        $empBpjsJht = (bool) ($setting?->bpjs_jht_enabled ?? true) && (bool) ($employee->bpjs_jht_enabled ?? true);
+        $empBpjsJp = (bool) ($setting?->bpjs_jp_enabled ?? true) && (bool) ($employee->bpjs_jp_enabled ?? false);
+
+        // Private insurance: check employee level or fallback to company setting if enabled for employee
+        $hasPrivateInsurance = (bool) ($employee->private_insurance_enabled ?? false)
+            || ((bool) ($setting?->private_insurance_enabled ?? false) && (float) ($setting?->private_insurance_nominal ?? 0) > 0 && $employee->private_insurance_enabled !== false);
+        $privateInsuranceNominal = (float) ($employee->private_insurance_nominal ?? 0);
+        if ($privateInsuranceNominal <= 0 && $hasPrivateInsurance && (float) ($setting?->private_insurance_nominal ?? 0) > 0) {
+            $privateInsuranceNominal = (float) ($setting?->private_insurance_nominal ?? 0);
+        }
+        $privateInsuranceName = $employee->private_insurance_name
+            ?: ($setting?->private_insurance_name ?: 'Asuransi Swasta');
+
+        $bpjsKesClass = $employee->bpjs_kesehatan_class
+            ?: ($setting?->bpjs_kesehatan_default_class ?: 'I');
+
         $bpjs = \App\Support\BpjsCalculator::calculate(
             calculationBase: $bpjsWageBase,
             bpjsKesEnabled: (bool) ($setting?->bpjs_kesehatan_enabled ?? false),
             bpjsTkEnabled: (bool) ($setting?->bpjs_ketenagakerjaan_enabled ?? false),
             empBpjsKesEnabled: (bool) ($employee->bpjs_kesehatan_enabled ?? false),
             empBpjsTkEnabled: (bool) ($employee->bpjs_ketenagakerjaan_enabled ?? false),
-            empBpjsJpEnabled: (bool) ($employee->bpjs_jp_enabled ?? false),
+            empBpjsJpEnabled: $empBpjsJp,
             jkkRate: (float) ($setting?->bpjs_jkk_rate ?? 0.240),
             kesWageCap: (float) ($setting?->bpjs_kesehatan_wage_cap ?? 12_000_000),
             jpWageCap: (float) ($setting?->bpjs_jp_wage_cap ?? 10_042_300),
+            empBpjsJkkEnabled: $empBpjsJkk,
+            empBpjsJkmEnabled: $empBpjsJkm,
+            empBpjsJhtEnabled: $empBpjsJht,
+            privateInsuranceEnabled: $hasPrivateInsurance,
+            privateInsuranceNominal: $privateInsuranceNominal,
         );
 
         $kasbonDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'kasbon');
@@ -374,6 +397,7 @@ class PayrollGenerationService
             'pph21_company_borne' => $pph21CompanyBorne,
             'bpjs_kesehatan_company' => $bpjs['bpjs_kesehatan_company'],
             'bpjs_kesehatan_employee' => $bpjs['bpjs_kesehatan_employee'],
+            'bpjs_kesehatan_class' => $bpjsKesClass,
             'bpjs_jkk_company' => $bpjs['bpjs_jkk_company'],
             'bpjs_jkm_company' => $bpjs['bpjs_jkm_company'],
             'bpjs_jht_company' => $bpjs['bpjs_jht_company'],
@@ -382,6 +406,8 @@ class PayrollGenerationService
             'bpjs_jp_employee' => $bpjs['bpjs_jp_employee'],
             'bpjs_total_company' => $bpjs['bpjs_total_company'],
             'bpjs_total_employee' => $bpjs['bpjs_total_employee'],
+            'private_insurance_name' => $hasPrivateInsurance ? $privateInsuranceName : null,
+            'private_insurance_nominal' => $hasPrivateInsurance ? $privateInsuranceNominal : 0.0,
             'kasbon_deduction' => $kasbonDeduction,
             'denda_deduction' => $dendaDeduction,
             'unpaid_leave_deduction' => $unpaidLeaveDeduction,

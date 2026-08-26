@@ -80,7 +80,14 @@ class Employee extends Model
         'bpjs_ketenagakerjaan_number',
         'bpjs_kesehatan_enabled',
         'bpjs_ketenagakerjaan_enabled',
+        'bpjs_jkk_enabled',
+        'bpjs_jkm_enabled',
+        'bpjs_jht_enabled',
         'bpjs_jp_enabled',
+        'bpjs_kesehatan_class',
+        'private_insurance_enabled',
+        'private_insurance_name',
+        'private_insurance_nominal',
         'sim_a_number',
         'sim_b_number',
         'sim_c_number',
@@ -118,7 +125,12 @@ class Employee extends Model
             'is_wfa' => 'boolean',
             'bpjs_kesehatan_enabled' => 'boolean',
             'bpjs_ketenagakerjaan_enabled' => 'boolean',
+            'bpjs_jkk_enabled' => 'boolean',
+            'bpjs_jkm_enabled' => 'boolean',
+            'bpjs_jht_enabled' => 'boolean',
             'bpjs_jp_enabled' => 'boolean',
+            'private_insurance_enabled' => 'boolean',
+            'private_insurance_nominal' => 'decimal:2',
         ];
     }
 

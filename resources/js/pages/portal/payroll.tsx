@@ -50,6 +50,7 @@ type PayrollPayload = {
         pph21_company_borne: string | number;
         bpjs_kesehatan_company?: string | number;
         bpjs_kesehatan_employee?: string | number;
+        bpjs_kesehatan_class?: string | null;
         bpjs_jkk_company?: string | number;
         bpjs_jkm_company?: string | number;
         bpjs_jht_company?: string | number;
@@ -58,6 +59,8 @@ type PayrollPayload = {
         bpjs_jp_employee?: string | number;
         bpjs_total_company?: string | number;
         bpjs_total_employee?: string | number;
+        private_insurance_name?: string | null;
+        private_insurance_nominal?: string | number;
         kasbon_deduction: string | number;
         denda_deduction: string | number;
         unpaid_leave_deduction: string | number;
@@ -499,6 +502,14 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                                 <span>BPJS TK JP (Karyawan 1%)</span>
                                                 <span className="font-semibold text-rose-700">
                                                     {formatCurrency(slip.bpjs_jp_employee)}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {Number(slip.private_insurance_nominal ?? 0) > 0 && (
+                                            <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                <span>{slip.private_insurance_name || 'Asuransi Swasta'}</span>
+                                                <span className="font-semibold text-rose-700">
+                                                    {formatCurrency(slip.private_insurance_nominal)}
                                                 </span>
                                             </div>
                                         )}

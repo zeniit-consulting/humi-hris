@@ -141,6 +141,7 @@ class PayrollController extends Controller
                     'pph21_company_borne' => $item->pph21_company_borne,
                     'bpjs_kesehatan_company' => $item->bpjs_kesehatan_company,
                     'bpjs_kesehatan_employee' => $item->bpjs_kesehatan_employee,
+                    'bpjs_kesehatan_class' => $item->bpjs_kesehatan_class,
                     'bpjs_jkk_company' => $item->bpjs_jkk_company,
                     'bpjs_jkm_company' => $item->bpjs_jkm_company,
                     'bpjs_jht_company' => $item->bpjs_jht_company,
@@ -149,6 +150,8 @@ class PayrollController extends Controller
                     'bpjs_jp_employee' => $item->bpjs_jp_employee,
                     'bpjs_total_company' => $item->bpjs_total_company,
                     'bpjs_total_employee' => $item->bpjs_total_employee,
+                    'private_insurance_name' => $item->private_insurance_name,
+                    'private_insurance_nominal' => $item->private_insurance_nominal,
                     'kasbon_deduction' => $item->kasbon_deduction,
                     'denda_deduction' => $item->denda_deduction,
                     'unpaid_leave_deduction' => $item->unpaid_leave_deduction,
@@ -265,6 +268,8 @@ class PayrollController extends Controller
             'bpjs_jht_employee' => ['nullable', 'numeric', 'min:0'],
             'bpjs_jp_company' => ['nullable', 'numeric', 'min:0'],
             'bpjs_jp_employee' => ['nullable', 'numeric', 'min:0'],
+            'private_insurance_name' => ['nullable', 'string', 'max:100'],
+            'private_insurance_nominal' => ['nullable', 'numeric', 'min:0'],
             'variable_allowances' => ['nullable', 'array', 'max:20'],
             'variable_allowances.*.name' => ['required', 'string', 'max:100'],
             'variable_allowances.*.amount' => ['required', 'numeric', 'min:0'],
@@ -310,7 +315,8 @@ class PayrollController extends Controller
         $bpjsTotalEmployee = round(
             (float) $payrollItem->bpjs_kesehatan_employee
             + (float) $payrollItem->bpjs_jht_employee
-            + (float) $payrollItem->bpjs_jp_employee,
+            + (float) $payrollItem->bpjs_jp_employee
+            + (float) $payrollItem->private_insurance_nominal,
             2
         );
 

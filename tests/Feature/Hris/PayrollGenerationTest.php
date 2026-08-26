@@ -1298,4 +1298,82 @@ class PayrollGenerationTest extends TestCase
             'net_salary' => 5230000.00,
         ]);
     }
+
+    public function test_bpjs_selective_programs_class_and_private_insurance_calculation(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        CompanySetting::query()->create([
+            'user_id' => $user->id,
+            'name' => 'PT Asuransi Sejahtera',
+            'bpjs_kesehatan_enabled' => true,
+            'bpjs_ketenagakerjaan_enabled' => true,
+            'bpjs_jkk_enabled' => true,
+            'bpjs_jkm_enabled' => true,
+            'bpjs_jht_enabled' => true,
+            'bpjs_jp_enabled' => false, // JP disabled at company level
+            'bpjs_kesehatan_default_class' => 'I',
+            'bpjs_jkk_rate' => 0.24,
+            'private_insurance_enabled' => true,
+            'private_insurance_name' => 'Prudential Corporate',
+            'private_insurance_nominal' => 150_000,
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2026-01-01',
+            'base_salary' => 10_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_number' => '00012345678',
+            'bpjs_ketenagakerjaan_number' => '1234567890',
+            'bpjs_kesehatan_enabled' => true,
+            'bpjs_kesehatan_class' => 'II',
+            'bpjs_ketenagakerjaan_enabled' => true,
+            'bpjs_jkk_enabled' => true,
+            'bpjs_jkm_enabled' => false, // JKM disabled for this employee
+            'bpjs_jht_enabled' => true,
+            'bpjs_jp_enabled' => false,
+            'private_insurance_enabled' => true,
+            'private_insurance_name' => 'Prudential Platinum',
+            'private_insurance_nominal' => 200_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-07'])
+            ->assertRedirect();
+
+        // Base 10.000.000:
+        // BPJS Kes Company: 400.000, Employee: 100.000 (Class II)
+        // BPJS JKK Company (0.24%): 24.000
+        // BPJS JKM Company: 0 (disabled)
+        // BPJS JHT Company (3.7%): 370.000, Employee (2%): 200.000
+        // BPJS JP: 0 (disabled)
+        // Private insurance deduction: 200.000
+        // Total BPJS Company: 400.000 + 24.000 + 370.000 = 794.000
+        // Total BPJS Employee (inc private insurance): 100.000 + 200.000 + 200.000 = 500.000
+        // Net Salary: 10.000.000 - 500.000 = 9.500.000
+
+        $this->assertDatabaseHas('payroll_items', [
+            'employee_id' => $employee->id,
+            'base_salary' => 10000000.00,
+            'bpjs_kesehatan_class' => 'II',
+            'bpjs_kesehatan_company' => 400000.00,
+            'bpjs_kesehatan_employee' => 100000.00,
+            'bpjs_jkk_company' => 24000.00,
+            'bpjs_jkm_company' => 0.00,
+            'bpjs_jht_company' => 370000.00,
+            'bpjs_jht_employee' => 200000.00,
+            'bpjs_jp_company' => 0.00,
+            'bpjs_jp_employee' => 0.00,
+            'private_insurance_name' => 'Prudential Platinum',
+            'private_insurance_nominal' => 200000.00,
+            'bpjs_total_company' => 794000.00,
+            'bpjs_total_employee' => 500000.00,
+            'deductions_total' => 500000.00,
+            'net_salary' => 9500000.00,
+        ]);
+    }
 }

@@ -39,6 +39,14 @@ type Settings = {
     auto_overtime_min_minutes: number;
     bpjs_kesehatan_enabled: boolean;
     bpjs_ketenagakerjaan_enabled: boolean;
+    bpjs_jkk_enabled: boolean;
+    bpjs_jkm_enabled: boolean;
+    bpjs_jht_enabled: boolean;
+    bpjs_jp_enabled: boolean;
+    bpjs_kesehatan_default_class: 'I' | 'II' | 'III';
+    private_insurance_enabled: boolean;
+    private_insurance_name: string;
+    private_insurance_nominal: number;
     bpjs_kesehatan_wage_cap: number;
     bpjs_jp_wage_cap: number;
     bpjs_jkk_rate: number;
@@ -627,16 +635,17 @@ export default function PayrollSettings({
                             </span>
                         </label>
 
-                        <div className="rounded-lg border bg-card p-5 space-y-4">
+                        <div className="rounded-lg border bg-card p-5 space-y-6">
                             <div>
-                                <h3 className="text-base font-medium">Pengaturan BPJS Perusahaan</h3>
+                                <h3 className="text-base font-medium">Pengaturan BPJS & Asuransi Perusahaan</h3>
                                 <p className="text-xs text-muted-foreground">
-                                    Konfigurasi default pemotongan dan tanggungan iuran BPJS Kesehatan dan Ketenagakerjaan.
+                                    Konfigurasi program BPJS Kesehatan, BPJS Ketenagakerjaan (JKK, JKM, JHT, JP), dan Asuransi Swasta Tambahan.
                                 </p>
                             </div>
 
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <label className="flex items-start gap-3 rounded-lg border bg-slate-50/60 p-4">
+                            {/* BPJS Kesehatan Section */}
+                            <div className="rounded-md border p-4 space-y-4 bg-slate-50/50">
+                                <label className="flex items-start gap-3">
                                     <input
                                         type="checkbox"
                                         checked={form.data.bpjs_kesehatan_enabled}
@@ -650,12 +659,56 @@ export default function PayrollSettings({
                                             Aktifkan BPJS Kesehatan
                                         </span>
                                         <span className="mt-1 block text-xs text-muted-foreground">
-                                            Total 5% (4% Perusahaan, 1% Karyawan).
+                                            Total 5% (4% Perusahaan, 1% Karyawan) dengan batas maksimal upah.
                                         </span>
                                     </span>
                                 </label>
 
-                                <label className="flex items-start gap-3 rounded-lg border bg-slate-50/60 p-4">
+                                {form.data.bpjs_kesehatan_enabled && (
+                                    <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="bpjs_kesehatan_default_class">Kategori Kelas Default BPJS Kesehatan</Label>
+                                            <select
+                                                id="bpjs_kesehatan_default_class"
+                                                value={form.data.bpjs_kesehatan_default_class}
+                                                onChange={(e) =>
+                                                    form.setData('bpjs_kesehatan_default_class', e.target.value as 'I' | 'II' | 'III')
+                                                }
+                                                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                            >
+                                                <option value="I">Kelas I (Satu)</option>
+                                                <option value="II">Kelas II (Dua)</option>
+                                                <option value="III">Kelas III (Tiga)</option>
+                                            </select>
+                                            <p className="text-xs text-muted-foreground">
+                                                Dapat disesuaikan secara spesifik pada masing-masing data karyawan.
+                                            </p>
+                                            <InputError message={form.errors.bpjs_kesehatan_default_class} />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="bpjs_kesehatan_wage_cap">Batas Maksimal Upah BPJS Kesehatan (Rp)</Label>
+                                            <Input
+                                                id="bpjs_kesehatan_wage_cap"
+                                                type="number"
+                                                min="0"
+                                                value={form.data.bpjs_kesehatan_wage_cap}
+                                                onChange={(event) =>
+                                                    form.setData('bpjs_kesehatan_wage_cap', Number(event.target.value))
+                                                }
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                Default batas atas: Rp 12.000.000
+                                            </p>
+                                            <InputError message={form.errors.bpjs_kesehatan_wage_cap} />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* BPJS Ketenagakerjaan Section */}
+                            <div className="rounded-md border p-4 space-y-4 bg-slate-50/50">
+                                <label className="flex items-start gap-3">
                                     <input
                                         type="checkbox"
                                         checked={form.data.bpjs_ketenagakerjaan_enabled}
@@ -669,64 +722,179 @@ export default function PayrollSettings({
                                             Aktifkan BPJS Ketenagakerjaan
                                         </span>
                                         <span className="mt-1 block text-xs text-muted-foreground">
-                                            Meliputi JKK, JKM, JHT (5.7%), dan JP (3%).
+                                            Pilih program perlindungan jaminan sosial yang dijalankan untuk karyawan.
                                         </span>
                                     </span>
                                 </label>
+
+                                {form.data.bpjs_ketenagakerjaan_enabled && (
+                                    <div className="space-y-4 pt-2 border-t">
+                                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                            <label className="flex items-start gap-2.5 rounded-lg border bg-white p-3">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.data.bpjs_jkk_enabled}
+                                                    onChange={(e) =>
+                                                        form.setData('bpjs_jkk_enabled', e.target.checked)
+                                                    }
+                                                    className="mt-0.5 size-4 rounded border-input accent-primary"
+                                                />
+                                                <div>
+                                                    <span className="text-xs font-semibold block text-slate-900">JKK</span>
+                                                    <span className="text-[11px] text-muted-foreground block">
+                                                        Jaminan Kecelakaan Kerja ({form.data.bpjs_jkk_rate}%)
+                                                    </span>
+                                                </div>
+                                            </label>
+
+                                            <label className="flex items-start gap-2.5 rounded-lg border bg-white p-3">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.data.bpjs_jkm_enabled}
+                                                    onChange={(e) =>
+                                                        form.setData('bpjs_jkm_enabled', e.target.checked)
+                                                    }
+                                                    className="mt-0.5 size-4 rounded border-input accent-primary"
+                                                />
+                                                <div>
+                                                    <span className="text-xs font-semibold block text-slate-900">JKM</span>
+                                                    <span className="text-[11px] text-muted-foreground block">
+                                                        Jaminan Kematian (0.3% Perusahaan)
+                                                    </span>
+                                                </div>
+                                            </label>
+
+                                            <label className="flex items-start gap-2.5 rounded-lg border bg-white p-3">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.data.bpjs_jht_enabled}
+                                                    onChange={(e) =>
+                                                        form.setData('bpjs_jht_enabled', e.target.checked)
+                                                    }
+                                                    className="mt-0.5 size-4 rounded border-input accent-primary"
+                                                />
+                                                <div>
+                                                    <span className="text-xs font-semibold block text-slate-900">JHT</span>
+                                                    <span className="text-[11px] text-muted-foreground block">
+                                                        Jaminan Hari Tua (3.7% + 2%)
+                                                    </span>
+                                                </div>
+                                            </label>
+
+                                            <label className="flex items-start gap-2.5 rounded-lg border bg-white p-3">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.data.bpjs_jp_enabled}
+                                                    onChange={(e) =>
+                                                        form.setData('bpjs_jp_enabled', e.target.checked)
+                                                    }
+                                                    className="mt-0.5 size-4 rounded border-input accent-primary"
+                                                />
+                                                <div>
+                                                    <span className="text-xs font-semibold block text-slate-900">JP</span>
+                                                    <span className="text-[11px] text-muted-foreground block">
+                                                        Jaminan Pensiun (2% + 1%)
+                                                    </span>
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        <div className="grid gap-4 sm:grid-cols-2">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="bpjs_jkk_rate">Tarif Iuran JKK Perusahaan (%)</Label>
+                                                <Input
+                                                    id="bpjs_jkk_rate"
+                                                    type="number"
+                                                    step="0.001"
+                                                    min="0"
+                                                    value={form.data.bpjs_jkk_rate}
+                                                    onChange={(event) =>
+                                                        form.setData('bpjs_jkk_rate', Number(event.target.value))
+                                                    }
+                                                />
+                                                <p className="text-xs text-muted-foreground">
+                                                    Standar tingkat risiko sangat rendah: 0.24%
+                                                </p>
+                                                <InputError message={form.errors.bpjs_jkk_rate} />
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="bpjs_jp_wage_cap">Batas Maksimal Upah JP (Rp)</Label>
+                                                <Input
+                                                    id="bpjs_jp_wage_cap"
+                                                    type="number"
+                                                    min="0"
+                                                    value={form.data.bpjs_jp_wage_cap}
+                                                    onChange={(event) =>
+                                                        form.setData('bpjs_jp_wage_cap', Number(event.target.value))
+                                                    }
+                                                />
+                                                <p className="text-xs text-muted-foreground">
+                                                    Default batas atas JP: Rp 10.042.300
+                                                </p>
+                                                <InputError message={form.errors.bpjs_jp_wage_cap} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="grid gap-4 sm:grid-cols-3">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="bpjs_jkk_rate">Tarif JKK Perusahaan (%)</Label>
-                                    <Input
-                                        id="bpjs_jkk_rate"
-                                        type="number"
-                                        step="0.001"
-                                        min="0"
-                                        value={form.data.bpjs_jkk_rate}
+                            {/* Asuransi Swasta Tambahan */}
+                            <div className="rounded-md border p-4 space-y-4 bg-slate-50/50">
+                                <label className="flex items-start gap-3">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.data.private_insurance_enabled}
                                         onChange={(event) =>
-                                            form.setData('bpjs_jkk_rate', Number(event.target.value))
+                                            form.setData('private_insurance_enabled', event.target.checked)
                                         }
+                                        className="mt-0.5 size-4 rounded border-input accent-primary"
                                     />
-                                    <p className="text-xs text-muted-foreground">
-                                        Standar tingkat risiko sangat rendah: 0.24%
-                                    </p>
-                                    <InputError message={form.errors.bpjs_jkk_rate} />
-                                </div>
+                                    <span>
+                                        <span className="block text-sm font-medium">
+                                            Gunakan Asuransi Swasta Tambahan
+                                        </span>
+                                        <span className="mt-1 block text-xs text-muted-foreground">
+                                            Aktifkan jika perusahaan menyediakan atau memfasilitasi asuransi kesehatan swasta tambahan (misal: Prudential, Allianz, AXA, Sinarmas, dll).
+                                        </span>
+                                    </span>
+                                </label>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="bpjs_kesehatan_wage_cap">Batas Maksimal Upah BPJS Kesehatan (Rp)</Label>
-                                    <Input
-                                        id="bpjs_kesehatan_wage_cap"
-                                        type="number"
-                                        min="0"
-                                        value={form.data.bpjs_kesehatan_wage_cap}
-                                        onChange={(event) =>
-                                            form.setData('bpjs_kesehatan_wage_cap', Number(event.target.value))
-                                        }
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Default: Rp 12.000.000
-                                    </p>
-                                    <InputError message={form.errors.bpjs_kesehatan_wage_cap} />
-                                </div>
+                                {form.data.private_insurance_enabled && (
+                                    <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="private_insurance_name">Nama Program Asuransi Swasta</Label>
+                                            <Input
+                                                id="private_insurance_name"
+                                                type="text"
+                                                placeholder="Contoh: Asuransi Prudential / Allianz"
+                                                value={form.data.private_insurance_name}
+                                                onChange={(event) =>
+                                                    form.setData('private_insurance_name', event.target.value)
+                                                }
+                                            />
+                                            <InputError message={form.errors.private_insurance_name} />
+                                        </div>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="bpjs_jp_wage_cap">Batas Maksimal Upah Jaminan Pensiun / JP (Rp)</Label>
-                                    <Input
-                                        id="bpjs_jp_wage_cap"
-                                        type="number"
-                                        min="0"
-                                        value={form.data.bpjs_jp_wage_cap}
-                                        onChange={(event) =>
-                                            form.setData('bpjs_jp_wage_cap', Number(event.target.value))
-                                        }
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Default: Rp 10.042.300
-                                    </p>
-                                    <InputError message={form.errors.bpjs_jp_wage_cap} />
-                                </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="private_insurance_nominal">Nominal Iuran / Premi Default per Karyawan (Rp)</Label>
+                                            <Input
+                                                id="private_insurance_nominal"
+                                                type="number"
+                                                min="0"
+                                                placeholder="0"
+                                                value={form.data.private_insurance_nominal}
+                                                onChange={(event) =>
+                                                    form.setData('private_insurance_nominal', Number(event.target.value))
+                                                }
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                Nominal ini juga dapat disesuaikan per individu pada formulir data karyawan.
+                                            </p>
+                                            <InputError message={form.errors.private_insurance_nominal} />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

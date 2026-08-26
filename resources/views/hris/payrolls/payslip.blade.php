@@ -203,6 +203,12 @@
                     <td class="label">Jabatan</td>
                     <td>{{ $employee->position?->name ?: '-' }}</td>
                 </tr>
+                @if ($slip->bpjs_kesehatan_class || $employee->bpjs_kesehatan_class)
+                <tr>
+                    <td class="label">Kelas BPJS Kes</td>
+                    <td>Kelas {{ $slip->bpjs_kesehatan_class ?: $employee->bpjs_kesehatan_class }}</td>
+                </tr>
+                @endif
                 <tr>
                     <td class="label">Periode</td>
                     <td>
@@ -302,6 +308,12 @@
                                     <tr>
                                         <td>BPJS Ketenagakerjaan (JP 1%)</td>
                                         <td>(Rp {{ number_format((float) $slip->bpjs_jp_employee, 0, ',', '.') }})</td>
+                                    </tr>
+                                @endif
+                                @if ((float) ($slip->private_insurance_nominal ?? 0) > 0)
+                                    <tr>
+                                        <td>{{ $slip->private_insurance_name ?: 'Asuransi Swasta' }}</td>
+                                        <td>(Rp {{ number_format((float) $slip->private_insurance_nominal, 0, ',', '.') }})</td>
                                     </tr>
                                 @endif
                                 @if ((float) ($slip->kasbon_deduction ?? 0) > 0)
