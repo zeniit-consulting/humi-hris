@@ -112,7 +112,7 @@ class ApprovalController extends Controller
                     'id' => $row->id,
                     'employee_label' => $row->employee?->employee_code.' - '.$row->employee?->full_name,
                     'date' => $row->created_at?->format('Y-m-d'),
-                    'description' => $row->title.' · Rp '.number_format((float) $row->amount, 0, ',', '.'),
+                    'description' => '['.($row->category ?? 'Others').'] '.$row->title.' · Rp '.number_format((float) $row->amount, 0, ',', '.'),
                     'reason' => $row->description,
                     'status' => $row->status,
                 ]),

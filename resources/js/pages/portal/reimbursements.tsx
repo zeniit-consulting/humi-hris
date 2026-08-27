@@ -17,8 +17,21 @@ import type { PortalLinkMap } from './lib';
 import { PortalShell } from './shell';
 
 type Props = { pageTitle: string };
+type BankAccount = {
+    id: number;
+    bank_name: string;
+    account_number: string;
+    account_holder_name: string;
+    is_primary: boolean;
+    label: string;
+};
 type Item = {
     id: number;
+    category: string;
+    bank_account_id?: number | null;
+    bank_name?: string | null;
+    account_number?: string | null;
+    account_holder_name?: string | null;
     title: string;
     description: string;
     amount: string | number;
@@ -28,7 +41,11 @@ type Item = {
     rejection_reason: string | null;
     created_at: string | null;
 };
-type Payload = { items: Item[] };
+type Payload = {
+    items: Item[];
+    bank_accounts?: BankAccount[];
+    categories?: string[];
+};
 
 const links: PortalLinkMap = {
     attendance: '/portal/attendance',
@@ -41,12 +58,18 @@ const links: PortalLinkMap = {
     dashboard: '/portal',
 };
 
+const defaultCategories = ['Travels', 'Meals', 'Supplies', 'Others'];
+
 export default function PortalReimbursementsPage({ pageTitle }: Props) {
     const [items, setItems] = useState<Item[]>([]);
+    const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+    const [categories, setCategories] = useState<string[]>(defaultCategories);
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [form, setForm] = useState({
+        category: 'Travels',
+        employee_bank_account_id: '' as string | number,
         title: '',
         description: '',
         amount: '',
@@ -60,6 +83,18 @@ export default function PortalReimbursementsPage({ pageTitle }: Props) {
                 '/portal/api/reimbursements',
             );
             setItems(response.data.items);
+            if (response.data.bank_accounts) {
+                setBankAccounts(response.data.bank_accounts);
+                const primary = response.data.bank_accounts.find((a) => a.is_primary);
+                if (primary) {
+                    setForm((p) => ({ ...p, employee_bank_account_id: primary.id }));
+                } else if (response.data.bank_accounts.length > 0) {
+                    setForm((p) => ({ ...p, employee_bank_account_id: response.data.bank_accounts![0].id }));
+                }
+            }
+            if (response.data.categories && response.data.categories.length > 0) {
+                setCategories(response.data.categories);
+            }
         } catch (error) {
             notifyPortal(
                 'error',
@@ -83,6 +118,10 @@ export default function PortalReimbursementsPage({ pageTitle }: Props) {
             return;
         }
         const data = new FormData();
+        data.append('category', form.category);
+        if (form.employee_bank_account_id) {
+            data.append('employee_bank_account_id', String(form.employee_bank_account_id));
+        }
         data.append('title', form.title);
         data.append('description', form.description);
         data.append('amount', form.amount);
@@ -111,7 +150,16 @@ export default function PortalReimbursementsPage({ pageTitle }: Props) {
             };
             if (!response.ok || !payload.success)
                 throw new Error(payload.message);
-            setForm({ title: '', description: '', amount: '', receipt: null });
+
+            const primary = bankAccounts.find((a) => a.is_primary);
+            setForm({
+                category: 'Travels',
+                employee_bank_account_id: primary ? primary.id : (bankAccounts[0]?.id ?? ''),
+                title: '',
+                description: '',
+                amount: '',
+                receipt: null,
+            });
             setOpen(false);
             notifyPortal('success', payload.message);
             await load();
@@ -208,13 +256,23 @@ export default function PortalReimbursementsPage({ pageTitle }: Props) {
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                    <h3 className="truncate text-sm font-extrabold text-slate-950">
-                                        {item.title}
-                                    </h3>
+                                    <div className="flex items-center gap-2">
+                                        <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700">
+                                            {item.category || 'Others'}
+                                        </span>
+                                        <h3 className="truncate text-sm font-extrabold text-slate-950">
+                                            {item.title}
+                                        </h3>
+                                    </div>
                                     <p className="mt-1 text-xs text-slate-500">
                                         {formatDate(item.created_at)} ·{' '}
                                         {item.receipt_name ?? 'Nota'}
                                     </p>
+                                    {item.bank_name && (
+                                        <p className="mt-0.5 text-[11px] text-slate-500">
+                                            Rek: {item.bank_name} - {item.account_number} ({item.account_holder_name})
+                                        </p>
+                                    )}
                                 </div>
                                 <span
                                     className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${item.status === 'approved' || item.status === 'paid' ? 'portal-primary-soft portal-primary-text' : item.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-900'}`}
@@ -259,6 +317,52 @@ export default function PortalReimbursementsPage({ pageTitle }: Props) {
                             </button>
                         </div>
                         <form onSubmit={submit} className="mt-5 space-y-4">
+                            <label className="block text-sm font-bold text-slate-800">
+                                Kategori Reimbursement
+                                <select
+                                    required
+                                    value={form.category}
+                                    onChange={(e) =>
+                                        setForm((p) => ({
+                                            ...p,
+                                            category: e.target.value,
+                                        }))
+                                    }
+                                    className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                                >
+                                    {categories.map((cat) => (
+                                        <option key={cat} value={cat}>
+                                            {cat}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+
+                            {bankAccounts.length > 0 && (
+                                <label className="block text-sm font-bold text-slate-800">
+                                    Rekening Penerima
+                                    <select
+                                        value={form.employee_bank_account_id}
+                                        onChange={(e) =>
+                                            setForm((p) => ({
+                                                ...p,
+                                                employee_bank_account_id: e.target.value,
+                                            }))
+                                        }
+                                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                                    >
+                                        {bankAccounts.map((acc) => (
+                                            <option key={acc.id} value={acc.id}>
+                                                {acc.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="mt-1 block text-xs font-normal text-slate-500">
+                                        Default menggunakan rekening utama.
+                                    </span>
+                                </label>
+                            )}
+
                             <label className="block text-sm font-bold text-slate-800">
                                 Judul
                                 <input

@@ -43,6 +43,10 @@ type Row = {
     id: number;
     employee_label: string;
     division_name: string | null;
+    category: string;
+    bank_name: string | null;
+    account_number: string | null;
+    account_holder_name: string | null;
     title: string;
     description: string;
     amount: string;
@@ -55,12 +59,16 @@ type Row = {
 type PageProps = {
     requests: { data: Row[]; total: number };
     period: string;
+    status: string | null;
+    category: string | null;
+    categories: string[];
     sort: { by: SortKey; direction: SortDirection };
     stats: Record<string, number>;
 };
 type SortKey =
     | 'employee'
     | 'title'
+    | 'category'
     | 'amount'
     | 'receipt'
     | 'status'
@@ -78,6 +86,7 @@ const labels: Record<string, string> = {
     processing: 'Diproses Finance',
     paid: 'Dibayar',
 };
+const categoryOptions = ['Travels', 'Meals', 'Supplies', 'Others'];
 const statStyles: Record<string, string> = {
     pending: 'border-amber-200 bg-amber-50/70',
     approved: 'border-emerald-200 bg-emerald-50/70',
@@ -153,7 +162,7 @@ function SortableHeader({
 }
 
 export default function ReimbursementsPage() {
-    const { requests, period, sort, stats } = usePage<PageProps>().props;
+    const { requests, period, status, category, categories = categoryOptions, sort, stats } = usePage<PageProps>().props;
     const [rejectRow, setRejectRow] = useState<RejectTarget>(null);
     const rejectForm = useForm({ rejection_reason: '' });
     const reject = (event: FormEvent) => {
@@ -173,16 +182,51 @@ export default function ReimbursementsPage() {
             { status: nextStatus },
             { preserveScroll: true },
         );
+
+    const applyFilter = (newFilters: { period?: string; status?: string | null; category?: string | null }) => {
+        const query: Record<string, any> = {
+            period: newFilters.period !== undefined ? newFilters.period : period,
+            sort_by: sort.by,
+            sort_dir: sort.direction,
+        };
+        const nextStatus = newFilters.status !== undefined ? newFilters.status : status;
+        const nextCategory = newFilters.category !== undefined ? newFilters.category : category;
+
+        if (nextStatus) query.status = nextStatus;
+        if (nextCategory) query.category = nextCategory;
+
+        router.get(pageUrl, query, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
     const toggleSort = (sortKey: SortKey) => {
         const direction: SortDirection =
             sort.by === sortKey && sort.direction === 'asc' ? 'desc' : 'asc';
+        const query: Record<string, any> = {
+            period,
+            sort_by: sortKey,
+            sort_dir: direction,
+        };
+        if (status) query.status = status;
+        if (category) query.category = category;
+
         router.get(
             pageUrl,
-            { period, sort_by: sortKey, sort_dir: direction },
+            query,
             { preserveState: true, preserveScroll: true, replace: true },
         );
     };
-    const exportUrl = `${pageUrl}/export?period=${period}&sort_by=${sort.by}&sort_dir=${sort.direction}`;
+
+    const exportUrlParams = new URLSearchParams();
+    exportUrlParams.set('period', period);
+    if (status) exportUrlParams.set('status', status);
+    if (category) exportUrlParams.set('category', category);
+    exportUrlParams.set('sort_by', sort.by);
+    exportUrlParams.set('sort_dir', sort.direction);
+    const exportUrl = `${pageUrl}/export?${exportUrlParams.toString()}`;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -198,10 +242,16 @@ export default function ReimbursementsPage() {
                     ].map((key) => (
                         <Card
                             key={key}
-                            className={`gap-1 py-3 ${statStyles[key] ?? ''}`}
+                            onClick={() => applyFilter({ status: status === key ? null : key })}
+                            className={`gap-1 py-3 cursor-pointer transition-all hover:ring-2 hover:ring-primary/40 ${statStyles[key] ?? ''} ${status === key ? 'ring-2 ring-primary shadow-sm' : ''}`}
                         >
                             <CardHeader className="px-4 pb-0">
-                                <CardDescription>{labels[key]}</CardDescription>
+                                <CardDescription className="flex items-center justify-between">
+                                    <span>{labels[key]}</span>
+                                    {status === key && (
+                                        <span className="text-[10px] font-bold uppercase text-primary">Aktif</span>
+                                    )}
+                                </CardDescription>
                                 <CardTitle className="text-2xl">
                                     {stats[key] ?? 0}
                                 </CardTitle>
@@ -218,26 +268,61 @@ export default function ReimbursementsPage() {
                             </CardDescription>
                         </div>
                         <div className="flex flex-wrap items-center justify-end gap-2">
+                            {/* Filter Status */}
                             <Select
-                                value={period}
+                                value={status ?? 'all'}
                                 onValueChange={(value) =>
-                                    router.get(
-                                        pageUrl,
-                                        {
-                                            period: value,
-                                            sort_by: sort.by,
-                                            sort_dir: sort.direction,
-                                        },
-                                        {
-                                            preserveState: true,
-                                            preserveScroll: true,
-                                            replace: true,
-                                        },
-                                    )
+                                    applyFilter({ status: value === 'all' ? null : value })
                                 }
                             >
                                 <SelectTrigger
-                                    className="w-[190px]"
+                                    className="w-[150px]"
+                                    aria-label="Filter status reimbursement"
+                                >
+                                    <SelectValue placeholder="Semua Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Status</SelectItem>
+                                    <SelectItem value="pending">Menunggu</SelectItem>
+                                    <SelectItem value="approved">Disetujui</SelectItem>
+                                    <SelectItem value="processing">Diproses Finance</SelectItem>
+                                    <SelectItem value="paid">Dibayar</SelectItem>
+                                    <SelectItem value="rejected">Ditolak</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {/* Filter Kategori */}
+                            <Select
+                                value={category ?? 'all'}
+                                onValueChange={(value) =>
+                                    applyFilter({ category: value === 'all' ? null : value })
+                                }
+                            >
+                                <SelectTrigger
+                                    className="w-[150px]"
+                                    aria-label="Filter kategori reimbursement"
+                                >
+                                    <SelectValue placeholder="Semua Kategori" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Kategori</SelectItem>
+                                    {categories.map((cat) => (
+                                        <SelectItem key={cat} value={cat}>
+                                            {cat}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            {/* Filter Periode */}
+                            <Select
+                                value={period}
+                                onValueChange={(value) =>
+                                    applyFilter({ period: value })
+                                }
+                            >
+                                <SelectTrigger
+                                    className="w-[180px]"
                                     aria-label="Filter periode reimbursement"
                                 >
                                     <SelectValue placeholder="Pilih periode" />
@@ -253,6 +338,7 @@ export default function ReimbursementsPage() {
                                     ))}
                                 </SelectContent>
                             </Select>
+
                             <Button variant="outline" asChild>
                                 <a href={exportUrl}>
                                     <FileSpreadsheet className="size-4" />
@@ -263,12 +349,19 @@ export default function ReimbursementsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1050px] text-sm">
+                            <table className="w-full min-w-[1100px] text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
                                         <SortableHeader
                                             label="Karyawan"
                                             sortKey="employee"
+                                            activeSort={sort.by}
+                                            direction={sort.direction}
+                                            onSort={toggleSort}
+                                        />
+                                        <SortableHeader
+                                            label="Kategori"
+                                            sortKey="category"
                                             activeSort={sort.by}
                                             direction={sort.direction}
                                             onSort={toggleSort}
@@ -308,7 +401,7 @@ export default function ReimbursementsPage() {
                                     {requests.data.length === 0 ? (
                                         <tr>
                                             <td
-                                                colSpan={6}
+                                                colSpan={7}
                                                 className="px-3 py-8 text-center text-muted-foreground"
                                             >
                                                 Tidak ada pengajuan.
@@ -326,8 +419,18 @@ export default function ReimbursementsPage() {
                                                         {row.division_name ??
                                                             '-'}
                                                     </div>
+                                                    {row.bank_name && (
+                                                        <div className="mt-1 text-[11px] text-slate-500">
+                                                            {row.bank_name} - {row.account_number}
+                                                        </div>
+                                                    )}
                                                 </td>
-                                                <td className="max-w-[320px] px-3 py-3">
+                                                <td className="px-3 py-3">
+                                                    <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-800">
+                                                        {row.category || 'Others'}
+                                                    </span>
+                                                </td>
+                                                <td className="max-w-[300px] px-3 py-3">
                                                     <div className="font-semibold">
                                                         {row.title}
                                                     </div>

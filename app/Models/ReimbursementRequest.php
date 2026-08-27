@@ -12,9 +12,12 @@ class ReimbursementRequest extends Model
     use BelongsToAccount, HasFactory;
 
     public const STATUSES = ['pending', 'approved', 'rejected', 'processing', 'paid'];
+    public const CATEGORIES = ['Travels', 'Meals', 'Supplies', 'Others'];
 
     protected $fillable = [
-        'user_id', 'employee_id', 'title', 'description', 'amount',
+        'user_id', 'employee_id', 'category', 'employee_bank_account_id',
+        'bank_name', 'account_number', 'account_holder_name',
+        'title', 'description', 'amount',
         'receipt_path', 'receipt_original_name', 'status', 'approved_by',
         'approved_at', 'rejection_reason', 'processed_by', 'processed_at',
         'finance_notes',
@@ -32,6 +35,11 @@ class ReimbursementRequest extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(EmployeeBankAccount::class, 'employee_bank_account_id');
     }
 
     public function approver(): BelongsTo
