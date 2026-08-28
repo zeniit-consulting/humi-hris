@@ -38,32 +38,7 @@ type MapboxLocationMapProps = {
 const mapboxAccessToken =
     import.meta.env.VITE_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
 
-const tileAttribution = '';
-
-const mapStyle: mapboxgl.Style = {
-    version: 8,
-    sources: {
-        cartoVoyager: {
-            type: 'raster',
-            tiles: [
-                'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-                'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-                'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-            ],
-            tileSize: 256,
-            attribution: tileAttribution,
-        },
-    },
-    layers: [
-        {
-            id: 'carto-voyager',
-            type: 'raster',
-            source: 'cartoVoyager',
-            minzoom: 0,
-            maxzoom: 20,
-        },
-    ],
-};
+const mapStyle = 'mapbox://styles/mapbox/streets-v12';
 
 const escapeHtml = (value: string) =>
     value

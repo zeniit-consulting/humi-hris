@@ -27,6 +27,8 @@ yarn-error.log
 /.vscode
 /.zed
 /.worktrees
+/.codex
+/.gemini
 *.zip
 *.tar.gz
 *.log
