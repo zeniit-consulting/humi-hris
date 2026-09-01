@@ -36,6 +36,11 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureApiDocumentationAccess();
         User::observe(UserObserver::class);
+
+        \Illuminate\Support\Facades\Event::listen(
+            \SocialiteProviders\Manager\SocialiteWasCalled::class,
+            \SocialiteProviders\Telegram\TelegramExtendSocialite::class.'@handle'
+        );
     }
 
     /**

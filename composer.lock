@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e973d5cd70a397a216b90c4eb929302a",
+    "content-hash": "38275a09804198d990202d93af8173ea",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -3353,6 +3353,78 @@
             "time": "2026-02-20T19:59:49+00:00"
         },
         {
+            "name": "laravel/socialite",
+            "version": "v5.30.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/socialite.git",
+                "reference": "5c79f43e48d518f0e82dff0a03009c4cbe794c4e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/socialite/zipball/5c79f43e48d518f0e82dff0a03009c4cbe794c4e",
+                "reference": "5c79f43e48d518f0e82dff0a03009c4cbe794c4e",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "firebase/php-jwt": "^6.4|^7.0",
+                "guzzlehttp/guzzle": "^6.0|^7.0",
+                "illuminate/contracts": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/http": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "league/oauth1-client": "^1.11",
+                "php": "^8.1",
+                "phpseclib/phpseclib": "^4.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.0",
+                "orchestra/testbench": "^4.18|^5.20|^6.47|^7.55|^8.36|^9.15|^10.8|^11.0",
+                "phpstan/phpstan": "^1.12.23",
+                "phpunit/phpunit": "^8.0|^9.3|^10.4|^11.5|^12.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Socialite": "Laravel\\Socialite\\Facades\\Socialite"
+                    },
+                    "providers": [
+                        "Laravel\\Socialite\\SocialiteServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-master": "5.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\Socialite\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                }
+            ],
+            "description": "Laravel wrapper around OAuth 1 & OAuth 2 libraries.",
+            "homepage": "https://laravel.com",
+            "keywords": [
+                "laravel",
+                "oauth"
+            ],
+            "support": {
+                "issues": "https://github.com/laravel/socialite/issues",
+                "source": "https://github.com/laravel/socialite"
+            },
+            "time": "2026-08-24T13:31:12+00:00"
+        },
+        {
             "name": "laravel/tinker",
             "version": "v2.11.1",
             "source": {
@@ -3985,6 +4057,82 @@
                 }
             ],
             "time": "2024-09-21T08:32:55+00:00"
+        },
+        {
+            "name": "league/oauth1-client",
+            "version": "v1.11.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thephpleague/oauth1-client.git",
+                "reference": "f9c94b088837eb1aae1ad7c4f23eb65cc6993055"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thephpleague/oauth1-client/zipball/f9c94b088837eb1aae1ad7c4f23eb65cc6993055",
+                "reference": "f9c94b088837eb1aae1ad7c4f23eb65cc6993055",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-openssl": "*",
+                "guzzlehttp/guzzle": "^6.0|^7.0",
+                "guzzlehttp/psr7": "^1.7|^2.0",
+                "php": ">=7.1||>=8.0"
+            },
+            "require-dev": {
+                "ext-simplexml": "*",
+                "friendsofphp/php-cs-fixer": "^2.17",
+                "mockery/mockery": "^1.3.3",
+                "phpstan/phpstan": "^0.12.42",
+                "phpunit/phpunit": "^7.5||9.5"
+            },
+            "suggest": {
+                "ext-simplexml": "For decoding XML-based responses."
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev",
+                    "dev-develop": "2.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "League\\OAuth1\\Client\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ben Corlett",
+                    "email": "bencorlett@me.com",
+                    "homepage": "http://www.webcomm.com.au",
+                    "role": "Developer"
+                }
+            ],
+            "description": "OAuth 1.0 Client Library",
+            "keywords": [
+                "Authentication",
+                "SSO",
+                "authorization",
+                "bitbucket",
+                "identity",
+                "idp",
+                "oauth",
+                "oauth1",
+                "single sign on",
+                "trello",
+                "tumblr",
+                "twitter"
+            ],
+            "support": {
+                "issues": "https://github.com/thephpleague/oauth1-client/issues",
+                "source": "https://github.com/thephpleague/oauth1-client/tree/v1.11.0"
+            },
+            "time": "2024-12-10T19:59:05+00:00"
         },
         {
             "name": "league/uri",
@@ -5456,6 +5604,126 @@
             "time": "2025-12-27T19:41:33+00:00"
         },
         {
+            "name": "phpseclib/phpseclib",
+            "version": "4.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/phpseclib/phpseclib.git",
+                "reference": "bb7b959c8159957edae6f5084ebbac765d310e16"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phpseclib/phpseclib/zipball/bb7b959c8159957edae6f5084ebbac765d310e16",
+                "reference": "bb7b959c8159957edae6f5084ebbac765d310e16",
+                "shasum": ""
+            },
+            "require": {
+                "paragonie/constant_time_encoding": "^2|^3",
+                "php": ">=8.1",
+                "symfony/polyfill-php82": "^1.26"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.22",
+                "ext-xml": "*",
+                "php-parallel-lint/php-parallel-lint": "^1.3",
+                "phpunit/phpunit": "^13",
+                "squizlabs/php_codesniffer": "^3.7",
+                "vimeo/psalm": "*"
+            },
+            "suggest": {
+                "ext-dom": "Install the DOM extension to load XML formatted public keys.",
+                "ext-gmp": "Install the GMP (GNU Multiple Precision) extension in order to speed up arbitrary precision integer arithmetic operations.",
+                "ext-libsodium": "SSH2/SFTP can make use of some algorithms provided by the libsodium-php extension.",
+                "ext-openssl": "Install the OpenSSL extension in order to speed up a wide variety of cryptographic operations."
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "phpseclib/bootstrap.php"
+                ],
+                "psr-4": {
+                    "phpseclib4\\": "phpseclib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jim Wigginton",
+                    "email": "terrafrost@php.net",
+                    "role": "Lead Developer"
+                },
+                {
+                    "name": "Patrick Monnerat",
+                    "email": "pm@datasphere.ch",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Andreas Fischer",
+                    "email": "bantu@phpbb.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Hans-Jürgen Petrich",
+                    "email": "petrich@tronic-media.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Graham Campbell",
+                    "email": "graham@alt-three.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Jack Worman",
+                    "email": "jack.worman@gmail.com",
+                    "homepage": "https://jackworman.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "PHP Secure Communications Library - Pure-PHP implementations of RSA, AES, SSH2, SFTP, X.509 etc.",
+            "homepage": "https://phpseclib.com/",
+            "keywords": [
+                "BigInteger",
+                "aes",
+                "asn.1",
+                "asn1",
+                "blowfish",
+                "crypto",
+                "cryptography",
+                "encryption",
+                "rsa",
+                "security",
+                "sftp",
+                "signature",
+                "signing",
+                "ssh",
+                "twofish",
+                "x.509",
+                "x509"
+            ],
+            "support": {
+                "issues": "https://github.com/phpseclib/phpseclib/issues",
+                "source": "https://github.com/phpseclib/phpseclib/tree/4.0.1"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/terrafrost",
+                    "type": "github"
+                },
+                {
+                    "url": "https://www.patreon.com/phpseclib",
+                    "type": "patreon"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/phpseclib/phpseclib",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-08-26T12:15:13+00:00"
+        },
+        {
             "name": "phpstan/phpdoc-parser",
             "version": "2.3.2",
             "source": {
@@ -6621,6 +6889,127 @@
                 }
             ],
             "time": "2026-05-05T09:22:46+00:00"
+        },
+        {
+            "name": "socialiteproviders/manager",
+            "version": "4.10.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/SocialiteProviders/Manager.git",
+                "reference": "65ad770276875682e246e5435566146bf0baebf2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/SocialiteProviders/Manager/zipball/65ad770276875682e246e5435566146bf0baebf2",
+                "reference": "65ad770276875682e246e5435566146bf0baebf2",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "^12.0 || ^13.0",
+                "laravel/socialite": "^5.29",
+                "php": "^8.3"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.6",
+                "phpunit/phpunit": "^12.5"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "SocialiteProviders\\Manager\\ServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "SocialiteProviders\\Manager\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Andy Wendt",
+                    "email": "andy@awendt.com"
+                },
+                {
+                    "name": "Anton Komarev",
+                    "email": "a.komarev@cybercog.su"
+                },
+                {
+                    "name": "Miguel Piedrafita",
+                    "email": "soy@miguelpiedrafita.com"
+                },
+                {
+                    "name": "atymic",
+                    "email": "atymicq@gmail.com",
+                    "homepage": "https://atymic.dev"
+                }
+            ],
+            "description": "Easily add new or override built-in providers in Laravel Socialite.",
+            "homepage": "https://socialiteproviders.com",
+            "keywords": [
+                "laravel",
+                "manager",
+                "oauth",
+                "providers",
+                "socialite"
+            ],
+            "support": {
+                "issues": "https://github.com/socialiteproviders/manager/issues",
+                "source": "https://github.com/socialiteproviders/manager"
+            },
+            "time": "2026-08-16T00:16:22+00:00"
+        },
+        {
+            "name": "socialiteproviders/telegram",
+            "version": "4.1.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/SocialiteProviders/Telegram.git",
+                "reference": "7097d79bd85e04e80447405db83ab28a3ec2b494"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/SocialiteProviders/Telegram/zipball/7097d79bd85e04e80447405db83ab28a3ec2b494",
+                "reference": "7097d79bd85e04e80447405db83ab28a3ec2b494",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.2 || ^8.0",
+                "socialiteproviders/manager": "~4.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Socialite": "Laravel\\Socialite\\Facades\\Socialite"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "SocialiteProviders\\Telegram\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Adnan RIHAN",
+                    "email": "adnan@rihan.fr"
+                }
+            ],
+            "description": "Telegram Authentication Provider for Laravel Socialite",
+            "support": {
+                "source": "https://github.com/SocialiteProviders/Telegram/tree/4.1.2"
+            },
+            "time": "2021-07-09T00:49:27+00:00"
         },
         {
             "name": "spatie/laravel-package-tools",
