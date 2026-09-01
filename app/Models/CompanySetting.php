@@ -21,6 +21,7 @@ class CompanySetting extends Model
         'user_id',
         'name',
         'details',
+        'telegram_group_chat_id',
         'portal_kasbon_enabled',
         'employee_activation_otp_enabled',
         'show_sub_company_menu',

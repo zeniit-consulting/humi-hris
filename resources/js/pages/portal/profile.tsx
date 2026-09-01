@@ -1142,6 +1142,34 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                         </p>
                     </div>
                 </ProfileAccordion>
+
+                <ProfileAccordion
+                    section="telegram"
+                    title="Integrasi Telegram Bot"
+                    description="Hubungkan akun untuk notifikasi cuti, lembur, dan slip gaji"
+                    icon={BellRing}
+                    isOpen={openSection === 'telegram'}
+                    onOpen={setOpenSection}
+                >
+                    <div className="space-y-3">
+                        <p className="text-sm text-slate-600">
+                            Dapatkan notifikasi persetujuan cuti/lembur secara instan dan unduh slip gaji langsung dari Telegram.
+                        </p>
+                        <div className="rounded-lg border border-sky-200 bg-sky-50/80 p-3 text-xs text-sky-900">
+                            <p className="font-semibold">Cara Menghubungkan Telegram:</p>
+                            <ol className="mt-1.5 list-decimal space-y-1 pl-4">
+                                <li>Buka bot Telegram HRIS di perangkat Anda.</li>
+                                <li>
+                                    Ketik perintah berikut di chat bot:
+                                    <code className="mt-1 block rounded bg-white px-2 py-1 font-mono text-sky-800 border">
+                                        /link {profile?.employee.employee_code ?? 'KODE_ANDA'} {profile?.employee.email ?? 'EMAIL_ANDA'}
+                                    </code>
+                                </li>
+                                <li>Bot akan otomatis mengonfirmasi status penautan akun Anda.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </ProfileAccordion>
             </div>
         </PortalShell>
     );

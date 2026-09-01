@@ -42,12 +42,15 @@ class PortalApprovalController extends Controller
             'attendance' => $this->approveAttendance($model, $actor),
             'shift_change' => $this->approveShift($model, $actor),
         };
+        app(\App\Services\TelegramNotificationService::class)->notifyEmployeeRequestStatus($type, $model, 'approved');
         return response()->json(['message' => 'Request disetujui.']);
     }
     public function reject(Request $request, string $type, int $id): JsonResponse
     {
         $data = $request->validate(['reason' => ['required', 'string', 'max:255']]);
-        app(ApprovalWorkflowService::class)->reject($this->requestFor($type, $id), $request->user(), $data['reason']);
+        $model = $this->requestFor($type, $id);
+        app(ApprovalWorkflowService::class)->reject($model, $request->user(), $data['reason']);
+        app(\App\Services\TelegramNotificationService::class)->notifyEmployeeRequestStatus($type, $model, 'rejected', $data['reason']);
         return response()->json(['message' => 'Request ditolak.']);
     }
     private function requestFor(string $type, int $id): AttendanceCorrectionRequest|LeaveRequest|OvertimeRequest|ShiftChangeRequest { return match ($type) { 'attendance' => AttendanceCorrectionRequest::findOrFail($id), 'leave' => LeaveRequest::findOrFail($id), 'overtime' => OvertimeRequest::findOrFail($id), 'shift_change' => ShiftChangeRequest::findOrFail($id), default => abort(404) }; }

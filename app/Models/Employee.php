@@ -43,6 +43,8 @@ class Employee extends Model
         'last_name',
         'email',
         'phone',
+        'telegram_chat_id',
+        'telegram_username',
         'gender',
         'birth_place',
         'birth_date',

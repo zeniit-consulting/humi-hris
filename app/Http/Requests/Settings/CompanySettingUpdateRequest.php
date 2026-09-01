@@ -47,6 +47,7 @@ class CompanySettingUpdateRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:150'],
             'details' => ['nullable', 'string', 'max:3000'],
+            'telegram_group_chat_id' => ['nullable', 'string', 'max:100'],
             'portal_kasbon_enabled' => ['required', 'boolean'],
             'employee_activation_otp_enabled' => ['required', 'boolean'],
             'show_sub_company_menu' => ['required', 'boolean'],

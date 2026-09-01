@@ -612,6 +612,28 @@ export default function Profile({
                                     />
                                 </div>
 
+                                <div className="grid gap-2">
+                                    <Label htmlFor="telegram_group_chat_id">
+                                        Telegram Group Chat ID (Rekap Absensi Harian)
+                                    </Label>
+
+                                    <Input
+                                        id="telegram_group_chat_id"
+                                        name="telegram_group_chat_id"
+                                        defaultValue={(company as any).telegram_group_chat_id ?? ''}
+                                        placeholder="Contoh: -1001234567890"
+                                    />
+
+                                    <p className="text-xs text-slate-500">
+                                        Bot Telegram akan otomatis mengirim rekap absensi harian setiap jam 09:00 pagi ke grup/channel ini. Pastikan Bot sudah diundang ke dalam grup.
+                                    </p>
+
+                                    <InputError
+                                        className="mt-2"
+                                        message={(errors as any).telegram_group_chat_id}
+                                    />
+                                </div>
+
                                 <div className="grid gap-3 rounded-lg border bg-slate-50/60 p-4">
                                     <div className="flex items-start gap-3">
                                         <input

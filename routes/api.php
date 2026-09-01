@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
 Route::post('webhooks/pakasir', PakasirWebhookController::class)->name('webhooks.pakasir');
+Route::post('webhooks/telegram', [\App\Http\Controllers\Api\TelegramWebhookController::class, 'handle'])->name('webhooks.telegram');
 
 Route::prefix('third-party/v1')->name('third-party.v1.')->group(function (): void {
     Route::post('auth/token', [ThirdPartyAuthController::class, 'issueToken'])

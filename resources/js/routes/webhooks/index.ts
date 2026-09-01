@@ -55,8 +55,65 @@ pakasirForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 pakasir.form = pakasirForm
 
+/**
+* @see \App\Http\Controllers\Api\TelegramWebhookController::telegram
+* @see app/Http/Controllers/Api/TelegramWebhookController.php:33
+* @route '/api/webhooks/telegram'
+*/
+export const telegram = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: telegram.url(options),
+    method: 'post',
+})
+
+telegram.definition = {
+    methods: ["post"],
+    url: '/api/webhooks/telegram',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Api\TelegramWebhookController::telegram
+* @see app/Http/Controllers/Api/TelegramWebhookController.php:33
+* @route '/api/webhooks/telegram'
+*/
+telegram.url = (options?: RouteQueryOptions) => {
+    return telegram.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\TelegramWebhookController::telegram
+* @see app/Http/Controllers/Api/TelegramWebhookController.php:33
+* @route '/api/webhooks/telegram'
+*/
+telegram.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: telegram.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\TelegramWebhookController::telegram
+* @see app/Http/Controllers/Api/TelegramWebhookController.php:33
+* @route '/api/webhooks/telegram'
+*/
+const telegramForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: telegram.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\TelegramWebhookController::telegram
+* @see app/Http/Controllers/Api/TelegramWebhookController.php:33
+* @route '/api/webhooks/telegram'
+*/
+telegramForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: telegram.url(options),
+    method: 'post',
+})
+
+telegram.form = telegramForm
+
 const webhooks = {
     pakasir: Object.assign(pakasir, pakasir),
+    telegram: Object.assign(telegram, telegram),
 }
 
 export default webhooks
