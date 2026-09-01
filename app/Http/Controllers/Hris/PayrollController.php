@@ -41,9 +41,10 @@ class PayrollController extends Controller
 
         $run = PayrollRun::query()
             ->with([
-                'items.employee:id,employee_code,first_name,last_name,phone,sub_company_id,is_active,employment_status',
+                'items.employee:id,employee_code,first_name,last_name,phone,sub_company_id,division_id,hire_date,offboarded_at,base_salary,is_active,employment_status',
                 'items.employee.subCompany:id,code,name',
-                'items.employee.bankAccounts:id,employee_id,is_primary',
+                'items.employee.division:id,name',
+                'items.employee.bankAccounts:id,employee_id,bank_name,account_number,account_holder_name,is_primary',
             ])
             ->where('user_id', $ownerId)
             ->where('period', $period)
@@ -114,55 +115,69 @@ class PayrollController extends Controller
                 'unfiltered_total_net_salary' => $run->total_net_salary,
             ] : null,
             'items' => $items
-                ->map(fn ($item) => [
-                    'id' => $item->id,
-                    'employee_id' => $item->employee_id,
-                    'employee_label' => $item->employee
-                        ? $item->employee->employee_code.' - '.$item->employee->full_name
-                        : '-',
-                    'sub_company_label' => $item->employee?->subCompany
-                        ? $item->employee->subCompany->code.' - '.$item->employee->subCompany->name
-                        : 'Internal',
-                    'can_send_payslip' => $item->employee?->phone
-                        ? WhatsAppPhone::isValid($item->employee->phone)
-                        : false,
-                    'base_salary' => $item->base_salary,
-                    'allowances_total' => $item->allowances_total,
-                    'is_prorated' => $item->is_prorated,
-                    'proration_working_days' => $item->proration_working_days,
-                    'proration_payable_days' => $item->proration_payable_days,
-                    'proration_factor' => $item->proration_factor,
-                    'overtime_hours' => $item->overtime_hours,
-                    'overtime_pay' => $item->overtime_pay,
-                    'pph21_method' => $item->pph21_method,
-                    'pph21_rate' => $item->pph21_rate,
-                    'pph21_allowance' => $item->pph21_allowance,
-                    'pph21_deduction' => $item->pph21_deduction,
-                    'pph21_company_borne' => $item->pph21_company_borne,
-                    'bpjs_kesehatan_company' => $item->bpjs_kesehatan_company,
-                    'bpjs_kesehatan_employee' => $item->bpjs_kesehatan_employee,
-                    'bpjs_kesehatan_class' => $item->bpjs_kesehatan_class,
-                    'bpjs_jkk_company' => $item->bpjs_jkk_company,
-                    'bpjs_jkm_company' => $item->bpjs_jkm_company,
-                    'bpjs_jht_company' => $item->bpjs_jht_company,
-                    'bpjs_jht_employee' => $item->bpjs_jht_employee,
-                    'bpjs_jp_company' => $item->bpjs_jp_company,
-                    'bpjs_jp_employee' => $item->bpjs_jp_employee,
-                    'bpjs_total_company' => $item->bpjs_total_company,
-                    'bpjs_total_employee' => $item->bpjs_total_employee,
-                    'private_insurance_name' => $item->private_insurance_name,
-                    'private_insurance_nominal' => $item->private_insurance_nominal,
-                    'kasbon_deduction' => $item->kasbon_deduction,
-                    'denda_deduction' => $item->denda_deduction,
-                    'unpaid_leave_deduction' => $item->unpaid_leave_deduction,
-                    'deductions_total' => $item->deductions_total,
-                    'net_salary' => $item->net_salary,
-                    'allowance_breakdown' => $item->allowance_breakdown ?? [],
-                    'variable_allowance_breakdown' => $item->variable_allowance_breakdown ?? [],
-                    'bonus_breakdown' => $item->bonus_breakdown ?? [],
-                    'thr_months_of_service' => $item->thr_months_of_service,
-                    'thr_amount' => $item->thr_amount,
-                ])->values(),
+                ->map(function ($item) {
+                    $primaryBank = $item->employee?->bankAccounts?->firstWhere('is_primary', true)
+                        ?? $item->employee?->bankAccounts?->first();
+
+                    return [
+                        'id' => $item->id,
+                        'employee_id' => $item->employee_id,
+                        'employee_code' => $item->employee?->employee_code ?? '-',
+                        'employee_name' => $item->employee?->full_name ?? '-',
+                        'employee_label' => $item->employee
+                            ? $item->employee->employee_code.' - '.$item->employee->full_name
+                            : '-',
+                        'division_name' => $item->employee?->division?->name ?? '-',
+                        'hire_date' => $item->employee?->hire_date?->format('d M Y'),
+                        'offboarded_at' => $item->employee?->offboarded_at?->format('d M Y'),
+                        'bank_name' => $primaryBank?->bank_name ?? null,
+                        'account_number' => $primaryBank?->account_number ?? null,
+                        'account_holder_name' => $primaryBank?->account_holder_name ?? null,
+                        'unprorated_base_salary' => $item->employee?->base_salary,
+                        'sub_company_label' => $item->employee?->subCompany
+                            ? $item->employee->subCompany->code.' - '.$item->employee->subCompany->name
+                            : 'Internal',
+                        'can_send_payslip' => $item->employee?->phone
+                            ? WhatsAppPhone::isValid($item->employee->phone)
+                            : false,
+                        'base_salary' => $item->base_salary,
+                        'allowances_total' => $item->allowances_total,
+                        'is_prorated' => $item->is_prorated,
+                        'proration_working_days' => $item->proration_working_days,
+                        'proration_payable_days' => $item->proration_payable_days,
+                        'proration_factor' => $item->proration_factor,
+                        'overtime_hours' => $item->overtime_hours,
+                        'overtime_pay' => $item->overtime_pay,
+                        'pph21_method' => $item->pph21_method,
+                        'pph21_rate' => $item->pph21_rate,
+                        'pph21_allowance' => $item->pph21_allowance,
+                        'pph21_deduction' => $item->pph21_deduction,
+                        'pph21_company_borne' => $item->pph21_company_borne,
+                        'bpjs_kesehatan_company' => $item->bpjs_kesehatan_company,
+                        'bpjs_kesehatan_employee' => $item->bpjs_kesehatan_employee,
+                        'bpjs_kesehatan_class' => $item->bpjs_kesehatan_class,
+                        'bpjs_jkk_company' => $item->bpjs_jkk_company,
+                        'bpjs_jkm_company' => $item->bpjs_jkm_company,
+                        'bpjs_jht_company' => $item->bpjs_jht_company,
+                        'bpjs_jht_employee' => $item->bpjs_jht_employee,
+                        'bpjs_jp_company' => $item->bpjs_jp_company,
+                        'bpjs_jp_employee' => $item->bpjs_jp_employee,
+                        'bpjs_total_company' => $item->bpjs_total_company,
+                        'bpjs_total_employee' => $item->bpjs_total_employee,
+                        'private_insurance_name' => $item->private_insurance_name,
+                        'private_insurance_nominal' => $item->private_insurance_nominal,
+                        'kasbon_deduction' => $item->kasbon_deduction,
+                        'denda_deduction' => $item->denda_deduction,
+                        'unpaid_leave_deduction' => $item->unpaid_leave_deduction,
+                        'deductions_total' => $item->deductions_total,
+                        'net_salary' => $item->net_salary,
+                        'allowance_breakdown' => $item->allowance_breakdown ?? [],
+                        'variable_allowance_breakdown' => $item->variable_allowance_breakdown ?? [],
+                        'bonus_breakdown' => $item->bonus_breakdown ?? [],
+                        'thr_months_of_service' => $item->thr_months_of_service,
+                        'thr_amount' => $item->thr_amount,
+                    ];
+                })->values(),
             'payrollReadiness' => $readiness->summarize($ownerId, $period, $run),
         ]);
     }

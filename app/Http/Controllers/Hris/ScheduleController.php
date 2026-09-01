@@ -20,8 +20,12 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -429,15 +433,23 @@ class ScheduleController extends Controller
             ->orderBy('last_name')
             ->get();
 
+        $shifts = WorkShift::query()
+            ->where('user_id', $ownerId)
+            ->orderBy('code')
+            ->get();
+
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Jadwal');
 
+        // Header info
         $sheet->setCellValue('A1', 'Employee ID');
         $sheet->setCellValue('B1', 'Employee Name');
         $sheet->setCellValue('C1', 'Bulan');
         $sheet->setCellValue('D1', $month);
+        $sheet->getStyle('A1:D1')->getFont()->setBold(true);
 
+        // Header Table
         $sheet->setCellValue('A2', 'ID');
         $sheet->setCellValue('B2', 'Nama');
 
@@ -446,12 +458,90 @@ class ScheduleController extends Controller
             $sheet->setCellValue([$col, 2], $day);
             $col++;
         }
+        $lastColIndex = 2 + $daysInMonth;
+        $lastColLetter = Coordinate::stringFromColumnIndex($lastColIndex);
 
-        $row = 3;
+        // Header Table Styling
+        $headerRange = 'A2:'.$lastColLetter.'2';
+        $sheet->getStyle($headerRange)->getFont()->setBold(true);
+        $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE2EFDA');
+
+        $sampleShiftCode = $shifts->firstWhere('is_day_off', false)?->code ?? '0817';
+
+        // Row 3: Example / Sample Row
+        $sheet->setCellValue('A3', 'CONTOH');
+        $sheet->setCellValue('B3', 'Contoh Format Pengisian (Abaikan / Hapus)');
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            // Pattern example: e.g. Day Off on weekends or specific shift
+            $dayOfWeek = $start->copy()->addDays($day - 1)->dayOfWeek;
+            $code = in_array($dayOfWeek, [0, 6], true) ? 'OFF' : $sampleShiftCode;
+            $sheet->setCellValue([2 + $day, 3], $code);
+        }
+
+        $sheet->getStyle('A3:'.$lastColLetter.'3')->getFont()->setItalic(true)->getColor()->setARGB('FF7F7F7F');
+        $sheet->getStyle('A3:'.$lastColLetter.'3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2F2F2');
+        $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // Employee Data Rows starting from row 4
+        $row = 4;
         foreach ($employees as $employee) {
             $sheet->setCellValue([1, $row], $employee->id);
             $sheet->setCellValue([2, $row], $employee->full_name);
             $row++;
+        }
+
+        $lastDataRow = max(3, $row - 1);
+
+        // Border styling for the data table
+        $dataRange = 'A2:'.$lastColLetter.$lastDataRow;
+        $sheet->getStyle($dataRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD9D9D9');
+        $sheet->getStyle($dataRange)->getBorders()->getOutline()->setBorderStyle(Border::BORDER_MEDIUM)->getColor()->setARGB('FF808080');
+
+        // Align date columns to center
+        $dateColumnsRange = 'C2:'.$lastColLetter.$lastDataRow;
+        $sheet->getStyle($dateColumnsRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // Table Keterangan Kode Jam Kerja
+        $legendStartRow = $lastDataRow + 3;
+
+        $sheet->setCellValue('A'.$legendStartRow, '=== TABEL KETERANGAN KODE JAM KERJA (HANYA REFERENSI - JANGAN UBAH TEKS INI) ===');
+        $sheet->getStyle('A'.$legendStartRow)->getFont()->setBold(true)->getColor()->setARGB('FF1F4E78');
+
+        $legendHeaderRow = $legendStartRow + 1;
+        $sheet->setCellValue('A'.$legendHeaderRow, 'Kode Shift');
+        $sheet->setCellValue('B'.$legendHeaderRow, 'Nama Shift');
+        $sheet->setCellValue('C'.$legendHeaderRow, 'Jam Masuk');
+        $sheet->setCellValue('D'.$legendHeaderRow, 'Jam Pulang');
+        $sheet->setCellValue('E'.$legendHeaderRow, 'Tipe');
+
+        $legendHeaderRange = 'A'.$legendHeaderRow.':E'.$legendHeaderRow;
+        $sheet->getStyle($legendHeaderRange)->getFont()->setBold(true);
+        $sheet->getStyle($legendHeaderRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFDDEBF7');
+        $sheet->getStyle($legendHeaderRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $lRow = $legendHeaderRow + 1;
+        foreach ($shifts as $shift) {
+            $sheet->setCellValue('A'.$lRow, $shift->code);
+            $sheet->setCellValue('B'.$lRow, $shift->name);
+            $sheet->setCellValue('C'.$lRow, $shift->start_time ? Carbon::parse($shift->start_time)->format('H:i') : '-');
+            $sheet->setCellValue('D'.$lRow, $shift->end_time ? Carbon::parse($shift->end_time)->format('H:i') : '-');
+            $sheet->setCellValue('E'.$lRow, $shift->is_day_off ? 'Day Off (Libur)' : 'Hari Kerja');
+
+            $sheet->getStyle('A'.$lRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('C'.$lRow.':E'.$lRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $lRow++;
+        }
+
+        $legendLastRow = max($legendHeaderRow + 1, $lRow - 1);
+        $legendRange = 'A'.$legendHeaderRow.':E'.$legendLastRow;
+        $sheet->getStyle($legendRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD9D9D9');
+
+        // Auto-fit column widths
+        $sheet->getColumnDimension('A')->setWidth(14);
+        $sheet->getColumnDimension('B')->setWidth(30);
+        for ($colIdx = 3; $colIdx <= $lastColIndex; $colIdx++) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($colIdx))->setWidth(7);
         }
 
         $writer = new Xlsx($spreadsheet);
@@ -504,13 +594,33 @@ class ScheduleController extends Controller
 
         $highestRow = $sheet->getHighestDataRow();
 
+        // Valid employee IDs of current owner
+        $validEmployeeIds = Employee::query()
+            ->where('user_id', $ownerId)
+            ->pluck('id')
+            ->flip()
+            ->all();
+
         $rows = [];
         $errors = [];
         $now = now();
 
         for ($row = 3; $row <= $highestRow; $row++) {
-            $employeeId = $sheet->getCell([1, $row])->getValue();
-            if (! $employeeId) {
+            $rawEmployeeId = $sheet->getCell([1, $row])->getValue();
+            if ($rawEmployeeId === null || $rawEmployeeId === '') {
+                continue;
+            }
+
+            // Skip example / description header / non-numeric IDs
+            $cleanedId = trim((string) $rawEmployeeId);
+            if (! is_numeric($cleanedId)) {
+                continue;
+            }
+
+            $employeeId = (int) $cleanedId;
+
+            // Only process employees belonging to this account owner
+            if (! isset($validEmployeeIds[$employeeId])) {
                 continue;
             }
 
@@ -565,7 +675,7 @@ class ScheduleController extends Controller
             }
         }
 
-        return back();
+        return back()->with('success', sprintf('Berhasil mengimpor %d jadwal karyawan.', count($rows)));
     }
 
     /**

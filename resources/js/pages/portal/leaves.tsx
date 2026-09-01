@@ -165,10 +165,10 @@ export default function PortalLeavesPage({ pageTitle }: Props) {
                         }
                         className="h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
                     >
-                        <option value="annual">Cuti tahunan</option>
-                        <option value="sick">Cuti sakit</option>
-                        <option value="unpaid">Cuti tanpa gaji</option>
-                        <option value="other">Cuti lainnya</option>
+                        <option value="annual">Cuti Tahunan (Annual Leave)</option>
+                        <option value="sick">Izin Sakit (Sick Leave)</option>
+                        <option value="unpaid">Izin (Unpaid Leave)</option>
+                        <option value="other">Cuti Khusus (Special Leave)</option>
                     </select>
                     <div className="grid grid-cols-2 gap-3">
                         <input

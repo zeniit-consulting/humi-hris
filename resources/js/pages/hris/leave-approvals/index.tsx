@@ -75,10 +75,10 @@ const statusLabels: Record<string, string> = {
     cancelled: 'Dibatalkan',
 };
 const typeLabels: Record<string, string> = {
-    annual: 'Tahunan',
-    sick: 'Sakit',
-    unpaid: 'Tidak dibayar',
-    other: 'Lainnya',
+    annual: 'Cuti Tahunan (Annual Leave)',
+    sick: 'Izin Sakit (Sick Leave)',
+    unpaid: 'Izin (Unpaid Leave)',
+    other: 'Cuti Khusus (Special Leave)',
 };
 
 const badgeVariant = (status: string) =>

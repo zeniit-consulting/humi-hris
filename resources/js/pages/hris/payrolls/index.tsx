@@ -3,6 +3,9 @@ import {
     CalendarDays,
     Calculator,
     AlertTriangle,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
     CheckCircle2,
     Coins,
     Download,
@@ -78,7 +81,16 @@ type PayrollRun = {
 type PayrollItem = {
     id: number;
     employee_id: number;
+    employee_code?: string;
+    employee_name?: string;
     employee_label: string;
+    division_name?: string;
+    hire_date?: string | null;
+    offboarded_at?: string | null;
+    bank_name?: string | null;
+    account_number?: string | null;
+    account_holder_name?: string | null;
+    unprorated_base_salary?: string | number | null;
     sub_company_label: string;
     can_send_payslip: boolean;
     base_salary: string;
@@ -102,6 +114,8 @@ type PayrollItem = {
     bpjs_jp_employee?: string | number;
     bpjs_total_company?: string | number;
     bpjs_total_employee?: string | number;
+    private_insurance_name?: string | null;
+    private_insurance_nominal?: string | number | null;
     kasbon_deduction: string;
     denda_deduction: string;
     unpaid_leave_deduction: string;
@@ -223,6 +237,111 @@ export default function PayrollPage() {
         service_fee_total: '',
     });
     const [editingItem, setEditingItem] = useState<PayrollItem | null>(null);
+    const [sortKey, setSortKey] = useState<string>('employee');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+    const handleSort = (key: string) => {
+        if (sortKey === key) {
+            setSortOrder((current) => (current === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortKey(key);
+            setSortOrder('asc');
+        }
+    };
+
+    const sortedItems = useMemo(() => {
+        const list = [...items];
+        list.sort((a, b) => {
+            let valA: any = '';
+            let valB: any = '';
+
+            switch (sortKey) {
+                case 'employee_code':
+                    valA = a.employee_code || parseEmployeeLabel(a.employee_label).code || '';
+                    valB = b.employee_code || parseEmployeeLabel(b.employee_label).code || '';
+                    break;
+                case 'employee':
+                    valA = a.employee_name || parseEmployeeLabel(a.employee_label).name || '';
+                    valB = b.employee_name || parseEmployeeLabel(b.employee_label).name || '';
+                    break;
+                case 'division':
+                    valA = a.division_name || '';
+                    valB = b.division_name || '';
+                    break;
+                case 'dates':
+                    valA = a.hire_date || '';
+                    valB = b.hire_date || '';
+                    break;
+                case 'bank':
+                    valA = a.bank_name || '';
+                    valB = b.bank_name || '';
+                    break;
+                case 'base_salary':
+                    valA = Number(a.base_salary ?? 0);
+                    valB = Number(b.base_salary ?? 0);
+                    break;
+                case 'allowances_total':
+                    valA = Number(a.allowances_total ?? 0);
+                    valB = Number(b.allowances_total ?? 0);
+                    break;
+                case 'overtime_pay':
+                    valA = Number(a.overtime_pay ?? 0);
+                    valB = Number(b.overtime_pay ?? 0);
+                    break;
+                case 'pph21_rate':
+                    valA = Number(a.pph21_rate ?? 0);
+                    valB = Number(b.pph21_rate ?? 0);
+                    break;
+                case 'bpjs':
+                    valA = Number(a.bpjs_total_employee ?? 0) + Number(a.bpjs_total_company ?? 0);
+                    valB = Number(b.bpjs_total_employee ?? 0) + Number(b.bpjs_total_company ?? 0);
+                    break;
+                case 'kasbon_deduction':
+                    valA = Number(a.kasbon_deduction ?? 0);
+                    valB = Number(b.kasbon_deduction ?? 0);
+                    break;
+                case 'denda_deduction':
+                    valA = Number(a.denda_deduction ?? 0);
+                    valB = Number(b.denda_deduction ?? 0);
+                    break;
+                case 'unpaid_leave_deduction':
+                    valA = Number(a.unpaid_leave_deduction ?? 0);
+                    valB = Number(b.unpaid_leave_deduction ?? 0);
+                    break;
+                case 'deductions_total':
+                    valA = Number(a.deductions_total ?? 0);
+                    valB = Number(b.deductions_total ?? 0);
+                    break;
+                case 'net_salary':
+                    valA = Number(a.net_salary ?? 0);
+                    valB = Number(b.net_salary ?? 0);
+                    break;
+                case 'thr_months_of_service':
+                    valA = Number(a.thr_months_of_service ?? 0);
+                    valB = Number(b.thr_months_of_service ?? 0);
+                    break;
+                case 'thr_amount':
+                    valA = Number(a.thr_amount ?? 0);
+                    valB = Number(b.thr_amount ?? 0);
+                    break;
+                default:
+                    valA = a.id;
+                    valB = b.id;
+                    break;
+            }
+
+            if (typeof valA === 'number' && typeof valB === 'number') {
+                return sortOrder === 'asc' ? valA - valB : valB - valA;
+            }
+
+            const strA = String(valA).toLowerCase();
+            const strB = String(valB).toLowerCase();
+            if (strA < strB) return sortOrder === 'asc' ? -1 : 1;
+            if (strA > strB) return sortOrder === 'asc' ? 1 : -1;
+            return 0;
+        });
+        return list;
+    }, [items, sortKey, sortOrder]);
     const editItemForm = useForm({
         base_salary: '',
         allowances_total: '',
@@ -762,29 +881,131 @@ export default function PayrollPage() {
                     <CardContent>
                         <div className="overflow-x-auto">
                             {type === 'thr' ? (
-                                <table className="w-full min-w-[700px] text-sm">
+                                <table className="w-full min-w-[1000px] text-sm">
                                     <thead>
                                         <tr className="border-b text-left">
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('employee_code')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    ID
+                                                    {sortKey === 'employee_code' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
                                             <th className="sticky left-0 z-20 bg-background px-3 py-2">
-                                                Karyawan
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('employee')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Karyawan
+                                                    {sortKey === 'employee' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
                                             </th>
                                             <th className="px-3 py-2">
-                                                Gaji Pokok
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('division')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Divisi
+                                                    {sortKey === 'division' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
                                             </th>
                                             <th className="px-3 py-2">
-                                                Masa Kerja
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('dates')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Tanggal
+                                                    {sortKey === 'dates' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
                                             </th>
-                                            <th className="px-3 py-2">THR</th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('bank')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Rekening Bank
+                                                    {sortKey === 'bank' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('base_salary')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Gaji Pokok
+                                                    {sortKey === 'base_salary' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('thr_months_of_service')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Masa Kerja
+                                                    {sortKey === 'thr_months_of_service' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('thr_amount')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    THR
+                                                    {sortKey === 'thr_amount' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
                                             <th className="px-3 py-2 text-right">
                                                 Aksi
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {items.length === 0 && (
+                                        {sortedItems.length === 0 && (
                                             <tr>
                                                 <td
-                                                    colSpan={5}
+                                                    colSpan={9}
                                                     className="px-3 py-8 text-center text-muted-foreground"
                                                 >
                                                     Belum ada data THR di
@@ -792,92 +1013,298 @@ export default function PayrollPage() {
                                                 </td>
                                             </tr>
                                         )}
-                                        {items.map((item) => (
-                                            <tr
-                                                key={item.id}
-                                                className="border-b align-top"
-                                            >
-                                                <td className="sticky left-0 z-10 bg-background px-3 py-3 font-medium">
-                                                    <div className="leading-tight">
-                                                        <p className="text-sm font-medium">
-                                                            {
-                                                                parseEmployeeLabel(
-                                                                    item.employee_label,
-                                                                ).name
-                                                            }
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {
-                                                                parseEmployeeLabel(
-                                                                    item.employee_label,
-                                                                ).code
-                                                            }
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {
-                                                                item.sub_company_label
-                                                            }
-                                                        </p>
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {formatCurrency(
-                                                        item.base_salary,
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {item.thr_months_of_service !=
-                                                    null
-                                                        ? `${item.thr_months_of_service} bulan`
-                                                        : '-'}
-                                                </td>
-                                                <td className="px-3 py-3 font-semibold">
-                                                    <span className="inline-flex items-center gap-1">
-                                                        <Sparkles className="size-4 text-emerald-600" />
-                                                        {formatCurrency(
-                                                            item.thr_amount ??
-                                                                null,
+                                        {sortedItems.map((item) => {
+                                            const empCode = item.employee_code || parseEmployeeLabel(item.employee_label).code;
+                                            const empName = item.employee_name || parseEmployeeLabel(item.employee_label).name;
+
+                                            return (
+                                                <tr
+                                                    key={item.id}
+                                                    className="border-b align-top"
+                                                >
+                                                    <td className="px-3 py-3 font-mono text-xs text-muted-foreground">
+                                                        {empCode}
+                                                    </td>
+                                                    <td className="sticky left-0 z-10 bg-background px-3 py-3 font-medium">
+                                                        <div className="leading-tight">
+                                                            <p className="text-sm font-medium">
+                                                                {empName}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {item.sub_company_label}
+                                                            </p>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3 py-3 text-xs">
+                                                        {item.division_name || '-'}
+                                                    </td>
+                                                    <td className="px-3 py-3 text-xs">
+                                                        <div>
+                                                            <span className="text-muted-foreground">Join: </span>
+                                                            <span>{item.hire_date || '-'}</span>
+                                                        </div>
+                                                        {item.offboarded_at && (
+                                                            <div className="text-[11px] font-medium text-red-600">
+                                                                Resign: {item.offboarded_at}
+                                                            </div>
                                                         )}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-3 text-right">
-                                                    <span className="text-xs text-muted-foreground">
-                                                        -
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                    </td>
+                                                    <td className="px-3 py-3 text-xs">
+                                                        {item.bank_name ? (
+                                                            <div>
+                                                                <p className="font-medium text-foreground">{item.bank_name}</p>
+                                                                <p className="font-mono text-muted-foreground">{item.account_number}</p>
+                                                                {item.account_holder_name && (
+                                                                    <p className="text-[11px] text-muted-foreground">a.n {item.account_holder_name}</p>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">-</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {formatCurrency(
+                                                            item.base_salary,
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {item.thr_months_of_service !=
+                                                        null
+                                                            ? `${item.thr_months_of_service} bulan`
+                                                            : '-'}
+                                                    </td>
+                                                    <td className="px-3 py-3 font-semibold">
+                                                        <span className="inline-flex items-center gap-1">
+                                                            <Sparkles className="size-4 text-emerald-600" />
+                                                            {formatCurrency(
+                                                                item.thr_amount ??
+                                                                    null,
+                                                            )}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-3 text-right">
+                                                        <span className="text-xs text-muted-foreground">
+                                                            -
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             ) : (
-                                <table className="w-full min-w-[1420px] text-sm">
+                                <table className="w-full min-w-[1700px] text-sm">
                                     <thead>
                                         <tr className="border-b text-left">
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('employee_code')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    ID
+                                                    {sortKey === 'employee_code' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
                                             <th className="sticky left-0 z-20 bg-background px-3 py-2">
-                                                Karyawan
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('employee')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Karyawan
+                                                    {sortKey === 'employee' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
                                             </th>
                                             <th className="px-3 py-2">
-                                                Gaji Pokok
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('division')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Divisi
+                                                    {sortKey === 'division' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
                                             </th>
                                             <th className="px-3 py-2">
-                                                Tunjangan
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('dates')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Tanggal
+                                                    {sortKey === 'dates' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
                                             </th>
                                             <th className="px-3 py-2">
-                                                Lembur
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('bank')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Rekening Bank
+                                                    {sortKey === 'bank' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
                                             </th>
-                                            <th className="px-3 py-2">PPh21</th>
                                             <th className="px-3 py-2">
-                                                Kasbon
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('base_salary')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Gaji Pokok
+                                                    {sortKey === 'base_salary' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
                                             </th>
-                                            <th className="px-3 py-2">Denda</th>
                                             <th className="px-3 py-2">
-                                                Cuti Tanpa Gaji
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('allowances_total')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Tunjangan
+                                                    {sortKey === 'allowances_total' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
                                             </th>
                                             <th className="px-3 py-2">
-                                                Total Potongan
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('overtime_pay')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Lembur
+                                                    {sortKey === 'overtime_pay' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
                                             </th>
                                             <th className="px-3 py-2">
-                                                Take Home Pay
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('pph21_rate')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    PPh21
+                                                    {sortKey === 'pph21_rate' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('bpjs')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    BPJS (Info)
+                                                    {sortKey === 'bpjs' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('kasbon_deduction')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Kasbon
+                                                    {sortKey === 'kasbon_deduction' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('denda_deduction')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Denda
+                                                    {sortKey === 'denda_deduction' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('unpaid_leave_deduction')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Cuti Tanpa Gaji
+                                                    {sortKey === 'unpaid_leave_deduction' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('deductions_total')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Total Potongan
+                                                    {sortKey === 'deductions_total' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('net_salary')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Take Home Pay
+                                                    {sortKey === 'net_salary' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
                                             </th>
                                             <th className="px-3 py-2 text-right">
                                                 Aksi
@@ -885,10 +1312,10 @@ export default function PayrollPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {items.length === 0 && (
+                                        {sortedItems.length === 0 && (
                                             <tr>
                                                 <td
-                                                    colSpan={10}
+                                                    colSpan={16}
                                                     className="px-3 py-8 text-center text-muted-foreground"
                                                 >
                                                     Belum ada data payroll di
@@ -896,264 +1323,207 @@ export default function PayrollPage() {
                                                 </td>
                                             </tr>
                                         )}
-                                        {items.map((item) => (
-                                            <tr
-                                                key={item.id}
-                                                className="border-b align-top"
-                                            >
-                                                <td className="sticky left-0 z-10 bg-background px-3 py-3 font-medium">
-                                                    <div className="leading-tight">
-                                                        <p className="text-sm font-medium">
-                                                            {
-                                                                parseEmployeeLabel(
-                                                                    item.employee_label,
-                                                                ).name
-                                                            }
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {
-                                                                parseEmployeeLabel(
-                                                                    item.employee_label,
-                                                                ).code
-                                                            }
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {
-                                                                item.sub_company_label
-                                                            }
-                                                        </p>
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <p>
-                                                        {formatCurrency(
-                                                            item.base_salary,
+                                        {sortedItems.map((item) => {
+                                            const empCode = item.employee_code || parseEmployeeLabel(item.employee_label).code;
+                                            const empName = item.employee_name || parseEmployeeLabel(item.employee_label).name;
+                                            const totalBpjsEmp = Number(item.bpjs_total_employee ?? 0);
+                                            const totalBpjsComp = Number(item.bpjs_total_company ?? 0);
+
+                                            return (
+                                                <tr
+                                                    key={item.id}
+                                                    className="border-b align-top"
+                                                >
+                                                    <td className="px-3 py-3 font-mono text-xs text-muted-foreground">
+                                                        {empCode}
+                                                    </td>
+                                                    <td className="sticky left-0 z-10 bg-background px-3 py-3 font-medium">
+                                                        <div className="leading-tight">
+                                                            <p className="text-sm font-medium">
+                                                                {empName}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {item.sub_company_label}
+                                                            </p>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3 py-3 text-xs">
+                                                        {item.division_name || '-'}
+                                                    </td>
+                                                    <td className="px-3 py-3 text-xs">
+                                                        <div>
+                                                            <span className="text-muted-foreground">Join: </span>
+                                                            <span>{item.hire_date || '-'}</span>
+                                                        </div>
+                                                        {item.offboarded_at && (
+                                                            <div className="text-[11px] font-medium text-red-600">
+                                                                Resign: {item.offboarded_at}
+                                                            </div>
                                                         )}
-                                                    </p>
-                                                    {item.is_prorated && (
-                                                        <Badge
-                                                            variant="outline"
-                                                            className="mt-1"
-                                                        >
-                                                            Prorata{' '}
-                                                            {
-                                                                item.proration_payable_days
-                                                            }
-                                                            /
-                                                            {
-                                                                item.proration_working_days
-                                                            }{' '}
-                                                            hari
-                                                        </Badge>
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <p className="font-medium">
-                                                        {formatCurrency(
-                                                            item.allowances_total,
+                                                    </td>
+                                                    <td className="px-3 py-3 text-xs">
+                                                        {item.bank_name ? (
+                                                            <div>
+                                                                <p className="font-medium text-foreground">{item.bank_name}</p>
+                                                                <p className="font-mono text-muted-foreground">{item.account_number}</p>
+                                                                {item.account_holder_name && (
+                                                                    <p className="text-[11px] text-muted-foreground">a.n {item.account_holder_name}</p>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">-</span>
                                                         )}
-                                                    </p>
-                                                    <div className="mt-1 flex flex-wrap gap-1">
-                                                        {Object.keys(
-                                                            item.allowance_breakdown ??
-                                                                {},
-                                                        ).length === 0 && (
-                                                            <span className="text-xs text-muted-foreground">
-                                                                Tanpa tunjangan
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        <p className="font-medium">
+                                                            {formatCurrency(
+                                                                item.base_salary,
+                                                            )}
+                                                        </p>
+                                                        {item.is_prorated && (
+                                                            <div className="mt-1 space-y-0.5">
+                                                                {item.unprorated_base_salary != null && (
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        Pokok: {formatCurrency(item.unprorated_base_salary)}
+                                                                    </p>
+                                                                )}
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="text-[10px]"
+                                                                >
+                                                                    Prorata{' '}
+                                                                    {item.proration_payable_days}
+                                                                    /
+                                                                    {item.proration_working_days}{' '}
+                                                                    hari
+                                                                </Badge>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        <p className="font-medium">
+                                                            {formatCurrency(
+                                                                item.allowances_total,
+                                                            )}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {Number(
+                                                            item.overtime_pay ?? 0,
+                                                        ) > 0 ? (
+                                                            formatCurrency(
+                                                                item.overtime_pay,
+                                                            )
+                                                        ) : (
+                                                            <span className="text-muted-foreground">
+                                                                -
                                                             </span>
                                                         )}
-                                                        {Object.entries(
-                                                            item.allowance_breakdown ??
-                                                                {},
-                                                        ).map(
-                                                            ([
-                                                                name,
-                                                                amount,
-                                                            ]) => (
-                                                                <Badge
-                                                                    key={`${item.id}-${name}`}
-                                                                    variant="secondary"
-                                                                    className="text-[11px]"
-                                                                >
-                                                                    <Coins className="size-3" />
-                                                                    {name}:{' '}
-                                                                    {formatCurrency(
-                                                                        amount,
-                                                                    )}
-                                                                </Badge>
-                                                            ),
-                                                        )}
-                                                        {Object.entries(
-                                                            item.variable_allowance_breakdown ??
-                                                                {},
-                                                        ).map(
-                                                            ([
-                                                                name,
-                                                                amount,
-                                                            ]) => (
-                                                                <Badge
-                                                                    key={`${item.id}-variable-${name}`}
-                                                                    variant="secondary"
-                                                                    className="font-normal"
-                                                                >
-                                                                    Tidak tetap:{' '}
-                                                                    {name}{' '}
-                                                                    {formatCurrency(
-                                                                        amount,
-                                                                    )}
-                                                                </Badge>
-                                                            ),
-                                                        )}
-                                                        {Object.entries(
-                                                            item.bonus_breakdown ??
-                                                                {},
-                                                        ).map(
-                                                            ([
-                                                                name,
-                                                                amount,
-                                                            ]) => (
-                                                                <Badge
-                                                                    key={`${item.id}-bonus-${name}`}
-                                                                    variant="outline"
-                                                                    className="font-normal"
-                                                                >
-                                                                    Bonus:{' '}
-                                                                    {name}{' '}
-                                                                    {formatCurrency(
-                                                                        amount,
-                                                                    )}
-                                                                </Badge>
-                                                            ),
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {Number(
-                                                        item.overtime_pay ?? 0,
-                                                    ) > 0 ? (
-                                                        formatCurrency(
-                                                            item.overtime_pay,
-                                                        )
-                                                    ) : (
-                                                        <span className="text-muted-foreground">
-                                                            -
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <div className="space-y-1">
+                                                    </td>
+                                                    <td className="px-3 py-3">
                                                         <p className="font-medium">
-                                                            {pph21Label(
-                                                                item.pph21_method,
-                                                            )}{' '}
-                                                            · Nominal{' '}
                                                             {formatCurrency(
-                                                                item.pph21_rate ??
-                                                                    0,
+                                                                item.pph21_rate ?? 0,
                                                             )}
                                                         </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Potongan:{' '}
-                                                            {formatCurrency(
-                                                                item.pph21_deduction,
-                                                            )}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Tunjangan:{' '}
-                                                            {formatCurrency(
-                                                                item.pph21_allowance,
-                                                            )}
-                                                        </p>
-                                                        {Number(
-                                                            item.pph21_company_borne ??
-                                                                0,
-                                                        ) > 0 ? (
-                                                            <p className="text-xs text-muted-foreground">
-                                                                Ditanggung
-                                                                perusahaan:{' '}
-                                                                {formatCurrency(
-                                                                    item.pph21_company_borne,
-                                                                )}
-                                                            </p>
-                                                        ) : null}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {formatCurrency(
-                                                        item.kasbon_deduction,
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {formatCurrency(
-                                                        item.denda_deduction,
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {formatCurrency(
-                                                        item.unpaid_leave_deduction,
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {formatCurrency(
-                                                        item.deductions_total,
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3 font-semibold">
-                                                    <span className="inline-flex items-center gap-1">
-                                                        <Sparkles className="size-4 text-emerald-600" />
-                                                        {formatCurrency(
-                                                            item.net_salary,
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {pph21Label(item.pph21_method)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {totalBpjsEmp > 0 || totalBpjsComp > 0 ? (
+                                                            <div className="space-y-0.5 text-xs">
+                                                                <p className="font-medium text-foreground">
+                                                                    {formatCurrency(totalBpjsEmp + totalBpjsComp)}
+                                                                </p>
+                                                                <p className="text-[11px] text-muted-foreground">
+                                                                    Karyawan: {formatCurrency(totalBpjsEmp)}
+                                                                </p>
+                                                                <p className="text-[11px] text-muted-foreground">
+                                                                    Perusahaan: {formatCurrency(totalBpjsComp)}
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">-</span>
                                                         )}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-3 text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            type="button"
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() =>
-                                                                startEditItem(
-                                                                    item,
-                                                                )
-                                                            }
-                                                            disabled={
-                                                                run?.is_saved
-                                                            }
-                                                            className="whitespace-nowrap"
-                                                        >
-                                                            <Pencil className="size-4" />
-                                                            Edit
-                                                        </Button>
-                                                        <Button
-                                                            type="button"
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() =>
-                                                                handleSendPayslip(
-                                                                    item,
-                                                                )
-                                                            }
-                                                            disabled={
-                                                                !run?.is_saved ||
-                                                                !item.can_send_payslip ||
-                                                                sendingPayslipItemIds.includes(
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {formatCurrency(
+                                                            item.kasbon_deduction,
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {formatCurrency(
+                                                            item.denda_deduction,
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {formatCurrency(
+                                                            item.unpaid_leave_deduction,
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {formatCurrency(
+                                                            item.deductions_total,
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-3 font-semibold">
+                                                        <span className="inline-flex items-center gap-1">
+                                                            <Sparkles className="size-4 text-emerald-600" />
+                                                            {formatCurrency(
+                                                                item.net_salary,
+                                                            )}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-3 text-right">
+                                                        <div className="flex justify-end gap-2">
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() =>
+                                                                    startEditItem(
+                                                                        item,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    run?.is_saved
+                                                                }
+                                                                className="whitespace-nowrap"
+                                                            >
+                                                                <Pencil className="size-4" />
+                                                                Edit
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() =>
+                                                                    handleSendPayslip(
+                                                                        item,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    !run?.is_saved ||
+                                                                    !item.can_send_payslip ||
+                                                                    sendingPayslipItemIds.includes(
+                                                                        item.id,
+                                                                    )
+                                                                }
+                                                                className="whitespace-nowrap"
+                                                            >
+                                                                <Send className="size-4" />
+                                                                {sendingPayslipItemIds.includes(
                                                                     item.id,
                                                                 )
-                                                            }
-                                                            className="whitespace-nowrap"
-                                                        >
-                                                            <Send className="size-4" />
-                                                            {sendingPayslipItemIds.includes(
-                                                                item.id,
-                                                            )
-                                                                ? 'Queue...'
-                                                                : 'Kirim WA'}
-                                                        </Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                                    ? 'Queue...'
+                                                                    : 'Kirim WA'}
+                                                            </Button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             )}

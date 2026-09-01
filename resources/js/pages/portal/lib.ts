@@ -162,10 +162,10 @@ export const statusLabels: Record<string, string> = {
 };
 
 export const leaveTypeLabels: Record<string, string> = {
-    annual: 'Cuti tahunan',
-    sick: 'Cuti sakit',
-    unpaid: 'Cuti tanpa gaji',
-    other: 'Cuti lainnya',
+    annual: 'Cuti Tahunan (Annual Leave)',
+    sick: 'Izin Sakit (Sick Leave)',
+    unpaid: 'Izin (Unpaid Leave)',
+    other: 'Cuti Khusus (Special Leave)',
 };
 
 export const translatePortalError = (

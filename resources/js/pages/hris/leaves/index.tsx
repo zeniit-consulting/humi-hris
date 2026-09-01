@@ -127,10 +127,10 @@ const statusLabelMap: Record<string, string> = {
 };
 
 const typeLabelMap: Record<string, string> = {
-    annual: 'Tahunan',
-    sick: 'Sakit',
-    unpaid: 'Tidak Dibayar',
-    other: 'Lainnya',
+    annual: 'Cuti Tahunan (Annual Leave)',
+    sick: 'Izin Sakit (Sick Leave)',
+    unpaid: 'Izin (Unpaid Leave)',
+    other: 'Cuti Khusus (Special Leave)',
 };
 
 export default function LeavePage() {

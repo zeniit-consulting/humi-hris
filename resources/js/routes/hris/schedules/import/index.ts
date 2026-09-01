@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::template
-* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @see app/Http/Controllers/Hris/ScheduleController.php:422
 * @route '/hris/schedules/import/template'
 */
 export const template = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ template.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::template
-* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @see app/Http/Controllers/Hris/ScheduleController.php:422
 * @route '/hris/schedules/import/template'
 */
 template.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ template.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::template
-* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @see app/Http/Controllers/Hris/ScheduleController.php:422
 * @route '/hris/schedules/import/template'
 */
 template.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ template.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::template
-* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @see app/Http/Controllers/Hris/ScheduleController.php:422
 * @route '/hris/schedules/import/template'
 */
 template.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ template.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::template
-* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @see app/Http/Controllers/Hris/ScheduleController.php:422
 * @route '/hris/schedules/import/template'
 */
 const templateForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const templateForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::template
-* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @see app/Http/Controllers/Hris/ScheduleController.php:422
 * @route '/hris/schedules/import/template'
 */
 templateForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ templateForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\ScheduleController::template
-* @see app/Http/Controllers/Hris/ScheduleController.php:418
+* @see app/Http/Controllers/Hris/ScheduleController.php:422
 * @route '/hris/schedules/import/template'
 */
 templateForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
