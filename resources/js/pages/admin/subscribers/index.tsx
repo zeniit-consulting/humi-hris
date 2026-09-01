@@ -161,9 +161,22 @@ export default function SubscriberManagementPage() {
             new Date().toISOString().slice(0, 10),
         trial_ends_at: selectedSubscriber?.subscription?.trial_ends_at ?? '',
     });
+
     const suspendForm = useForm({
         reason: '',
     });
+
+    useEffect(() => {
+        if (!selectedSubscriber) {
+            setSelectedSubscriber(subscribers[0] ?? null);
+            return;
+        }
+
+        const updated = subscribers.find((s) => s.id === selectedSubscriber.id);
+        if (updated) {
+            setSelectedSubscriber(updated);
+        }
+    }, [subscribers]);
 
     useEffect(() => {
         if (!selectedSubscriber) {
@@ -184,7 +197,8 @@ export default function SubscriberManagementPage() {
                 new Date().toISOString().slice(0, 10),
             trial_ends_at: selectedSubscriber.subscription?.trial_ends_at ?? '',
         });
-    }, [selectedSubscriber, subscriptionForm]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedSubscriber?.id, selectedSubscriber?.subscription]);
 
     const handleFilterSubmit = (event: FormEvent) => {
         event.preventDefault();
@@ -544,17 +558,33 @@ export default function SubscriberManagementPage() {
                                                         subscriptionForm.data
                                                             .status
                                                     }
-                                                    onChange={(event) =>
-                                                        subscriptionForm.setData(
-                                                            'status',
-                                                            event.target
-                                                                .value as
-                                                                | 'trial'
-                                                                | 'active'
-                                                                | 'expired'
-                                                                | 'cancelled',
-                                                        )
-                                                    }
+                                                    onChange={(event) => {
+                                                        const newStatus = event.target.value as
+                                                            | 'trial'
+                                                            | 'active'
+                                                            | 'expired'
+                                                            | 'cancelled';
+
+                                                        const todayStr = new Date().toISOString().slice(0, 10);
+                                                        const nextMonth = new Date();
+                                                        nextMonth.setMonth(nextMonth.getMonth() + 1);
+                                                        const nextMonthStr = nextMonth.toISOString().slice(0, 10);
+
+                                                        // If changing from expired/cancelled to active/trial and end date is expired, auto-extend period end
+                                                        const isPastEnd = !subscriptionForm.data.current_period_end || subscriptionForm.data.current_period_end < todayStr;
+
+                                                        if ((newStatus === 'active' || newStatus === 'trial') && isPastEnd) {
+                                                            subscriptionForm.setData((prev) => ({
+                                                                ...prev,
+                                                                status: newStatus,
+                                                                current_period_start: prev.current_period_start || todayStr,
+                                                                current_period_end: nextMonthStr,
+                                                                trial_ends_at: newStatus === 'trial' ? (prev.trial_ends_at || nextMonthStr) : prev.trial_ends_at,
+                                                            }));
+                                                        } else {
+                                                            subscriptionForm.setData('status', newStatus);
+                                                        }
+                                                    }}
                                                     className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                                                 >
                                                     <option value="trial">
