@@ -29,7 +29,6 @@ import {
     serializeWebPushSubscription,
     webPushIsSupported,
 } from './lib/web-push';
-import { extractFaceDescriptor, loadFaceRecognitionModels } from '@/lib/face-recognition';
 import { PortalShell } from './shell';
 
 // Hallmark · genre: modern-minimal · macrostructure: Long Document · theme: Quiet · enrichment: none
@@ -448,6 +447,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
             const base64Photo = canvas.toDataURL('image/jpeg', 0.85);
 
             setFaceModelLoading(true);
+            const { extractFaceDescriptor } = await import('@/lib/face-recognition');
             const faceResult = await extractFaceDescriptor(img);
             URL.revokeObjectURL(objectUrl);
 

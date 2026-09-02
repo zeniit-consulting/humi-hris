@@ -9,11 +9,6 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapboxLocationMap } from '@/components/mapbox-location-map';
 import {
-    extractFaceDescriptor,
-    loadFaceRecognitionModels,
-    matchFace,
-} from '@/lib/face-recognition';
-import {
     notifyPortal,
     notifyPortalAfterRedirect,
     localDateString,
@@ -359,6 +354,7 @@ export function PortalAttendanceLocationPage({
             setFaceStatusMessage('Memulai kamera & memuat model AI...');
             setIsCameraActive(true);
 
+            const { loadFaceRecognitionModels } = await import('@/lib/face-recognition');
             await loadFaceRecognitionModels();
 
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -411,6 +407,7 @@ export function PortalAttendanceLocationPage({
             }
 
             try {
+                const { extractFaceDescriptor, matchFace } = await import('@/lib/face-recognition');
                 const faceResult = await extractFaceDescriptor(videoRef.current);
 
                 if (!faceResult) {
