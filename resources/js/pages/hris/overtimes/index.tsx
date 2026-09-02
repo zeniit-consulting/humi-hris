@@ -28,6 +28,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SearchableSelect from '@/components/ui/searchable-select';
@@ -103,7 +104,9 @@ type OvertimeFormData = {
 type Filters = {
     status: string;
     employee_id: string;
-    date: string;
+    date?: string;
+    start_date?: string;
+    end_date?: string;
 };
 
 type PageProps = {
@@ -262,7 +265,8 @@ export default function OvertimePage() {
 
     const overtimeExportQuery = new URLSearchParams(
         Object.entries({
-            date: filterState.date,
+            start_date: filterState.start_date ?? filterState.date ?? '',
+            end_date: filterState.end_date ?? filterState.date ?? '',
             employee_id: filterState.employee_id,
             status: filterState.status,
         }).filter(([, value]) => value !== ''),
@@ -272,6 +276,12 @@ export default function OvertimePage() {
         overtimeExportQuery === ''
             ? '/hris/overtimes/export'
             : `/hris/overtimes/export?${overtimeExportQuery}`;
+
+    const dateRangeDisplay = filterState.start_date && filterState.end_date
+        ? filterState.start_date === filterState.end_date
+            ? filterState.start_date
+            : `${filterState.start_date} s/d ${filterState.end_date}`
+        : filterState.date || 'Semua';
 
     return (
         <AppLayout
@@ -312,25 +322,25 @@ export default function OvertimePage() {
                     <CardContent>
                         <form
                             onSubmit={applyFilter}
-                            className="grid gap-3 md:grid-cols-[220px_220px_160px_auto]"
+                            className="grid gap-3 md:grid-cols-[240px_220px_160px_auto]"
                         >
                             <div className="grid gap-2">
-                                <Label htmlFor="filter_date">Tanggal</Label>
-                                <div className="relative">
-                                    <CalendarDays className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        id="filter_date"
-                                        type="date"
-                                        value={filterState.date}
-                                        onChange={(event) =>
-                                            setFilterState((prev) => ({
-                                                ...prev,
-                                                date: event.target.value,
-                                            }))
-                                        }
-                                        className="pl-9"
-                                    />
-                                </div>
+                                <Label htmlFor="filter_date">Rentang Tanggal</Label>
+                                <DateRangePicker
+                                    value={{
+                                        from: filterState.start_date ?? filterState.date,
+                                        to: filterState.end_date ?? filterState.date,
+                                    }}
+                                    onChange={(range) => {
+                                        setFilterState((prev) => ({
+                                            ...prev,
+                                            start_date: range.from,
+                                            end_date: range.to ?? range.from,
+                                            date: range.from,
+                                        }));
+                                    }}
+                                    placeholder="Semua tanggal..."
+                                />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="filter_employee">
@@ -412,10 +422,10 @@ export default function OvertimePage() {
                                     type="button"
                                     variant="outline"
                                     onClick={() => {
-                                        const reset = {
-                                            date: new Date()
-                                                .toISOString()
-                                                .slice(0, 10),
+                                        const reset: Filters = {
+                                            date: '',
+                                            start_date: '',
+                                            end_date: '',
                                             employee_id: '',
                                             status: '',
                                         };
@@ -444,7 +454,7 @@ export default function OvertimePage() {
                         <div>
                             <CardTitle>Daftar Lembur</CardTitle>
                             <CardDescription>
-                                Tanggal aktif: {filterState.date}
+                                Rentang tanggal aktif: {dateRangeDisplay}
                             </CardDescription>
                         </div>
                         <Button asChild size="sm" variant="outline">

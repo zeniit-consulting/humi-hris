@@ -32,22 +32,29 @@ class LeaveController extends Controller
             'status' => ['nullable', 'string'],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
-        $activeDate = Carbon::parse($validated['date'] ?? today())->toDateString();
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
 
         $filters = [
             'status' => $validated['status'] ?? '',
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
-            'date' => $activeDate,
+            'date' => $startDate ?? '',
+            'start_date' => $startDate ?? '',
+            'end_date' => $endDate ?? '',
         ];
 
         $leaves = LeaveRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']))
-            ->whereDate('start_date', '<=', $filters['date'])
-            ->whereDate('end_date', '>=', $filters['date'])
+            ->when($filters['start_date'] !== '' && $filters['end_date'] !== '', function ($query) use ($filters) {
+                $query->whereDate('start_date', '<=', $filters['end_date'])
+                    ->whereDate('end_date', '>=', $filters['start_date']);
+            })
             ->orderByDesc('start_date')
             ->paginate(12)
             ->withQueryString()
@@ -97,12 +104,19 @@ class LeaveController extends Controller
             'status' => ['nullable', Rule::in(['pending', 'approved', 'rejected', 'cancelled'])],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
+
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
 
         $filters = [
             'status' => $validated['status'] ?? 'pending',
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
-            'date' => $validated['date'] ?? '',
+            'date' => $startDate ?? '',
+            'start_date' => $startDate ?? '',
+            'end_date' => $endDate ?? '',
         ];
 
         $leaves = LeaveRequest::query()
@@ -110,7 +124,10 @@ class LeaveController extends Controller
             ->where('user_id', $ownerId)
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']))
-            ->when($filters['date'] !== '', fn ($query) => $query->whereDate('start_date', '<=', $filters['date'])->whereDate('end_date', '>=', $filters['date']))
+            ->when($filters['start_date'] !== '' && $filters['end_date'] !== '', function ($query) use ($filters) {
+                $query->whereDate('start_date', '<=', $filters['end_date'])
+                    ->whereDate('end_date', '>=', $filters['start_date']);
+            })
             ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
             ->orderByDesc('start_date')
             ->paginate(15)
@@ -127,28 +144,20 @@ class LeaveController extends Controller
                 'total_days' => $leave->total_days,
                 'reason' => $leave->reason,
                 'status' => $leave->status,
-                'approval_stage' => $leave->approval_stage,
-                'first_approved_by' => $leave->firstApprover?->name,
-                'first_approved_at' => $leave->first_approved_at?->toIso8601String(),
-                'approved_by' => $leave->approver?->name,
-                'approved_at' => $leave->approved_at?->toIso8601String(),
                 'rejection_reason' => $leave->rejection_reason,
-                'created_at' => $leave->created_at?->toIso8601String(),
+                'approver_name' => $leave->approver?->name,
+                'approved_at' => $leave->approved_at?->format('Y-m-d H:i'),
+                'approval_step' => $leave->approval_step,
+                'first_approver_name' => $leave->firstApprover?->name,
+                'first_approved_at' => $leave->first_approved_at?->format('Y-m-d H:i'),
             ]);
 
         $employees = Employee::query()
-            ->where('user_id', $ownerId)
             ->where('is_active', true)
             ->where('employment_status', '!=', 'resigned')
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get(['id', 'employee_code', 'first_name', 'last_name']);
-
-        $stats = LeaveRequest::query()
-            ->where('user_id', $ownerId)
-            ->selectRaw('status, COUNT(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
 
         return Inertia::render('hris/leave-approvals/index', [
             'leaves' => $leaves,
@@ -159,9 +168,9 @@ class LeaveController extends Controller
             'filters' => $filters,
             'statusOptions' => ['pending', 'approved', 'rejected', 'cancelled'],
             'stats' => [
-                'pending' => (int) ($stats['pending'] ?? 0),
-                'approved' => (int) ($stats['approved'] ?? 0),
-                'rejected' => (int) ($stats['rejected'] ?? 0),
+                'pending' => LeaveRequest::query()->where('user_id', $ownerId)->where('status', 'pending')->count(),
+                'approved' => LeaveRequest::query()->where('user_id', $ownerId)->where('status', 'approved')->count(),
+                'rejected' => LeaveRequest::query()->where('user_id', $ownerId)->where('status', 'rejected')->count(),
             ],
             'approvalLevels' => (int) (app(LeaveBalanceService::class)->getPolicy(User::findOrFail($ownerId), 'annual')?->approval_levels ?? 1),
         ]);
@@ -324,20 +333,29 @@ class LeaveController extends Controller
             'status' => ['nullable', 'string'],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
+
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
 
         $filters = [
             'status' => $validated['status'] ?? '',
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
-            'date' => Carbon::parse($validated['date'] ?? today())->toDateString(),
+            'date' => $startDate ?? '',
+            'start_date' => $startDate ?? '',
+            'end_date' => $endDate ?? '',
         ];
 
         $rows = LeaveRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']))
-            ->whereDate('start_date', '<=', $filters['date'])
-            ->whereDate('end_date', '>=', $filters['date'])
+            ->when($filters['start_date'] !== '' && $filters['end_date'] !== '', function ($query) use ($filters) {
+                $query->whereDate('start_date', '<=', $filters['end_date'])
+                    ->whereDate('end_date', '>=', $filters['start_date']);
+            })
             ->orderByDesc('start_date')
             ->get();
 

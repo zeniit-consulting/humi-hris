@@ -20,6 +20,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SearchableSelect from '@/components/ui/searchable-select';
@@ -36,7 +37,13 @@ import type { BreadcrumbItem } from '@/types';
 type LinkItem = { url: string | null; label: string; active: boolean };
 type Paginator<T> = { data: T[]; links: LinkItem[]; total: number };
 type EmployeeOption = { id: number; label: string };
-type Filters = { status: string; employee_id: string; date: string };
+type Filters = {
+    status: string;
+    employee_id: string;
+    date?: string;
+    start_date?: string;
+    end_date?: string;
+};
 type LeaveRow = {
     id: number;
     employee_label: string;
@@ -114,7 +121,13 @@ export default function LeaveApprovalPage() {
     };
 
     const resetFilter = () => {
-        const reset = { status: 'pending', employee_id: '', date: '' };
+        const reset: Filters = {
+            status: 'pending',
+            employee_id: '',
+            date: '',
+            start_date: '',
+            end_date: '',
+        };
         setFilterState(reset);
         router.get(pageUrl, reset, {
             preserveState: true,
@@ -136,7 +149,14 @@ export default function LeaveApprovalPage() {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout
+            breadcrumbs={breadcrumbs}
+            headerActions={
+                <Button asChild size="sm" variant="outline">
+                    <Link href="/hris/leaves">Kelola Cuti</Link>
+                </Button>
+            }
+        >
             <Head title="Approval Cuti" />
             <div className="space-y-4 p-4">
                 <div className="grid gap-4 md:grid-cols-3">
@@ -166,25 +186,25 @@ export default function LeaveApprovalPage() {
                     <CardContent>
                         <form
                             onSubmit={applyFilter}
-                            className="grid gap-3 md:grid-cols-[220px_220px_170px_auto]"
+                            className="grid gap-3 md:grid-cols-[240px_220px_170px_auto]"
                         >
                             <div className="grid gap-2">
-                                <Label htmlFor="date">Tanggal</Label>
-                                <div className="relative">
-                                    <CalendarDays className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        id="date"
-                                        type="date"
-                                        value={filterState.date}
-                                        onChange={(e) =>
-                                            setFilterState((p) => ({
-                                                ...p,
-                                                date: e.target.value,
-                                            }))
-                                        }
-                                        className="pl-9"
-                                    />
-                                </div>
+                                <Label htmlFor="date">Rentang Tanggal</Label>
+                                <DateRangePicker
+                                    value={{
+                                        from: filterState.start_date ?? filterState.date,
+                                        to: filterState.end_date ?? filterState.date,
+                                    }}
+                                    onChange={(range) => {
+                                        setFilterState((p) => ({
+                                            ...p,
+                                            start_date: range.from,
+                                            end_date: range.to ?? range.from,
+                                            date: range.from,
+                                        }));
+                                    }}
+                                    placeholder="Semua tanggal..."
+                                />
                             </div>
                             <div className="grid gap-2">
                                 <Label>Karyawan</Label>

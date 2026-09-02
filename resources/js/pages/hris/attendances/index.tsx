@@ -30,6 +30,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SearchableSelect from '@/components/ui/searchable-select';
@@ -96,7 +97,9 @@ type AttendanceFormData = {
 };
 
 type Filters = {
-    date: string;
+    date?: string;
+    start_date?: string;
+    end_date?: string;
     status: string;
     employee_id: string;
     sort_by: 'employee' | 'check_in_at' | 'check_out_at';
@@ -262,7 +265,8 @@ export default function AttendancePage() {
 
     const attendanceExportQuery = new URLSearchParams(
         Object.entries({
-            date: filterState.date,
+            start_date: filterState.start_date ?? filterState.date ?? '',
+            end_date: filterState.end_date ?? filterState.date ?? '',
             status: filterState.status,
             employee_id: filterState.employee_id,
             sort_by: filterState.sort_by,
@@ -276,6 +280,12 @@ export default function AttendancePage() {
             ? '/hris/attendances/export'
             : `/hris/attendances/export?${attendanceExportQuery}`;
 
+    const dateRangeDisplay = filterState.start_date && filterState.end_date
+        ? filterState.start_date === filterState.end_date
+            ? filterState.start_date
+            : `${filterState.start_date} s/d ${filterState.end_date}`
+        : filterState.date ?? '-';
+
     return (
         <AppLayout
             breadcrumbs={breadcrumbs}
@@ -287,7 +297,7 @@ export default function AttendancePage() {
                         onClick={() =>
                             router.post(
                                 '/hris/attendances/sync-missing-checkouts',
-                                { date: filterState.date },
+                                { date: filterState.start_date ?? filterState.date },
                                 { preserveScroll: true },
                             )
                         }
@@ -347,25 +357,25 @@ export default function AttendancePage() {
                     <CardContent>
                         <form
                             onSubmit={applyFilter}
-                            className="grid gap-3 md:grid-cols-[200px_220px_220px_auto]"
+                            className="grid gap-3 md:grid-cols-[240px_200px_220px_auto]"
                         >
                             <div className="grid gap-2">
-                                <Label htmlFor="filter_date">Tanggal</Label>
-                                <div className="relative">
-                                    <CalendarDays className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        id="filter_date"
-                                        type="date"
-                                        value={filterState.date}
-                                        onChange={(event) =>
-                                            setFilterState((prev) => ({
-                                                ...prev,
-                                                date: event.target.value,
-                                            }))
-                                        }
-                                        className="pl-9"
-                                    />
-                                </div>
+                                <Label htmlFor="filter_date">Rentang Tanggal</Label>
+                                <DateRangePicker
+                                    value={{
+                                        from: filterState.start_date ?? filterState.date,
+                                        to: filterState.end_date ?? filterState.date,
+                                    }}
+                                    onChange={(range) => {
+                                        setFilterState((prev) => ({
+                                            ...prev,
+                                            start_date: range.from,
+                                            end_date: range.to ?? range.from,
+                                            date: range.from,
+                                        }));
+                                    }}
+                                    placeholder="Pilih rentang tanggal..."
+                                />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="filter_status">Status</Label>
@@ -447,11 +457,14 @@ export default function AttendancePage() {
                                     type="button"
                                     variant="outline"
                                     onClick={() => {
-                                        const reset = {
+                                        const todayStr = new Date()
+                                            .toISOString()
+                                            .slice(0, 10);
+                                        const reset: Filters = {
                                             ...filterState,
-                                            date: new Date()
-                                                .toISOString()
-                                                .slice(0, 10),
+                                            date: todayStr,
+                                            start_date: todayStr,
+                                            end_date: todayStr,
                                             status: '',
                                             employee_id: '',
                                         };
@@ -480,7 +493,7 @@ export default function AttendancePage() {
                         <div>
                             <CardTitle>Daftar Kehadiran</CardTitle>
                             <CardDescription>
-                                Tanggal aktif: {filterState.date}
+                                Rentang tanggal aktif: {dateRangeDisplay}
                             </CardDescription>
                         </div>
                         <Button asChild size="sm" variant="outline">

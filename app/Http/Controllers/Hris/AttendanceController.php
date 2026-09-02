@@ -30,6 +30,8 @@ class AttendanceController extends Controller
 
         $validated = $request->validate([
             'date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'status' => ['nullable', 'string'],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'sort_by' => ['nullable', 'in:employee,check_in_at,check_out_at'],
@@ -41,10 +43,13 @@ class AttendanceController extends Controller
             ->orderBy('last_name')
             ->get(['id', 'employee_code', 'first_name', 'last_name']);
 
-        $activeDate = $validated['date'] ?? today()->toDateString();
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? today()->toDateString();
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
 
         $filters = [
-            'date' => $activeDate,
+            'date' => $startDate,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'status' => $validated['status'] ?? '',
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
             'sort_by' => $validated['sort_by'] ?? 'employee',
@@ -53,7 +58,11 @@ class AttendanceController extends Controller
 
         $attendancesQuery = EmployeeAttendance::query()
             ->with('employee:id,employee_code,first_name,last_name')
-            ->whereDate('attendance_date', $filters['date'])
+            ->when(
+                $filters['start_date'] === $filters['end_date'],
+                fn ($query) => $query->whereDate('attendance_date', $filters['start_date']),
+                fn ($query) => $query->whereBetween('attendance_date', [$filters['start_date'], $filters['end_date']]),
+            )
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']));
 
@@ -66,7 +75,7 @@ class AttendanceController extends Controller
                 ->orderByRaw('check_out_at IS NULL')
                 ->orderBy('check_out_at', $filters['sort_dir']);
         } else {
-            $attendancesQuery->orderBy('employee_id', $filters['sort_dir']);
+            $attendancesQuery->orderBy('attendance_date', 'desc')->orderBy('employee_id', $filters['sort_dir']);
         }
 
         $attendancesPaginator = $attendancesQuery
@@ -81,26 +90,32 @@ class AttendanceController extends Controller
         $shiftByEmployee = $employeeIds->isEmpty()
             ? collect()
             : EmployeeSchedule::query()
-                ->whereDate('work_date', $filters['date'])
+                ->whereBetween('work_date', [$filters['start_date'], $filters['end_date']])
                 ->whereIn('employee_id', $employeeIds)
-                ->pluck('shift_code', 'employee_id');
+                ->get()
+                ->groupBy(fn (EmployeeSchedule $s) => $s->employee_id.'_'.$s->work_date->toDateString());
 
-        $attendances = $attendancesPaginator->through(fn (EmployeeAttendance $attendance) => [
-            'id' => $attendance->id,
-            'employee_id' => $attendance->employee_id,
-            'employee_label' => $attendance->employee
-                ? $attendance->employee->employee_code.' - '.$attendance->employee->full_name
-                : '-',
-            'attendance_date' => $attendance->attendance_date->format('Y-m-d'),
-            'timezone' => $attendance->timezone,
-            'shift_name' => (string) ($shiftByEmployee->get($attendance->employee_id) ?? 'OFF'),
-            'status' => $attendance->status,
-            'late_minutes' => $attendance->late_minutes,
-            'late_level' => $attendance->late_level,
-            'check_in_at' => $attendance->check_in_at?->toIso8601String(),
-            'check_out_at' => $attendance->check_out_at?->toIso8601String(),
-            'notes' => $attendance->notes,
-        ]);
+        $attendances = $attendancesPaginator->through(function (EmployeeAttendance $attendance) use ($shiftByEmployee) {
+            $dateStr = $attendance->attendance_date->format('Y-m-d');
+            $shiftSchedule = $shiftByEmployee->get($attendance->employee_id.'_'.$dateStr)?->first();
+
+            return [
+                'id' => $attendance->id,
+                'employee_id' => $attendance->employee_id,
+                'employee_label' => $attendance->employee
+                    ? $attendance->employee->employee_code.' - '.$attendance->employee->full_name
+                    : '-',
+                'attendance_date' => $dateStr,
+                'timezone' => $attendance->timezone,
+                'shift_name' => (string) ($shiftSchedule?->shift_code ?? 'OFF'),
+                'status' => $attendance->status,
+                'late_minutes' => $attendance->late_minutes,
+                'late_level' => $attendance->late_level,
+                'check_in_at' => $attendance->check_in_at?->toIso8601String(),
+                'check_out_at' => $attendance->check_out_at?->toIso8601String(),
+                'notes' => $attendance->notes,
+            ];
+        });
 
         $todaySummaryRows = EmployeeAttendance::query()
             ->selectRaw('status, COUNT(*) as total')
@@ -297,14 +312,21 @@ class AttendanceController extends Controller
 
         $validated = $request->validate([
             'date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'status' => ['nullable', 'string'],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'sort_by' => ['nullable', 'in:employee,check_in_at,check_out_at'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
         ]);
 
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? today()->toDateString();
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
+
         $filters = [
-            'date' => $validated['date'] ?? today()->toDateString(),
+            'date' => $startDate,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'status' => $validated['status'] ?? '',
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
             'sort_by' => $validated['sort_by'] ?? 'employee',
@@ -313,7 +335,11 @@ class AttendanceController extends Controller
 
         $query = EmployeeAttendance::query()
             ->with('employee:id,employee_code,first_name,last_name')
-            ->whereDate('attendance_date', $filters['date'])
+            ->when(
+                $filters['start_date'] === $filters['end_date'],
+                fn ($builder) => $builder->whereDate('attendance_date', $filters['start_date']),
+                fn ($builder) => $builder->whereBetween('attendance_date', [$filters['start_date'], $filters['end_date']]),
+            )
             ->when($filters['status'] !== '', fn ($builder) => $builder->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($builder) => $builder->where('employee_id', $filters['employee_id']));
 
@@ -322,7 +348,7 @@ class AttendanceController extends Controller
         } elseif ($filters['sort_by'] === 'check_out_at') {
             $query->orderByRaw('check_out_at IS NULL')->orderBy('check_out_at', $filters['sort_dir']);
         } else {
-            $query->orderBy('employee_id', $filters['sort_dir']);
+            $query->orderBy('attendance_date', 'desc')->orderBy('employee_id', $filters['sort_dir']);
         }
 
         $rows = $query->get();
@@ -343,6 +369,9 @@ class AttendanceController extends Controller
                 'on_leave' => 'Cuti',
                 'absent' => 'Absen',
             ];
+            $dateRangeLabel = $filters['start_date'] === $filters['end_date']
+                ? $filters['start_date']
+                : "{$filters['start_date']} s/d {$filters['end_date']}";
 
             echo '<!DOCTYPE html><html><head><meta charset="UTF-8">';
             echo '<style>
@@ -362,7 +391,7 @@ class AttendanceController extends Controller
             echo '<tr><td class="company" colspan="7">'.$escape($companyName).'</td></tr>';
             echo '<tr><td colspan="7">'.nl2br($escape($companyDetails)).'</td></tr>';
             echo '<tr><td class="title" colspan="7">Laporan Kehadiran</td></tr>';
-            echo '<tr><td class="meta" colspan="7">Tanggal laporan: '.$escape($filters['date']).'</td></tr>';
+            echo '<tr><td class="meta" colspan="7">Tanggal laporan: '.$escape($dateRangeLabel).'</td></tr>';
             echo '<tr><td class="meta" colspan="7">Status: '.$escape($filters['status'] !== '' ? ($statusLabels[$filters['status']] ?? $filters['status']) : 'Semua').'</td></tr>';
             echo '<tr><td class="meta" colspan="7">Timezone: '.$escape($timezone).'</td></tr>';
             echo '<tr><td class="meta" colspan="7">Generated at: '.$escape($generatedAt).'</td></tr>';

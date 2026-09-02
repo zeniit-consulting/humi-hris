@@ -30,21 +30,28 @@ class OvertimeController extends Controller
             'status' => ['nullable', 'string'],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
-        $activeDate = Carbon::parse($validated['date'] ?? today())->toDateString();
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
 
         $filters = [
             'status' => $validated['status'] ?? '',
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
-            'date' => $activeDate,
+            'date' => $startDate ?? '',
+            'start_date' => $startDate ?? '',
+            'end_date' => $endDate ?? '',
         ];
 
         $overtimes = OvertimeRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']))
-            ->whereDate('work_date', $filters['date'])
+            ->when($filters['start_date'] !== '' && $filters['end_date'] !== '', function ($query) use ($filters) {
+                $query->whereBetween('work_date', [$filters['start_date'], $filters['end_date']]);
+            })
             ->orderByDesc('work_date')
             ->paginate(12)
             ->withQueryString()
@@ -101,12 +108,19 @@ class OvertimeController extends Controller
             'status' => ['nullable', Rule::in(['pending', 'approved', 'rejected'])],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
+
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
 
         $filters = [
             'status' => $validated['status'] ?? 'pending',
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
-            'date' => $validated['date'] ?? '',
+            'date' => $startDate ?? '',
+            'start_date' => $startDate ?? '',
+            'end_date' => $endDate ?? '',
         ];
 
         $overtimes = OvertimeRequest::query()
@@ -114,7 +128,9 @@ class OvertimeController extends Controller
             ->where('user_id', $ownerId)
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']))
-            ->when($filters['date'] !== '', fn ($query) => $query->whereDate('work_date', $filters['date']))
+            ->when($filters['start_date'] !== '' && $filters['end_date'] !== '', function ($query) use ($filters) {
+                $query->whereBetween('work_date', [$filters['start_date'], $filters['end_date']]);
+            })
             ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
             ->orderByDesc('work_date')
             ->paginate(15)
@@ -321,19 +337,28 @@ class OvertimeController extends Controller
             'status' => ['nullable', 'string'],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
+
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
 
         $filters = [
             'status' => $validated['status'] ?? '',
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
-            'date' => Carbon::parse($validated['date'] ?? today())->toDateString(),
+            'date' => $startDate ?? '',
+            'start_date' => $startDate ?? '',
+            'end_date' => $endDate ?? '',
         ];
 
         $rows = OvertimeRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']))
-            ->whereDate('work_date', $filters['date'])
+            ->when($filters['start_date'] !== '' && $filters['end_date'] !== '', function ($query) use ($filters) {
+                $query->whereBetween('work_date', [$filters['start_date'], $filters['end_date']]);
+            })
             ->orderByDesc('work_date')
             ->get();
 
