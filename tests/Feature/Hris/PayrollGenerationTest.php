@@ -1098,13 +1098,13 @@ class PayrollGenerationTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('payrollReadiness.period', '2026-02')
                 ->where('payrollReadiness.status', 'warning')
-                ->where('payrollReadiness.warning_count', 3)
+                ->where('payrollReadiness.warning_count', 2)
                 ->where('payrollReadiness.checks.0.key', 'active_employees_included')
                 ->where('payrollReadiness.checks.0.complete', false)
                 ->where('payrollReadiness.checks.1.key', 'bank_accounts')
                 ->where('payrollReadiness.checks.1.complete', false)
-                ->where('payrollReadiness.checks.2.key', 'pending_approvals')
-                ->where('payrollReadiness.checks.2.complete', false)
+                ->where('payrollReadiness.checks.2.key', 'resigned_excluded')
+                ->where('payrollReadiness.checks.2.complete', true)
             );
     }
 

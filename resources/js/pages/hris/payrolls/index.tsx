@@ -1,4 +1,4 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     CalendarDays,
     Calculator,
@@ -6,6 +6,7 @@ import {
     ArrowUpDown,
     ArrowUp,
     ArrowDown,
+    ArrowUpRight,
     CheckCircle2,
     Coins,
     Download,
@@ -163,6 +164,7 @@ type PageProps = {
             complete: boolean;
             severity: 'warning' | 'error';
             description: string;
+            action_url?: string;
         }>;
     };
 };
@@ -841,33 +843,51 @@ export default function PayrollPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid gap-2 md:grid-cols-2">
-                                {payrollReadiness.checks.map((check) => (
-                                    <div
-                                        key={check.key}
-                                        className="flex items-start gap-2 rounded-md border border-white/70 bg-white/70 px-3 py-2"
-                                    >
-                                        {check.complete ? (
-                                            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" />
-                                        ) : (
-                                            <AlertTriangle
-                                                className={`mt-0.5 size-4 shrink-0 ${
-                                                    check.severity === 'error'
-                                                        ? 'text-red-700'
-                                                        : 'text-amber-700'
-                                                }`}
-                                            />
-                                        )}
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-slate-950">
-                                                {check.label}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {check.description}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="grid gap-3 md:grid-cols-3">
+                                {payrollReadiness.checks.map((check) => {
+                                    const CardWrapper = check.action_url ? Link : 'div';
+                                    const wrapperProps = check.action_url
+                                        ? {
+                                              href: check.action_url,
+                                              className:
+                                                  'group flex flex-col justify-between rounded-lg border border-white/80 bg-white/80 p-3.5 shadow-sm transition hover:border-slate-300 hover:bg-white hover:shadow',
+                                          }
+                                        : {
+                                              className:
+                                                  'flex flex-col justify-between rounded-lg border border-white/80 bg-white/80 p-3.5 shadow-sm',
+                                          };
+
+                                    return (
+                                        <CardWrapper key={check.key} {...(wrapperProps as any)}>
+                                            <div className="flex items-start gap-2.5">
+                                                {check.complete ? (
+                                                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" />
+                                                ) : (
+                                                    <AlertTriangle
+                                                        className={`mt-0.5 size-4 shrink-0 ${
+                                                            check.severity === 'error'
+                                                                ? 'text-red-700'
+                                                                : 'text-amber-700'
+                                                        }`}
+                                                    />
+                                                )}
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <p className="text-sm font-semibold text-slate-950">
+                                                            {check.label}
+                                                        </p>
+                                                        {check.action_url && (
+                                                            <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground opacity-60 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
+                                                        )}
+                                                    </div>
+                                                    <p className="mt-1 text-xs text-muted-foreground">
+                                                        {check.description}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </CardWrapper>
+                                    );
+                                })}
                             </div>
                         </CardContent>
                     </Card>
@@ -875,77 +895,112 @@ export default function PayrollPage() {
 
                 {type === 'thr' ? (
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Card className="gap-2 py-3">
-                            <CardHeader className="px-4 pb-0">
-                                <CardDescription>
-                                    Total Karyawan THR
-                                </CardDescription>
-                                <CardTitle className="text-2xl">
-                                    {totals.employees}
-                                </CardTitle>
-                            </CardHeader>
+                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                            <a href="#payroll-table" className="cursor-pointer">
+                                <CardHeader className="px-4 pb-0">
+                                    <div className="flex items-center justify-between text-muted-foreground">
+                                        <CardDescription>
+                                            Total Karyawan THR
+                                        </CardDescription>
+                                        <ArrowUpRight className="size-4 opacity-0 transition group-hover:opacity-100" />
+                                    </div>
+                                    <CardTitle className="text-2xl">
+                                        {totals.employees}
+                                    </CardTitle>
+                                </CardHeader>
+                            </a>
                         </Card>
-                        <Card className="gap-2 py-3">
-                            <CardHeader className="px-4 pb-0">
-                                <CardDescription>Total THR</CardDescription>
-                                <CardTitle className="text-2xl">
-                                    {formatCurrency(totals.thr)}
-                                </CardTitle>
-                            </CardHeader>
+                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                            <a href="#payroll-table" className="cursor-pointer">
+                                <CardHeader className="px-4 pb-0">
+                                    <div className="flex items-center justify-between text-muted-foreground">
+                                        <CardDescription>Total THR</CardDescription>
+                                        <ArrowUpRight className="size-4 opacity-0 transition group-hover:opacity-100" />
+                                    </div>
+                                    <CardTitle className="text-2xl">
+                                        {formatCurrency(totals.thr)}
+                                    </CardTitle>
+                                </CardHeader>
+                            </a>
                         </Card>
                     </div>
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                        <Card className="gap-2 py-3">
-                            <CardHeader className="px-4 pb-0">
-                                <CardDescription>
-                                    Jumlah Karyawan
-                                </CardDescription>
-                                <CardTitle className="text-2xl">
-                                    {totals.employees}
-                                </CardTitle>
-                            </CardHeader>
+                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                            <Link href="/hris/employees" className="cursor-pointer">
+                                <CardHeader className="px-4 pb-0">
+                                    <div className="flex items-center justify-between text-muted-foreground">
+                                        <CardDescription>
+                                            Jumlah Karyawan
+                                        </CardDescription>
+                                        <ArrowUpRight className="size-4 opacity-0 transition group-hover:opacity-100" />
+                                    </div>
+                                    <CardTitle className="text-2xl">
+                                        {totals.employees}
+                                    </CardTitle>
+                                </CardHeader>
+                            </Link>
                         </Card>
-                        <Card className="gap-2 py-3">
-                            <CardHeader className="px-4 pb-0">
-                                <CardDescription>Total Bruto</CardDescription>
-                                <CardTitle className="text-2xl">
-                                    {formatCurrency(totals.gross)}
-                                </CardTitle>
-                            </CardHeader>
+                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                            <a href="#payroll-table" className="cursor-pointer">
+                                <CardHeader className="px-4 pb-0">
+                                    <div className="flex items-center justify-between text-muted-foreground">
+                                        <CardDescription>Total Bruto</CardDescription>
+                                        <ArrowUpRight className="size-4 opacity-0 transition group-hover:opacity-100" />
+                                    </div>
+                                    <CardTitle className="text-2xl">
+                                        {formatCurrency(totals.gross)}
+                                    </CardTitle>
+                                </CardHeader>
+                            </a>
                         </Card>
-                        <Card className="gap-2 py-3">
-                            <CardHeader className="px-4 pb-0">
-                                <CardDescription>Total Lembur</CardDescription>
-                                <CardTitle className="text-2xl">
-                                    {formatCurrency(totals.overtime)}
-                                </CardTitle>
-                            </CardHeader>
+                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                            <Link href="/hris/overtimes" className="cursor-pointer">
+                                <CardHeader className="px-4 pb-0">
+                                    <div className="flex items-center justify-between text-muted-foreground">
+                                        <CardDescription>Total Lembur</CardDescription>
+                                        <ArrowUpRight className="size-4 opacity-0 transition group-hover:opacity-100" />
+                                    </div>
+                                    <CardTitle className="text-2xl">
+                                        {formatCurrency(totals.overtime)}
+                                    </CardTitle>
+                                </CardHeader>
+                            </Link>
                         </Card>
-                        <Card className="gap-2 py-3">
-                            <CardHeader className="px-4 pb-0">
-                                <CardDescription>
-                                    Total Potongan
-                                </CardDescription>
-                                <CardTitle className="text-2xl">
-                                    {formatCurrency(totals.deductions)}
-                                </CardTitle>
-                            </CardHeader>
+                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                            <a href="#payroll-table" className="cursor-pointer">
+                                <CardHeader className="px-4 pb-0">
+                                    <div className="flex items-center justify-between text-muted-foreground">
+                                        <CardDescription>
+                                            Total Potongan
+                                        </CardDescription>
+                                        <ArrowUpRight className="size-4 opacity-0 transition group-hover:opacity-100" />
+                                    </div>
+                                    <CardTitle className="text-2xl">
+                                        {formatCurrency(totals.deductions)}
+                                    </CardTitle>
+                                </CardHeader>
+                            </a>
                         </Card>
-                        <Card className="gap-2 py-3">
-                            <CardHeader className="px-4 pb-0">
-                                <CardDescription>
-                                    Total Take Home Pay
-                                </CardDescription>
-                                <CardTitle className="text-2xl">
-                                    {formatCurrency(totals.net)}
-                                </CardTitle>
-                            </CardHeader>
+                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                            <a href="#payroll-table" className="cursor-pointer">
+                                <CardHeader className="px-4 pb-0">
+                                    <div className="flex items-center justify-between text-muted-foreground">
+                                        <CardDescription>
+                                            Total Take Home Pay
+                                        </CardDescription>
+                                        <ArrowUpRight className="size-4 opacity-0 transition group-hover:opacity-100" />
+                                    </div>
+                                    <CardTitle className="text-2xl">
+                                        {formatCurrency(totals.net)}
+                                    </CardTitle>
+                                </CardHeader>
+                            </a>
                         </Card>
                     </div>
                 )}
 
-                <Card>
+                <Card id="payroll-table">
                     <CardHeader>
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <CardTitle>

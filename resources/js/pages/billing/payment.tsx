@@ -55,27 +55,53 @@ const planLabels: Record<string, string> = {
     plus: 'Plus',
 };
 
+function getPlanLabel(planSlug?: string | null): string {
+    if (!planSlug) return 'Subscription';
+    return planLabels[planSlug] ?? (planSlug.charAt(0).toUpperCase() + planSlug.slice(1));
+}
+
 const fmt = new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     maximumFractionDigits: 0,
 });
 
-function formatDateTime(value: string | null) {
+function formatDateTime(value: string | null | undefined) {
     if (!value) return '-';
 
-    return new Intl.DateTimeFormat('id-ID', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    }).format(new Date(value));
+    try {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return '-';
+        return new Intl.DateTimeFormat('id-ID', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        }).format(date);
+    } catch {
+        return '-';
+    }
 }
 
 export default function BillingPaymentPage() {
-    const { invoice, payment_url, billing_url, payment_check_url } =
+    const { invoice, payment_url, billing_url, payment_check_url, download_url } =
         usePage<PageProps>().props;
     const { post, processing } = useForm({});
+
+    if (!invoice) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="Pembayaran" />
+                <div className="mx-auto max-w-5xl p-6 text-center">
+                    <p className="text-muted-foreground">Invoice tidak ditemukan.</p>
+                    <Button variant="outline" className="mt-4" asChild>
+                        <Link href={billing_url || '/billing'}>Kembali ke Billing</Link>
+                    </Button>
+                </div>
+            </AppLayout>
+        );
+    }
+
     const qrisValue = invoice.payment_number ?? payment_url ?? '';
-    const payableAmount = invoice.total_payment ?? invoice.amount;
+    const payableAmount = invoice.total_payment ?? invoice.amount ?? 0;
     const isPaid = invoice.status === 'paid';
 
     const handleCopy = async () => {
@@ -85,6 +111,7 @@ export default function BillingPaymentPage() {
     };
 
     const handleCheckPayment = () => {
+        if (!payment_check_url) return;
         post(payment_check_url, {
             preserveScroll: true,
         });
@@ -92,7 +119,7 @@ export default function BillingPaymentPage() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Pembayaran ${invoice.invoice_number}`} />
+            <Head title={`Pembayaran ${invoice.invoice_number ?? ''}`} />
 
             <div className="mx-auto max-w-5xl space-y-6 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -104,7 +131,7 @@ export default function BillingPaymentPage() {
                             </Badge>
                         </div>
                         <h1 className="text-2xl font-semibold tracking-tight">
-                            Pembayaran Paket {planLabels[invoice.plan_slug]}
+                            Pembayaran Paket {getPlanLabel(invoice.plan_slug)}
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             Invoice {invoice.invoice_number}
@@ -125,7 +152,7 @@ export default function BillingPaymentPage() {
                             </Button>
                         )}
                         <Button variant="outline" asChild>
-                            <Link href={billing_url}>
+                            <Link href={billing_url || '/billing'}>
                                 <ArrowLeft className="mr-2 size-4" />
                                 Kembali ke Billing
                             </Link>
@@ -215,7 +242,7 @@ export default function BillingPaymentPage() {
                                     Paket
                                 </span>
                                 <span className="font-medium">
-                                    {planLabels[invoice.plan_slug]}
+                                    {getPlanLabel(invoice.plan_slug)}
                                 </span>
                             </div>
                             <div className="flex justify-between gap-4">
@@ -223,7 +250,7 @@ export default function BillingPaymentPage() {
                                     Karyawan aktif
                                 </span>
                                 <span className="font-medium">
-                                    {invoice.employee_count}
+                                    {invoice.employee_count ?? 0}
                                 </span>
                             </div>
                             <div className="flex justify-between gap-4">
@@ -239,10 +266,10 @@ export default function BillingPaymentPage() {
                                     Nominal
                                 </span>
                                 <span className="font-medium">
-                                    {fmt.format(invoice.amount)}
+                                    {fmt.format(invoice.amount ?? 0)}
                                 </span>
                             </div>
-                            {invoice.payment_fee > 0 && (
+                            {Boolean(invoice.payment_fee && invoice.payment_fee > 0) && (
                                 <div className="flex justify-between gap-4">
                                     <span className="text-muted-foreground">
                                         Fee

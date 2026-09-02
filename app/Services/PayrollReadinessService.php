@@ -54,6 +54,7 @@ class PayrollReadinessService
                     : ($missingPayrollCount === 0
                         ? 'Semua karyawan aktif sudah masuk payroll'
                         : $missingPayrollCount.' karyawan aktif belum masuk payroll'),
+                'action_url' => '/hris/employees',
             ],
             [
                 'key' => 'bank_accounts',
@@ -63,15 +64,7 @@ class PayrollReadinessService
                 'description' => $missingBankCount === 0
                     ? 'Semua karyawan aktif punya rekening utama'
                     : $missingBankCount.' karyawan aktif belum punya rekening utama',
-            ],
-            [
-                'key' => 'pending_approvals',
-                'label' => 'Approval payroll bersih',
-                'complete' => $pendingApprovals === 0,
-                'severity' => 'warning',
-                'description' => $pendingApprovals === 0
-                    ? 'Tidak ada approval pending'
-                    : $pendingApprovals.' approval masih pending',
+                'action_url' => '/hris/employees',
             ],
             [
                 'key' => 'resigned_excluded',
@@ -81,6 +74,7 @@ class PayrollReadinessService
                 'description' => $resignedIncludedCount === 0
                     ? 'Tidak ada karyawan resign di payroll'
                     : $resignedIncludedCount.' karyawan resign masih masuk payroll',
+                'action_url' => '/hris/employees',
             ],
         ];
 
