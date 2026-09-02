@@ -420,7 +420,7 @@ export const store = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:258
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:284
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 const update6847ebaffc100b9132c30c491935b11e = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -435,7 +435,7 @@ update6847ebaffc100b9132c30c491935b11e.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:258
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:284
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 update6847ebaffc100b9132c30c491935b11e.url = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -468,7 +468,7 @@ update6847ebaffc100b9132c30c491935b11e.url = (args: { employeeAttendance: number
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:258
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:284
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 update6847ebaffc100b9132c30c491935b11e.put = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -478,7 +478,7 @@ update6847ebaffc100b9132c30c491935b11e.put = (args: { employeeAttendance: number
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:258
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:284
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 const update6847ebaffc100b9132c30c491935b11eForm = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -493,7 +493,7 @@ const update6847ebaffc100b9132c30c491935b11eForm = (args: { employeeAttendance: 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:258
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:284
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 update6847ebaffc100b9132c30c491935b11eForm.put = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -509,7 +509,7 @@ update6847ebaffc100b9132c30c491935b11eForm.put = (args: { employeeAttendance: nu
 update6847ebaffc100b9132c30c491935b11e.form = update6847ebaffc100b9132c30c491935b11eForm
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:258
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:284
 * @route '/portal/api/attendances/{employeeAttendance}'
 */
 const update769c0a171c4e53a258dea5bb54a48795 = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -524,7 +524,7 @@ update769c0a171c4e53a258dea5bb54a48795.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:258
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:284
 * @route '/portal/api/attendances/{employeeAttendance}'
 */
 update769c0a171c4e53a258dea5bb54a48795.url = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -557,7 +557,7 @@ update769c0a171c4e53a258dea5bb54a48795.url = (args: { employeeAttendance: number
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:258
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:284
 * @route '/portal/api/attendances/{employeeAttendance}'
 */
 update769c0a171c4e53a258dea5bb54a48795.put = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -567,7 +567,7 @@ update769c0a171c4e53a258dea5bb54a48795.put = (args: { employeeAttendance: number
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:258
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:284
 * @route '/portal/api/attendances/{employeeAttendance}'
 */
 const update769c0a171c4e53a258dea5bb54a48795Form = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -582,7 +582,7 @@ const update769c0a171c4e53a258dea5bb54a48795Form = (args: { employeeAttendance: 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::update
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:258
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:284
 * @route '/portal/api/attendances/{employeeAttendance}'
 */
 update769c0a171c4e53a258dea5bb54a48795Form.put = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -604,7 +604,7 @@ export const update = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:308
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:358
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 const destroy6847ebaffc100b9132c30c491935b11e = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -619,7 +619,7 @@ destroy6847ebaffc100b9132c30c491935b11e.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:308
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:358
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 destroy6847ebaffc100b9132c30c491935b11e.url = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -652,7 +652,7 @@ destroy6847ebaffc100b9132c30c491935b11e.url = (args: { employeeAttendance: numbe
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:308
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:358
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 destroy6847ebaffc100b9132c30c491935b11e.delete = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -662,7 +662,7 @@ destroy6847ebaffc100b9132c30c491935b11e.delete = (args: { employeeAttendance: nu
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:308
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:358
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 const destroy6847ebaffc100b9132c30c491935b11eForm = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -677,7 +677,7 @@ const destroy6847ebaffc100b9132c30c491935b11eForm = (args: { employeeAttendance:
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:308
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:358
 * @route '/api/mobile/v1/attendances/{employeeAttendance}'
 */
 destroy6847ebaffc100b9132c30c491935b11eForm.delete = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -693,7 +693,7 @@ destroy6847ebaffc100b9132c30c491935b11eForm.delete = (args: { employeeAttendance
 destroy6847ebaffc100b9132c30c491935b11e.form = destroy6847ebaffc100b9132c30c491935b11eForm
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:308
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:358
 * @route '/portal/api/attendances/{employeeAttendance}'
 */
 const destroy769c0a171c4e53a258dea5bb54a48795 = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -708,7 +708,7 @@ destroy769c0a171c4e53a258dea5bb54a48795.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:308
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:358
 * @route '/portal/api/attendances/{employeeAttendance}'
 */
 destroy769c0a171c4e53a258dea5bb54a48795.url = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -741,7 +741,7 @@ destroy769c0a171c4e53a258dea5bb54a48795.url = (args: { employeeAttendance: numbe
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:308
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:358
 * @route '/portal/api/attendances/{employeeAttendance}'
 */
 destroy769c0a171c4e53a258dea5bb54a48795.delete = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -751,7 +751,7 @@ destroy769c0a171c4e53a258dea5bb54a48795.delete = (args: { employeeAttendance: nu
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:308
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:358
 * @route '/portal/api/attendances/{employeeAttendance}'
 */
 const destroy769c0a171c4e53a258dea5bb54a48795Form = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -766,7 +766,7 @@ const destroy769c0a171c4e53a258dea5bb54a48795Form = (args: { employeeAttendance:
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:308
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:358
 * @route '/portal/api/attendances/{employeeAttendance}'
 */
 destroy769c0a171c4e53a258dea5bb54a48795Form.delete = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

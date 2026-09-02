@@ -11,6 +11,7 @@ import type { BreadcrumbItem } from '@/types';
 
 type Settings = {
     missing_clock_out_request_days: number;
+    require_face_recognition?: boolean;
     attendance_revision_cutoff_day: string;
 };
 
@@ -108,8 +109,8 @@ export default function AttendanceSettings({
                                     </option>
                                 </select>
                                 <p className="text-xs text-muted-foreground">
-                                    Sistem memakai batas yang lebih cepat antara
-                                    H+N dan cut-off ini.
+                                    Absensi periode berjalan ditutup setelah
+                                    tanggal ini.
                                 </p>
                                 <InputError
                                     message={
@@ -118,6 +119,30 @@ export default function AttendanceSettings({
                                     }
                                 />
                             </div>
+                        </div>
+
+                        <div className="rounded-lg border p-4">
+                            <label className="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="mt-1 size-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                    checked={form.data.require_face_recognition}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'require_face_recognition',
+                                            e.target.checked,
+                                        )
+                                    }
+                                />
+                                <div className="space-y-1">
+                                    <span className="text-sm font-medium leading-none">
+                                        Wajibkan Face Recognition (Pengenalan Wajah)
+                                    </span>
+                                    <p className="text-xs text-muted-foreground">
+                                        Saat diaktifkan, karyawan wajib melakukan verifikasi live detection wajah yang cocok dengan master foto wajah sebelum dapat clock-in atau clock-out.
+                                    </p>
+                                </div>
+                            </label>
                         </div>
 
                         <Button disabled={form.processing}>

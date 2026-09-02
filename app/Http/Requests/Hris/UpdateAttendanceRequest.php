@@ -44,9 +44,12 @@ class UpdateAttendanceRequest extends FormRequest
             'check_in_at' => ['nullable', 'date'],
             'check_in_latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'check_in_longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'check_in_photo' => ['nullable', 'string'],
             'check_out_at' => ['nullable', 'date', 'after_or_equal:check_in_at'],
             'check_out_latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'check_out_longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'check_out_photo' => ['nullable', 'string'],
+            'face_similarity_score' => ['nullable', 'numeric', 'between:0,1'],
             'notes' => ['nullable', 'string', 'max:255'],
         ];
     }

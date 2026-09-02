@@ -294,6 +294,9 @@ class PortalController extends Controller
                 'employment_status' => $employee->employment_status,
                 'employment_type' => $employee->employment_type,
                 'is_wfa' => $employee->is_wfa,
+                'face_enrolled' => ! empty($employee->face_embedding),
+                'face_embedding' => $employee->face_embedding,
+                'face_photo_url' => $employee->face_photo_url,
                 'division' => $employee->division ? [
                     'id' => $employee->division->id,
                     'name' => $employee->division->name,
@@ -399,6 +402,7 @@ class PortalController extends Controller
                 'employee_timezone' => $employee?->timezone,
                 'active_timezone' => $timezone,
                 'radius_meters' => (int) ($companySetting?->attendance_radius_meters ?? 100),
+                'require_face_recognition' => (bool) ($companySetting?->require_face_recognition ?? false),
                 'primary_location' => $companySetting?->location_latitude !== null && $companySetting?->location_longitude !== null ? [
                     'name' => $companySetting->location_name ?: 'Lokasi utama',
                     'address' => $companySetting->location_address,

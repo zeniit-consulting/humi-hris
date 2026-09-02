@@ -16,6 +16,7 @@ class AttendanceSettingUpdateRequest extends FormRequest
     {
         return [
             'missing_clock_out_request_days' => ['required', 'integer', 'min:0', 'max:31'],
+            'require_face_recognition' => ['nullable', 'boolean'],
             'attendance_revision_cutoff_day' => [
                 'required',
                 Rule::in([

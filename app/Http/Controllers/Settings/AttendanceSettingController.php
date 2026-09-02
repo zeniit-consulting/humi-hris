@@ -19,6 +19,7 @@ class AttendanceSettingController extends Controller
         return Inertia::render('settings/attendance', [
             'settings' => [
                 'missing_clock_out_request_days' => $setting->missing_clock_out_request_days ?? 2,
+                'require_face_recognition' => (bool) ($setting->require_face_recognition ?? false),
                 'attendance_revision_cutoff_day' => $setting->attendance_revision_cutoff_day ?? 'end_of_month',
             ],
         ]);

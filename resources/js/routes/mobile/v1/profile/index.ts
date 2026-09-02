@@ -83,7 +83,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:81
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:84
 * @route '/api/mobile/v1/profile'
 */
 export const update = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -98,7 +98,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:81
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:84
 * @route '/api/mobile/v1/profile'
 */
 update.url = (options?: RouteQueryOptions) => {
@@ -107,7 +107,7 @@ update.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:81
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:84
 * @route '/api/mobile/v1/profile'
 */
 update.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -117,7 +117,7 @@ update.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:81
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:84
 * @route '/api/mobile/v1/profile'
 */
 const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -132,7 +132,7 @@ const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:81
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:84
 * @route '/api/mobile/v1/profile'
 */
 updateForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

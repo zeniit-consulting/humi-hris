@@ -58,6 +58,9 @@ class ProfileController extends Controller
                 'biological_mother_name' => $employee->biological_mother_name,
                 'emergency_contact_name' => $employee->emergency_contact_name,
                 'emergency_contact_phone' => $employee->emergency_contact_phone,
+                'face_enrolled' => ! empty($employee->face_embedding),
+                'face_photo_url' => $employee->face_photo_url,
+                'face_enrolled_at' => $employee->face_enrolled_at?->toIso8601String(),
                 'division' => $employee->division ? [
                     'id' => $employee->division->id,
                     'name' => $employee->division->name,
@@ -171,5 +174,58 @@ class ProfileController extends Controller
             'account_holder_name' => $account->account_holder_name,
             'is_primary' => true,
         ], 'Rekening bank berhasil disimpan.');
+    }
+
+    /**
+     * Pendaftaran / enrollment master wajah karyawan.
+     */
+    public function enrollFace(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $employee = $this->resolveRequiredSelfServiceEmployee($user);
+
+        $validated = $request->validate([
+            'face_embedding' => ['required', 'array', 'min:128', 'max:128'],
+            'face_embedding.*' => ['required', 'numeric'],
+            'face_photo' => ['nullable', 'string'], // Data URL / base64 image
+        ]);
+
+        $photoUrl = null;
+        if (! empty($validated['face_photo']) && str_starts_with($validated['face_photo'], 'data:image/')) {
+            try {
+                $imageParts = explode(';base64,', $validated['face_photo']);
+                if (count($imageParts) === 2) {
+                    $imageTypeAux = explode('image/', $imageParts[0]);
+                    $imageType = $imageTypeAux[1] ?? 'jpg';
+                    $imageBase64 = base64_decode($imageParts[1], true);
+
+                    if ($imageBase64 !== false) {
+                        $filename = 'faces/'.$employee->id.'_'.time().'.'.$imageType;
+                        if (\App\Support\R2Storage::isConfigured()) {
+                            \App\Support\R2Storage::disk()->put($filename, $imageBase64);
+                            $photoUrl = \App\Support\R2Storage::url($filename);
+                        } else {
+                            \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $imageBase64);
+                            $photoUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($filename);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore photo storage error if disk fails, keep embedding
+            }
+        }
+
+        $employee->update([
+            'face_embedding' => array_map('floatval', $validated['face_embedding']),
+            'face_photo_url' => $photoUrl ?? $employee->face_photo_url,
+            'face_enrolled_at' => now(),
+        ]);
+
+        return $this->success([
+            'face_enrolled' => true,
+            'face_photo_url' => $employee->face_photo_url,
+            'face_enrolled_at' => $employee->face_enrolled_at?->toIso8601String(),
+        ], 'Master foto wajah berhasil didaftarkan.');
     }
 }

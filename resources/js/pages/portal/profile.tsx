@@ -1,12 +1,15 @@
 import {
     CheckCircle2,
     BellRing,
+    Camera,
     ChevronDown,
     CreditCard,
     FileBadge,
     Mail,
     Phone,
     Save,
+    ScanFace,
+    Trash2,
     UserRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -26,6 +29,7 @@ import {
     serializeWebPushSubscription,
     webPushIsSupported,
 } from './lib/web-push';
+import { extractFaceDescriptor, loadFaceRecognitionModels } from '@/lib/face-recognition';
 import { PortalShell } from './shell';
 
 // Hallmark · genre: modern-minimal · macrostructure: Long Document · theme: Quiet · enrichment: none
@@ -64,6 +68,9 @@ type ProfileData = {
         biological_mother_name: string | null;
         emergency_contact_name: string | null;
         emergency_contact_phone: string | null;
+        face_enrolled?: boolean;
+        face_photo_url?: string | null;
+        face_enrolled_at?: string | null;
         division: { id: number; name: string } | null;
         position: { id: number; name: string } | null;
     };
@@ -191,6 +198,13 @@ export default function PortalProfilePage({ pageTitle }: Props) {
     const [isSaving, setIsSaving] = useState(false);
     const [isEnablingPush, setIsEnablingPush] = useState(false);
     const [openSection, setOpenSection] = useState('personal');
+
+    // Face recognition enrollment state
+    const [isEnrollingFace, setIsEnrollingFace] = useState(false);
+    const [faceEnrollError, setFaceEnrollError] = useState<string | null>(null);
+    const [faceEnrollSuccess, setFaceEnrollSuccess] = useState<string | null>(null);
+    const [isFaceCameraOpen, setIsFaceCameraOpen] = useState(false);
+    const [faceModelLoading, setFaceModelLoading] = useState(false);
 
     const [formProfile, setFormProfile] = useState({
         phone: '',
@@ -407,7 +421,57 @@ export default function PortalProfilePage({ pageTitle }: Props) {
         }
     };
 
-    const bankAccounts = profile?.bank_accounts || [];
+    const handleEnrollFromFile = async (file: File) => {
+        setFaceEnrollError(null);
+        setFaceEnrollSuccess(null);
+        setIsEnrollingFace(true);
+
+        try {
+            // Create image element to feed face-api
+            const img = document.createElement('img');
+            const objectUrl = URL.createObjectURL(file);
+            img.src = objectUrl;
+
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = () => reject(new Error('Gagal memuat gambar foto'));
+            });
+
+            // Convert to base64 for upload
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.min(img.width, 600);
+            canvas.height = Math.round((canvas.width / img.width) * img.height);
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            }
+            const base64Photo = canvas.toDataURL('image/jpeg', 0.85);
+
+            setFaceModelLoading(true);
+            const faceResult = await extractFaceDescriptor(img);
+            URL.revokeObjectURL(objectUrl);
+
+            if (!faceResult) {
+                throw new Error('Wajah tidak terdeteksi pada foto. Pastikan foto wajah tegak lurus dan pencahayaan terang.');
+            }
+
+            await requestApi('/portal/api/profile/enroll-face', 'POST', {
+                face_embedding: faceResult.descriptor,
+                face_photo: base64Photo,
+            });
+
+            setFaceEnrollSuccess('Master wajah berhasil disimpan! Anda sekarang dapat melakukan presensi dengan verifikasi wajah.');
+            notifyPortal('success', 'Master wajah berhasil disimpan.');
+            await loadData();
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Gagal memproses pendaftaran wajah.';
+            setFaceEnrollError(message);
+            notifyPortal('error', message);
+        } finally {
+            setIsEnrollingFace(false);
+            setFaceModelLoading(false);
+        }
+    };
     const primaryBank = bankAccounts.find((b) => b.is_primary);
     const showAttendanceNotificationSetup =
         shouldShowAttendanceNotificationSetup(
@@ -1140,6 +1204,94 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                             Untuk mengubah email, silakan hubungi HR atau
                             administrator sistem.
                         </p>
+                    </div>
+                </ProfileAccordion>
+
+                <ProfileAccordion
+                    section="face_recognition"
+                    title="Biometrik Wajah (Face Recognition)"
+                    description={
+                        profile?.employee.face_enrolled
+                            ? 'Wajah terdaftar • Siap untuk presensi'
+                            : 'Wajah belum didaftarkan'
+                    }
+                    icon={ScanFace}
+                    isOpen={openSection === 'face_recognition'}
+                    onOpen={setOpenSection}
+                >
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Daftarkan foto wajah Anda sekali untuk digunakan sebagai verifikasi biometrik saat melakukan presensi (Clock-in / Clock-out).
+                        </p>
+
+                        {profile?.employee.face_enrolled && profile.employee.face_photo_url ? (
+                            <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+                                <img
+                                    src={profile.employee.face_photo_url}
+                                    alt="Foto Master Wajah"
+                                    className="size-16 rounded-lg object-cover border-2 border-emerald-500 shadow-sm"
+                                />
+                                <div>
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                                        <CheckCircle2 className="size-3.5" />
+                                        Master Wajah Terverifikasi
+                                    </span>
+                                    <p className="mt-1 text-xs text-emerald-950 font-medium">
+                                        Wajah Anda sudah aktif untuk presensi biometrik.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : null}
+
+                        {faceEnrollError && (
+                            <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800 font-medium">
+                                {faceEnrollError}
+                            </div>
+                        )}
+
+                        {faceEnrollSuccess && (
+                            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 font-medium">
+                                {faceEnrollSuccess}
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-slate-900">
+                                {profile?.employee.face_enrolled
+                                    ? 'Perbarui Foto Master Wajah'
+                                    : 'Upload Foto Master Wajah'}
+                            </label>
+                            <p className="text-xs text-slate-500">
+                                Ambil selfie atau upload foto wajah dari galeri yang jelas menghadap ke depan tanpa masker/kacamata hitam.
+                            </p>
+
+                            <div className="pt-2">
+                                <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-stone-300 bg-stone-50/80 p-5 hover:bg-stone-100 transition cursor-pointer">
+                                    <Camera className="size-8 text-stone-400 mb-2" />
+                                    <span className="text-sm font-semibold text-stone-700">
+                                        {isEnrollingFace
+                                            ? (faceModelLoading ? 'Memuat model AI...' : 'Mengekstrak vektor wajah...')
+                                            : 'Pilih / Ambil Foto Wajah'}
+                                    </span>
+                                    <span className="text-xs text-stone-400 mt-1">
+                                        JPG, JPEG, PNG (Maks 5MB)
+                                    </span>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="user"
+                                        disabled={isEnrollingFace}
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                void handleEnrollFromFile(file);
+                                            }
+                                        }}
+                                        className="hidden"
+                                    />
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </ProfileAccordion>
 

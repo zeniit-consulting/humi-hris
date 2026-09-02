@@ -98,6 +98,9 @@ class Employee extends Model
         'emergency_contact_phone',
         'emergency_contact_relationship',
         'notes',
+        'face_embedding',
+        'face_photo_url',
+        'face_enrolled_at',
         'is_active',
     ];
 
@@ -125,6 +128,8 @@ class Employee extends Model
             'is_active' => 'boolean',
             'attendance_location_ids' => 'array',
             'is_wfa' => 'boolean',
+            'face_embedding' => 'array',
+            'face_enrolled_at' => 'datetime',
             'bpjs_kesehatan_enabled' => 'boolean',
             'bpjs_ketenagakerjaan_enabled' => 'boolean',
             'bpjs_jkk_enabled' => 'boolean',

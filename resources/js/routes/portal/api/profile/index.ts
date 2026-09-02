@@ -83,7 +83,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:81
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:84
 * @route '/portal/api/profile'
 */
 export const update = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -98,7 +98,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:81
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:84
 * @route '/portal/api/profile'
 */
 update.url = (options?: RouteQueryOptions) => {
@@ -107,7 +107,7 @@ update.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:81
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:84
 * @route '/portal/api/profile'
 */
 update.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -117,7 +117,7 @@ update.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:81
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:84
 * @route '/portal/api/profile'
 */
 const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -132,7 +132,7 @@ const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::update
-* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:81
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:84
 * @route '/portal/api/profile'
 */
 updateForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -147,10 +147,67 @@ updateForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => (
 
 update.form = updateForm
 
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::enrollFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
+* @route '/portal/api/profile/enroll-face'
+*/
+export const enrollFace = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: enrollFace.url(options),
+    method: 'post',
+})
+
+enrollFace.definition = {
+    methods: ["post"],
+    url: '/portal/api/profile/enroll-face',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::enrollFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
+* @route '/portal/api/profile/enroll-face'
+*/
+enrollFace.url = (options?: RouteQueryOptions) => {
+    return enrollFace.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::enrollFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
+* @route '/portal/api/profile/enroll-face'
+*/
+enrollFace.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: enrollFace.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::enrollFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
+* @route '/portal/api/profile/enroll-face'
+*/
+const enrollFaceForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: enrollFace.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::enrollFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
+* @route '/portal/api/profile/enroll-face'
+*/
+enrollFaceForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: enrollFace.url(options),
+    method: 'post',
+})
+
+enrollFace.form = enrollFaceForm
+
 const profile = {
     show: Object.assign(show, show),
     update: Object.assign(update, update),
     bankAccount: Object.assign(bankAccount, bankAccount),
+    enrollFace: Object.assign(enrollFace, enrollFace),
 }
 
 export default profile

@@ -82,7 +82,7 @@ edit.form = editForm
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::update
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:27
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:28
 * @route '/settings/attendance'
 */
 export const update = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -97,7 +97,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::update
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:27
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:28
 * @route '/settings/attendance'
 */
 update.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ update.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::update
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:27
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:28
 * @route '/settings/attendance'
 */
 update.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -116,7 +116,7 @@ update.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::update
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:27
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:28
 * @route '/settings/attendance'
 */
 const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -131,7 +131,7 @@ const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::update
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:27
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:28
 * @route '/settings/attendance'
 */
 updateForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

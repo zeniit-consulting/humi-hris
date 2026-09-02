@@ -229,6 +229,30 @@ class AttendanceController extends Controller
             $timezone,
         );
 
+        $checkInPhotoUrl = null;
+        if (! empty($validated['check_in_photo']) && str_starts_with($validated['check_in_photo'], 'data:image/')) {
+            try {
+                $imageParts = explode(';base64,', $validated['check_in_photo']);
+                if (count($imageParts) === 2) {
+                    $imageTypeAux = explode('image/', $imageParts[0]);
+                    $imageType = $imageTypeAux[1] ?? 'jpg';
+                    $imageBase64 = base64_decode($imageParts[1], true);
+                    if ($imageBase64 !== false) {
+                        $filename = 'attendances/in_'.$validated['employee_id'].'_'.time().'.'.$imageType;
+                        if (\App\Support\R2Storage::isConfigured()) {
+                            \App\Support\R2Storage::disk()->put($filename, $imageBase64);
+                            $checkInPhotoUrl = \App\Support\R2Storage::url($filename);
+                        } else {
+                            \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $imageBase64);
+                            $checkInPhotoUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($filename);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore upload failure
+            }
+        }
+
         $payload = [
             'employee_id' => $validated['employee_id'],
             'shift_id' => $validated['shift_id'] ?? null,
@@ -238,9 +262,11 @@ class AttendanceController extends Controller
             'check_in_at' => $validated['check_in_at'] ?? null,
             'check_in_latitude' => $validated['check_in_latitude'] ?? null,
             'check_in_longitude' => $validated['check_in_longitude'] ?? null,
+            'check_in_photo_url' => $checkInPhotoUrl,
             'check_out_at' => $validated['check_out_at'] ?? null,
             'check_out_latitude' => $validated['check_out_latitude'] ?? null,
             'check_out_longitude' => $validated['check_out_longitude'] ?? null,
+            'face_similarity_score' => $validated['face_similarity_score'] ?? null,
             'notes' => $validated['notes'] ?? null,
         ];
 
@@ -292,6 +318,30 @@ class AttendanceController extends Controller
         if ($employeeAttendance->attendance_date->lt(Carbon::today($timezone)->subDays(3))) {
             return $this->error('Clock out hanya bisa dilakukan maksimal 3 hari dari tanggal absensi.');
         }
+
+        if (! empty($validated['check_out_photo']) && str_starts_with($validated['check_out_photo'], 'data:image/')) {
+            try {
+                $imageParts = explode(';base64,', $validated['check_out_photo']);
+                if (count($imageParts) === 2) {
+                    $imageTypeAux = explode('image/', $imageParts[0]);
+                    $imageType = $imageTypeAux[1] ?? 'jpg';
+                    $imageBase64 = base64_decode($imageParts[1], true);
+                    if ($imageBase64 !== false) {
+                        $filename = 'attendances/out_'.$employee->id.'_'.time().'.'.$imageType;
+                        if (\App\Support\R2Storage::isConfigured()) {
+                            \App\Support\R2Storage::disk()->put($filename, $imageBase64);
+                            $validated['check_out_photo_url'] = \App\Support\R2Storage::url($filename);
+                        } else {
+                            \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $imageBase64);
+                            $validated['check_out_photo_url'] = \Illuminate\Support\Facades\Storage::disk('public')->url($filename);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore upload failure
+            }
+        }
+        unset($validated['check_out_photo'], $validated['check_in_photo']);
 
         $validated = array_merge($validated, $statusService->resolveStatusAttributes($validated, $user->accountOwnerId(), $timezone));
         $validated['timezone'] = $employeeAttendance->timezone ?: $timezone;
@@ -350,9 +400,12 @@ class AttendanceController extends Controller
             'check_in_at' => $this->localTimestamp($attendance->check_in_at, $sourceTimezone),
             'check_in_latitude' => $attendance->check_in_latitude,
             'check_in_longitude' => $attendance->check_in_longitude,
+            'check_in_photo_url' => $attendance->check_in_photo_url,
             'check_out_at' => $this->localTimestamp($attendance->check_out_at, $sourceTimezone),
             'check_out_latitude' => $attendance->check_out_latitude,
             'check_out_longitude' => $attendance->check_out_longitude,
+            'check_out_photo_url' => $attendance->check_out_photo_url,
+            'face_similarity_score' => $attendance->face_similarity_score,
             'notes' => $attendance->notes,
         ];
     }

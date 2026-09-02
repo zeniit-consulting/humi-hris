@@ -29,9 +29,12 @@ class EmployeeAttendance extends Model
         'check_in_at',
         'check_in_latitude',
         'check_in_longitude',
+        'check_in_photo_url',
         'check_out_at',
         'check_out_latitude',
         'check_out_longitude',
+        'check_out_photo_url',
+        'face_similarity_score',
         'notes',
     ];
 
@@ -51,6 +54,7 @@ class EmployeeAttendance extends Model
             'check_in_longitude' => 'decimal:7',
             'check_out_latitude' => 'decimal:7',
             'check_out_longitude' => 'decimal:7',
+            'face_similarity_score' => 'float',
         ];
     }
 
