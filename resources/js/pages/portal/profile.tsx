@@ -472,7 +472,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
             setFaceModelLoading(false);
         }
     };
-    const primaryBank = bankAccounts.find((b) => b.is_primary);
+    const primaryBank = (profile?.bank_accounts ?? []).find((b) => b.is_primary);
     const showAttendanceNotificationSetup =
         shouldShowAttendanceNotificationSetup(
             profile?.has_push_notification_device ?? false,
@@ -1224,13 +1224,27 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                             Daftarkan foto wajah Anda sekali untuk digunakan sebagai verifikasi biometrik saat melakukan presensi (Clock-in / Clock-out).
                         </p>
 
-                        {profile?.employee?.face_enrolled && profile.employee.face_photo_url ? (
+                        {profile?.employee?.face_enrolled ? (
                             <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
-                                <img
-                                    src={profile.employee.face_photo_url}
-                                    alt="Foto Master Wajah"
-                                    className="size-16 rounded-lg object-cover border-2 border-emerald-500 shadow-sm"
-                                />
+                                {profile.employee.face_photo_url ? (
+                                    <img
+                                        src={profile.employee.face_photo_url}
+                                        alt="Foto Master Wajah"
+                                        onError={(e) => {
+                                            // Fallback if image path 404s
+                                            e.currentTarget.style.display = 'none';
+                                            const parent = e.currentTarget.parentElement;
+                                            if (parent) {
+                                                const fallback = parent.querySelector('.face-fallback-icon');
+                                                if (fallback) fallback.classList.remove('hidden');
+                                            }
+                                        }}
+                                        className="size-16 rounded-lg object-cover border-2 border-emerald-500 shadow-sm"
+                                    />
+                                ) : null}
+                                <div className={`size-16 rounded-lg border-2 border-emerald-500 bg-emerald-100/80 flex items-center justify-center text-emerald-700 shadow-sm face-fallback-icon ${profile.employee.face_photo_url ? 'hidden' : ''}`}>
+                                    <ScanFace className="size-8" />
+                                </div>
                                 <div>
                                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
                                         <CheckCircle2 className="size-3.5" />

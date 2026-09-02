@@ -93,9 +93,20 @@ class HandleInertiaRequests extends Middleware
                         return null;
                     }
 
+                    $avatarUrl = null;
+                    if ($user->avatar_path) {
+                        if (Storage::disk('public')->exists($user->avatar_path)) {
+                            $avatarUrl = Storage::disk('public')->url($user->avatar_path);
+                        } elseif (R2Storage::isConfigured()) {
+                            $avatarUrl = R2Storage::url($user->avatar_path);
+                        } else {
+                            $avatarUrl = Storage::disk('public')->url($user->avatar_path);
+                        }
+                    }
+
                     return [
                         ...$user->toArray(),
-                        'avatar' => R2Storage::url($user->avatar_path),
+                        'avatar' => $avatarUrl,
                     ];
                 },
             ],

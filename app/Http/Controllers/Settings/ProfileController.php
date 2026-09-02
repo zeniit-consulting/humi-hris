@@ -116,14 +116,8 @@ class ProfileController extends Controller
         }
 
         if ($request->file('avatar') instanceof UploadedFile) {
-            if (! R2Storage::isConfigured()) {
-                return back()
-                    ->withInput()
-                    ->withErrors(['avatar' => 'Cloudflare R2 belum dikonfigurasi lengkap. Isi R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, dan R2_ENDPOINT.']);
-            }
-
             $this->deleteAvatar($user->avatar_path);
-            $user->avatar_path = R2Storage::disk()->putFile('avatars', $request->file('avatar'), 'public');
+            $user->avatar_path = Storage::disk('public')->putFile('avatars', $request->file('avatar'));
         }
 
         $user->save();
@@ -145,7 +139,9 @@ class ProfileController extends Controller
             return;
         }
 
-        if (R2Storage::isConfigured()) {
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        } elseif (R2Storage::isConfigured() && R2Storage::disk()->exists($path)) {
             R2Storage::disk()->delete($path);
         }
     }

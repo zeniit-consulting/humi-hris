@@ -98,9 +98,9 @@ class ProfileUpdateTest extends TestCase
         $this->assertNotNull($user->email_verified_at);
     }
 
-    public function test_profile_avatar_can_be_uploaded_to_r2(): void
+    public function test_profile_avatar_can_be_uploaded_to_public_storage(): void
     {
-        Storage::fake('r2');
+        Storage::fake('public');
 
         $user = User::factory()->create();
 
@@ -120,14 +120,14 @@ class ProfileUpdateTest extends TestCase
         $user->refresh();
 
         $this->assertNotNull($user->avatar_path);
-        Storage::disk('r2')->assertExists($user->avatar_path);
+        Storage::disk('public')->assertExists($user->avatar_path);
     }
 
     public function test_existing_profile_avatar_can_be_removed(): void
     {
-        Storage::fake('r2');
+        Storage::fake('public');
 
-        $path = UploadedFile::fake()->image('avatar.jpg')->store('avatars', 'r2');
+        $path = UploadedFile::fake()->image('avatar.jpg')->store('avatars', 'public');
 
         $user = User::factory()->create([
             'avatar_path' => $path,
@@ -149,7 +149,7 @@ class ProfileUpdateTest extends TestCase
         $user->refresh();
 
         $this->assertNull($user->avatar_path);
-        Storage::disk('r2')->assertMissing($path);
+        Storage::disk('public')->assertMissing($path);
     }
 
     public function test_user_can_delete_their_account()
