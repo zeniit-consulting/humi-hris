@@ -168,6 +168,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         Route::get('payrolls', [PayrollController::class, 'index'])->name('payrolls.index');
         Route::post('payrolls/generate', [PayrollController::class, 'generate'])->name('payrolls.generate');
         Route::post('payrolls/thr/generate', [PayrollController::class, 'generateThr'])->name('payrolls.thr.generate');
+        Route::post('payrolls/{payrollRun}/lock', [PayrollController::class, 'toggleLock'])->name('payrolls.lock');
         Route::post('payrolls/{payrollRun}/save', [PayrollController::class, 'save'])->name('payrolls.save');
         Route::post('payrolls/{payrollRun}/send-payslips', [PayrollController::class, 'sendPayslips'])->name('payrolls.send-payslips');
         Route::put('payrolls/{payrollRun}/items/{payrollItem}', [PayrollController::class, 'updateItem'])->name('payrolls.items.update');

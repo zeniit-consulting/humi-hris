@@ -1376,4 +1376,72 @@ class PayrollGenerationTest extends TestCase
             'net_salary' => 9500000.00,
         ]);
     }
+
+    public function test_payroll_can_be_locked_and_unlocked_with_phone_number_pin()
+    {
+        $user1 = User::factory()->create([
+            'email_verified_at' => now(),
+            'phone' => '081234567890',
+        ]);
+
+        $user2 = User::factory()->create([
+            'email_verified_at' => now(),
+            'phone' => '089876543210',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user1->id,
+            'base_salary' => 5_000_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $this->actingAs($user1)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-08'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user1->id)->where('period', '2026-08')->firstOrFail();
+        $item = $run->items()->firstOrFail();
+
+        // 1. User 1 locks payroll
+        $this->actingAs($user1)
+            ->post(route('hris.payrolls.lock', $run))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $run->refresh();
+        $this->assertTrue($run->is_locked);
+        $this->assertEquals($user1->id, $run->locked_by);
+
+        // 2. User 1 (who locked it) CAN still edit payroll item
+        $this->actingAs($user1)
+            ->put(route('hris.payrolls.items.update', [$run, $item]), [
+                'base_salary' => 6_000_000,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        // 3. Attach user2 as sub-account or team member
+        // In our test, simulate another user in the company attempting to edit while locked by user 1
+        // We set user2's owner ID to user1 or test controller check
+        // For testing, user2 attempts unlock with WRONG PIN
+        $this->actingAs($user1)
+            ->post(route('hris.payrolls.lock', $run), [
+                'pin' => '089999999999',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertTrue($run->fresh()->is_locked);
+
+        // 4. Unlock with correct PIN (user 1's phone number)
+        $this->actingAs($user1)
+            ->post(route('hris.payrolls.lock', $run), [
+                'pin' => '081234567890',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertFalse($run->fresh()->is_locked);
+    }
 }

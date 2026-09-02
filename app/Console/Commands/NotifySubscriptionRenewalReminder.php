@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Subscription;
+use App\Services\SubscriptionService;
 use App\Services\WhatsAppNotificationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -11,12 +12,18 @@ class NotifySubscriptionRenewalReminder extends Command
 {
     protected $signature = 'subscription:notify-renewal-reminder {--days=7 : Jumlah hari sebelum masa aktif berakhir}';
 
-    protected $description = 'Kirim reminder WhatsApp renewal subscription sebelum masa aktif plan berakhir';
+    protected $description = 'Generate proforma invoice QRIS & kirim reminder WhatsApp renewal subscription sebelum masa aktif plan berakhir';
 
-    public function handle(WhatsAppNotificationService $notificationService): int
+    public function handle(WhatsAppNotificationService $notificationService, SubscriptionService $subscriptionService): int
     {
         $days = max(1, (int) $this->option('days'));
         $targetDate = Carbon::today()->addDays($days)->toDateString();
+
+        // 1. Auto-generate proforma invoice and QRIS payment
+        $stats = $subscriptionService->generateProformaInvoicesForExpiringSubscriptions($days);
+        $this->info("Proforma invoice generation: {$stats['generated']} generated, {$stats['skipped']} skipped, {$stats['failed']} failed.");
+
+        // 2. Send renewal notifications
         $sent = 0;
 
         Subscription::query()

@@ -3,6 +3,7 @@ import {
     ArrowLeft,
     CheckCircle2,
     Copy,
+    Download,
     ExternalLink,
     QrCode,
     RefreshCw,
@@ -40,6 +41,7 @@ type PageProps = {
     payment_url: string | null;
     billing_url: string;
     payment_check_url: string;
+    download_url?: string;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -109,12 +111,26 @@ export default function BillingPaymentPage() {
                         </p>
                     </div>
 
-                    <Button variant="outline" asChild>
-                        <Link href={billing_url}>
-                            <ArrowLeft className="mr-2 size-4" />
-                            Kembali ke Billing
-                        </Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        {download_url && (
+                            <Button variant="outline" asChild>
+                                <a
+                                    href={download_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Download className="mr-2 size-4" />
+                                    Download PDF
+                                </a>
+                            </Button>
+                        )}
+                        <Button variant="outline" asChild>
+                            <Link href={billing_url}>
+                                <ArrowLeft className="mr-2 size-4" />
+                                Kembali ke Billing
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">

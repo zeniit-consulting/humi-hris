@@ -41,6 +41,7 @@ class PayrollController extends Controller
 
         $run = PayrollRun::query()
             ->with([
+                'lockedBy:id,name',
                 'items.employee:id,employee_code,first_name,last_name,phone,sub_company_id,division_id,hire_date,offboarded_at,base_salary,is_active,employment_status',
                 'items.employee.subCompany:id,code,name',
                 'items.employee.division:id,name',
@@ -105,6 +106,11 @@ class PayrollController extends Controller
                 'generated_at' => $run->generated_at?->toIso8601String(),
                 'is_saved' => $run->is_saved,
                 'saved_at' => $run->saved_at?->toIso8601String(),
+                'is_locked' => (bool) $run->is_locked,
+                'locked_at' => $run->locked_at?->toIso8601String(),
+                'locked_by' => $run->locked_by,
+                'locked_by_name' => $run->lockedBy?->name,
+                'is_locked_by_me' => (int) ($run->locked_by ?? 0) === (int) $request->user()->id,
                 'employees_count' => $filteredTotals['employees_count'],
                 'total_base_salary' => $filteredTotals['total_base_salary'],
                 'total_allowances' => $filteredTotals['total_allowances'],
@@ -250,7 +256,66 @@ class PayrollController extends Controller
         return $redirect->with('success', 'Payroll berhasil disimpan.');
     }
 
-    public function updateItem(PayrollRun $payrollRun, PayrollItem $payrollItem, Request $request): RedirectResponse
+    /**
+     * Lock or unlock the payroll run.
+     */
+     public function toggleLock(PayrollRun $payrollRun, Request $request): RedirectResponse
+     {
+         $ownerId = $request->user()->accountOwnerId();
+         abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+ 
+         if ($payrollRun->is_saved) {
+             return back()->with('error', 'Payroll yang sudah difinalisasi/disimpan tidak memerlukan lock/unlock.');
+         }
+ 
+         $user = $request->user();
+ 
+         // If currently locked, perform unlock with PIN verification (user phone number)
+         if ($payrollRun->is_locked) {
+             $validated = $request->validate([
+                 'pin' => ['required', 'string'],
+             ], [
+                 'pin.required' => 'PIN (nomor telepon pengunci) wajib diisi untuk melakukan unlock.',
+             ]);
+ 
+             $lockingUser = $payrollRun->lockedBy;
+             $cleanInputPin = preg_replace('/\D/', '', (string) $validated['pin']);
+             $cleanUserPhone = $lockingUser ? preg_replace('/\D/', '', (string) $lockingUser->phone) : '';
+ 
+             // Normalize trailing digits if international / leading zero (e.g. 0812 vs 62812)
+             $matchesPhone = false;
+             if ($cleanUserPhone !== '' && $cleanInputPin !== '') {
+                 if ($cleanUserPhone === $cleanInputPin) {
+                     $matchesPhone = true;
+                 } elseif (str_ends_with($cleanUserPhone, $cleanInputPin) || str_ends_with($cleanInputPin, $cleanUserPhone)) {
+                     $matchesPhone = true;
+                 }
+             }
+ 
+             if (! $matchesPhone) {
+                 return back()->with('error', 'PIN tidak valid. Masukkan nomor telepon user yang melakukan lock payroll.');
+             }
+ 
+             $payrollRun->update([
+                 'is_locked' => false,
+                 'locked_at' => null,
+                 'locked_by' => null,
+             ]);
+ 
+             return back()->with('success', 'Payroll berhasil di-unlock. Data sekarang dapat diedit.');
+         }
+ 
+         // If currently unlocked, lock it under current user
+         $payrollRun->update([
+             'is_locked' => true,
+             'locked_at' => now(),
+             'locked_by' => $user->id,
+         ]);
+ 
+         return back()->with('success', "Payroll berhasil di-lock oleh {$user->name}. Admin lain tidak dapat mengubah data tanpa PIN.");
+     }
+ 
+     public function updateItem(PayrollRun $payrollRun, PayrollItem $payrollItem, Request $request): RedirectResponse
     {
         $ownerId = $request->user()->accountOwnerId();
         abort_if((int) $payrollRun->user_id !== $ownerId, 403);
@@ -258,6 +323,11 @@ class PayrollController extends Controller
 
         if ($payrollRun->is_saved) {
             return back()->with('error', 'Payroll yang sudah disimpan tidak bisa diedit.');
+        }
+
+        if ($payrollRun->is_locked && (int) $payrollRun->locked_by !== (int) $request->user()->id) {
+            $lockedByName = $payrollRun->lockedBy?->name ?? 'Admin lain';
+            return back()->with('error', "Payroll sedang di-lock oleh {$lockedByName}. Hanya user tersebut yang dapat mengedit atau melakukan unlock.");
         }
 
         $this->normalizePayrollItemInput($request);

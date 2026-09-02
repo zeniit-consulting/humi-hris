@@ -36,6 +36,9 @@ class PayrollRun extends Model
         'is_saved',
         'saved_at',
         'saved_by',
+        'is_locked',
+        'locked_at',
+        'locked_by',
     ];
 
     /**
@@ -52,6 +55,8 @@ class PayrollRun extends Model
             'generated_at' => 'datetime',
             'is_saved' => 'boolean',
             'saved_at' => 'datetime',
+            'is_locked' => 'boolean',
+            'locked_at' => 'datetime',
             'total_base_salary' => 'decimal:2',
             'total_allowances' => 'decimal:2',
             'total_deductions' => 'decimal:2',
@@ -82,5 +87,13 @@ class PayrollRun extends Model
     public function savedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'saved_by');
+    }
+
+    /**
+     * Get user who locked this payroll.
+     */
+    public function lockedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'locked_by');
     }
 }

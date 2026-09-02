@@ -311,6 +311,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::get('billing/invoices/{invoice}/payment', [BillingController::class, 'payment'])->name('billing.invoices.payment');
     Route::post('billing/invoices/{invoice}/payment/check', [BillingController::class, 'checkPayment'])->name('billing.invoices.payment.check');
     Route::post('billing/invoices/{invoice}/proof', [BillingController::class, 'uploadProof'])->name('billing.invoices.proof');
+    Route::get('billing/invoices/{invoice}/download', [BillingController::class, 'downloadInvoice'])->name('billing.invoices.download');
     Route::delete('billing/invoices/{invoice}', [BillingController::class, 'cancelInvoice'])->name('billing.invoices.cancel');
 });
 

@@ -9,10 +9,17 @@ use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionService
 {
     public const TRIAL_DAYS = 30;
+
+    public function __construct(
+        protected ?PakasirPaymentGateway $pakasir = null,
+    ) {
+        $this->pakasir = $pakasir ?? app(PakasirPaymentGateway::class);
+    }
 
     public function initializeFreeSubscription(User $user): Subscription
     {
@@ -183,5 +190,94 @@ class SubscriptionService
         $currentCount = $this->getEmployeeCount($owner);
 
         return $currentCount < $plan->max_employees;
+    }
+
+    /**
+     * Auto-generate proforma invoices with QRIS for subscriptions expiring in $days days (default H-7).
+     *
+     * @return array{generated: int, skipped: int, failed: int}
+     */
+    public function generateProformaInvoicesForExpiringSubscriptions(int $days = 7): array
+    {
+        $targetDate = Carbon::today()->addDays($days)->toDateString();
+
+        $subscriptions = Subscription::query()
+            ->with('user')
+            ->whereIn('status', ['active', 'trial'])
+            ->whereDate('current_period_end', $targetDate)
+            ->orderBy('id')
+            ->get();
+
+        $stats = ['generated' => 0, 'skipped' => 0, 'failed' => 0];
+
+        foreach ($subscriptions as $subscription) {
+            $user = $subscription->user;
+            if (! $user) {
+                $stats['skipped']++;
+                continue;
+            }
+
+            $ownerId = $user->accountOwnerId();
+            $employeeCount = $this->getEmployeeCount($user);
+
+            // Cannot bill if 0 employees
+            if ($employeeCount < 1) {
+                $stats['skipped']++;
+                continue;
+            }
+
+            // Target plan slug: if trial/free, default to core; otherwise maintain current plan
+            $targetPlanSlug = $subscription->plan_slug === 'free' ? 'core' : $subscription->plan_slug;
+
+            // Check if there is already a valid pending invoice for this user and plan
+            $existingInvoice = SubscriptionInvoice::query()
+                ->where('user_id', $ownerId)
+                ->where('plan_slug', $targetPlanSlug)
+                ->where('status', 'pending')
+                ->where(function ($query) {
+                    $query->whereNull('payment_expires_at')
+                        ->orWhere('payment_expires_at', '>', now());
+                })
+                ->latest('created_at')
+                ->first();
+
+            if ($existingInvoice) {
+                $stats['skipped']++;
+                continue;
+            }
+
+            try {
+                $invoice = $this->createInvoice($user, $targetPlanSlug, $employeeCount, 'qris');
+
+                // Set due date to the expiration date of the subscription
+                $invoice->update([
+                    'due_date' => $subscription->current_period_end?->toDateString() ?? Carbon::today()->addDays($days)->toDateString(),
+                ]);
+
+                // Auto-create QRIS transaction via Pakasir if configured
+                if ($this->pakasir && $this->pakasir->isConfigured()) {
+                    try {
+                        $response = $this->pakasir->createTransaction($invoice, 'qris');
+                        $this->pakasir->applyTransactionResponse($invoice, $response);
+                    } catch (\Throwable $pe) {
+                        Log::warning('subscription.proforma_invoice.pakasir_failed', [
+                            'invoice_id' => $invoice->id,
+                            'error' => $pe->getMessage(),
+                        ]);
+                    }
+                }
+
+                $stats['generated']++;
+            } catch (\Throwable $e) {
+                Log::error('subscription.proforma_invoice.failed', [
+                    'subscription_id' => $subscription->id,
+                    'user_id' => $ownerId,
+                    'error' => $e->getMessage(),
+                ]);
+                $stats['failed']++;
+            }
+        }
+
+        return $stats;
     }
 }

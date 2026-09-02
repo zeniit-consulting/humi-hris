@@ -10,6 +10,8 @@ import {
     Coins,
     Download,
     Filter,
+    Lock,
+    Unlock,
     Pencil,
     Plus,
     Send,
@@ -66,6 +68,11 @@ type PayrollRun = {
     generated_at: string | null;
     is_saved: boolean;
     saved_at: string | null;
+    is_locked?: boolean;
+    locked_at?: string | null;
+    locked_by?: number | null;
+    locked_by_name?: string | null;
+    is_locked_by_me?: boolean;
     employees_count: number;
     total_base_salary: string;
     total_allowances: string;
@@ -237,6 +244,9 @@ export default function PayrollPage() {
         service_fee_total: '',
     });
     const [editingItem, setEditingItem] = useState<PayrollItem | null>(null);
+    const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
+    const [unlockPin, setUnlockPin] = useState('');
+    const [isLockSubmitting, setIsLockSubmitting] = useState(false);
     const [sortKey, setSortKey] = useState<string>('employee');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -524,6 +534,37 @@ export default function PayrollPage() {
         );
     };
 
+    const handleLock = () => {
+        if (!run || run.is_saved) return;
+        setIsLockSubmitting(true);
+        router.post(
+            `/hris/payrolls/${run.id}/lock`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setIsLockSubmitting(false),
+            }
+        );
+    };
+
+    const handleUnlock = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!run || run.is_saved || !unlockPin) return;
+        setIsLockSubmitting(true);
+        router.post(
+            `/hris/payrolls/${run.id}/lock`,
+            { pin: unlockPin },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setUnlockDialogOpen(false);
+                    setUnlockPin('');
+                },
+                onFinish: () => setIsLockSubmitting(false),
+            }
+        );
+    };
+
     const handleSendPayslip = (item: PayrollItem) => {
         if (!run) {
             return;
@@ -646,7 +687,7 @@ export default function PayrollPage() {
                                         type="button"
                                         variant="secondary"
                                         onClick={handleSave}
-                                        disabled={!run || run.is_saved}
+                                        disabled={!run || run.is_saved || (run.is_locked && !run.is_locked_by_me)}
                                         className="whitespace-nowrap"
                                     >
                                         <Sparkles className="size-4" />
@@ -654,6 +695,33 @@ export default function PayrollPage() {
                                             ? 'Payroll Tersimpan'
                                             : 'Simpan Payroll'}
                                     </Button>
+
+                                    {run && !run.is_saved && (
+                                        run.is_locked ? (
+                                            <Button
+                                                type="button"
+                                                variant={run.is_locked_by_me ? 'outline' : 'destructive'}
+                                                onClick={() => setUnlockDialogOpen(true)}
+                                                disabled={isLockSubmitting}
+                                                className="whitespace-nowrap"
+                                            >
+                                                <Unlock className="size-4" />
+                                                {run.is_locked_by_me ? 'Unlock Payroll (Saya)' : `Unlock Payroll (${run.locked_by_name ?? 'Admin'})`}
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={handleLock}
+                                                disabled={isLockSubmitting}
+                                                className="whitespace-nowrap"
+                                            >
+                                                <Lock className="size-4" />
+                                                Lock Payroll
+                                            </Button>
+                                        )
+                                    )}
+
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -701,18 +769,46 @@ export default function PayrollPage() {
                                     )}
                                 </>
                             ) : (
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    onClick={handleSave}
-                                    disabled={!run || run.is_saved}
-                                    className="whitespace-nowrap"
-                                >
-                                    <Sparkles className="size-4" />
-                                    {run?.is_saved
-                                        ? 'THR Tersimpan'
-                                        : 'Simpan THR'}
-                                </Button>
+                                <>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={handleSave}
+                                        disabled={!run || run.is_saved || (run.is_locked && !run.is_locked_by_me)}
+                                        className="whitespace-nowrap"
+                                    >
+                                        <Sparkles className="size-4" />
+                                        {run?.is_saved
+                                            ? 'THR Tersimpan'
+                                            : 'Simpan THR'}
+                                    </Button>
+
+                                    {run && !run.is_saved && (
+                                        run.is_locked ? (
+                                            <Button
+                                                type="button"
+                                                variant={run.is_locked_by_me ? 'outline' : 'destructive'}
+                                                onClick={() => setUnlockDialogOpen(true)}
+                                                disabled={isLockSubmitting}
+                                                className="whitespace-nowrap"
+                                            >
+                                                <Unlock className="size-4" />
+                                                {run.is_locked_by_me ? 'Unlock THR (Saya)' : `Unlock THR (${run.locked_by_name ?? 'Admin'})`}
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={handleLock}
+                                                disabled={isLockSubmitting}
+                                                className="whitespace-nowrap"
+                                            >
+                                                <Lock className="size-4" />
+                                                Lock THR
+                                            </Button>
+                                        )
+                                    )}
+                                </>
                             )}
                         </div>
                     </CardContent>
@@ -851,11 +947,19 @@ export default function PayrollPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>
-                            {type === 'thr'
-                                ? `Preview THR ${periodState}`
-                                : `Preview Payroll ${periodState}`}
-                        </CardTitle>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <CardTitle>
+                                {type === 'thr'
+                                    ? `Preview THR ${periodState}`
+                                    : `Preview Payroll ${periodState}`}
+                            </CardTitle>
+                            {run && !run.is_saved && run.is_locked && (
+                                <Badge variant={run.is_locked_by_me ? "secondary" : "destructive"} className="gap-1 px-2.5 py-1">
+                                    <Lock className="size-3.5" />
+                                    {run.is_locked_by_me ? 'Di-lock oleh Anda (Akses Edit Aktif)' : `Di-lock oleh ${run.locked_by_name ?? 'Admin'} (Read Only)`}
+                                </Badge>
+                            )}
+                        </div>
                         <CardDescription>
                             {run?.generated_at
                                 ? run.is_saved
@@ -1487,7 +1591,8 @@ export default function PayrollPage() {
                                                                     )
                                                                 }
                                                                 disabled={
-                                                                    run?.is_saved
+                                                                    run?.is_saved ||
+                                                                    Boolean(run?.is_locked && !run?.is_locked_by_me)
                                                                 }
                                                                 className="whitespace-nowrap"
                                                             >
@@ -2005,6 +2110,61 @@ export default function PayrollPage() {
                             </div>
                         </div>
                     ) : null}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Unlock className="size-5 text-primary" />
+                            Unlock Payroll
+                        </DialogTitle>
+                        <DialogDescription>
+                            {run?.locked_by_name ? (
+                                <>
+                                    Payroll ini di-lock oleh <b>{run.locked_by_name}</b>. Masukkan PIN berupa nomor telepon terdaftar user tersebut untuk membuka kunci (unlock).
+                                </>
+                            ) : (
+                                'Masukkan PIN berupa nomor telepon user yang melakukan lock payroll untuk membuka kunci.'
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleUnlock} className="space-y-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="unlock_pin">PIN (Nomor Telepon Pengunci)</Label>
+                            <Input
+                                id="unlock_pin"
+                                type="password"
+                                inputMode="numeric"
+                                placeholder="Contoh: 081234567890"
+                                value={unlockPin}
+                                onChange={(e) => setUnlockPin(e.target.value)}
+                                autoFocus
+                                required
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Masukkan nomor telepon user yang melakukan lock.
+                            </p>
+                        </div>
+
+                        <div className="flex justify-end gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setUnlockDialogOpen(false);
+                                    setUnlockPin('');
+                                }}
+                            >
+                                Batal
+                            </Button>
+                            <Button type="submit" disabled={isLockSubmitting || !unlockPin}>
+                                {isLockSubmitting ? 'Memproses...' : 'Buka Kunci (Unlock)'}
+                            </Button>
+                        </div>
+                    </form>
                 </DialogContent>
             </Dialog>
         </AppLayout>

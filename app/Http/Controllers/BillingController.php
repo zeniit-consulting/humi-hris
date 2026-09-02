@@ -6,10 +6,12 @@ use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\PakasirPaymentGateway;
+use App\Services\SubscriptionInvoicePdfService;
 use App\Services\SubscriptionService;
 use App\Support\R2Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -21,6 +23,7 @@ class BillingController extends Controller
     public function __construct(
         protected SubscriptionService $subscriptionService,
         protected PakasirPaymentGateway $pakasir,
+        protected SubscriptionInvoicePdfService $invoicePdfService,
     ) {}
 
     public function index(Request $request): InertiaResponse
@@ -52,6 +55,7 @@ class BillingController extends Controller
                 'invoice_payment_check_template' => $this->routePath('billing.invoices.payment.check', ['invoice' => '__INVOICE_ID__']),
                 'invoice_proof_template' => $this->routePath('billing.invoices.proof', ['invoice' => '__INVOICE_ID__']),
                 'invoice_cancel_template' => $this->routePath('billing.invoices.cancel', ['invoice' => '__INVOICE_ID__']),
+                'invoice_download_template' => $this->routePath('billing.invoices.download', ['invoice' => '__INVOICE_ID__']),
             ],
             'subscription' => $subscription ? [
                 'id' => $subscription->id,
@@ -291,6 +295,7 @@ class BillingController extends Controller
             'payment_url' => $this->pakasir->paymentUrl($invoice),
             'billing_url' => $this->routePath('billing.index'),
             'payment_check_url' => $this->routePath('billing.invoices.payment.check', ['invoice' => $invoice->id]),
+            'download_url' => $this->routePath('billing.invoices.download', ['invoice' => $invoice->id]),
         ]);
     }
 
@@ -363,6 +368,17 @@ class BillingController extends Controller
 
         return redirect()->away($this->routePath('billing.index'))
             ->with('success', 'Invoice berhasil dibatalkan.');
+    }
+
+    public function downloadInvoice(Request $request, SubscriptionInvoice $invoice): Response
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $ownerId = $user->accountOwnerId();
+
+        abort_if($invoice->user_id !== $ownerId, 403);
+
+        return $this->invoicePdfService->download($invoice);
     }
 
     private function routePath(string $name, array $parameters = []): string

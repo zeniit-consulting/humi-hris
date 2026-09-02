@@ -5,6 +5,8 @@ import {
     CheckCircle2,
     Clock,
     CreditCard,
+    Download,
+    FileText,
     Lock,
     Receipt,
     Sparkles,
@@ -78,6 +80,7 @@ type PageProps = {
         invoice_payment_check_template: string;
         invoice_proof_template: string;
         invoice_cancel_template: string;
+        invoice_download_template: string;
     };
 };
 
@@ -600,11 +603,13 @@ function InvoiceTable({
     proofUrlTemplate,
     cancelUrlTemplate,
     paymentUrlTemplate,
+    downloadUrlTemplate,
 }: {
     invoices: Invoice[];
     proofUrlTemplate: string;
     cancelUrlTemplate: string;
     paymentUrlTemplate: string;
+    downloadUrlTemplate: string;
 }) {
     const [uploadInvoiceId, setUploadInvoiceId] = useState<number | null>(null);
     const { delete: destroy, processing: cancelling } = useForm({});
@@ -699,93 +704,115 @@ function InvoiceTable({
                                         {formatDeviceDateTime(inv.created_at)}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        {inv.status === 'pending' && (
-                                            <div className="flex justify-end gap-2">
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 w-8 p-0"
-                                                    disabled={
-                                                        !inv.payment_number
-                                                    }
-                                                    asChild={
-                                                        !!inv.payment_number
-                                                    }
-                                                    title="Bayar invoice"
-                                                >
-                                                    {inv.payment_number ? (
-                                                        <Link
-                                                            href={paymentUrlTemplate.replace(
-                                                                '__INVOICE_ID__',
-                                                                String(inv.id),
-                                                            )}
-                                                        >
-                                                            <Banknote className="size-4" />
-                                                            <span className="sr-only">
-                                                                Bayar invoice
-                                                            </span>
-                                                        </Link>
-                                                    ) : (
-                                                        <>
-                                                            <Banknote className="size-4" />
-                                                            <span className="sr-only">
-                                                                Bayar invoice
-                                                            </span>
-                                                        </>
+                                        <div className="flex items-center justify-end gap-1.5">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="h-8 gap-1.5 px-2.5 text-xs"
+                                                asChild
+                                                title="Unduh Invoice PDF"
+                                            >
+                                                <a
+                                                    href={downloadUrlTemplate.replace(
+                                                        '__INVOICE_ID__',
+                                                        String(inv.id),
                                                     )}
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 w-8 p-0"
-                                                    onClick={() =>
-                                                        setUploadInvoiceId(
-                                                            inv.id,
-                                                        )
-                                                    }
-                                                    title="Upload bukti pembayaran"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
                                                 >
-                                                    <Upload className="size-4" />
-                                                    <span className="sr-only">
-                                                        Upload bukti pembayaran
-                                                    </span>
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    className="h-8 w-8 p-0"
-                                                    disabled={cancelling}
-                                                    onClick={() =>
-                                                        handleCancel(inv.id)
-                                                    }
-                                                    title="Batalkan invoice"
-                                                >
-                                                    <X className="size-4" />
-                                                    <span className="sr-only">
-                                                        Batalkan invoice
-                                                    </span>
-                                                </Button>
-                                            </div>
-                                        )}
-                                        {inv.status === 'paid' &&
-                                            inv.payment_proof && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    asChild
-                                                >
-                                                    <a
-                                                        href={inv.payment_proof}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
+                                                    <Download className="size-3.5" />
+                                                    <span>PDF</span>
+                                                </a>
+                                            </Button>
+
+                                            {inv.status === 'pending' && (
+                                                <>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 w-8 p-0"
+                                                        disabled={
+                                                            !inv.payment_number
+                                                        }
+                                                        asChild={
+                                                            !!inv.payment_number
+                                                        }
+                                                        title="Bayar invoice"
                                                     >
-                                                        Lihat Bukti
-                                                    </a>
-                                                </Button>
+                                                        {inv.payment_number ? (
+                                                            <Link
+                                                                href={paymentUrlTemplate.replace(
+                                                                    '__INVOICE_ID__',
+                                                                    String(inv.id),
+                                                                )}
+                                                            >
+                                                                <Banknote className="size-4" />
+                                                                <span className="sr-only">
+                                                                    Bayar invoice
+                                                                </span>
+                                                            </Link>
+                                                        ) : (
+                                                            <>
+                                                                <Banknote className="size-4" />
+                                                                <span className="sr-only">
+                                                                    Bayar invoice
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 w-8 p-0"
+                                                        onClick={() =>
+                                                            setUploadInvoiceId(
+                                                                inv.id,
+                                                            )
+                                                        }
+                                                        title="Upload bukti pembayaran"
+                                                    >
+                                                        <Upload className="size-4" />
+                                                        <span className="sr-only">
+                                                            Upload bukti pembayaran
+                                                        </span>
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        className="h-8 w-8 p-0"
+                                                        disabled={cancelling}
+                                                        onClick={() =>
+                                                            handleCancel(inv.id)
+                                                        }
+                                                        title="Batalkan invoice"
+                                                    >
+                                                        <X className="size-4" />
+                                                        <span className="sr-only">
+                                                            Batalkan invoice
+                                                        </span>
+                                                    </Button>
+                                                </>
                                             )}
+                                            {inv.status === 'paid' &&
+                                                inv.payment_proof && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        asChild
+                                                    >
+                                                        <a
+                                                            href={inv.payment_proof}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                        >
+                                                            Lihat Bukti
+                                                        </a>
+                                                    </Button>
+                                                )}
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             );
@@ -906,6 +933,9 @@ export default function BillingPage() {
                         cancelUrlTemplate={billing_urls.invoice_cancel_template}
                         paymentUrlTemplate={
                             billing_urls.invoice_payment_template
+                        }
+                        downloadUrlTemplate={
+                            billing_urls.invoice_download_template
                         }
                     />
                 </section>
