@@ -1193,7 +1193,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     section="email"
                     title="Email akun"
                     description={
-                        profile?.employee.email ?? 'Email tidak terdaftar'
+                        profile?.employee?.email ?? 'Email tidak terdaftar'
                     }
                     icon={Mail}
                     isOpen={openSection === 'email'}
@@ -1211,7 +1211,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     section="face_recognition"
                     title="Biometrik Wajah (Face Recognition)"
                     description={
-                        profile?.employee.face_enrolled
+                        profile?.employee?.face_enrolled
                             ? 'Wajah terdaftar • Siap untuk presensi'
                             : 'Wajah belum didaftarkan'
                     }
@@ -1224,7 +1224,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                             Daftarkan foto wajah Anda sekali untuk digunakan sebagai verifikasi biometrik saat melakukan presensi (Clock-in / Clock-out).
                         </p>
 
-                        {profile?.employee.face_enrolled && profile.employee.face_photo_url ? (
+                        {profile?.employee?.face_enrolled && profile.employee.face_photo_url ? (
                             <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
                                 <img
                                     src={profile.employee.face_photo_url}
@@ -1257,7 +1257,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
 
                         <div className="space-y-2">
                             <label className="block text-sm font-semibold text-slate-900">
-                                {profile?.employee.face_enrolled
+                                {profile?.employee?.face_enrolled
                                     ? 'Perbarui Foto Master Wajah'
                                     : 'Upload Foto Master Wajah'}
                             </label>
@@ -1314,7 +1314,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                 <li>
                                     Ketik perintah berikut di chat bot:
                                     <code className="mt-1 block rounded bg-white px-2 py-1 font-mono text-sky-800 border">
-                                        /link {profile?.employee.employee_code ?? 'KODE_ANDA'} {profile?.employee.email ?? 'EMAIL_ANDA'}
+                                        /link {profile?.employee?.employee_code ?? 'KODE_ANDA'} {profile?.employee?.email ?? 'EMAIL_ANDA'}
                                     </code>
                                 </li>
                                 <li>Bot akan otomatis mengonfirmasi status penautan akun Anda.</li>

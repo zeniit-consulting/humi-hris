@@ -1,17 +1,30 @@
-import * as faceapi from '@vladmandic/face-api';
-
+let faceapiModule: typeof import('@vladmandic/face-api') | null = null;
 let modelsLoaded = false;
 let modelLoadingPromise: Promise<void> | null = null;
+
+async function getFaceApi() {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+    if (!faceapiModule) {
+        faceapiModule = await import('@vladmandic/face-api');
+    }
+    return faceapiModule;
+}
 
 /**
  * Load tiny face detector, face landmark 68 tiny, and face recognition models
  */
 export async function loadFaceRecognitionModels(modelPath = '/models'): Promise<void> {
+    if (typeof window === 'undefined') return;
     if (modelsLoaded) return;
     if (modelLoadingPromise) return modelLoadingPromise;
 
     modelLoadingPromise = (async () => {
         try {
+            const faceapi = await getFaceApi();
+            if (!faceapi) return;
+
             await Promise.all([
                 faceapi.nets.tinyFaceDetector.loadFromUri(modelPath),
                 faceapi.nets.faceLandmark68TinyNet.loadFromUri(modelPath),
@@ -35,6 +48,11 @@ export async function loadFaceRecognitionModels(modelPath = '/models'): Promise<
 export async function extractFaceDescriptor(
     input: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
 ): Promise<{ descriptor: number[]; score: number } | null> {
+    if (typeof window === 'undefined') return null;
+
+    const faceapi = await getFaceApi();
+    if (!faceapi) return null;
+
     await loadFaceRecognitionModels();
 
     const detection = await faceapi
