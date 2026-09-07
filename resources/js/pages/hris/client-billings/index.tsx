@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -265,20 +266,23 @@ export default function ClientBillingPage() {
 
                 <Card>
                     <CardHeader>
-                        <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <CardTitle>Daftar Invoice Klien</CardTitle>
                                 <CardDescription>
                                     Total data: {invoices.total}
                                 </CardDescription>
                             </div>
-                            <Button
-                                type="button"
-                                onClick={() => setInvoiceDialogOpen(true)}
-                            >
-                                <Plus className="size-4" />
-                                Buat Invoice Klien
-                            </Button>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <SimplePagination data={invoices} />
+                                <Button
+                                    type="button"
+                                    onClick={() => setInvoiceDialogOpen(true)}
+                                >
+                                    <Plus className="size-4" />
+                                    Buat Invoice Klien
+                                </Button>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -408,39 +412,6 @@ export default function ClientBillingPage() {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {invoices.links.map((link, index) => (
-                                <Button
-                                    key={`${link.label}-${index}`}
-                                    asChild={link.url !== null}
-                                    size="sm"
-                                    variant={
-                                        link.active ? 'default' : 'outline'
-                                    }
-                                    disabled={link.url === null}
-                                >
-                                    {link.url ? (
-                                        <Link
-                                            href={link.url}
-                                            preserveScroll
-                                            preserveState
-                                        >
-                                            <span
-                                                dangerouslySetInnerHTML={{
-                                                    __html: link.label,
-                                                }}
-                                            />
-                                        </Link>
-                                    ) : (
-                                        <span
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
-                                    )}
-                                </Button>
-                            ))}
                         </div>
                     </CardContent>
                 </Card>

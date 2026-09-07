@@ -34,6 +34,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SearchableSelect from '@/components/ui/searchable-select';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Select,
     SelectContent,
@@ -489,19 +490,22 @@ export default function AttendancePage() {
                 </Card>
 
                 <Card>
-                    <CardHeader className="flex flex-row items-start justify-between gap-3">
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <CardTitle>Daftar Kehadiran</CardTitle>
                             <CardDescription>
                                 Rentang tanggal aktif: {dateRangeDisplay}
                             </CardDescription>
                         </div>
-                        <Button asChild size="sm" variant="outline">
-                            <a href={attendanceExportUrl}>
-                                <Download className="size-4" />
-                                Export .xls
-                            </a>
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <SimplePagination data={attendances} />
+                            <Button asChild size="sm" variant="outline">
+                                <a href={attendanceExportUrl}>
+                                    <Download className="size-4" />
+                                    Export .xls
+                                </a>
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -649,40 +653,6 @@ export default function AttendancePage() {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {attendances.links.map((link, index) => (
-                                <Button
-                                    key={`${link.label}-${index}`}
-                                    asChild={link.url !== null}
-                                    size="sm"
-                                    variant={
-                                        link.active ? 'default' : 'outline'
-                                    }
-                                    disabled={link.url === null}
-                                >
-                                    {link.url ? (
-                                        <Link
-                                            href={link.url}
-                                            preserveScroll
-                                            preserveState
-                                        >
-                                            <span
-                                                dangerouslySetInnerHTML={{
-                                                    __html: link.label,
-                                                }}
-                                            />
-                                        </Link>
-                                    ) : (
-                                        <span
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
-                                    )}
-                                </Button>
-                            ))}
                         </div>
                     </CardContent>
                 </Card>

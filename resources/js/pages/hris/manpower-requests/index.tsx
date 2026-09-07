@@ -5,6 +5,7 @@ import type { FormEvent, ReactNode } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -488,11 +489,14 @@ export default function ManpowerRequestPage() {
                 </Card>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Daftar Manpower Request</CardTitle>
-                        <CardDescription>
-                            Total data: {requests.total}
-                        </CardDescription>
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <CardTitle>Daftar Manpower Request</CardTitle>
+                            <CardDescription>
+                                Total data: {requests.total}
+                            </CardDescription>
+                        </div>
+                        <SimplePagination data={requests} />
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -593,39 +597,6 @@ export default function ManpowerRequestPage() {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {requests.links.map((link, index) => (
-                                <Button
-                                    key={`${link.label}-${index}`}
-                                    asChild={link.url !== null}
-                                    size="sm"
-                                    variant={
-                                        link.active ? 'default' : 'outline'
-                                    }
-                                    disabled={link.url === null}
-                                >
-                                    {link.url ? (
-                                        <Link
-                                            href={link.url}
-                                            preserveScroll
-                                            preserveState
-                                        >
-                                            <span
-                                                dangerouslySetInnerHTML={{
-                                                    __html: link.label,
-                                                }}
-                                            />
-                                        </Link>
-                                    ) : (
-                                        <span
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
-                                    )}
-                                </Button>
-                            ))}
                         </div>
                     </CardContent>
                 </Card>

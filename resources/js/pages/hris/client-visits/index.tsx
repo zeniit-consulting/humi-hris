@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { MapboxLocationMap } from '@/components/mapbox-location-map';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -282,11 +283,14 @@ export default function ClientVisitsIndex() {
                 </Card>
 
                 <Card className="w-full">
-                    <CardHeader>
-                        <CardTitle>Riwayat Harian</CardTitle>
-                        <CardDescription>
-                            {visits.total} kunjungan pada {filters.date}
-                        </CardDescription>
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <CardTitle>Riwayat Harian</CardTitle>
+                            <CardDescription>
+                                {visits.total} kunjungan pada {filters.date}
+                            </CardDescription>
+                        </div>
+                        <SimplePagination data={visits} />
                     </CardHeader>
                     <CardContent className="overflow-x-auto">
                         <table className="w-full min-w-[900px] text-sm">

@@ -20,6 +20,7 @@ import InputError from '@/components/input-error';
 import { LockedFeatureBanner } from '@/components/locked-feature-banner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -902,7 +903,7 @@ export default function RecruitmentPage() {
                 </Card>
 
                 <Card>
-                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                    <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <CardTitle>Lowongan</CardTitle>
                             <CardDescription>
@@ -910,10 +911,7 @@ export default function RecruitmentPage() {
                                 halaman publiknya ke kandidat.
                             </CardDescription>
                         </div>
-                        <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
-                            <Briefcase className="size-3.5" />
-                            {vacancies.total} lowongan
-                        </div>
+                        <SimplePagination data={vacancies} />
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -1087,45 +1085,11 @@ export default function RecruitmentPage() {
                                 </tbody>
                             </table>
                         </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {vacancies.links.map((link, index) => (
-                                <Button
-                                    key={`${link.label}-${index}`}
-                                    asChild={link.url !== null}
-                                    size="sm"
-                                    variant={
-                                        link.active ? 'default' : 'outline'
-                                    }
-                                    disabled={link.url === null}
-                                >
-                                    {link.url ? (
-                                        <Link
-                                            href={link.url}
-                                            preserveState
-                                            preserveScroll
-                                        >
-                                            <span
-                                                dangerouslySetInnerHTML={{
-                                                    __html: link.label,
-                                                }}
-                                            />
-                                        </Link>
-                                    ) : (
-                                        <span
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
-                                    )}
-                                </Button>
-                            ))}
-                        </div>
                     </CardContent>
                 </Card>
 
                 <Card>
-                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                    <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <CardTitle>Tracker Kandidat</CardTitle>
                             <CardDescription>
@@ -1133,10 +1097,7 @@ export default function RecruitmentPage() {
                                 diterima, lalu kelola dokumen rekrutmen.
                             </CardDescription>
                         </div>
-                        <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
-                            <CalendarClock className="size-3.5" />
-                            {applications.total} kandidat
-                        </div>
+                        <SimplePagination data={applications} />
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -1342,40 +1303,6 @@ export default function RecruitmentPage() {
                                     )}
                                 </tbody>
                             </table>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {applications.links.map((link, index) => (
-                                <Button
-                                    key={`${link.label}-${index}`}
-                                    asChild={link.url !== null}
-                                    size="sm"
-                                    variant={
-                                        link.active ? 'default' : 'outline'
-                                    }
-                                    disabled={link.url === null}
-                                >
-                                    {link.url ? (
-                                        <Link
-                                            href={link.url}
-                                            preserveState
-                                            preserveScroll
-                                        >
-                                            <span
-                                                dangerouslySetInnerHTML={{
-                                                    __html: link.label,
-                                                }}
-                                            />
-                                        </Link>
-                                    ) : (
-                                        <span
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
-                                    )}
-                                </Button>
-                            ))}
                         </div>
                     </CardContent>
                 </Card>

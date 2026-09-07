@@ -1,12 +1,17 @@
-import { Plus, Trash2 } from 'lucide-react';
+import { CalendarClock, Check, Plus, Sparkles, Tag, Trash2, Users } from 'lucide-react';
 import { Head, useForm } from '@inertiajs/react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import {
+    formatThousandDigits,
+    normalizeDigitInput,
+} from '@/lib/currency-input';
 import { edit } from '@/routes/profile';
 import type { BreadcrumbItem } from '@/types';
 
@@ -343,19 +348,23 @@ export default function PayrollSettings({
                             )}
                         </div>
 
-                        <div className="space-y-4 rounded-lg border bg-slate-50 p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h3 className="text-sm font-semibold">
-                                        Daftar Event Lembur & Insentif per Jabatan
-                                    </h3>
-                                    <p className="text-xs text-muted-foreground">
-                                        Atur kode komponen, tarif, satuan (kegiatan, jam, hari, kehadiran), serta batasan jabatan karyawan yang dapat mengajukan.
+                        <div className="space-y-4 rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4">
+                                <div className="space-y-0.5">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                                            <CalendarClock className="size-4" />
+                                        </div>
+                                        <h3 className="text-sm font-semibold text-slate-900">
+                                            Event Lembur & Insentif per Jabatan
+                                        </h3>
+                                    </div>
+                                    <p className="text-xs text-slate-500 pl-9">
+                                        Kustomisasi jenis lembur/kegiatan khusus, tarif insentif, dan pembatasan jabatan karyawan yang berhak mengajukan.
                                     </p>
                                 </div>
                                 <Button
                                     type="button"
-                                    variant="outline"
                                     size="sm"
                                     onClick={() =>
                                         form.setData('overtime_events', [
@@ -363,48 +372,93 @@ export default function PayrollSettings({
                                             { code: '', name: '', nominal: 0, unit: 'kegiatan', position_ids: [] },
                                         ])
                                     }
-                                    className="h-8 gap-1.5 text-xs"
+                                    className="gap-1.5 text-xs font-medium self-start sm:self-auto"
                                 >
                                     <Plus className="size-3.5" />
-                                    Tambah Event
+                                    Tambah Event Baru
                                 </Button>
                             </div>
-                            {form.data.overtime_events.length > 0 && (
-                                <div className="space-y-3 pt-2">
-                                    {form.data.overtime_events.map(
-                                        (event, index) => (
+
+                            {form.data.overtime_events.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center">
+                                    <div className="flex size-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                                        <Sparkles className="size-5" />
+                                    </div>
+                                    <p className="mt-2 text-xs font-medium text-slate-700">
+                                        Belum Ada Komponen Event Khusus
+                                    </p>
+                                    <p className="mt-0.5 max-w-sm text-[11px] text-slate-500">
+                                        Jika perusahaan memiliki insentif lembur event khusus (seperti event toko, stock opname, dinas luar), tambahkan di sini.
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                            form.setData('overtime_events', [
+                                                { code: '', name: '', nominal: 0, unit: 'kegiatan', position_ids: [] },
+                                            ])
+                                        }
+                                        className="mt-3.5 h-8 gap-1.5 text-xs"
+                                    >
+                                        <Plus className="size-3.5" />
+                                        Buat Event Pertama
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {form.data.overtime_events.map((event, index) => {
+                                        const selectedCount = (event.position_ids ?? []).length;
+                                        const isAllPositions = selectedCount === 0;
+
+                                        return (
                                             <div
                                                 key={index}
-                                                className="rounded-lg border bg-white p-3 shadow-xs space-y-3"
+                                                className="group relative rounded-xl border border-slate-200/80 bg-slate-50/40 p-4 transition-all hover:border-slate-300 hover:bg-slate-50/70 hover:shadow-xs space-y-3.5"
                                             >
-                                                <div className="flex items-center justify-between border-b pb-2">
-                                                    <span className="text-xs font-semibold text-muted-foreground">
-                                                        Event #{index + 1}
-                                                    </span>
+                                                {/* Header Card Event */}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="flex size-5 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-700">
+                                                            {index + 1}
+                                                        </span>
+                                                        <span className="text-xs font-medium text-slate-800">
+                                                            {event.name ? event.name : 'Event Baru (Belum diberi nama)'}
+                                                        </span>
+                                                        {event.code && (
+                                                            <span className="rounded bg-slate-200/70 px-1.5 py-0.5 font-mono text-[10px] text-slate-600">
+                                                                {event.code}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => {
-                                                            const newEvents = [
-                                                                ...form.data.overtime_events,
-                                                            ];
+                                                            const newEvents = [...form.data.overtime_events];
                                                             newEvents.splice(index, 1);
                                                             form.setData('overtime_events', newEvents);
                                                         }}
-                                                        className="h-7 text-xs text-rose-500 hover:bg-rose-50 hover:text-rose-600 gap-1"
+                                                        className="h-7 text-xs text-rose-500 hover:bg-rose-50 hover:text-rose-600 gap-1 px-2"
                                                     >
                                                         <Trash2 className="size-3.5" />
                                                         Hapus
                                                     </Button>
                                                 </div>
 
+                                                {/* Grid Input Utama */}
                                                 <div className="grid gap-3 sm:grid-cols-12">
                                                     <div className="sm:col-span-3 space-y-1">
-                                                        <Label className="text-xs">Kode</Label>
+                                                        <Label className="text-[11px] font-medium text-slate-600 flex items-center gap-1">
+                                                            <Tag className="size-3 text-slate-400" />
+                                                            Kode (Opsional)
+                                                        </Label>
                                                         <Input
-                                                            placeholder="Contoh: OT_STORE_SM"
+                                                            placeholder="Misal: OT_EVENT"
                                                             value={event.code ?? ''}
+                                                            className="h-9 bg-white text-xs font-mono"
                                                             onChange={(e) => {
                                                                 const newEvents = [...form.data.overtime_events];
                                                                 newEvents[index].code = e.target.value.toUpperCase();
@@ -414,10 +468,13 @@ export default function PayrollSettings({
                                                     </div>
 
                                                     <div className="sm:col-span-4 space-y-1">
-                                                        <Label className="text-xs">Nama Kegiatan / Komponen</Label>
+                                                        <Label className="text-[11px] font-medium text-slate-600">
+                                                            Nama Event / Kegiatan <span className="text-rose-500">*</span>
+                                                        </Label>
                                                         <Input
-                                                            placeholder="Contoh: OT Store - Store Manager"
+                                                            placeholder="Misal: OT Event Toko / Bazaar"
                                                             value={event.name}
+                                                            className="h-9 bg-white text-xs"
                                                             required
                                                             onChange={(e) => {
                                                                 const newEvents = [...form.data.overtime_events];
@@ -435,19 +492,28 @@ export default function PayrollSettings({
                                                     </div>
 
                                                     <div className="sm:col-span-3 space-y-1">
-                                                        <Label className="text-xs">Tarif (Rp)</Label>
-                                                        <Input
-                                                            type="number"
-                                                            placeholder="Contoh: 15385"
-                                                            min="0"
-                                                            value={event.nominal}
-                                                            required
-                                                            onChange={(e) => {
-                                                                const newEvents = [...form.data.overtime_events];
-                                                                newEvents[index].nominal = Number(e.target.value);
-                                                                form.setData('overtime_events', newEvents);
-                                                            }}
-                                                        />
+                                                        <Label className="text-[11px] font-medium text-slate-600">
+                                                            Tarif Insentif <span className="text-rose-500">*</span>
+                                                        </Label>
+                                                        <div className="relative">
+                                                            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs text-slate-400">
+                                                                Rp
+                                                            </span>
+                                                            <Input
+                                                                type="text"
+                                                                inputMode="numeric"
+                                                                placeholder="0"
+                                                                value={event.nominal ? formatThousandDigits(event.nominal) : ''}
+                                                                className="h-9 bg-white pl-8 text-xs font-medium"
+                                                                required
+                                                                onChange={(e) => {
+                                                                    const raw = normalizeDigitInput(e.target.value);
+                                                                    const newEvents = [...form.data.overtime_events];
+                                                                    newEvents[index].nominal = raw ? Number(raw) : 0;
+                                                                    form.setData('overtime_events', newEvents);
+                                                                }}
+                                                            />
+                                                        </div>
                                                         <InputError
                                                             message={
                                                                 (form.errors as Record<string, string>)[
@@ -458,9 +524,11 @@ export default function PayrollSettings({
                                                     </div>
 
                                                     <div className="sm:col-span-2 space-y-1">
-                                                        <Label className="text-xs">Satuan</Label>
+                                                        <Label className="text-[11px] font-medium text-slate-600">
+                                                            Hitungan Per
+                                                        </Label>
                                                         <select
-                                                            className="h-9 w-full rounded-md border border-input bg-background px-2.5 text-xs outline-none"
+                                                            className="h-9 w-full rounded-md border border-input bg-white px-2.5 text-xs outline-none focus:border-primary"
                                                             value={event.unit ?? 'kegiatan'}
                                                             onChange={(e) => {
                                                                 const newEvents = [...form.data.overtime_events];
@@ -468,19 +536,51 @@ export default function PayrollSettings({
                                                                 form.setData('overtime_events', newEvents);
                                                             }}
                                                         >
-                                                            <option value="kegiatan">kegiatan</option>
-                                                            <option value="jam">jam (hitung durasi)</option>
-                                                            <option value="hari">hari</option>
-                                                            <option value="kehadiran">kehadiran</option>
+                                                            <option value="kegiatan">Kegiatan</option>
+                                                            <option value="jam">Jam</option>
+                                                            <option value="hari">Hari</option>
+                                                            <option value="kehadiran">Kehadiran</option>
                                                         </select>
                                                     </div>
                                                 </div>
 
-                                                <div className="space-y-1.5 pt-1">
-                                                    <Label className="text-xs text-slate-700">
-                                                        Berlaku untuk Jabatan (Kosongkan jika berlaku untuk Semua Jabatan):
-                                                    </Label>
-                                                    <div className="flex flex-wrap gap-2 pt-0.5">
+                                                {/* Batasan Jabatan */}
+                                                <div className="rounded-lg border border-slate-200/60 bg-white p-3 space-y-2">
+                                                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <Users className="size-3.5 text-slate-400" />
+                                                            <span className="text-[11px] font-medium text-slate-700">
+                                                                Hak Akses Jabatan:
+                                                            </span>
+                                                            <span className="text-[11px] text-slate-500">
+                                                                {isAllPositions ? (
+                                                                    <Badge variant="secondary" className="font-normal text-[10px] py-0 px-1.5">
+                                                                        Semua Jabatan Bisa Mengajukan
+                                                                    </Badge>
+                                                                ) : (
+                                                                    <Badge variant="outline" className="font-medium text-[10px] text-indigo-700 border-indigo-200 bg-indigo-50/50 py-0 px-1.5">
+                                                                        Terbatas ({selectedCount} jabatan)
+                                                                    </Badge>
+                                                                )}
+                                                            </span>
+                                                        </div>
+
+                                                        {!isAllPositions && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newEvents = [...form.data.overtime_events];
+                                                                    newEvents[index].position_ids = [];
+                                                                    form.setData('overtime_events', newEvents);
+                                                                }}
+                                                                className="text-[10px] text-slate-500 hover:text-indigo-600 underline cursor-pointer"
+                                                            >
+                                                                Bebaskan ke Semua Jabatan
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex flex-wrap gap-1.5 pt-1">
                                                         {positions.map((pos) => {
                                                             const isSelected = (event.position_ids ?? []).includes(pos.id);
                                                             return (
@@ -496,26 +596,27 @@ export default function PayrollSettings({
                                                                         newEvents[index].position_ids = nextIds;
                                                                         form.setData('overtime_events', newEvents);
                                                                     }}
-                                                                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs transition-colors cursor-pointer border ${
+                                                                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-all cursor-pointer border ${
                                                                         isSelected
-                                                                            ? 'bg-primary text-primary-foreground border-primary'
-                                                                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                                                                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                                                                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800'
                                                                     }`}
                                                                 >
+                                                                    {isSelected && <Check className="size-3" />}
                                                                     {pos.name}
                                                                 </button>
                                                             );
                                                         })}
                                                         {positions.length === 0 && (
-                                                            <p className="text-xs text-muted-foreground italic">
-                                                                Belum ada master data jabatan. Event berlaku umum.
+                                                            <p className="text-[11px] text-slate-400 italic">
+                                                                Belum ada master data jabatan terdaftar.
                                                             </p>
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
-                                        ),
-                                    )}
+                                        );
+                                    })}
                                 </div>
                             )}
                             <InputError

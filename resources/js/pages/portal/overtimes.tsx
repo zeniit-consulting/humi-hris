@@ -88,32 +88,6 @@ export default function PortalOvertimesPage({ pageTitle }: Props) {
     }, []);
 
     const overtimeEvents = portal?.overtime_events ?? [];
-    const selectedEvent = overtimeEvents.find((e) => e.name === form.event_name);
-
-    const calculateHours = (startTime: string, endTime: string, breakMins: string) => {
-        if (!startTime || !endTime) return 0;
-        const [startH, startM] = startTime.split(':').map(Number);
-        const [endH, endM] = endTime.split(':').map(Number);
-        if (isNaN(startH) || isNaN(startM) || isNaN(endH) || isNaN(endM)) return 0;
-        let startMinutes = startH * 60 + startM;
-        let endMinutes = endH * 60 + endM;
-        if (endMinutes <= startMinutes) {
-            endMinutes += 24 * 60;
-        }
-        const netMinutes = Math.max(endMinutes - startMinutes - (Number(breakMins) || 0), 0);
-        return Math.round((netMinutes / 60) * 100) / 100;
-    };
-
-    const calculatedHours = calculateHours(form.start_time, form.end_time, form.break_minutes);
-
-    const estimatedEventNominal = (() => {
-        if (!form.is_event || !selectedEvent) return 0;
-        const baseNominal = Number(selectedEvent.nominal ?? 0);
-        if (selectedEvent.unit === 'jam') {
-            return Math.round(baseNominal * calculatedHours);
-        }
-        return baseNominal;
-    })();
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -225,28 +199,10 @@ export default function PortalOvertimesPage({ pageTitle }: Props) {
                                     <option value="">-- Pilih Event Lembur --</option>
                                     {overtimeEvents.map((ev, idx) => (
                                         <option key={idx} value={ev.name}>
-                                            {ev.code ? `[${ev.code}] ` : ''}{ev.name} — Rp {Number(ev.nominal).toLocaleString('id-ID')} / {ev.unit ?? 'kegiatan'}
+                                            {ev.code ? `[${ev.code}] ` : ''}{ev.name}
                                         </option>
                                     ))}
                                 </select>
-
-                                {selectedEvent && (
-                                    <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-900 border border-emerald-200">
-                                        <div>
-                                            <p className="font-semibold">{selectedEvent.name}</p>
-                                            <p className="text-emerald-700">
-                                                Rp {Number(selectedEvent.nominal).toLocaleString('id-ID')} / {selectedEvent.unit ?? 'kegiatan'}
-                                                {selectedEvent.unit === 'jam' && ` × ${calculatedHours} jam`}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="text-[10px] uppercase text-emerald-600 block">Estimasi Upah</span>
-                                            <span className="text-sm font-bold text-emerald-900">
-                                                Rp {estimatedEventNominal.toLocaleString('id-ID')}
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         )}
                     </div>
@@ -353,11 +309,6 @@ export default function PortalOvertimesPage({ pageTitle }: Props) {
                                         <p className="mt-1 text-sm text-slate-500">
                                             {item.start_time} - {item.end_time}{' '}
                                             · {item.total_hours} jam
-                                            {item.is_event && item.event_nominal !== null && item.event_nominal !== undefined && (
-                                                <span className="ml-1.5 font-medium text-emerald-600">
-                                                    (Rp {Number(item.event_nominal).toLocaleString('id-ID')})
-                                                </span>
-                                            )}
                                         </p>
                                         {item.reason ? (
                                             <p className="mt-2 text-sm text-slate-600">

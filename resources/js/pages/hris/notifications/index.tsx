@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -196,16 +197,17 @@ export default function NotificationIndex() {
 
                 <div className="grid gap-4">
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <BellRing className="size-4" />
-                                Daftar notifikasi
-                            </CardTitle>
-                            <CardDescription>
-                                {notifications.from ?? 0}-
-                                {notifications.to ?? 0} dari{' '}
-                                {notifications.total} notifikasi.
-                            </CardDescription>
+                        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <BellRing className="size-4" />
+                                    Daftar notifikasi
+                                </CardTitle>
+                                <CardDescription>
+                                    Kelola pengumuman dan pesan notifikasi.
+                                </CardDescription>
+                            </div>
+                            <SimplePagination data={notifications} />
                         </CardHeader>
                         <CardContent className="grid gap-4">
                             <div className="flex flex-col gap-2 md:flex-row">
@@ -333,8 +335,6 @@ export default function NotificationIndex() {
                                     </tbody>
                                 </table>
                             </div>
-
-                            <Pagination links={notifications.links} />
                         </CardContent>
                     </Card>
                 </div>

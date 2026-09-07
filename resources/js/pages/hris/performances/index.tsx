@@ -20,6 +20,7 @@ import { useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -842,15 +843,17 @@ export default function PerformanceIndex() {
                 {activeTab === 'Reviews' ? (
                     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <UsersRound className="size-4" />
-                                    Review Karyawan
-                                </CardTitle>
-                                <CardDescription>
-                                    {reviews.from ?? 0}-{reviews.to ?? 0} dari{' '}
-                                    {reviews.total} review.
-                                </CardDescription>
+                            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <UsersRound className="size-4" />
+                                        Review Karyawan
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Kelola review penilaian kinerja karyawan.
+                                    </CardDescription>
+                                </div>
+                                <SimplePagination data={reviews} />
                             </CardHeader>
                             <CardContent className="flex flex-col gap-4">
                                 <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
@@ -1051,7 +1054,6 @@ export default function PerformanceIndex() {
                                         </tbody>
                                     </table>
                                 </div>
-                                <Pagination links={reviews.links} />
                             </CardContent>
                         </Card>
 

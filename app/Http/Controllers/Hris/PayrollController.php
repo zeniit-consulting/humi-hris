@@ -42,7 +42,7 @@ class PayrollController extends Controller
         $run = PayrollRun::query()
             ->with([
                 'lockedBy:id,name',
-                'items.employee:id,employee_code,first_name,last_name,phone,sub_company_id,division_id,hire_date,offboarded_at,base_salary,is_active,employment_status',
+                'items.employee:id,employee_code,first_name,last_name,phone,sub_company_id,division_id,hire_date,offboarded_at,base_salary,is_active,employment_status,employment_type',
                 'items.employee.subCompany:id,code,name',
                 'items.employee.division:id,name',
                 'items.employee.bankAccounts:id,employee_id,bank_name,account_number,account_holder_name,is_primary',
@@ -136,6 +136,8 @@ class PayrollController extends Controller
                         'division_name' => $item->employee?->division?->name ?? '-',
                         'hire_date' => $item->employee?->hire_date?->format('d M Y'),
                         'offboarded_at' => $item->employee?->offboarded_at?->format('d M Y'),
+                        'employment_status' => $item->employee?->employment_status ?? null,
+                        'employment_type' => $item->employee?->employment_type ?? null,
                         'bank_name' => $primaryBank?->bank_name ?? null,
                         'account_number' => $primaryBank?->account_number ?? null,
                         'account_holder_name' => $primaryBank?->account_holder_name ?? null,

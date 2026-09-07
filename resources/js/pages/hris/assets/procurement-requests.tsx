@@ -14,6 +14,7 @@ import type { FormEvent, ReactNode } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -284,7 +285,7 @@ export default function AssetProcurementRequestsPage() {
 
             <div className="space-y-4 p-4">
                 <Card>
-                    <CardHeader className="flex flex-row items-start justify-between gap-3">
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <CardTitle className="flex items-center gap-2">
                                 <ShoppingCart className="size-4" />
@@ -295,13 +296,16 @@ export default function AssetProcurementRequestsPage() {
                                 ke inventory.
                             </CardDescription>
                         </div>
-                        <Button
-                            type="button"
-                            onClick={() => setDialogOpen(true)}
-                        >
-                            <Plus className="size-4" />
-                            Buat Request
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <SimplePagination data={requests} />
+                            <Button
+                                type="button"
+                                onClick={() => setDialogOpen(true)}
+                            >
+                                <Plus className="size-4" />
+                                Buat Request
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid gap-3 md:grid-cols-4">
@@ -563,40 +567,6 @@ export default function AssetProcurementRequestsPage() {
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                            {requests.links.map((link, index) => (
-                                <Button
-                                    key={`${link.label}-${index}`}
-                                    asChild={link.url !== null}
-                                    size="sm"
-                                    variant={
-                                        link.active ? 'default' : 'outline'
-                                    }
-                                    disabled={link.url === null}
-                                >
-                                    {link.url ? (
-                                        <Link
-                                            href={link.url}
-                                            preserveScroll
-                                            preserveState
-                                        >
-                                            <span
-                                                dangerouslySetInnerHTML={{
-                                                    __html: link.label,
-                                                }}
-                                            />
-                                        </Link>
-                                    ) : (
-                                        <span
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
-                                    )}
-                                </Button>
-                            ))}
                         </div>
                     </CardContent>
                 </Card>

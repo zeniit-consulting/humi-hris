@@ -3,9 +3,7 @@ import {
     AlertTriangle,
     Building2,
     CalendarClock,
-    CalendarDays,
     ChevronDown,
-    Clock3,
     Filter,
     ReceiptText,
     UsersRound,
@@ -125,6 +123,7 @@ type ContractReminders = {
 };
 
 type DashboardFilters = {
+    period?: string;
     range: 'today' | 'this_week' | 'this_month';
     outsourcing_period: string;
     outsourcing_sub_company_id: string;
@@ -207,6 +206,7 @@ export default function Dashboard({
     stats,
     attendanceChart,
     filters,
+    availablePeriods = [],
     actionQueue,
     attendanceFocus,
     recentRequests,
@@ -216,6 +216,7 @@ export default function Dashboard({
     stats: DashboardStats;
     attendanceChart: AttendancePoint[];
     filters: DashboardFilters;
+    availablePeriods?: Array<{ value: string; label: string }>;
     actionQueue: ActionQueue;
     attendanceFocus: AttendanceFocus;
     recentRequests: RecentRequests;
@@ -236,7 +237,12 @@ export default function Dashboard({
         ]),
         1,
     );
-    const genderEntries = [
+    const genderEntries: Array<{
+        key: string;
+        label: string;
+        color: string;
+        total: number;
+    }> = [
         { key: 'male', label: 'Laki-laki', color: '#0f766e' },
         { key: 'female', label: 'Perempuan', color: '#14b8a6' },
         { key: 'other', label: 'Lainnya', color: '#f59e0b' },
@@ -285,57 +291,127 @@ export default function Dashboard({
         );
     };
 
+    const reminders = [
+        ...attendanceFocus.items
+            .filter((item) => item.description.startsWith('Telat'))
+            .map((item) => {
+                const parts = item.description.split('·');
+                const datePart = parts.length >= 3 ? parts[2].trim() : (parts.length === 2 ? parts[1].trim() : 'Hari Ini');
+                return {
+                    id: item.id,
+                    name: item.label,
+                    type: 'Absensi (Terlambat)',
+                    badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300',
+                    date: datePart,
+                    href: item.href,
+                };
+            }),
+        ...recentRequests.items.map((item) => ({
+            id: item.id,
+            name: item.employee_label,
+            type: `Request: ${item.type}`,
+            badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300',
+            date: item.date_label || item.created_at || '-',
+            href: item.href,
+        })),
+        ...contractReminders.items.map((item) => ({
+            id: `contract-${item.id}`,
+            name: item.employee_label,
+            type: `Reminder: ${item.type}`,
+            badgeColor: 'bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300',
+            date: `${item.date_label} (${item.days_remaining} hari)`,
+            href: item.href,
+        })),
+    ].slice(0, 20);
+
+    const currentPeriod = filters.period || filters.outsourcing_period || (availablePeriods[0]?.value ?? new Date().toISOString().slice(0, 7));
+
+    const periodOptions = availablePeriods.length > 0
+        ? availablePeriods
+        : [{
+            value: currentPeriod,
+            label: currentPeriod,
+        }];
+
+    const handlePeriodChange = (newPeriod: string) => {
+        router.get(
+            dashboard.url(),
+            {
+                ...filters,
+                period: newPeriod,
+                outsourcing_period: newPeriod,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
 
             <div className="space-y-6 p-4">
-                <Card>
-                    <CardHeader>
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div>
-                                <CardTitle>
-                                    Selamat datang, {userName}
-                                </CardTitle>
-                                <CardDescription>
-                                    Pantau kondisi tim, kehadiran, dan pekerjaan
-                                    HR hari ini dari satu dashboard.
-                                </CardDescription>
-                            </div>
-                            {actionQueue.total > 0 && (
-                                <div className="rounded-md border border-rose-200 bg-rose-50/70 px-3 py-2 text-sm text-rose-700 dark:border-rose-950 dark:bg-rose-950/25 dark:text-rose-300">
-                                    <span className="font-semibold">
-                                        {actionQueue.total}
-                                    </span>{' '}
-                                    Pending actions
-                                </div>
-                            )}
-                        </div>
-                    </CardHeader>
-                    {actionQueue.items.length > 0 && (
-                        <CardContent>
-                            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                                {actionQueue.items.map((item) => (
-                                    <Link
-                                        key={item.key}
-                                        href={item.href}
-                                        className="flex min-h-11 items-center justify-between gap-3 rounded-md border border-rose-200 bg-rose-50/70 px-3 py-2 text-rose-700 transition-colors hover:bg-rose-100 dark:border-rose-950 dark:bg-rose-950/25 dark:text-rose-300 dark:hover:bg-rose-950/40"
-                                    >
-                                        <p className="truncate text-sm font-medium">
-                                            {item.label}
-                                        </p>
-                                        <div className="flex shrink-0 items-center gap-2">
-                                            <span className="text-lg font-semibold tabular-nums">
-                                                {item.count}
-                                            </span>
-                                            <AlertTriangle className="size-4" />
-                                        </div>
-                                    </Link>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            Selamat datang, {userName}
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Pantau kondisi tim, kehadiran, dan pekerjaan HR hari ini dari satu dashboard.
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Select
+                            value={currentPeriod}
+                            onValueChange={handlePeriodChange}
+                        >
+                            <SelectTrigger className="h-9 w-[180px] bg-background">
+                                <SelectValue placeholder="Pilih Periode" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {periodOptions.map((opt) => (
+                                    <SelectItem key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </SelectItem>
                                 ))}
+                            </SelectContent>
+                        </Select>
+
+                        {actionQueue.total > 0 && (
+                            <div className="rounded-md border border-rose-200 bg-rose-50/70 px-3 py-2 text-sm text-rose-700 dark:border-rose-950 dark:bg-rose-950/25 dark:text-rose-300">
+                                <span className="font-semibold">
+                                    {actionQueue.total}
+                                </span>{' '}
+                                Pending actions
                             </div>
-                        </CardContent>
-                    )}
-                </Card>
+                        )}
+                    </div>
+                </div>
+
+                {actionQueue.items.length > 0 && (
+                    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                        {actionQueue.items.map((item) => (
+                            <Link
+                                key={item.key}
+                                href={item.href}
+                                className="flex min-h-11 items-center justify-between gap-3 rounded-md border border-rose-200 bg-rose-50/70 px-3 py-2 text-rose-700 transition-colors hover:bg-rose-100 dark:border-rose-950 dark:bg-rose-950/25 dark:text-rose-300 dark:hover:bg-rose-950/40"
+                            >
+                                <p className="truncate text-sm font-medium">
+                                    {item.label}
+                                </p>
+                                <div className="flex shrink-0 items-center gap-2">
+                                    <span className="text-lg font-semibold tabular-nums">
+                                        {item.count}
+                                    </span>
+                                    <AlertTriangle className="size-4" />
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                )}
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-8">
                     <Card className="gap-2 border-sky-200 bg-sky-50/70 py-3 dark:border-sky-950 dark:bg-sky-950/25">
@@ -427,123 +503,8 @@ export default function Dashboard({
                     </Card>
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-3">
-                    <Card className="gap-0 py-0">
-                        <CardHeader className="px-4 py-3">
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <CardTitle>Absensi Hari Ini</CardTitle>
-                                    <CardDescription>
-                                        Nama karyawan yang perlu dicek admin.
-                                    </CardDescription>
-                                </div>
-                                <CalendarDays className="size-5 text-muted-foreground" />
-                            </div>
-                        </CardHeader>
-                        <CardContent className="px-4 pb-4">
-                            <DashboardList
-                                icon={Clock3}
-                                title="Perlu Ditindaklanjuti"
-                                count={
-                                    attendanceFocus.missing_clock_ins_count +
-                                    attendanceFocus.late_today_count
-                                }
-                                empty="Tidak ada absensi yang perlu ditindaklanjuti."
-                                items={attendanceFocus.items.map((item) => ({
-                                    key: item.id,
-                                    label: item.label,
-                                    description: item.description,
-                                    href: item.href,
-                                }))}
-                            />
-                        </CardContent>
-                    </Card>
-
-                    <Card className="gap-0 py-0">
-                        <CardHeader className="px-4 py-3">
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <CardTitle>Request Terbaru</CardTitle>
-                                    <CardDescription>
-                                        Aktivitas terbaru dari karyawan dan
-                                        supervisor.
-                                    </CardDescription>
-                                </div>
-                                <AlertTriangle className="size-5 text-muted-foreground" />
-                            </div>
-                        </CardHeader>
-                        <CardContent className="px-4 pb-4">
-                            {recentRequests.items.length === 0 ? (
-                                <div className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
-                                    Belum ada request terbaru.
-                                </div>
-                            ) : (
-                                <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
-                                    {recentRequests.items.map((item) => (
-                                        <Link
-                                            key={item.id}
-                                            href={item.href}
-                                            className="flex items-start justify-between gap-3 rounded-md border px-3 py-2 transition-colors hover:bg-muted/40"
-                                        >
-                                            <div className="min-w-0">
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <p className="text-sm font-medium">
-                                                        {item.type}
-                                                    </p>
-                                                    <StatusPill
-                                                        status={item.status}
-                                                    />
-                                                </div>
-                                                <p className="mt-1 truncate text-sm text-muted-foreground">
-                                                    {item.employee_label}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {item.date_label}
-                                                </p>
-                                            </div>
-                                            <p className="shrink-0 text-xs text-muted-foreground">
-                                                {item.created_at ?? ''}
-                                            </p>
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <Card className="gap-0 py-0">
-                        <CardHeader className="px-4 py-3">
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <CardTitle>
-                                        Reminder Kontrak & Probation
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Berakhir dalam 30 hari ke depan.
-                                    </CardDescription>
-                                </div>
-                                <CalendarClock className="size-5 text-muted-foreground" />
-                            </div>
-                        </CardHeader>
-                        <CardContent className="px-4 pb-4">
-                            <DashboardList
-                                icon={CalendarClock}
-                                title="Akan Berakhir"
-                                count={contractReminders.total}
-                                empty="Tidak ada kontrak atau probation yang segera berakhir."
-                                items={contractReminders.items.map((item) => ({
-                                    key: `${item.type}-${item.id}`,
-                                    label: item.employee_label,
-                                    description: `${item.type} · ${item.date_label} · ${item.days_remaining} hari`,
-                                    href: item.href,
-                                }))}
-                            />
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <div className="grid gap-4 lg:grid-cols-12">
-                    <Card className="gap-0 py-0 lg:col-span-9">
+                <div className="grid gap-4 lg:grid-cols-10">
+                    <Card className="flex flex-col gap-0 py-0 lg:col-span-5">
                         <CardHeader className="px-4 py-3">
                             <div className="flex flex-wrap items-center justify-between gap-3">
                                 <CardTitle>Chart Kehadiran</CardTitle>
@@ -561,7 +522,7 @@ export default function Dashboard({
                                             onClick={() =>
                                                 router.get(
                                                     dashboard.url(),
-                                                    { range: option.value },
+                                                    { ...filters, range: option.value },
                                                     {
                                                         preserveState: true,
                                                         preserveScroll: true,
@@ -576,11 +537,10 @@ export default function Dashboard({
                                 </div>
                             </div>
                             <CardDescription>
-                                Komposisi hadir, terlambat, cuti, dan absen per
-                                hari.
+                                Komposisi hadir, terlambat, cuti, dan absen per hari.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="px-4 pb-4">
+                        <CardContent className="flex flex-1 flex-col justify-between px-4 pb-4">
                             <div className="mb-3 flex flex-wrap gap-1.5 text-xs">
                                 <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
                                     <span className="size-2 rounded-full bg-emerald-500" />
@@ -601,7 +561,7 @@ export default function Dashboard({
                             </div>
 
                             <div className="overflow-x-auto">
-                                <div className="min-w-[680px]">
+                                <div className="min-w-[400px]">
                                     <svg
                                         viewBox="0 0 760 240"
                                         className="h-56 w-full"
@@ -650,7 +610,7 @@ export default function Dashboard({
                                                     const x =
                                                         attendanceChart.length ===
                                                         1
-                                                            ? 380
+                                                             ? 380
                                                             : 36 +
                                                               (index /
                                                                   (attendanceChart.length -
@@ -692,42 +652,43 @@ export default function Dashboard({
                             </div>
                         </CardContent>
                     </Card>
-                    <Card className="lg:col-span-3">
-                        <CardHeader>
-                            <CardTitle>Gender Karyawan</CardTitle>
+
+                    <Card className="flex flex-col justify-between lg:col-span-2">
+                        <CardHeader className="px-4 py-3">
+                            <CardTitle>Gender</CardTitle>
                             <CardDescription>
                                 Distribusi karyawan aktif.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="px-4 pb-4">
                             <div
-                                className="mx-auto size-44 rounded-full"
+                                className="mx-auto size-36 rounded-full"
                                 style={{
                                     background: `conic-gradient(${genderGradient || '#e2e8f0 0 100%'})`,
                                 }}
                             >
-                                <div className="flex size-full items-center justify-center p-8">
+                                <div className="flex size-full items-center justify-center p-6">
                                     <div className="flex size-full items-center justify-center rounded-full bg-card text-center">
                                         <div>
-                                            <p className="text-2xl font-bold">
+                                            <p className="text-xl font-bold">
                                                 {genderTotal}
                                             </p>
-                                            <p className="text-xs text-muted-foreground">
+                                            <p className="text-[11px] text-muted-foreground">
                                                 Karyawan
                                             </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="mt-5 space-y-2 text-sm">
+                            <div className="mt-4 space-y-1.5 text-xs">
                                 {genderEntries.map((item) => (
                                     <div
                                         key={item.key}
                                         className="flex items-center justify-between gap-2"
                                     >
-                                        <span className="inline-flex items-center gap-2">
+                                        <span className="inline-flex items-center gap-1.5">
                                             <span
-                                                className="size-2.5 rounded-full"
+                                                className="size-2 rounded-full"
                                                 style={{
                                                     backgroundColor: item.color,
                                                 }}
@@ -740,6 +701,49 @@ export default function Dashboard({
                                     </div>
                                 ))}
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="flex flex-col gap-0 py-0 lg:col-span-3">
+                        <CardHeader className="px-4 py-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <CardTitle>Reminder Terkini</CardTitle>
+                                <CalendarClock className="size-5 text-muted-foreground" />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="flex-1 px-4 pb-4">
+                            {reminders.length === 0 ? (
+                                <div className="flex h-64 items-center justify-center rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+                                    Tidak ada reminder atau aktivitas terkini.
+                                </div>
+                            ) : (
+                                <div className="max-h-[340px] space-y-2 overflow-y-auto pr-1">
+                                    {reminders.map((item) => (
+                                        <Link
+                                            key={item.id}
+                                            href={item.href}
+                                            className="block rounded-lg border p-2.5 transition-colors hover:bg-muted/50"
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <p className="truncate text-sm font-semibold">
+                                                    {item.name}
+                                                </p>
+                                                <span
+                                                    className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${item.badgeColor}`}
+                                                >
+                                                    {item.type}
+                                                </span>
+                                            </div>
+                                            <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                                                <span>Tanggal:</span>
+                                                <span className="font-medium text-foreground">
+                                                    {item.date}
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -1067,86 +1071,6 @@ export default function Dashboard({
                 ) : null}
             </div>
         </AppLayout>
-    );
-}
-
-function DashboardList({
-    icon: Icon,
-    title,
-    count,
-    empty,
-    items,
-}: {
-    icon: typeof Building2;
-    title: string;
-    count: number;
-    empty: string;
-    items: Array<{
-        key: string;
-        label: string;
-        description: string;
-        href: string;
-    }>;
-}) {
-    return (
-        <div className="rounded-md border p-2.5">
-            <div className="mb-2 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                    <Icon className="size-4 text-muted-foreground" />
-                    <p className="text-sm font-medium">{title}</p>
-                </div>
-                <span className="rounded-md bg-muted px-2 py-1 text-xs font-semibold">
-                    {count}
-                </span>
-            </div>
-            {items.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{empty}</p>
-            ) : (
-                <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
-                    {items.map((item) => (
-                        <Link
-                            key={item.key}
-                            href={item.href}
-                            className="block rounded border px-2.5 py-1.5 transition-colors hover:bg-muted/40"
-                        >
-                            <p className="truncate text-sm font-medium">
-                                {item.label}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                {item.description}
-                            </p>
-                        </Link>
-                    ))}
-                    {count > items.length && (
-                        <p className="text-xs text-muted-foreground">
-                            +{count - items.length} lainnya
-                        </p>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-}
-
-function StatusPill({ status }: { status: string }) {
-    const labelMap: Record<string, string> = {
-        pending: 'Pending',
-        approved: 'Disetujui',
-        rejected: 'Ditolak',
-        cancelled: 'Dibatalkan',
-    };
-
-    const color =
-        status === 'approved'
-            ? 'bg-emerald-50 text-emerald-700'
-            : status === 'rejected' || status === 'cancelled'
-              ? 'bg-rose-50 text-rose-700'
-              : 'bg-amber-50 text-amber-700';
-
-    return (
-        <span className={`rounded px-2 py-0.5 text-xs font-medium ${color}`}>
-            {labelMap[status] ?? status}
-        </span>
     );
 }
 

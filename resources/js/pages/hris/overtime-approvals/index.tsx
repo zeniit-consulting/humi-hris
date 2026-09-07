@@ -23,6 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SearchableSelect from '@/components/ui/searchable-select';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Select,
     SelectContent,
@@ -248,11 +249,14 @@ export default function OvertimeApprovalPage() {
                 </Card>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Daftar Pengajuan Lembur</CardTitle>
-                        <CardDescription>
-                            Total data: {overtimes.total}
-                        </CardDescription>
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <CardTitle>Daftar Pengajuan Lembur</CardTitle>
+                            <CardDescription>
+                                Total data: {overtimes.total}
+                            </CardDescription>
+                        </div>
+                        <SimplePagination data={overtimes} />
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -367,39 +371,6 @@ export default function OvertimeApprovalPage() {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {overtimes.links.map((link, index) => (
-                                <Button
-                                    key={`${link.label}-${index}`}
-                                    asChild={link.url !== null}
-                                    size="sm"
-                                    variant={
-                                        link.active ? 'default' : 'outline'
-                                    }
-                                    disabled={link.url === null}
-                                >
-                                    {link.url ? (
-                                        <Link
-                                            href={link.url}
-                                            preserveScroll
-                                            preserveState
-                                        >
-                                            <span
-                                                dangerouslySetInnerHTML={{
-                                                    __html: link.label,
-                                                }}
-                                            />
-                                        </Link>
-                                    ) : (
-                                        <span
-                                            dangerouslySetInnerHTML={{
-                                                __html: link.label,
-                                            }}
-                                        />
-                                    )}
-                                </Button>
-                            ))}
                         </div>
                     </CardContent>
                 </Card>

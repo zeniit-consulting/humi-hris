@@ -43,19 +43,33 @@ class DashboardController extends Controller
         $ownerId = $user->accountOwnerId();
 
         $validated = $request->validate([
+            'period' => ['nullable', 'date_format:Y-m'],
             'range' => ['nullable', 'in:today,this_week,this_month'],
             'outsourcing_period' => ['nullable', 'date_format:Y-m'],
             'outsourcing_sub_company_id' => ['nullable', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $ownerId)],
         ]);
 
+        $period = $validated['period'] ?? $validated['outsourcing_period'] ?? now()->format('Y-m');
         $activeRange = $validated['range'] ?? 'this_week';
-        $outsourcingPeriod = $validated['outsourcing_period'] ?? now()->format('Y-m');
+        $outsourcingPeriod = $validated['outsourcing_period'] ?? $period;
         $outsourcingSubCompanyId = $validated['outsourcing_sub_company_id'] ?? null;
         $today = Carbon::today();
+        $periodDate = Carbon::createFromFormat('Y-m', $period)->startOfMonth();
+        $isCurrentPeriod = $period === now()->format('Y-m');
+
+        // Determine reference date for daily attendance and chart
+        $referenceDate = $isCurrentPeriod ? $today->copy() : $periodDate->copy()->endOfMonth();
+
         $startDate = match ($activeRange) {
-            'today' => $today->copy(),
-            'this_month' => $today->copy()->startOfMonth(),
-            default => $today->copy()->startOfWeek(),
+            'today' => $referenceDate->copy(),
+            'this_month' => $periodDate->copy()->startOfMonth(),
+            default => $isCurrentPeriod ? $today->copy()->startOfWeek() : $periodDate->copy()->startOfMonth(),
+        };
+
+        $chartEndDate = match ($activeRange) {
+            'today' => $referenceDate->copy(),
+            'this_month' => $periodDate->copy()->endOfMonth(),
+            default => $isCurrentPeriod ? $today->copy() : $periodDate->copy()->endOfMonth(),
         };
 
         $totalEmployees = Employee::query()->count();
@@ -71,13 +85,13 @@ class DashboardController extends Controller
             ->sum('openings');
 
         $monthlyPayrollBurn = (float) (PayrollRun::query()
-            ->where('period', $today->format('Y-m'))
+            ->where('period', $period)
             ->latest('generated_at')
             ->value('total_net_salary') ?? 0);
 
         $resignedYtd = Employee::query()
             ->where('employment_status', 'resigned')
-            ->whereYear('updated_at', $today->year)
+            ->whereYear('updated_at', $periodDate->year)
             ->count();
 
         $attritionYtd = ($activeEmployees + $resignedYtd) > 0
@@ -86,7 +100,7 @@ class DashboardController extends Controller
 
         $todayAttendance = EmployeeAttendance::query()
             ->selectRaw('status, COUNT(*) as total')
-            ->whereDate('attendance_date', $today)
+            ->whereDate('attendance_date', $referenceDate)
             ->groupBy('status')
             ->pluck('total', 'status');
 
@@ -111,7 +125,7 @@ class DashboardController extends Controller
 
         $dailyRaw = EmployeeAttendance::query()
             ->selectRaw('attendance_date, status, COUNT(*) as total')
-            ->whereBetween('attendance_date', [$startDate->toDateString(), $today->toDateString()])
+            ->whereBetween('attendance_date', [$startDate->toDateString(), $chartEndDate->toDateString()])
             ->groupBy('attendance_date', 'status')
             ->orderBy('attendance_date')
             ->get();
@@ -123,7 +137,7 @@ class DashboardController extends Controller
         $dates = collect();
         $cursor = $startDate->copy();
 
-        while ($cursor->lte($today)) {
+        while ($cursor->lte($chartEndDate)) {
             $dates->push($cursor->copy());
             $cursor->addDay();
         }
@@ -156,10 +170,12 @@ class DashboardController extends Controller
 
         return Inertia::render('dashboard', [
             'filters' => [
+                'period' => $period,
                 'range' => $activeRange,
                 'outsourcing_period' => $outsourcingPeriod,
                 'outsourcing_sub_company_id' => $outsourcingSubCompanyId ? (string) $outsourcingSubCompanyId : '',
             ],
+            'availablePeriods' => $this->availablePeriods($ownerId),
             'stats' => [
                 'total_employees' => $totalEmployees,
                 'active_employees' => $activeEmployees,
@@ -178,9 +194,9 @@ class DashboardController extends Controller
             ],
             'attendanceChart' => $attendanceChart,
             'actionQueue' => $this->actionQueue($ownerId, $today),
-            'attendanceFocus' => $this->attendanceFocus($ownerId, $today),
-            'recentRequests' => $this->recentRequests($ownerId),
-            'contractReminders' => $this->contractReminders($ownerId, $today),
+            'attendanceFocus' => $this->attendanceFocus($ownerId, $referenceDate, $period),
+            'recentRequests' => $this->recentRequests($ownerId, $period),
+            'contractReminders' => $this->contractReminders($ownerId, $periodDate),
             'outsourcing' => $this->outsourcingSummary(
                 $ownerId,
                 $outsourcingPeriod,
@@ -328,13 +344,13 @@ class DashboardController extends Controller
         ];
     }
 
-    private function attendanceFocus(int $ownerId, Carbon $today): array
+    private function attendanceFocus(int $ownerId, Carbon $referenceDate, string $period): array
     {
-        $todayDate = $today->toDateString();
+        $targetDate = $referenceDate->toDateString();
 
         $attendedEmployeeIds = EmployeeAttendance::query()
             ->where('user_id', $ownerId)
-            ->whereDate('attendance_date', $todayDate)
+            ->whereDate('attendance_date', $targetDate)
             ->pluck('employee_id');
 
         $missingClockIns = Employee::query()
@@ -342,21 +358,33 @@ class DashboardController extends Controller
             ->where('is_active', true)
             ->whereNotIn('id', $attendedEmployeeIds)
             ->orderBy('first_name')
-            ->limit(6)
+            ->limit(20)
             ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id'])
             ->map(fn (Employee $employee): array => [
                 'id' => $employee->id,
                 'label' => $employee->employee_code.' - '.$employee->full_name,
-                'href' => route('hris.attendances.index', ['date' => $todayDate, 'employee_id' => $employee->id]),
+                'href' => route('hris.attendances.index', ['date' => $targetDate, 'employee_id' => $employee->id]),
             ]);
 
-        $lateToday = EmployeeAttendance::query()
+        // Query late attendances for the period (prioritizing the reference date or the selected month)
+        $lateAttendanceQuery = EmployeeAttendance::query()
             ->with('employee:id,employee_code,first_name,last_name')
             ->where('user_id', $ownerId)
-            ->whereDate('attendance_date', $todayDate)
-            ->where('status', 'late')
+            ->where('status', 'late');
+
+        if ($period === now()->format('Y-m')) {
+            $lateAttendanceQuery->whereDate('attendance_date', $targetDate);
+        } else {
+            $lateAttendanceQuery->whereBetween('attendance_date', [
+                Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString(),
+                Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString(),
+            ]);
+        }
+
+        $lateItems = $lateAttendanceQuery
+            ->orderByDesc('attendance_date')
             ->orderBy('check_in_at')
-            ->limit(6)
+            ->limit(20)
             ->get()
             ->map(fn (EmployeeAttendance $attendance): array => [
                 'id' => $attendance->id,
@@ -364,7 +392,8 @@ class DashboardController extends Controller
                     ? $attendance->employee->employee_code.' - '.$attendance->employee->full_name
                     : 'Karyawan',
                 'time' => $this->attendanceLocalTime($attendance),
-                'href' => route('hris.attendances.index', ['date' => $todayDate, 'employee_id' => $attendance->employee_id]),
+                'date_label' => $attendance->attendance_date?->format('d M Y') ?? $targetDate,
+                'href' => route('hris.attendances.index', ['date' => $attendance->attendance_date?->toDateString() ?? $targetDate, 'employee_id' => $attendance->employee_id]),
             ]);
 
         return [
@@ -373,18 +402,14 @@ class DashboardController extends Controller
                 ->where('is_active', true)
                 ->whereNotIn('id', $attendedEmployeeIds)
                 ->count(),
-            'late_today_count' => EmployeeAttendance::query()
-                ->where('user_id', $ownerId)
-                ->whereDate('attendance_date', $todayDate)
-                ->where('status', 'late')
-                ->count(),
+            'late_today_count' => $lateItems->count(),
             'missingClockIns' => $missingClockIns,
-            'lateToday' => $lateToday,
-            'items' => $lateToday
+            'lateToday' => $lateItems,
+            'items' => $lateItems
                 ->map(fn (array $item): array => [
                     'id' => 'late-'.$item['id'],
                     'label' => $item['label'],
-                    'description' => 'Telat · Clock in '.$item['time'],
+                    'description' => 'Telat · Clock in '.$item['time'].' · '.($item['date_label'] ?? ''),
                     'href' => $item['href'],
                 ])
                 ->concat($missingClockIns->map(fn (array $item): array => [
@@ -393,7 +418,7 @@ class DashboardController extends Controller
                     'description' => 'Belum clock in',
                     'href' => $item['href'],
                 ]))
-                ->take(5)
+                ->take(20)
                 ->values(),
         ];
     }
@@ -419,15 +444,15 @@ class DashboardController extends Controller
         return $attendance->check_in_at->copy()->setTimezone($timezone)->format('H:i').' '.$label;
     }
 
-    private function recentRequests(int $ownerId): array
+    private function recentRequests(int $ownerId, string $period): array
     {
         $items = collect()
-            ->merge($this->recentAttendanceRequests($ownerId))
-            ->merge($this->recentLeaveRequests($ownerId))
-            ->merge($this->recentOvertimeRequests($ownerId))
-            ->merge($this->recentShiftChangeRequests($ownerId))
+            ->merge($this->recentAttendanceRequests($ownerId, $period))
+            ->merge($this->recentLeaveRequests($ownerId, $period))
+            ->merge($this->recentOvertimeRequests($ownerId, $period))
+            ->merge($this->recentShiftChangeRequests($ownerId, $period))
             ->sortByDesc('created_at')
-            ->take(5)
+            ->take(20)
             ->values();
 
         return [
@@ -438,10 +463,15 @@ class DashboardController extends Controller
         ];
     }
 
-    private function contractReminders(int $ownerId, Carbon $today): array
+    private function contractReminders(int $ownerId, Carbon $periodDate): array
     {
-        $threshold = $today->copy()->addDays(30);
-        $dateRange = [$today->toDateString(), $threshold->toDateString()];
+        $periodStart = $periodDate->copy()->startOfMonth()->toDateString();
+        $periodEnd = $periodDate->copy()->endOfMonth()->toDateString();
+        $isCurrentMonth = $periodDate->format('Y-m') === now()->format('Y-m');
+
+        $dateRange = $isCurrentMonth
+            ? [now()->toDateString(), now()->addDays(30)->toDateString()]
+            : [$periodStart, $periodEnd];
 
         $contractQuery = Employee::query()
             ->where('user_id', $ownerId)
@@ -456,7 +486,7 @@ class DashboardController extends Controller
 
         $contracts = (clone $contractQuery)
             ->orderBy('contract_end_date')
-            ->limit(5)
+            ->limit(20)
             ->get(['id', 'employee_code', 'first_name', 'last_name', 'contract_end_date'])
             ->map(fn (Employee $employee): array => [
                 'id' => $employee->id,
@@ -467,7 +497,7 @@ class DashboardController extends Controller
 
         $probations = (clone $probationQuery)
             ->orderBy('probation_end_date')
-            ->limit(5)
+            ->limit(20)
             ->get(['id', 'employee_code', 'first_name', 'last_name', 'probation_end_date'])
             ->map(fn (Employee $employee): array => [
                 'id' => $employee->id,
@@ -481,24 +511,31 @@ class DashboardController extends Controller
             'items' => $contracts
                 ->concat($probations)
                 ->sortBy('end_date')
-                ->take(5)
+                ->take(20)
                 ->values()
                 ->map(fn (array $item): array => [
                     ...$item,
                     'date_label' => Carbon::parse($item['end_date'])->translatedFormat('d M Y'),
-                    'days_remaining' => (int) $today->diffInDays(Carbon::parse($item['end_date'])),
+                    'days_remaining' => (int) $periodDate->diffInDays(Carbon::parse($item['end_date'])),
                     'href' => route('hris.employees.index', ['search' => str($item['employee_label'])->before(' - ')->toString()]),
                 ]),
         ];
     }
 
-    private function recentAttendanceRequests(int $ownerId): array
+    private function recentAttendanceRequests(int $ownerId, string $period): array
     {
+        $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
+        $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+
         return AttendanceCorrectionRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
             ->where('user_id', $ownerId)
+            ->where(function ($query) use ($start, $end) {
+                $query->whereBetween('attendance_date', [$start, $end])
+                    ->orWhereBetween('created_at', [$start.' 00:00:00', $end.' 23:59:59']);
+            })
             ->latest()
-            ->limit(5)
+            ->limit(20)
             ->get()
             ->map(fn (AttendanceCorrectionRequest $request): array => [
                 'id' => 'attendance-'.$request->id,
@@ -512,13 +549,21 @@ class DashboardController extends Controller
             ->all();
     }
 
-    private function recentLeaveRequests(int $ownerId): array
+    private function recentLeaveRequests(int $ownerId, string $period): array
     {
+        $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
+        $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+
         return LeaveRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
             ->where('user_id', $ownerId)
+            ->where(function ($query) use ($start, $end) {
+                $query->whereBetween('start_date', [$start, $end])
+                    ->orWhereBetween('end_date', [$start, $end])
+                    ->orWhereBetween('created_at', [$start.' 00:00:00', $end.' 23:59:59']);
+            })
             ->latest()
-            ->limit(5)
+            ->limit(20)
             ->get()
             ->map(fn (LeaveRequest $request): array => [
                 'id' => 'leave-'.$request->id,
@@ -532,13 +577,20 @@ class DashboardController extends Controller
             ->all();
     }
 
-    private function recentOvertimeRequests(int $ownerId): array
+    private function recentOvertimeRequests(int $ownerId, string $period): array
     {
+        $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
+        $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+
         return OvertimeRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
             ->where('user_id', $ownerId)
+            ->where(function ($query) use ($start, $end) {
+                $query->whereBetween('work_date', [$start, $end])
+                    ->orWhereBetween('created_at', [$start.' 00:00:00', $end.' 23:59:59']);
+            })
             ->latest()
-            ->limit(5)
+            ->limit(20)
             ->get()
             ->map(fn (OvertimeRequest $request): array => [
                 'id' => 'overtime-'.$request->id,
@@ -552,13 +604,20 @@ class DashboardController extends Controller
             ->all();
     }
 
-    private function recentShiftChangeRequests(int $ownerId): array
+    private function recentShiftChangeRequests(int $ownerId, string $period): array
     {
+        $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
+        $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+
         return ShiftChangeRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
             ->where('user_id', $ownerId)
+            ->where(function ($query) use ($start, $end) {
+                $query->whereBetween('requested_date', [$start, $end])
+                    ->orWhereBetween('created_at', [$start.' 00:00:00', $end.' 23:59:59']);
+            })
             ->latest()
-            ->limit(5)
+            ->limit(20)
             ->get()
             ->map(fn (ShiftChangeRequest $request): array => [
                 'id' => 'shift-'.$request->id,
@@ -676,5 +735,52 @@ class DashboardController extends Controller
         return (float) $run->items()
             ->whereHas('employee', fn ($query) => $query->whereIn('sub_company_id', $subCompanyIds))
             ->sum('net_salary');
+    }
+
+    /**
+     * Get list of unique periods (Y-m) that contain operational / HR data for this account.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function availablePeriods(int $ownerId): array
+    {
+        $attendancePeriods = EmployeeAttendance::query()
+            ->where('user_id', $ownerId)
+            ->whereNotNull('attendance_date')
+            ->selectRaw("DISTINCT SUBSTRING(attendance_date, 1, 7) as period")
+            ->pluck('period');
+
+        $payrollPeriods = PayrollRun::query()
+            ->where('user_id', $ownerId)
+            ->whereNotNull('period')
+            ->selectRaw("DISTINCT period")
+            ->pluck('period');
+
+        $leavePeriods = LeaveRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereNotNull('start_date')
+            ->selectRaw("DISTINCT SUBSTRING(start_date, 1, 7) as period")
+            ->pluck('period');
+
+        $overtimePeriods = OvertimeRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereNotNull('work_date')
+            ->selectRaw("DISTINCT SUBSTRING(work_date, 1, 7) as period")
+            ->pluck('period');
+
+        $allPeriods = collect([now()->format('Y-m')])
+            ->merge($attendancePeriods)
+            ->merge($payrollPeriods)
+            ->merge($leavePeriods)
+            ->merge($overtimePeriods)
+            ->filter(fn ($p) => is_string($p) && preg_match('/^\d{4}-\d{2}$/', $p))
+            ->unique()
+            ->sortDesc()
+            ->values();
+
+        return $allPeriods->map(fn (string $periodVal): array => [
+            'value' => $periodVal,
+            'label' => Carbon::createFromFormat('Y-m', $periodVal)->translatedFormat('F Y'),
+        ])->all();
     }
 }

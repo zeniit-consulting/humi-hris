@@ -95,6 +95,8 @@ type PayrollItem = {
     division_name?: string;
     hire_date?: string | null;
     offboarded_at?: string | null;
+    employment_status?: string | null;
+    employment_type?: string | null;
     bank_name?: string | null;
     account_number?: string | null;
     account_holder_name?: string | null;
@@ -193,6 +195,25 @@ const parseEmployeeLabel = (label: string) => {
         code: code ?? '-',
         name: nameParts.join(' - ') || label,
     };
+};
+
+const getEmploymentBadgeLabel = (status?: string | null, type?: string | null) => {
+    if (status === 'probation') {
+        return 'Probation';
+    }
+    if (type === 'PKWT') {
+        return 'PKWT';
+    }
+    if (type === 'PKWTT') {
+        return 'PKWTT';
+    }
+    if (type) {
+        return type;
+    }
+    if (status === 'active') {
+        return 'PKWTT';
+    }
+    return null;
 };
 
 const pph21Label = (method: string | null) => {
@@ -1040,10 +1061,10 @@ export default function PayrollPage() {
                     <CardContent>
                         <div className="overflow-x-auto">
                             {type === 'thr' ? (
-                                <table className="w-full min-w-[1000px] text-sm">
+                                <table className="w-full min-w-[1100px] text-sm">
                                     <thead>
                                         <tr className="border-b text-left">
-                                            <th className="px-3 py-2">
+                                            <th className="w-32 min-w-[120px] px-3 py-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSort('employee_code')}
@@ -1057,7 +1078,7 @@ export default function PayrollPage() {
                                                     )}
                                                 </button>
                                             </th>
-                                            <th className="sticky left-0 z-20 bg-background px-3 py-2">
+                                            <th className="sticky left-0 z-20 w-64 min-w-[220px] bg-background px-3 py-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSort('employee')}
@@ -1071,7 +1092,7 @@ export default function PayrollPage() {
                                                     )}
                                                 </button>
                                             </th>
-                                            <th className="px-3 py-2">
+                                            <th className="w-40 min-w-[140px] px-3 py-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSort('division')}
@@ -1085,7 +1106,7 @@ export default function PayrollPage() {
                                                     )}
                                                 </button>
                                             </th>
-                                            <th className="px-3 py-2">
+                                            <th className="w-56 min-w-[190px] px-3 py-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSort('dates')}
@@ -1175,33 +1196,34 @@ export default function PayrollPage() {
                                         {sortedItems.map((item) => {
                                             const empCode = item.employee_code || parseEmployeeLabel(item.employee_label).code;
                                             const empName = item.employee_name || parseEmployeeLabel(item.employee_label).name;
+                                            const statusBadge = getEmploymentBadgeLabel(item.employment_status, item.employment_type);
 
                                             return (
                                                 <tr
                                                     key={item.id}
                                                     className="border-b align-top"
                                                 >
-                                                    <td className="px-3 py-3 font-mono text-xs text-muted-foreground">
+                                                    <td className="w-32 min-w-[120px] px-3 py-3 font-mono text-xs text-muted-foreground">
                                                         {empCode}
                                                     </td>
-                                                    <td className="sticky left-0 z-10 bg-background px-3 py-3 font-medium">
-                                                        <div className="leading-tight">
-                                                            <p className="text-sm font-medium">
-                                                                {empName}
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                {item.sub_company_label}
-                                                            </p>
-                                                        </div>
+                                                    <td className="sticky left-0 z-10 w-64 min-w-[220px] bg-background px-3 py-3 font-medium">
+                                                        <p className="text-sm font-medium">
+                                                            {empName}
+                                                        </p>
                                                     </td>
-                                                    <td className="px-3 py-3 text-xs">
+                                                    <td className="w-40 min-w-[140px] px-3 py-3 text-xs">
                                                         {item.division_name || '-'}
                                                     </td>
-                                                    <td className="px-3 py-3 text-xs">
+                                                    <td className="w-56 min-w-[190px] px-3 py-3 text-xs">
                                                         <div>
                                                             <span className="text-muted-foreground">Join: </span>
                                                             <span>{item.hire_date || '-'}</span>
                                                         </div>
+                                                        {statusBadge && (
+                                                            <div className="text-[11px] text-muted-foreground">
+                                                                ({statusBadge})
+                                                            </div>
+                                                        )}
                                                         {item.offboarded_at && (
                                                             <div className="text-[11px] font-medium text-red-600">
                                                                 Resign: {item.offboarded_at}
@@ -1252,10 +1274,10 @@ export default function PayrollPage() {
                                     </tbody>
                                 </table>
                             ) : (
-                                <table className="w-full min-w-[1700px] text-sm">
+                                <table className="w-full min-w-[1800px] text-sm">
                                     <thead>
                                         <tr className="border-b text-left">
-                                            <th className="px-3 py-2">
+                                            <th className="w-32 min-w-[120px] px-3 py-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSort('employee_code')}
@@ -1269,7 +1291,7 @@ export default function PayrollPage() {
                                                     )}
                                                 </button>
                                             </th>
-                                            <th className="sticky left-0 z-20 bg-background px-3 py-2">
+                                            <th className="sticky left-0 z-20 w-64 min-w-[220px] bg-background px-3 py-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSort('employee')}
@@ -1283,7 +1305,7 @@ export default function PayrollPage() {
                                                     )}
                                                 </button>
                                             </th>
-                                            <th className="px-3 py-2">
+                                            <th className="w-40 min-w-[140px] px-3 py-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSort('division')}
@@ -1297,7 +1319,7 @@ export default function PayrollPage() {
                                                     )}
                                                 </button>
                                             </th>
-                                            <th className="px-3 py-2">
+                                            <th className="w-56 min-w-[190px] px-3 py-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSort('dates')}
@@ -1487,33 +1509,34 @@ export default function PayrollPage() {
                                             const empName = item.employee_name || parseEmployeeLabel(item.employee_label).name;
                                             const totalBpjsEmp = Number(item.bpjs_total_employee ?? 0);
                                             const totalBpjsComp = Number(item.bpjs_total_company ?? 0);
+                                            const statusBadge = getEmploymentBadgeLabel(item.employment_status, item.employment_type);
 
                                             return (
                                                 <tr
                                                     key={item.id}
                                                     className="border-b align-top"
                                                 >
-                                                    <td className="px-3 py-3 font-mono text-xs text-muted-foreground">
+                                                    <td className="w-32 min-w-[120px] px-3 py-3 font-mono text-xs text-muted-foreground">
                                                         {empCode}
                                                     </td>
-                                                    <td className="sticky left-0 z-10 bg-background px-3 py-3 font-medium">
-                                                        <div className="leading-tight">
-                                                            <p className="text-sm font-medium">
-                                                                {empName}
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                {item.sub_company_label}
-                                                            </p>
-                                                        </div>
+                                                    <td className="sticky left-0 z-10 w-64 min-w-[220px] bg-background px-3 py-3 font-medium">
+                                                        <p className="text-sm font-medium">
+                                                            {empName}
+                                                        </p>
                                                     </td>
-                                                    <td className="px-3 py-3 text-xs">
+                                                    <td className="w-40 min-w-[140px] px-3 py-3 text-xs">
                                                         {item.division_name || '-'}
                                                     </td>
-                                                    <td className="px-3 py-3 text-xs">
+                                                    <td className="w-56 min-w-[190px] px-3 py-3 text-xs">
                                                         <div>
                                                             <span className="text-muted-foreground">Join: </span>
                                                             <span>{item.hire_date || '-'}</span>
                                                         </div>
+                                                        {statusBadge && (
+                                                            <div className="text-[11px] text-muted-foreground">
+                                                                ({statusBadge})
+                                                            </div>
+                                                        )}
                                                         {item.offboarded_at && (
                                                             <div className="text-[11px] font-medium text-red-600">
                                                                 Resign: {item.offboarded_at}

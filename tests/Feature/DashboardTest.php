@@ -20,6 +20,7 @@ use App\Models\SubCompany;
 use App\Models\User;
 use App\Models\WorkShift;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
@@ -413,12 +414,53 @@ class DashboardTest extends TestCase
             ->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
-                ->has('attendanceFocus.items', 5)
-                ->has('recentRequests.items', 5)
+                ->has('attendanceFocus.items', 6)
+                ->has('recentRequests.items', 6)
                 ->where('contractReminders.total', 2)
                 ->has('contractReminders.items', 2)
                 ->where('contractReminders.items.0.type', 'Probation')
                 ->where('contractReminders.items.1.type', 'Kontrak')
+            );
+    }
+
+    public function test_dashboard_filters_attendance_chart_and_reminders_by_selected_period(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'is_active' => true,
+        ]);
+
+        // Create data in previous period (2026-05)
+        EmployeeAttendance::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-05-15',
+            'status' => 'late',
+            'check_in_at' => Carbon::parse('2026-05-15 09:15:00'),
+        ]);
+
+        LeaveRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'annual',
+            'start_date' => '2026-05-10',
+            'end_date' => '2026-05-12',
+            'total_days' => 3,
+            'reason' => 'Liburan',
+            'status' => 'approved',
+            'created_at' => Carbon::parse('2026-05-01 10:00:00'),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['period' => '2026-05']))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('filters.period', '2026-05')
+                ->has('attendanceChart', 31)
+                ->where('attendanceFocus.late_today_count', 1)
+                ->has('recentRequests.items', 1)
+                ->where('recentRequests.items.0.type', 'Cuti/Sakit')
             );
     }
 }

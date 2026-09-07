@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -327,15 +328,17 @@ export default function SurveyIndex() {
                 <div className="grid gap-4">
                     <div className="grid gap-4">
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <ClipboardList className="size-4" />
-                                    Daftar survey
-                                </CardTitle>
-                                <CardDescription>
-                                    {surveys.from ?? 0}-{surveys.to ?? 0} dari{' '}
-                                    {surveys.total} survey.
-                                </CardDescription>
+                            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <ClipboardList className="size-4" />
+                                        Daftar survey
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Kelola kuesioner dan formulir survei.
+                                    </CardDescription>
+                                </div>
+                                <SimplePagination data={surveys} />
                             </CardHeader>
                             <CardContent className="grid gap-4">
                                 <div className="flex flex-col gap-2 md:flex-row">
@@ -465,7 +468,6 @@ export default function SurveyIndex() {
                                         </tbody>
                                     </table>
                                 </div>
-                                <Pagination links={surveys.links} />
                             </CardContent>
                         </Card>
 

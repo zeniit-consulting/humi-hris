@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -152,12 +153,15 @@ export default function AuditLogsPage() {
                 </Card>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Riwayat Aksi Superadmin</CardTitle>
-                        <CardDescription>
-                            Catatan perubahan subscription, invoice, dan status
-                            tenant.
-                        </CardDescription>
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <CardTitle>Riwayat Aksi Superadmin</CardTitle>
+                            <CardDescription>
+                                Catatan perubahan subscription, invoice, dan status
+                                tenant.
+                            </CardDescription>
+                        </div>
+                        <SimplePagination data={logs} />
                     </CardHeader>
                     <CardContent>
                         {logs.data.length === 0 ? (
@@ -231,8 +235,6 @@ export default function AuditLogsPage() {
                                 </TableBody>
                             </Table>
                         )}
-
-                        <Pagination links={logs.links} />
                     </CardContent>
                 </Card>
             </div>

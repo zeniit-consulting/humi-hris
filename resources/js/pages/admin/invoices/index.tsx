@@ -9,6 +9,7 @@ import {
 import type { FormEvent } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -219,12 +220,15 @@ export default function AdminInvoicesPage() {
                 </Card>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Semua Invoice</CardTitle>
-                        <CardDescription>
-                            Data invoice lintas tenant untuk operasional billing
-                            platform.
-                        </CardDescription>
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <CardTitle>Semua Invoice</CardTitle>
+                            <CardDescription>
+                                Data invoice lintas tenant untuk operasional billing
+                                platform.
+                            </CardDescription>
+                        </div>
+                        <SimplePagination data={invoices} />
                     </CardHeader>
                     <CardContent>
                         {invoices.data.length === 0 ? (
@@ -369,8 +373,6 @@ export default function AdminInvoicesPage() {
                                 </TableBody>
                             </Table>
                         )}
-
-                        <Pagination links={invoices.links} />
                     </CardContent>
                 </Card>
             </div>

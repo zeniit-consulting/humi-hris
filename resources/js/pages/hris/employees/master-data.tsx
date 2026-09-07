@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import ActionIconButton from '@/components/action-icon-button';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -418,20 +419,23 @@ export default function EmployeeMasterDataPage() {
 
                     {activeTab === 'divisions' ? (
                         <Card>
-                            <CardHeader className="flex flex-row items-start justify-between gap-4">
+                            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <CardTitle>Divisi</CardTitle>
                                     <CardDescription>
                                         Kelola struktur divisi organisasi.
                                     </CardDescription>
                                 </div>
-                                <Button
-                                    size="sm"
-                                    onClick={openCreateDivisionDialog}
-                                >
-                                    <Plus className="size-4" />
-                                    Tambah Divisi
-                                </Button>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <SimplePagination data={divisions} />
+                                    <Button
+                                        size="sm"
+                                        onClick={openCreateDivisionDialog}
+                                    >
+                                        <Plus className="size-4" />
+                                        Tambah Divisi
+                                    </Button>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <form
@@ -492,10 +496,10 @@ export default function EmployeeMasterDataPage() {
                                                     key={division.id}
                                                     className="border-b"
                                                 >
-                                                    <td className="px-3 py-3">
+                                                    <td className="px-3 py-2 font-mono text-xs">
                                                         {division.code}
                                                     </td>
-                                                    <td className="px-3 py-3">
+                                                    <td className="px-3 py-2">
                                                         <p className="font-medium">
                                                             {division.name}
                                                         </p>
@@ -504,13 +508,13 @@ export default function EmployeeMasterDataPage() {
                                                                 '-'}
                                                         </p>
                                                     </td>
-                                                    <td className="px-3 py-3">
+                                                    <td className="px-3 py-2">
                                                         {
                                                             division.employees_count
                                                         }
                                                     </td>
-                                                    <td className="px-3 py-3">
-                                                        <div className="flex gap-1.5">
+                                                    <td className="px-3 py-2">
+                                                        <div className="flex items-center gap-1">
                                                             <ActionIconButton
                                                                 label="Edit divisi"
                                                                 icon={Pencil}
@@ -528,62 +532,29 @@ export default function EmployeeMasterDataPage() {
                                         </tbody>
                                     </table>
                                 </div>
-
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {divisions.links.map((link, index) => (
-                                        <Button
-                                            key={`${link.label}-${index}`}
-                                            asChild={link.url !== null}
-                                            size="sm"
-                                            variant={
-                                                link.active
-                                                    ? 'default'
-                                                    : 'outline'
-                                            }
-                                            disabled={link.url === null}
-                                        >
-                                            {link.url ? (
-                                                <Link
-                                                    href={link.url}
-                                                    preserveScroll
-                                                    preserveState
-                                                >
-                                                    <span
-                                                        dangerouslySetInnerHTML={{
-                                                            __html: link.label,
-                                                        }}
-                                                    />
-                                                </Link>
-                                            ) : (
-                                                <span
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: link.label,
-                                                    }}
-                                                />
-                                            )}
-                                        </Button>
-                                    ))}
-                                </div>
                             </CardContent>
                         </Card>
                     ) : null}
 
                     {activeTab === 'positions' ? (
                         <Card>
-                            <CardHeader className="flex flex-row items-start justify-between gap-4">
+                            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <CardTitle>Jabatan</CardTitle>
                                     <CardDescription>
                                         Kelola master jabatan tiap divisi.
                                     </CardDescription>
                                 </div>
-                                <Button
-                                    size="sm"
-                                    onClick={openCreatePositionDialog}
-                                >
-                                    <Plus className="size-4" />
-                                    Tambah Jabatan
-                                </Button>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <SimplePagination data={positions} />
+                                    <Button
+                                        size="sm"
+                                        onClick={openCreatePositionDialog}
+                                    >
+                                        <Plus className="size-4" />
+                                        Tambah Jabatan
+                                    </Button>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <form
@@ -650,10 +621,10 @@ export default function EmployeeMasterDataPage() {
                                                     key={position.id}
                                                     className="border-b"
                                                 >
-                                                    <td className="px-3 py-3">
+                                                    <td className="px-3 py-2 font-mono text-xs">
                                                         {position.code}
                                                     </td>
-                                                    <td className="px-3 py-3">
+                                                    <td className="px-3 py-2">
                                                         <p className="font-medium">
                                                             {position.name}
                                                         </p>
@@ -663,22 +634,22 @@ export default function EmployeeMasterDataPage() {
                                                                 '-'}
                                                         </p>
                                                     </td>
-                                                    <td className="px-3 py-3">
+                                                    <td className="px-3 py-2 text-muted-foreground">
                                                         {position
                                                             .parent_position
                                                             ?.name ?? '-'}
                                                     </td>
-                                                    <td className="px-3 py-3">
+                                                    <td className="px-3 py-2 text-muted-foreground">
                                                         {position.division
                                                             ?.name ?? '-'}
                                                     </td>
-                                                    <td className="px-3 py-3">
+                                                    <td className="px-3 py-2">
                                                         {
                                                             position.employees_count
                                                         }
                                                     </td>
-                                                    <td className="px-3 py-3">
-                                                        <div className="flex gap-1.5">
+                                                    <td className="px-3 py-2">
+                                                        <div className="flex items-center gap-1">
                                                             <ActionIconButton
                                                                 label="Tambah sub-jabatan"
                                                                 icon={Plus}
@@ -705,42 +676,6 @@ export default function EmployeeMasterDataPage() {
                                             ))}
                                         </tbody>
                                     </table>
-                                </div>
-
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {positions.links.map((link, index) => (
-                                        <Button
-                                            key={`${link.label}-${index}`}
-                                            asChild={link.url !== null}
-                                            size="sm"
-                                            variant={
-                                                link.active
-                                                    ? 'default'
-                                                    : 'outline'
-                                            }
-                                            disabled={link.url === null}
-                                        >
-                                            {link.url ? (
-                                                <Link
-                                                    href={link.url}
-                                                    preserveScroll
-                                                    preserveState
-                                                >
-                                                    <span
-                                                        dangerouslySetInnerHTML={{
-                                                            __html: link.label,
-                                                        }}
-                                                    />
-                                                </Link>
-                                            ) : (
-                                                <span
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: link.label,
-                                                    }}
-                                                />
-                                            )}
-                                        </Button>
-                                    ))}
                                 </div>
                             </CardContent>
                         </Card>
