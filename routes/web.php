@@ -143,6 +143,44 @@ Route::get('robots.txt', function () {
     HandleInertiaRequests::class,
 ])->name('robots');
 
+Route::get('llms.txt', function () {
+    $baseUrl = rtrim((string) config('app.url'), '/');
+
+    return response(implode("\n", [
+        '# Humi HRIS',
+        '',
+        '> Humi adalah software HRIS Indonesia untuk membantu perusahaan mengelola data karyawan, absensi, cuti, lembur, payroll, approval, rekrutmen, dan portal karyawan.',
+        '',
+        '## Produk dan fitur',
+        '- Manajemen karyawan: '.$baseUrl.'/features',
+        '- Absensi, jadwal, cuti, lembur, payroll, rekrutmen, aset, dan performance tracker: '.$baseUrl.'/features',
+        '- Solusi HRIS untuk outsourcing: '.$baseUrl.'/hris-outsourcing',
+        '- Solusi HRIS untuk retail dan F&B: '.$baseUrl.'/hris-retail-fnb',
+        '- Solusi HRIS untuk manufaktur shift: '.$baseUrl.'/hris-manufaktur-shift',
+        '',
+        '## Sumber publik',
+        '- Berita dan panduan HRIS: '.$baseUrl.'/berita',
+        '- Lowongan karier: '.$baseUrl.'/careers',
+        '- Kontak dan konsultasi: '.$baseUrl.'/contact',
+        '',
+        '## Catatan',
+        '- Informasi karyawan, payroll, dashboard, portal, billing, dan endpoint API bersifat privat dan tidak tercantum di sini.',
+        '',
+    ]), 200, [
+        'Content-Type' => 'text/plain; charset=UTF-8',
+        'Cache-Control' => 'public, max-age=3600',
+    ]);
+})->withoutMiddleware([
+    EncryptCookies::class,
+    AddQueuedCookiesToResponse::class,
+    StartSession::class,
+    ShareErrorsFromSession::class,
+    ValidateCsrfToken::class,
+    AddLinkHeadersForPreloadedAssets::class,
+    HandleAppearance::class,
+    HandleInertiaRequests::class,
+])->name('llms');
+
 Route::get('sitemap.xml', function () {
     $baseUrl = rtrim((string) config('app.url'), '/');
     $urls = [

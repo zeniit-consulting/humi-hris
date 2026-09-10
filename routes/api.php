@@ -46,7 +46,7 @@ Route::prefix('mobile/v1')->name('mobile.v1.')->group(function (): void {
         ->middleware('throttle:10,1')
         ->name('auth.portal-login');
 
-    Route::middleware('auth:sanctum,web')->group(function (): void {
+    Route::middleware(['auth:sanctum', 'require.bearer', CheckAbilities::class.':mobile'])->group(function (): void {
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
 

@@ -87,4 +87,20 @@ class SeoInfrastructureTest extends TestCase
             )
             ->assertDontSee('expired-vacancy', false);
     }
+
+    public function test_llms_txt_describes_public_product_sources_without_private_routes(): void
+    {
+        config(['app.url' => 'https://humi.test']);
+
+        $this->get('/llms.txt')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/plain; charset=UTF-8')
+            ->assertSee('# Humi HRIS', false)
+            ->assertSee('https://humi.test/features', false)
+            ->assertSee('https://humi.test/hris-outsourcing', false)
+            ->assertSee('https://humi.test/berita', false)
+            ->assertSee('bersifat privat', false)
+            ->assertDontSee('/api/mobile/v1', false)
+            ->assertDontSee('/dashboard', false);
+    }
 }

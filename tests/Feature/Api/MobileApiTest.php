@@ -137,6 +137,30 @@ class MobileApiTest extends TestCase
             ->assertUnauthorized();
     }
 
+    public function test_mobile_api_rejects_web_session_authentication(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
+        $this->actingAs($user, 'web')
+            ->getJson('/api/mobile/v1/auth/me')
+            ->assertUnauthorized();
+    }
+
+    public function test_mobile_api_rejects_tokens_without_mobile_ability(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
+        $token = $user->createToken('third-party', ['third-party'])->plainTextToken;
+
+        $this->withToken($token)
+            ->getJson('/api/mobile/v1/auth/me')
+            ->assertForbidden();
+    }
+
     public function test_mobile_employee_list_for_sub_user_only_returns_linked_sub_company_employees(): void
     {
         $owner = User::factory()->create([
