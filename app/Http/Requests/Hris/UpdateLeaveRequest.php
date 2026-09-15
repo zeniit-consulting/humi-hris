@@ -34,6 +34,7 @@ class UpdateLeaveRequest extends FormRequest
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'reason' => ['nullable', 'string', 'max:1000'],
+            'attachment' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf,webp', 'max:5120'],
             'status' => ['required', Rule::in(['pending', 'approved', 'rejected', 'cancelled'])],
             'rejection_reason' => ['nullable', 'string', 'max:255'],
         ];

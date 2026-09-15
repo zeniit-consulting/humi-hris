@@ -1,8 +1,9 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { CalendarDays, Check, Eye, Filter, RotateCcw, X } from 'lucide-react';
+import { CalendarDays, Check, Eye, Filter, Paperclip, RotateCcw, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import ActionIconButton from '@/components/action-icon-button';
+import { AttachmentPreviewDialog } from '@/components/attachment-preview-dialog';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,6 +56,8 @@ type LeaveRow = {
     end_date: string;
     total_days: string;
     reason: string | null;
+    attachment: string | null;
+    attachment_name: string | null;
     status: string;
     approval_stage: number;
     first_approved_by: string | null;
@@ -102,6 +105,11 @@ export default function LeaveApprovalPage() {
     const [filterState, setFilterState] = useState(filters);
     const [detailRow, setDetailRow] = useState<LeaveRow | null>(null);
     const [rejectRow, setRejectRow] = useState<LeaveRow | null>(null);
+    const [previewAttachment, setPreviewAttachment] = useState<{
+        url: string;
+        name?: string | null;
+        title?: string;
+    } | null>(null);
     const rejectForm = useForm({ rejection_reason: '' });
 
     useEffect(() => {
@@ -365,6 +373,20 @@ export default function LeaveApprovalPage() {
                                             </td>
                                             <td className="px-3 py-3">
                                                 <div className="flex gap-1.5">
+                                                    {row.attachment && (
+                                                        <ActionIconButton
+                                                            label="Lihat Lampiran"
+                                                            icon={Paperclip}
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                setPreviewAttachment({
+                                                                    url: row.attachment!,
+                                                                    name: row.attachment_name,
+                                                                    title: `Lampiran Cuti - ${row.employee_label}`,
+                                                                })
+                                                            }
+                                                        />
+                                                    )}
                                                     <ActionIconButton
                                                         label="Detail"
                                                         icon={Eye}
@@ -452,6 +474,31 @@ export default function LeaveApprovalPage() {
                                     {detailRow.rejection_reason}
                                 </p>
                             )}
+                            {detailRow.attachment && (
+                                <div className="pt-1">
+                                    <p className="font-semibold text-foreground">
+                                        Lampiran / Dokumen Pendukung:
+                                    </p>
+                                    <div className="mt-1.5">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-2 text-xs"
+                                            onClick={() =>
+                                                setPreviewAttachment({
+                                                    url: detailRow.attachment!,
+                                                    name: detailRow.attachment_name,
+                                                    title: `Lampiran Cuti - ${detailRow.employee_label}`,
+                                                })
+                                            }
+                                        >
+                                            <Paperclip className="size-3.5" />
+                                            {detailRow.attachment_name || 'Lihat Lampiran'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </DialogContent>
@@ -504,6 +551,16 @@ export default function LeaveApprovalPage() {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <AttachmentPreviewDialog
+                open={previewAttachment !== null}
+                onOpenChange={(open) => {
+                    if (!open) setPreviewAttachment(null);
+                }}
+                url={previewAttachment?.url}
+                name={previewAttachment?.name}
+                title={previewAttachment?.title}
+            />
         </AppLayout>
     );
 }

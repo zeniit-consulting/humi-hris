@@ -280,181 +280,185 @@ class PortalController extends Controller
             ]);
         }
 
-        return $this->success([
-            'user' => $this->userPayload($user),
-            'today' => [
-                'date' => $today->toDateString(),
-                'formatted' => $today->locale('id')->translatedFormat('l, d F'),
-            ],
-            'employee' => $employee ? [
-                'id' => $employee->id,
-                'employee_code' => $employee->employee_code,
-                'full_name' => $employee->full_name,
-                'email' => $employee->email,
-                'employment_status' => $employee->employment_status,
-                'employment_type' => $employee->employment_type,
-                'is_wfa' => $employee->is_wfa,
-                'face_enrolled' => ! empty($employee->face_embedding),
-                'face_embedding' => $employee->face_embedding,
-                'face_photo_url' => $employee->face_photo_url,
-                'division' => $employee->division ? [
-                    'id' => $employee->division->id,
-                    'name' => $employee->division->name,
-                ] : null,
-                'position' => $employee->position ? [
-                    'id' => $employee->position->id,
-                    'name' => $employee->position->name,
-                ] : null,
-            ] : null,
-            'quick_action' => [
-                'shift' => $todayShift ? [
-                    'id' => $todayShiftOption?->id ?? $todayShift->id,
-                    'code' => $todayShiftOption?->code ?? $todayShift->shift_code,
-                    'name' => $todayShiftOption?->name ?? $todayShift->shift_code,
-                    'start_time' => $todayShiftOption?->start_time ?? $todayShift->start_time,
-                    'end_time' => $todayShiftOption?->end_time ?? $todayShift->end_time,
-                    'is_day_off' => $todayShiftOption?->is_day_off ?? $todayShift->is_day_off,
-                ] : null,
-                'attendance' => $todayAttendance ? [
-                    'id' => $todayAttendance->id,
-                    'attendance_date' => $todayAttendance->attendance_date?->format('Y-m-d'),
-                    'status' => $todayAttendance->status,
-                    'shift' => $todayAttendance->shift ? [
-                        'id' => $todayAttendance->shift->id,
-                        'code' => $todayAttendance->shift->code,
-                        'name' => $todayAttendance->shift->name,
-                        'start_time' => $todayAttendance->shift->start_time,
-                        'end_time' => $todayAttendance->shift->end_time,
-                        'is_day_off' => $todayAttendance->shift->is_day_off,
-                    ] : null,
-                    'check_in_at' => $this->localTimestamp($todayAttendance->check_in_at, $timezone),
-                    'check_out_at' => $this->localTimestamp($todayAttendance->check_out_at, $timezone),
-                    'notes' => $todayAttendance->notes,
-                ] : null,
-                'open_attendance' => $openAttendance ? [
-                    'id' => $openAttendance->id,
-                    'attendance_date' => $openAttendance->attendance_date?->format('Y-m-d'),
-                    'status' => $openAttendance->status,
-                    'shift' => $openAttendance->shift ? [
-                        'id' => $openAttendance->shift->id,
-                        'code' => $openAttendance->shift->code,
-                        'name' => $openAttendance->shift->name,
-                        'start_time' => $openAttendance->shift->start_time,
-                        'end_time' => $openAttendance->shift->end_time,
-                        'is_day_off' => $openAttendance->shift->is_day_off,
-                    ] : null,
-                    'check_in_at' => $this->localTimestamp($openAttendance->check_in_at, $timezone),
-                    'check_out_at' => $this->localTimestamp($openAttendance->check_out_at, $timezone),
-                    'check_in_latitude' => $openAttendance->check_in_latitude,
-                    'check_in_longitude' => $openAttendance->check_in_longitude,
-                    'check_out_latitude' => $openAttendance->check_out_latitude,
-                    'check_out_longitude' => $openAttendance->check_out_longitude,
-                    'notes' => $openAttendance->notes,
-                ] : null,
-                'can_clock_in' => $employee !== null && $openAttendance === null && $todayAttendance === null,
-                'can_clock_out' => $openAttendance !== null,
-                'hint' => $employee
-                    ? ($openAttendance
-                        ? 'Masih ada absensi yang belum pulang.'
-                        : ($todayAttendance
-                            ? ($todayAttendance->check_out_at
-                                ? 'Absensi hari ini sudah selesai.'
-                                : 'Pulang tersedia setelah shift selesai.')
-                            : 'Belum ada absensi yang tercatat untuk hari ini.'))
-                    : 'Tidak ada profil karyawan yang cocok dengan email akun ini.',
-            ],
-            'cards' => [
-                'annual_leave_days' => $annualLeaveDays,
-                'sick_leave_days' => $sickLeaveDays,
-                'pending_surveys' => $pendingSurveys->count(),
-                'assigned_assets' => $assignedAssets->count(),
-                'payroll_preview' => [
-                    'period' => $period,
-                    'is_saved' => $payrollRun?->is_saved ?? false,
-                    'generated_at' => $payrollRun?->generated_at?->setTimezone($timezone)->toIso8601String(),
-                    'net_salary' => $payrollItem?->net_salary,
+            $hasApprovalLine = $employee ? app(\App\Services\ApprovalWorkflowService::class)->hasApprovalLine($employee) : false;
+
+            return $this->success([
+                'user' => $this->userPayload($user),
+                'today' => [
+                    'date' => $today->toDateString(),
+                    'formatted' => $today->locale('id')->translatedFormat('l, d F'),
                 ],
-            ],
-            'announcements' => $announcements->map(fn (NotificationAnnouncement $announcement) => [
-                'id' => $announcement->id,
-                'title' => $announcement->title,
-                'message' => $announcement->message,
-                'publish_at' => $announcement->publish_at?->setTimezone($timezone)->toIso8601String(),
-            ])->values(),
-            'surveys' => $pendingSurveys->map(fn (EmployeeSurvey $survey) => [
-                'id' => $survey->id,
-                'title' => $survey->title,
-                'description' => $survey->description,
-                'is_anonymous' => (bool) $survey->is_anonymous,
-                'questions_count' => count($survey->questions ?? []),
-                'ends_at' => $survey->ends_at?->setTimezone($timezone)->toIso8601String(),
-            ])->values(),
-            'assets' => $assignedAssets->map(fn (CompanyAssetAssignment $assignment) => [
-                'id' => $assignment->id,
-                'asset_code' => $assignment->asset?->asset_code,
-                'name' => $assignment->asset?->name ?? 'Aset perusahaan',
-                'category' => $assignment->asset?->category,
-                'issued_at' => $assignment->issued_at?->format('Y-m-d'),
-                'condition_out' => $assignment->condition_out,
-            ])->values(),
-            'attendance_policy' => [
-                'mode' => $employee?->is_wfa ? 'wfa' : 'onsite',
-                'employee_timezone' => $employee?->timezone,
-                'active_timezone' => $timezone,
-                'radius_meters' => (int) ($companySetting?->attendance_radius_meters ?? 100),
-                'require_face_recognition' => (bool) ($companySetting?->require_face_recognition ?? false),
-                'primary_location' => $companySetting?->location_latitude !== null && $companySetting?->location_longitude !== null ? [
-                    'name' => $companySetting->location_name ?: 'Lokasi utama',
-                    'address' => $companySetting->location_address,
-                    'latitude' => (float) $companySetting->location_latitude,
-                    'longitude' => (float) $companySetting->location_longitude,
-                    'radius_meters' => (int) ($companySetting->attendance_radius_meters ?? 100),
+                'employee' => $employee ? [
+                    'id' => $employee->id,
+                    'employee_code' => $employee->employee_code,
+                    'full_name' => $employee->full_name,
+                    'email' => $employee->email,
+                    'employment_status' => $employee->employment_status,
+                    'employment_type' => $employee->employment_type,
+                    'is_wfa' => $employee->is_wfa,
+                    'face_enrolled' => ! empty($employee->face_embedding),
+                    'face_embedding' => $employee->face_embedding,
+                    'face_photo_url' => $employee->face_photo_url,
+                    'division' => $employee->division ? [
+                        'id' => $employee->division->id,
+                        'name' => $employee->division->name,
+                    ] : null,
+                    'position' => $employee->position ? [
+                        'id' => $employee->position->id,
+                        'name' => $employee->position->name,
+                    ] : null,
                 ] : null,
-                'locations' => $this->attendanceLocationsForEmployee($employee, $companySetting),
-            ],
-            'shift_options' => $availableShifts->map(fn (WorkShift $shift) => [
-                'id' => $shift->id,
-                'code' => $shift->code,
-                'name' => $shift->name,
-                'start_time' => $shift->start_time,
-                'end_time' => $shift->end_time,
-                'is_day_off' => $shift->is_day_off,
-            ])->values(),
-            'timeline' => $timeline
-                ->sortBy('date')
-                ->take(6)
-                ->values(),
-            'features' => [
-                'kasbon' => CompanySetting::portalKasbonEnabledFor($user),
-            ],
-            'overtime_events' => collect($companySetting?->overtime_events ?? [])
-                ->filter(function (array $event) use ($employee) {
-                    $positionIds = $event['position_ids'] ?? [];
-                    if (empty($positionIds)) {
-                        return true;
-                    }
-                    return $employee && in_array((int) $employee->position_id, array_map('intval', (array) $positionIds), true);
-                })
-                ->values()
-                ->all(),
-            'links' => array_filter([
-                'attendance' => route('portal.attendance'),
-                'schedules' => route('portal.attendance'),
-                'leaves' => route('portal.leaves'),
-                'overtimes' => route('portal.overtimes'),
-                'kasbons' => CompanySetting::portalKasbonEnabledFor($user)
-                    ? route('portal.kasbons')
-                    : null,
-                'reimbursements' => route('portal.reimbursements'),
-                'payroll' => route('portal.payroll'),
-                'activity' => route('portal.activity'),
-                'client_visits' => route('portal.activity.client-visits'),
-                'performance_activity' => route('portal.activity.performance'),
-                'reprimands' => route('portal.reprimands'),
-                'profile' => route('portal.profile'),
-                'dashboard' => route('portal.index'),
-            ]),
-        ]);
+                'quick_action' => [
+                    'shift' => $todayShift ? [
+                        'id' => $todayShiftOption?->id ?? $todayShift->id,
+                        'code' => $todayShiftOption?->code ?? $todayShift->shift_code,
+                        'name' => $todayShiftOption?->name ?? $todayShift->shift_code,
+                        'start_time' => $todayShiftOption?->start_time ?? $todayShift->start_time,
+                        'end_time' => $todayShiftOption?->end_time ?? $todayShift->end_time,
+                        'is_day_off' => $todayShiftOption?->is_day_off ?? $todayShift->is_day_off,
+                    ] : null,
+                    'attendance' => $todayAttendance ? [
+                        'id' => $todayAttendance->id,
+                        'attendance_date' => $todayAttendance->attendance_date?->format('Y-m-d'),
+                        'status' => $todayAttendance->status,
+                        'shift' => $todayAttendance->shift ? [
+                            'id' => $todayAttendance->shift->id,
+                            'code' => $todayAttendance->shift->code,
+                            'name' => $todayAttendance->shift->name,
+                            'start_time' => $todayAttendance->shift->start_time,
+                            'end_time' => $todayAttendance->shift->end_time,
+                            'is_day_off' => $todayAttendance->shift->is_day_off,
+                        ] : null,
+                        'check_in_at' => $this->localTimestamp($todayAttendance->check_in_at, $timezone),
+                        'check_out_at' => $this->localTimestamp($todayAttendance->check_out_at, $timezone),
+                        'notes' => $todayAttendance->notes,
+                    ] : null,
+                    'open_attendance' => $openAttendance ? [
+                        'id' => $openAttendance->id,
+                        'attendance_date' => $openAttendance->attendance_date?->format('Y-m-d'),
+                        'status' => $openAttendance->status,
+                        'shift' => $openAttendance->shift ? [
+                            'id' => $openAttendance->shift->id,
+                            'code' => $openAttendance->shift->code,
+                            'name' => $openAttendance->shift->name,
+                            'start_time' => $openAttendance->shift->start_time,
+                            'end_time' => $openAttendance->shift->end_time,
+                            'is_day_off' => $openAttendance->shift->is_day_off,
+                        ] : null,
+                        'check_in_at' => $this->localTimestamp($openAttendance->check_in_at, $timezone),
+                        'check_out_at' => $this->localTimestamp($openAttendance->check_out_at, $timezone),
+                        'check_in_latitude' => $openAttendance->check_in_latitude,
+                        'check_in_longitude' => $openAttendance->check_in_longitude,
+                        'check_out_latitude' => $openAttendance->check_out_latitude,
+                        'check_out_longitude' => $openAttendance->check_out_longitude,
+                        'notes' => $openAttendance->notes,
+                    ] : null,
+                    'can_clock_in' => $employee !== null && $openAttendance === null && $todayAttendance === null,
+                    'can_clock_out' => $openAttendance !== null,
+                    'hint' => $employee
+                        ? ($openAttendance
+                            ? 'Masih ada absensi yang belum pulang.'
+                            : ($todayAttendance
+                                ? ($todayAttendance->check_out_at
+                                    ? 'Absensi hari ini sudah selesai.'
+                                    : 'Pulang tersedia setelah shift selesai.')
+                                : 'Belum ada absensi yang tercatat untuk hari ini.'))
+                        : 'Tidak ada profil karyawan yang cocok dengan email akun ini.',
+                ],
+                'cards' => [
+                    'annual_leave_days' => $annualLeaveDays,
+                    'sick_leave_days' => $sickLeaveDays,
+                    'pending_surveys' => $pendingSurveys->count(),
+                    'assigned_assets' => $assignedAssets->count(),
+                    'payroll_preview' => [
+                        'period' => $period,
+                        'is_saved' => $payrollRun?->is_saved ?? false,
+                        'generated_at' => $payrollRun?->generated_at?->setTimezone($timezone)->toIso8601String(),
+                        'net_salary' => $payrollItem?->net_salary,
+                    ],
+                ],
+                'announcements' => $announcements->map(fn (NotificationAnnouncement $announcement) => [
+                    'id' => $announcement->id,
+                    'title' => $announcement->title,
+                    'message' => $announcement->message,
+                    'publish_at' => $announcement->publish_at?->setTimezone($timezone)->toIso8601String(),
+                ])->values(),
+                'surveys' => $pendingSurveys->map(fn (EmployeeSurvey $survey) => [
+                    'id' => $survey->id,
+                    'title' => $survey->title,
+                    'description' => $survey->description,
+                    'is_anonymous' => (bool) $survey->is_anonymous,
+                    'questions_count' => count($survey->questions ?? []),
+                    'ends_at' => $survey->ends_at?->setTimezone($timezone)->toIso8601String(),
+                ])->values(),
+                'assets' => $assignedAssets->map(fn (CompanyAssetAssignment $assignment) => [
+                    'id' => $assignment->id,
+                    'asset_code' => $assignment->asset?->asset_code,
+                    'name' => $assignment->asset?->name ?? 'Aset perusahaan',
+                    'category' => $assignment->asset?->category,
+                    'issued_at' => $assignment->issued_at?->format('Y-m-d'),
+                    'condition_out' => $assignment->condition_out,
+                ])->values(),
+                'attendance_policy' => [
+                    'mode' => $employee?->is_wfa ? 'wfa' : 'onsite',
+                    'employee_timezone' => $employee?->timezone,
+                    'active_timezone' => $timezone,
+                    'radius_meters' => (int) ($companySetting?->attendance_radius_meters ?? 100),
+                    'require_face_recognition' => (bool) ($companySetting?->require_face_recognition ?? false),
+                    'primary_location' => $companySetting?->location_latitude !== null && $companySetting?->location_longitude !== null ? [
+                        'name' => $companySetting->location_name ?: 'Lokasi utama',
+                        'address' => $companySetting->location_address,
+                        'latitude' => (float) $companySetting->location_latitude,
+                        'longitude' => (float) $companySetting->location_longitude,
+                        'radius_meters' => (int) ($companySetting->attendance_radius_meters ?? 100),
+                    ] : null,
+                    'locations' => $this->attendanceLocationsForEmployee($employee, $companySetting),
+                ],
+                'shift_options' => $availableShifts->map(fn (WorkShift $shift) => [
+                    'id' => $shift->id,
+                    'code' => $shift->code,
+                    'name' => $shift->name,
+                    'start_time' => $shift->start_time,
+                    'end_time' => $shift->end_time,
+                    'is_day_off' => $shift->is_day_off,
+                ])->values(),
+                'timeline' => $timeline
+                    ->sortBy('date')
+                    ->take(6)
+                    ->values(),
+                'features' => [
+                    'kasbon' => CompanySetting::portalKasbonEnabledFor($user),
+                    'approvals' => $hasApprovalLine,
+                ],
+                'overtime_events' => collect($companySetting?->overtime_events ?? [])
+                    ->filter(function (array $event) use ($employee) {
+                        $positionIds = $event['position_ids'] ?? [];
+                        if (empty($positionIds)) {
+                            return true;
+                        }
+                        return $employee && in_array((int) $employee->position_id, array_map('intval', (array) $positionIds), true);
+                    })
+                    ->values()
+                    ->all(),
+                'links' => array_filter([
+                    'attendance' => route('portal.attendance'),
+                    'schedules' => route('portal.attendance'),
+                    'leaves' => route('portal.leaves'),
+                    'overtimes' => route('portal.overtimes'),
+                    'kasbons' => CompanySetting::portalKasbonEnabledFor($user)
+                        ? route('portal.kasbons')
+                        : null,
+                    'reimbursements' => route('portal.reimbursements'),
+                    'payroll' => route('portal.payroll'),
+                    'activity' => route('portal.activity'),
+                    'client_visits' => route('portal.activity.client-visits'),
+                    'performance_activity' => route('portal.activity.performance'),
+                    'reprimands' => route('portal.reprimands'),
+                    'approvals' => $hasApprovalLine ? route('portal.approvals') : null,
+                    'profile' => route('portal.profile'),
+                    'dashboard' => route('portal.index'),
+                ]),
+            ]);
     }
 
     /**

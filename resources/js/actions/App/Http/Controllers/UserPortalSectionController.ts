@@ -1540,7 +1540,7 @@ approvals.form = approvalsForm
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:119
+* @see app/Http/Controllers/UserPortalSectionController.php:124
 * @route '/portal/api/payrolls/preview-secure'
 */
 export const previewPayslip = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1555,7 +1555,7 @@ previewPayslip.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:119
+* @see app/Http/Controllers/UserPortalSectionController.php:124
 * @route '/portal/api/payrolls/preview-secure'
 */
 previewPayslip.url = (options?: RouteQueryOptions) => {
@@ -1564,7 +1564,7 @@ previewPayslip.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:119
+* @see app/Http/Controllers/UserPortalSectionController.php:124
 * @route '/portal/api/payrolls/preview-secure'
 */
 previewPayslip.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1574,7 +1574,7 @@ previewPayslip.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:119
+* @see app/Http/Controllers/UserPortalSectionController.php:124
 * @route '/portal/api/payrolls/preview-secure'
 */
 const previewPayslipForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1584,7 +1584,7 @@ const previewPayslipForm = (options?: RouteQueryOptions): RouteFormDefinition<'p
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::previewPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:119
+* @see app/Http/Controllers/UserPortalSectionController.php:124
 * @route '/portal/api/payrolls/preview-secure'
 */
 previewPayslipForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1596,7 +1596,7 @@ previewPayslip.form = previewPayslipForm
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:145
+* @see app/Http/Controllers/UserPortalSectionController.php:150
 * @route '/portal/payroll/export'
 */
 export const exportPayslip = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1611,7 +1611,7 @@ exportPayslip.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:145
+* @see app/Http/Controllers/UserPortalSectionController.php:150
 * @route '/portal/payroll/export'
 */
 exportPayslip.url = (options?: RouteQueryOptions) => {
@@ -1620,7 +1620,7 @@ exportPayslip.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:145
+* @see app/Http/Controllers/UserPortalSectionController.php:150
 * @route '/portal/payroll/export'
 */
 exportPayslip.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1630,7 +1630,7 @@ exportPayslip.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:145
+* @see app/Http/Controllers/UserPortalSectionController.php:150
 * @route '/portal/payroll/export'
 */
 const exportPayslipForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1640,7 +1640,7 @@ const exportPayslipForm = (options?: RouteQueryOptions): RouteFormDefinition<'po
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:145
+* @see app/Http/Controllers/UserPortalSectionController.php:150
 * @route '/portal/payroll/export'
 */
 exportPayslipForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

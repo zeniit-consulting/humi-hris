@@ -283,7 +283,7 @@ export const store = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:101
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 const update266d27416d7915652abe7603f15e709d = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -298,7 +298,7 @@ update266d27416d7915652abe7603f15e709d.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:101
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 update266d27416d7915652abe7603f15e709d.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -331,7 +331,7 @@ update266d27416d7915652abe7603f15e709d.url = (args: { leave: number | { id: numb
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:101
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 update266d27416d7915652abe7603f15e709d.put = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -341,7 +341,7 @@ update266d27416d7915652abe7603f15e709d.put = (args: { leave: number | { id: numb
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:101
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 const update266d27416d7915652abe7603f15e709dForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -356,7 +356,7 @@ const update266d27416d7915652abe7603f15e709dForm = (args: { leave: number | { id
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:101
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 update266d27416d7915652abe7603f15e709dForm.put = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -372,7 +372,7 @@ update266d27416d7915652abe7603f15e709dForm.put = (args: { leave: number | { id: 
 update266d27416d7915652abe7603f15e709d.form = update266d27416d7915652abe7603f15e709dForm
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:101
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
 * @route '/portal/api/leaves/{leave}'
 */
 const update9fd2359cf1a2cac699e2f0822853f079 = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -387,7 +387,7 @@ update9fd2359cf1a2cac699e2f0822853f079.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:101
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
 * @route '/portal/api/leaves/{leave}'
 */
 update9fd2359cf1a2cac699e2f0822853f079.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -420,7 +420,7 @@ update9fd2359cf1a2cac699e2f0822853f079.url = (args: { leave: number | { id: numb
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:101
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
 * @route '/portal/api/leaves/{leave}'
 */
 update9fd2359cf1a2cac699e2f0822853f079.put = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -430,7 +430,7 @@ update9fd2359cf1a2cac699e2f0822853f079.put = (args: { leave: number | { id: numb
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:101
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
 * @route '/portal/api/leaves/{leave}'
 */
 const update9fd2359cf1a2cac699e2f0822853f079Form = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -445,7 +445,7 @@ const update9fd2359cf1a2cac699e2f0822853f079Form = (args: { leave: number | { id
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:101
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
 * @route '/portal/api/leaves/{leave}'
 */
 update9fd2359cf1a2cac699e2f0822853f079Form.put = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -467,7 +467,7 @@ export const update = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 const destroy266d27416d7915652abe7603f15e709d = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -482,7 +482,7 @@ destroy266d27416d7915652abe7603f15e709d.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 destroy266d27416d7915652abe7603f15e709d.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -515,7 +515,7 @@ destroy266d27416d7915652abe7603f15e709d.url = (args: { leave: number | { id: num
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 destroy266d27416d7915652abe7603f15e709d.delete = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -525,7 +525,7 @@ destroy266d27416d7915652abe7603f15e709d.delete = (args: { leave: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 const destroy266d27416d7915652abe7603f15e709dForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -540,7 +540,7 @@ const destroy266d27416d7915652abe7603f15e709dForm = (args: { leave: number | { i
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 destroy266d27416d7915652abe7603f15e709dForm.delete = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -556,7 +556,7 @@ destroy266d27416d7915652abe7603f15e709dForm.delete = (args: { leave: number | { 
 destroy266d27416d7915652abe7603f15e709d.form = destroy266d27416d7915652abe7603f15e709dForm
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
 * @route '/portal/api/leaves/{leave}'
 */
 const destroy9fd2359cf1a2cac699e2f0822853f079 = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -571,7 +571,7 @@ destroy9fd2359cf1a2cac699e2f0822853f079.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
 * @route '/portal/api/leaves/{leave}'
 */
 destroy9fd2359cf1a2cac699e2f0822853f079.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -604,7 +604,7 @@ destroy9fd2359cf1a2cac699e2f0822853f079.url = (args: { leave: number | { id: num
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
 * @route '/portal/api/leaves/{leave}'
 */
 destroy9fd2359cf1a2cac699e2f0822853f079.delete = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -614,7 +614,7 @@ destroy9fd2359cf1a2cac699e2f0822853f079.delete = (args: { leave: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
 * @route '/portal/api/leaves/{leave}'
 */
 const destroy9fd2359cf1a2cac699e2f0822853f079Form = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -629,7 +629,7 @@ const destroy9fd2359cf1a2cac699e2f0822853f079Form = (args: { leave: number | { i
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:135
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
 * @route '/portal/api/leaves/{leave}'
 */
 destroy9fd2359cf1a2cac699e2f0822853f079Form.delete = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

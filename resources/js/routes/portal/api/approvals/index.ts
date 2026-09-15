@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Api\PortalApprovalController::approve
-* @see app/Http/Controllers/Api/PortalApprovalController.php:34
+* @see app/Http/Controllers/Api/PortalApprovalController.php:139
 * @route '/portal/api/approvals/{type}/{id}/approve'
 */
 export const approve = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ approve.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PortalApprovalController::approve
-* @see app/Http/Controllers/Api/PortalApprovalController.php:34
+* @see app/Http/Controllers/Api/PortalApprovalController.php:139
 * @route '/portal/api/approvals/{type}/{id}/approve'
 */
 approve.url = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions) => {
@@ -123,7 +123,7 @@ approve.url = (args: { type: string | number, id: string | number } | [type: str
 
 /**
 * @see \App\Http\Controllers\Api\PortalApprovalController::approve
-* @see app/Http/Controllers/Api/PortalApprovalController.php:34
+* @see app/Http/Controllers/Api/PortalApprovalController.php:139
 * @route '/portal/api/approvals/{type}/{id}/approve'
 */
 approve.post = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -133,7 +133,7 @@ approve.post = (args: { type: string | number, id: string | number } | [type: st
 
 /**
 * @see \App\Http\Controllers\Api\PortalApprovalController::approve
-* @see app/Http/Controllers/Api/PortalApprovalController.php:34
+* @see app/Http/Controllers/Api/PortalApprovalController.php:139
 * @route '/portal/api/approvals/{type}/{id}/approve'
 */
 const approveForm = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -143,7 +143,7 @@ const approveForm = (args: { type: string | number, id: string | number } | [typ
 
 /**
 * @see \App\Http\Controllers\Api\PortalApprovalController::approve
-* @see app/Http/Controllers/Api/PortalApprovalController.php:34
+* @see app/Http/Controllers/Api/PortalApprovalController.php:139
 * @route '/portal/api/approvals/{type}/{id}/approve'
 */
 approveForm.post = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -155,7 +155,7 @@ approve.form = approveForm
 
 /**
 * @see \App\Http\Controllers\Api\PortalApprovalController::reject
-* @see app/Http/Controllers/Api/PortalApprovalController.php:48
+* @see app/Http/Controllers/Api/PortalApprovalController.php:153
 * @route '/portal/api/approvals/{type}/{id}/reject'
 */
 export const reject = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -170,7 +170,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PortalApprovalController::reject
-* @see app/Http/Controllers/Api/PortalApprovalController.php:48
+* @see app/Http/Controllers/Api/PortalApprovalController.php:153
 * @route '/portal/api/approvals/{type}/{id}/reject'
 */
 reject.url = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions) => {
@@ -196,7 +196,7 @@ reject.url = (args: { type: string | number, id: string | number } | [type: stri
 
 /**
 * @see \App\Http\Controllers\Api\PortalApprovalController::reject
-* @see app/Http/Controllers/Api/PortalApprovalController.php:48
+* @see app/Http/Controllers/Api/PortalApprovalController.php:153
 * @route '/portal/api/approvals/{type}/{id}/reject'
 */
 reject.post = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -206,7 +206,7 @@ reject.post = (args: { type: string | number, id: string | number } | [type: str
 
 /**
 * @see \App\Http\Controllers\Api\PortalApprovalController::reject
-* @see app/Http/Controllers/Api/PortalApprovalController.php:48
+* @see app/Http/Controllers/Api/PortalApprovalController.php:153
 * @route '/portal/api/approvals/{type}/{id}/reject'
 */
 const rejectForm = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -216,7 +216,7 @@ const rejectForm = (args: { type: string | number, id: string | number } | [type
 
 /**
 * @see \App\Http\Controllers\Api\PortalApprovalController::reject
-* @see app/Http/Controllers/Api/PortalApprovalController.php:48
+* @see app/Http/Controllers/Api/PortalApprovalController.php:153
 * @route '/portal/api/approvals/{type}/{id}/reject'
 */
 rejectForm.post = (args: { type: string | number, id: string | number } | [type: string | number, id: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

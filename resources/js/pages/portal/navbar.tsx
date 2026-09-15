@@ -40,13 +40,29 @@ const getNavItemHref = (key: string, links: PortalLinkMap): string => {
 };
 
 export function PortalNavbar({ active, links }: PortalNavbarProps) {
+    const visibleNavItems = navItems.filter((item) => {
+        if (item.key === 'approvals') {
+            return Boolean(links?.approvals);
+        }
+        return true;
+    });
+
+    const gridColsClass =
+        visibleNavItems.length === 4
+            ? 'grid-cols-4'
+            : visibleNavItems.length === 5
+              ? 'grid-cols-5'
+              : 'grid-flow-col auto-cols-fr';
+
     return (
         <nav
             aria-label="Navigasi portal"
             className="fixed inset-x-0 bottom-0 z-[var(--portal-z-sticky)] w-full"
         >
-            <div className="portal-material grid grid-cols-5 gap-1 rounded-t-[1.15rem] rounded-b-none border p-1.5 pb-[max(1.125rem,calc(0.375rem+env(safe-area-inset-bottom)))]">
-                {navItems.map((item) => {
+            <div
+                className={`portal-material grid ${gridColsClass} gap-1 rounded-t-[1.15rem] rounded-b-none border p-1.5 pb-[max(1.125rem,calc(0.375rem+env(safe-area-inset-bottom)))]`}
+            >
+                {visibleNavItems.map((item) => {
                     const href = getNavItemHref(item.key, links);
                     const isActive = active === item.key;
 

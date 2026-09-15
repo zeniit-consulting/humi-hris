@@ -83,13 +83,15 @@ export const localMonthString = (date = new Date()) =>
 export async function requestApi<T>(
     url: string,
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
-    body?: Record<string, unknown>,
+    body?: Record<string, unknown> | FormData,
 ): Promise<MobileResponse<T>> {
     const browserTimezone = deviceTimezone();
     const xsrfCookie = document.cookie
         .split('; ')
         .find((row) => row.startsWith('XSRF-TOKEN='))
         ?.split('=')[1];
+
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
 
     const response = await fetch(url, {
         method,
@@ -101,9 +103,9 @@ export async function requestApi<T>(
             ...(xsrfCookie
                 ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfCookie) }
                 : {}),
-            ...(body ? { 'Content-Type': 'application/json' } : {}),
+            ...(body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     });
 
     const payload = (await response.json()) as MobileResponse<T>;

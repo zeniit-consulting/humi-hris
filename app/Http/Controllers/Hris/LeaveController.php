@@ -69,6 +69,8 @@ class LeaveController extends Controller
                 'end_date' => $leave->end_date->format('Y-m-d'),
                 'total_days' => $leave->total_days,
                 'reason' => $leave->reason,
+                'attachment' => $leave->attachment ? asset('storage/' . $leave->attachment) : null,
+                'attachment_name' => $leave->attachment_name,
                 'status' => $leave->status,
                 'rejection_reason' => $leave->rejection_reason,
             ]);
@@ -143,6 +145,8 @@ class LeaveController extends Controller
                 'end_date' => $leave->end_date->format('Y-m-d'),
                 'total_days' => $leave->total_days,
                 'reason' => $leave->reason,
+                'attachment' => $leave->attachment ? asset('storage/' . $leave->attachment) : null,
+                'attachment_name' => $leave->attachment_name,
                 'status' => $leave->status,
                 'rejection_reason' => $leave->rejection_reason,
                 'approver_name' => $leave->approver?->name,
@@ -230,6 +234,13 @@ class LeaveController extends Controller
 
         [$approvedAt, $approvedBy] = $this->resolveApprovalState($validated['status'], $request->user()?->id);
 
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $path = $file->store('leave-attachments', 'public');
+            $validated['attachment'] = $path;
+            $validated['attachment_name'] = $file->getClientOriginalName();
+        }
+
         $leave = LeaveRequest::create([
             ...$validated,
             'total_days' => $totalDays,
@@ -263,6 +274,13 @@ class LeaveController extends Controller
     public function update(UpdateLeaveRequest $request, LeaveRequest $leave): RedirectResponse
     {
         $validated = $request->validated();
+
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $path = $file->store('leave-attachments', 'public');
+            $validated['attachment'] = $path;
+            $validated['attachment_name'] = $file->getClientOriginalName();
+        }
 
         $totalDays = $this->calculateTotalDays($validated['start_date'], $validated['end_date']);
         $previousStatus = $leave->status;

@@ -84,6 +84,13 @@ class LeaveController extends Controller
             $validated['rejection_reason'] = null;
         }
 
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $path = $file->store('leave-attachments', 'public');
+            $validated['attachment'] = $path;
+            $validated['attachment_name'] = $file->getClientOriginalName();
+        }
+
         [$approvedAt, $approvedBy] = $this->resolveApprovalState($validated['status'], $request->user()?->id);
 
         $leave = LeaveRequest::query()->create([
@@ -111,6 +118,13 @@ class LeaveController extends Controller
             $validated['employee_id'] = $employee->id;
             $validated['status'] = 'pending';
             $validated['rejection_reason'] = null;
+        }
+
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $path = $file->store('leave-attachments', 'public');
+            $validated['attachment'] = $path;
+            $validated['attachment_name'] = $file->getClientOriginalName();
         }
 
         [$approvedAt, $approvedBy] = $this->resolveApprovalState(
@@ -176,6 +190,8 @@ class LeaveController extends Controller
             'end_date' => $leave->end_date?->format('Y-m-d'),
             'total_days' => $leave->total_days,
             'reason' => $leave->reason,
+            'attachment' => $leave->attachment ? asset('storage/' . $leave->attachment) : null,
+            'attachment_name' => $leave->attachment_name,
             'status' => $leave->status,
             'rejection_reason' => $leave->rejection_reason,
             'approved_by' => $leave->approved_by,

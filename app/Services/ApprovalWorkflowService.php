@@ -85,6 +85,64 @@ class ApprovalWorkflowService
         return match ($request::class) { AttendanceCorrectionRequest::class => 'attendance', LeaveRequest::class => 'leave', OvertimeRequest::class => 'overtime', ShiftChangeRequest::class => 'shift_change' };
     }
 
+    public function hasApprovalLine(?Employee $employee): bool
+    {
+        if (! $employee) {
+            return false;
+        }
+
+        if ($employee->directReports()->exists()) {
+            return true;
+        }
+
+        $employee->loadMissing('position');
+        if ($employee->position && in_array((string) $employee->position->level, ['0', '1'], true)) {
+            return true;
+        }
+
+        $isConfiguredInSettings = ApprovalSetting::query()
+            ->where('user_id', $employee->user_id)
+            ->where(function ($query) use ($employee) {
+                $query->where('first_approver_employee_id', $employee->id)
+                    ->orWhere('second_approver_employee_id', $employee->id);
+            })
+            ->exists();
+
+        if ($isConfiguredInSettings) {
+            return true;
+        }
+
+        if (AttendanceCorrectionRequest::query()
+            ->where('first_approver_employee_id', $employee->id)
+            ->orWhere('second_approver_employee_id', $employee->id)
+            ->exists()) {
+            return true;
+        }
+
+        if (LeaveRequest::query()
+            ->where('first_approver_employee_id', $employee->id)
+            ->orWhere('second_approver_employee_id', $employee->id)
+            ->exists()) {
+            return true;
+        }
+
+        if (OvertimeRequest::query()
+            ->where('first_approver_employee_id', $employee->id)
+            ->orWhere('second_approver_employee_id', $employee->id)
+            ->exists()) {
+            return true;
+        }
+
+        if (ShiftChangeRequest::query()
+            ->where('first_approver_employee_id', $employee->id)
+            ->orWhere('second_approver_employee_id', $employee->id)
+            ->exists()) {
+            return true;
+        }
+
+        return false;
+    }
+
     private function legacyApprovalLevels(Model $request): int
     {
         if (! $request instanceof LeaveRequest) return 1;

@@ -113,6 +113,11 @@ class UserPortalSectionController extends Controller
 
     public function approvals(Request $request): Response|RedirectResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+        $employee = $this->resolveSelfServiceEmployee($user);
+        abort_unless($employee && app(\App\Services\ApprovalWorkflowService::class)->hasApprovalLine($employee), 404);
+
         return $this->renderForUser($request, 'portal/approvals', 'Approval');
     }
 

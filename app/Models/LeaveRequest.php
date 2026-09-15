@@ -25,6 +25,8 @@ class LeaveRequest extends Model
         'end_date',
         'total_days',
         'reason',
+        'attachment',
+        'attachment_name',
         'status',
         'approval_stage',
         'approval_levels', 'first_approver_employee_id', 'second_approver_employee_id', 'rejection_stage',
