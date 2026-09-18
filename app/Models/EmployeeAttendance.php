@@ -26,6 +26,8 @@ class EmployeeAttendance extends Model
         'status',
         'late_minutes',
         'late_level',
+        'late_penalty',
+        'is_half_day',
         'check_in_at',
         'check_in_latitude',
         'check_in_longitude',
@@ -48,6 +50,8 @@ class EmployeeAttendance extends Model
         return [
             'attendance_date' => 'date',
             'late_minutes' => 'integer',
+            'late_penalty' => 'decimal:2',
+            'is_half_day' => 'boolean',
             'check_in_at' => 'datetime',
             'check_out_at' => 'datetime',
             'check_in_latitude' => 'decimal:7',

@@ -572,6 +572,47 @@ class WorkforceModulesTest extends TestCase
         ]);
     }
 
+    public function test_roster_shift_generation_ignores_offboarded_and_resigned_employees_when_applying_to_all(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $activeEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+        $offboardedEmployee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'is_active' => false,
+            'employment_status' => 'resigned',
+            'offboarded_at' => '2026-01-31',
+        ]);
+
+        $this->seedWorkShifts($user);
+
+        $this->actingAs($user)->post(route('hris.schedules.roster'), [
+            'apply_scope' => 'all',
+            'start_date' => '2026-02-01',
+            'end_date' => '2026-02-01',
+            'pattern' => ['0918'],
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $activeEmployee->id,
+            'work_date' => '2026-02-01',
+            'shift_code' => '0918',
+        ]);
+
+        $this->assertDatabaseMissing('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $offboardedEmployee->id,
+            'work_date' => '2026-02-01',
+        ]);
+    }
+
     public function test_holiday_sync_stores_holidays_and_sets_selected_employee_schedule_to_off(): void
     {
         Http::fake([

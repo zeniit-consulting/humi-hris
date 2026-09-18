@@ -388,6 +388,8 @@ class AttendanceController extends Controller
             'status' => $attendance->status,
             'late_minutes' => $attendance->late_minutes,
             'late_level' => $attendance->late_level,
+            'late_penalty' => (float) ($attendance->late_penalty ?? 0),
+            'is_half_day' => (bool) ($attendance->is_half_day ?? false),
             'shift' => $attendance->shift ? [
                 'id' => $attendance->shift->id,
                 'code' => $attendance->shift->code,

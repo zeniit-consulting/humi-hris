@@ -46,6 +46,9 @@ class ScheduleController extends Controller
 
         $employees = Employee::query()
             ->where('user_id', $ownerId)
+            ->where('is_active', true)
+            ->whereNull('offboarded_at')
+            ->where('employment_status', '!=', 'resigned')
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get(['id', 'employee_code', 'first_name', 'last_name']);
@@ -129,6 +132,10 @@ class ScheduleController extends Controller
         $pattern = array_values($validated['pattern']);
         $employeeIds = $this->rosterEmployeeIds($validated, $ownerId);
 
+        if (empty($employeeIds)) {
+            return back()->with('error', 'Tidak ada karyawan yang dipilih untuk penerapan roster.');
+        }
+
         $start = Carbon::parse($validated['start_date'])->startOfDay();
         $end = Carbon::parse($validated['end_date'])->startOfDay();
 
@@ -140,7 +147,11 @@ class ScheduleController extends Controller
 
             while ($cursor->lte($end)) {
                 $shiftCode = $pattern[$index % count($pattern)];
-                $template = $templates[$shiftCode] ?? $templates['OFF'];
+                $template = $templates[$shiftCode] ?? ($templates['OFF'] ?? [
+                    'start_time' => null,
+                    'end_time' => null,
+                    'is_day_off' => true,
+                ]);
 
                 $rows[] = [
                     'user_id' => $ownerId,
@@ -160,13 +171,17 @@ class ScheduleController extends Controller
             }
         }
 
-        EmployeeSchedule::query()->upsert(
-            $rows,
-            ['employee_id', 'work_date'],
-            ['shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at']
-        );
+        if (! empty($rows)) {
+            foreach (array_chunk($rows, 500) as $chunk) {
+                EmployeeSchedule::query()->upsert(
+                    $chunk,
+                    ['employee_id', 'work_date'],
+                    ['user_id', 'shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at']
+                );
+            }
+        }
 
-        return back();
+        return back()->with('success', 'Jadwal roster berhasil diterapkan.');
     }
 
     /**
@@ -182,21 +197,38 @@ class ScheduleController extends Controller
         if ($scope === 'all') {
             return Employee::query()
                 ->where('user_id', $ownerId)
+                ->where('is_active', true)
+                ->whereNull('offboarded_at')
+                ->where('employment_status', '!=', 'resigned')
                 ->orderBy('id')
                 ->pluck('id')
-                ->map(fn (int $id): int => $id)
+                ->map(fn (int $id): int => (int) $id)
                 ->all();
         }
 
         if ($scope === 'selected') {
-            return collect($validated['target_employee_ids'] ?? [])
+            $ids = collect($validated['target_employee_ids'] ?? [])
                 ->map(fn (mixed $id): int => (int) $id)
                 ->unique()
                 ->values()
                 ->all();
+
+            if (empty($ids)) {
+                return [];
+            }
+
+            return Employee::query()
+                ->where('user_id', $ownerId)
+                ->whereIn('id', $ids)
+                ->where('is_active', true)
+                ->whereNull('offboarded_at')
+                ->where('employment_status', '!=', 'resigned')
+                ->pluck('id')
+                ->map(fn (int $id): int => (int) $id)
+                ->all();
         }
 
-        return [(int) $validated['employee_id']];
+        return ! empty($validated['employee_id']) ? [(int) $validated['employee_id']] : [];
     }
 
     /**

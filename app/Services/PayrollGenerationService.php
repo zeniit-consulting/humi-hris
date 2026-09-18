@@ -371,7 +371,9 @@ class PayrollGenerationService
         );
 
         $kasbonDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'kasbon');
-        $dendaDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'denda');
+        $manualDendaDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'denda');
+        $attendanceLateDeduction = (float) $employee->attendances->sum('late_penalty');
+        $dendaDeduction = round($manualDendaDeduction + $attendanceLateDeduction, 2);
         $deductionsTotal = round(
             $kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + $pph21Deduction + $bpjs['bpjs_total_employee'],
             2

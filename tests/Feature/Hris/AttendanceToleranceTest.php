@@ -178,4 +178,230 @@ class AttendanceToleranceTest extends TestCase
             'id' => $schedule->id,
         ]);
     }
+
+    public function test_company_tiered_lateness_penalty_calculation(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+
+        \App\Models\CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => 'PT Test',
+                'late_penalty_enabled' => true,
+                'late_tolerance_minutes' => 15,
+                'late_penalty_type' => 'tiered',
+                'late_penalty_tiers' => [
+                    ['from_minute' => 1, 'to_minute' => 15, 'penalty_amount' => 0, 'description' => 'Toleransi'],
+                    ['from_minute' => 16, 'to_minute' => 30, 'penalty_amount' => 20000, 'description' => 'Terlambat 16-30 menit'],
+                    ['from_minute' => 31, 'to_minute' => 60, 'penalty_amount' => 50000, 'description' => 'Terlambat 31-60 menit'],
+                ],
+            ]
+        );
+
+        WorkShift::query()->updateOrCreate(
+            ['user_id' => $user->id, 'code' => '0918'],
+            [
+                'name' => 'Pagi 9',
+                'start_time' => '09:00',
+                'end_time' => '18:00',
+                'is_day_off' => false,
+                'late_tolerance_minutes' => 15,
+            ]
+        );
+
+        EmployeeSchedule::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-05-20',
+            'shift_code' => '0918',
+            'start_time' => '09:00',
+            'end_time' => '18:00',
+            'is_day_off' => false,
+        ]);
+
+        // Check-in at 09:20 (20 min late -> tier 16-30 min -> Rp 20.000)
+        $this->actingAs($user)
+            ->post(route('hris.attendances.store'), [
+                'employee_id' => $employee->id,
+                'attendance_date' => '2026-05-20',
+                'status' => 'present',
+                'check_in_at' => '2026-05-20 09:20:00',
+            ])
+            ->assertRedirect();
+
+        $attendance = EmployeeAttendance::query()
+            ->where('employee_id', $employee->id)
+            ->whereDate('attendance_date', '2026-05-20')
+            ->firstOrFail();
+
+        $this->assertSame('late', $attendance->status);
+        $this->assertSame(20, $attendance->late_minutes);
+        $this->assertEquals(20000.00, (float) $attendance->late_penalty);
+        $this->assertFalse((bool) $attendance->is_half_day);
+    }
+
+    public function test_company_progressive_lateness_penalty_calculation(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+
+        \App\Models\CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => 'PT Test',
+                'late_penalty_enabled' => true,
+                'late_tolerance_minutes' => 15,
+                'late_penalty_type' => 'progressive',
+                'late_base_penalty_minutes' => 15,
+                'late_base_penalty_amount' => 10000,
+                'late_incremental_penalty_amount' => 1000,
+                'late_incremental_unit_minutes' => 1,
+            ]
+        );
+
+        WorkShift::query()->updateOrCreate(
+            ['user_id' => $user->id, 'code' => '0918'],
+            [
+                'name' => 'Pagi 9',
+                'start_time' => '09:00',
+                'end_time' => '18:00',
+                'is_day_off' => false,
+                'late_tolerance_minutes' => 15,
+            ]
+        );
+
+        EmployeeSchedule::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-05-21',
+            'shift_code' => '0918',
+            'start_time' => '09:00',
+            'end_time' => '18:00',
+            'is_day_off' => false,
+        ]);
+
+        // Check-in at 09:25 (25 min late -> base 15m = 10k, extra 10m * 1k = 10k -> Total 20k)
+        $this->actingAs($user)
+            ->post(route('hris.attendances.store'), [
+                'employee_id' => $employee->id,
+                'attendance_date' => '2026-05-21',
+                'status' => 'present',
+                'check_in_at' => '2026-05-21 09:25:00',
+            ])
+            ->assertRedirect();
+
+        $attendance = EmployeeAttendance::query()
+            ->where('employee_id', $employee->id)
+            ->whereDate('attendance_date', '2026-05-21')
+            ->firstOrFail();
+
+        $this->assertSame('late', $attendance->status);
+        $this->assertSame(25, $attendance->late_minutes);
+        $this->assertEquals(20000.00, (float) $attendance->late_penalty);
+    }
+
+    public function test_company_max_lateness_half_day_leave_deduction_and_penalty(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2025-01-01',
+        ]);
+
+        \App\Models\CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => 'PT Test',
+                'late_penalty_enabled' => true,
+                'late_tolerance_minutes' => 15,
+                'late_half_day_enabled' => true,
+                'late_half_day_cutoff_minutes' => 60,
+                'late_half_day_penalty_amount' => 75000,
+                'late_half_day_deduct_leave' => true,
+            ]
+        );
+
+        WorkShift::query()->updateOrCreate(
+            ['user_id' => $user->id, 'code' => '0918'],
+            [
+                'name' => 'Pagi 9',
+                'start_time' => '09:00',
+                'end_time' => '18:00',
+                'is_day_off' => false,
+                'late_tolerance_minutes' => 15,
+            ]
+        );
+
+        EmployeeSchedule::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-05-22',
+            'shift_code' => '0918',
+            'start_time' => '09:00',
+            'end_time' => '18:00',
+            'is_day_off' => false,
+        ]);
+
+        // Check-in at 10:15 (75 min late >= 60 min cutoff -> half day leave + Rp 75.000 penalty)
+        $this->actingAs($user)
+            ->post(route('hris.attendances.store'), [
+                'employee_id' => $employee->id,
+                'attendance_date' => '2026-05-22',
+                'status' => 'present',
+                'check_in_at' => '2026-05-22 10:15:00',
+            ])
+            ->assertRedirect();
+
+        $attendance = EmployeeAttendance::query()
+            ->where('employee_id', $employee->id)
+            ->whereDate('attendance_date', '2026-05-22')
+            ->firstOrFail();
+
+        $this->assertSame('late', $attendance->status);
+        $this->assertSame(75, $attendance->late_minutes);
+        $this->assertSame('half_day', $attendance->late_level);
+        $this->assertTrue((bool) $attendance->is_half_day);
+        $this->assertEquals(75000.00, (float) $attendance->late_penalty);
+
+        $this->assertDatabaseHas('leave_requests', [
+            'employee_id' => $employee->id,
+            'leave_type' => 'annual',
+            'total_days' => 0.5,
+            'status' => 'approved',
+        ]);
+    }
+
+    public function test_attendance_settings_endpoint_saves_lateness_rules(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->patch(route('settings.attendance.update'), [
+                'missing_clock_out_request_days' => 3,
+                'require_face_recognition' => true,
+                'attendance_revision_cutoff_day' => '25',
+                'late_penalty_enabled' => true,
+                'late_tolerance_minutes' => 15,
+                'late_penalty_type' => 'tiered',
+                'late_penalty_tiers' => [
+                    ['from_minute' => 1, 'to_minute' => 15, 'penalty_amount' => 0, 'description' => 'Toleransi'],
+                    ['from_minute' => 16, 'to_minute' => 30, 'penalty_amount' => 25000, 'description' => '16-30m'],
+                ],
+                'late_half_day_enabled' => true,
+                'late_half_day_cutoff_minutes' => 60,
+                'late_half_day_penalty_amount' => 50000,
+                'late_half_day_deduct_leave' => true,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('company_settings', [
+            'user_id' => $user->id,
+            'late_penalty_enabled' => true,
+            'late_tolerance_minutes' => 15,
+            'late_penalty_type' => 'tiered',
+            'late_half_day_enabled' => true,
+            'late_half_day_cutoff_minutes' => 60,
+        ]);
+    }
 }

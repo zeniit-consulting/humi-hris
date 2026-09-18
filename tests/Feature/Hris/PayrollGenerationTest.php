@@ -1444,4 +1444,177 @@ class PayrollGenerationTest extends TestCase
 
         $this->assertFalse($run->fresh()->is_locked);
     }
+
+    public function test_payroll_can_be_exported_as_csv(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-CSV-01',
+            'first_name' => 'Budi',
+            'last_name' => 'Santoso',
+            'hire_date' => '2026-01-01',
+            'base_salary' => 6_000_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        EmployeeBankAccount::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'bank_name' => 'BCA',
+            'account_number' => '1234567890',
+            'account_holder_name' => 'BUDI SANTOSO',
+            'is_primary' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-06'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-06')->firstOrFail();
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.save', $run))
+            ->assertRedirect();
+
+        $response = $this->actingAs($user)
+            ->get(route('hris.payrolls.export.csv', $run))
+            ->assertOk();
+
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('EMP-CSV-01', $content);
+        $this->assertStringContainsString('Budi Santoso', $content);
+        $this->assertStringContainsString('BCA', $content);
+        $this->assertStringContainsString('1234567890', $content);
+    }
+
+    public function test_thr_payroll_can_be_exported_as_csv(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'THR-CSV-01',
+            'first_name' => 'Siti',
+            'last_name' => 'Aminah',
+            'hire_date' => '2025-01-01',
+            'base_salary' => 5_000_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.thr.generate'), ['reference_date' => '2026-03-15'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-03')->where('type', 'thr')->firstOrFail();
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.save', $run))
+            ->assertRedirect();
+
+        $response = $this->actingAs($user)
+            ->get(route('hris.payrolls.export.csv', $run))
+            ->assertOk();
+
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('THR-CSV-01', $content);
+        $this->assertStringContainsString('Siti Aminah', $content);
+        $this->assertStringContainsString('Masa Kerja (Bulan)', $content);
+        $this->assertStringContainsString('Nominal THR', $content);
+    }
+
+    public function test_draft_payroll_can_be_exported_as_csv_before_being_saved(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'DRAFT-CSV-01',
+            'first_name' => 'Ahmad',
+            'last_name' => 'Dahlan',
+            'hire_date' => '2026-01-01',
+            'base_salary' => 7_500_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-07'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-07')->firstOrFail();
+        $this->assertFalse($run->is_saved);
+
+        $response = $this->actingAs($user)
+            ->get(route('hris.payrolls.export.csv', $run))
+            ->assertOk();
+
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
+        $this->assertStringContainsString('payroll_2026-07_draft.csv', (string) $response->headers->get('content-disposition'));
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('DRAFT-CSV-01', $content);
+        $this->assertStringContainsString('Ahmad Dahlan', $content);
+    }
+
+    public function test_payroll_generation_includes_attendance_late_penalties_in_denda_deductions(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2026-01-01',
+            'base_salary' => 6_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_enabled' => false,
+            'bpjs_ketenagakerjaan_enabled' => false,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        // Create attendances with late penalties in May 2026
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-05-10',
+            'status' => 'late',
+            'late_minutes' => 20,
+            'late_penalty' => 20000,
+            'check_in_at' => '2026-05-10 09:20:00',
+        ]);
+
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-05-15',
+            'status' => 'late',
+            'late_minutes' => 45,
+            'late_penalty' => 50000,
+            'check_in_at' => '2026-05-15 09:45:00',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-05'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-05')->firstOrFail();
+        $item = $run->items()->where('employee_id', $employee->id)->firstOrFail();
+
+        // 20.000 + 50.000 = 70.000
+        $this->assertEquals(70000.00, (float) $item->denda_deduction);
+        $this->assertEquals(6000000.00 - 70000.00, (float) $item->net_salary);
+    }
 }

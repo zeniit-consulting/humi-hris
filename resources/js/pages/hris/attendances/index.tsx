@@ -82,6 +82,8 @@ type AttendanceRecord = {
     status: string;
     late_minutes: number | null;
     late_level: string | null;
+    late_penalty?: number;
+    is_half_day?: boolean;
     check_in_at: string | null;
     check_out_at: string | null;
     notes: string | null;
@@ -138,6 +140,7 @@ const lateLevelLabelMap: Record<string, string> = {
     level_1: 'Level 1',
     level_2: 'Level 2',
     level_3: 'Level 3',
+    half_day: 'Cuti 1/2 Hari',
 };
 
 const defaultAttendanceForm: AttendanceFormData = {
@@ -590,14 +593,26 @@ export default function AttendancePage() {
                                                     ] ?? row.status}
                                                 </Badge>
                                                 {row.late_level ? (
-                                                    <div className="mt-1 text-xs text-destructive">
-                                                        {lateLevelLabelMap[
-                                                            row.late_level
-                                                        ] ?? row.late_level}
-                                                        {row.late_minutes !==
-                                                        null
-                                                            ? ` - ${row.late_minutes} menit`
-                                                            : ''}
+                                                    <div className="mt-1 text-xs text-destructive flex flex-col gap-0.5">
+                                                        <span>
+                                                            {lateLevelLabelMap[
+                                                                row.late_level
+                                                            ] ?? row.late_level}
+                                                            {row.late_minutes !==
+                                                            null
+                                                                ? ` - ${row.late_minutes}m`
+                                                                : ''}
+                                                        </span>
+                                                        {row.late_penalty && row.late_penalty > 0 ? (
+                                                            <span className="text-[11px] font-medium text-destructive/90">
+                                                                Denda: Rp {row.late_penalty.toLocaleString('id-ID')}
+                                                            </span>
+                                                        ) : null}
+                                                        {row.is_half_day ? (
+                                                            <span className="inline-block w-fit text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-semibold px-1 rounded">
+                                                                Cuti 1/2 Hari
+                                                            </span>
+                                                        ) : null}
                                                     </div>
                                                 ) : null}
                                             </td>

@@ -443,7 +443,8 @@ export default function SchedulePage() {
             .filter((item) => item !== '');
 
         rosterForm.transform((data) => ({
-            employee_id: data.employee_id,
+            employee_id:
+                data.apply_scope === 'single' ? data.employee_id : undefined,
             apply_scope: data.apply_scope,
             target_employee_ids:
                 data.apply_scope === 'selected' ? data.target_employee_ids : [],

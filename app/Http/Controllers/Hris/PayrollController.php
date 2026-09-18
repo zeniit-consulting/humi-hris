@@ -438,6 +438,153 @@ class PayrollController extends Controller
     }
 
     /**
+     * Export full payroll records to CSV.
+     */
+    public function exportCsv(PayrollRun $payrollRun, Request $request): StreamedResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+
+        $payrollRun->loadMissing([
+            'items.employee:id,employee_code,first_name,last_name,sub_company_id,division_id,position_id,employment_status',
+            'items.employee.subCompany:id,code,name',
+            'items.employee.division:id,name',
+            'items.employee.position:id,name',
+            'items.employee.bankAccounts' => fn ($q) => $q->where('is_primary', true)->limit(1),
+        ]);
+
+        $subCompanyId = $request->integer('sub_company_id') ?: null;
+        $items = $payrollRun->items
+            ->when($subCompanyId !== null, fn ($collection) => $collection->filter(
+                fn ($item) => (int) ($item->employee?->sub_company_id ?? 0) === (int) $subCompanyId
+            ))
+            ->values();
+
+        $isThr = $payrollRun->type === 'thr';
+        $prefix = $isThr ? 'thr_' : 'payroll_';
+        $statusSuffix = $payrollRun->is_saved ? '' : '_draft';
+        $filename = $prefix.$payrollRun->period.$statusSuffix.'.csv';
+
+        return response()->streamDownload(function () use ($items, $isThr): void {
+            $out = fopen('php://output', 'wb');
+            // BOM for UTF-8 Excel compatibility
+            fwrite($out, "\xEF\xBB\xBF");
+
+            if ($isThr) {
+                fputcsv($out, [
+                    'No',
+                    'NIK',
+                    'Nama Karyawan',
+                    'Perusahaan / Entitas',
+                    'Divisi',
+                    'Jabatan',
+                    'Status Karyawan',
+                    'Bank',
+                    'No Rekening',
+                    'Atas Nama',
+                    'Gaji Pokok',
+                    'Masa Kerja (Bulan)',
+                    'Nominal THR',
+                    'PPh 21',
+                    'Total THR Bersih',
+                ]);
+
+                $no = 1;
+                foreach ($items as $item) {
+                    $employee = $item->employee;
+                    $bank = $employee?->bankAccounts->first();
+
+                    fputcsv($out, [
+                        $no++,
+                        $employee?->employee_code ?? '',
+                        $employee?->full_name ?? '-',
+                        $employee?->subCompany?->name ?? 'Internal',
+                        $employee?->division?->name ?? '-',
+                        $employee?->position?->name ?? '-',
+                        $employee?->employment_status ?? '-',
+                        strtoupper($bank?->bank_name ?? ''),
+                        $bank?->account_number ?? '',
+                        $bank?->account_holder_name ?? '',
+                        (int) round((float) $item->base_salary),
+                        $item->thr_months_of_service ?? 0,
+                        (int) round((float) ($item->thr_amount ?: $item->net_salary)),
+                        (int) round((float) $item->pph21_deduction),
+                        (int) round((float) $item->net_salary),
+                    ]);
+                }
+            } else {
+                fputcsv($out, [
+                    'No',
+                    'NIK',
+                    'Nama Karyawan',
+                    'Perusahaan / Entitas',
+                    'Divisi',
+                    'Jabatan',
+                    'Status Karyawan',
+                    'Bank',
+                    'No Rekening',
+                    'Atas Nama',
+                    'Gaji Pokok',
+                    'Total Tunjangan',
+                    'Jam Lembur',
+                    'Uang Lembur',
+                    'Tunjangan PPh 21',
+                    'BPJS TK Perusahaan',
+                    'BPJS Kes Perusahaan',
+                    'PPh 21',
+                    'BPJS TK Karyawan',
+                    'BPJS Kes Karyawan',
+                    'Asuransi Swasta',
+                    'Potongan Kasbon',
+                    'Potongan Denda',
+                    'Potongan Unpaid Leave',
+                    'Total Potongan',
+                    'Gaji Bersih',
+                ]);
+
+                $no = 1;
+                foreach ($items as $item) {
+                    $employee = $item->employee;
+                    $bank = $employee?->bankAccounts->first();
+                    $bpjsTkCompany = round((float) $item->bpjs_jkk_company + (float) $item->bpjs_jkm_company + (float) $item->bpjs_jht_company + (float) $item->bpjs_jp_company, 2);
+                    $bpjsTkEmployee = round((float) $item->bpjs_jht_employee + (float) $item->bpjs_jp_employee, 2);
+
+                    fputcsv($out, [
+                        $no++,
+                        $employee?->employee_code ?? '',
+                        $employee?->full_name ?? '-',
+                        $employee?->subCompany?->name ?? 'Internal',
+                        $employee?->division?->name ?? '-',
+                        $employee?->position?->name ?? '-',
+                        $employee?->employment_status ?? '-',
+                        strtoupper($bank?->bank_name ?? ''),
+                        $bank?->account_number ?? '',
+                        $bank?->account_holder_name ?? '',
+                        (int) round((float) $item->base_salary),
+                        (int) round((float) $item->allowances_total),
+                        (float) $item->overtime_hours,
+                        (int) round((float) $item->overtime_pay),
+                        (int) round((float) $item->pph21_allowance),
+                        (int) round((float) $bpjsTkCompany),
+                        (int) round((float) $item->bpjs_kesehatan_company),
+                        (int) round((float) $item->pph21_deduction),
+                        (int) round((float) $bpjsTkEmployee),
+                        (int) round((float) $item->bpjs_kesehatan_employee),
+                        (int) round((float) $item->private_insurance_nominal),
+                        (int) round((float) $item->kasbon_deduction),
+                        (int) round((float) $item->denda_deduction),
+                        (int) round((float) $item->unpaid_leave_deduction),
+                        (int) round((float) $item->deductions_total),
+                        (int) round((float) $item->net_salary),
+                    ]);
+                }
+            }
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
      * Export transfer format Mandiri (CSV semicolon).
      */
     public function exportMandiri(PayrollRun $payrollRun, Request $request): StreamedResponse

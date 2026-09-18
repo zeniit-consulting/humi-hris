@@ -24,6 +24,22 @@ class AttendanceSettingUpdateRequest extends FormRequest
                     ...array_map(static fn (int $day): string => (string) $day, range(1, 28)),
                 ]),
             ],
+            'late_penalty_enabled' => ['nullable', 'boolean'],
+            'late_tolerance_minutes' => ['required', 'integer', 'min:0', 'max:480'],
+            'late_penalty_type' => ['required', 'string', 'in:tiered,progressive'],
+            'late_penalty_tiers' => ['nullable', 'array'],
+            'late_penalty_tiers.*.from_minute' => ['nullable', 'integer', 'min:0'],
+            'late_penalty_tiers.*.to_minute' => ['nullable', 'integer', 'min:0'],
+            'late_penalty_tiers.*.penalty_amount' => ['nullable', 'numeric', 'min:0'],
+            'late_penalty_tiers.*.description' => ['nullable', 'string', 'max:100'],
+            'late_base_penalty_minutes' => ['nullable', 'integer', 'min:0'],
+            'late_base_penalty_amount' => ['nullable', 'numeric', 'min:0'],
+            'late_incremental_penalty_amount' => ['nullable', 'numeric', 'min:0'],
+            'late_incremental_unit_minutes' => ['nullable', 'integer', 'min:1', 'max:60'],
+            'late_half_day_enabled' => ['nullable', 'boolean'],
+            'late_half_day_cutoff_minutes' => ['nullable', 'integer', 'min:1', 'max:480'],
+            'late_half_day_penalty_amount' => ['nullable', 'numeric', 'min:0'],
+            'late_half_day_deduct_leave' => ['nullable', 'boolean'],
         ];
     }
 }

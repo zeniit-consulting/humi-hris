@@ -762,6 +762,20 @@ export default function PayrollPage() {
                                             ? 'Masuk queue...'
                                             : 'Kirim Payslip WA'}
                                     </Button>
+                                    {run && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            <a
+                                                href={`/hris/payrolls/${run.id}/export/csv${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
+                                            >
+                                                <Download className="mr-1.5 size-3.5" />
+                                                {run.is_saved ? 'Download CSV' : 'Download Draft CSV'}
+                                            </a>
+                                        </Button>
+                                    )}
                                     {run && run.is_saved && (
                                         <>
                                             <Button
@@ -805,6 +819,21 @@ export default function PayrollPage() {
                                             ? 'THR Tersimpan'
                                             : 'Simpan THR'}
                                     </Button>
+
+                                    {run && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            <a
+                                                href={`/hris/payrolls/${run.id}/export/csv${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
+                                            >
+                                                <Download className="mr-1.5 size-3.5" />
+                                                {run.is_saved ? 'Download CSV' : 'Download Draft CSV'}
+                                            </a>
+                                        </Button>
+                                    )}
 
                                     {run && !run.is_saved && (
                                         run.is_locked ? (

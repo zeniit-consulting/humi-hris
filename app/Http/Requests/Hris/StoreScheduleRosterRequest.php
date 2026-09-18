@@ -17,6 +17,21 @@ class StoreScheduleRosterRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('pattern') && is_array($this->input('pattern'))) {
+            $this->merge([
+                'pattern' => array_values(array_filter(array_map(
+                    fn ($item) => is_string($item) ? strtoupper(trim($item)) : $item,
+                    $this->input('pattern')
+                ), fn ($item) => $item !== '' && $item !== null)),
+            ]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array<mixed>|string>

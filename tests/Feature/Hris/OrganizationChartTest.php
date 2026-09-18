@@ -51,4 +51,38 @@ class OrganizationChartTest extends TestCase
                 ->where('chart.0.employee_code', 'EMP-ACTIVE')
                 ->where('chart.0.is_vacant', false));
     }
+
+    public function test_organization_chart_marks_position_vacant_when_only_offboarded_employee_assigned(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Finance Lead',
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'position_id' => $position->id,
+            'employee_code' => 'EMP-OFFBOARDED',
+            'employment_status' => 'resigned',
+            'offboarded_at' => '2026-05-01',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.organization-chart.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hris/organization-chart/index')
+                ->has('chart', 1)
+                ->where('chart.0.employees', [])
+                ->where('chart.0.employee_code', 'VACANT')
+                ->where('chart.0.full_name', 'Vacant')
+                ->where('chart.0.is_vacant', true));
+    }
 }
