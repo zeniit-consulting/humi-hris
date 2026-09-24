@@ -32,7 +32,9 @@ type Settings = {
     late_half_day_enabled?: boolean;
     late_half_day_cutoff_minutes?: number;
     late_half_day_penalty_amount?: number;
+    late_half_day_penalty_type?: 'nominal' | 'prorate_half_day';
     late_half_day_deduct_leave?: boolean;
+    unrecorded_cutoff_penalty_enabled?: boolean;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -49,6 +51,7 @@ export default function AttendanceSettings({
         missing_clock_out_request_days: settings.missing_clock_out_request_days ?? 2,
         require_face_recognition: settings.require_face_recognition ?? false,
         attendance_revision_cutoff_day: settings.attendance_revision_cutoff_day ?? 'end_of_month',
+        unrecorded_cutoff_penalty_enabled: settings.unrecorded_cutoff_penalty_enabled ?? false,
         late_penalty_enabled: settings.late_penalty_enabled ?? false,
         late_tolerance_minutes: settings.late_tolerance_minutes ?? 15,
         late_penalty_type: settings.late_penalty_type ?? 'tiered',
@@ -64,6 +67,7 @@ export default function AttendanceSettings({
         late_half_day_enabled: settings.late_half_day_enabled ?? false,
         late_half_day_cutoff_minutes: settings.late_half_day_cutoff_minutes ?? 60,
         late_half_day_penalty_amount: settings.late_half_day_penalty_amount ?? 0,
+        late_half_day_penalty_type: settings.late_half_day_penalty_type ?? 'nominal',
         late_half_day_deduct_leave: settings.late_half_day_deduct_leave ?? true,
     });
 
@@ -420,24 +424,48 @@ export default function AttendanceSettings({
                                     </div>
 
                                     <div className="grid gap-2">
-                                        <Label htmlFor="late_half_day_penalty_amount" className="font-medium">
-                                            Nominal Denda Tambahan (Rp)
+                                        <Label htmlFor="late_half_day_penalty_type" className="font-medium">
+                                            Metode Denda Terlambat Setengah Hari
                                         </Label>
-                                        <Input
-                                            id="late_half_day_penalty_amount"
-                                            type="number"
-                                            min="0"
-                                            step="1000"
-                                            className="font-mono"
-                                            value={form.data.late_half_day_penalty_amount}
+                                        <select
+                                            id="late_half_day_penalty_type"
+                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary"
+                                            value={form.data.late_half_day_penalty_type}
                                             onChange={(e) =>
-                                                form.setData('late_half_day_penalty_amount', Number(e.target.value))
+                                                form.setData('late_half_day_penalty_type', e.target.value as 'nominal' | 'prorate_half_day')
                                             }
-                                        />
+                                        >
+                                            <option value="nominal">Nominal Tetap (Rp)</option>
+                                            <option value="prorate_half_day">Potong Setengah Hari Prorate Gaji (Gapok + Tunjangan Tetap)</option>
+                                        </select>
                                         <p className="text-xs text-muted-foreground">
-                                            Besaran denda yang dikenakan saat terlambat mencapai batas cuti setengah hari (opsional).
+                                            {form.data.late_half_day_penalty_type === 'prorate_half_day'
+                                                ? 'Denda dihitung otomatis: 0.5 × (Gaji Pokok + Tunjangan Tetap) / Hari Kerja per bulan.'
+                                                : 'Denda menggunakan nominal rupiah tetap.'}
                                         </p>
                                     </div>
+
+                                    {form.data.late_half_day_penalty_type === 'nominal' && (
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="late_half_day_penalty_amount" className="font-medium">
+                                                Nominal Denda Tambahan (Rp)
+                                            </Label>
+                                            <Input
+                                                id="late_half_day_penalty_amount"
+                                                type="number"
+                                                min="0"
+                                                step="1000"
+                                                className="font-mono"
+                                                value={form.data.late_half_day_penalty_amount}
+                                                onChange={(e) =>
+                                                    form.setData('late_half_day_penalty_amount', Number(e.target.value))
+                                                }
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                Besaran denda yang dikenakan saat terlambat mencapai batas cuti setengah hari (opsional).
+                                            </p>
+                                        </div>
+                                    )}
 
                                     <div className="sm:col-span-2 rounded-lg border bg-amber-500/10 border-amber-500/20 p-4">
                                         <label className="flex items-start gap-3 cursor-pointer">
@@ -529,6 +557,30 @@ export default function AttendanceSettings({
                                     <InputError
                                         message={form.errors.attendance_revision_cutoff_day}
                                     />
+                                </div>
+
+                                <div className="sm:col-span-2 rounded-lg border bg-muted/40 p-4">
+                                    <label className="flex items-start gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="mt-1 size-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                            checked={form.data.unrecorded_cutoff_penalty_enabled}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'unrecorded_cutoff_penalty_enabled',
+                                                    e.target.checked,
+                                                )
+                                            }
+                                        />
+                                        <div className="space-y-1">
+                                            <span className="text-sm font-medium leading-none">
+                                                Potong Setengah Hari Prorate Jika Karyawan Tidak Absen Sampai Masa Cutoff
+                                            </span>
+                                            <p className="text-xs text-muted-foreground">
+                                                Jika diaktifkan, jadwal kerja yang tidak memiliki catatan absensi (tidak clock in/out) hingga melewati batas cutoff bulanan akan otomatis dikenakan potongan denda setengah hari prorate (0.5 × [Gaji Pokok + Tunjangan Tetap] / Hari Kerja).
+                                            </p>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
 

@@ -15,6 +15,7 @@ class PublicHoliday extends Model
         'user_id',
         'date',
         'name',
+        'holiday_type',
         'is_national_holiday',
     ];
 
@@ -22,6 +23,7 @@ class PublicHoliday extends Model
     {
         return [
             'date' => 'date',
+            'holiday_type' => 'string',
             'is_national_holiday' => 'boolean',
         ];
     }

@@ -42,6 +42,7 @@ class PortalController extends Controller
         $openAttendance = null;
         $annualLeaveDays = 0.0;
         $sickLeaveDays = 0.0;
+        $attendancePenalty = 0.0;
         $availableShifts = collect();
         $todayShift = null;
         $upcomingLeaves = collect();
@@ -101,6 +102,13 @@ class PortalController extends Controller
 
             $annualLeaveDays = $annualLeaveBalance?->remainingBalance() ?? 0.0;
             $sickLeaveDays = $sickLeaveBalance?->remainingBalance() ?? 0.0;
+
+            $startOfMonth = $today->copy()->startOfMonth()->toDateString();
+            $endOfMonth = $today->copy()->endOfMonth()->toDateString();
+            $attendancePenalty = (float) EmployeeAttendance::query()
+                ->where('employee_id', $employee->id)
+                ->whereBetween('attendance_date', [$startOfMonth, $endOfMonth])
+                ->sum('late_penalty');
 
             $upcomingLeaves = LeaveRequest::query()
                 ->where('employee_id', $employee->id)
@@ -370,6 +378,7 @@ class PortalController extends Controller
                     'sick_leave_days' => $sickLeaveDays,
                     'pending_surveys' => $pendingSurveys->count(),
                     'assigned_assets' => $assignedAssets->count(),
+                    'attendance_penalty' => round($attendancePenalty, 2),
                     'payroll_preview' => [
                         'period' => $period,
                         'is_saved' => $payrollRun?->is_saved ?? false,

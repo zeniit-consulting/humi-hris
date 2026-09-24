@@ -273,12 +273,6 @@
                                         @endforeach
                                     @endif
                                 @endif
-                                @if ((float) ($slip->pph21_allowance ?? 0) > 0)
-                                    <tr>
-                                        <td>Tunjangan PPh21</td>
-                                        <td>Rp {{ number_format((float) ($slip->pph21_allowance ?? 0), 0, ',', '.') }}</td>
-                                    </tr>
-                                @endif
                             </tbody>
                         </table>
                     </td>
@@ -286,7 +280,7 @@
                         <h2 class="panel-title">Deduction & Tax</h2>
                         <table class="money-table">
                             <tbody>
-                                @if ((float) ($slip->pph21_deduction ?? 0) > 0)
+                                @if ((float) ($slip->pph21_deduction ?? 0) > 0 && ($slip->pph21_method !== 'gross_up'))
                                     <tr>
                                         <td>PPh21</td>
                                         <td>(Rp {{ number_format((float) $slip->pph21_deduction, 0, ',', '.') }})</td>
@@ -339,9 +333,69 @@
                     </td>
                 </tr>
             </table>
+
+            @php
+                $hasCompanyBpjs = ((float) ($slip->bpjs_kesehatan_company ?? 0) > 0)
+                    || ((float) ($slip->bpjs_jkk_company ?? 0) > 0)
+                    || ((float) ($slip->bpjs_jkm_company ?? 0) > 0)
+                    || ((float) ($slip->bpjs_jht_company ?? 0) > 0)
+                    || ((float) ($slip->bpjs_jp_company ?? 0) > 0);
+                $hasPphAllowance = (float) ($slip->pph21_allowance ?? 0) > 0;
+                $hasBenefit = $hasCompanyBpjs || $hasPphAllowance;
+            @endphp
+
+            @if ($hasBenefit)
+            <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed #e2e8f0;">
+                <h2 class="panel-title">Benefit (Ditanggung Perusahaan)</h2>
+                <table class="money-table">
+                    <tbody>
+                        @if ((float) ($slip->bpjs_kesehatan_company ?? 0) > 0)
+                            <tr>
+                                <td>BPJS Kesehatan Perusahaan (4%)</td>
+                                <td>Rp {{ number_format((float) $slip->bpjs_kesehatan_company, 0, ',', '.') }}</td>
+                            </tr>
+                        @endif
+                        @if ((float) ($slip->bpjs_jkk_company ?? 0) > 0)
+                            <tr>
+                                <td>BPJS Ketenagakerjaan JKK Perusahaan</td>
+                                <td>Rp {{ number_format((float) $slip->bpjs_jkk_company, 0, ',', '.') }}</td>
+                            </tr>
+                        @endif
+                        @if ((float) ($slip->bpjs_jkm_company ?? 0) > 0)
+                            <tr>
+                                <td>BPJS Ketenagakerjaan JKM Perusahaan</td>
+                                <td>Rp {{ number_format((float) $slip->bpjs_jkm_company, 0, ',', '.') }}</td>
+                            </tr>
+                        @endif
+                        @if ((float) ($slip->bpjs_jht_company ?? 0) > 0)
+                            <tr>
+                                <td>BPJS Ketenagakerjaan JHT Perusahaan (3.7%)</td>
+                                <td>Rp {{ number_format((float) $slip->bpjs_jht_company, 0, ',', '.') }}</td>
+                            </tr>
+                        @endif
+                        @if ((float) ($slip->bpjs_jp_company ?? 0) > 0)
+                            <tr>
+                                <td>BPJS Ketenagakerjaan JP Perusahaan (2%)</td>
+                                <td>Rp {{ number_format((float) $slip->bpjs_jp_company, 0, ',', '.') }}</td>
+                            </tr>
+                        @endif
+                        @if ($hasPphAllowance)
+                            <tr>
+                                <td>Tunjangan PPh21 (Perusahaan)</td>
+                                <td>Rp {{ number_format((float) $slip->pph21_allowance, 0, ',', '.') }}</td>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+                <div style="font-size: 5pt; color: #94a3b8; margin-top: 2px;">
+                    * Benefit ditanggung sepenuhnya oleh perusahaan dan tidak dihitung ke dalam gaji / take home pay.
+                </div>
+            </div>
+            @endif
+
             <div class="summary">
                 Total Penghasilan
-                <strong>Rp {{ number_format((float) $slip->base_salary + (float) $slip->allowances_total + (float) ($slip->overtime_pay ?? 0) + (float) ($slip->pph21_allowance ?? 0), 0, ',', '.') }}</strong>
+                <strong>Rp {{ number_format((float) $slip->base_salary + (float) $slip->allowances_total + (float) ($slip->overtime_pay ?? 0), 0, ',', '.') }}</strong>
             </div>
             <div class="summary">
                 Total Potongan

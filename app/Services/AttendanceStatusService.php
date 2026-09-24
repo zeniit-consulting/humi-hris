@@ -68,7 +68,11 @@ class AttendanceStatusService
             }
         }
 
-        $latePenalty = $this->calculateLatePenalty($lateMinutes, $isHalfDay, $setting);
+        $employee = ! empty($data['employee_id'])
+            ? \App\Models\Employee::query()->with('allowances')->find($data['employee_id'])
+            : null;
+
+        $latePenalty = $this->calculateLatePenalty($lateMinutes, $isHalfDay, $setting, $employee);
         $lateLevel = $isHalfDay ? 'half_day' : $this->lateLevel($lateMinutes);
 
         // Auto deduct 0.5 days from annual leave if half-day rule is enabled and configured to deduct leave
@@ -85,14 +89,26 @@ class AttendanceStatusService
         ];
     }
 
-    public function calculateLatePenalty(int $lateMinutes, bool $isHalfDay, ?CompanySetting $setting): float
+    public function calculateLatePenalty(int $lateMinutes, bool $isHalfDay, ?CompanySetting $setting, ?\App\Models\Employee $employee = null): float
     {
         if (! $setting || ! (bool) $setting->late_penalty_enabled) {
             return 0.0;
         }
 
-        if ($isHalfDay && (float) ($setting->late_half_day_penalty_amount ?? 0) > 0) {
-            return (float) $setting->late_half_day_penalty_amount;
+        if ($isHalfDay) {
+            if (($setting->late_half_day_penalty_type ?? 'nominal') === 'prorate_half_day') {
+                if ($employee) {
+                    $baseSalary = (float) ($employee->base_salary ?? 0);
+                    $allowances = (float) $employee->allowances->where('is_active', true)->sum('amount');
+                    $activeDays = max((int) ($setting->active_working_days ?? 22), 1);
+
+                    return round(0.5 * (($baseSalary + $allowances) / $activeDays), 2);
+                }
+            }
+
+            if ((float) ($setting->late_half_day_penalty_amount ?? 0) > 0) {
+                return (float) $setting->late_half_day_penalty_amount;
+            }
         }
 
         $type = $setting->late_penalty_type ?? 'tiered';

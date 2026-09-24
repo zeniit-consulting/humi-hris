@@ -68,6 +68,7 @@ type Position = {
     level_label: string | null;
     description: string | null;
     is_active: boolean;
+    exclude_from_org_chart: boolean;
     employees_count: number;
     division: {
         id: number;
@@ -95,6 +96,7 @@ type PositionOption = {
     level: string | null;
     division_name: string | null;
     employees_count: number;
+    exclude_from_org_chart?: boolean;
 };
 
 type DivisionFormData = {
@@ -112,6 +114,7 @@ type PositionFormData = {
     level: string;
     description: string;
     is_active: boolean;
+    exclude_from_org_chart: boolean;
 };
 
 type Filters = {
@@ -167,6 +170,7 @@ const POSITION_DEFAULT: PositionFormData = {
     level: '4',
     description: '',
     is_active: true,
+    exclude_from_org_chart: false,
 };
 
 export default function EmployeeMasterDataPage() {
@@ -294,6 +298,7 @@ export default function EmployeeMasterDataPage() {
                     : '4',
             description: position.description ?? '',
             is_active: position.is_active,
+            exclude_from_org_chart: Boolean(position.exclude_from_org_chart),
         });
         setPositionDialogOpen(true);
     };
@@ -625,9 +630,21 @@ export default function EmployeeMasterDataPage() {
                                                         {position.code}
                                                     </td>
                                                     <td className="px-3 py-2">
-                                                        <p className="font-medium">
-                                                            {position.name}
-                                                        </p>
+                                                        <div className="flex flex-wrap items-center gap-1.5">
+                                                            <p className="font-medium">
+                                                                {position.name}
+                                                            </p>
+                                                            {position.exclude_from_org_chart && (
+                                                                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                                                                    Exclude Bagan
+                                                                </span>
+                                                            )}
+                                                            {!position.is_active && (
+                                                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                                                    Nonaktif
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <p className="text-xs text-muted-foreground">
                                                             {position.level_label ??
                                                                 position.level ??
@@ -980,18 +997,35 @@ export default function EmployeeMasterDataPage() {
                                 message={positionForm.errors.description}
                             />
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Checkbox
-                                id="position_is_active"
-                                checked={positionForm.data.is_active}
-                                onCheckedChange={(checked) =>
-                                    positionForm.setData(
-                                        'is_active',
-                                        checked === true,
-                                    )
-                                }
-                            />
-                            <Label htmlFor="position_is_active">Aktif</Label>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                    id="position_is_active"
+                                    checked={positionForm.data.is_active}
+                                    onCheckedChange={(checked) =>
+                                        positionForm.setData(
+                                            'is_active',
+                                            checked === true,
+                                        )
+                                    }
+                                />
+                                <Label htmlFor="position_is_active" className="cursor-pointer">Aktif</Label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                    id="position_exclude_from_org_chart"
+                                    checked={positionForm.data.exclude_from_org_chart}
+                                    onCheckedChange={(checked) =>
+                                        positionForm.setData(
+                                            'exclude_from_org_chart',
+                                            checked === true,
+                                        )
+                                    }
+                                />
+                                <Label htmlFor="position_exclude_from_org_chart" className="cursor-pointer">
+                                    Exclude dari Struktur Organisasi
+                                </Label>
+                            </div>
                         </div>
                         <div className="flex justify-end gap-2">
                             <Button

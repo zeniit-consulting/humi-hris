@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -80,6 +80,62 @@ indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 index.form = indexForm
 
-const OrganizationChartController = { index }
+/**
+* @see \App\Http\Controllers\Hris\OrganizationChartController::updateExclusions
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:118
+* @route '/hris/organization-chart/exclusions'
+*/
+export const updateExclusions = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: updateExclusions.url(options),
+    method: 'post',
+})
+
+updateExclusions.definition = {
+    methods: ["post"],
+    url: '/hris/organization-chart/exclusions',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\OrganizationChartController::updateExclusions
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:118
+* @route '/hris/organization-chart/exclusions'
+*/
+updateExclusions.url = (options?: RouteQueryOptions) => {
+    return updateExclusions.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\OrganizationChartController::updateExclusions
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:118
+* @route '/hris/organization-chart/exclusions'
+*/
+updateExclusions.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: updateExclusions.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\OrganizationChartController::updateExclusions
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:118
+* @route '/hris/organization-chart/exclusions'
+*/
+const updateExclusionsForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: updateExclusions.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\OrganizationChartController::updateExclusions
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:118
+* @route '/hris/organization-chart/exclusions'
+*/
+updateExclusionsForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: updateExclusions.url(options),
+    method: 'post',
+})
+
+updateExclusions.form = updateExclusionsForm
+
+const OrganizationChartController = { index, updateExclusions }
 
 export default OrganizationChartController

@@ -66,6 +66,7 @@ class UpdatePositionRequest extends FormRequest
             'level' => ['required', Rule::in(['0', '1', '2', '3', '4', '5'])],
             'description' => ['nullable', 'string', 'max:500'],
             'is_active' => ['sometimes', 'boolean'],
+            'exclude_from_org_chart' => ['sometimes', 'boolean'],
         ];
     }
 }

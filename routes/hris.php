@@ -73,6 +73,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::put('employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
     Route::delete('employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
     Route::get('organization-chart', [OrganizationChartController::class, 'index'])->name('organization-chart.index');
+    Route::post('organization-chart/exclusions', [OrganizationChartController::class, 'updateExclusions'])->name('organization-chart.exclusions.update');
     Route::middleware('subscription.feature:performance')->group(function () {
         Route::get('performances', [PerformanceController::class, 'index'])->name('performances.index');
         Route::post('performances/periods', [PerformanceController::class, 'storePeriod'])->name('performances.periods.store');
@@ -151,6 +152,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
     Route::delete('schedules/{employeeSchedule}', [ScheduleController::class, 'destroySchedule'])->name('schedules.destroy');
     Route::post('schedules/holidays/sync', [ScheduleController::class, 'syncHolidays'])->name('schedules.holidays.sync');
+    Route::post('schedules/holidays', [ScheduleController::class, 'storeHoliday'])->name('schedules.holidays.store');
+    Route::delete('schedules/holidays/{publicHoliday}', [ScheduleController::class, 'destroyHoliday'])->name('schedules.holidays.destroy');
     Route::post('schedules/shifts', [ScheduleController::class, 'storeShift'])->name('schedules.shifts.store');
     Route::put('schedules/shifts/{workShift}', [ScheduleController::class, 'updateShift'])->name('schedules.shifts.update');
     Route::delete('schedules/shifts/{workShift}', [ScheduleController::class, 'destroyShift'])->name('schedules.shifts.destroy');
@@ -175,6 +178,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         Route::post('payrolls/{payrollRun}/items/{payrollItem}/send-payslip', [PayrollController::class, 'sendPayslip'])->name('payrolls.items.send-payslip');
         Route::get('payrolls/{payrollRun}/export', [PayrollController::class, 'exportCsv'])->name('payrolls.export');
         Route::get('payrolls/{payrollRun}/export/csv', [PayrollController::class, 'exportCsv'])->name('payrolls.export.csv');
+        Route::get('payrolls/{payrollRun}/export/excel', [PayrollController::class, 'exportExcel'])->name('payrolls.export.excel');
+        Route::get('payrolls/{payrollRun}/export/xlsx', [PayrollController::class, 'exportExcel'])->name('payrolls.export.xlsx');
         Route::get('payrolls/{payrollRun}/export/mandiri', [PayrollController::class, 'exportMandiri'])->name('payrolls.export.mandiri');
         Route::get('payrolls/{payrollRun}/export/bca', [PayrollController::class, 'exportBca'])->name('payrolls.export.bca');
         Route::get('kasbons', [KasbonController::class, 'index'])->name('kasbons.index');

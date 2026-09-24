@@ -23,6 +23,7 @@ class PositionController extends Controller
         Position::create([
             ...$validated,
             'is_active' => $request->boolean('is_active', true),
+            'exclude_from_org_chart' => $request->boolean('exclude_from_org_chart', false),
         ]);
 
         return back();
@@ -40,6 +41,7 @@ class PositionController extends Controller
         $position->update([
             ...$validated,
             'is_active' => $request->boolean('is_active', true),
+            'exclude_from_org_chart' => $request->boolean('exclude_from_org_chart', false),
         ]);
 
         return back();

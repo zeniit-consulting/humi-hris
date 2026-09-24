@@ -36,7 +36,9 @@ class AttendanceSettingController extends Controller
                 'late_half_day_enabled' => (bool) ($setting->late_half_day_enabled ?? false),
                 'late_half_day_cutoff_minutes' => (int) ($setting->late_half_day_cutoff_minutes ?? 60),
                 'late_half_day_penalty_amount' => (float) ($setting->late_half_day_penalty_amount ?? 0),
+                'late_half_day_penalty_type' => $setting->late_half_day_penalty_type ?? 'nominal',
                 'late_half_day_deduct_leave' => (bool) ($setting->late_half_day_deduct_leave ?? true),
+                'unrecorded_cutoff_penalty_enabled' => (bool) ($setting->unrecorded_cutoff_penalty_enabled ?? false),
             ],
         ]);
     }

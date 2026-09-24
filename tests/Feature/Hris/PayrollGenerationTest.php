@@ -463,6 +463,7 @@ class PayrollGenerationTest extends TestCase
 
         $employee = Employee::factory()->create([
             'user_id' => $user->id,
+            'hire_date' => '2026-01-01',
             'base_salary' => 4_000_000,
             'pph21_method' => 'net',
             'pph21_rate' => 200_000,
@@ -802,6 +803,7 @@ class PayrollGenerationTest extends TestCase
 
         $employee = Employee::factory()->create([
             'user_id' => $user->id,
+            'hire_date' => '2026-01-01',
             'base_salary' => 5_000_000,
             'pph21_method' => 'gross',
             'pph21_rate' => 12_500,
@@ -1616,5 +1618,264 @@ class PayrollGenerationTest extends TestCase
         // 20.000 + 50.000 = 70.000
         $this->assertEquals(70000.00, (float) $item->denda_deduction);
         $this->assertEquals(6000000.00 - 70000.00, (float) $item->net_salary);
+    }
+
+    public function test_draft_csv_export_contains_ktp_npwp_ptkp_itemized_allowances_and_benefit_columns(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-DRAFT-01',
+            'first_name' => 'Dewi',
+            'last_name' => 'Lestari',
+            'ktp_number' => '3201019908870001',
+            'npwp_number' => '098765432100000',
+            'ptkp_category' => 'TK/0',
+            'base_salary' => 5_000_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        EmployeeAllowance::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Transport',
+            'amount' => 400_000,
+            'is_active' => true,
+            'effective_start_date' => '2026-01-01',
+        ]);
+
+        EmployeeAllowance::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Makan',
+            'amount' => 350_000,
+            'is_active' => true,
+            'effective_start_date' => '2026-01-01',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-07'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-07')->firstOrFail();
+
+        $response = $this->actingAs($user)
+            ->get(route('hris.payrolls.export.csv', $run))
+            ->assertOk();
+
+        $content = $response->streamedContent();
+
+        // Check tax and ID columns
+        $this->assertStringContainsString('No. KTP', $content);
+        $this->assertStringContainsString('No. NPWP', $content);
+        $this->assertStringContainsString('Status Pajak', $content);
+        $this->assertStringContainsString('3201019908870001', $content);
+        $this->assertStringContainsString('098765432100000', $content);
+        $this->assertStringContainsString('TK/0', $content);
+
+        // Check itemized allowances and total
+        $this->assertStringContainsString('Tunjangan Transport', $content);
+        $this->assertStringContainsString('Tunjangan Makan', $content);
+        $this->assertStringContainsString('Total Tunjangan Diterima', $content);
+
+        // Check benefit categorization headers
+        $this->assertStringContainsString('Benefit - BPJS TK Perusahaan', $content);
+        $this->assertStringContainsString('Benefit - BPJS Kes Perusahaan', $content);
+        $this->assertStringContainsString('Benefit - Tunjangan PPh 21', $content);
+        $this->assertStringContainsString('Potongan PPh 21', $content);
+    }
+
+    public function test_unrecorded_attendance_cutoff_applies_half_day_prorate_deduction(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'active_working_days' => 20,
+                'unrecorded_cutoff_penalty_enabled' => true,
+                'attendance_revision_cutoff_day' => '25',
+                'bpjs_kesehatan_enabled' => false,
+                'bpjs_ketenagakerjaan_enabled' => false,
+            ]
+        );
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 4_000_000, // per day = 200.000, half day = 100.000
+            'is_active' => true,
+            'employment_status' => 'active',
+            'hire_date' => '2026-01-01',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_enabled' => false,
+            'bpjs_ketenagakerjaan_enabled' => false,
+        ]);
+
+        // No attendance recorded in May 2026 -> generates unrecorded cutoff penalty
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-05'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-05')->firstOrFail();
+        $item = $run->items()->where('employee_id', $employee->id)->firstOrFail();
+
+        // Should have a deduction for unrecorded attendance days up to cutoff
+        $this->assertGreaterThan(0, (float) $item->denda_deduction);
+        $this->assertEquals((float) $item->base_salary - (float) $item->denda_deduction, (float) $item->net_salary);
+    }
+
+    public function test_csv_export_places_total_sum_row_above_header_for_both_draft_and_saved_payroll(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $emp1 = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-TOT-01',
+            'first_name' => 'Karyawan',
+            'last_name' => 'Satu',
+            'base_salary' => 5_000_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+            'hire_date' => '2026-01-01',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_enabled' => false,
+            'bpjs_ketenagakerjaan_enabled' => false,
+        ]);
+
+        $emp2 = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-TOT-02',
+            'first_name' => 'Karyawan',
+            'last_name' => 'Dua',
+            'base_salary' => 7_000_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+            'hire_date' => '2026-01-01',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_enabled' => false,
+            'bpjs_ketenagakerjaan_enabled' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-08'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-08')->firstOrFail();
+        $this->assertFalse($run->is_saved);
+
+        // 1. Test Draft CSV
+        $responseDraft = $this->actingAs($user)
+            ->get(route('hris.payrolls.export.csv', $run))
+            ->assertOk();
+
+        $contentDraft = $responseDraft->streamedContent();
+        // Remove UTF-8 BOM if present
+        $cleanContent = ltrim($contentDraft, "\xEF\xBB\xBF");
+        $lines = explode("\n", trim($cleanContent));
+
+        // Line 0 must be TOTAL row
+        $totalRow = str_getcsv($lines[0]);
+        $this->assertEquals('TOTAL', $totalRow[0]);
+
+        // Line 1 must be table header
+        $headerRow = str_getcsv($lines[1]);
+        $this->assertEquals('No', $headerRow[0]);
+        $this->assertEquals('NIK', $headerRow[1]);
+        $this->assertEquals('Nama Karyawan', $headerRow[2]);
+
+        // Check Gaji Pokok column index
+        $gajiPokokIndex = array_search('Gaji Pokok', $headerRow, true);
+        $this->assertNotFalse($gajiPokokIndex);
+        $this->assertEquals(12_000_000, (int) $totalRow[$gajiPokokIndex]);
+
+        // Check Gaji Bersih column index
+        $gajiBersihIndex = array_search('Gaji Bersih', $headerRow, true);
+        $this->assertNotFalse($gajiBersihIndex);
+        $this->assertEquals(12_000_000, (int) $totalRow[$gajiBersihIndex]);
+
+        // 2. Save Payroll and test Saved CSV
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.save', $run))
+            ->assertRedirect();
+        $this->assertTrue($run->fresh()->is_saved);
+
+        $responseSaved = $this->actingAs($user)
+            ->get(route('hris.payrolls.export.csv', $run))
+            ->assertOk();
+
+        $cleanSavedContent = ltrim($responseSaved->streamedContent(), "\xEF\xBB\xBF");
+        $savedLines = explode("\n", trim($cleanSavedContent));
+
+        $savedTotalRow = str_getcsv($savedLines[0]);
+        $this->assertEquals('TOTAL', $savedTotalRow[0]);
+        $this->assertEquals(12_000_000, (int) $savedTotalRow[$gajiPokokIndex]);
+
+        $savedHeaderRow = str_getcsv($savedLines[1]);
+        $this->assertEquals('No', $savedHeaderRow[0]);
+        $this->assertEquals('Gaji Pokok', $savedHeaderRow[$gajiPokokIndex]);
+    }
+
+    public function test_excel_export_places_total_sum_row_above_header(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $emp = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 6_000_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+            'hire_date' => '2026-01-01',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_enabled' => false,
+            'bpjs_ketenagakerjaan_enabled' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-09'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-09')->firstOrFail();
+
+        $response = $this->actingAs($user)
+            ->get(route('hris.payrolls.export.excel', $run))
+            ->assertOk();
+
+        $this->assertEquals('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $response->headers->get('content-type'));
+
+        // Load spreadsheet from streamed content
+        $stream = $response->streamedContent();
+        $temp = tempnam(sys_get_temp_dir(), 'test_payroll_excel_');
+        file_put_contents($temp, $stream);
+
+        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        $spreadsheet = $reader->load($temp);
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Row 1: TOTAL
+        $this->assertEquals('TOTAL', $sheet->getCell('A1')->getValue());
+        $this->assertStringStartsWith('=SUM(', (string) $sheet->getCell('N1')->getValue());
+
+        // Row 2: Table Header
+        $this->assertEquals('No', $sheet->getCell('A2')->getValue());
+        $this->assertEquals('Gaji Pokok', $sheet->getCell('N2')->getValue());
+
+        // Row 3: Employee Data
+        $this->assertEquals(6_000_000, (int) $sheet->getCell('N3')->getValue());
+
+        unlink($temp);
     }
 }

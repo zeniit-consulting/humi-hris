@@ -57,7 +57,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\PositionController::update
-* @see app/Http/Controllers/Hris/PositionController.php:34
+* @see app/Http/Controllers/Hris/PositionController.php:35
 * @route '/hris/positions/{position}'
 */
 export const update = (args: { position: number | { id: number } } | [position: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -72,7 +72,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PositionController::update
-* @see app/Http/Controllers/Hris/PositionController.php:34
+* @see app/Http/Controllers/Hris/PositionController.php:35
 * @route '/hris/positions/{position}'
 */
 update.url = (args: { position: number | { id: number } } | [position: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -105,7 +105,7 @@ update.url = (args: { position: number | { id: number } } | [position: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\PositionController::update
-* @see app/Http/Controllers/Hris/PositionController.php:34
+* @see app/Http/Controllers/Hris/PositionController.php:35
 * @route '/hris/positions/{position}'
 */
 update.put = (args: { position: number | { id: number } } | [position: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -115,7 +115,7 @@ update.put = (args: { position: number | { id: number } } | [position: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\PositionController::update
-* @see app/Http/Controllers/Hris/PositionController.php:34
+* @see app/Http/Controllers/Hris/PositionController.php:35
 * @route '/hris/positions/{position}'
 */
 const updateForm = (args: { position: number | { id: number } } | [position: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -130,7 +130,7 @@ const updateForm = (args: { position: number | { id: number } } | [position: num
 
 /**
 * @see \App\Http\Controllers\Hris\PositionController::update
-* @see app/Http/Controllers/Hris/PositionController.php:34
+* @see app/Http/Controllers/Hris/PositionController.php:35
 * @route '/hris/positions/{position}'
 */
 updateForm.put = (args: { position: number | { id: number } } | [position: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -147,7 +147,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\PositionController::destroy
-* @see app/Http/Controllers/Hris/PositionController.php:51
+* @see app/Http/Controllers/Hris/PositionController.php:53
 * @route '/hris/positions/{position}'
 */
 export const destroy = (args: { position: number | { id: number } } | [position: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -162,7 +162,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PositionController::destroy
-* @see app/Http/Controllers/Hris/PositionController.php:51
+* @see app/Http/Controllers/Hris/PositionController.php:53
 * @route '/hris/positions/{position}'
 */
 destroy.url = (args: { position: number | { id: number } } | [position: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -195,7 +195,7 @@ destroy.url = (args: { position: number | { id: number } } | [position: number |
 
 /**
 * @see \App\Http\Controllers\Hris\PositionController::destroy
-* @see app/Http/Controllers/Hris/PositionController.php:51
+* @see app/Http/Controllers/Hris/PositionController.php:53
 * @route '/hris/positions/{position}'
 */
 destroy.delete = (args: { position: number | { id: number } } | [position: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -205,7 +205,7 @@ destroy.delete = (args: { position: number | { id: number } } | [position: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\PositionController::destroy
-* @see app/Http/Controllers/Hris/PositionController.php:51
+* @see app/Http/Controllers/Hris/PositionController.php:53
 * @route '/hris/positions/{position}'
 */
 const destroyForm = (args: { position: number | { id: number } } | [position: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -220,7 +220,7 @@ const destroyForm = (args: { position: number | { id: number } } | [position: nu
 
 /**
 * @see \App\Http\Controllers\Hris\PositionController::destroy
-* @see app/Http/Controllers/Hris/PositionController.php:51
+* @see app/Http/Controllers/Hris/PositionController.php:53
 * @route '/hris/positions/{position}'
 */
 destroyForm.delete = (args: { position: number | { id: number } } | [position: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

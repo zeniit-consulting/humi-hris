@@ -421,7 +421,7 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                                         )}
                                                     </span>
                                                     <span className="font-semibold">
-                                                        {formatCurrency(slip.overtime_pay)}
+                                                        {formatCurrency(slip.overtime_pay ?? 0)}
                                                     </span>
                                                 </div>
                                                 {slip.event_overtimes && slip.event_overtimes.length > 0 && (
@@ -454,38 +454,102 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                     </div>
                                 </div>
 
+                                {(Number(slip.bpjs_kesehatan_company ?? 0) > 0 ||
+                                  Number(slip.bpjs_jkk_company ?? 0) > 0 ||
+                                  Number(slip.bpjs_jkm_company ?? 0) > 0 ||
+                                  Number(slip.bpjs_jht_company ?? 0) > 0 ||
+                                  Number(slip.bpjs_jp_company ?? 0) > 0 ||
+                                  Number(slip.pph21_allowance ?? 0) > 0) && (
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
+                                                Benefit (Ditanggung Perusahaan)
+                                            </p>
+                                            <span className="text-[10px] text-slate-400">
+                                                * Tidak dihitung ke dalam gaji
+                                            </span>
+                                        </div>
+                                        <div className="mt-3 space-y-3 text-sm">
+                                            {Number(slip.bpjs_kesehatan_company ?? 0) > 0 && (
+                                                <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                    <span>BPJS Kesehatan (Perusahaan 4%)</span>
+                                                    <span className="font-semibold text-sky-700">
+                                                        {formatCurrency(slip.bpjs_kesehatan_company ?? 0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {Number(slip.bpjs_jkk_company ?? 0) > 0 && (
+                                                <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                    <span>BPJS TK JKK (Perusahaan)</span>
+                                                    <span className="font-semibold text-sky-700">
+                                                        {formatCurrency(slip.bpjs_jkk_company ?? 0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {Number(slip.bpjs_jkm_company ?? 0) > 0 && (
+                                                <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                    <span>BPJS TK JKM (Perusahaan)</span>
+                                                    <span className="font-semibold text-sky-700">
+                                                        {formatCurrency(slip.bpjs_jkm_company ?? 0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {Number(slip.bpjs_jht_company ?? 0) > 0 && (
+                                                <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                    <span>BPJS TK JHT (Perusahaan 3.7%)</span>
+                                                    <span className="font-semibold text-sky-700">
+                                                        {formatCurrency(slip.bpjs_jht_company ?? 0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {Number(slip.bpjs_jp_company ?? 0) > 0 && (
+                                                <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                    <span>BPJS TK JP (Perusahaan 2%)</span>
+                                                    <span className="font-semibold text-sky-700">
+                                                        {formatCurrency(slip.bpjs_jp_company ?? 0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {Number(slip.pph21_allowance ?? 0) > 0 && (
+                                                <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                    <span>Tunjangan PPh21 (Perusahaan)</span>
+                                                    <span className="font-semibold text-sky-700">
+                                                        {formatCurrency(slip.pph21_allowance ?? 0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div>
                                     <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
                                         Potongan
                                     </p>
                                     <div className="mt-3 space-y-3 text-sm">
-                                        <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                            <span>PPh21</span>
-                                            <span className="font-semibold">
-                                                {Number(slip.pph21_rate ?? 0)}%
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                            <span>Potongan PPh21</span>
-                                            <span className="font-semibold">
-                                                {formatCurrency(
-                                                    slip.pph21_deduction,
-                                                )}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                            <span>Tunjangan PPh21</span>
-                                            <span className="font-semibold">
-                                                {formatCurrency(
-                                                    slip.pph21_allowance,
-                                                )}
-                                            </span>
-                                        </div>
+                                        {slip.pph21_method !== 'gross_up' && Number(slip.pph21_deduction ?? 0) > 0 && (
+                                            <>
+                                                <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                    <span>PPh21</span>
+                                                    <span className="font-semibold">
+                                                        {Number(slip.pph21_rate ?? 0)}%
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                    <span>Potongan PPh21</span>
+                                                    <span className="font-semibold text-rose-700">
+                                                        {formatCurrency(
+                                                            slip.pph21_deduction,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )}
                                         {Number(slip.bpjs_kesehatan_employee ?? 0) > 0 && (
                                             <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
                                                 <span>BPJS Kesehatan (Karyawan 1%)</span>
                                                 <span className="font-semibold text-rose-700">
-                                                    {formatCurrency(slip.bpjs_kesehatan_employee)}
+                                                    {formatCurrency(slip.bpjs_kesehatan_employee ?? 0)}
                                                 </span>
                                             </div>
                                         )}
@@ -493,7 +557,7 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                             <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
                                                 <span>BPJS TK JHT (Karyawan 2%)</span>
                                                 <span className="font-semibold text-rose-700">
-                                                    {formatCurrency(slip.bpjs_jht_employee)}
+                                                    {formatCurrency(slip.bpjs_jht_employee ?? 0)}
                                                 </span>
                                             </div>
                                         )}
@@ -501,7 +565,7 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                             <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
                                                 <span>BPJS TK JP (Karyawan 1%)</span>
                                                 <span className="font-semibold text-rose-700">
-                                                    {formatCurrency(slip.bpjs_jp_employee)}
+                                                    {formatCurrency(slip.bpjs_jp_employee ?? 0)}
                                                 </span>
                                             </div>
                                         )}
@@ -509,7 +573,7 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                             <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
                                                 <span>{slip.private_insurance_name || 'Asuransi Swasta'}</span>
                                                 <span className="font-semibold text-rose-700">
-                                                    {formatCurrency(slip.private_insurance_nominal)}
+                                                    {formatCurrency(slip.private_insurance_nominal ?? 0)}
                                                 </span>
                                             </div>
                                         )}

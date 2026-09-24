@@ -3,6 +3,7 @@
 // Hallmark · pre-emit critique: P4 H5 E4 S5 R4 V4 · contrast: pass (46–50) · responsive: pass (36, 59, 61–69)
 import { Head, Link } from '@inertiajs/react';
 import {
+    AlertCircle,
     BellRing,
     CalendarDays,
     ChevronRight,
@@ -78,6 +79,7 @@ type PortalSummary = {
         sick_leave_days: number;
         pending_surveys: number;
         assigned_assets: number;
+        attendance_penalty?: number;
         payroll_preview: {
             period: string;
             is_saved: boolean;
@@ -166,6 +168,11 @@ const quickLinks = [
     { key: 'reimbursements', label: 'Reimburse', icon: ReceiptText },
     { key: 'payroll', label: 'Payroll', icon: Wallet },
 ] as const;
+
+const formatRupiah = (amount: number | string | null | undefined) => {
+    const num = Math.round(Number(amount ?? 0));
+    return `Rp ${num.toLocaleString('id-ID')}`;
+};
 
 const formatTime = (value: string | null) => {
     if (!value) {
@@ -519,25 +526,21 @@ export default function PortalPage() {
                                             icon={CalendarDays}
                                         />
                                         <a
-                                            href={links.payroll}
+                                            href={links.attendance}
                                             className="portal-pressable portal-focus-ring rounded-[var(--portal-radius-control)] border border-white/70 bg-[var(--portal-color-surface-glass)] p-3 shadow-[var(--portal-shadow-raised)]"
                                         >
                                             <span className="flex items-center justify-between gap-2 text-[var(--portal-color-muted)]">
                                                 <span className="text-xs font-medium">
-                                                    Payroll
+                                                    Denda absensi
                                                 </span>
-                                                {summary?.cards.payroll_preview
-                                                    .is_saved ? (
-                                                    <CircleCheck className="size-4 text-[var(--portal-color-success)]" />
+                                                {(summary?.cards.attendance_penalty ?? 0) > 0 ? (
+                                                    <AlertCircle className="size-4 text-[var(--portal-color-warning)]" />
                                                 ) : (
-                                                    <Clock3 className="size-4 text-[var(--portal-color-warning)]" />
+                                                    <CircleCheck className="size-4 text-[var(--portal-color-success)]" />
                                                 )}
                                             </span>
-                                            <span className="mt-3 block text-sm font-bold text-[var(--portal-color-ink)]">
-                                                {summary?.cards.payroll_preview
-                                                    .is_saved
-                                                    ? 'Sudah tersedia'
-                                                    : 'Belum tersedia'}
+                                            <span className="portal-tabular mt-3 block text-sm font-bold text-[var(--portal-color-ink)]">
+                                                {formatRupiah(summary?.cards.attendance_penalty ?? 0)}
                                             </span>
                                         </a>
                                         <div className="rounded-[var(--portal-radius-control)] border border-white/70 bg-[var(--portal-color-surface-glass)] p-3 shadow-[var(--portal-shadow-raised)]">

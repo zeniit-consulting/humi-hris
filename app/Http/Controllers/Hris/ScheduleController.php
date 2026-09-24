@@ -337,6 +337,7 @@ class ScheduleController extends Controller
                 'user_id' => $ownerId,
                 'date' => $holiday['date'],
                 'name' => (string) $holiday['name'],
+                'holiday_type' => ((bool) $holiday['is_national_holiday']) ? 'national' : 'joint_leave',
                 'is_national_holiday' => (bool) $holiday['is_national_holiday'],
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -347,7 +348,7 @@ class ScheduleController extends Controller
             PublicHoliday::query()->upsert(
                 $holidayRows->all(),
                 ['user_id', 'date', 'name'],
-                ['is_national_holiday', 'updated_at'],
+                ['is_national_holiday', 'holiday_type', 'updated_at'],
             );
         }
 
@@ -402,6 +403,99 @@ class ScheduleController extends Controller
             $scheduleRows->count(),
             $validated['month'],
         ));
+    }
+
+    /**
+     * Store or update a work calendar holiday.
+     */
+    public function storeHoliday(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'date' => ['required', 'date'],
+            'name' => ['required', 'string', 'max:255'],
+            'holiday_type' => ['required', 'string', 'in:national,joint_leave,company,other'],
+            'apply_to_schedule' => ['nullable', 'boolean'],
+        ]);
+
+        $holiday = PublicHoliday::updateOrCreate(
+            [
+                'user_id' => $ownerId,
+                'date' => $validated['date'],
+                'name' => $validated['name'],
+            ],
+            [
+                'holiday_type' => $validated['holiday_type'],
+                'is_national_holiday' => $validated['holiday_type'] === 'national',
+            ]
+        );
+
+        $appliedCount = 0;
+        if (! empty($validated['apply_to_schedule'])) {
+            $employeeIds = Employee::query()
+                ->where('user_id', $ownerId)
+                ->where('is_active', true)
+                ->whereNull('offboarded_at')
+                ->where('employment_status', '!=', 'resigned')
+                ->pluck('id');
+
+            $offShift = WorkShift::query()->firstOrCreate(
+                [
+                    'user_id' => $ownerId,
+                    'code' => 'OFF',
+                ],
+                [
+                    'name' => 'Day Off',
+                    'start_time' => null,
+                    'end_time' => null,
+                    'is_day_off' => true,
+                    'late_tolerance_minutes' => 0,
+                ]
+            );
+
+            $now = now();
+            $scheduleRows = $employeeIds->map(fn ($empId) => [
+                'user_id' => $ownerId,
+                'employee_id' => $empId,
+                'work_date' => $holiday->date->toDateString(),
+                'shift_code' => $offShift->code,
+                'start_time' => null,
+                'end_time' => null,
+                'is_day_off' => true,
+                'notes' => $holiday->name,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])->all();
+
+            if (! empty($scheduleRows)) {
+                EmployeeSchedule::query()->upsert(
+                    $scheduleRows,
+                    ['employee_id', 'work_date'],
+                    ['user_id', 'shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at']
+                );
+                $appliedCount = count($scheduleRows);
+            }
+        }
+
+        $message = 'Hari libur berhasil disimpan.';
+        if ($appliedCount > 0) {
+            $message .= " Diterapkan ke jadwal $appliedCount karyawan.";
+        }
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Delete a work calendar holiday.
+     */
+    public function destroyHoliday(Request $request, PublicHoliday $publicHoliday): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_unless((int) $publicHoliday->user_id === $ownerId, 404);
+
+        $publicHoliday->delete();
+
+        return back()->with('success', 'Hari libur berhasil dihapus.');
     }
 
     /**
@@ -786,7 +880,8 @@ class ScheduleController extends Controller
                 'id' => $holiday->id,
                 'date' => $holiday->date->toDateString(),
                 'name' => $holiday->name,
-                'is_national_holiday' => $holiday->is_national_holiday,
+                'holiday_type' => $holiday->holiday_type ?? ($holiday->is_national_holiday ? 'national' : 'joint_leave'),
+                'is_national_holiday' => (bool) $holiday->is_national_holiday,
             ])
             ->all();
     }

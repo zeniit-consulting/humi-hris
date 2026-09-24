@@ -1,7 +1,8 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
+import exclusions from './exclusions'
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +17,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +26,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +36,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +46,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +56,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +66,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::index
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:16
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:19
 * @route '/hris/organization-chart'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,6 +83,7 @@ index.form = indexForm
 
 const organizationChart = {
     index: Object.assign(index, index),
+    exclusions: Object.assign(exclusions, exclusions),
 }
 
 export default organizationChart

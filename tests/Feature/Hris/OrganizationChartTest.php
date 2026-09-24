@@ -85,4 +85,94 @@ class OrganizationChartTest extends TestCase
                 ->where('chart.0.full_name', 'Vacant')
                 ->where('chart.0.is_vacant', true));
     }
+
+    public function test_organization_chart_excludes_positions_and_reparents_descendants(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        // Level 0: CEO
+        $ceo = Position::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Chief Executive Officer',
+            'code' => 'CEO',
+            'level' => '0',
+            'parent_position_id' => null,
+            'exclude_from_org_chart' => false,
+        ]);
+
+        // Level 1: Director (Excluded!)
+        $director = Position::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Director of Ops',
+            'code' => 'DIR',
+            'level' => '1',
+            'parent_position_id' => $ceo->id,
+            'exclude_from_org_chart' => true,
+        ]);
+
+        // Level 2: Manager (child of Director)
+        $manager = Position::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Operations Manager',
+            'code' => 'MGR',
+            'level' => '2',
+            'parent_position_id' => $director->id,
+            'exclude_from_org_chart' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.organization-chart.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hris/organization-chart/index')
+                ->has('chart', 1) // Only CEO at root
+                ->where('chart.0.id', $ceo->id)
+                ->has('chart.0.children', 1)
+                ->where('chart.0.children.0.id', $manager->id) // Manager is directly under CEO!
+                ->where('stats.excluded_positions', 1)
+                ->where('stats.total_nodes', 2));
+    }
+
+    public function test_can_update_organization_chart_exclusions(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $pos1 = Position::factory()->create([
+            'user_id' => $user->id,
+            'exclude_from_org_chart' => false,
+        ]);
+
+        $pos2 = Position::factory()->create([
+            'user_id' => $user->id,
+            'exclude_from_org_chart' => false,
+        ]);
+
+        // Bulk update
+        $response = $this->actingAs($user)
+            ->post(route('hris.organization-chart.exclusions.update'), [
+                'excluded_position_ids' => [$pos1->id],
+            ]);
+
+        $response->assertRedirect();
+        $this->assertTrue($pos1->fresh()->exclude_from_org_chart);
+        $this->assertFalse($pos2->fresh()->exclude_from_org_chart);
+
+        // Single position toggle
+        $this->actingAs($user)
+            ->post(route('hris.organization-chart.exclusions.update'), [
+                'position_id' => $pos2->id,
+                'exclude' => true,
+            ])
+            ->assertRedirect();
+
+        $this->assertTrue($pos2->fresh()->exclude_from_org_chart);
+    }
 }

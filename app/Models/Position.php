@@ -27,6 +27,7 @@ class Position extends Model
         'level',
         'description',
         'is_active',
+        'exclude_from_org_chart',
     ];
 
     /**
@@ -38,6 +39,7 @@ class Position extends Model
     {
         return [
             'is_active' => 'boolean',
+            'exclude_from_org_chart' => 'boolean',
         ];
     }
 

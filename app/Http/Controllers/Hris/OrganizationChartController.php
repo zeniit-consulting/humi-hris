@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Hris;
 
 use App\Http\Controllers\Controller;
+use App\Models\Division;
 use App\Models\Position;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,7 +20,7 @@ class OrganizationChartController extends Controller
     {
         $ownerId = $request->user()->accountOwnerId();
 
-        $positions = Position::query()
+        $allPositions = Position::query()
             ->where('user_id', $ownerId)
             ->with([
                 'division:id,name',
@@ -39,53 +42,166 @@ class OrganizationChartController extends Controller
                 'name',
                 'level',
                 'is_active',
+                'exclude_from_org_chart',
             ]);
 
-        $positionMap = $positions->keyBy('id');
+        $positionMap = $allPositions->keyBy('id');
+        $excludedIds = $allPositions->where('exclude_from_org_chart', true)->pluck('id')->all();
 
-        $childrenByParent = $positions->groupBy(
-            fn (Position $position) => $position->parent_position_id === null
-                ? 'root'
-                : (string) $position->parent_position_id
-        );
+        // Non-excluded positions participate in the org chart tree
+        $chartPositions = $allPositions->reject(fn (Position $p) => in_array($p->id, $excludedIds, true));
 
-        $rootPositions = $positions
-            ->filter(fn (Position $position) => $position->parent_position_id === null || ! $positionMap->has($position->parent_position_id))
+        // Group children by effective parent (re-parenting through excluded ancestors)
+        $effectiveChildrenByParent = [];
+        $rootPositions = [];
+
+        foreach ($chartPositions as $position) {
+            $effectiveParentId = $this->resolveEffectiveParentId($position, $positionMap, $excludedIds);
+
+            if ($effectiveParentId === null) {
+                $rootPositions[] = $position;
+            } else {
+                $effectiveChildrenByParent[$effectiveParentId][] = $position;
+            }
+        }
+
+        $rootPositions = collect($rootPositions)
             ->sortBy(fn (Position $position) => $this->buildSortKey($position))
             ->values();
 
         $tree = $rootPositions->map(
-            fn (Position $position) => $this->buildNode($position, $childrenByParent, [])
+            fn (Position $position) => $this->buildNode($position, $effectiveChildrenByParent, [])
         )->values();
 
         $maxDepth = $this->calculateMaxDepth($tree->all());
 
+        $managePositions = $allPositions->map(fn (Position $p) => [
+            'id' => $p->id,
+            'code' => $p->code,
+            'name' => $p->name,
+            'division_name' => $p->division?->name,
+            'level' => $this->normalizePositionLevel($p->level),
+            'level_label' => $this->positionLevelLabel($p->level),
+            'is_active' => (bool) $p->is_active,
+            'is_vacant' => $p->employees->isEmpty(),
+            'exclude_from_org_chart' => (bool) $p->exclude_from_org_chart,
+            'employees_count' => $p->employees->count(),
+            'parent_position_id' => $p->parent_position_id,
+        ])->values();
+
+        $divisions = Division::query()
+            ->where('user_id', $ownerId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('hris/organization-chart/index', [
             'chart' => $tree,
+            'all_positions' => $managePositions,
+            'divisions' => $divisions,
             'stats' => [
-                'total_nodes' => $positions->count(),
+                'total_positions' => $allPositions->count(),
+                'total_nodes' => $chartPositions->count(),
                 'root_count' => $rootPositions->count(),
                 'max_depth' => $maxDepth,
+                'filled_positions' => $allPositions->filter(fn (Position $p) => $p->employees->isNotEmpty())->count(),
+                'vacant_positions' => $allPositions->filter(fn (Position $p) => $p->employees->isEmpty())->count(),
+                'inactive_positions' => $allPositions->filter(fn (Position $p) => ! $p->is_active)->count(),
+                'excluded_positions' => count($excludedIds),
+                'total_employees' => $allPositions->sum(fn (Position $p) => $p->employees->count()),
             ],
         ]);
     }
 
     /**
+     * Update position exclusions from org chart.
+     */
+    public function updateExclusions(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+
+        if ($request->has('position_id')) {
+            $validated = $request->validate([
+                'position_id' => ['required', 'integer', Rule::exists('positions', 'id')->where('user_id', $ownerId)],
+                'exclude' => ['required', 'boolean'],
+            ]);
+
+            Position::query()
+                ->where('user_id', $ownerId)
+                ->where('id', $validated['position_id'])
+                ->update(['exclude_from_org_chart' => $validated['exclude']]);
+
+            return back()->with('success', 'Status jabatan di struktur organisasi berhasil diperbarui.');
+        }
+
+        $validated = $request->validate([
+            'excluded_position_ids' => ['nullable', 'array'],
+            'excluded_position_ids.*' => ['integer', Rule::exists('positions', 'id')->where('user_id', $ownerId)],
+        ]);
+
+        $excludedIds = $validated['excluded_position_ids'] ?? [];
+
+        Position::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('id', $excludedIds)
+            ->update(['exclude_from_org_chart' => true]);
+
+        Position::query()
+            ->where('user_id', $ownerId)
+            ->whereNotIn('id', $excludedIds)
+            ->update(['exclude_from_org_chart' => false]);
+
+        return back()->with('success', 'Pengaturan struktur organisasi berhasil diperbarui.');
+    }
+
+    /**
+     * Resolve effective parent ID by walking up ancestry past excluded positions.
+     *
+     * @param  \Illuminate\Support\Collection<int, Position>  $positionMap
+     * @param  array<int, int>  $excludedIds
+     */
+    private function resolveEffectiveParentId(Position $position, $positionMap, array $excludedIds): ?int
+    {
+        $currentParentId = $position->parent_position_id;
+        $seen = [$position->id];
+
+        while ($currentParentId !== null && isset($positionMap[$currentParentId])) {
+            if (in_array($currentParentId, $seen, true)) {
+                return null; // prevent cycle loops
+            }
+            $seen[] = $currentParentId;
+
+            if (! in_array($currentParentId, $excludedIds, true)) {
+                return $currentParentId;
+            }
+
+            $parent = $positionMap[$currentParentId];
+            $currentParentId = $parent->parent_position_id;
+        }
+
+        return null;
+    }
+
+    /**
      * Build recursive organization node.
      *
+     * @param  array<int, list<Position>>  $childrenByParent
      * @param  array<int, int>  $visited
      * @return array<string, mixed>
      */
-    private function buildNode(Position $position, $childrenByParent, array $visited): array
+    private function buildNode(Position $position, array $childrenByParent, array $visited): array
     {
         if (in_array($position->id, $visited, true)) {
             return [
                 'id' => $position->id,
                 'position_code' => $position->code,
                 'employees' => [],
+                'employees_count' => 0,
                 'employee_code' => 'VACANT',
                 'full_name' => 'Vacant',
                 'is_vacant' => true,
+                'is_position_active' => (bool) $position->is_active,
+                'exclude_from_org_chart' => (bool) $position->exclude_from_org_chart,
+                'division_id' => $position->division_id,
                 'division_name' => $position->division?->name,
                 'position_name' => $position->name,
                 'position_level' => $this->normalizePositionLevel($position->level),
@@ -99,7 +215,8 @@ class OrganizationChartController extends Controller
 
         $nextVisited = [...$visited, $position->id];
 
-        $children = collect($childrenByParent->get((string) $position->id, []))
+        $rawChildren = $childrenByParent[$position->id] ?? [];
+        $children = collect($rawChildren)
             ->sortBy(fn (Position $child) => $this->buildSortKey($child))
             ->values()
             ->map(fn (Position $child) => $this->buildNode($child, $childrenByParent, $nextVisited))
@@ -117,22 +234,27 @@ class OrganizationChartController extends Controller
             'employee_code' => $emp->employee_code,
             'full_name' => $emp->full_name,
             'employment_status' => $emp->employment_status,
-            'is_active' => $emp->is_active,
+            'is_active' => (bool) $emp->is_active,
+            'face_photo_url' => $emp->face_photo_url,
         ])->all();
 
         return [
             'id' => $position->id,
             'position_code' => $position->code,
             'employees' => $isVacant ? [] : $employeesData,
+            'employees_count' => $employees->count(),
             'employee_code' => $employees->first()?->employee_code ?? 'VACANT',
             'full_name' => $employees->first()?->full_name ?? 'Vacant',
             'is_vacant' => $isVacant,
+            'is_position_active' => (bool) $position->is_active,
+            'exclude_from_org_chart' => (bool) $position->exclude_from_org_chart,
+            'division_id' => $position->division_id,
             'division_name' => $position->division?->name,
             'position_name' => $position->name,
             'position_level' => $this->normalizePositionLevel($position->level),
             'position_level_label' => $this->positionLevelLabel($position->level),
             'employment_status' => $employees->first()?->employment_status ?? 'vacant',
-            'is_active' => $employees->first()?->is_active ?? false,
+            'is_active' => (bool) ($position->is_active && ($employees->first()?->is_active ?? false)),
             'children' => $children,
             'cycle_detected' => false,
         ];

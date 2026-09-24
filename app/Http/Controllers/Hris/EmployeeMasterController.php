@@ -83,6 +83,7 @@ class EmployeeMasterController extends Controller
                 },
                 'description' => $position->description,
                 'is_active' => $position->is_active,
+                'exclude_from_org_chart' => (bool) $position->exclude_from_org_chart,
                 'employees_count' => $position->employees_count,
                 'division' => $position->division ? [
                     'id' => $position->division->id,

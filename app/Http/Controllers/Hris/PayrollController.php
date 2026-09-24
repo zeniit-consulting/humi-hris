@@ -18,6 +18,11 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PayrollController extends Controller
@@ -442,11 +447,15 @@ class PayrollController extends Controller
      */
     public function exportCsv(PayrollRun $payrollRun, Request $request): StreamedResponse
     {
+        if (in_array(strtolower((string) $request->query('format')), ['excel', 'xlsx', 'xls'], true)) {
+            return $this->exportExcel($payrollRun, $request);
+        }
+
         $ownerId = $request->user()->accountOwnerId();
         abort_if((int) $payrollRun->user_id !== $ownerId, 403);
 
         $payrollRun->loadMissing([
-            'items.employee:id,employee_code,first_name,last_name,sub_company_id,division_id,position_id,employment_status',
+            'items.employee:id,employee_code,first_name,last_name,sub_company_id,division_id,position_id,employment_status,ktp_number,npwp_number,ptkp_category',
             'items.employee.subCompany:id,code,name',
             'items.employee.division:id,name',
             'items.employee.position:id,name',
@@ -465,16 +474,59 @@ class PayrollController extends Controller
         $statusSuffix = $payrollRun->is_saved ? '' : '_draft';
         $filename = $prefix.$payrollRun->period.$statusSuffix.'.csv';
 
-        return response()->streamDownload(function () use ($items, $isThr): void {
+        $fixedAllowanceNames = $items
+            ->flatMap(fn ($item) => array_keys($item->allowance_breakdown ?? []))
+            ->unique()
+            ->values()
+            ->all();
+
+        return response()->streamDownload(function () use ($items, $isThr, $fixedAllowanceNames): void {
             $out = fopen('php://output', 'wb');
             // BOM for UTF-8 Excel compatibility
             fwrite($out, "\xEF\xBB\xBF");
 
             if ($isThr) {
+                $totalBaseSalary = 0;
+                $totalThrAmount = 0;
+                $totalPph21 = 0;
+                $totalNetSalary = 0;
+
+                foreach ($items as $item) {
+                    $totalBaseSalary += (float) $item->base_salary;
+                    $totalThrAmount += (float) ($item->thr_amount ?: $item->net_salary);
+                    $totalPph21 += (float) $item->pph21_deduction;
+                    $totalNetSalary += (float) $item->net_salary;
+                }
+
+                // Baris Total di atas header
+                fputcsv($out, [
+                    'TOTAL',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    (int) round($totalBaseSalary),
+                    '',
+                    (int) round($totalThrAmount),
+                    (int) round($totalPph21),
+                    (int) round($totalNetSalary),
+                ]);
+
                 fputcsv($out, [
                     'No',
                     'NIK',
                     'Nama Karyawan',
+                    'No. KTP',
+                    'No. NPWP',
+                    'Status Pajak',
                     'Perusahaan / Entitas',
                     'Divisi',
                     'Jabatan',
@@ -498,6 +550,9 @@ class PayrollController extends Controller
                         $no++,
                         $employee?->employee_code ?? '',
                         $employee?->full_name ?? '-',
+                        $employee?->ktp_number ? "'".$employee->ktp_number : '-',
+                        $employee?->npwp_number ? "'".$employee->npwp_number : '-',
+                        $employee?->ptkp_category ?? '-',
                         $employee?->subCompany?->name ?? 'Internal',
                         $employee?->division?->name ?? '-',
                         $employee?->position?->name ?? '-',
@@ -513,10 +568,13 @@ class PayrollController extends Controller
                     ]);
                 }
             } else {
-                fputcsv($out, [
+                $headers = [
                     'No',
                     'NIK',
                     'Nama Karyawan',
+                    'No. KTP',
+                    'No. NPWP',
+                    'Status Pajak',
                     'Perusahaan / Entitas',
                     'Divisi',
                     'Jabatan',
@@ -525,22 +583,118 @@ class PayrollController extends Controller
                     'No Rekening',
                     'Atas Nama',
                     'Gaji Pokok',
-                    'Total Tunjangan',
-                    'Jam Lembur',
-                    'Uang Lembur',
-                    'Tunjangan PPh 21',
-                    'BPJS TK Perusahaan',
-                    'BPJS Kes Perusahaan',
-                    'PPh 21',
-                    'BPJS TK Karyawan',
-                    'BPJS Kes Karyawan',
-                    'Asuransi Swasta',
-                    'Potongan Kasbon',
-                    'Potongan Denda',
-                    'Potongan Unpaid Leave',
-                    'Total Potongan',
-                    'Gaji Bersih',
-                ]);
+                ];
+
+                foreach ($fixedAllowanceNames as $allowanceName) {
+                    $headers[] = str_starts_with(strtolower($allowanceName), 'tunjangan')
+                        ? $allowanceName
+                        : 'Tunjangan '.$allowanceName;
+                }
+
+                $headers[] = 'Total Tunjangan Diterima';
+                $headers[] = 'Jam Lembur';
+                $headers[] = 'Uang Lembur';
+                $headers[] = 'Benefit - BPJS TK Perusahaan';
+                $headers[] = 'Benefit - BPJS Kes Perusahaan';
+                $headers[] = 'Benefit - Tunjangan PPh 21';
+                $headers[] = 'Potongan PPh 21';
+                $headers[] = 'BPJS TK Karyawan';
+                $headers[] = 'BPJS Kes Karyawan';
+                $headers[] = 'Asuransi Swasta';
+                $headers[] = 'Potongan Kasbon';
+                $headers[] = 'Potongan Denda';
+                $headers[] = 'Potongan Unpaid Leave';
+                $headers[] = 'Total Potongan';
+                $headers[] = 'Gaji Bersih';
+
+                // Hitung total untuk setiap kolom nominal
+                $totalBaseSalary = 0;
+                $totalAllowancesByName = array_fill_keys($fixedAllowanceNames, 0);
+                $totalAllowancesReceived = 0;
+                $totalOvertimeHours = 0;
+                $totalOvertimePay = 0;
+                $totalBpjsTkCompany = 0;
+                $totalBpjsKesCompany = 0;
+                $totalPph21Allowance = 0;
+                $totalPph21Deduction = 0;
+                $totalBpjsTkEmployee = 0;
+                $totalBpjsKesEmployee = 0;
+                $totalPrivateInsurance = 0;
+                $totalKasbon = 0;
+                $totalDenda = 0;
+                $totalUnpaidLeave = 0;
+                $totalDeductions = 0;
+                $totalNetSalary = 0;
+
+                foreach ($items as $item) {
+                    $bpjsTkCompany = round((float) $item->bpjs_jkk_company + (float) $item->bpjs_jkm_company + (float) $item->bpjs_jht_company + (float) $item->bpjs_jp_company, 2);
+                    $bpjsTkEmployee = round((float) $item->bpjs_jht_employee + (float) $item->bpjs_jp_employee, 2);
+                    $employeePph21 = $item->pph21_method === 'gross_up' ? 0.0 : (float) $item->pph21_deduction;
+                    $allowanceBreakdown = $item->allowance_breakdown ?? [];
+
+                    $totalBaseSalary += (float) $item->base_salary;
+                    foreach ($fixedAllowanceNames as $allowanceName) {
+                        $totalAllowancesByName[$allowanceName] += (float) ($allowanceBreakdown[$allowanceName] ?? 0);
+                    }
+                    $totalAllowancesReceived += (float) $item->allowances_total;
+                    $totalOvertimeHours += (float) $item->overtime_hours;
+                    $totalOvertimePay += (float) $item->overtime_pay;
+                    $totalBpjsTkCompany += $bpjsTkCompany;
+                    $totalBpjsKesCompany += (float) $item->bpjs_kesehatan_company;
+                    $totalPph21Allowance += (float) $item->pph21_allowance;
+                    $totalPph21Deduction += $employeePph21;
+                    $totalBpjsTkEmployee += $bpjsTkEmployee;
+                    $totalBpjsKesEmployee += (float) $item->bpjs_kesehatan_employee;
+                    $totalPrivateInsurance += (float) $item->private_insurance_nominal;
+                    $totalKasbon += (float) $item->kasbon_deduction;
+                    $totalDenda += (float) $item->denda_deduction;
+                    $totalUnpaidLeave += (float) $item->unpaid_leave_deduction;
+                    $totalDeductions += (float) $item->deductions_total;
+                    $totalNetSalary += (float) $item->net_salary;
+                }
+
+                $totalsRow = [
+                    'TOTAL',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    (int) round($totalBaseSalary),
+                ];
+
+                foreach ($fixedAllowanceNames as $allowanceName) {
+                    $totalsRow[] = (int) round($totalAllowancesByName[$allowanceName]);
+                }
+
+                $totalsRow[] = (int) round($totalAllowancesReceived);
+                $totalsRow[] = round($totalOvertimeHours, 2);
+                $totalsRow[] = (int) round($totalOvertimePay);
+                $totalsRow[] = (int) round($totalBpjsTkCompany);
+                $totalsRow[] = (int) round($totalBpjsKesCompany);
+                $totalsRow[] = (int) round($totalPph21Allowance);
+                $totalsRow[] = (int) round($totalPph21Deduction);
+                $totalsRow[] = (int) round($totalBpjsTkEmployee);
+                $totalsRow[] = (int) round($totalBpjsKesEmployee);
+                $totalsRow[] = (int) round($totalPrivateInsurance);
+                $totalsRow[] = (int) round($totalKasbon);
+                $totalsRow[] = (int) round($totalDenda);
+                $totalsRow[] = (int) round($totalUnpaidLeave);
+                $totalsRow[] = (int) round($totalDeductions);
+                $totalsRow[] = (int) round($totalNetSalary);
+
+                // Baris Total di atas nama table header
+                fputcsv($out, $totalsRow);
+
+                // Baris Header
+                fputcsv($out, $headers);
 
                 $no = 1;
                 foreach ($items as $item) {
@@ -548,11 +702,15 @@ class PayrollController extends Controller
                     $bank = $employee?->bankAccounts->first();
                     $bpjsTkCompany = round((float) $item->bpjs_jkk_company + (float) $item->bpjs_jkm_company + (float) $item->bpjs_jht_company + (float) $item->bpjs_jp_company, 2);
                     $bpjsTkEmployee = round((float) $item->bpjs_jht_employee + (float) $item->bpjs_jp_employee, 2);
+                    $employeePph21 = $item->pph21_method === 'gross_up' ? 0.0 : (float) $item->pph21_deduction;
 
-                    fputcsv($out, [
+                    $row = [
                         $no++,
                         $employee?->employee_code ?? '',
                         $employee?->full_name ?? '-',
+                        $employee?->ktp_number ? "'".$employee->ktp_number : '-',
+                        $employee?->npwp_number ? "'".$employee->npwp_number : '-',
+                        $employee?->ptkp_category ?? '-',
                         $employee?->subCompany?->name ?? 'Internal',
                         $employee?->division?->name ?? '-',
                         $employee?->position?->name ?? '-',
@@ -561,27 +719,282 @@ class PayrollController extends Controller
                         $bank?->account_number ?? '',
                         $bank?->account_holder_name ?? '',
                         (int) round((float) $item->base_salary),
-                        (int) round((float) $item->allowances_total),
-                        (float) $item->overtime_hours,
-                        (int) round((float) $item->overtime_pay),
-                        (int) round((float) $item->pph21_allowance),
-                        (int) round((float) $bpjsTkCompany),
-                        (int) round((float) $item->bpjs_kesehatan_company),
-                        (int) round((float) $item->pph21_deduction),
-                        (int) round((float) $bpjsTkEmployee),
-                        (int) round((float) $item->bpjs_kesehatan_employee),
-                        (int) round((float) $item->private_insurance_nominal),
-                        (int) round((float) $item->kasbon_deduction),
-                        (int) round((float) $item->denda_deduction),
-                        (int) round((float) $item->unpaid_leave_deduction),
-                        (int) round((float) $item->deductions_total),
-                        (int) round((float) $item->net_salary),
-                    ]);
+                    ];
+
+                    $allowanceBreakdown = $item->allowance_breakdown ?? [];
+                    foreach ($fixedAllowanceNames as $allowanceName) {
+                        $row[] = (int) round((float) ($allowanceBreakdown[$allowanceName] ?? 0));
+                    }
+
+                    $row[] = (int) round((float) $item->allowances_total);
+                    $row[] = (float) $item->overtime_hours;
+                    $row[] = (int) round((float) $item->overtime_pay);
+
+                    // Benefit (Ditanggung Perusahaan)
+                    $row[] = (int) round((float) $bpjsTkCompany);
+                    $row[] = (int) round((float) $item->bpjs_kesehatan_company);
+                    $row[] = (int) round((float) $item->pph21_allowance);
+
+                    // Potongan (Mengurangi gaji karyawan)
+                    $row[] = (int) round($employeePph21);
+                    $row[] = (int) round((float) $bpjsTkEmployee);
+                    $row[] = (int) round((float) $item->bpjs_kesehatan_employee);
+                    $row[] = (int) round((float) $item->private_insurance_nominal);
+                    $row[] = (int) round((float) $item->kasbon_deduction);
+                    $row[] = (int) round((float) $item->denda_deduction);
+                    $row[] = (int) round((float) $item->unpaid_leave_deduction);
+                    $row[] = (int) round((float) $item->deductions_total);
+                    $row[] = (int) round((float) $item->net_salary);
+
+                    fputcsv($out, $row);
                 }
             }
 
             fclose($out);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
+     * Export full payroll records to Excel (XLSX).
+     */
+    public function exportExcel(PayrollRun $payrollRun, Request $request): StreamedResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+
+        $payrollRun->loadMissing([
+            'items.employee:id,employee_code,first_name,last_name,sub_company_id,division_id,position_id,employment_status,ktp_number,npwp_number,ptkp_category',
+            'items.employee.subCompany:id,code,name',
+            'items.employee.division:id,name',
+            'items.employee.position:id,name',
+            'items.employee.bankAccounts' => fn ($q) => $q->where('is_primary', true)->limit(1),
+        ]);
+
+        $subCompanyId = $request->integer('sub_company_id') ?: null;
+        $items = $payrollRun->items
+            ->when($subCompanyId !== null, fn ($collection) => $collection->filter(
+                fn ($item) => (int) ($item->employee?->sub_company_id ?? 0) === (int) $subCompanyId
+            ))
+            ->values();
+
+        $isThr = $payrollRun->type === 'thr';
+        $prefix = $isThr ? 'thr_' : 'payroll_';
+        $statusSuffix = $payrollRun->is_saved ? '' : '_draft';
+        $filename = $prefix.$payrollRun->period.$statusSuffix.'.xlsx';
+
+        $fixedAllowanceNames = $items
+            ->flatMap(fn ($item) => array_keys($item->allowance_breakdown ?? []))
+            ->unique()
+            ->values()
+            ->all();
+
+        return response()->streamDownload(function () use ($items, $isThr, $fixedAllowanceNames): void {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle($isThr ? 'THR' : 'Payroll');
+
+            $dataRowCount = $items->count();
+            $lastDataRow = $dataRowCount > 0 ? (2 + $dataRowCount) : 3;
+
+            if ($isThr) {
+                $headers = [
+                    'No',
+                    'NIK',
+                    'Nama Karyawan',
+                    'No. KTP',
+                    'No. NPWP',
+                    'Status Pajak',
+                    'Perusahaan / Entitas',
+                    'Divisi',
+                    'Jabatan',
+                    'Status Karyawan',
+                    'Bank',
+                    'No Rekening',
+                    'Atas Nama',
+                    'Gaji Pokok',
+                    'Masa Kerja (Bulan)',
+                    'Nominal THR',
+                    'PPh 21',
+                    'Total THR Bersih',
+                ];
+
+                // Baris 1: TOTAL DI ATAS HEADER
+                $sheet->setCellValue('A1', 'TOTAL');
+                $sheet->setCellValue('N1', "=SUM(N3:N{$lastDataRow})");
+                $sheet->setCellValue('P1', "=SUM(P3:P{$lastDataRow})");
+                $sheet->setCellValue('Q1', "=SUM(Q3:Q{$lastDataRow})");
+                $sheet->setCellValue('R1', "=SUM(R3:R{$lastDataRow})");
+
+                $sheet->getStyle('A1:R1')->getFont()->setBold(true);
+                $sheet->getStyle('A1:R1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE2E8F0');
+                $sheet->getStyle('N1:R1')->getNumberFormat()->setFormatCode('#,##0');
+
+                // Baris 2: TABLE HEADERS
+                foreach ($headers as $colIdx => $header) {
+                    $colLetter = Coordinate::stringFromColumnIndex($colIdx + 1);
+                    $sheet->setCellValue("{$colLetter}2", $header);
+                }
+                $sheet->getStyle('A2:R2')->getFont()->setBold(true);
+                $sheet->getStyle('A2:R2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF1F5F9');
+
+                // Baris 3..N: DATA ROWS
+                $currentRow = 3;
+                $no = 1;
+                foreach ($items as $item) {
+                    $employee = $item->employee;
+                    $bank = $employee?->bankAccounts->first();
+
+                    $sheet->setCellValue("A{$currentRow}", $no++);
+                    $sheet->setCellValueExplicit("B{$currentRow}", (string) ($employee?->employee_code ?? ''), DataType::TYPE_STRING);
+                    $sheet->setCellValue("C{$currentRow}", $employee?->full_name ?? '-');
+                    $sheet->setCellValueExplicit("D{$currentRow}", (string) ($employee?->ktp_number ?? '-'), DataType::TYPE_STRING);
+                    $sheet->setCellValueExplicit("E{$currentRow}", (string) ($employee?->npwp_number ?? '-'), DataType::TYPE_STRING);
+                    $sheet->setCellValue("F{$currentRow}", $employee?->ptkp_category ?? '-');
+                    $sheet->setCellValue("G{$currentRow}", $employee?->subCompany?->name ?? 'Internal');
+                    $sheet->setCellValue("H{$currentRow}", $employee?->division?->name ?? '-');
+                    $sheet->setCellValue("I{$currentRow}", $employee?->position?->name ?? '-');
+                    $sheet->setCellValue("J{$currentRow}", $employee?->employment_status ?? '-');
+                    $sheet->setCellValue("K{$currentRow}", strtoupper($bank?->bank_name ?? ''));
+                    $sheet->setCellValueExplicit("L{$currentRow}", (string) ($bank?->account_number ?? ''), DataType::TYPE_STRING);
+                    $sheet->setCellValue("M{$currentRow}", $bank?->account_holder_name ?? '');
+                    $sheet->setCellValue("N{$currentRow}", (int) round((float) $item->base_salary));
+                    $sheet->setCellValue("O{$currentRow}", (int) ($item->thr_months_of_service ?? 0));
+                    $sheet->setCellValue("P{$currentRow}", (int) round((float) ($item->thr_amount ?: $item->net_salary)));
+                    $sheet->setCellValue("Q{$currentRow}", (int) round((float) $item->pph21_deduction));
+                    $sheet->setCellValue("R{$currentRow}", (int) round((float) $item->net_salary));
+
+                    $sheet->getStyle("N{$currentRow}:R{$currentRow}")->getNumberFormat()->setFormatCode('#,##0');
+                    $currentRow++;
+                }
+
+                for ($col = 1; $col <= count($headers); $col++) {
+                    $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($col))->setAutoSize(true);
+                }
+            } else {
+                $headers = [
+                    'No',
+                    'NIK',
+                    'Nama Karyawan',
+                    'No. KTP',
+                    'No. NPWP',
+                    'Status Pajak',
+                    'Perusahaan / Entitas',
+                    'Divisi',
+                    'Jabatan',
+                    'Status Karyawan',
+                    'Bank',
+                    'No Rekening',
+                    'Atas Nama',
+                    'Gaji Pokok',
+                ];
+
+                foreach ($fixedAllowanceNames as $allowanceName) {
+                    $headers[] = str_starts_with(strtolower($allowanceName), 'tunjangan')
+                        ? $allowanceName
+                        : 'Tunjangan '.$allowanceName;
+                }
+
+                $headers[] = 'Total Tunjangan Diterima';
+                $headers[] = 'Jam Lembur';
+                $headers[] = 'Uang Lembur';
+                $headers[] = 'Benefit - BPJS TK Perusahaan';
+                $headers[] = 'Benefit - BPJS Kes Perusahaan';
+                $headers[] = 'Benefit - Tunjangan PPh 21';
+                $headers[] = 'Potongan PPh 21';
+                $headers[] = 'BPJS TK Karyawan';
+                $headers[] = 'BPJS Kes Karyawan';
+                $headers[] = 'Asuransi Swasta';
+                $headers[] = 'Potongan Kasbon';
+                $headers[] = 'Potongan Denda';
+                $headers[] = 'Potongan Unpaid Leave';
+                $headers[] = 'Total Potongan';
+                $headers[] = 'Gaji Bersih';
+
+                $totalCols = count($headers);
+                $lastColLetter = Coordinate::stringFromColumnIndex($totalCols);
+
+                // Baris 1: TOTAL DI ATAS HEADER
+                $sheet->setCellValue('A1', 'TOTAL');
+
+                // Isi SUM untuk setiap kolom nominal (mulai kolom 14 = Gaji Pokok hingga kolom terakhir)
+                for ($colIdx = 14; $colIdx <= $totalCols; $colIdx++) {
+                    $colLetter = Coordinate::stringFromColumnIndex($colIdx);
+                    $sheet->setCellValue("{$colLetter}1", "=SUM({$colLetter}3:{$colLetter}{$lastDataRow})");
+                }
+
+                $sheet->getStyle("A1:{$lastColLetter}1")->getFont()->setBold(true);
+                $sheet->getStyle("A1:{$lastColLetter}1")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE2E8F0');
+                $sheet->getStyle("N1:{$lastColLetter}1")->getNumberFormat()->setFormatCode('#,##0');
+
+                // Baris 2: TABLE HEADERS
+                foreach ($headers as $colIdx => $header) {
+                    $colLetter = Coordinate::stringFromColumnIndex($colIdx + 1);
+                    $sheet->setCellValue("{$colLetter}2", $header);
+                }
+                $sheet->getStyle("A2:{$lastColLetter}2")->getFont()->setBold(true);
+                $sheet->getStyle("A2:{$lastColLetter}2")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF1F5F9');
+
+                // Baris 3..N: DATA ROWS
+                $currentRow = 3;
+                $no = 1;
+                foreach ($items as $item) {
+                    $employee = $item->employee;
+                    $bank = $employee?->bankAccounts->first();
+                    $bpjsTkCompany = round((float) $item->bpjs_jkk_company + (float) $item->bpjs_jkm_company + (float) $item->bpjs_jht_company + (float) $item->bpjs_jp_company, 2);
+                    $bpjsTkEmployee = round((float) $item->bpjs_jht_employee + (float) $item->bpjs_jp_employee, 2);
+                    $employeePph21 = $item->pph21_method === 'gross_up' ? 0.0 : (float) $item->pph21_deduction;
+                    $allowanceBreakdown = $item->allowance_breakdown ?? [];
+
+                    $colNum = 1;
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", $no++);
+                    $sheet->setCellValueExplicit(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (string) ($employee?->employee_code ?? ''), DataType::TYPE_STRING);
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", $employee?->full_name ?? '-');
+                    $sheet->setCellValueExplicit(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (string) ($employee?->ktp_number ?? '-'), DataType::TYPE_STRING);
+                    $sheet->setCellValueExplicit(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (string) ($employee?->npwp_number ?? '-'), DataType::TYPE_STRING);
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", $employee?->ptkp_category ?? '-');
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", $employee?->subCompany?->name ?? 'Internal');
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", $employee?->division?->name ?? '-');
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", $employee?->position?->name ?? '-');
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", $employee?->employment_status ?? '-');
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", strtoupper($bank?->bank_name ?? ''));
+                    $sheet->setCellValueExplicit(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (string) ($bank?->account_number ?? ''), DataType::TYPE_STRING);
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", $bank?->account_holder_name ?? '');
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->base_salary));
+
+                    foreach ($fixedAllowanceNames as $allowanceName) {
+                        $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) ($allowanceBreakdown[$allowanceName] ?? 0)));
+                    }
+
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->allowances_total));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (float) $item->overtime_hours);
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->overtime_pay));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $bpjsTkCompany));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->bpjs_kesehatan_company));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->pph21_allowance));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round($employeePph21));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $bpjsTkEmployee));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->bpjs_kesehatan_employee));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->private_insurance_nominal));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->kasbon_deduction));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->denda_deduction));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->unpaid_leave_deduction));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->deductions_total));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->net_salary));
+
+                    $sheet->getStyle("N{$currentRow}:{$lastColLetter}{$currentRow}")->getNumberFormat()->setFormatCode('#,##0');
+                    $currentRow++;
+                }
+
+                for ($col = 1; $col <= $totalCols; $col++) {
+                    $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($col))->setAutoSize(true);
+                }
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     /**

@@ -613,6 +613,62 @@ class WorkforceModulesTest extends TestCase
         ]);
     }
 
+    public function test_roster_shift_can_be_generated_for_all_employees_with_empty_target_ids(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $this->seedWorkShifts($user);
+
+        $this->actingAs($user)->post(route('hris.schedules.roster'), [
+            'apply_scope' => 'all',
+            'target_employee_ids' => [],
+            'employee_id' => '',
+            'start_date' => '2026-02-01',
+            'end_date' => '2026-02-01',
+            'pattern' => ['0918'],
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $this->assertDatabaseHas('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-02-01',
+            'shift_code' => '0918',
+        ]);
+    }
+
+    public function test_roster_shift_fails_validation_with_proper_messages_when_required_scope_data_missing(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+        $this->seedWorkShifts($user);
+
+        // Single scope missing employee_id
+        $this->actingAs($user)->post(route('hris.schedules.roster'), [
+            'apply_scope' => 'single',
+            'start_date' => '2026-02-01',
+            'end_date' => '2026-02-01',
+            'pattern' => ['0918'],
+        ])->assertSessionHasErrors(['employee_id' => 'Pilih karyawan yang akan diterapkan jadwal roster.']);
+
+        // Selected scope with empty target_employee_ids
+        $this->actingAs($user)->post(route('hris.schedules.roster'), [
+            'apply_scope' => 'selected',
+            'target_employee_ids' => [],
+            'start_date' => '2026-02-01',
+            'end_date' => '2026-02-01',
+            'pattern' => ['0918'],
+        ])->assertSessionHasErrors(['target_employee_ids' => 'Pilih minimal satu karyawan tujuan.']);
+    }
+
     public function test_holiday_sync_stores_holidays_and_sets_selected_employee_schedule_to_off(): void
     {
         Http::fake([

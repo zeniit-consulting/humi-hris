@@ -203,7 +203,6 @@ class PayrollGenerationService
                 'leaveRequests' => function ($query) use ($ownerId, $start, $end): void {
                     $query->withoutGlobalScopes()
                         ->where('user_id', $ownerId)
-                        ->where('leave_type', 'unpaid')
                         ->where('status', 'approved')
                         ->whereDate('start_date', '<=', $end->toDateString())
                         ->whereDate('end_date', '>=', $start->toDateString());
@@ -373,12 +372,24 @@ class PayrollGenerationService
         $kasbonDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'kasbon');
         $manualDendaDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'denda');
         $attendanceLateDeduction = (float) $employee->attendances->sum('late_penalty');
-        $dendaDeduction = round($manualDendaDeduction + $attendanceLateDeduction, 2);
+
+        // Jika karyawan tidak absen sampai masa cutoff maka termasuk potongan setengah hari prorate
+        $unrecordedCutoffDays = $this->unrecordedAttendanceCutoffDays($employee, $start, $end, $setting);
+        $halfDayProrateRate = round(0.5 * (($monthlyBaseSalary + (float) $employee->allowances->where('is_active', true)->sum('amount')) / $activeWorkingDays), 2);
+        $unrecordedCutoffDeduction = round($unrecordedCutoffDays * $halfDayProrateRate, 2);
+
+        $dendaDeduction = round($manualDendaDeduction + $attendanceLateDeduction + $unrecordedCutoffDeduction, 2);
         $deductionsTotal = round(
             $kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + $pph21Deduction + $bpjs['bpjs_total_employee'],
             2
         );
-        $netSalary = round(max(($baseSalary + $allowancesTotal + $overtimePay + $pph21Allowance) - $deductionsTotal, 0), 2);
+
+        // BPJS Perusahaan dan Tunjangan PPH dikategorikan sebagai benefit, tidak dihitung ke dalam gaji
+        $takeHomePayDeductions = round(
+            $kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + ($pph21Method === 'gross_up' ? 0 : $pph21Deduction) + $bpjs['bpjs_total_employee'],
+            2
+        );
+        $netSalary = round(max(($baseSalary + $allowancesTotal + $overtimePay) - $takeHomePayDeductions, 0), 2);
 
         return [
             'user_id' => $ownerId,
@@ -553,11 +564,68 @@ class PayrollGenerationService
 
     private function unpaidLeaveDays(Employee $employee, Carbon $start, Carbon $end): int
     {
-        return $employee->leaveRequests->sum(function ($leave) use ($start, $end): int {
-            $leaveStart = Carbon::parse($leave->start_date)->max($start);
-            $leaveEnd = Carbon::parse($leave->end_date)->min($end);
+        return $employee->leaveRequests
+            ->where('leave_type', 'unpaid')
+            ->sum(function ($leave) use ($start, $end): int {
+                $leaveStart = Carbon::parse($leave->start_date)->max($start);
+                $leaveEnd = Carbon::parse($leave->end_date)->min($end);
 
-            return $leaveStart->greaterThan($leaveEnd) ? 0 : $leaveStart->diffInDays($leaveEnd) + 1;
-        });
+                return $leaveStart->greaterThan($leaveEnd) ? 0 : $leaveStart->diffInDays($leaveEnd) + 1;
+            });
+    }
+
+    private function unrecordedAttendanceCutoffDays(Employee $employee, Carbon $start, Carbon $end, ?CompanySetting $setting): int
+    {
+        if (! (bool) ($setting?->unrecorded_cutoff_penalty_enabled ?? false)) {
+            return 0;
+        }
+
+        $cutoffDay = $setting->attendance_revision_cutoff_day ?? 'end_of_month';
+        $cutoffDate = $cutoffDay === 'end_of_month'
+            ? $end->copy()->endOfDay()
+            : $start->copy()->day(min((int) $cutoffDay, $start->daysInMonth))->endOfDay();
+
+        $schedules = $employee->schedules->keyBy(
+            fn ($schedule): string => $schedule->work_date->toDateString()
+        );
+        $attendances = $employee->attendances->keyBy(
+            fn ($att): string => $att->attendance_date?->toDateString() ?? ''
+        );
+        $approvedLeaves = $employee->leaveRequests;
+
+        $missingDays = 0;
+        $evalEnd = $end->copy()->min(now());
+
+        for ($date = $start->copy(); $date->lte($evalEnd); $date->addDay()) {
+            if ($date->greaterThan($cutoffDate)) {
+                break;
+            }
+
+            $dateStr = $date->toDateString();
+            $schedule = $schedules->get($dateStr);
+            $isWorkingDay = $schedule ? ! $schedule->is_day_off : $date->isWeekday();
+
+            if (! $isWorkingDay) {
+                continue;
+            }
+
+            $attendance = $attendances->get($dateStr);
+            if ($attendance && ($attendance->check_in_at !== null || in_array($attendance->status, ['present', 'late', 'on_leave'], true))) {
+                continue;
+            }
+
+            $hasLeave = $approvedLeaves->contains(function ($leave) use ($dateStr): bool {
+                $startStr = Carbon::parse($leave->start_date)->toDateString();
+                $endStr = Carbon::parse($leave->end_date)->toDateString();
+
+                return $dateStr >= $startStr && $dateStr <= $endStr;
+            });
+
+            if (! $hasLeave) {
+                $missingDays++;
+            }
+        }
+
+        return $missingDays;
     }
 }
