@@ -118,6 +118,41 @@
         </tr>
     </table>
 
+    @if (isset($sopSummary))
+    <h2>Ringkasan SOP & Kebijakan HR Periode Laporan</h2>
+    <table class="data" style="margin-bottom: 12px; font-size: 8px;">
+        <tr>
+            <th style="width: 25%;">Kebijakan Kerja & Cut-off</th>
+            <th style="width: 25%;">Presensi & Sanksi Keterlambatan</th>
+            <th style="width: 25%;">Kebijakan Lembur (Overtime)</th>
+            <th style="width: 25%;">BPJS & Asuransi Perusahaan</th>
+        </tr>
+        <tr>
+            <td style="vertical-align: top;">
+                <strong>Hari Kerja Standar:</strong> {{ $sopSummary['working_days'] }} hari<br>
+                <strong>Siklus Cut-off:</strong> {{ $sopSummary['cutoff']['label'] }}<br>
+                <strong>Batas Lupa Pulang:</strong> Maksimal H+{{ $sopSummary['attendance']['missing_clock_out_request_days'] }}
+            </td>
+            <td style="vertical-align: top;">
+                <strong>Toleransi Terlambat:</strong> {{ $sopSummary['attendance']['late_tolerance_minutes'] }} menit<br>
+                <strong>Denda Terlambat:</strong> {{ $sopSummary['attendance']['late_penalty_enabled'] ? ($sopSummary['attendance']['late_penalty_type'] === 'tiered' ? 'Bertahap (Tiered)' : 'Progresif') : 'Nonaktif' }}<br>
+                <strong>Terlambat Maksimal:</strong> {{ $sopSummary['attendance']['late_half_day_enabled'] ? 'Potong 50% Prorata (≥'.$sopSummary['attendance']['late_half_day_cutoff_minutes'].' mnt)' : 'Nonaktif' }}<br>
+                <strong>Tanpa Absen Cut-off:</strong> {{ $sopSummary['attendance']['unrecorded_cutoff_penalty_enabled'] ? 'Potong 50% Prorata' : 'Tidak dipotong' }}
+            </td>
+            <td style="vertical-align: top;">
+                <strong>Tarif Lembur:</strong> {{ $sopSummary['overtime']['rate_type'] === 'formula' ? 'Formula Standar (1/'.$sopSummary['overtime']['hour_divisor'].')' : 'Nominal Flat' }}<br>
+                <strong>Multipliers:</strong> 1.5x jam 1, 2.0x seterusnya<br>
+                <strong>Auto Lembur:</strong> {{ $sopSummary['overtime']['auto_overtime_from_attendance'] ? 'Aktif (>'.$sopSummary['overtime']['auto_overtime_min_minutes'].' mnt)' : 'Manual' }}
+            </td>
+            <td style="vertical-align: top;">
+                <strong>BPJS Kesehatan:</strong> {{ $sopSummary['bpjs_insurance']['bpjs_kesehatan_enabled'] ? 'Aktif (Kelas '.$sopSummary['bpjs_insurance']['bpjs_kesehatan_default_class'].')' : 'Nonaktif' }}<br>
+                <strong>BPJS TK:</strong> {{ $sopSummary['bpjs_insurance']['bpjs_ketenagakerjaan_enabled'] ? 'Aktif' : 'Nonaktif' }}<br>
+                <strong>Asuransi Swasta:</strong> {{ $sopSummary['bpjs_insurance']['private_insurance_enabled'] ? $sopSummary['bpjs_insurance']['private_insurance_name'] : 'Tidak Ada' }}
+            </td>
+        </tr>
+    </table>
+    @endif
+
     <h2>Dashboard Analitik</h2>
     <table class="summary">
         <tr>

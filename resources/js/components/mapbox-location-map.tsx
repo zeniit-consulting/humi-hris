@@ -217,8 +217,17 @@ export function MapboxLocationMap({
         }
 
         map.on('error', (event) => {
-            if (event.error) {
-                setMapError(event.error.message);
+            if (event.error && !map.isStyleLoaded()) {
+                const message = event.error.message || 'Map gagal dimuat.';
+                if (
+                    message.includes('401') ||
+                    message.includes('Unauthorized') ||
+                    message.includes('token')
+                ) {
+                    setMapError('Akses Mapbox tidak valid atau token kedaluwarsa.');
+                }
+            } else {
+                console.warn('Mapbox non-fatal warning/error:', event.error);
             }
         });
 
@@ -232,6 +241,7 @@ export function MapboxLocationMap({
         );
 
         map.on('load', () => {
+            map.resize();
             map.addSource('attendance-radius', {
                 type: 'geojson',
                 data: initialCircleDataRef.current,
@@ -277,7 +287,31 @@ export function MapboxLocationMap({
 
         mapRef.current = map;
 
+        // Auto-resize when container dimensions change (e.g., inside modals/dialogs, tabs, or responsive layouts)
+        const container = containerRef.current;
+        let resizeObserver: ResizeObserver | null = null;
+        if (container && typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(() => {
+                mapRef.current?.resize();
+            });
+            resizeObserver.observe(container);
+        }
+
+        const rafId = requestAnimationFrame(() => {
+            mapRef.current?.resize();
+        });
+        const timer1 = setTimeout(() => {
+            mapRef.current?.resize();
+        }, 150);
+        const timer2 = setTimeout(() => {
+            mapRef.current?.resize();
+        }, 500);
+
         return () => {
+            cancelAnimationFrame(rafId);
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+            resizeObserver?.disconnect();
             markersRef.current.forEach((marker) => marker.remove());
             markersRef.current = [];
             map.remove();
@@ -393,6 +427,8 @@ export function MapboxLocationMap({
         }
     }, [isUserPulsing, locations, selectedLocation, userLocation]);
 
+    const lastFlownRef = useRef<MapCoordinates | null>(null);
+
     useEffect(() => {
         const map = mapRef.current;
 
@@ -400,13 +436,25 @@ export function MapboxLocationMap({
             return;
         }
 
+        if (
+            lastFlownRef.current &&
+            Math.abs(lastFlownRef.current.latitude - autoCenter.latitude) <
+                0.0000001 &&
+            Math.abs(lastFlownRef.current.longitude - autoCenter.longitude) <
+                0.0000001
+        ) {
+            return;
+        }
+
+        lastFlownRef.current = autoCenter;
+
         map.flyTo({
             center: [autoCenter.longitude, autoCenter.latitude],
             zoom: Math.max(map.getZoom(), 16),
             duration: 800,
             essential: true,
         });
-    }, [autoCenter]);
+    }, [autoCenter?.latitude, autoCenter?.longitude]);
 
     return (
         <div className={className}>
@@ -415,7 +463,10 @@ export function MapboxLocationMap({
                     {mapError}
                 </div>
             ) : (
-                <div ref={containerRef} className="h-full w-full" />
+                <div
+                    ref={containerRef}
+                    className="relative h-full w-full min-h-[250px]"
+                />
             )}
         </div>
     );

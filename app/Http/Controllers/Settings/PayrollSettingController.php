@@ -65,7 +65,12 @@ class PayrollSettingController extends Controller
 
     public function update(PayrollSettingUpdateRequest $request): RedirectResponse
     {
-        $this->settingFor($request)->update($request->validated());
+        $validated = $request->validated();
+        if (isset($validated['payroll_cutoff_day'])) {
+            $validated['attendance_revision_cutoff_day'] = $validated['payroll_cutoff_day'];
+        }
+
+        $this->settingFor($request)->update($validated);
 
         return to_route('settings.payroll.edit')->with('success', 'Pengaturan payroll dan lembur berhasil diperbarui.');
     }

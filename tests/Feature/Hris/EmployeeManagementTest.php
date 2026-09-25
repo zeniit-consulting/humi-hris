@@ -162,6 +162,61 @@ class EmployeeManagementTest extends TestCase
             );
     }
 
+    public function test_employee_table_can_be_sorted_by_age_and_includes_formatted_age(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Senior',
+            'last_name' => 'Worker',
+            'birth_date' => '1980-01-15',
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Junior',
+            'last_name' => 'Worker',
+            'birth_date' => '2002-06-20',
+        ]);
+
+        // Ascending age: youngest first (Junior), then older (Senior)
+        $this->actingAs($user)
+            ->get(route('hris.employees.index', [
+                'sort' => 'age',
+                'direction' => 'asc',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.sort', 'age')
+                ->where('filters.direction', 'asc')
+                ->where('employees.data.0.full_name', 'Junior Worker')
+                ->where('employees.data.0.age_formatted', function ($value) {
+                    return str_ends_with($value, ' tahun');
+                })
+                ->where('employees.data.1.full_name', 'Senior Worker')
+                ->where('employees.data.1.age_formatted', function ($value) {
+                    return str_ends_with($value, ' tahun');
+                })
+            );
+
+        // Descending age: oldest first (Senior), then younger (Junior)
+        $this->actingAs($user)
+            ->get(route('hris.employees.index', [
+                'sort' => 'age',
+                'direction' => 'desc',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.sort', 'age')
+                ->where('filters.direction', 'desc')
+                ->where('employees.data.0.full_name', 'Senior Worker')
+                ->where('employees.data.1.full_name', 'Junior Worker')
+            );
+    }
+
     public function test_employee_code_is_generated_from_position_division_sequence_and_hire_date()
     {
         $user = User::factory()->create([
@@ -924,6 +979,89 @@ class EmployeeManagementTest extends TestCase
             ])
             ->assertRedirect(route('portal.login'))
             ->assertSessionHasErrors('employee_code');
+    }
+
+    public function test_admin_can_rehire_offboarded_employee(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'level' => '3',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'email' => 'rehire@example.com',
+            'phone' => '628123456788',
+            'hire_date' => '2026-01-01',
+            'employment_status' => 'resigned',
+            'employment_type' => 'PKWTT',
+            'is_active' => false,
+            'offboarded_at' => '2026-06-02',
+            'offboarding_reason' => 'resigned',
+            'offboarding_notes' => 'Alasan pribadi',
+        ]);
+
+        $portalUser = User::factory()->create([
+            'parent_user_id' => $user->id,
+            'role' => 'user',
+            'email' => 'rehire@example.com',
+            'phone' => '628123456788',
+            'suspended_at' => now(),
+            'suspension_reason' => 'Employee offboarding: Resign',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->put(route('hris.employees.update', $employee), [
+                'employee_code' => $employee->employee_code,
+                'first_name' => $employee->first_name,
+                'last_name' => $employee->last_name,
+                'full_name' => $employee->full_name,
+                'email' => $employee->email,
+                'phone' => $employee->phone,
+                'hire_date' => '2026-09-01',
+                'employment_status' => 'active',
+                'employment_type' => 'PKWTT',
+                'division_id' => $division->id,
+                'position_id' => $position->id,
+                'pph21_method' => 'gross',
+                'pph21_rate' => 5,
+                'is_active' => true,
+                'change_notes' => 'Onboard kembali (Re-hire)',
+            ]);
+
+        $response->assertSessionHasNoErrors();
+
+        $employee->refresh();
+
+        $this->assertSame('active', $employee->employment_status);
+        $this->assertTrue($employee->is_active);
+        $this->assertNull($employee->offboarded_at);
+        $this->assertNull($employee->offboarding_reason);
+        $this->assertNull($employee->offboarding_notes);
+        $this->assertSame('2026-09-01', $employee->hire_date?->format('Y-m-d'));
+
+        $this->assertNull($portalUser->fresh()->suspended_at);
+        $this->assertNull($portalUser->fresh()->suspension_reason);
+
+        $this->assertDatabaseHas('employee_employment_histories', [
+            'employee_id' => $employee->id,
+            'event_type' => 'status_change',
+            'old_status' => 'resigned',
+            'new_status' => 'active',
+            'notes' => 'Onboard kembali (Re-hire)',
+            'created_by_user_id' => $user->id,
+        ]);
     }
 
     public function test_offboarding_rejects_date_before_hire_date(): void
@@ -1736,6 +1874,138 @@ class EmployeeManagementTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_import_employees_with_indonesian_headers_and_custom_code(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+            'code' => 'FNB',
+            'name' => 'FnB Services',
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'code' => 'POS-FT',
+            'name' => 'Fulltimer',
+            'level' => '4',
+        ]);
+
+        $file = $this->buildEmployeeImportFile([
+            [
+                'Kode Pegawai' => 'TDPM-001',
+                'Nama' => 'Sabrina Ayu Fitriyah',
+                'Email' => 'sabrina@example.com',
+                'Telepon' => '62882005766747',
+                'Jenis Kelamin' => 'female',
+                'Tempat Lahir' => 'semarang',
+                'Tanggal Lahir' => '2000-12-26',
+                'Pendidikan Terakhir' => 'SMA',
+                'Status Pernikahan' => 'single',
+                'Jumlah Anak' => '0',
+                'Tanggal Masuk' => '2023-10-06',
+                'Status Karyawan' => 'Aktif',
+                'Tipe Karyawan' => 'PKWTT',
+                'Gaji Pokok' => '3200000',
+                'Tunjangan Tetap' => '800000',
+                'Divisi' => 'FnB Services',
+                'Jabatan' => 'Fulltimer',
+                'Bank Utama' => 'MANDIRI',
+                'No. Rekening' => '1350020990899',
+                'Nama Pemilik Rekening' => 'SABRINA AYU FITRIYAH',
+                'Alamat KTP' => 'JL. Delta Mas 3',
+                'No. KTP' => '3374026612000003',
+                'No. KK' => '337402170712005',
+                'Aktif' => 'Ya',
+            ],
+        ]);
+
+        $response = $this->actingAs($user)->post(route('hris.employees.import'), [
+            'import_file' => $file,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('employees', [
+            'user_id' => $user->id,
+            'employee_code' => 'TDPM-001',
+            'first_name' => 'Sabrina Ayu Fitriyah',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'base_salary' => '3200000.00',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+        ]);
+
+        $employee = \App\Models\Employee::where('employee_code', 'TDPM-001')->first();
+        $this->assertNotNull($employee);
+
+        $this->assertDatabaseHas('employee_bank_accounts', [
+            'employee_id' => $employee->id,
+            'bank_name' => 'MANDIRI',
+            'account_number' => '1350020990899',
+        ]);
+
+        $this->assertDatabaseHas('employee_allowances', [
+            'employee_id' => $employee->id,
+            'amount' => '800000.00',
+        ]);
+    }
+
+    public function test_admin_can_import_employees_with_simplified_minimal_columns(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+            'code' => 'OPS',
+            'name' => 'Operational',
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'code' => 'STF-OP',
+            'name' => 'Staff Operasional',
+            'level' => '4',
+        ]);
+
+        $file = $this->buildEmployeeImportFile([
+            [
+                'Nama Lengkap' => 'Budi Santoso',
+                'Divisi' => 'Operational',
+                'Jabatan' => 'Staff Operasional',
+            ],
+        ]);
+
+        $response = $this->actingAs($user)->post(route('hris.employees.import'), [
+            'import_file' => $file,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('employees', [
+            'user_id' => $user->id,
+            'first_name' => 'Budi Santoso',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+        ]);
+
+        $employee = \App\Models\Employee::where('user_id', $user->id)->where('first_name', 'Budi Santoso')->first();
+        $this->assertNotNull($employee);
+        $this->assertSame(now()->toDateString(), $employee->hire_date?->format('Y-m-d'));
+        $this->assertEquals(0, (float) $employee->base_salary);
+    }
+
     public function test_employee_import_fails_when_division_code_is_unknown(): void
     {
         $user = User::factory()->create([
@@ -2122,12 +2392,159 @@ class EmployeeManagementTest extends TestCase
         $this->assertSame('valid', $valid->complianceStatus());
     }
 
+    public function test_admin_can_store_and_update_employee_with_bank_account(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $division = Division::factory()->create(['user_id' => $user->id]);
+        $position = Position::factory()->create(['user_id' => $user->id, 'division_id' => $division->id]);
+
+        $response = $this->actingAs($user)->post(route('hris.employees.store'), [
+            'full_name' => 'John Doe',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'hire_date' => '2026-01-01',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'base_salary' => '5000000',
+            'bank_name' => 'BCA',
+            'account_number' => '8915295441',
+            'account_holder_name' => 'JOHN DOE',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $employee = Employee::where('user_id', $user->id)->where('first_name', 'John Doe')->first();
+        $this->assertNotNull($employee);
+
+        $this->assertDatabaseHas('employee_bank_accounts', [
+            'employee_id' => $employee->id,
+            'bank_name' => 'BCA',
+            'account_number' => '8915295441',
+            'account_holder_name' => 'JOHN DOE',
+            'is_primary' => true,
+        ]);
+
+        // Now update bank account
+        $updateResponse = $this->actingAs($user)->put(route('hris.employees.update', $employee), [
+            'employee_code' => $employee->employee_code,
+            'full_name' => 'John Doe',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'hire_date' => '2026-01-01',
+            'employment_status' => 'active',
+            'employment_type' => 'PKWTT',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'base_salary' => '6000000',
+            'bank_name' => 'MANDIRI',
+            'account_number' => '1350020990899',
+            'account_holder_name' => 'JOHN DOE',
+        ]);
+
+        $updateResponse->assertRedirect();
+        $updateResponse->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('employee_bank_accounts', [
+            'employee_id' => $employee->id,
+            'bank_name' => 'MANDIRI',
+            'account_number' => '1350020990899',
+            'is_primary' => true,
+        ]);
+    }
+
+    public function test_admin_can_import_employees_with_combo_and_various_bank_columns(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $division = Division::factory()->create(['user_id' => $user->id, 'name' => 'Engineering']);
+        $position = Position::factory()->create(['user_id' => $user->id, 'division_id' => $division->id, 'name' => 'Developer']);
+
+        $file = $this->buildEmployeeImportFile([
+            [
+                'Nama Lengkap' => 'Jane Smith',
+                'Divisi' => 'Engineering',
+                'Jabatan' => 'Developer',
+                'Rekening Bank' => 'BCA 8915295441',
+            ],
+        ]);
+
+        $response = $this->actingAs($user)->post(route('hris.employees.import'), [
+            'import_file' => $file,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $employee = Employee::where('user_id', $user->id)->where('first_name', 'Jane Smith')->first();
+        $this->assertNotNull($employee);
+
+        $this->assertDatabaseHas('employee_bank_accounts', [
+            'employee_id' => $employee->id,
+            'bank_name' => 'BCA',
+            'account_number' => '8915295441',
+            'account_holder_name' => 'Jane Smith',
+            'is_primary' => true,
+        ]);
+    }
+
+    public function test_admin_can_reimport_to_update_existing_employees_and_bank_accounts(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $division = Division::factory()->create(['user_id' => $user->id, 'name' => 'Engineering']);
+        $position = Position::factory()->create(['user_id' => $user->id, 'division_id' => $division->id, 'name' => 'Developer']);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-TEST-99',
+            'first_name' => 'Existing Employee',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+        ]);
+
+        $this->assertDatabaseMissing('employee_bank_accounts', [
+            'employee_id' => $employee->id,
+        ]);
+
+        $file = $this->buildEmployeeImportFile([
+            [
+                'Kode Pegawai' => 'EMP-TEST-99',
+                'Nama Lengkap' => 'Existing Employee Updated',
+                'Divisi' => 'Engineering',
+                'Jabatan' => 'Developer',
+                'Bank' => 'BRI',
+                'No. Rekening' => '02930129301',
+                'Nama Pemilik Rekening' => 'EXISTING EMPLOYEE',
+            ],
+        ]);
+
+        $response = $this->actingAs($user)->post(route('hris.employees.import'), [
+            'import_file' => $file,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('employees', [
+            'id' => $employee->id,
+            'first_name' => 'Existing Employee Updated',
+        ]);
+
+        $this->assertDatabaseHas('employee_bank_accounts', [
+            'employee_id' => $employee->id,
+            'bank_name' => 'BRI',
+            'account_number' => '02930129301',
+            'account_holder_name' => 'EXISTING EMPLOYEE',
+        ]);
+    }
+
     /**
      * @param  array<int, array<string, string>>  $rows
      */
-    private function buildEmployeeImportFile(array $rows): UploadedFile
+    private function buildEmployeeImportFile(array $rows, ?array $customHeaders = null): UploadedFile
     {
-        $headers = [
+        $headers = $customHeaders ?? ($rows !== [] ? array_keys($rows[0]) : [
             'full_name',
             'email',
             'phone',
@@ -2158,7 +2575,7 @@ class EmployeeManagementTest extends TestCase
             'emergency_contact_phone',
             'notes',
             'is_active',
-        ];
+        ]);
 
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();

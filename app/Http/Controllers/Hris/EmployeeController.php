@@ -18,7 +18,9 @@ use App\Services\EmployeeEmploymentHistoryService;
 use App\Services\UserPortalAccountService;
 use App\Support\WhatsAppPhone;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,6 +63,7 @@ class EmployeeController extends Controller
                 'name',
                 'code',
                 'contact',
+                'age',
                 'division',
                 'sub_company',
                 'position',
@@ -122,6 +125,10 @@ class EmployeeController extends Controller
                 ->orderBy('last_name', $filters['direction']))
             ->when($filters['sort'] === 'code', fn ($query) => $query->orderBy('employee_code', $filters['direction']))
             ->when($filters['sort'] === 'contact', fn ($query) => $query->orderBy('email', $filters['direction']))
+            ->when($filters['sort'] === 'age', function ($query) use ($filters): void {
+                $direction = $filters['direction'] === 'desc' ? 'asc' : 'desc';
+                $query->orderByRaw('CASE WHEN birth_date IS NULL THEN 1 ELSE 0 END, birth_date '.$direction);
+            })
             ->when($filters['sort'] === 'division', fn ($query) => $query->orderBy(
                 Division::query()->select('name')->whereColumn('divisions.id', 'employees.division_id'),
                 $filters['direction'],
@@ -152,6 +159,8 @@ class EmployeeController extends Controller
                 'gender' => $employee->gender,
                 'birth_place' => $employee->birth_place,
                 'birth_date' => $employee->birth_date?->format('Y-m-d'),
+                'age' => $employee->age,
+                'age_formatted' => $employee->age_formatted,
                 'last_education' => $employee->last_education,
                 'marital_status' => $employee->marital_status,
                 'children_count' => $employee->children_count,
@@ -680,6 +689,7 @@ class EmployeeController extends Controller
                 ['header' => 'Jenis Kelamin', 'value' => fn (Employee $employee) => $employee->gender],
                 ['header' => 'Tempat Lahir', 'value' => fn (Employee $employee) => $employee->birth_place],
                 ['header' => 'Tanggal Lahir', 'value' => fn (Employee $employee) => $employee->birth_date?->format('Y-m-d')],
+                ['header' => 'Usia', 'value' => fn (Employee $employee) => $employee->age_formatted],
                 ['header' => 'Pendidikan Terakhir', 'value' => fn (Employee $employee) => $employee->last_education],
                 ['header' => 'Status Pernikahan', 'value' => fn (Employee $employee) => $employee->marital_status],
                 ['header' => 'Jumlah Anak', 'value' => fn (Employee $employee) => $employee->children_count],
@@ -766,48 +776,81 @@ class EmployeeController extends Controller
     {
         $fileName = 'employee_import_template.xlsx';
         $headers = [
+            'employee_code',
             'full_name',
             'email',
             'phone',
             'gender',
             'birth_place',
-            'timezone',
             'birth_date',
-            'last_education',
-            'marital_status',
-            'children_count',
+            'division_code',
+            'position_code',
             'hire_date',
             'employment_status',
             'employment_type',
-            'pph21_method',
-            'pph21_rate',
-            'division_code',
-            'sub_company_code',
-            'position_code',
-            'manager_employee_code',
             'base_salary',
-            'address',
-            'family_card_number',
+            'fixed_allowance',
+            'bank_name',
+            'account_number',
+            'account_holder_name',
             'ktp_number',
-            'bpjs_kesehatan_number',
-            'bpjs_ketenagakerjaan_number',
-            'sim_a_number',
-            'sim_b_number',
-            'sim_c_number',
-            'biological_mother_name',
-            'emergency_contact_name',
-            'emergency_contact_phone',
-            'notes',
-            'is_active',
+            'address',
         ];
 
         return response()->streamDownload(function () use ($headers): void {
             $spreadsheet = new Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Template Karyawan');
 
             foreach ($headers as $index => $header) {
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($index + 1).'1', $header);
+                $col = Coordinate::stringFromColumnIndex($index + 1);
+                $sheet->setCellValue($col.'1', $header);
+                $sheet->getColumnDimension($col)->setAutoSize(true);
             }
+
+            $lastCol = Coordinate::stringFromColumnIndex(count($headers));
+            $sheet->getStyle('A1:'.$lastCol.'1')->getFont()->setBold(true);
+
+            $helpSheet = $spreadsheet->createSheet();
+            $helpSheet->setTitle('Panduan Kolom');
+            $helpSheet->setCellValue('A1', 'Nama Kolom');
+            $helpSheet->setCellValue('B1', 'Wajib / Opsional');
+            $helpSheet->setCellValue('C1', 'Keterangan & Format');
+            $helpSheet->getStyle('A1:C1')->getFont()->setBold(true);
+
+            $guides = [
+                ['employee_code', 'Opsional', 'Kode unik pegawai (contoh: EMP-001). Kosongkan jika ingin dibuatkan otomatis oleh sistem.'],
+                ['full_name', 'WAJIB', 'Nama lengkap karyawan (contoh: Sabrina Ayu Fitriyah).'],
+                ['email', 'Opsional', 'Email aktif karyawan (contoh: sabrina@example.com).'],
+                ['phone', 'Opsional', 'Nomor HP / WhatsApp (contoh: 0882005766747).'],
+                ['gender', 'Opsional', 'Jenis kelamin: male / female (atau Laki-laki / Perempuan).'],
+                ['birth_place', 'Opsional', 'Kota tempat lahir (contoh: Semarang).'],
+                ['birth_date', 'Opsional', 'Tanggal lahir format YYYY-MM-DD (contoh: 2000-12-26).'],
+                ['division_code', 'WAJIB', 'Nama atau Kode Divisi yang terdaftar (contoh: FnB Services atau FNB).'],
+                ['position_code', 'WAJIB', 'Nama atau Kode Jabatan yang terdaftar (contoh: Fulltimer atau POS-FT).'],
+                ['hire_date', 'Opsional', 'Tanggal masuk kerja format YYYY-MM-DD (contoh: 2023-10-06). Default: tanggal hari ini.'],
+                ['employment_status', 'Opsional', 'Status kerja: active / probation (atau Aktif / Percobaan). Default: active.'],
+                ['employment_type', 'Opsional', 'Tipe kerja: PKWTT / PKWT (atau Tetap / Kontrak). Default: PKWTT.'],
+                ['base_salary', 'Opsional', 'Gaji pokok nominal angka (contoh: 3200000). Default: 0.'],
+                ['fixed_allowance', 'Opsional', 'Tunjangan tetap nominal angka (contoh: 800000).'],
+                ['bank_name', 'Opsional', 'Nama bank penggajian (contoh: MANDIRI, BCA, BRI, BNI).'],
+                ['account_number', 'Opsional', 'Nomor rekening bank penggajian (contoh: 1350020990899).'],
+                ['account_holder_name', 'Opsional', 'Nama pemilik rekening di buku tabungan. Default: nama karyawan.'],
+                ['ktp_number', 'Opsional', 'Nomor Induk Kependudukan (NIK) 16 digit.'],
+                ['address', 'Opsional', 'Alamat domisili atau KTP karyawan.'],
+            ];
+
+            foreach ($guides as $idx => $guide) {
+                $r = $idx + 2;
+                $helpSheet->setCellValue('A'.$r, $guide[0]);
+                $helpSheet->setCellValue('B'.$r, $guide[1]);
+                $helpSheet->setCellValue('C'.$r, $guide[2]);
+            }
+            $helpSheet->getColumnDimension('A')->setAutoSize(true);
+            $helpSheet->getColumnDimension('B')->setAutoSize(true);
+            $helpSheet->getColumnDimension('C')->setAutoSize(true);
+
+            $spreadsheet->setActiveSheetIndex(0);
 
             $writer = new Xlsx($spreadsheet);
             $writer->save('php://output');
@@ -837,112 +880,169 @@ class EmployeeController extends Controller
             ]);
         }
 
-        $divisionMap = Division::query()
-            ->where('user_id', $ownerId)
-            ->get()
-            ->keyBy(fn (Division $division) => strtoupper((string) $division->code));
+        $divisions = Division::query()->where('user_id', $ownerId)->get();
+        $divisionByCode = $divisions->keyBy(fn (Division $division) => strtoupper(trim((string) $division->code)));
+        $divisionByName = $divisions->keyBy(fn (Division $division) => strtoupper(trim((string) $division->name)));
 
-        $positionMap = Position::query()
-            ->where('user_id', $ownerId)
-            ->get()
-            ->keyBy(fn (Position $position) => strtoupper((string) $position->code));
+        $positions = Position::query()->where('user_id', $ownerId)->get();
+        $positionByCode = $positions->keyBy(fn (Position $position) => strtoupper(trim((string) $position->code)));
+        $positionByName = $positions->keyBy(fn (Position $position) => strtoupper(trim((string) $position->name)));
 
-        $subCompanyMap = SubCompany::query()
-            ->where('user_id', $ownerId)
-            ->get()
-            ->keyBy(fn (SubCompany $subCompany) => strtoupper((string) $subCompany->code));
+        $subCompanies = SubCompany::query()->where('user_id', $ownerId)->get();
+        $subCompanyByCode = $subCompanies->keyBy(fn (SubCompany $subCompany) => strtoupper(trim((string) $subCompany->code)));
+        $subCompanyByName = $subCompanies->keyBy(fn (SubCompany $subCompany) => strtoupper(trim((string) $subCompany->name)));
 
-        DB::transaction(function () use ($rows, $ownerId, $divisionMap, $positionMap, $subCompanyMap): void {
+        DB::transaction(function () use ($rows, $ownerId, $divisions, $divisionByCode, $divisionByName, $positions, $positionByCode, $positionByName, $subCompanyByCode, $subCompanyByName): void {
             foreach ($rows as $rowNumber => $row) {
-                $divisionCode = strtoupper((string) ($row['division_code'] ?? ''));
-                $subCompanyCode = strtoupper((string) ($row['sub_company_code'] ?? ''));
-                $positionCode = strtoupper((string) ($row['position_code'] ?? ''));
-                $managerCode = strtoupper((string) ($row['manager_employee_code'] ?? ''));
+                $rawDivision = trim((string) ($row['division_code'] ?? ''));
+                $rawSubCompany = trim((string) ($row['sub_company_code'] ?? ''));
+                $rawPosition = trim((string) ($row['position_code'] ?? ''));
+                $managerCode = strtoupper(trim((string) ($row['manager_employee_code'] ?? '')));
 
-                $division = $divisionCode !== '' ? $divisionMap->get($divisionCode) : null;
-                $subCompany = $subCompanyCode !== '' ? $subCompanyMap->get($subCompanyCode) : null;
-                $position = $positionCode !== '' ? $positionMap->get($positionCode) : null;
+                $division = null;
+                if ($rawDivision !== '') {
+                    $division = $divisionByCode->get(strtoupper($rawDivision)) ?? $divisionByName->get(strtoupper($rawDivision));
+                }
+
+                $subCompany = null;
+                if ($rawSubCompany !== '') {
+                    $subCompany = $subCompanyByCode->get(strtoupper($rawSubCompany)) ?? $subCompanyByName->get(strtoupper($rawSubCompany));
+                }
+
+                $position = null;
+                if ($rawPosition !== '') {
+                    $position = $positionByCode->get(strtoupper($rawPosition));
+                    if ($position === null && $division !== null) {
+                        $position = $positions->first(function (Position $p) use ($rawPosition, $division) {
+                            return (int) $p->division_id === (int) $division->id && strcasecmp(trim((string) $p->name), $rawPosition) === 0;
+                        });
+                    }
+                    if ($position === null) {
+                        $position = $positionByName->get(strtoupper($rawPosition));
+                    }
+                }
+
                 $managerId = null;
-
-                if ($managerCode !== '') {
+                if ($managerCode !== '' && $managerCode !== '-') {
                     $managerId = Employee::withoutGlobalScope('sub_user_sub_company_records')
                         ->where('user_id', $ownerId)
                         ->where('employee_code', $managerCode)
                         ->value('id');
                 }
 
+                $employeeCode = $this->nullableString($row['employee_code'] ?? null);
+                $fullName = $this->nullableString($row['full_name'] ?? null) ?? '';
+                $rawSalary = $this->normalizeImportedAmount($row['base_salary'] ?? null);
+                $baseSalary = $rawSalary !== null ? (float) $rawSalary : 0.0;
+                $hireDate = $this->normalizeImportedDate($row['hire_date'] ?? null) ?? now()->toDateString();
+
                 $payload = [
-                    'full_name' => $this->nullableString($row['full_name'] ?? null) ?? '',
-                    'employee_code' => null,
-                    'first_name' => $this->nullableString($row['full_name'] ?? null) ?? '',
+                    'user_id' => $ownerId,
+                    'full_name' => $fullName,
+                    'employee_code' => $employeeCode,
+                    'first_name' => $fullName,
                     'last_name' => null,
                     'email' => $this->nullableString($row['email'] ?? null),
-                    'phone' => $this->nullableString($row['phone'] ?? null),
-                    'gender' => $this->nullableString($row['gender'] ?? null),
+                    'phone' => $this->cleanPhone($row['phone'] ?? null),
+                    'gender' => $this->normalizeImportedGender($row['gender'] ?? null),
                     'birth_place' => $this->nullableString($row['birth_place'] ?? null),
-                    'timezone' => $this->nullableString($row['timezone'] ?? null),
-                    'birth_date' => $this->nullableString($row['birth_date'] ?? null),
+                    'timezone' => $this->normalizeImportedTimezone($row['timezone'] ?? null),
+                    'birth_date' => $this->normalizeImportedDate($row['birth_date'] ?? null),
+                    'blood_type' => $this->nullableString($row['blood_type'] ?? null),
+                    'religion' => $this->nullableString($row['religion'] ?? null),
                     'last_education' => $this->nullableString($row['last_education'] ?? null),
-                    'marital_status' => $this->nullableString($row['marital_status'] ?? null),
-                    'children_count' => $this->nullableInteger($row['children_count'] ?? null),
-                    'hire_date' => $this->nullableString($row['hire_date'] ?? null),
-                    'employment_status' => $this->nullableString($row['employment_status'] ?? null),
+                    'marital_status' => $this->normalizeImportedMaritalStatus($row['marital_status'] ?? null),
+                    'children_count' => $this->nullableInteger($row['children_count'] ?? null) ?? 0,
+                    'hire_date' => $hireDate,
+                    'employment_status' => $this->normalizeImportedEmploymentStatus($row['employment_status'] ?? null),
                     'employment_type' => $subCompany
                         ? 'OS'
                         : $this->normalizeEmploymentType($row['employment_type'] ?? null),
-                    'pph21_method' => $this->nullableString($row['pph21_method'] ?? null) ?? 'gross',
-                    'pph21_rate' => $this->normalizeImportedAmount($row['pph21_rate'] ?? null) ?? '0',
+                    'contract_duration_months' => $this->nullableInteger($row['contract_duration_months'] ?? null),
+                    'contract_end_date' => $this->normalizeImportedDate($row['contract_end_date'] ?? null),
+                    'probation_duration_months' => $this->nullableInteger($row['probation_duration_months'] ?? null),
+                    'probation_end_date' => $this->normalizeImportedDate($row['probation_end_date'] ?? null),
+                    'pkwtt_activated_at' => $this->normalizeImportedDate($row['pkwtt_activated_at'] ?? null),
+                    'is_wfa' => $this->normalizeImportedBoolean($row['is_wfa'] ?? null, false),
+                    'pph21_method' => $this->normalizeImportedPph21Method($row['pph21_method'] ?? null),
+                    'pph21_rate' => (int) ($this->normalizeImportedAmount($row['pph21_rate'] ?? null) ?? 0),
+                    'ptkp_category' => $this->cleanPtkp($row['ptkp_category'] ?? null),
                     'division_id' => $division?->id,
                     'sub_company_id' => $subCompany?->id,
                     'position_id' => $position?->id,
                     'manager_id' => $managerId,
-                    'base_salary' => $this->normalizeImportedAmount($row['base_salary'] ?? null),
+                    'base_salary' => $baseSalary,
                     'address' => $this->nullableString($row['address'] ?? null),
-                    'family_card_number' => $this->nullableString($row['family_card_number'] ?? null),
-                    'ktp_number' => $this->nullableString($row['ktp_number'] ?? null),
-                    'bpjs_kesehatan_number' => $this->nullableString($row['bpjs_kesehatan_number'] ?? null),
-                    'bpjs_ketenagakerjaan_number' => $this->nullableString($row['bpjs_ketenagakerjaan_number'] ?? null),
-                    'sim_a_number' => $this->nullableString($row['sim_a_number'] ?? null),
-                    'sim_b_number' => $this->nullableString($row['sim_b_number'] ?? null),
-                    'sim_c_number' => $this->nullableString($row['sim_c_number'] ?? null),
+                    'domicile_address' => $this->nullableString($row['domicile_address'] ?? null),
+                    'family_card_number' => $this->cleanIdentificationNumber($row['family_card_number'] ?? null),
+                    'ktp_number' => $this->cleanIdentificationNumber($row['ktp_number'] ?? null),
+                    'npwp_number' => $this->cleanIdentificationNumber($row['npwp_number'] ?? null),
+                    'bpjs_kesehatan_number' => $this->cleanIdentificationNumber($row['bpjs_kesehatan_number'] ?? null),
+                    'bpjs_ketenagakerjaan_number' => $this->cleanIdentificationNumber($row['bpjs_ketenagakerjaan_number'] ?? null),
+                    'sim_a_number' => $this->cleanIdentificationNumber($row['sim_a_number'] ?? null),
+                    'sim_b_number' => $this->cleanIdentificationNumber($row['sim_b_number'] ?? null),
+                    'sim_c_number' => $this->cleanIdentificationNumber($row['sim_c_number'] ?? null),
                     'biological_mother_name' => $this->nullableString($row['biological_mother_name'] ?? null),
                     'emergency_contact_name' => $this->nullableString($row['emergency_contact_name'] ?? null),
-                    'emergency_contact_phone' => $this->nullableString($row['emergency_contact_phone'] ?? null),
+                    'emergency_contact_phone' => $this->cleanPhone($row['emergency_contact_phone'] ?? null),
+                    'emergency_contact_relationship' => $this->nullableString($row['emergency_contact_relationship'] ?? null),
                     'notes' => $this->nullableString($row['notes'] ?? null),
-                    'is_active' => $this->normalizeImportedBoolean($row['is_active'] ?? null),
+                    'is_active' => $this->normalizeImportedBoolean($row['is_active'] ?? null, true),
                 ];
+
+                $existingEmployee = null;
+                if ($employeeCode !== null && $employeeCode !== '') {
+                    $existingEmployee = Employee::withoutGlobalScope('sub_user_sub_company_records')
+                        ->where('user_id', $ownerId)
+                        ->where('employee_code', $employeeCode)
+                        ->first();
+                }
 
                 $validator = Validator::make($payload, [
                     'full_name' => ['required', 'string', 'max:150'],
-                    'employee_code' => ['nullable', 'string', 'max:30'],
+                    'employee_code' => [
+                        'nullable',
+                        'string',
+                        'max:30',
+                        Rule::unique('employees', 'employee_code')->where('user_id', $ownerId)->ignore($existingEmployee?->id),
+                    ],
                     'first_name' => ['nullable', 'string', 'max:100'],
                     'last_name' => ['nullable', 'string', 'max:100'],
                     'email' => [
                         'nullable',
                         'email',
                         'max:150',
-                        Rule::unique('employees', 'email')->where('user_id', $ownerId),
+                        Rule::unique('employees', 'email')->where('user_id', $ownerId)->ignore($existingEmployee?->id),
                     ],
                     'phone' => ['nullable', 'string', 'max:30'],
                     'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
                     'birth_place' => ['nullable', 'string', 'max:150'],
                     'timezone' => ['nullable', Rule::in(array_keys(Employee::TIMEZONES))],
                     'birth_date' => ['nullable', 'date'],
+                    'blood_type' => ['nullable', 'string', 'max:10'],
+                    'religion' => ['nullable', 'string', 'max:50'],
                     'last_education' => ['nullable', 'string', 'max:100'],
                     'marital_status' => ['nullable', Rule::in(['single', 'married', 'divorced', 'widowed'])],
                     'children_count' => ['nullable', 'integer', 'min:0'],
                     'hire_date' => ['required', 'date'],
                     'employment_status' => ['required', Rule::in(['active', 'probation', 'on_leave', 'resigned'])],
                     'employment_type' => ['required', Rule::in(Employee::EMPLOYMENT_TYPES)],
+                    'contract_duration_months' => ['nullable', 'integer', 'min:0'],
+                    'contract_end_date' => ['nullable', 'date'],
+                    'probation_duration_months' => ['nullable', 'integer', 'min:0'],
+                    'probation_end_date' => ['nullable', 'date'],
+                    'pkwtt_activated_at' => ['nullable', 'date'],
+                    'is_wfa' => ['boolean'],
                     'pph21_method' => ['required', Rule::in(['ter_harian', 'gross', 'net', 'gross_up'])],
                     'pph21_rate' => ['required', 'integer', 'min:0'],
+                    'ptkp_category' => ['nullable', Rule::in(['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'])],
                     'division_id' => ['required', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
                     'sub_company_id' => ['nullable', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $ownerId)],
                     'position_id' => [
                         'required',
                         'integer',
                         Rule::exists('positions', 'id')->where('user_id', $ownerId),
-                        function (string $attribute, mixed $value, \Closure $fail) use ($ownerId): void {
+                        function (string $attribute, mixed $value, \Closure $fail) use ($ownerId, $existingEmployee): void {
                             $positionLevel = Position::query()->whereKey($value)->value('level');
 
                             if (! in_array((string) $positionLevel, ['0', '1', '2'], true)) {
@@ -952,6 +1052,7 @@ class EmployeeController extends Controller
                             $isOccupied = Employee::withoutGlobalScope('sub_user_sub_company_records')
                                 ->where('user_id', $ownerId)
                                 ->where('position_id', $value)
+                                ->when($existingEmployee, fn ($q) => $q->where('id', '!=', $existingEmployee->id))
                                 ->exists();
 
                             if ($isOccupied) {
@@ -962,8 +1063,10 @@ class EmployeeController extends Controller
                     'manager_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
                     'base_salary' => ['nullable', 'numeric', 'min:0'],
                     'address' => ['nullable', 'string', 'max:500'],
+                    'domicile_address' => ['nullable', 'string', 'max:500'],
                     'family_card_number' => ['nullable', 'string', 'max:32'],
                     'ktp_number' => ['nullable', 'string', 'max:32'],
+                    'npwp_number' => ['nullable', 'string', 'max:32'],
                     'bpjs_kesehatan_number' => ['nullable', 'string', 'max:32'],
                     'bpjs_ketenagakerjaan_number' => ['nullable', 'string', 'max:32'],
                     'sim_a_number' => ['nullable', 'string', 'max:32'],
@@ -972,29 +1075,30 @@ class EmployeeController extends Controller
                     'biological_mother_name' => ['nullable', 'string', 'max:100'],
                     'emergency_contact_name' => ['nullable', 'string', 'max:100'],
                     'emergency_contact_phone' => ['nullable', 'string', 'max:30'],
+                    'emergency_contact_relationship' => ['nullable', 'string', 'max:100'],
                     'notes' => ['nullable', 'string', 'max:1000'],
                     'is_active' => ['required', 'boolean'],
                 ]);
 
-                if ($divisionCode !== '' && $division === null) {
-                    $validator->after(function ($validator) use ($divisionCode): void {
-                        $validator->errors()->add('division_id', 'Kode divisi '.$divisionCode.' tidak ditemukan.');
+                if ($rawDivision !== '' && $division === null) {
+                    $validator->after(function ($validator) use ($rawDivision): void {
+                        $validator->errors()->add('division_id', 'Kode divisi '.$rawDivision.' tidak ditemukan.');
                     });
                 }
 
-                if ($positionCode !== '' && $position === null) {
-                    $validator->after(function ($validator) use ($positionCode): void {
-                        $validator->errors()->add('position_id', 'Kode jabatan '.$positionCode.' tidak ditemukan.');
+                if ($rawPosition !== '' && $position === null) {
+                    $validator->after(function ($validator) use ($rawPosition): void {
+                        $validator->errors()->add('position_id', 'Kode jabatan '.$rawPosition.' tidak ditemukan.');
                     });
                 }
 
-                if ($subCompanyCode !== '' && $subCompany === null) {
-                    $validator->after(function ($validator) use ($subCompanyCode): void {
-                        $validator->errors()->add('sub_company_id', 'Kode sub-company '.$subCompanyCode.' tidak ditemukan.');
+                if ($rawSubCompany !== '' && $subCompany === null) {
+                    $validator->after(function ($validator) use ($rawSubCompany): void {
+                        $validator->errors()->add('sub_company_id', 'Kode sub-company '.$rawSubCompany.' tidak ditemukan.');
                     });
                 }
 
-                if ($managerCode !== '' && $managerId === null) {
+                if ($managerCode !== '' && $managerCode !== '-' && $managerId === null) {
                     $validator->after(function ($validator) use ($managerCode): void {
                         $validator->errors()->add('manager_id', 'Kode manager '.$managerCode.' tidak ditemukan.');
                     });
@@ -1010,17 +1114,68 @@ class EmployeeController extends Controller
 
                 $this->ensurePositionMatchesDivision($payload['position_id'], $payload['division_id']);
 
-                $division = Division::query()->lockForUpdate()->findOrFail($payload['division_id']);
-                $position = Position::query()->lockForUpdate()->findOrFail($payload['position_id']);
-
-                Employee::create([
-                    ...$payload,
-                    'employee_code' => $this->generateEmployeeCode(
-                        $division,
-                        $position,
+                $finalEmployeeCode = $payload['employee_code'];
+                if ($finalEmployeeCode === null || $finalEmployeeCode === '') {
+                    $divisionModel = Division::query()->lockForUpdate()->findOrFail($payload['division_id']);
+                    $positionModel = Position::query()->lockForUpdate()->findOrFail($payload['position_id']);
+                    $finalEmployeeCode = $this->generateEmployeeCode(
+                        $divisionModel,
+                        $positionModel,
                         (string) $payload['hire_date'],
-                    ),
-                ]);
+                    );
+                }
+
+                if ($existingEmployee) {
+                    $existingEmployee->update([
+                        ...$payload,
+                        'employee_code' => $finalEmployeeCode,
+                    ]);
+                    $employee = $existingEmployee;
+                } else {
+                    $employee = Employee::create([
+                        ...$payload,
+                        'employee_code' => $finalEmployeeCode,
+                    ]);
+                }
+
+                $bankName = $this->nullableString($row['bank_name'] ?? null);
+                $accountNumber = $this->cleanIdentificationNumber($row['account_number'] ?? null);
+                $accountHolderName = $this->nullableString($row['account_holder_name'] ?? null) ?? $employee->full_name;
+
+                if ($bankName === null && $accountNumber !== null) {
+                    if (preg_match('/^(BCA|MANDIRI|BRI|BNI|BSI|CIMB|PERMATA|DANAMON|PANIN|OCBC|BTN|BTPN|JAGO|SEABANK|MAYBANK|MEGA|BJB)[\s:-]+(\d+)$/i', $accountNumber, $matches)) {
+                        $bankName = strtoupper($matches[1]);
+                        $accountNumber = $matches[2];
+                    } elseif (preg_match('/^(\d+)[\s:-]+(BCA|MANDIRI|BRI|BNI|BSI|CIMB|PERMATA|DANAMON|PANIN|OCBC|BTN|BTPN|JAGO|SEABANK|MAYBANK|MEGA|BJB)$/i', $accountNumber, $matches)) {
+                        $bankName = strtoupper($matches[2]);
+                        $accountNumber = $matches[1];
+                    }
+                }
+
+                if ($accountNumber !== null && $accountNumber !== '') {
+                    EmployeeBankAccount::updateOrCreate(
+                        [
+                            'employee_id' => $employee->id,
+                            'is_primary' => true,
+                        ],
+                        [
+                            'user_id' => $ownerId,
+                            'bank_name' => $bankName ?? 'Bank Transfer',
+                            'account_number' => $accountNumber,
+                            'account_holder_name' => $accountHolderName,
+                        ]
+                    );
+                }
+
+                $allowanceAmount = $this->normalizeImportedAmount($row['fixed_allowance'] ?? null);
+                if ($allowanceAmount !== null && (float) $allowanceAmount > 0) {
+                    $this->syncFixedAllowances($employee, [
+                        [
+                            'name' => 'Tunjangan Operasional',
+                            'amount' => $allowanceAmount,
+                        ],
+                    ]);
+                }
             }
         });
 
@@ -1086,12 +1241,15 @@ class EmployeeController extends Controller
     {
         $validated = $this->prepareEmploymentLifecycle($request->validated());
         $fixedAllowances = $validated['fixed_allowances'] ?? [];
-        unset($validated['fixed_allowances']);
+        $bankName = $this->nullableString($validated['bank_name'] ?? null);
+        $accountNumber = $this->cleanIdentificationNumber($validated['account_number'] ?? null);
+        $accountHolderName = $this->nullableString($validated['account_holder_name'] ?? null);
+        unset($validated['fixed_allowances'], $validated['bank_name'], $validated['account_number'], $validated['account_holder_name']);
 
         $this->ensurePositionMatchesDivision($validated['position_id'] ?? null, $validated['division_id'] ?? null);
 
         try {
-            $employee = DB::transaction(function () use ($request, $validated, $fixedAllowances): Employee {
+            $employee = DB::transaction(function () use ($request, $validated, $fixedAllowances, $bankName, $accountNumber, $accountHolderName): Employee {
                 $division = Division::query()
                     ->lockForUpdate()
                     ->findOrFail($validated['division_id']);
@@ -1117,6 +1275,17 @@ class EmployeeController extends Controller
                 ]);
 
                 $this->syncFixedAllowances($employee, $fixedAllowances);
+
+                if ($accountNumber !== null && $accountNumber !== '') {
+                    EmployeeBankAccount::create([
+                        'user_id' => $employee->user_id,
+                        'employee_id' => $employee->id,
+                        'bank_name' => $bankName ?? 'Bank Transfer',
+                        'account_number' => $accountNumber,
+                        'account_holder_name' => $accountHolderName ?? $employee->full_name,
+                        'is_primary' => true,
+                    ]);
+                }
 
                 return $employee;
             });
@@ -1145,33 +1314,77 @@ class EmployeeController extends Controller
         $changeNotes = $validated['change_notes'] ?? null;
         $shouldSyncFixedAllowances = array_key_exists('fixed_allowances', $validated);
         $fixedAllowances = $validated['fixed_allowances'] ?? [];
-        unset($validated['change_effective_date'], $validated['change_notes'], $validated['fixed_allowances']);
+        $hasBankInput = array_key_exists('account_number', $validated) || array_key_exists('bank_name', $validated) || array_key_exists('account_holder_name', $validated);
+        $bankName = array_key_exists('bank_name', $validated) ? $this->nullableString($validated['bank_name']) : null;
+        $accountNumber = array_key_exists('account_number', $validated) ? $this->cleanIdentificationNumber($validated['account_number']) : null;
+        $accountHolderName = array_key_exists('account_holder_name', $validated) ? $this->nullableString($validated['account_holder_name']) : null;
+        unset($validated['change_effective_date'], $validated['change_notes'], $validated['fixed_allowances'], $validated['bank_name'], $validated['account_number'], $validated['account_holder_name']);
         $validated = $this->prepareEmploymentLifecycle($validated, $employee);
 
         $this->ensurePositionMatchesDivision($validated['position_id'] ?? null, $validated['division_id'] ?? null);
 
         try {
-            $employee = DB::transaction(function () use ($employee, $request, $validated, $effectiveDate, $changeNotes, $historyService, $fixedAllowances, $shouldSyncFixedAllowances): Employee {
+            $employee = DB::transaction(function () use ($employee, $request, $validated, $effectiveDate, $changeNotes, $historyService, $fixedAllowances, $shouldSyncFixedAllowances, $hasBankInput, $bankName, $accountNumber, $accountHolderName): Employee {
                 $before = $employee->only([
                     'employment_status', 'division_id', 'position_id',
                     'contract_duration_months', 'contract_end_date',
                     'base_salary', 'daily_wage',
                 ]);
 
+                $wasOffboarded = $employee->offboarded_at !== null || $employee->employment_status === 'resigned';
+                $isRejoining = $wasOffboarded && ($validated['employment_status'] ?? null) !== 'resigned';
+
+                if ($isRejoining) {
+                    $validated['offboarded_at'] = null;
+                    $validated['offboarding_reason'] = null;
+                    $validated['offboarding_notes'] = null;
+                }
+
                 $employee->update([
                     ...$validated,
                     'is_active' => $request->boolean('is_active', true),
                 ]);
 
+                if ($isRejoining) {
+                    $this->portalUserQuery($employee)->update([
+                        'suspended_at' => null,
+                        'suspension_reason' => null,
+                        'suspended_by' => null,
+                    ]);
+                }
+
                 if ($shouldSyncFixedAllowances) {
                     $this->syncFixedAllowances($employee, $fixedAllowances);
+                }
+
+                if ($hasBankInput && $accountNumber !== null && $accountNumber !== '') {
+                    $primaryBank = $employee->bankAccounts()->where('is_primary', true)->first()
+                        ?? $employee->bankAccounts()->first();
+
+                    if ($primaryBank) {
+                        $primaryBank->update([
+                            'bank_name' => $bankName ?? ($primaryBank->bank_name ?: 'Bank Transfer'),
+                            'account_number' => $accountNumber,
+                            'account_holder_name' => $accountHolderName ?? $employee->full_name,
+                            'is_primary' => true,
+                        ]);
+                    } else {
+                        EmployeeBankAccount::create([
+                            'user_id' => $employee->user_id,
+                            'employee_id' => $employee->id,
+                            'bank_name' => $bankName ?? 'Bank Transfer',
+                            'account_number' => $accountNumber,
+                            'account_holder_name' => $accountHolderName ?? $employee->full_name,
+                            'is_primary' => true,
+                        ]);
+                    }
                 }
 
                 $historyService->recordChanges(
                     $employee->fresh(),
                     $before,
                     $effectiveDate,
-                    $changeNotes,
+                    $changeNotes ?? ($isRejoining ? 'Onboard kembali (Re-hire) setelah offboarding' : null),
                     $request->user(),
                 );
 
@@ -1530,14 +1743,208 @@ class EmployeeController extends Controller
             ]);
         }
 
-        $header = array_map(function ($value, $index) {
+        $headerAliases = [
+            'kode pegawai' => 'employee_code',
+            'kode_pegawai' => 'employee_code',
+            'kode' => 'employee_code',
+            'id karyawan' => 'employee_code',
+            'id_karyawan' => 'employee_code',
+            'nama' => 'full_name',
+            'nama lengkap' => 'full_name',
+            'nama_lengkap' => 'full_name',
+            'nama karyawan' => 'full_name',
+            'nama_karyawan' => 'full_name',
+            'email' => 'email',
+            'telepon' => 'phone',
+            'no telepon' => 'phone',
+            'no. telepon' => 'phone',
+            'no_telepon' => 'phone',
+            'nomor telepon' => 'phone',
+            'nomor_telepon' => 'phone',
+            'no hp' => 'phone',
+            'no. hp' => 'phone',
+            'no_hp' => 'phone',
+            'nomor hp' => 'phone',
+            'nomor_hp' => 'phone',
+            'hp' => 'phone',
+            'jenis kelamin' => 'gender',
+            'jenis_kelamin' => 'gender',
+            'gender' => 'gender',
+            'jk' => 'gender',
+            'tempat lahir' => 'birth_place',
+            'tempat_lahir' => 'birth_place',
+            'kota lahir' => 'birth_place',
+            'tanggal lahir' => 'birth_date',
+            'tanggal_lahir' => 'birth_date',
+            'tgl lahir' => 'birth_date',
+            'tgl_lahir' => 'birth_date',
+            'golongan darah' => 'blood_type',
+            'golongan_darah' => 'blood_type',
+            'agama' => 'religion',
+            'pendidikan terakhir' => 'last_education',
+            'pendidikan_terakhir' => 'last_education',
+            'pendidikan' => 'last_education',
+            'status pernikahan' => 'marital_status',
+            'status_pernikahan' => 'marital_status',
+            'jumlah anak' => 'children_count',
+            'jumlah_anak' => 'children_count',
+            'alamat' => 'address',
+            'alamat ktp' => 'address',
+            'alamat_ktp' => 'address',
+            'alamat domisili' => 'domicile_address',
+            'alamat_domisili' => 'domicile_address',
+            'kontak darurat' => 'emergency_contact_name',
+            'kontak_darurat' => 'emergency_contact_name',
+            'telepon darurat' => 'emergency_contact_phone',
+            'telepon_darurat' => 'emergency_contact_phone',
+            'hubungan kontak darurat' => 'emergency_contact_relationship',
+            'hubungan_kontak_darurat' => 'emergency_contact_relationship',
+            'no kk' => 'family_card_number',
+            'no. kk' => 'family_card_number',
+            'no_kk' => 'family_card_number',
+            'nomor kk' => 'family_card_number',
+            'no ktp' => 'ktp_number',
+            'no. ktp' => 'ktp_number',
+            'no_ktp' => 'ktp_number',
+            'nomor ktp' => 'ktp_number',
+            'ktp' => 'ktp_number',
+            'nik' => 'ktp_number',
+            'npwp' => 'npwp_number',
+            'nomor npwp' => 'npwp_number',
+            'no npwp' => 'npwp_number',
+            'no. npwp' => 'npwp_number',
+            'bpjs kesehatan' => 'bpjs_kesehatan_number',
+            'bpjs_kesehatan' => 'bpjs_kesehatan_number',
+            'bpjs ketenagakerjaan' => 'bpjs_ketenagakerjaan_number',
+            'bpjs_ketenagakerjaan' => 'bpjs_ketenagakerjaan_number',
+            'sim a' => 'sim_a_number',
+            'sim_a' => 'sim_a_number',
+            'sim b' => 'sim_b_number',
+            'sim_b' => 'sim_b_number',
+            'sim c' => 'sim_c_number',
+            'sim_c' => 'sim_c_number',
+            'nama ibu kandung' => 'biological_mother_name',
+            'nama_ibu_kandung' => 'biological_mother_name',
+            'ibu kandung' => 'biological_mother_name',
+            'gaji pokok' => 'base_salary',
+            'gaji_pokok' => 'base_salary',
+            'gaji' => 'base_salary',
+            'gapok' => 'base_salary',
+            'metode pph21' => 'pph21_method',
+            'metode_pph21' => 'pph21_method',
+            'tarif pph21' => 'pph21_rate',
+            'tarif_pph21' => 'pph21_rate',
+            'kategori ptkp' => 'ptkp_category',
+            'kategori_ptkp' => 'ptkp_category',
+            'ptkp' => 'ptkp_category',
+            'bank utama' => 'bank_name',
+            'bank_utama' => 'bank_name',
+            'bank' => 'bank_name',
+            'nama bank' => 'bank_name',
+            'nama_bank' => 'bank_name',
+            'bank name' => 'bank_name',
+            'bank_name' => 'bank_name',
+            'no rekening' => 'account_number',
+            'no. rekening' => 'account_number',
+            'no_rekening' => 'account_number',
+            'nomor rekening' => 'account_number',
+            'nomor_rekening' => 'account_number',
+            'no rek' => 'account_number',
+            'no. rek' => 'account_number',
+            'no_rek' => 'account_number',
+            'rekening' => 'account_number',
+            'rekening bank' => 'account_number',
+            'rekening_bank' => 'account_number',
+            'no rekening bank' => 'account_number',
+            'no. rekening bank' => 'account_number',
+            'no_rekening_bank' => 'account_number',
+            'nomor rekening bank' => 'account_number',
+            'nomor_rekening_bank' => 'account_number',
+            'bank account' => 'account_number',
+            'bank_account' => 'account_number',
+            'bank account number' => 'account_number',
+            'bank_account_number' => 'account_number',
+            'account number' => 'account_number',
+            'account_number' => 'account_number',
+            'acc number' => 'account_number',
+            'acc no' => 'account_number',
+            'nama pemilik rekening' => 'account_holder_name',
+            'nama_pemilik_rekening' => 'account_holder_name',
+            'pemilik rekening' => 'account_holder_name',
+            'pemilik_rekening' => 'account_holder_name',
+            'nama pemilik rekening bank' => 'account_holder_name',
+            'nama rekening' => 'account_holder_name',
+            'nama_rekening' => 'account_holder_name',
+            'atas nama' => 'account_holder_name',
+            'atas_nama' => 'account_holder_name',
+            'nama pemilik' => 'account_holder_name',
+            'nama_pemilik' => 'account_holder_name',
+            'pemilik' => 'account_holder_name',
+            'an' => 'account_holder_name',
+            'a.n' => 'account_holder_name',
+            'a.n.' => 'account_holder_name',
+            'a/n' => 'account_holder_name',
+            'account holder' => 'account_holder_name',
+            'account_holder' => 'account_holder_name',
+            'account holder name' => 'account_holder_name',
+            'account_holder_name' => 'account_holder_name',
+            'account name' => 'account_holder_name',
+            'account_name' => 'account_holder_name',
+            'tunjangan tetap' => 'fixed_allowance',
+            'tunjangan_tetap' => 'fixed_allowance',
+            'tunjangan' => 'fixed_allowance',
+            'divisi' => 'division_code',
+            'kode divisi' => 'division_code',
+            'kode_divisi' => 'division_code',
+            'departemen' => 'division_code',
+            'sub company' => 'sub_company_code',
+            'sub_company' => 'sub_company_code',
+            'kode sub company' => 'sub_company_code',
+            'kode_sub_company' => 'sub_company_code',
+            'jabatan' => 'position_code',
+            'kode jabatan' => 'position_code',
+            'kode_jabatan' => 'position_code',
+            'atasan' => 'manager_employee_code',
+            'kode atasan' => 'manager_employee_code',
+            'kode_atasan' => 'manager_employee_code',
+            'manager' => 'manager_employee_code',
+            'status karyawan' => 'employment_status',
+            'status_karyawan' => 'employment_status',
+            'status' => 'employment_status',
+            'tipe karyawan' => 'employment_type',
+            'tipe_karyawan' => 'employment_type',
+            'tanggal masuk' => 'hire_date',
+            'tanggal_masuk' => 'hire_date',
+            'durasi kontrak (bulan)' => 'contract_duration_months',
+            'durasi kontrak' => 'contract_duration_months',
+            'durasi_kontrak' => 'contract_duration_months',
+            'tanggal akhir kontrak' => 'contract_end_date',
+            'tanggal_akhir_kontrak' => 'contract_end_date',
+            'durasi probation (bulan)' => 'probation_duration_months',
+            'durasi probation' => 'probation_duration_months',
+            'durasi_probation' => 'probation_duration_months',
+            'tanggal akhir probation' => 'probation_end_date',
+            'tanggal_akhir_probation' => 'probation_end_date',
+            'tanggal aktivasi pkwtt' => 'pkwtt_activated_at',
+            'tanggal_aktivasi_pkwtt' => 'pkwtt_activated_at',
+            'wfa' => 'is_wfa',
+            'zona waktu' => 'timezone',
+            'zona_waktu' => 'timezone',
+            'aktif' => 'is_active',
+            'catatan' => 'notes',
+            'catatan pekerjaan' => 'notes',
+        ];
+
+        $header = array_map(function ($value, $index) use ($headerAliases) {
             $value = (string) $value;
 
             if ($index === 0) {
                 $value = preg_replace('/^\xEF\xBB\xBF/', '', $value) ?? $value;
             }
 
-            return Str::of($value)->trim()->lower()->toString();
+            $rawKey = Str::of($value)->trim()->lower()->toString();
+
+            return $headerAliases[$rawKey] ?? $rawKey;
         }, $headerRow, array_keys($headerRow));
 
         $lineNumber = 1;
@@ -1550,10 +1957,18 @@ class EmployeeController extends Controller
                 continue;
             }
 
-            $parsedRows[$lineNumber] = array_combine(
+            $rowAssociative = array_combine(
                 $header,
                 array_pad($data, count($header), null)
             ) ?: [];
+
+            $name = trim((string) ($rowAssociative['full_name'] ?? ''));
+            $code = trim((string) ($rowAssociative['employee_code'] ?? ''));
+            if ($name === '' && $code === '') {
+                continue;
+            }
+
+            $parsedRows[$lineNumber] = $rowAssociative;
         }
 
         $spreadsheet->disconnectWorksheets();
@@ -1596,11 +2011,156 @@ class EmployeeController extends Controller
         return $digits === '' ? null : $digits;
     }
 
-    private function normalizeImportedBoolean(mixed $value): bool
+    private function normalizeImportedBoolean(mixed $value, bool $default = true): bool
     {
-        $normalized = strtolower($this->nullableString($value) ?? '1');
+        if ($value === null || $value === '' || $value === '-') {
+            return $default;
+        }
+
+        $normalized = strtolower(trim((string) $value));
 
         return in_array($normalized, ['1', 'true', 'yes', 'ya', 'aktif'], true);
+    }
+
+    private function normalizeImportedDate(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $str = trim((string) $value);
+        if ($str === '' || $str === '-' || $str === '0') {
+            return null;
+        }
+
+        if (is_numeric($str) && (float) $str > 1000 && (float) $str < 100000) {
+            try {
+                return ExcelDate::excelToDateTimeObject((float) $str)->format('Y-m-d');
+            } catch (\Throwable) {
+            }
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $str)) {
+            return $str;
+        }
+
+        if (preg_match('/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})$/', $str, $m)) {
+            return sprintf('%04d-%02d-%02d', (int) $m[3], (int) $m[2], (int) $m[1]);
+        }
+
+        try {
+            return Carbon::parse($str)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function normalizeImportedGender(mixed $value): ?string
+    {
+        $val = strtolower(trim((string) $value));
+
+        return match ($val) {
+            'male', 'laki-laki', 'pria', 'l' => 'male',
+            'female', 'perempuan', 'wanita', 'p' => 'female',
+            'other', 'lainnya' => 'other',
+            default => null,
+        };
+    }
+
+    private function normalizeImportedMaritalStatus(mixed $value): ?string
+    {
+        $val = strtolower(trim((string) $value));
+
+        return match ($val) {
+            'single', 'belum menikah', 'lajang', 'belum kawin' => 'single',
+            'married', 'menikah', 'kawin' => 'married',
+            'divorced', 'cerai', 'cerai hidup' => 'divorced',
+            'widowed', 'janda', 'duda', 'cerai mati' => 'widowed',
+            default => null,
+        };
+    }
+
+    private function normalizeImportedEmploymentStatus(mixed $value): string
+    {
+        $val = strtolower(trim((string) $value));
+
+        return match ($val) {
+            'active', 'aktif' => 'active',
+            'probation', 'percobaan' => 'probation',
+            'on_leave', 'cuti' => 'on_leave',
+            'resigned', 'keluar', 'berhenti' => 'resigned',
+            default => 'active',
+        };
+    }
+
+    private function normalizeImportedTimezone(mixed $value): string
+    {
+        $val = strtolower(trim((string) $value));
+
+        if (str_contains($val, 'makassar') || str_contains($val, 'wita')) {
+            return 'Asia/Makassar';
+        }
+
+        if (str_contains($val, 'jayapura') || str_contains($val, 'wit')) {
+            return 'Asia/Jayapura';
+        }
+
+        return 'Asia/Jakarta';
+    }
+
+    private function normalizeImportedPph21Method(mixed $value): string
+    {
+        $val = strtolower(trim((string) $value));
+
+        return match ($val) {
+            'net', 'nett' => 'net',
+            'gross_up', 'gross up' => 'gross_up',
+            'ter_harian', 'harian' => 'ter_harian',
+            default => 'gross',
+        };
+    }
+
+    private function cleanIdentificationNumber(mixed $value): ?string
+    {
+        if (is_string($value) && preg_match('/^[+-]?\d+(?:\.\d+)?E[+-]?\d+$/i', trim($value))) {
+            $value = sprintf('%.0f', (float) $value);
+        } elseif (is_float($value)) {
+            $value = sprintf('%.0f', $value);
+        }
+
+        $str = $this->nullableString($value);
+
+        if ($str === null || $str === '-') {
+            return null;
+        }
+
+        $cleaned = trim(rtrim($str, '.'));
+
+        return $cleaned === '' ? null : $cleaned;
+    }
+
+    private function cleanPhone(mixed $value): ?string
+    {
+        $str = $this->nullableString($value);
+
+        if ($str === null || $str === '-') {
+            return null;
+        }
+
+        $digits = preg_replace('/[^\d+]/', '', $str);
+
+        return $digits === '' ? null : $digits;
+    }
+
+    private function cleanPtkp(mixed $value): ?string
+    {
+        $val = strtoupper(trim((string) $value));
+
+        if (in_array($val, ['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'], true)) {
+            return $val;
+        }
+
+        return null;
     }
 
     private function normalizeEmploymentType(mixed $value): string

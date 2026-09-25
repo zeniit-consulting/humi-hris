@@ -246,7 +246,7 @@ class PayrollGenerationService
                 },
                 'attendances' => function ($query) use ($ownerId, $start, $end): void {
                     $query->withoutGlobalScopes()
-                        ->where('user_id', $ownerId)
+                        ->where(fn ($q) => $q->where('user_id', $ownerId)->orWhereNull('user_id'))
                         ->whereBetween('attendance_date', [$start->toDateString(), $end->toDateString()]);
                 },
                 'leaveRequests' => function ($query) use ($ownerId, $start, $end): void {
@@ -421,20 +421,12 @@ class PayrollGenerationService
         $kasbonDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'kasbon');
         $manualDendaDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'denda');
         $attendanceLateDeduction = (float) $employee->attendances->sum(function ($att) use ($setting, $employee): float {
-            $penalty = (float) ($att->late_penalty ?? 0);
-            if ($penalty > 0) {
-                return $penalty;
-            }
-            if ($att->status === 'late' || (int) ($att->late_minutes ?? 0) > 0 || (bool) ($att->is_half_day ?? false)) {
-                return app(\App\Services\AttendanceStatusService::class)->calculateLatePenalty(
-                    (int) ($att->late_minutes ?? 0),
-                    (bool) ($att->is_half_day ?? false),
-                    $setting,
-                    $employee
-                );
-            }
-
-            return 0.0;
+            return app(\App\Services\AttendanceStatusService::class)->calculateLatePenaltyForAttendance(
+                $att,
+                $setting,
+                $employee,
+                syncAttendanceRecord: true,
+            );
         });
 
         // Jika karyawan tidak absen sampai masa cutoff maka termasuk potongan setengah hari prorate
@@ -651,7 +643,7 @@ class PayrollGenerationService
                 $leaveStart = Carbon::parse($leave->start_date)->max($start);
                 $leaveEnd = Carbon::parse($leave->end_date)->min($end);
 
-                return $leaveStart->greaterThan($leaveEnd) ? 0 : $leaveStart->diffInDays($leaveEnd) + 1;
+                return $leaveStart->greaterThan($leaveEnd) ? 0 : (int) ($leaveStart->diffInDays($leaveEnd) + 1);
             });
     }
 

@@ -2,7 +2,9 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     Building2,
     CheckCircle2,
+    Loader2,
     MapPin,
+    Navigation,
     Pencil,
     Plus,
     Search,
@@ -11,6 +13,7 @@ import {
 import { useMemo, useState } from 'react';
 import type { ComponentProps, FormEvent } from 'react';
 import InputError from '@/components/input-error';
+import { MapboxLocationMap } from '@/components/mapbox-location-map';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SimplePagination } from '@/components/ui/simple-pagination';
@@ -137,6 +140,16 @@ const LOCATION_DEFAULT: LocationFormData = {
     is_active: true,
 };
 
+const DEFAULT_MAP_CENTER = { latitude: -6.2088, longitude: 106.8456 };
+
+const parseCoordinate = (value: string): number | null => {
+    if (!value || value.trim() === '') {
+        return null;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+};
+
 export default function SubCompaniesIndex() {
     const { filters, subCompanies, stats } = usePage<PageProps>().props;
     const [companyDialogOpen, setCompanyDialogOpen] = useState(false);
@@ -149,6 +162,7 @@ export default function SubCompaniesIndex() {
     const [editingLocation, setEditingLocation] =
         useState<AttendanceLocation | null>(null);
     const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+    const [isLocating, setIsLocating] = useState(false);
 
     const filterForm = useForm({
         search: filters.search,
@@ -156,6 +170,114 @@ export default function SubCompaniesIndex() {
     });
     const companyForm = useForm<SubCompanyFormData>(SUB_COMPANY_DEFAULT);
     const locationForm = useForm<LocationFormData>(LOCATION_DEFAULT);
+
+    const parsedLatitude = parseCoordinate(locationForm.data.latitude);
+    const parsedLongitude = parseCoordinate(locationForm.data.longitude);
+    const hasCoordinates = parsedLatitude !== null && parsedLongitude !== null;
+
+    const mapCenter = useMemo(() => {
+        if (hasCoordinates) {
+            return { latitude: parsedLatitude, longitude: parsedLongitude };
+        }
+        return DEFAULT_MAP_CENTER;
+    }, [hasCoordinates, parsedLatitude, parsedLongitude]);
+
+    const selectedMapLocation = useMemo(() => {
+        if (!hasCoordinates) {
+            return null;
+        }
+        return { latitude: parsedLatitude, longitude: parsedLongitude };
+    }, [hasCoordinates, parsedLatitude, parsedLongitude]);
+
+    const mapLocations = useMemo(() => {
+        if (!hasCoordinates) {
+            return [];
+        }
+        return [
+            {
+                name: locationForm.data.name || 'Lokasi Absen',
+                address: locationForm.data.address || null,
+                latitude: parsedLatitude,
+                longitude: parsedLongitude,
+                radiusMeters: Math.max(
+                    10,
+                    Number(locationForm.data.radius_meters) || 100,
+                ),
+            },
+        ];
+    }, [
+        hasCoordinates,
+        locationForm.data.name,
+        locationForm.data.address,
+        locationForm.data.radius_meters,
+        parsedLatitude,
+        parsedLongitude,
+    ]);
+
+    const handleMapSelect = async (latitude: number, longitude: number) => {
+        locationForm.clearErrors('latitude', 'longitude');
+        const latStr = latitude.toFixed(7);
+        const lngStr = longitude.toFixed(7);
+
+        locationForm.setData((current) => ({
+            ...current,
+            latitude: latStr,
+            longitude: lngStr,
+        }));
+
+        if (!locationForm.data.address || locationForm.data.address.trim() === '') {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(
+                        latStr,
+                    )}&lon=${encodeURIComponent(lngStr)}`,
+                    {
+                        headers: {
+                            Accept: 'application/json',
+                        },
+                    },
+                );
+                if (response.ok) {
+                    const data = (await response.json()) as {
+                        display_name?: string;
+                    };
+                    if (data.display_name) {
+                        locationForm.setData((current) => ({
+                            ...current,
+                            address: current.address || data.display_name || '',
+                        }));
+                    }
+                }
+            } catch {
+                // Silently ignore reverse geocode error
+            }
+        }
+    };
+
+    const handleUseCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            alert('Geolocation tidak didukung oleh browser Anda.');
+            return;
+        }
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setIsLocating(false);
+                handleMapSelect(
+                    position.coords.latitude,
+                    position.coords.longitude,
+                );
+            },
+            (error) => {
+                setIsLocating(false);
+                console.error('Gagal mendapatkan lokasi perangkat:', error);
+                alert(
+                    'Gagal mendeteksi lokasi saat ini. Pastikan izin lokasi aktif pada browser Anda.',
+                );
+            },
+            { enableHighAccuracy: true, timeout: 10000 },
+        );
+    };
 
     const selectedCompany = useMemo(
         () =>
@@ -265,6 +387,14 @@ export default function SubCompaniesIndex() {
     const submitLocation = (event: FormEvent) => {
         event.preventDefault();
         if (!selectedCompany) return;
+
+        if (!locationForm.data.latitude || !locationForm.data.longitude) {
+            locationForm.setError(
+                'latitude',
+                'Silakan klik titik lokasi pada peta Mapbox terlebih dahulu.',
+            );
+            return;
+        }
 
         if (editingLocation) {
             locationForm.put(
@@ -824,31 +954,74 @@ export default function SubCompaniesIndex() {
                             }
                             error={locationForm.errors.address}
                         />
-                        <div className="grid gap-3 md:grid-cols-2">
-                            <Field
-                                id="latitude"
-                                label="Latitude"
-                                type="number"
-                                step="0.0000001"
-                                value={locationForm.data.latitude}
-                                onChange={(value) =>
-                                    locationForm.setData('latitude', value)
-                                }
-                                error={locationForm.errors.latitude}
-                                required
-                            />
-                            <Field
-                                id="longitude"
-                                label="Longitude"
-                                type="number"
-                                step="0.0000001"
-                                value={locationForm.data.longitude}
-                                onChange={(value) =>
-                                    locationForm.setData('longitude', value)
-                                }
-                                error={locationForm.errors.longitude}
-                                required
-                            />
+                        <div className="space-y-2">
+                            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <Label className="text-sm font-medium">
+                                        Titik Lokasi Absen (Peta Mapbox){' '}
+                                        <span className="text-rose-500">*</span>
+                                    </Label>
+                                    <p className="text-xs text-muted-foreground">
+                                        Klik kursor pada peta untuk menentukan titik koordinat lokasi absen.
+                                    </p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleUseCurrentLocation}
+                                    disabled={isLocating}
+                                    className="h-8 gap-1.5 self-start text-xs sm:self-auto"
+                                >
+                                    {isLocating ? (
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                    ) : (
+                                        <Navigation className="size-3.5" />
+                                    )}
+                                    {isLocating ? 'Mencari...' : 'Lokasi Saya'}
+                                </Button>
+                            </div>
+
+                            <div className="overflow-hidden rounded-lg border bg-muted/20">
+                                <MapboxLocationMap
+                                    center={mapCenter}
+                                    zoom={hasCoordinates ? 16 : 5}
+                                    className="h-72 w-full"
+                                    locations={mapLocations}
+                                    selectedLocation={selectedMapLocation}
+                                    autoCenter={selectedMapLocation}
+                                    onSelect={handleMapSelect}
+                                />
+                            </div>
+
+                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/30 px-3 py-2 text-xs">
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                    <MapPin className="size-3.5 text-primary shrink-0" />
+                                    <span>Titik Koordinat:</span>
+                                </div>
+                                {hasCoordinates ? (
+                                    <div className="flex items-center gap-3 font-mono text-xs font-semibold text-foreground">
+                                        <span>Lat: {locationForm.data.latitude}</span>
+                                        <span className="text-muted-foreground/50">|</span>
+                                        <span>Lng: {locationForm.data.longitude}</span>
+                                    </div>
+                                ) : (
+                                    <span className="italic text-amber-600 dark:text-amber-400">
+                                        Belum dipilih (klik kursor pada peta)
+                                    </span>
+                                )}
+                            </div>
+
+                            {(locationForm.errors.latitude ||
+                                locationForm.errors.longitude) && (
+                                <InputError
+                                    message={
+                                        locationForm.errors.latitude ||
+                                        locationForm.errors.longitude ||
+                                        'Titik koordinat lokasi wajib dipilih pada peta.'
+                                    }
+                                />
+                            )}
                         </div>
                         <Field
                             id="radius_meters"

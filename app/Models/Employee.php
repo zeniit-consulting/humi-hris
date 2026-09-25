@@ -323,4 +323,21 @@ class Employee extends Model
     {
         return trim(implode(' ', array_filter([$this->first_name, $this->last_name])));
     }
+
+    /**
+     * Get the employee's current age in years.
+     */
+    public function getAgeAttribute(): ?int
+    {
+        return $this->birth_date ? (int) $this->birth_date->age : null;
+    }
+
+    /**
+     * Get the employee's age formatted as "xx tahun".
+     */
+    public function getAgeFormattedAttribute(): string
+    {
+        return $this->age !== null ? "{$this->age} tahun" : '-';
+    }
 }
+

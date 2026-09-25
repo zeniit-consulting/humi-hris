@@ -211,6 +211,8 @@ type Employee = {
     gender: string | null;
     birth_place: string | null;
     birth_date: string | null;
+    age?: number | null;
+    age_formatted?: string | null;
     last_education: string | null;
     marital_status: string | null;
     children_count: number | null;
@@ -336,6 +338,9 @@ type EmployeeFormData = {
     position_id: string;
     manager_id: string;
     base_salary: string;
+    bank_name: string;
+    account_number: string;
+    account_holder_name: string;
     daily_wage: string;
     service_fee_points: string;
     fixed_allowances: Array<{ name: string; amount: string }>;
@@ -420,6 +425,7 @@ type EmployeeSortKey =
     | 'name'
     | 'code'
     | 'contact'
+    | 'age'
     | 'division'
     | 'sub_company'
     | 'position'
@@ -582,6 +588,9 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     position_id: '',
     manager_id: '',
     base_salary: '',
+    bank_name: '',
+    account_number: '',
+    account_holder_name: '',
     daily_wage: '',
     service_fee_points: '0',
     fixed_allowances: [],
@@ -834,6 +843,41 @@ const formatDateDisplay = (value: string | null) => {
     }).format(parsedDate);
 };
 
+const formatAgeDisplay = (
+    birthDate: string | null,
+    age?: number | null,
+    ageFormatted?: string | null,
+) => {
+    if (ageFormatted && ageFormatted !== '-') {
+        return ageFormatted;
+    }
+
+    if (typeof age === 'number') {
+        return `${age} tahun`;
+    }
+
+    if (!birthDate) {
+        return '-';
+    }
+
+    const parsedDate = new Date(`${birthDate}T00:00:00`);
+    if (Number.isNaN(parsedDate.getTime())) {
+        return '-';
+    }
+
+    const today = new Date();
+    let calculatedAge = today.getFullYear() - parsedDate.getFullYear();
+    const monthDiff = today.getMonth() - parsedDate.getMonth();
+    if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < parsedDate.getDate())
+    ) {
+        calculatedAge--;
+    }
+
+    return calculatedAge >= 0 ? `${calculatedAge} tahun` : '-';
+};
+
 const formatCurrencyDisplay = (value: string | null) => {
     if (!value) {
         return '-';
@@ -1013,6 +1057,9 @@ export default function EmployeesIndex() {
                 'position_id',
                 'manager_id',
                 'base_salary',
+                'bank_name',
+                'account_number',
+                'account_holder_name',
                 'fixed_allowances',
                 'is_active',
                 'change_effective_date',
@@ -1158,6 +1205,10 @@ export default function EmployeesIndex() {
     };
 
     const openEditEmployeeDialog = (employee: Employee) => {
+        const primaryBank =
+            employee.bank_accounts?.find((b) => b.is_primary) ??
+            employee.bank_accounts?.[0];
+
         setEditingEmployee(employee);
         setEmployeeFormStep(1);
         employeeForm.clearErrors();
@@ -1207,6 +1258,9 @@ export default function EmployeesIndex() {
                 : '',
             manager_id: employee.manager_id ? String(employee.manager_id) : '',
             base_salary: normalizeStoredCurrencyValue(employee.base_salary),
+            bank_name: primaryBank?.bank_name ?? '',
+            account_number: primaryBank?.account_number ?? '',
+            account_holder_name: primaryBank?.account_holder_name ?? '',
             daily_wage: normalizeStoredCurrencyValue(employee.daily_wage),
             service_fee_points: employee.service_fee_points ?? '0',
             fixed_allowances: employee.allowances
@@ -2235,7 +2289,7 @@ export default function EmployeesIndex() {
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1320px] text-xs">
+                            <table className="w-full min-w-[1400px] text-xs">
                                 <thead>
                                     <tr className="border-b text-center">
                                         <SortableEmployeeHeader
@@ -2261,6 +2315,14 @@ export default function EmployeesIndex() {
                                             direction={filters.direction}
                                             onSort={handleSort}
                                             className="min-w-[190px] px-2 py-1.5 text-center"
+                                        />
+                                        <SortableEmployeeHeader
+                                            label="Usia"
+                                            sortKey="age"
+                                            activeSort={filters.sort}
+                                            direction={filters.direction}
+                                            onSort={handleSort}
+                                            className="min-w-[95px] px-2 py-1.5 text-center"
                                         />
                                         <SortableEmployeeHeader
                                             label="Divisi"
@@ -2310,6 +2372,9 @@ export default function EmployeesIndex() {
                                             onSort={handleSort}
                                             className="min-w-[135px] px-2 py-1.5 text-center"
                                         />
+                                        <th className="min-w-[140px] px-2 py-1.5 text-center font-medium">
+                                            Rekening Bank
+                                        </th>
                                         <SortableEmployeeHeader
                                             label="Status"
                                             sortKey="status"
@@ -2327,7 +2392,7 @@ export default function EmployeesIndex() {
                                     {employees.data.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={11}
+                                                colSpan={13}
                                                 className="px-3 py-8 text-center text-muted-foreground"
                                             >
                                                 {isResignedList
@@ -2401,6 +2466,13 @@ export default function EmployeesIndex() {
                                                         </p>
                                                     </div>
                                                 </td>
+                                                <td className="px-2 py-2 text-center whitespace-nowrap">
+                                                    {formatAgeDisplay(
+                                                        employee.birth_date,
+                                                        employee.age,
+                                                        employee.age_formatted,
+                                                    )}
+                                                </td>
                                                 <td className="px-2 py-2">
                                                     {employee.division?.name ??
                                                         '-'}
@@ -2450,6 +2522,38 @@ export default function EmployeesIndex() {
                                                             ? employee.daily_wage
                                                             : employee.base_salary,
                                                     )}
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    {(() => {
+                                                        const primaryBank =
+                                                            employee.bank_accounts?.find(
+                                                                (b) =>
+                                                                    b.is_primary,
+                                                            ) ??
+                                                            employee
+                                                                .bank_accounts?.[0];
+                                                        if (!primaryBank) {
+                                                            return (
+                                                                <span className="text-muted-foreground">
+                                                                    -
+                                                                </span>
+                                                            );
+                                                        }
+                                                        return (
+                                                            <div className="flex flex-col">
+                                                                <span className="font-semibold text-foreground">
+                                                                    {
+                                                                        primaryBank.bank_name
+                                                                    }
+                                                                </span>
+                                                                <span className="font-mono text-[11px] text-muted-foreground">
+                                                                    {
+                                                                        primaryBank.account_number
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    })()}
                                                 </td>
                                                 <td className="px-2 py-2">
                                                     <Badge
@@ -2561,22 +2665,47 @@ export default function EmployeesIndex() {
                                                                             PKWTT
                                                                         </DropdownMenuItem>
                                                                     )}
-                                                                <DropdownMenuItem
-                                                                    disabled={
-                                                                        employee.employment_status ===
-                                                                            'resigned' &&
-                                                                        employee.offboarded_at !==
-                                                                            null
-                                                                    }
-                                                                    onClick={() =>
-                                                                        openOffboardingDialog(
-                                                                            employee,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <UserRoundX className="size-4" />
-                                                                    Offboarding
-                                                                </DropdownMenuItem>
+                                                                {employee.employment_status ===
+                                                                'resigned' ||
+                                                                employee.offboarded_at !==
+                                                                    null ? (
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => {
+                                                                            openEditEmployeeDialog(
+                                                                                employee,
+                                                                            );
+                                                                            employeeForm.setData(
+                                                                                (
+                                                                                    prev,
+                                                                                ) => ({
+                                                                                    ...prev,
+                                                                                    employment_status:
+                                                                                        'active',
+                                                                                    is_active:
+                                                                                        true,
+                                                                                    change_notes:
+                                                                                        'Onboard kembali (Re-hire)',
+                                                                                }),
+                                                                            );
+                                                                        }}
+                                                                    >
+                                                                        <UserRoundCheck className="size-4 text-emerald-600" />
+                                                                        Onboard
+                                                                        kembali
+                                                                        (Re-hire)
+                                                                    </DropdownMenuItem>
+                                                                ) : (
+                                                                    <DropdownMenuItem
+                                                                        onClick={() =>
+                                                                            openOffboardingDialog(
+                                                                                employee,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <UserRoundX className="size-4" />
+                                                                        Offboarding
+                                                                    </DropdownMenuItem>
+                                                                )}
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
                                                     </div>
@@ -2700,8 +2829,9 @@ export default function EmployeesIndex() {
                     <DialogHeader>
                         <DialogTitle>Import Data Karyawan</DialogTitle>
                         <DialogDescription>
-                            Unduh template Excel, isi data sesuai kolom, lalu
-                            upload file untuk menambahkan karyawan sekaligus.
+                            Unduh template Excel yang kini lebih sederhana, isi
+                            data karyawan, lalu unggah kembali untuk impor
+                            sekaligus.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -2711,12 +2841,12 @@ export default function EmployeesIndex() {
                     >
                         <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
                             <p className="font-medium text-foreground">
-                                Template import
+                                Format Template Sederhana
                             </p>
-                            <p className="mt-1">
-                                Gunakan `division_code` dan `position_code` yang
-                                sudah terdaftar. File yang didukung: XLSX, XLS,
-                                CSV, atau TXT.
+                            <p className="mt-1 text-xs leading-relaxed">
+                                Cukup isi kolom esensial (Nama Lengkap, Divisi,
+                                Jabatan, Tanggal Masuk, dan Gaji). Kolom Divisi &
+                                Jabatan dapat diisi menggunakan <strong>Nama</strong> (contoh: <em>FnB Services</em>, <em>Fulltimer</em>) maupun <strong>Kode</strong> (contoh: <em>FNB</em>, <em>POS-FT</em>). Kolom dalam Bahasa Indonesia maupun Inggris didukung otomatis.
                             </p>
                             <Button
                                 asChild
@@ -2727,7 +2857,7 @@ export default function EmployeesIndex() {
                             >
                                 <a href={employeeImportTemplateUrl}>
                                     <Download className="size-4" />
-                                    Download Template
+                                    Download Template Sederhana
                                 </a>
                             </Button>
                         </div>
@@ -2833,6 +2963,35 @@ export default function EmployeesIndex() {
                                     </dt>
                                     <dd className="text-sm font-medium">
                                         {detailEmployee.phone ?? '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Tempat & Tanggal Lahir
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {[
+                                            detailEmployee.birth_place,
+                                            detailEmployee.birth_date
+                                                ? formatDateDisplay(
+                                                      detailEmployee.birth_date,
+                                                  )
+                                                : null,
+                                        ]
+                                            .filter(Boolean)
+                                            .join(', ') || '-'}
+                                    </dd>
+                                </div>
+                                <div className="flex flex-col">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Usia
+                                    </dt>
+                                    <dd className="text-sm font-medium">
+                                        {formatAgeDisplay(
+                                            detailEmployee.birth_date,
+                                            detailEmployee.age,
+                                            detailEmployee.age_formatted,
+                                        )}
                                     </dd>
                                 </div>
                                 <div className="flex flex-col">
@@ -3057,6 +3216,51 @@ export default function EmployeesIndex() {
                                     </dd>
                                 </div>
                             </dl>
+                            <div className="flex flex-col gap-2 rounded-md border p-3">
+                                <div className="flex items-center gap-2">
+                                    <Landmark className="size-4 text-primary" />
+                                    <p className="font-medium text-foreground">
+                                        Rekening Bank Penggajian
+                                    </p>
+                                </div>
+                                {detailEmployee.bank_accounts.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        Belum ada rekening bank yang didaftarkan.
+                                    </p>
+                                ) : (
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        {detailEmployee.bank_accounts.map(
+                                            (bank) => (
+                                                <div
+                                                    key={bank.id}
+                                                    className="flex flex-col gap-1 rounded border bg-muted/20 p-2.5 text-xs"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="font-semibold text-foreground">
+                                                            {bank.bank_name}
+                                                        </span>
+                                                        {bank.is_primary && (
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="text-[10px]"
+                                                            >
+                                                                Utama
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    <p className="font-mono text-sm font-medium">
+                                                        {bank.account_number}
+                                                    </p>
+                                                    <p className="text-muted-foreground">
+                                                        a.n.{' '}
+                                                        {bank.account_holder_name}
+                                                    </p>
+                                                </div>
+                                            ),
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                             <div className="flex flex-col gap-3 rounded-md border p-3">
                                 <p className="font-medium">
                                     Histori Kepegawaian
@@ -5207,6 +5411,99 @@ export default function EmployeesIndex() {
                                     </div>
                                 </div>
 
+                                <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+                                    <div className="flex items-center gap-2">
+                                        <Landmark className="size-4 text-primary" />
+                                        <p className="text-sm font-semibold text-foreground">
+                                            Rekening Bank Penggajian (Utama)
+                                        </p>
+                                    </div>
+                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="employee_bank_name">
+                                            Nama Bank
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <Input
+                                                id="employee_bank_name"
+                                                value={
+                                                    employeeForm.data.bank_name
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'bank_name',
+                                                        event.target.value.toUpperCase(),
+                                                    )
+                                                }
+                                                placeholder="Contoh: BCA, MANDIRI, BRI, BNI"
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .bank_name
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="employee_account_number">
+                                            Nomor Rekening
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <Input
+                                                id="employee_account_number"
+                                                value={
+                                                    employeeForm.data
+                                                        .account_number
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'account_number',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Contoh: 1350020990899"
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .account_number
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="employee_account_holder_name">
+                                            Nama Pemilik Rekening
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <Input
+                                                id="employee_account_holder_name"
+                                                value={
+                                                    employeeForm.data
+                                                        .account_holder_name
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'account_holder_name',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder={
+                                                    employeeForm.data
+                                                        .full_name ||
+                                                    'Sesuai buku tabungan'
+                                                }
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .account_holder_name
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                     <Label htmlFor="employee_is_active">
                                         Status Aktif
@@ -5356,6 +5653,14 @@ export default function EmployeesIndex() {
                                         {formatThousandDigits(
                                             employeeForm.data.pph21_rate || '0',
                                         ) || '0'}
+                                    </p>
+                                    <p>
+                                        <span className="font-medium">
+                                            Rekening Bank:
+                                        </span>{' '}
+                                        {employeeForm.data.account_number
+                                            ? `${employeeForm.data.bank_name || 'Bank'} • ${employeeForm.data.account_number} (a.n. ${employeeForm.data.account_holder_name || employeeForm.data.full_name || '-'})`
+                                            : '-'}
                                     </p>
                                 </div>
 

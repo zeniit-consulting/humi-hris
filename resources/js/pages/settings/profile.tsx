@@ -53,12 +53,16 @@ const parseCoordinate = (value: string): number | null => {
 type LocationMapPickerProps = {
     latitude: string;
     longitude: string;
+    radiusMeters?: number;
+    locationName?: string;
     onSelect: (latitude: number, longitude: number) => void;
 };
 
 function LocationMapPicker({
     latitude,
     longitude,
+    radiusMeters = 100,
+    locationName = 'Lokasi Utama',
     onSelect,
 }: LocationMapPickerProps) {
     const parsedLatitude = parseCoordinate(latitude);
@@ -69,15 +73,42 @@ function LocationMapPicker({
         ? [parsedLatitude, parsedLongitude]
         : defaultMapCenter;
 
-    const selectedLocation = hasSelectedPoint
-        ? { latitude: parsedLatitude, longitude: parsedLongitude }
-        : null;
+    const selectedLocation = useMemo(
+        () =>
+            hasSelectedPoint
+                ? { latitude: parsedLatitude, longitude: parsedLongitude }
+                : null,
+        [hasSelectedPoint, parsedLatitude, parsedLongitude],
+    );
+
+    const mapLocations = useMemo(
+        () =>
+            hasSelectedPoint
+                ? [
+                      {
+                          name: locationName,
+                          address: null,
+                          latitude: parsedLatitude,
+                          longitude: parsedLongitude,
+                          radiusMeters: Math.max(10, radiusMeters),
+                      },
+                  ]
+                : [],
+        [
+            hasSelectedPoint,
+            locationName,
+            parsedLatitude,
+            parsedLongitude,
+            radiusMeters,
+        ],
+    );
 
     return (
         <MapboxLocationMap
             center={{ latitude: center[0], longitude: center[1] }}
             zoom={hasSelectedPoint ? 16 : 5}
             className="h-80 w-full"
+            locations={mapLocations}
             selectedLocation={selectedLocation}
             autoCenter={selectedLocation}
             onSelect={onSelect}
@@ -954,6 +985,15 @@ export default function Profile({
                                                     longitude={
                                                         primaryLocation.longitude
                                                     }
+                                                    radiusMeters={
+                                                        Number(
+                                                            company.attendance_radius_meters,
+                                                        ) || 100
+                                                    }
+                                                    locationName={
+                                                        company.location_name ||
+                                                        'Kantor Pusat'
+                                                    }
                                                     onSelect={
                                                         handlePrimaryLocationSelect
                                                     }
@@ -1349,6 +1389,19 @@ export default function Profile({
                                                             mapPickerIndex
                                                         ].longitude ?? '',
                                                     )}
+                                                    radiusMeters={
+                                                        Number(
+                                                            attendanceLocations[
+                                                                mapPickerIndex
+                                                            ].radius_meters,
+                                                        ) || 100
+                                                    }
+                                                    locationName={
+                                                        attendanceLocations[
+                                                            mapPickerIndex
+                                                        ].name ||
+                                                        'Lokasi Absensi'
+                                                    }
                                                     onSelect={(
                                                         latitude,
                                                         longitude,

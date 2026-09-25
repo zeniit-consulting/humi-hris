@@ -15,5 +15,8 @@ test('employee table headers trigger server-side sorting', () => {
     assert.match(source, /sort: key/);
     assert.match(source, /<SortableEmployeeHeader/);
     assert.match(source, /sortKey="name"/);
+    assert.match(source, /sortKey="age"/);
     assert.match(source, /sortKey="hire_date"/);
+    assert.match(source, /label="Usia"/);
 });
+

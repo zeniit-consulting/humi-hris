@@ -1,5 +1,16 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { CalendarDays, Download, Filter, RotateCcw } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    BookOpen,
+    CalendarClock,
+    CalendarDays,
+    Clock,
+    Download,
+    Filter,
+    RotateCcw,
+    ShieldCheck,
+    SlidersHorizontal,
+    Timer,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -228,6 +239,60 @@ type Analytics = {
     }>;
 };
 
+type SopSummary = {
+    company_name: string;
+    working_days: number;
+    cutoff: {
+        day: string;
+        label: string;
+        description: string;
+    };
+    attendance: {
+        late_tolerance_minutes: number;
+        late_penalty_enabled: boolean;
+        late_penalty_type: string;
+        late_penalty_tiers: Array<{
+            from_minute: number;
+            to_minute: number | null | '';
+            penalty_amount: number;
+            description?: string;
+        }>;
+        late_base_penalty_minutes: number;
+        late_base_penalty_amount: number;
+        late_incremental_penalty_amount: number;
+        late_half_day_enabled: boolean;
+        late_half_day_cutoff_minutes: number;
+        late_half_day_penalty_type: string;
+        late_half_day_penalty_amount: number;
+        late_half_day_deduct_leave: boolean;
+        unrecorded_cutoff_penalty_enabled: boolean;
+        missing_clock_out_request_days: number;
+        require_face_recognition: boolean;
+    };
+    overtime: {
+        calculation_mode: string;
+        rate_type: string;
+        fixed_rate: number | null;
+        hour_divisor: number;
+        multiplier_h1: number;
+        multiplier_subsequent: number;
+        auto_overtime_from_attendance: boolean;
+        auto_overtime_min_minutes: number;
+    };
+    bpjs_insurance: {
+        bpjs_kesehatan_enabled: boolean;
+        bpjs_kesehatan_default_class: string;
+        bpjs_ketenagakerjaan_enabled: boolean;
+        jkk_enabled: boolean;
+        jkm_enabled: boolean;
+        jht_enabled: boolean;
+        jp_enabled: boolean;
+        private_insurance_enabled: boolean;
+        private_insurance_name: string;
+        private_insurance_nominal: number;
+    };
+};
+
 type PageProps = {
     period: Period;
     filters: {
@@ -246,6 +311,7 @@ type PageProps = {
     performanceDetails: PerformanceDetails;
     recruitmentDetails: RecruitmentDetails;
     analytics: Analytics;
+    sopSummary?: SopSummary;
 };
 
 const monthOptions = [
@@ -320,6 +386,7 @@ export default function ReportPage() {
         performanceDetails,
         recruitmentDetails,
         analytics,
+        sopSummary,
     } = usePage<PageProps>().props;
     const [month, setMonth] = useState(String(filters.month));
     const [year, setYear] = useState(String(filters.year));
@@ -480,6 +547,180 @@ export default function ReportPage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                {sopSummary && (
+                    <Card className="border-indigo-100/90 bg-linear-to-b from-indigo-50/30 via-background to-background dark:border-indigo-950/40">
+                        <CardHeader className="pb-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="space-y-1">
+                                    <CardTitle className="flex items-center gap-2 text-base text-indigo-950 dark:text-indigo-200">
+                                        <BookOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                        Ringkasan SOP & Kebijakan HR Periode {period.label}
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Parameter standar operasional presensi, batas toleransi, denda, cut-off, upah lembur, dan jaminan sosial yang berlaku.
+                                    </CardDescription>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" asChild className="h-8 text-xs gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300">
+                                        <Link href="/settings/payroll">
+                                            <SlidersHorizontal className="h-3.5 w-3.5" />
+                                            Kelola Kebijakan
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+                                {/* 1. Kebijakan Kerja & Cut-off */}
+                                <div className="rounded-xl border border-slate-200/80 bg-card p-4 space-y-2.5 shadow-2xs">
+                                    <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 pb-1.5 border-b">
+                                        <CalendarClock className="h-4 w-4 text-blue-600" />
+                                        <h4 className="font-semibold text-xs uppercase tracking-wider">Kerja & Cut-off</h4>
+                                    </div>
+                                    <div className="space-y-2 text-xs">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Hari Kerja Standar:</span>
+                                            <span className="font-medium text-right font-mono">{sopSummary.working_days} hari/bln</span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Siklus Cut-off:</span>
+                                            <span className="font-medium text-right text-blue-600 dark:text-blue-400">
+                                                {sopSummary.cutoff.day === 'end_of_month' ? 'Akhir Bulan' : `Tanggal ${sopSummary.cutoff.day}`}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Batas Lupa Pulang:</span>
+                                            <span className="font-medium text-right">Maks. H+{sopSummary.attendance.missing_clock_out_request_days} hari</span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Verifikasi Presensi:</span>
+                                            <span className="font-medium text-right">
+                                                {sopSummary.attendance.require_face_recognition ? 'Face Recognition' : 'GPS / Geofence'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 2. Presensi & Sanksi Keterlambatan */}
+                                <div className="rounded-xl border border-slate-200/80 bg-card p-4 space-y-2.5 shadow-2xs">
+                                    <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 pb-1.5 border-b">
+                                        <Clock className="h-4 w-4 text-amber-600" />
+                                        <h4 className="font-semibold text-xs uppercase tracking-wider">Presensi & Denda</h4>
+                                    </div>
+                                    <div className="space-y-2 text-xs">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Toleransi Masuk:</span>
+                                            <span className="font-medium text-right font-mono">{sopSummary.attendance.late_tolerance_minutes} menit</span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Skema Denda:</span>
+                                            <span className="font-medium text-right">
+                                                {sopSummary.attendance.late_penalty_enabled
+                                                    ? (sopSummary.attendance.late_penalty_type === 'tiered' ? 'Bertahap (Tiered)' : 'Progresif per Menit')
+                                                    : 'Nonaktif'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Terlambat Maksimal:</span>
+                                            <span className="font-medium text-right text-amber-600 dark:text-amber-400">
+                                                {sopSummary.attendance.late_half_day_enabled
+                                                    ? `50% Prorate (≥${sopSummary.attendance.late_half_day_cutoff_minutes} m)`
+                                                    : 'Nonaktif'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Tanpa Absen Cutoff:</span>
+                                            <span className="font-medium text-right">
+                                                {sopSummary.attendance.unrecorded_cutoff_penalty_enabled ? 'Potong Prorata' : 'Tidak dipotong'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 3. Kebijakan Lembur */}
+                                <div className="rounded-xl border border-slate-200/80 bg-card p-4 space-y-2.5 shadow-2xs">
+                                    <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 pb-1.5 border-b">
+                                        <Timer className="h-4 w-4 text-indigo-600" />
+                                        <h4 className="font-semibold text-xs uppercase tracking-wider">Lembur (Overtime)</h4>
+                                    </div>
+                                    <div className="space-y-2 text-xs">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Metode Upah:</span>
+                                            <span className="font-medium text-right">
+                                                {sopSummary.overtime.rate_type === 'formula' ? `Depnaker (1/${sopSummary.overtime.hour_divisor})` : 'Nominal Flat'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Multiplier Jam:</span>
+                                            <span className="font-medium text-right font-mono">1.5x / 2.0x</span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Auto-Lembur:</span>
+                                            <span className="font-medium text-right">
+                                                {sopSummary.overtime.auto_overtime_from_attendance
+                                                    ? `Aktif (>${sopSummary.overtime.auto_overtime_min_minutes} mnt)`
+                                                    : 'Manual / Form'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Mode Ambang:</span>
+                                            <span className="font-medium text-right capitalize">
+                                                {sopSummary.overtime.calculation_mode === 'threshold_daily' ? 'Ambang Jam' : 'Jam Riil'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 4. BPJS & Jaminan Sosial */}
+                                <div className="rounded-xl border border-slate-200/80 bg-card p-4 space-y-2.5 shadow-2xs">
+                                    <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 pb-1.5 border-b">
+                                        <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                                        <h4 className="font-semibold text-xs uppercase tracking-wider">BPJS & Asuransi</h4>
+                                    </div>
+                                    <div className="space-y-2 text-xs">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">BPJS Kesehatan:</span>
+                                            <span className="font-medium text-right">
+                                                {sopSummary.bpjs_insurance.bpjs_kesehatan_enabled ? `Kelas ${sopSummary.bpjs_insurance.bpjs_kesehatan_default_class}` : 'Nonaktif'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">BPJS TK Program:</span>
+                                            <span className="font-medium text-right text-emerald-600 dark:text-emerald-400">
+                                                {sopSummary.bpjs_insurance.bpjs_ketenagakerjaan_enabled
+                                                    ? [
+                                                          sopSummary.bpjs_insurance.jkk_enabled && 'JKK',
+                                                          sopSummary.bpjs_insurance.jkm_enabled && 'JKM',
+                                                          sopSummary.bpjs_insurance.jht_enabled && 'JHT',
+                                                          sopSummary.bpjs_insurance.jp_enabled && 'JP',
+                                                      ].filter(Boolean).join(', ')
+                                                    : 'Nonaktif'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Asuransi Swasta:</span>
+                                            <span className="font-medium text-right truncate max-w-[120px]" title={sopSummary.bpjs_insurance.private_insurance_name}>
+                                                {sopSummary.bpjs_insurance.private_insurance_enabled
+                                                    ? (sopSummary.bpjs_insurance.private_insurance_name || 'Aktif')
+                                                    : 'Tidak Ada'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <span className="text-muted-foreground">Iuran Default:</span>
+                                            <span className="font-medium text-right font-mono">
+                                                {sopSummary.bpjs_insurance.private_insurance_enabled
+                                                    ? formatCurrency(sopSummary.bpjs_insurance.private_insurance_nominal)
+                                                    : '-'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <Card>
                     <CardHeader>

@@ -621,31 +621,34 @@ class PayrollController extends Controller
                 }
 
                 $headers[] = 'Total Tunjangan Diterima';
+                $headers[] = 'Tunjangan Tidak Tetap';
                 $headers[] = 'Jam Lembur';
                 $headers[] = 'Uang Lembur';
-                $headers[] = 'Benefit - BPJS TK Perusahaan';
-                $headers[] = 'Benefit - BPJS Kes Perusahaan';
-                $headers[] = 'Benefit - Tunjangan PPh 21';
+                $headers[] = 'Bonus';
+                $headers[] = 'Total Tunjangan';
                 $headers[] = 'Potongan PPh 21';
-                $headers[] = 'BPJS TK Karyawan';
-                $headers[] = 'BPJS Kes Karyawan';
-                $headers[] = 'Asuransi Swasta';
+                $headers[] = 'Iuran BPJS TK';
+                $headers[] = 'Iuran BPJS Kesehatan';
+                $headers[] = 'Iuran Asuransi Swasta';
                 $headers[] = 'Potongan Kasbon';
                 $headers[] = 'Potongan Denda';
                 $headers[] = 'Potongan Unpaid Leave';
                 $headers[] = 'Potongan Lainnya';
                 $headers[] = 'Total Potongan';
                 $headers[] = 'Gaji Bersih';
+                $headers[] = 'Benefit - BPJS TK Perusahaan';
+                $headers[] = 'Benefit - BPJS Kes Perusahaan';
+                $headers[] = 'Benefit - Tunjangan PPh 21';
 
                 // Hitung total untuk setiap kolom nominal
                 $totalBaseSalary = 0;
                 $totalAllowancesByName = array_fill_keys($fixedAllowanceNames, 0);
                 $totalAllowancesReceived = 0;
+                $totalVariableAllowances = 0;
                 $totalOvertimeHours = 0;
                 $totalOvertimePay = 0;
-                $totalBpjsTkCompany = 0;
-                $totalBpjsKesCompany = 0;
-                $totalPph21Allowance = 0;
+                $totalBonus = 0;
+                $totalTotalTunjangan = 0;
                 $totalPph21Deduction = 0;
                 $totalBpjsTkEmployee = 0;
                 $totalBpjsKesEmployee = 0;
@@ -656,6 +659,9 @@ class PayrollController extends Controller
                 $totalManualDeduction = 0;
                 $totalDeductions = 0;
                 $totalNetSalary = 0;
+                $totalBpjsTkCompany = 0;
+                $totalBpjsKesCompany = 0;
+                $totalPph21Allowance = 0;
 
                 foreach ($items as $item) {
                     $bpjsTkCompany = round((float) $item->bpjs_jkk_company + (float) $item->bpjs_jkm_company + (float) $item->bpjs_jht_company + (float) $item->bpjs_jp_company, 2);
@@ -663,16 +669,26 @@ class PayrollController extends Controller
                     $employeePph21 = $item->pph21_method === 'gross_up' ? 0.0 : (float) $item->pph21_deduction;
                     $allowanceBreakdown = $item->allowance_breakdown ?? [];
 
+                    $fixedAllowancesTotal = (float) collect($allowanceBreakdown)->sum();
+                    if ($fixedAllowancesTotal == 0 && (float) $item->allowances_total > 0) {
+                        $fixedAllowancesTotal = max(0, (float) $item->allowances_total - (float) collect($item->variable_allowance_breakdown ?? [])->sum() - (float) collect($item->bonus_breakdown ?? [])->sum());
+                    }
+                    $variableAllowancesTotal = (float) collect($item->variable_allowance_breakdown ?? [])->sum();
+                    $bonusTotal = (float) collect($item->bonus_breakdown ?? [])->sum();
+                    $overtimeHours = (float) $item->overtime_hours;
+                    $overtimePay = (float) $item->overtime_pay;
+                    $totalTunjangan = round($fixedAllowancesTotal + $variableAllowancesTotal + $overtimePay + $bonusTotal, 2);
+
                     $totalBaseSalary += (float) $item->base_salary;
                     foreach ($fixedAllowanceNames as $allowanceName) {
                         $totalAllowancesByName[$allowanceName] += (float) ($allowanceBreakdown[$allowanceName] ?? 0);
                     }
-                    $totalAllowancesReceived += (float) $item->allowances_total;
-                    $totalOvertimeHours += (float) $item->overtime_hours;
-                    $totalOvertimePay += (float) $item->overtime_pay;
-                    $totalBpjsTkCompany += $bpjsTkCompany;
-                    $totalBpjsKesCompany += (float) $item->bpjs_kesehatan_company;
-                    $totalPph21Allowance += (float) $item->pph21_allowance;
+                    $totalAllowancesReceived += $fixedAllowancesTotal;
+                    $totalVariableAllowances += $variableAllowancesTotal;
+                    $totalOvertimeHours += $overtimeHours;
+                    $totalOvertimePay += $overtimePay;
+                    $totalBonus += $bonusTotal;
+                    $totalTotalTunjangan += $totalTunjangan;
                     $totalPph21Deduction += $employeePph21;
                     $totalBpjsTkEmployee += $bpjsTkEmployee;
                     $totalBpjsKesEmployee += (float) $item->bpjs_kesehatan_employee;
@@ -683,6 +699,9 @@ class PayrollController extends Controller
                     $totalManualDeduction += (float) ($item->manual_deduction_total ?? 0);
                     $totalDeductions += (float) $item->deductions_total;
                     $totalNetSalary += (float) $item->net_salary;
+                    $totalBpjsTkCompany += $bpjsTkCompany;
+                    $totalBpjsKesCompany += (float) $item->bpjs_kesehatan_company;
+                    $totalPph21Allowance += (float) $item->pph21_allowance;
                 }
 
                 $totalsRow = [
@@ -707,11 +726,11 @@ class PayrollController extends Controller
                 }
 
                 $totalsRow[] = (int) round($totalAllowancesReceived);
+                $totalsRow[] = (int) round($totalVariableAllowances);
                 $totalsRow[] = round($totalOvertimeHours, 2);
                 $totalsRow[] = (int) round($totalOvertimePay);
-                $totalsRow[] = (int) round($totalBpjsTkCompany);
-                $totalsRow[] = (int) round($totalBpjsKesCompany);
-                $totalsRow[] = (int) round($totalPph21Allowance);
+                $totalsRow[] = (int) round($totalBonus);
+                $totalsRow[] = (int) round($totalTotalTunjangan);
                 $totalsRow[] = (int) round($totalPph21Deduction);
                 $totalsRow[] = (int) round($totalBpjsTkEmployee);
                 $totalsRow[] = (int) round($totalBpjsKesEmployee);
@@ -722,6 +741,9 @@ class PayrollController extends Controller
                 $totalsRow[] = (int) round($totalManualDeduction);
                 $totalsRow[] = (int) round($totalDeductions);
                 $totalsRow[] = (int) round($totalNetSalary);
+                $totalsRow[] = (int) round($totalBpjsTkCompany);
+                $totalsRow[] = (int) round($totalBpjsKesCompany);
+                $totalsRow[] = (int) round($totalPph21Allowance);
 
                 // Baris Total di atas nama table header
                 fputcsv($out, $totalsRow);
@@ -759,14 +781,22 @@ class PayrollController extends Controller
                         $row[] = (int) round((float) ($allowanceBreakdown[$allowanceName] ?? 0));
                     }
 
-                    $row[] = (int) round((float) $item->allowances_total);
-                    $row[] = (float) $item->overtime_hours;
-                    $row[] = (int) round((float) $item->overtime_pay);
+                    $fixedAllowancesTotal = (float) collect($allowanceBreakdown)->sum();
+                    if ($fixedAllowancesTotal == 0 && (float) $item->allowances_total > 0) {
+                        $fixedAllowancesTotal = max(0, (float) $item->allowances_total - (float) collect($item->variable_allowance_breakdown ?? [])->sum() - (float) collect($item->bonus_breakdown ?? [])->sum());
+                    }
+                    $variableAllowancesTotal = (float) collect($item->variable_allowance_breakdown ?? [])->sum();
+                    $bonusTotal = (float) collect($item->bonus_breakdown ?? [])->sum();
+                    $overtimeHours = (float) $item->overtime_hours;
+                    $overtimePay = (float) $item->overtime_pay;
+                    $totalTunjangan = round($fixedAllowancesTotal + $variableAllowancesTotal + $overtimePay + $bonusTotal, 2);
 
-                    // Benefit (Ditanggung Perusahaan)
-                    $row[] = (int) round((float) $bpjsTkCompany);
-                    $row[] = (int) round((float) $item->bpjs_kesehatan_company);
-                    $row[] = (int) round((float) $item->pph21_allowance);
+                    $row[] = (int) round($fixedAllowancesTotal);
+                    $row[] = (int) round($variableAllowancesTotal);
+                    $row[] = (float) $overtimeHours;
+                    $row[] = (int) round($overtimePay);
+                    $row[] = (int) round($bonusTotal);
+                    $row[] = (int) round($totalTunjangan);
 
                     // Potongan (Mengurangi gaji karyawan)
                     $row[] = (int) round($employeePph21);
@@ -779,6 +809,11 @@ class PayrollController extends Controller
                     $row[] = (int) round((float) ($item->manual_deduction_total ?? 0));
                     $row[] = (int) round((float) $item->deductions_total);
                     $row[] = (int) round((float) $item->net_salary);
+
+                    // Benefit (Ditanggung Perusahaan) - Paling kanan setelah take home pay/netto
+                    $row[] = (int) round((float) $bpjsTkCompany);
+                    $row[] = (int) round((float) $item->bpjs_kesehatan_company);
+                    $row[] = (int) round((float) $item->pph21_allowance);
 
                     fputcsv($out, $row);
                 }
@@ -929,21 +964,24 @@ class PayrollController extends Controller
                 }
 
                 $headers[] = 'Total Tunjangan Diterima';
+                $headers[] = 'Tunjangan Tidak Tetap';
                 $headers[] = 'Jam Lembur';
                 $headers[] = 'Uang Lembur';
-                $headers[] = 'Benefit - BPJS TK Perusahaan';
-                $headers[] = 'Benefit - BPJS Kes Perusahaan';
-                $headers[] = 'Benefit - Tunjangan PPh 21';
+                $headers[] = 'Bonus';
+                $headers[] = 'Total Tunjangan';
                 $headers[] = 'Potongan PPh 21';
-                $headers[] = 'BPJS TK Karyawan';
-                $headers[] = 'BPJS Kes Karyawan';
-                $headers[] = 'Asuransi Swasta';
+                $headers[] = 'Iuran BPJS TK';
+                $headers[] = 'Iuran BPJS Kesehatan';
+                $headers[] = 'Iuran Asuransi Swasta';
                 $headers[] = 'Potongan Kasbon';
                 $headers[] = 'Potongan Denda';
                 $headers[] = 'Potongan Unpaid Leave';
                 $headers[] = 'Potongan Lainnya';
                 $headers[] = 'Total Potongan';
                 $headers[] = 'Gaji Bersih';
+                $headers[] = 'Benefit - BPJS TK Perusahaan';
+                $headers[] = 'Benefit - BPJS Kes Perusahaan';
+                $headers[] = 'Benefit - Tunjangan PPh 21';
 
                 $totalCols = count($headers);
                 $lastColLetter = Coordinate::stringFromColumnIndex($totalCols);
@@ -1000,12 +1038,24 @@ class PayrollController extends Controller
                         $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) ($allowanceBreakdown[$allowanceName] ?? 0)));
                     }
 
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->allowances_total));
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (float) $item->overtime_hours);
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->overtime_pay));
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $bpjsTkCompany));
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->bpjs_kesehatan_company));
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->pph21_allowance));
+                    $fixedAllowancesTotal = (float) collect($allowanceBreakdown)->sum();
+                    if ($fixedAllowancesTotal == 0 && (float) $item->allowances_total > 0) {
+                        $fixedAllowancesTotal = max(0, (float) $item->allowances_total - (float) collect($item->variable_allowance_breakdown ?? [])->sum() - (float) collect($item->bonus_breakdown ?? [])->sum());
+                    }
+                    $variableAllowancesTotal = (float) collect($item->variable_allowance_breakdown ?? [])->sum();
+                    $bonusTotal = (float) collect($item->bonus_breakdown ?? [])->sum();
+                    $overtimeHours = (float) $item->overtime_hours;
+                    $overtimePay = (float) $item->overtime_pay;
+                    $totalTunjangan = round($fixedAllowancesTotal + $variableAllowancesTotal + $overtimePay + $bonusTotal, 2);
+
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round($fixedAllowancesTotal));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round($variableAllowancesTotal));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (float) $overtimeHours);
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round($overtimePay));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round($bonusTotal));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round($totalTunjangan));
+
+                    // Potongan
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round($employeePph21));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $bpjsTkEmployee));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->bpjs_kesehatan_employee));
@@ -1016,6 +1066,11 @@ class PayrollController extends Controller
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) ($item->manual_deduction_total ?? 0)));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->deductions_total));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->net_salary));
+
+                    // Benefit (Paling kanan setelah take home pay/netto)
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $bpjsTkCompany));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->bpjs_kesehatan_company));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->pph21_allowance));
 
                     $sheet->getStyle("N{$currentRow}:{$lastColLetter}{$currentRow}")->getNumberFormat()->setFormatCode('#,##0');
                     $currentRow++;

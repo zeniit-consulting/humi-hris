@@ -133,6 +133,72 @@ class MonthlyReportService
             'performanceDetails' => $performanceDetails,
             'recruitmentDetails' => $recruitmentDetails,
             'analytics' => $this->analytics($summary, $performanceDetails, $recruitmentDetails),
+            'sopSummary' => $this->sopSummary($ownerId),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function sopSummary(int $ownerId): array
+    {
+        $setting = CompanySetting::query()->where('user_id', $ownerId)->first();
+        $cutoffDay = (string) ($setting?->payroll_cutoff_day ?? $setting?->attendance_revision_cutoff_day ?? 'end_of_month');
+        $workingDays = (int) ($setting?->active_working_days ?? 22);
+
+        return [
+            'company_name' => $setting?->name ?: 'Perusahaan',
+            'working_days' => $workingDays,
+            'cutoff' => [
+                'day' => $cutoffDay,
+                'label' => $cutoffDay === 'end_of_month'
+                    ? 'Akhir Bulan (Tanggal 1 s/d Akhir Bulan)'
+                    : "Tanggal {$cutoffDay} (Tgl " . ((int) $cutoffDay + 1) . " bulan lalu s/d Tgl {$cutoffDay} bulan berjalan)",
+                'description' => 'Batas penutupan rekapitulasi absensi, perhitungan denda, dan akumulasi lembur untuk periode penggajian.',
+            ],
+            'attendance' => [
+                'late_tolerance_minutes' => (int) ($setting?->late_tolerance_minutes ?? 15),
+                'late_penalty_enabled' => (bool) ($setting?->late_penalty_enabled ?? false),
+                'late_penalty_type' => (string) ($setting?->late_penalty_type ?? 'tiered'),
+                'late_penalty_tiers' => $setting?->late_penalty_tiers ?? [
+                    ['from_minute' => 1, 'to_minute' => 15, 'penalty_amount' => 0, 'description' => 'Toleransi'],
+                    ['from_minute' => 16, 'to_minute' => 30, 'penalty_amount' => 20000, 'description' => 'Terlambat 16-30 menit'],
+                    ['from_minute' => 31, 'to_minute' => 60, 'penalty_amount' => 50000, 'description' => 'Terlambat 31-60 menit'],
+                ],
+                'late_base_penalty_minutes' => (int) ($setting?->late_base_penalty_minutes ?? 15),
+                'late_base_penalty_amount' => (float) ($setting?->late_base_penalty_amount ?? 0),
+                'late_incremental_penalty_amount' => (float) ($setting?->late_incremental_penalty_amount ?? 0),
+                'late_half_day_enabled' => (bool) ($setting?->late_half_day_enabled ?? false),
+                'late_half_day_cutoff_minutes' => (int) ($setting?->late_half_day_cutoff_minutes ?? 60),
+                'late_half_day_penalty_type' => (string) ($setting?->late_half_day_penalty_type ?? 'prorate_half_day'),
+                'late_half_day_penalty_amount' => (float) ($setting?->late_half_day_penalty_amount ?? 0),
+                'late_half_day_deduct_leave' => (bool) ($setting?->late_half_day_deduct_leave ?? false),
+                'unrecorded_cutoff_penalty_enabled' => (bool) ($setting?->unrecorded_cutoff_penalty_enabled ?? false),
+                'missing_clock_out_request_days' => (int) ($setting?->missing_clock_out_request_days ?? 2),
+                'require_face_recognition' => (bool) ($setting?->require_face_recognition ?? false),
+            ],
+            'overtime' => [
+                'calculation_mode' => (string) ($setting?->overtime_calculation_mode ?? 'hourly'),
+                'rate_type' => (string) ($setting?->overtime_rate_type ?? 'formula'),
+                'fixed_rate' => $setting?->overtime_fixed_rate_per_hour !== null ? (float) $setting->overtime_fixed_rate_per_hour : null,
+                'hour_divisor' => (int) ($setting?->overtime_hour_divisor ?? 173),
+                'multiplier_h1' => (float) ($setting?->overtime_multiplier_hour1 ?? 1.5),
+                'multiplier_subsequent' => (float) ($setting?->overtime_multiplier_subsequent ?? 2.0),
+                'auto_overtime_from_attendance' => (bool) ($setting?->auto_overtime_from_attendance ?? false),
+                'auto_overtime_min_minutes' => (int) ($setting?->auto_overtime_min_minutes ?? 30),
+            ],
+            'bpjs_insurance' => [
+                'bpjs_kesehatan_enabled' => (bool) ($setting?->bpjs_kesehatan_enabled ?? true),
+                'bpjs_kesehatan_default_class' => (string) ($setting?->bpjs_kesehatan_default_class ?? 'I'),
+                'bpjs_ketenagakerjaan_enabled' => (bool) ($setting?->bpjs_ketenagakerjaan_enabled ?? true),
+                'jkk_enabled' => (bool) ($setting?->bpjs_jkk_enabled ?? true),
+                'jkm_enabled' => (bool) ($setting?->bpjs_jkm_enabled ?? true),
+                'jht_enabled' => (bool) ($setting?->bpjs_jht_enabled ?? true),
+                'jp_enabled' => (bool) ($setting?->bpjs_jp_enabled ?? true),
+                'private_insurance_enabled' => (bool) ($setting?->private_insurance_enabled ?? false),
+                'private_insurance_name' => (string) ($setting?->private_insurance_name ?? ''),
+                'private_insurance_nominal' => (float) ($setting?->private_insurance_nominal ?? 0),
+            ],
         ];
     }
 

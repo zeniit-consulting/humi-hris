@@ -112,20 +112,12 @@ class PortalController extends Controller
                 ->whereBetween('attendance_date', [$periodStart->toDateString(), $periodEnd->toDateString()])
                 ->get()
                 ->sum(function (EmployeeAttendance $att) use ($companySetting, $employee): float {
-                    $penalty = (float) ($att->late_penalty ?? 0);
-                    if ($penalty > 0) {
-                        return $penalty;
-                    }
-                    if ($att->status === 'late' || (int) ($att->late_minutes ?? 0) > 0 || (bool) ($att->is_half_day ?? false)) {
-                        return app(\App\Services\AttendanceStatusService::class)->calculateLatePenalty(
-                            (int) ($att->late_minutes ?? 0),
-                            (bool) ($att->is_half_day ?? false),
-                            $companySetting,
-                            $employee
-                        );
-                    }
-
-                    return 0.0;
+                    return app(\App\Services\AttendanceStatusService::class)->calculateLatePenaltyForAttendance(
+                        $att,
+                        $companySetting,
+                        $employee,
+                        syncAttendanceRecord: true,
+                    );
                 });
 
             $upcomingLeaves = LeaveRequest::query()

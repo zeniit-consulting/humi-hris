@@ -16,11 +16,14 @@ class AttendanceSettingController extends Controller
     {
         $setting = $this->settingFor($request);
 
+        $cutoffDay = (string) ($setting->payroll_cutoff_day ?? $setting->attendance_revision_cutoff_day ?? 'end_of_month');
+
         return Inertia::render('settings/attendance', [
             'settings' => [
                 'missing_clock_out_request_days' => $setting->missing_clock_out_request_days ?? 2,
                 'require_face_recognition' => (bool) ($setting->require_face_recognition ?? false),
-                'attendance_revision_cutoff_day' => $setting->attendance_revision_cutoff_day ?? 'end_of_month',
+                'attendance_revision_cutoff_day' => $cutoffDay,
+                'payroll_cutoff_day' => $cutoffDay,
                 'late_penalty_enabled' => (bool) ($setting->late_penalty_enabled ?? false),
                 'late_tolerance_minutes' => (int) ($setting->late_tolerance_minutes ?? 15),
                 'late_penalty_type' => $setting->late_penalty_type ?? 'tiered',
@@ -46,7 +49,12 @@ class AttendanceSettingController extends Controller
 
     public function update(AttendanceSettingUpdateRequest $request): RedirectResponse
     {
-        $this->settingFor($request)->update($request->validated());
+        $validated = $request->validated();
+        if (isset($validated['attendance_revision_cutoff_day'])) {
+            $validated['payroll_cutoff_day'] = $validated['attendance_revision_cutoff_day'];
+        }
+
+        $this->settingFor($request)->update($validated);
 
         return to_route('settings.attendance.edit')
             ->with('success', 'Pengaturan absensi berhasil diperbarui.');

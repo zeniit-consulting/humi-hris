@@ -121,14 +121,14 @@ export default function PayrollSettings({
                                 </div>
                             </div>
 
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="grid gap-2">
+                            <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+                                <div className="space-y-2 min-w-0 w-full">
                                     <Label htmlFor="payroll_cutoff_day">
                                         Tanggal Cut-off Payroll
                                     </Label>
                                     <select
                                         id="payroll_cutoff_day"
-                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary"
+                                        className="h-9 w-full min-w-0 max-w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary truncate"
                                         value={form.data.payroll_cutoff_day}
                                         onChange={(event) =>
                                             form.setData(
@@ -138,7 +138,7 @@ export default function PayrollSettings({
                                         }
                                     >
                                         <option value="end_of_month">
-                                            Akhir Bulan (Tanggal 1 s/d Akhir Bulan)
+                                            Akhir Bulan (Tgl 1 s/d Akhir Bulan)
                                         </option>
                                         {Array.from({ length: 28 }, (_, index) => {
                                             const day = index + 1;
@@ -148,7 +148,7 @@ export default function PayrollSettings({
                                                     key={day}
                                                     value={String(day)}
                                                 >
-                                                    Tanggal {day} (Periode: Tgl {startDay} bulan lalu s/d Tgl {day} bulan ini)
+                                                    Tanggal {day} (Siklus: Tgl {startDay} - {day})
                                                 </option>
                                             );
                                         })}
@@ -163,23 +163,29 @@ export default function PayrollSettings({
                                     />
                                 </div>
 
-                                <div className="grid gap-2">
+                                <div className="space-y-2 min-w-0 w-full">
                                     <Label htmlFor="active_working_days">
                                         Hari Kerja Aktif Standar
                                     </Label>
-                                    <Input
-                                        id="active_working_days"
-                                        type="number"
-                                        min="1"
-                                        max="31"
-                                        value={form.data.active_working_days}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'active_working_days',
-                                                Number(event.target.value),
-                                            )
-                                        }
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            id="active_working_days"
+                                            type="number"
+                                            min="1"
+                                            max="31"
+                                            className="w-full pr-14"
+                                            value={form.data.active_working_days}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'active_working_days',
+                                                    Number(event.target.value),
+                                                )
+                                            }
+                                        />
+                                        <span className="pointer-events-none absolute right-3 top-2.5 text-xs text-muted-foreground font-medium">
+                                            hari
+                                        </span>
+                                    </div>
                                     <p className="text-xs text-muted-foreground">
                                         Default 22 hari. Digunakan sebagai pembagi perhitungan denda prorata dan potongan cuti tanpa gaji.
                                     </p>
@@ -188,7 +194,7 @@ export default function PayrollSettings({
                                     />
                                 </div>
 
-                                <div className="sm:col-span-2 rounded-lg border bg-blue-50/60 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 p-3.5 text-xs text-blue-900 dark:text-blue-200">
+                                <div className="col-span-1 md:col-span-2 rounded-lg border bg-blue-50/60 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 p-3.5 text-xs text-blue-900 dark:text-blue-200">
                                     <p className="font-semibold mb-1">Dampak Pengaturan Cut-off terhadap Generate Payroll:</p>
                                     <p className="leading-relaxed">
                                         {form.data.payroll_cutoff_day === 'end_of_month'
@@ -199,14 +205,14 @@ export default function PayrollSettings({
                             </div>
                         </div>
 
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="grid gap-2">
+                        <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+                            <div className="space-y-2 min-w-0 w-full">
                                 <Label htmlFor="overtime_calculation_mode">
                                     Metode Hitung Lembur
                                 </Label>
                                 <select
                                     id="overtime_calculation_mode"
-                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
                                     value={form.data.overtime_calculation_mode}
                                     onChange={(event) =>
                                         form.setData(
@@ -231,7 +237,7 @@ export default function PayrollSettings({
                                     }
                                 />
                             </div>
-                            <div className="grid gap-2">
+                            <div className="space-y-2 min-w-0 w-full">
                                 <Label htmlFor="overtime_threshold_hours">
                                     Ambang Jam
                                 </Label>
@@ -240,6 +246,7 @@ export default function PayrollSettings({
                                     type="number"
                                     min="1"
                                     max="24"
+                                    className="w-full"
                                     value={form.data.overtime_threshold_hours}
                                     onChange={(event) =>
                                         form.setData(
@@ -258,13 +265,13 @@ export default function PayrollSettings({
                                     }
                                 />
                             </div>
-                            <div className="grid gap-2">
+                            <div className="space-y-2 min-w-0 w-full">
                                 <Label htmlFor="overtime_rate_type">
                                     Skema Tarif Lembur
                                 </Label>
                                 <select
                                     id="overtime_rate_type"
-                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
                                     value={form.data.overtime_rate_type}
                                     onChange={(event) =>
                                         form.setData(
@@ -517,8 +524,8 @@ export default function PayrollSettings({
                                                 </div>
 
                                                 {/* Grid Input Utama */}
-                                                <div className="grid gap-3 sm:grid-cols-12">
-                                                    <div className="sm:col-span-3 space-y-1">
+                                                <div className="grid gap-3 grid-cols-1 md:grid-cols-12">
+                                                    <div className="md:col-span-3 space-y-1">
                                                         <Label className="text-[11px] font-medium text-slate-600 flex items-center gap-1">
                                                             <Tag className="size-3 text-slate-400" />
                                                             Kode (Opsional)
@@ -535,7 +542,7 @@ export default function PayrollSettings({
                                                         />
                                                     </div>
 
-                                                    <div className="sm:col-span-4 space-y-1">
+                                                    <div className="md:col-span-4 space-y-1">
                                                         <Label className="text-[11px] font-medium text-slate-600">
                                                             Nama Event / Kegiatan <span className="text-rose-500">*</span>
                                                         </Label>
@@ -559,7 +566,7 @@ export default function PayrollSettings({
                                                         />
                                                     </div>
 
-                                                    <div className="sm:col-span-3 space-y-1">
+                                                    <div className="md:col-span-3 space-y-1">
                                                         <Label className="text-[11px] font-medium text-slate-600">
                                                             Tarif Insentif <span className="text-rose-500">*</span>
                                                         </Label>
@@ -591,7 +598,7 @@ export default function PayrollSettings({
                                                         />
                                                     </div>
 
-                                                    <div className="sm:col-span-2 space-y-1">
+                                                    <div className="md:col-span-2 space-y-1">
                                                         <Label className="text-[11px] font-medium text-slate-600">
                                                             Hitungan Per
                                                         </Label>
@@ -898,7 +905,7 @@ export default function PayrollSettings({
 
                                 {form.data.bpjs_ketenagakerjaan_enabled && (
                                     <div className="space-y-4 pt-2 border-t">
-                                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
                                             <label className="flex items-start gap-2.5 rounded-lg border bg-white p-3">
                                                 <input
                                                     type="checkbox"

@@ -1995,4 +1995,285 @@ class PayrollGenerationTest extends TestCase
         $this->assertEquals(125000.00, (float) $item->denda_deduction);
         $this->assertEquals(5000000.00 - 125000.00, (float) $item->net_salary);
     }
+
+    public function test_payroll_generation_automatically_calculates_late_penalties_when_not_previously_stored(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'late_penalty_enabled' => true,
+                'late_tolerance_minutes' => 15,
+                'late_penalty_type' => 'tiered',
+                'late_penalty_tiers' => [
+                    ['from_minute' => 1, 'to_minute' => 15, 'penalty_amount' => 0],
+                    ['from_minute' => 16, 'to_minute' => 30, 'penalty_amount' => 20000],
+                    ['from_minute' => 31, 'to_minute' => 60, 'penalty_amount' => 50000],
+                ],
+            ]
+        );
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2026-01-01',
+            'base_salary' => 6_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_enabled' => false,
+            'bpjs_ketenagakerjaan_enabled' => false,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        // Schedule with custom shift_code (no matching WorkShift code)
+        \App\Models\EmployeeSchedule::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-05-11',
+            'shift_code' => 'CUSTOM_PAGI',
+            'start_time' => '08:00:00',
+            'end_time' => '17:00:00',
+            'is_day_off' => false,
+        ]);
+
+        // Attendance 1: late 35 minutes (check_in 08:35), late_penalty is 0.00 and late_minutes is null
+        $att1 = EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-05-11',
+            'status' => 'late',
+            'late_minutes' => null,
+            'late_penalty' => 0.00,
+            'check_in_at' => '2026-05-11 08:35:00',
+        ]);
+
+        // Attendance 2: explicitly marked late, no check-in time recorded -> should fall back to first non-zero tier (20,000)
+        $att2 = EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-05-12',
+            'status' => 'late',
+            'late_minutes' => null,
+            'late_penalty' => 0.00,
+            'check_in_at' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-05'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-05')->firstOrFail();
+        $item = $run->items()->where('employee_id', $employee->id)->firstOrFail();
+
+        // 50.000 (att1: 35 min tier) + 20.000 (att2: fallback tier) = 70.000
+        $this->assertEquals(70000.00, (float) $item->denda_deduction);
+        $this->assertEquals(6000000.00 - 70000.00, (float) $item->net_salary);
+
+        // Assert attendance record was updated in database
+        $this->assertEquals(50000.00, (float) $att1->fresh()->late_penalty);
+        $this->assertEquals(35, (int) $att1->fresh()->late_minutes);
+        $this->assertEquals(20000.00, (float) $att2->fresh()->late_penalty);
+    }
+
+    public function test_payroll_generation_automatically_applies_half_day_prorate_deduction_for_excessive_lateness(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'late_penalty_enabled' => true,
+                'late_half_day_enabled' => true,
+                'late_half_day_cutoff_minutes' => 60,
+                'late_half_day_penalty_type' => 'prorate_half_day',
+                'active_working_days' => 20,
+            ]
+        );
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2026-01-01',
+            'base_salary' => 4_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_enabled' => false,
+            'bpjs_ketenagakerjaan_enabled' => false,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        EmployeeAllowance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Tetap',
+            'amount' => 1_000_000,
+            'is_active' => true,
+        ]);
+
+        // Schedule: start 08:00
+        \App\Models\EmployeeSchedule::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-05-12',
+            'shift_code' => 'REG',
+            'start_time' => '08:00:00',
+            'end_time' => '17:00:00',
+            'is_day_off' => false,
+        ]);
+
+        // Attendance: check_in at 09:15 (late 75 minutes >= 60 min cutoff)
+        // 50% prorate = 0.5 * (5,000,000 / 20) = 125,000
+        $att = EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-05-12',
+            'status' => 'late',
+            'late_minutes' => null,
+            'late_penalty' => 0.00,
+            'is_half_day' => false,
+            'check_in_at' => '2026-05-12 09:15:00',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-05'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-05')->firstOrFail();
+        $item = $run->items()->where('employee_id', $employee->id)->firstOrFail();
+
+        $this->assertEquals(125000.00, (float) $item->denda_deduction);
+        $this->assertEquals(5000000.00 - 125000.00, (float) $item->net_salary);
+        $this->assertEquals(125000.00, (float) $att->fresh()->late_penalty);
+        $this->assertTrue((bool) $att->fresh()->is_half_day);
+    }
+
+    public function test_export_csv_and_excel_orders_benefits_after_net_salary_and_uses_iuran_and_total_tunjangan(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-EXP-01',
+            'first_name' => 'Budi',
+            'last_name' => 'Santoso',
+            'base_salary' => 5_000_000,
+            'is_active' => true,
+            'employment_status' => 'active',
+            'hire_date' => '2026-01-01',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_enabled' => true,
+            'bpjs_ketenagakerjaan_enabled' => true,
+        ]);
+
+        EmployeeAllowance::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Makan',
+            'amount' => 500_000,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-06'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-06')->firstOrFail();
+        $item = $run->items()->where('employee_id', $employee->id)->firstOrFail();
+
+        // Update item with variable allowance, overtime, and bonus
+        $this->actingAs($user)->put(route('hris.payrolls.items.update', [$run, $item]), [
+            'base_salary' => 5_000_000,
+            'overtime_hours' => 2,
+            'overtime_pay' => 200_000,
+            'variable_allowances' => [
+                ['name' => 'Transport Harian', 'amount' => 300_000],
+            ],
+            'bonuses' => [
+                ['name' => 'Insentif Sales', 'amount' => 400_000],
+            ],
+        ])->assertRedirect();
+
+        $item->refresh();
+
+        // 1. Test CSV Export
+        $responseCsv = $this->actingAs($user)
+            ->get(route('hris.payrolls.export.csv', $run))
+            ->assertOk();
+
+        $cleanContent = ltrim($responseCsv->streamedContent(), "\xEF\xBB\xBF");
+        $lines = explode("\n", trim($cleanContent));
+        $headerRow = str_getcsv($lines[1]);
+        $dataRow = str_getcsv($lines[2]);
+
+        // Check header names
+        $this->assertContains('Total Tunjangan', $headerRow);
+        $this->assertContains('Iuran BPJS TK', $headerRow);
+        $this->assertContains('Iuran BPJS Kesehatan', $headerRow);
+        $this->assertContains('Iuran Asuransi Swasta', $headerRow);
+        $this->assertContains('Benefit - BPJS TK Perusahaan', $headerRow);
+        $this->assertContains('Benefit - BPJS Kes Perusahaan', $headerRow);
+        $this->assertContains('Benefit - Tunjangan PPh 21', $headerRow);
+
+        // Check positions: Benefit columns must be to the right of Gaji Bersih
+        $gajiBersihIdx = array_search('Gaji Bersih', $headerRow, true);
+        $bpjsTkBenefitIdx = array_search('Benefit - BPJS TK Perusahaan', $headerRow, true);
+        $bpjsKesBenefitIdx = array_search('Benefit - BPJS Kes Perusahaan', $headerRow, true);
+        $pphBenefitIdx = array_search('Benefit - Tunjangan PPh 21', $headerRow, true);
+
+        $this->assertNotFalse($gajiBersihIdx);
+        $this->assertNotFalse($bpjsTkBenefitIdx);
+        $this->assertGreaterThan($gajiBersihIdx, $bpjsTkBenefitIdx);
+        $this->assertGreaterThan($gajiBersihIdx, $bpjsKesBenefitIdx);
+        $this->assertGreaterThan($gajiBersihIdx, $pphBenefitIdx);
+
+        // Check Total Tunjangan value: 500,000 (tetap) + 300,000 (tidak tetap) + 200,000 (lembur) + 400,000 (bonus) = 1,400,000
+        $totalTunjanganIdx = array_search('Total Tunjangan', $headerRow, true);
+        $this->assertNotFalse($totalTunjanganIdx);
+        $this->assertEquals(1_400_000, (int) $dataRow[$totalTunjanganIdx]);
+
+        // 2. Test Excel Export
+        $responseExcel = $this->actingAs($user)
+            ->get(route('hris.payrolls.export.excel', $run))
+            ->assertOk();
+
+        $stream = $responseExcel->streamedContent();
+        $temp = tempnam(sys_get_temp_dir(), 'test_payroll_excel_');
+        file_put_contents($temp, $stream);
+
+        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        $spreadsheet = $reader->load($temp);
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Check Row 2 header
+        $excelHeaders = [];
+        $col = 1;
+        while ($sheet->getCell(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . '2')->getValue() !== null) {
+            $excelHeaders[] = $sheet->getCell(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . '2')->getValue();
+            $col++;
+        }
+
+        $this->assertContains('Total Tunjangan', $excelHeaders);
+        $this->assertContains('Iuran BPJS TK', $excelHeaders);
+        $this->assertContains('Iuran BPJS Kesehatan', $excelHeaders);
+        $this->assertContains('Iuran Asuransi Swasta', $excelHeaders);
+
+        $excelGajiBersihIdx = array_search('Gaji Bersih', $excelHeaders, true);
+        $excelBpjsTkBenefitIdx = array_search('Benefit - BPJS TK Perusahaan', $excelHeaders, true);
+        $this->assertGreaterThan($excelGajiBersihIdx, $excelBpjsTkBenefitIdx);
+
+        // Check data row value for Total Tunjangan
+        $excelTotalTunjanganIdx = array_search('Total Tunjangan', $excelHeaders, true);
+        $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($excelTotalTunjanganIdx + 1);
+        $this->assertEquals(1_400_000, (int) $sheet->getCell($colLetter . '3')->getValue());
+
+        unlink($temp);
+    }
 }

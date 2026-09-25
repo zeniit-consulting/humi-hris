@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertCircle, AlertTriangle, Clock, Plus, ShieldAlert, Trash2 } from 'lucide-react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -21,6 +21,7 @@ type Settings = {
     missing_clock_out_request_days: number;
     require_face_recognition?: boolean;
     attendance_revision_cutoff_day: string;
+    payroll_cutoff_day?: string;
     late_penalty_enabled?: boolean;
     late_tolerance_minutes: number;
     late_penalty_type: 'tiered' | 'progressive';
@@ -52,6 +53,7 @@ export default function AttendanceSettings({
         missing_clock_out_request_days: settings.missing_clock_out_request_days ?? 2,
         require_face_recognition: settings.require_face_recognition ?? false,
         attendance_revision_cutoff_day: settings.attendance_revision_cutoff_day ?? 'end_of_month',
+        payroll_cutoff_day: settings.payroll_cutoff_day ?? settings.attendance_revision_cutoff_day ?? 'end_of_month',
         unrecorded_cutoff_penalty_enabled: settings.unrecorded_cutoff_penalty_enabled ?? false,
         late_penalty_enabled: settings.late_penalty_enabled ?? false,
         late_tolerance_minutes: settings.late_tolerance_minutes ?? 15,
@@ -142,12 +144,13 @@ export default function AttendanceSettings({
                                             type="number"
                                             min="0"
                                             max="480"
+                                            className="pr-16"
                                             value={form.data.late_tolerance_minutes}
                                             onChange={(e) =>
                                                 form.setData('late_tolerance_minutes', Number(e.target.value))
                                             }
                                         />
-                                        <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-medium">
+                                        <span className="pointer-events-none absolute right-3 top-2.5 text-xs text-muted-foreground font-medium">
                                             menit
                                         </span>
                                     </div>
@@ -222,14 +225,14 @@ export default function AttendanceSettings({
                                     </div>
 
                                     <div className="overflow-x-auto rounded-lg border">
-                                        <table className="w-full text-left text-sm">
+                                        <table className="w-full min-w-[620px] text-left text-sm">
                                             <thead className="bg-muted/60 text-xs font-semibold text-muted-foreground uppercase">
                                                 <tr>
-                                                    <th className="px-3 py-2">Dari (Menit)</th>
-                                                    <th className="px-3 py-2">Sampai (Menit)</th>
-                                                    <th className="px-3 py-2">Nominal Denda (Rp)</th>
-                                                    <th className="px-3 py-2">Keterangan</th>
-                                                    <th className="px-3 py-2 text-center w-12">Aksi</th>
+                                                    <th className="px-3 py-2 whitespace-nowrap">Dari (Menit)</th>
+                                                    <th className="px-3 py-2 whitespace-nowrap">Sampai (Menit)</th>
+                                                    <th className="px-3 py-2 whitespace-nowrap">Nominal Denda (Rp)</th>
+                                                    <th className="px-3 py-2 whitespace-nowrap">Keterangan</th>
+                                                    <th className="px-3 py-2 text-center w-12 whitespace-nowrap">Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y">
@@ -410,12 +413,13 @@ export default function AttendanceSettings({
                                                 type="number"
                                                 min="1"
                                                 max="480"
+                                                className="pr-16"
                                                 value={form.data.late_half_day_cutoff_minutes}
                                                 onChange={(e) =>
                                                     form.setData('late_half_day_cutoff_minutes', Number(e.target.value))
                                                 }
                                             />
-                                            <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-medium">
+                                            <span className="pointer-events-none absolute right-3 top-2.5 text-xs text-muted-foreground font-medium">
                                                 menit
                                             </span>
                                         </div>
@@ -539,37 +543,31 @@ export default function AttendanceSettings({
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="attendance_revision_cutoff_day">
-                                        Tanggal Cut-off Absensi Bulanan
+                                    <Label className="font-medium text-slate-800 dark:text-slate-200">
+                                        Siklus Cut-off Terintegrasi (Payroll & Absensi)
                                     </Label>
-                                    <select
-                                        id="attendance_revision_cutoff_day"
-                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary"
-                                        value={form.data.attendance_revision_cutoff_day}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'attendance_revision_cutoff_day',
-                                                event.target.value,
-                                            )
-                                        }
-                                    >
-                                        {Array.from({ length: 28 }, (_, index) => (
-                                            <option
-                                                key={index + 1}
-                                                value={String(index + 1)}
+                                    <div className="rounded-lg border bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 p-3 text-xs space-y-1.5">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="font-semibold text-blue-900 dark:text-blue-200">
+                                                {form.data.attendance_revision_cutoff_day === 'end_of_month'
+                                                    ? 'Akhir Bulan (Tgl 1 s/d Akhir Bulan)'
+                                                    : `Tanggal ${form.data.attendance_revision_cutoff_day} Setiap Bulan`}
+                                            </span>
+                                            <Link
+                                                href="/settings/payroll"
+                                                className="text-[11px] font-medium text-primary hover:underline shrink-0"
                                             >
-                                                Tanggal {index + 1}
-                                            </option>
-                                        ))}
-                                        <option value="end_of_month">
-                                            Akhir Bulan
-                                        </option>
-                                    </select>
-                                    <p className="text-xs text-muted-foreground">
-                                        Revisi absensi periode berjalan ditutup setelah tanggal ini.
-                                    </p>
-                                    <InputError
-                                        message={form.errors.attendance_revision_cutoff_day}
+                                                Ubah di Payroll →
+                                            </Link>
+                                        </div>
+                                        <p className="text-muted-foreground text-[11px] leading-relaxed">
+                                            Tanggal batas cut-off tersinkronisasi otomatis dengan siklus penggajian untuk menjaga konsistensi akumulasi kehadiran, lembur, dan denda.
+                                        </p>
+                                    </div>
+                                    <input
+                                        type="hidden"
+                                        name="attendance_revision_cutoff_day"
+                                        value={form.data.attendance_revision_cutoff_day}
                                     />
                                 </div>
 
