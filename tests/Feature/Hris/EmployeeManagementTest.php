@@ -73,6 +73,8 @@ class EmployeeManagementTest extends TestCase
                 ->where('employeeList', 'active')
                 ->has('employees.data', 1)
                 ->where('employees.data.0.full_name', 'Karyawan Aktif')
+                ->where('stats.employees_total', 1)
+                ->where('stats.employees_active', 1)
             );
     }
 

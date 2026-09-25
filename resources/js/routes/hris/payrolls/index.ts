@@ -4,7 +4,7 @@ import items from './items'
 import exportMethod9280c6 from './export'
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::index
-* @see app/Http/Controllers/Hris/PayrollController.php:33
+* @see app/Http/Controllers/Hris/PayrollController.php:34
 * @route '/hris/payrolls'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -19,7 +19,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::index
-* @see app/Http/Controllers/Hris/PayrollController.php:33
+* @see app/Http/Controllers/Hris/PayrollController.php:34
 * @route '/hris/payrolls'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -28,7 +28,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::index
-* @see app/Http/Controllers/Hris/PayrollController.php:33
+* @see app/Http/Controllers/Hris/PayrollController.php:34
 * @route '/hris/payrolls'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -38,7 +38,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::index
-* @see app/Http/Controllers/Hris/PayrollController.php:33
+* @see app/Http/Controllers/Hris/PayrollController.php:34
 * @route '/hris/payrolls'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -48,7 +48,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::index
-* @see app/Http/Controllers/Hris/PayrollController.php:33
+* @see app/Http/Controllers/Hris/PayrollController.php:34
 * @route '/hris/payrolls'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -58,7 +58,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::index
-* @see app/Http/Controllers/Hris/PayrollController.php:33
+* @see app/Http/Controllers/Hris/PayrollController.php:34
 * @route '/hris/payrolls'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -68,7 +68,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::index
-* @see app/Http/Controllers/Hris/PayrollController.php:33
+* @see app/Http/Controllers/Hris/PayrollController.php:34
 * @route '/hris/payrolls'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -85,7 +85,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::generate
-* @see app/Http/Controllers/Hris/PayrollController.php:201
+* @see app/Http/Controllers/Hris/PayrollController.php:210
 * @route '/hris/payrolls/generate'
 */
 export const generate = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -100,7 +100,7 @@ generate.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::generate
-* @see app/Http/Controllers/Hris/PayrollController.php:201
+* @see app/Http/Controllers/Hris/PayrollController.php:210
 * @route '/hris/payrolls/generate'
 */
 generate.url = (options?: RouteQueryOptions) => {
@@ -109,7 +109,7 @@ generate.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::generate
-* @see app/Http/Controllers/Hris/PayrollController.php:201
+* @see app/Http/Controllers/Hris/PayrollController.php:210
 * @route '/hris/payrolls/generate'
 */
 generate.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -119,7 +119,7 @@ generate.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::generate
-* @see app/Http/Controllers/Hris/PayrollController.php:201
+* @see app/Http/Controllers/Hris/PayrollController.php:210
 * @route '/hris/payrolls/generate'
 */
 const generateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -129,7 +129,7 @@ const generateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> 
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::generate
-* @see app/Http/Controllers/Hris/PayrollController.php:201
+* @see app/Http/Controllers/Hris/PayrollController.php:210
 * @route '/hris/payrolls/generate'
 */
 generateForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -141,7 +141,7 @@ generate.form = generateForm
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::lock
-* @see app/Http/Controllers/Hris/PayrollController.php:269
+* @see app/Http/Controllers/Hris/PayrollController.php:282
 * @route '/hris/payrolls/{payrollRun}/lock'
 */
 export const lock = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -156,7 +156,7 @@ lock.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::lock
-* @see app/Http/Controllers/Hris/PayrollController.php:269
+* @see app/Http/Controllers/Hris/PayrollController.php:282
 * @route '/hris/payrolls/{payrollRun}/lock'
 */
 lock.url = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -189,7 +189,7 @@ lock.url = (args: { payrollRun: number | { id: number } } | [payrollRun: number 
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::lock
-* @see app/Http/Controllers/Hris/PayrollController.php:269
+* @see app/Http/Controllers/Hris/PayrollController.php:282
 * @route '/hris/payrolls/{payrollRun}/lock'
 */
 lock.post = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -199,7 +199,7 @@ lock.post = (args: { payrollRun: number | { id: number } } | [payrollRun: number
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::lock
-* @see app/Http/Controllers/Hris/PayrollController.php:269
+* @see app/Http/Controllers/Hris/PayrollController.php:282
 * @route '/hris/payrolls/{payrollRun}/lock'
 */
 const lockForm = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -209,7 +209,7 @@ const lockForm = (args: { payrollRun: number | { id: number } } | [payrollRun: n
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::lock
-* @see app/Http/Controllers/Hris/PayrollController.php:269
+* @see app/Http/Controllers/Hris/PayrollController.php:282
 * @route '/hris/payrolls/{payrollRun}/lock'
 */
 lockForm.post = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -221,7 +221,7 @@ lock.form = lockForm
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::save
-* @see app/Http/Controllers/Hris/PayrollController.php:241
+* @see app/Http/Controllers/Hris/PayrollController.php:254
 * @route '/hris/payrolls/{payrollRun}/save'
 */
 export const save = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -236,7 +236,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::save
-* @see app/Http/Controllers/Hris/PayrollController.php:241
+* @see app/Http/Controllers/Hris/PayrollController.php:254
 * @route '/hris/payrolls/{payrollRun}/save'
 */
 save.url = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -269,7 +269,7 @@ save.url = (args: { payrollRun: number | { id: number } } | [payrollRun: number 
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::save
-* @see app/Http/Controllers/Hris/PayrollController.php:241
+* @see app/Http/Controllers/Hris/PayrollController.php:254
 * @route '/hris/payrolls/{payrollRun}/save'
 */
 save.post = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -279,7 +279,7 @@ save.post = (args: { payrollRun: number | { id: number } } | [payrollRun: number
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::save
-* @see app/Http/Controllers/Hris/PayrollController.php:241
+* @see app/Http/Controllers/Hris/PayrollController.php:254
 * @route '/hris/payrolls/{payrollRun}/save'
 */
 const saveForm = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -289,7 +289,7 @@ const saveForm = (args: { payrollRun: number | { id: number } } | [payrollRun: n
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::save
-* @see app/Http/Controllers/Hris/PayrollController.php:241
+* @see app/Http/Controllers/Hris/PayrollController.php:254
 * @route '/hris/payrolls/{payrollRun}/save'
 */
 saveForm.post = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -301,7 +301,7 @@ save.form = saveForm
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslips
-* @see app/Http/Controllers/Hris/PayrollController.php:1185
+* @see app/Http/Controllers/Hris/PayrollController.php:1221
 * @route '/hris/payrolls/{payrollRun}/send-payslips'
 */
 export const sendPayslips = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -316,7 +316,7 @@ sendPayslips.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslips
-* @see app/Http/Controllers/Hris/PayrollController.php:1185
+* @see app/Http/Controllers/Hris/PayrollController.php:1221
 * @route '/hris/payrolls/{payrollRun}/send-payslips'
 */
 sendPayslips.url = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -349,7 +349,7 @@ sendPayslips.url = (args: { payrollRun: number | { id: number } } | [payrollRun:
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslips
-* @see app/Http/Controllers/Hris/PayrollController.php:1185
+* @see app/Http/Controllers/Hris/PayrollController.php:1221
 * @route '/hris/payrolls/{payrollRun}/send-payslips'
 */
 sendPayslips.post = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -359,7 +359,7 @@ sendPayslips.post = (args: { payrollRun: number | { id: number } } | [payrollRun
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslips
-* @see app/Http/Controllers/Hris/PayrollController.php:1185
+* @see app/Http/Controllers/Hris/PayrollController.php:1221
 * @route '/hris/payrolls/{payrollRun}/send-payslips'
 */
 const sendPayslipsForm = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -369,7 +369,7 @@ const sendPayslipsForm = (args: { payrollRun: number | { id: number } } | [payro
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslips
-* @see app/Http/Controllers/Hris/PayrollController.php:1185
+* @see app/Http/Controllers/Hris/PayrollController.php:1221
 * @route '/hris/payrolls/{payrollRun}/send-payslips'
 */
 sendPayslipsForm.post = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -381,7 +381,7 @@ sendPayslips.form = sendPayslipsForm
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::exportMethod
-* @see app/Http/Controllers/Hris/PayrollController.php:448
+* @see app/Http/Controllers/Hris/PayrollController.php:477
 * @route '/hris/payrolls/{payrollRun}/export'
 */
 export const exportMethod = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -396,7 +396,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::exportMethod
-* @see app/Http/Controllers/Hris/PayrollController.php:448
+* @see app/Http/Controllers/Hris/PayrollController.php:477
 * @route '/hris/payrolls/{payrollRun}/export'
 */
 exportMethod.url = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -429,7 +429,7 @@ exportMethod.url = (args: { payrollRun: number | { id: number } } | [payrollRun:
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::exportMethod
-* @see app/Http/Controllers/Hris/PayrollController.php:448
+* @see app/Http/Controllers/Hris/PayrollController.php:477
 * @route '/hris/payrolls/{payrollRun}/export'
 */
 exportMethod.get = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -439,7 +439,7 @@ exportMethod.get = (args: { payrollRun: number | { id: number } } | [payrollRun:
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::exportMethod
-* @see app/Http/Controllers/Hris/PayrollController.php:448
+* @see app/Http/Controllers/Hris/PayrollController.php:477
 * @route '/hris/payrolls/{payrollRun}/export'
 */
 exportMethod.head = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -449,7 +449,7 @@ exportMethod.head = (args: { payrollRun: number | { id: number } } | [payrollRun
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::exportMethod
-* @see app/Http/Controllers/Hris/PayrollController.php:448
+* @see app/Http/Controllers/Hris/PayrollController.php:477
 * @route '/hris/payrolls/{payrollRun}/export'
 */
 const exportMethodForm = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -459,7 +459,7 @@ const exportMethodForm = (args: { payrollRun: number | { id: number } } | [payro
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::exportMethod
-* @see app/Http/Controllers/Hris/PayrollController.php:448
+* @see app/Http/Controllers/Hris/PayrollController.php:477
 * @route '/hris/payrolls/{payrollRun}/export'
 */
 exportMethodForm.get = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -469,7 +469,7 @@ exportMethodForm.get = (args: { payrollRun: number | { id: number } } | [payroll
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::exportMethod
-* @see app/Http/Controllers/Hris/PayrollController.php:448
+* @see app/Http/Controllers/Hris/PayrollController.php:477
 * @route '/hris/payrolls/{payrollRun}/export'
 */
 exportMethodForm.head = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

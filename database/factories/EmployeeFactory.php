@@ -27,7 +27,7 @@ class EmployeeFactory extends Factory
             'last_education' => $this->faker->randomElement(['SMA/SMK', 'D3', 'S1', 'S2']),
             'marital_status' => $this->faker->randomElement(['single', 'married', 'divorced', 'widowed']),
             'children_count' => $this->faker->numberBetween(0, 4),
-            'hire_date' => $this->faker->date(),
+            'hire_date' => '2024-01-01',
             'employment_status' => 'active',
             'employment_type' => 'PKWTT',
             'pph21_method' => 'gross',

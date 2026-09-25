@@ -470,11 +470,24 @@ class EmployeeController extends Controller
             ],
             'filters' => $filters,
             'stats' => [
-                'employees_total' => Employee::query()->count(),
-                'employees_active' => Employee::query()->where('is_active', true)->count(),
+                'employees_total' => Employee::query()
+                    ->when($subCompanyScopeIds !== null, fn ($query) => $query->whereIn('sub_company_id', $subCompanyScopeIds))
+                    ->where('is_active', true)
+                    ->where('employment_status', '!=', 'resigned')
+                    ->count(),
+                'employees_active' => Employee::query()
+                    ->when($subCompanyScopeIds !== null, fn ($query) => $query->whereIn('sub_company_id', $subCompanyScopeIds))
+                    ->where('is_active', true)
+                    ->where('employment_status', '!=', 'resigned')
+                    ->count(),
                 'employees_by_type' => collect(Employee::EMPLOYMENT_TYPES)
                     ->mapWithKeys(fn (string $type) => [
-                        $type => Employee::query()->where('employment_type', $type)->count(),
+                        $type => Employee::query()
+                            ->when($subCompanyScopeIds !== null, fn ($query) => $query->whereIn('sub_company_id', $subCompanyScopeIds))
+                            ->where('is_active', true)
+                            ->where('employment_status', '!=', 'resigned')
+                            ->where('employment_type', $type)
+                            ->count(),
                     ])
                     ->all(),
                 'divisions_total' => Division::query()->count(),

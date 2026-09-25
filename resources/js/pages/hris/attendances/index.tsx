@@ -140,7 +140,7 @@ const lateLevelLabelMap: Record<string, string> = {
     level_1: 'Level 1',
     level_2: 'Level 2',
     level_3: 'Level 3',
-    half_day: 'Cuti 1/2 Hari',
+    half_day: 'Potong Prorata Harian',
 };
 
 const defaultAttendanceForm: AttendanceFormData = {
@@ -610,7 +610,7 @@ export default function AttendancePage() {
                                                         ) : null}
                                                         {row.is_half_day ? (
                                                             <span className="inline-block w-fit text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-semibold px-1 rounded">
-                                                                Cuti 1/2 Hari
+                                                                Potong Prorata Harian
                                                             </span>
                                                         ) : null}
                                                     </div>

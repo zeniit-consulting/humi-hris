@@ -35,6 +35,7 @@ type Settings = {
     late_half_day_penalty_type?: 'nominal' | 'prorate_half_day';
     late_half_day_deduct_leave?: boolean;
     unrecorded_cutoff_penalty_enabled?: boolean;
+    active_working_days?: number;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -67,8 +68,9 @@ export default function AttendanceSettings({
         late_half_day_enabled: settings.late_half_day_enabled ?? false,
         late_half_day_cutoff_minutes: settings.late_half_day_cutoff_minutes ?? 60,
         late_half_day_penalty_amount: settings.late_half_day_penalty_amount ?? 0,
-        late_half_day_penalty_type: settings.late_half_day_penalty_type ?? 'nominal',
-        late_half_day_deduct_leave: settings.late_half_day_deduct_leave ?? true,
+        late_half_day_penalty_type: settings.late_half_day_penalty_type ?? 'prorate_half_day',
+        late_half_day_deduct_leave: settings.late_half_day_deduct_leave ?? false,
+        active_working_days: settings.active_working_days ?? 22,
     });
 
     const addTierRow = () => {
@@ -368,11 +370,11 @@ export default function AttendanceSettings({
                             )}
                         </div>
 
-                        {/* Section 2: Aturan Cuti Setengah Hari & Maksimal Keterlambatan */}
+                        {/* Section 2: Aturan Potong Prorata Harian (Keterlambatan Maksimal) */}
                         <div className="rounded-xl border bg-card p-5 shadow-sm space-y-5">
                             <div className="flex items-center gap-2 pb-2 border-b">
                                 <AlertTriangle className="h-5 w-5 text-amber-500" />
-                                <h3 className="font-semibold text-base">Aturan Keterlambatan Maksimal & Cuti Setengah Hari</h3>
+                                <h3 className="font-semibold text-base">Aturan Keterlambatan Maksimal (Potong Prorata Harian)</h3>
                             </div>
 
                             <div className="rounded-lg border bg-muted/40 p-4">
@@ -387,10 +389,10 @@ export default function AttendanceSettings({
                                     />
                                     <div className="space-y-1">
                                         <span className="text-sm font-medium leading-none">
-                                            Aktifkan Aturan Keterlambatan Cuti Setengah Hari
+                                            Potong Prorata Harian
                                         </span>
                                         <p className="text-xs text-muted-foreground">
-                                            Jika karyawan terlambat melebihi batas menit maksimal yang ditentukan, kehadiran otomatis ditandai sebagai cuti setengah hari.
+                                            Jika karyawan terlambat melebihi batas menit maksimal yang ditentukan, otomatis potong denda senilai 50% dari prorata harian (gaji pokok + tunjangan tetap dibagi total hari kerja standar).
                                         </p>
                                     </div>
                                 </label>
@@ -418,14 +420,14 @@ export default function AttendanceSettings({
                                             </span>
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            Contoh: 60 menit. Karyawan yang terlambat ≥ 60 menit dari jam masuk akan dianggap cuti setengah hari.
+                                            Contoh: 60 menit. Karyawan yang terlambat ≥ 60 menit dari jam masuk akan dikenakan denda potong prorata harian (50%).
                                         </p>
                                         <InputError message={form.errors.late_half_day_cutoff_minutes} />
                                     </div>
 
                                     <div className="grid gap-2">
                                         <Label htmlFor="late_half_day_penalty_type" className="font-medium">
-                                            Metode Denda Terlambat Setengah Hari
+                                            Metode Denda Keterlambatan Maksimal
                                         </Label>
                                         <select
                                             id="late_half_day_penalty_type"
@@ -435,15 +437,27 @@ export default function AttendanceSettings({
                                                 form.setData('late_half_day_penalty_type', e.target.value as 'nominal' | 'prorate_half_day')
                                             }
                                         >
-                                            <option value="nominal">Nominal Tetap (Rp)</option>
                                             <option value="prorate_half_day">Potong Setengah Hari Prorate Gaji (Gapok + Tunjangan Tetap)</option>
+                                            <option value="nominal">Nominal Tetap (Rp)</option>
                                         </select>
                                         <p className="text-xs text-muted-foreground">
                                             {form.data.late_half_day_penalty_type === 'prorate_half_day'
-                                                ? 'Denda dihitung otomatis: 0.5 × (Gaji Pokok + Tunjangan Tetap) / Hari Kerja per bulan.'
+                                                ? 'Denda dihitung otomatis: 50% × (Gaji Pokok + Tunjangan Tetap) ÷ Hari Kerja Standar per Bulan.'
                                                 : 'Denda menggunakan nominal rupiah tetap.'}
                                         </p>
                                     </div>
+
+                                    {form.data.late_half_day_penalty_type === 'prorate_half_day' && (
+                                        <div className="sm:col-span-2 rounded-lg border bg-blue-50/60 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 p-3.5 text-xs text-blue-900 dark:text-blue-200">
+                                            <p className="font-semibold mb-1">Rumus Perhitungan Potong Prorata Harian (50%):</p>
+                                            <p className="font-mono text-[11px] bg-background/80 p-2 rounded border border-blue-200 dark:border-blue-800">
+                                                Denda = 50% × (Gaji Pokok + Total Tunjangan Tetap Aktif) ÷ {settings.active_working_days ?? 22} Hari Kerja
+                                            </p>
+                                            <p className="mt-1 text-muted-foreground text-[11px]">
+                                                Nilai denda ini otomatis dicatat pada kehadiran dan dipotongkan pada draft slip gaji (Denda Keterlambatan).
+                                            </p>
+                                        </div>
+                                    )}
 
                                     {form.data.late_half_day_penalty_type === 'nominal' && (
                                         <div className="grid gap-2">
@@ -462,7 +476,7 @@ export default function AttendanceSettings({
                                                 }
                                             />
                                             <p className="text-xs text-muted-foreground">
-                                                Besaran denda yang dikenakan saat terlambat mencapai batas cuti setengah hari (opsional).
+                                                Besaran denda tetap yang dikenakan saat terlambat mencapai batas menit maksimal.
                                             </p>
                                         </div>
                                     )}
@@ -482,7 +496,7 @@ export default function AttendanceSettings({
                                                     Otomatis Potong Saldo Cuti Tahunan (0.5 Hari)
                                                 </span>
                                                 <p className="text-xs text-muted-foreground">
-                                                    Jika dicentang, sistem akan otomatis mencatatkan pemotongan saldo cuti tahunan sebesar 0.5 hari untuk tanggal keterlambatan tersebut.
+                                                    Jika dicentang, sistem juga akan otomatis mencatatkan pemotongan saldo cuti tahunan sebesar 0.5 hari untuk tanggal keterlambatan tersebut.
                                                 </p>
                                             </div>
                                         </label>

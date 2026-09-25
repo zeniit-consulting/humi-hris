@@ -328,6 +328,12 @@
                                         <td>(Rp {{ number_format((float) $slip->unpaid_leave_deduction, 0, ',', '.') }})</td>
                                     </tr>
                                 @endif
+                                @foreach (($slip->manual_deduction_breakdown ?? []) as $name => $amount)
+                                    <tr>
+                                        <td>{{ $name }}</td>
+                                        <td>(Rp {{ number_format((float) $amount, 0, ',', '.') }})</td>
+                                    </tr>
+                                @endforeach
                             </tbody>
                         </table>
                     </td>

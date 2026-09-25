@@ -91,12 +91,14 @@ class AttendanceStatusService
 
     public function calculateLatePenalty(int $lateMinutes, bool $isHalfDay, ?CompanySetting $setting, ?\App\Models\Employee $employee = null): float
     {
-        if (! $setting || ! (bool) $setting->late_penalty_enabled) {
+        if (! $setting) {
             return 0.0;
         }
 
-        if ($isHalfDay) {
-            if (($setting->late_half_day_penalty_type ?? 'nominal') === 'prorate_half_day') {
+        if ($isHalfDay && (bool) ($setting->late_half_day_enabled ?? false)) {
+            $penaltyType = $setting->late_half_day_penalty_type ?? 'prorate_half_day';
+
+            if ($penaltyType === 'prorate_half_day') {
                 if ($employee) {
                     $baseSalary = (float) ($employee->base_salary ?? 0);
                     $allowances = (float) $employee->allowances->where('is_active', true)->sum('amount');
@@ -109,6 +111,10 @@ class AttendanceStatusService
             if ((float) ($setting->late_half_day_penalty_amount ?? 0) > 0) {
                 return (float) $setting->late_half_day_penalty_amount;
             }
+        }
+
+        if (! (bool) $setting->late_penalty_enabled) {
+            return 0.0;
         }
 
         $type = $setting->late_penalty_type ?? 'tiered';

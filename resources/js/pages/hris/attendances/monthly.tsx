@@ -301,7 +301,7 @@ export default function MonthlyAttendancePage() {
                                                 {row.late_level ? (
                                                     <div className="mt-1 text-xs text-destructive flex flex-col gap-0.5">
                                                         <span>
-                                                            {row.late_level === 'half_day' ? 'Cuti 1/2 Hari' : row.late_level}
+                                                            {row.late_level === 'half_day' ? 'Potong Prorata Harian' : row.late_level}
                                                             {row.late_minutes !== null ? ` (${row.late_minutes}m)` : ''}
                                                         </span>
                                                         {row.late_penalty && row.late_penalty > 0 ? (
@@ -311,7 +311,7 @@ export default function MonthlyAttendancePage() {
                                                         ) : null}
                                                         {row.is_half_day ? (
                                                             <span className="inline-block w-fit text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-semibold px-1 rounded">
-                                                                Cuti 1/2 Hari
+                                                                Potong Prorata Harian
                                                             </span>
                                                         ) : null}
                                                     </div>

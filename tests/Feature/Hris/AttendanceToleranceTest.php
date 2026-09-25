@@ -480,4 +480,79 @@ class AttendanceToleranceTest extends TestCase
         // 0.5 * (5.500.000 / 22) = 125.000
         $this->assertEquals(125000.00, (float) $attendance->late_penalty);
     }
+
+    public function test_company_max_lateness_half_day_prorate_penalty_works_even_when_general_late_penalty_disabled(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 6_000_000,
+        ]);
+
+        \App\Models\EmployeeAllowance::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'name' => 'Tunjangan Tetap',
+            'amount' => 600_000,
+            'is_active' => true,
+            'effective_start_date' => '2026-01-01',
+        ]);
+
+        \App\Models\CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => 'PT Test 2',
+                'active_working_days' => 22,
+                'late_penalty_enabled' => false, // General tiered penalty disabled
+                'late_tolerance_minutes' => 15,
+                'late_half_day_enabled' => true, // Potong Prorata Harian enabled
+                'late_half_day_cutoff_minutes' => 60,
+                'late_half_day_penalty_type' => 'prorate_half_day',
+                'late_half_day_deduct_leave' => false,
+            ]
+        );
+
+        WorkShift::query()->updateOrCreate(
+            ['user_id' => $user->id, 'code' => '0918'],
+            [
+                'name' => 'Pagi 9',
+                'start_time' => '09:00',
+                'end_time' => '18:00',
+                'is_day_off' => false,
+                'late_tolerance_minutes' => 15,
+            ]
+        );
+
+        EmployeeSchedule::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-05-24',
+            'shift_code' => '0918',
+            'start_time' => '09:00',
+            'end_time' => '18:00',
+            'is_day_off' => false,
+        ]);
+
+        // Check-in at 10:10 (70 min late > 60 cutoff -> half day prorate penalty)
+        $this->actingAs($user)
+            ->post(route('hris.attendances.store'), [
+                'employee_id' => $employee->id,
+                'attendance_date' => '2026-05-24',
+                'status' => 'present',
+                'check_in_at' => '2026-05-24 10:10:00',
+            ])
+            ->assertRedirect();
+
+        $attendance = EmployeeAttendance::query()
+            ->where('employee_id', $employee->id)
+            ->whereDate('attendance_date', '2026-05-24')
+            ->firstOrFail();
+
+        $this->assertSame('late', $attendance->status);
+        $this->assertSame(70, $attendance->late_minutes);
+        $this->assertSame('half_day', $attendance->late_level);
+        $this->assertTrue((bool) $attendance->is_half_day);
+        // 0.5 * ((6.000.000 + 600.000) / 22) = 0.5 * (6.600.000 / 22) = 0.5 * 300.000 = 150.000
+        $this->assertEquals(150000.00, (float) $attendance->late_penalty);
+    }
 }

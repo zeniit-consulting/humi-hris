@@ -35,6 +35,8 @@ class GeneratePayrollRequest extends FormRequest
 
         return [
             'period' => ['required', 'date_format:Y-m'],
+            'period_start' => ['nullable', 'date'],
+            'period_end' => ['nullable', 'date', 'after_or_equal:period_start'],
             'employee_scope' => ['nullable', 'in:all,parent_only'],
             'excluded_employee_ids' => ['nullable', 'array'],
             'excluded_employee_ids.*' => [

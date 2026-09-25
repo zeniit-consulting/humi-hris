@@ -162,6 +162,8 @@ class PayrollController extends Controller
                     'kasbon_deduction' => $item->kasbon_deduction,
                     'denda_deduction' => $item->denda_deduction,
                     'unpaid_leave_deduction' => $item->unpaid_leave_deduction,
+                    'manual_deduction_total' => (float) ($item->manual_deduction_total ?? 0),
+                    'manual_deduction_breakdown' => $item->manual_deduction_breakdown ?? [],
                     'deductions_total' => $item->deductions_total,
                     'net_salary' => $item->net_salary,
                     'allowance_breakdown' => $item->allowance_breakdown ?? [],

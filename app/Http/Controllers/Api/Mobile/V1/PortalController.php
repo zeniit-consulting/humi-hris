@@ -103,12 +103,30 @@ class PortalController extends Controller
             $annualLeaveDays = $annualLeaveBalance?->remainingBalance() ?? 0.0;
             $sickLeaveDays = $sickLeaveBalance?->remainingBalance() ?? 0.0;
 
-            $startOfMonth = $today->copy()->startOfMonth()->toDateString();
-            $endOfMonth = $today->copy()->endOfMonth()->toDateString();
+            [$periodStart, $periodEnd] = app(\App\Services\PayrollGenerationService::class)->calculatePeriodDates(
+                $period,
+                $companySetting,
+            );
             $attendancePenalty = (float) EmployeeAttendance::query()
                 ->where('employee_id', $employee->id)
-                ->whereBetween('attendance_date', [$startOfMonth, $endOfMonth])
-                ->sum('late_penalty');
+                ->whereBetween('attendance_date', [$periodStart->toDateString(), $periodEnd->toDateString()])
+                ->get()
+                ->sum(function (EmployeeAttendance $att) use ($companySetting, $employee): float {
+                    $penalty = (float) ($att->late_penalty ?? 0);
+                    if ($penalty > 0) {
+                        return $penalty;
+                    }
+                    if ($att->status === 'late' || (int) ($att->late_minutes ?? 0) > 0 || (bool) ($att->is_half_day ?? false)) {
+                        return app(\App\Services\AttendanceStatusService::class)->calculateLatePenalty(
+                            (int) ($att->late_minutes ?? 0),
+                            (bool) ($att->is_half_day ?? false),
+                            $companySetting,
+                            $employee
+                        );
+                    }
+
+                    return 0.0;
+                });
 
             $upcomingLeaves = LeaveRequest::query()
                 ->where('employee_id', $employee->id)

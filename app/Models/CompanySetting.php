@@ -61,6 +61,8 @@ class CompanySetting extends Model
         'missing_clock_out_request_days',
         'attendance_revision_cutoff_day',
         'unrecorded_cutoff_penalty_enabled',
+        'payroll_cutoff_day',
+        'payroll_period_start_day',
         'overtime_multiplier_hour1',
         'overtime_multiplier_subsequent',
         'overtime_events',

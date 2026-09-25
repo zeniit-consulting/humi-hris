@@ -31,6 +31,8 @@ type PositionOption = {
 
 type Settings = {
     active_working_days: number;
+    payroll_cutoff_day?: string;
+    payroll_period_start_day?: string | null;
     auto_deduct_leave_for_missing_checkout: boolean;
     overtime_calculation_mode: 'hourly' | 'threshold_daily';
     overtime_rate_type: 'formula' | 'fixed';
@@ -71,6 +73,8 @@ export default function PayrollSettings({
 }) {
     const form = useForm({
         ...settings,
+        payroll_cutoff_day: settings.payroll_cutoff_day ?? 'end_of_month',
+        payroll_period_start_day: settings.payroll_period_start_day ?? '',
         overtime_events: (settings.overtime_events ?? []).map((e) => ({
             code: e.code ?? '',
             name: e.name ?? '',
@@ -106,32 +110,96 @@ export default function PayrollSettings({
                             });
                         }}
                     >
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="grid gap-2">
-                                <Label htmlFor="active_working_days">
-                                    Hari Kerja Aktif
-                                </Label>
-                                <Input
-                                    id="active_working_days"
-                                    type="number"
-                                    min="1"
-                                    max="31"
-                                    value={form.data.active_working_days}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'active_working_days',
-                                            Number(event.target.value),
-                                        )
-                                    }
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    Default 22 hari. Digunakan untuk potongan
-                                    cuti tanpa gaji per hari.
-                                </p>
-                                <InputError
-                                    message={form.errors.active_working_days}
-                                />
+                        <div className="rounded-xl border bg-card p-5 shadow-sm space-y-4">
+                            <div className="flex items-center gap-2 pb-2 border-b">
+                                <CalendarClock className="h-5 w-5 text-primary" />
+                                <div>
+                                    <h3 className="font-semibold text-base">Periode Payroll & Cut-off Bulanan</h3>
+                                    <p className="text-xs text-muted-foreground">
+                                        Tentukan tanggal batas cut-off untuk akumulasi absensi, denda, dan lembur saat generate payroll bulanan.
+                                    </p>
+                                </div>
                             </div>
+
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="payroll_cutoff_day">
+                                        Tanggal Cut-off Payroll
+                                    </Label>
+                                    <select
+                                        id="payroll_cutoff_day"
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary"
+                                        value={form.data.payroll_cutoff_day}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'payroll_cutoff_day',
+                                                event.target.value,
+                                            )
+                                        }
+                                    >
+                                        <option value="end_of_month">
+                                            Akhir Bulan (Tanggal 1 s/d Akhir Bulan)
+                                        </option>
+                                        {Array.from({ length: 28 }, (_, index) => {
+                                            const day = index + 1;
+                                            const startDay = day + 1;
+                                            return (
+                                                <option
+                                                    key={day}
+                                                    value={String(day)}
+                                                >
+                                                    Tanggal {day} (Periode: Tgl {startDay} bulan lalu s/d Tgl {day} bulan ini)
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                    <p className="text-xs text-muted-foreground">
+                                        {form.data.payroll_cutoff_day === 'end_of_month'
+                                            ? 'Periode payroll dihitung penuh dari tanggal 1 s/d akhir bulan bersangkutan.'
+                                            : `Periode payroll dihitung dari tanggal ${Number(form.data.payroll_cutoff_day) + 1} bulan sebelumnya s/d tanggal ${form.data.payroll_cutoff_day} bulan berjalan.`}
+                                    </p>
+                                    <InputError
+                                        message={form.errors.payroll_cutoff_day}
+                                    />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="active_working_days">
+                                        Hari Kerja Aktif Standar
+                                    </Label>
+                                    <Input
+                                        id="active_working_days"
+                                        type="number"
+                                        min="1"
+                                        max="31"
+                                        value={form.data.active_working_days}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'active_working_days',
+                                                Number(event.target.value),
+                                            )
+                                        }
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Default 22 hari. Digunakan sebagai pembagi perhitungan denda prorata dan potongan cuti tanpa gaji.
+                                    </p>
+                                    <InputError
+                                        message={form.errors.active_working_days}
+                                    />
+                                </div>
+
+                                <div className="sm:col-span-2 rounded-lg border bg-blue-50/60 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 p-3.5 text-xs text-blue-900 dark:text-blue-200">
+                                    <p className="font-semibold mb-1">Dampak Pengaturan Cut-off terhadap Generate Payroll:</p>
+                                    <p className="leading-relaxed">
+                                        {form.data.payroll_cutoff_day === 'end_of_month'
+                                            ? 'Saat generate payroll untuk periode tertentu (misal September 2026), seluruh rekapan absensi, denda keterlambatan akumulatif, lembur, dan potongan otomatis dihitung untuk rentang 01 September s/d 30 September.'
+                                            : `Saat generate payroll untuk periode tertentu (misal September 2026), seluruh rekapan absensi, denda keterlambatan akumulatif, lembur, dan potongan otomatis dihitung untuk rentang ${Number(form.data.payroll_cutoff_day) + 1} bulan sebelumnya s/d ${form.data.payroll_cutoff_day} bulan berjalan.`}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
                             <div className="grid gap-2">
                                 <Label htmlFor="overtime_calculation_mode">
                                     Metode Hitung Lembur

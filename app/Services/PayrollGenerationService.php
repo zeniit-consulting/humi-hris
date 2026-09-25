@@ -12,6 +12,47 @@ use Illuminate\Support\Facades\DB;
 
 class PayrollGenerationService
 {
+    /**
+     * Determine the date range (start, end) for a given payroll period and company setting.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    public function calculatePeriodDates(string $period, ?CompanySetting $setting, ?string $customStart = null, ?string $customEnd = null): array
+    {
+        if ($customStart && $customEnd) {
+            return [
+                Carbon::parse($customStart)->startOfDay(),
+                Carbon::parse($customEnd)->endOfDay(),
+            ];
+        }
+
+        $periodDate = Carbon::createFromFormat('Y-m-d', $period.'-01');
+        $cutoffDay = $setting?->payroll_cutoff_day ?? 'end_of_month';
+
+        if ($cutoffDay === 'end_of_month' || $cutoffDay === '' || ! is_numeric($cutoffDay)) {
+            return [
+                $periodDate->copy()->startOfMonth(),
+                $periodDate->copy()->endOfMonth(),
+            ];
+        }
+
+        $day = (int) $cutoffDay;
+        $end = $periodDate->copy()->day(min($day, $periodDate->daysInMonth))->endOfDay();
+
+        $prevMonth = $periodDate->copy()->subMonthNoOverflow();
+        $startDaySetting = $setting?->payroll_period_start_day;
+
+        if ($startDaySetting !== null && is_numeric($startDaySetting)) {
+            $startDay = min((int) $startDaySetting, $prevMonth->daysInMonth);
+            $start = $prevMonth->copy()->day($startDay)->startOfDay();
+        } else {
+            $prevCutoff = $prevMonth->copy()->day(min($day, $prevMonth->daysInMonth));
+            $start = $prevCutoff->copy()->addDay()->startOfDay();
+        }
+
+        return [$start, $end];
+    }
+
     public function generateForPeriod(
         int $ownerId,
         string $period,
@@ -20,9 +61,11 @@ class PayrollGenerationService
         bool $includeSubCompanyEmployees = true,
         array $excludedEmployeeIds = [],
         float $serviceFeeTotal = 0,
+        ?string $customPeriodStart = null,
+        ?string $customPeriodEnd = null,
     ): PayrollRun {
-        $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth();
-        $end = $start->copy()->endOfMonth();
+        $setting = CompanySetting::query()->where('user_id', $ownerId)->first();
+        [$start, $end] = $this->calculatePeriodDates($period, $setting, $customPeriodStart, $customPeriodEnd);
 
         return DB::transaction(function () use ($ownerId, $period, $start, $end, $generatedBy, $markAsDraft, $includeSubCompanyEmployees, $excludedEmployeeIds, $serviceFeeTotal): PayrollRun {
             $run = PayrollRun::query()->updateOrCreate(
@@ -57,9 +100,15 @@ class PayrollGenerationService
         array $excludedEmployeeIds = [],
     ): PayrollRun {
         $period = $run->period;
-        $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth();
-        $end = $start->copy()->endOfMonth();
         $ownerId = (int) $run->user_id;
+        $setting = CompanySetting::query()->where('user_id', $ownerId)->first();
+
+        if ($run->period_start && $run->period_end) {
+            $start = Carbon::parse($run->period_start)->startOfDay();
+            $end = Carbon::parse($run->period_end)->endOfDay();
+        } else {
+            [$start, $end] = $this->calculatePeriodDates($period, $setting);
+        }
 
         return DB::transaction(function () use ($run, $ownerId, $start, $end, $generatedBy, $markAsDraft, $includeSubCompanyEmployees, $excludedEmployeeIds): PayrollRun {
             $items = $this->payrollItems($ownerId, $run, $start, $end, $includeSubCompanyEmployees, $excludedEmployeeIds);
@@ -371,22 +420,52 @@ class PayrollGenerationService
 
         $kasbonDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'kasbon');
         $manualDendaDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'denda');
-        $attendanceLateDeduction = (float) $employee->attendances->sum('late_penalty');
+        $attendanceLateDeduction = (float) $employee->attendances->sum(function ($att) use ($setting, $employee): float {
+            $penalty = (float) ($att->late_penalty ?? 0);
+            if ($penalty > 0) {
+                return $penalty;
+            }
+            if ($att->status === 'late' || (int) ($att->late_minutes ?? 0) > 0 || (bool) ($att->is_half_day ?? false)) {
+                return app(\App\Services\AttendanceStatusService::class)->calculateLatePenalty(
+                    (int) ($att->late_minutes ?? 0),
+                    (bool) ($att->is_half_day ?? false),
+                    $setting,
+                    $employee
+                );
+            }
+
+            return 0.0;
+        });
 
         // Jika karyawan tidak absen sampai masa cutoff maka termasuk potongan setengah hari prorate
         $unrecordedCutoffDays = $this->unrecordedAttendanceCutoffDays($employee, $start, $end, $setting);
         $halfDayProrateRate = round(0.5 * (($monthlyBaseSalary + (float) $employee->allowances->where('is_active', true)->sum('amount')) / $activeWorkingDays), 2);
         $unrecordedCutoffDeduction = round($unrecordedCutoffDays * $halfDayProrateRate, 2);
 
+        $manualDeductionBreakdown = [];
+        $otherDeductions = EmployeeDeduction::query()
+            ->withoutGlobalScopes()
+            ->where('user_id', $ownerId)
+            ->where('employee_id', $employee->id)
+            ->whereNotIn('type', ['kasbon', 'denda'])
+            ->whereBetween('deduction_date', [$start->toDateString(), $end->toDateString()])
+            ->get();
+
+        foreach ($otherDeductions as $otherDeduction) {
+            $label = ! empty($otherDeduction->notes) ? $otherDeduction->notes : ucfirst(str_replace('_', ' ', $otherDeduction->type));
+            $manualDeductionBreakdown[$label] = round(($manualDeductionBreakdown[$label] ?? 0) + (float) $otherDeduction->amount, 2);
+        }
+        $manualDeductionTotal = round(collect($manualDeductionBreakdown)->sum(), 2);
+
         $dendaDeduction = round($manualDendaDeduction + $attendanceLateDeduction + $unrecordedCutoffDeduction, 2);
         $deductionsTotal = round(
-            $kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + $pph21Deduction + $bpjs['bpjs_total_employee'],
+            $kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + $pph21Deduction + $manualDeductionTotal + $bpjs['bpjs_total_employee'],
             2
         );
 
         // BPJS Perusahaan dan Tunjangan PPH dikategorikan sebagai benefit, tidak dihitung ke dalam gaji
         $takeHomePayDeductions = round(
-            $kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + ($pph21Method === 'gross_up' ? 0 : $pph21Deduction) + $bpjs['bpjs_total_employee'],
+            $kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + ($pph21Method === 'gross_up' ? 0 : $pph21Deduction) + $manualDeductionTotal + $bpjs['bpjs_total_employee'],
             2
         );
         $netSalary = round(max(($baseSalary + $allowancesTotal + $overtimePay) - $takeHomePayDeductions, 0), 2);
@@ -424,6 +503,8 @@ class PayrollGenerationService
             'kasbon_deduction' => $kasbonDeduction,
             'denda_deduction' => $dendaDeduction,
             'unpaid_leave_deduction' => $unpaidLeaveDeduction,
+            'manual_deduction_total' => $manualDeductionTotal,
+            'manual_deduction_breakdown' => $manualDeductionBreakdown,
             'deductions_total' => $deductionsTotal,
             'net_salary' => $netSalary,
             'allowance_breakdown' => $allowanceGrouped->toArray(),
@@ -583,7 +664,7 @@ class PayrollGenerationService
         $cutoffDay = $setting->attendance_revision_cutoff_day ?? 'end_of_month';
         $cutoffDate = $cutoffDay === 'end_of_month'
             ? $end->copy()->endOfDay()
-            : $start->copy()->day(min((int) $cutoffDay, $start->daysInMonth))->endOfDay();
+            : $end->copy()->day(min((int) $cutoffDay, $end->daysInMonth))->endOfDay();
 
         $schedules = $employee->schedules->keyBy(
             fn ($schedule): string => $schedule->work_date->toDateString()

@@ -129,6 +129,8 @@ type PayrollItem = {
     kasbon_deduction: string;
     denda_deduction: string;
     unpaid_leave_deduction: string;
+    manual_deduction_total?: string | number;
+    manual_deduction_breakdown?: Record<string, number>;
     deductions_total: string;
     net_salary: string;
     allowance_breakdown: Record<string, number>;
@@ -155,6 +157,10 @@ type PageProps = {
         service_fee_points: string | number;
     }>;
     subCompanies: Array<{ id: number; label: string }>;
+    payrollSettings?: {
+        payroll_cutoff_day?: string;
+        payroll_period_start_day?: string | null;
+    };
     payrollReadiness: {
         period: string;
         status: 'ready' | 'warning' | 'error';
@@ -169,6 +175,40 @@ type PageProps = {
             action_url?: string;
         }>;
     };
+};
+
+const getPeriodDateRange = (periodYm: string, cutoffDay?: string) => {
+    if (!periodYm || !periodYm.includes('-')) return null;
+    const [yearStr, monthStr] = periodYm.split('-');
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    if (!year || !month) return null;
+
+    if (!cutoffDay || cutoffDay === 'end_of_month') {
+        const lastDay = new Date(year, month, 0).getDate();
+        const startStr = `${periodYm}-01`;
+        const endStr = `${periodYm}-${String(lastDay).padStart(2, '0')}`;
+        return { start: startStr, end: endStr };
+    }
+
+    const day = parseInt(cutoffDay, 10);
+    const lastDayThisMonth = new Date(year, month, 0).getDate();
+    const endDay = Math.min(day, lastDayThisMonth);
+    const endStr = `${periodYm}-${String(endDay).padStart(2, '0')}`;
+
+    let prevYear = year;
+    let prevMonth = month - 1;
+    if (prevMonth === 0) {
+        prevMonth = 12;
+        prevYear -= 1;
+    }
+    const lastDayPrevMonth = new Date(prevYear, prevMonth, 0).getDate();
+    const prevCutoff = Math.min(day, lastDayPrevMonth);
+    const prevDate = new Date(prevYear, prevMonth - 1, prevCutoff);
+    prevDate.setDate(prevDate.getDate() + 1);
+    const startStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}-${String(prevDate.getDate()).padStart(2, '0')}`;
+
+    return { start: startStr, end: endStr };
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -245,6 +285,7 @@ export default function PayrollPage() {
         sub_company_id,
         employeeOptions,
         subCompanies,
+        payrollSettings,
         payrollReadiness,
     } = usePage<PageProps>().props;
     const { subscription } = usePage().props;
@@ -388,6 +429,7 @@ export default function PayrollPage() {
         pph21_company_borne: '',
         kasbon_deduction: '',
         denda_deduction: '',
+        manual_deductions: [] as CompensationRow[],
     });
     const thrForm = useForm({ reference_date: '' });
 
@@ -506,6 +548,12 @@ export default function PayrollPage() {
             pph21_company_borne: formNumber(item.pph21_company_borne),
             kasbon_deduction: formNumber(item.kasbon_deduction),
             denda_deduction: formNumber(item.denda_deduction),
+            manual_deductions: Object.entries(
+                item.manual_deduction_breakdown ?? {},
+            ).map(([name, amount]) => ({
+                name,
+                amount: formNumber(amount),
+            })),
         });
     };
 
@@ -1081,10 +1129,17 @@ export default function PayrollPage() {
                 <Card id="payroll-table">
                     <CardHeader>
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                            <CardTitle>
-                                {type === 'thr'
-                                    ? `Preview THR ${periodState}`
-                                    : `Preview Payroll ${periodState}`}
+                            <CardTitle className="flex flex-wrap items-center gap-2">
+                                <span>
+                                    {type === 'thr'
+                                        ? `Preview THR ${periodState}`
+                                        : `Preview Payroll ${periodState}`}
+                                </span>
+                                {run?.period_start && run?.period_end && (
+                                    <Badge variant="outline" className="text-xs font-normal">
+                                        Periode: {run.period_start} s/d {run.period_end}
+                                    </Badge>
+                                )}
                             </CardTitle>
                             {run && !run.is_saved && run.is_locked && (
                                 <Badge variant={run.is_locked_by_me ? "secondary" : "destructive"} className="gap-1 px-2.5 py-1">
@@ -1519,6 +1574,20 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
+                                                    onClick={() => handleSort('manual_deduction_total')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Potongan Lainnya
+                                                    {sortKey === 'manual_deduction_total' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
                                                     onClick={() => handleSort('deductions_total')}
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
@@ -1553,7 +1622,7 @@ export default function PayrollPage() {
                                         {sortedItems.length === 0 && (
                                             <tr>
                                                 <td
-                                                    colSpan={16}
+                                                    colSpan={17}
                                                     className="px-3 py-8 text-center text-muted-foreground"
                                                 >
                                                     Belum ada data payroll di
@@ -1702,6 +1771,24 @@ export default function PayrollPage() {
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-3">
+                                                        {Number(item.manual_deduction_total ?? 0) > 0 ? (
+                                                            <div>
+                                                                <p className="font-medium">
+                                                                    {formatCurrency(item.manual_deduction_total)}
+                                                                </p>
+                                                                {item.manual_deduction_breakdown && Object.keys(item.manual_deduction_breakdown).length > 0 && (
+                                                                    <div className="text-[11px] text-muted-foreground space-y-0.5">
+                                                                        {Object.entries(item.manual_deduction_breakdown).map(([name, amount]) => (
+                                                                            <div key={name}>• {name}: {formatCurrency(amount)}</div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">-</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-3">
                                                         {formatCurrency(
                                                             item.deductions_total,
                                                         )}
@@ -1805,6 +1892,18 @@ export default function PayrollPage() {
                                     className="pl-9"
                                 />
                             </div>
+                            {(() => {
+                                const range = getPeriodDateRange(periodState, payrollSettings?.payroll_cutoff_day);
+                                if (!range) return null;
+                                return (
+                                    <p className="text-xs text-muted-foreground">
+                                        Rentang cut-off absensi & denda: <span className="font-semibold text-foreground">{range.start}</span> s/d <span className="font-semibold text-foreground">{range.end}</span>
+                                        {payrollSettings?.payroll_cutoff_day && payrollSettings.payroll_cutoff_day !== 'end_of_month'
+                                            ? ` (Cut-off tanggal ${payrollSettings.payroll_cutoff_day})`
+                                            : ' (Cut-off akhir bulan)'}
+                                    </p>
+                                );
+                            })()}
                         </div>
 
                         <div className="grid gap-2">
@@ -2222,6 +2321,18 @@ export default function PayrollPage() {
                                 rows={editItemForm.data.bonuses}
                                 onChange={(rows) =>
                                     editItemForm.setData('bonuses', rows)
+                                }
+                            />
+
+                            <CompensationRowsEditor
+                                title="Potongan Manual / Lainnya"
+                                addLabel="Tambah Potongan Manual"
+                                rows={editItemForm.data.manual_deductions}
+                                onChange={(rows) =>
+                                    editItemForm.setData(
+                                        'manual_deductions',
+                                        rows,
+                                    )
                                 }
                             />
 

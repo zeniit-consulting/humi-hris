@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PayrollSettingUpdateRequest extends FormRequest
 {
@@ -30,6 +31,17 @@ class PayrollSettingUpdateRequest extends FormRequest
     {
         return [
             'active_working_days' => ['required', 'integer', 'min:1', 'max:31'],
+            'payroll_cutoff_day' => [
+                'nullable',
+                Rule::in([
+                    'end_of_month',
+                    ...array_map(static fn (int $day): string => (string) $day, range(1, 28)),
+                ]),
+            ],
+            'payroll_period_start_day' => [
+                'nullable',
+                Rule::in(array_map(static fn (int $day): string => (string) $day, range(1, 31))),
+            ],
             'auto_deduct_leave_for_missing_checkout' => ['required', 'boolean'],
             'overtime_calculation_mode' => ['sometimes', 'in:hourly,threshold_daily'],
             'overtime_rate_type' => ['sometimes', 'in:formula,fixed'],

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Hris;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Hris\GeneratePayrollRequest;
 use App\Jobs\SendPayslipToWhatsApp;
+use App\Models\CompanySetting;
 use App\Models\Employee;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
@@ -73,10 +74,16 @@ class PayrollController extends Controller
             'total_net_salary' => round((float) $items->sum('net_salary'), 2),
         ];
 
+        $companySetting = CompanySetting::query()->where('user_id', $ownerId)->first();
+
         return Inertia::render('hris/payrolls/index', [
             'period' => $period,
             'type' => $type,
             'sub_company_id' => $subCompanyId ? (string) $subCompanyId : '',
+            'payrollSettings' => [
+                'payroll_cutoff_day' => (string) ($companySetting?->payroll_cutoff_day ?? 'end_of_month'),
+                'payroll_period_start_day' => $companySetting?->payroll_period_start_day ? (string) $companySetting->payroll_period_start_day : null,
+            ],
             'employeeOptions' => Employee::query()
                 ->with('subCompany:id,code,name')
                 ->where('user_id', $ownerId)
@@ -182,6 +189,8 @@ class PayrollController extends Controller
                         'kasbon_deduction' => $item->kasbon_deduction,
                         'denda_deduction' => $item->denda_deduction,
                         'unpaid_leave_deduction' => $item->unpaid_leave_deduction,
+                        'manual_deduction_total' => (float) ($item->manual_deduction_total ?? 0),
+                        'manual_deduction_breakdown' => $item->manual_deduction_breakdown ?? [],
                         'deductions_total' => $item->deductions_total,
                         'net_salary' => $item->net_salary,
                         'allowance_breakdown' => $item->allowance_breakdown ?? [],
@@ -205,6 +214,8 @@ class PayrollController extends Controller
         $employeeScope = $request->validated('employee_scope') ?? 'all';
         $excludedEmployeeIds = $request->validated('excluded_employee_ids') ?? [];
         $serviceFeeTotal = (float) ($request->validated('service_fee_total') ?? 0);
+        $periodStart = $request->validated('period_start');
+        $periodEnd = $request->validated('period_end');
 
         $payrolls->generateForPeriod(
             $ownerId,
@@ -214,6 +225,8 @@ class PayrollController extends Controller
             includeSubCompanyEmployees: $employeeScope === 'all',
             excludedEmployeeIds: $excludedEmployeeIds,
             serviceFeeTotal: $serviceFeeTotal,
+            customPeriodStart: $periodStart,
+            customPeriodEnd: $periodEnd,
         );
 
         return to_route('hris.payrolls.index', ['period' => $period, 'type' => 'regular']);
@@ -340,6 +353,7 @@ class PayrollController extends Controller
         $this->normalizePayrollItemInput($request);
         $this->normalizeCompensationRows($request, 'variable_allowances');
         $this->normalizeCompensationRows($request, 'bonuses');
+        $this->normalizeCompensationRows($request, 'manual_deductions');
 
         $validated = $request->validate([
             'base_salary' => ['nullable', 'numeric', 'min:0'],
@@ -368,11 +382,15 @@ class PayrollController extends Controller
             'bonuses' => ['nullable', 'array', 'max:20'],
             'bonuses.*.name' => ['required', 'string', 'max:100'],
             'bonuses.*.amount' => ['required', 'numeric', 'min:0'],
+            'manual_deductions' => ['nullable', 'array', 'max:20'],
+            'manual_deductions.*.name' => ['required', 'string', 'max:100'],
+            'manual_deductions.*.amount' => ['required', 'numeric', 'min:0'],
         ]);
 
         $variableAllowances = $validated['variable_allowances'] ?? null;
         $bonuses = $validated['bonuses'] ?? null;
-        unset($validated['variable_allowances'], $validated['bonuses']);
+        $manualDeductions = $validated['manual_deductions'] ?? null;
+        unset($validated['variable_allowances'], $validated['bonuses'], $validated['manual_deductions']);
 
         $payrollItem->fill($validated);
 
@@ -392,6 +410,16 @@ class PayrollController extends Controller
                     $fixedAllowancesTotal + collect($variableBreakdown)->sum() + collect($bonusBreakdown)->sum(),
                     2
                 ),
+            ]);
+        }
+
+        if ($manualDeductions !== null) {
+            $manualBreakdown = $this->compensationBreakdown($manualDeductions);
+            $manualDeductionTotal = round(collect($manualBreakdown)->sum(), 2);
+
+            $payrollItem->forceFill([
+                'manual_deduction_breakdown' => $manualBreakdown,
+                'manual_deduction_total' => $manualDeductionTotal,
             ]);
         }
 
@@ -417,6 +445,7 @@ class PayrollController extends Controller
             + (float) $payrollItem->kasbon_deduction
             + (float) $payrollItem->denda_deduction
             + (float) $payrollItem->unpaid_leave_deduction
+            + (float) ($payrollItem->manual_deduction_total ?? 0)
             + $bpjsTotalEmployee,
             2
         );
@@ -604,6 +633,7 @@ class PayrollController extends Controller
                 $headers[] = 'Potongan Kasbon';
                 $headers[] = 'Potongan Denda';
                 $headers[] = 'Potongan Unpaid Leave';
+                $headers[] = 'Potongan Lainnya';
                 $headers[] = 'Total Potongan';
                 $headers[] = 'Gaji Bersih';
 
@@ -623,6 +653,7 @@ class PayrollController extends Controller
                 $totalKasbon = 0;
                 $totalDenda = 0;
                 $totalUnpaidLeave = 0;
+                $totalManualDeduction = 0;
                 $totalDeductions = 0;
                 $totalNetSalary = 0;
 
@@ -649,6 +680,7 @@ class PayrollController extends Controller
                     $totalKasbon += (float) $item->kasbon_deduction;
                     $totalDenda += (float) $item->denda_deduction;
                     $totalUnpaidLeave += (float) $item->unpaid_leave_deduction;
+                    $totalManualDeduction += (float) ($item->manual_deduction_total ?? 0);
                     $totalDeductions += (float) $item->deductions_total;
                     $totalNetSalary += (float) $item->net_salary;
                 }
@@ -687,6 +719,7 @@ class PayrollController extends Controller
                 $totalsRow[] = (int) round($totalKasbon);
                 $totalsRow[] = (int) round($totalDenda);
                 $totalsRow[] = (int) round($totalUnpaidLeave);
+                $totalsRow[] = (int) round($totalManualDeduction);
                 $totalsRow[] = (int) round($totalDeductions);
                 $totalsRow[] = (int) round($totalNetSalary);
 
@@ -743,6 +776,7 @@ class PayrollController extends Controller
                     $row[] = (int) round((float) $item->kasbon_deduction);
                     $row[] = (int) round((float) $item->denda_deduction);
                     $row[] = (int) round((float) $item->unpaid_leave_deduction);
+                    $row[] = (int) round((float) ($item->manual_deduction_total ?? 0));
                     $row[] = (int) round((float) $item->deductions_total);
                     $row[] = (int) round((float) $item->net_salary);
 
@@ -907,6 +941,7 @@ class PayrollController extends Controller
                 $headers[] = 'Potongan Kasbon';
                 $headers[] = 'Potongan Denda';
                 $headers[] = 'Potongan Unpaid Leave';
+                $headers[] = 'Potongan Lainnya';
                 $headers[] = 'Total Potongan';
                 $headers[] = 'Gaji Bersih';
 
@@ -978,6 +1013,7 @@ class PayrollController extends Controller
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->kasbon_deduction));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->denda_deduction));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->unpaid_leave_deduction));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) ($item->manual_deduction_total ?? 0)));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->deductions_total));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->net_salary));
 

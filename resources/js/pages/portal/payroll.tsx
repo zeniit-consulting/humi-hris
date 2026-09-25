@@ -64,6 +64,8 @@ type PayrollPayload = {
         kasbon_deduction: string | number;
         denda_deduction: string | number;
         unpaid_leave_deduction: string | number;
+        manual_deduction_total?: string | number;
+        manual_deduction_breakdown?: Record<string, number>;
         deductions_total: string | number;
         net_salary: string | number;
         allowance_breakdown: Record<string, number>;
@@ -603,6 +605,19 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                                 )}
                                             </span>
                                         </div>
+                                        {Object.entries(
+                                            slip.manual_deduction_breakdown ?? {},
+                                        ).map(([name, amount]) => (
+                                            <div
+                                                key={`manual-deduction-${name}`}
+                                                className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3"
+                                            >
+                                                <span>{name}</span>
+                                                <span className="font-semibold text-rose-700">
+                                                    {formatCurrency(amount)}
+                                                </span>
+                                            </div>
+                                        ))}
                                         <div className="flex items-center justify-between rounded-[10px] bg-rose-50 px-4 py-3">
                                             <span>Total potongan</span>
                                             <span className="font-semibold text-rose-900">

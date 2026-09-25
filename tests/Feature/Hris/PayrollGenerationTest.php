@@ -538,6 +538,7 @@ class PayrollGenerationTest extends TestCase
             'employment_type' => 'DW',
             'base_salary' => 0,
             'daily_wage' => 150_000,
+            'hire_date' => '2026-01-01',
             'pph21_method' => 'gross',
             'pph21_rate' => 0,
         ]);
@@ -754,6 +755,47 @@ class PayrollGenerationTest extends TestCase
             'Insentif Shift' => 250_000,
         ], $item->variable_allowance_breakdown);
         $this->assertSame(['Bonus Target' => 1_000_000], $item->bonus_breakdown);
+    }
+
+    public function test_draft_payroll_accepts_manual_deductions_and_updates_net_salary(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2025-01-01',
+            'base_salary' => 5_000_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $this->actingAs($user)->post(route('hris.payrolls.generate'), [
+            'period' => '2026-02',
+        ]);
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-02')->firstOrFail();
+        $item = PayrollItem::query()->where('payroll_run_id', $run->id)->where('employee_id', $employee->id)->firstOrFail();
+
+        $this->actingAs($user)
+            ->put(route('hris.payrolls.items.update', [$run, $item]), [
+                'manual_deductions' => [
+                    ['name' => 'Potongan Koperasi', 'amount' => '150.000'],
+                    ['name' => 'Potongan Inventaris', 'amount' => '50.000'],
+                ],
+            ])
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']))
+            ->assertSessionHasNoErrors();
+
+        $item->refresh();
+
+        $this->assertSame('200000.00', $item->manual_deduction_total);
+        $this->assertSame([
+            'Potongan Koperasi' => 150_000,
+            'Potongan Inventaris' => 50_000,
+        ], $item->manual_deduction_breakdown);
+        $this->assertSame('200000.00', $item->deductions_total);
+        $this->assertSame('4800000.00', $item->net_salary);
     }
 
     public function test_saved_payroll_item_cannot_be_edited(): void
@@ -1877,5 +1919,80 @@ class PayrollGenerationTest extends TestCase
         $this->assertEquals(6_000_000, (int) $sheet->getCell('N3')->getValue());
 
         unlink($temp);
+    }
+
+    public function test_payroll_generation_accumulates_penalties_using_configured_cutoff_period(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        \App\Models\CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => 'PT Cutoff Test',
+                'active_working_days' => 22,
+                'payroll_cutoff_day' => '25',
+                'late_penalty_enabled' => true,
+            ]
+        );
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 5_000_000,
+            'hire_date' => '2026-01-01',
+            'is_active' => true,
+            'employment_status' => 'active',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'bpjs_kesehatan_enabled' => false,
+            'bpjs_ketenagakerjaan_enabled' => false,
+        ]);
+
+        // Penalty within cutoff: 2026-08-27 (period: 2026-08-26 to 2026-09-25)
+        \App\Models\EmployeeAttendance::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-08-27',
+            'status' => 'late',
+            'late_minutes' => 30,
+            'late_penalty' => 50000.00,
+            'timezone' => 'Asia/Jakarta',
+        ]);
+
+        // Penalty within cutoff: 2026-09-10
+        \App\Models\EmployeeAttendance::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-09-10',
+            'status' => 'late',
+            'late_minutes' => 45,
+            'late_penalty' => 75000.00,
+            'timezone' => 'Asia/Jakarta',
+        ]);
+
+        // Penalty AFTER cutoff: 2026-09-26 (belongs to October period)
+        \App\Models\EmployeeAttendance::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-09-26',
+            'status' => 'late',
+            'late_minutes' => 60,
+            'late_penalty' => 100000.00,
+            'timezone' => 'Asia/Jakarta',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), ['period' => '2026-09'])
+            ->assertRedirect();
+
+        $run = PayrollRun::query()->where('user_id', $user->id)->where('period', '2026-09')->firstOrFail();
+        $this->assertEquals('2026-08-26', $run->period_start->toDateString());
+        $this->assertEquals('2026-09-25', $run->period_end->toDateString());
+
+        $item = $run->items()->where('employee_id', $employee->id)->firstOrFail();
+        // 50.000 + 75.000 = 125.000 (excludes 100.000 on 2026-09-26)
+        $this->assertEquals(125000.00, (float) $item->denda_deduction);
+        $this->assertEquals(5000000.00 - 125000.00, (float) $item->net_salary);
     }
 }
