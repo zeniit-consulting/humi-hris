@@ -555,4 +555,160 @@ class AttendanceToleranceTest extends TestCase
         // 0.5 * ((6.000.000 + 600.000) / 22) = 0.5 * (6.600.000 / 22) = 0.5 * 300.000 = 150.000
         $this->assertEquals(150000.00, (float) $attendance->late_penalty);
     }
+
+    public function test_admin_can_sync_lateness_for_existing_attendances(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+
+        \App\Models\CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => 'Test Company',
+                'late_tolerance_minutes' => 15,
+                'late_penalty_enabled' => true,
+                'late_penalty_type' => 'tiered',
+                'late_penalty_tiers' => [
+                    ['from_minute' => 1, 'to_minute' => 15, 'penalty_amount' => 0],
+                    ['from_minute' => 16, 'to_minute' => 30, 'penalty_amount' => 25000],
+                    ['from_minute' => 31, 'to_minute' => 60, 'penalty_amount' => 50000],
+                ],
+            ]
+        );
+
+        $shift = WorkShift::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Shift Normal',
+            'code' => 'NORM',
+            'start_time' => '08:00',
+            'end_time' => '17:00',
+            'is_day_off' => false,
+            'late_tolerance_minutes' => 15,
+        ]);
+
+        EmployeeSchedule::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-06-01',
+            'shift_code' => 'NORM',
+            'start_time' => '08:00',
+            'end_time' => '17:00',
+            'is_day_off' => false,
+        ]);
+
+        EmployeeSchedule::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-06-02',
+            'shift_code' => 'NORM',
+            'start_time' => '08:00',
+            'end_time' => '17:00',
+            'is_day_off' => false,
+        ]);
+
+        // Record 1: Check-in at 08:25 (25 min late), but mistakenly recorded as present with no late info
+        $att1 = EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'shift_id' => $shift->id,
+            'attendance_date' => '2026-06-01',
+            'status' => 'present',
+            'check_in_at' => '2026-06-01 08:25:00',
+            'late_minutes' => null,
+            'late_penalty' => 0,
+        ]);
+
+        // Record 2: Check-in at 08:10 (on time, within 15 min tolerance), but was recorded as late with old penalty
+        $att2 = EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'shift_id' => $shift->id,
+            'attendance_date' => '2026-06-02',
+            'status' => 'late',
+            'check_in_at' => '2026-06-02 08:10:00',
+            'late_minutes' => 10,
+            'late_penalty' => 20000,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.attendances.sync-lateness'), [
+                'start_date' => '2026-06-01',
+                'end_date' => '2026-06-02',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $att1->refresh();
+        $att2->refresh();
+
+        // att1 should now be late with 25 minutes and 25.000 penalty
+        $this->assertSame('late', $att1->status);
+        $this->assertSame(25, $att1->late_minutes);
+        $this->assertSame('level_1', $att1->late_level);
+        $this->assertEquals(25000.00, (float) $att1->late_penalty);
+
+        // att2 should now be present (on time) with null late minutes and 0 penalty
+        $this->assertSame('present', $att2->status);
+        $this->assertNull($att2->late_minutes);
+        $this->assertNull($att2->late_level);
+        $this->assertEquals(0.00, (float) $att2->late_penalty);
+    }
+
+    public function test_admin_can_sync_lateness_from_attendance_settings(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+
+        \App\Models\CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => 'Test Company',
+                'late_tolerance_minutes' => 10,
+                'late_penalty_enabled' => true,
+                'late_penalty_type' => 'tiered',
+                'late_penalty_tiers' => [
+                    ['from_minute' => 1, 'to_minute' => 10, 'penalty_amount' => 0],
+                    ['from_minute' => 11, 'to_minute' => 30, 'penalty_amount' => 30000],
+                ],
+            ]
+        );
+
+        WorkShift::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Shift Pagi',
+            'code' => 'PAGI',
+            'start_time' => '08:00',
+            'end_time' => '17:00',
+            'is_day_off' => false,
+            'late_tolerance_minutes' => 10,
+        ]);
+
+        EmployeeSchedule::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-07-01',
+            'shift_code' => 'PAGI',
+            'start_time' => '08:00',
+            'end_time' => '17:00',
+            'is_day_off' => false,
+        ]);
+
+        $att = EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-07-01',
+            'status' => 'present',
+            'check_in_at' => '2026-07-01 08:20:00',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('settings.attendance.sync-lateness'))
+            ->assertRedirect(route('settings.attendance.edit'))
+            ->assertSessionHas('success');
+
+        $att->refresh();
+        $this->assertSame('late', $att->status);
+        $this->assertSame(20, $att->late_minutes);
+        $this->assertEquals(30000.00, (float) $att->late_penalty);
+    }
 }

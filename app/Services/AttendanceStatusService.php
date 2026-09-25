@@ -271,6 +271,173 @@ class AttendanceStatusService
         return $finalPenalty;
     }
 
+    /**
+     * Synchronize tardiness / lateness for existing attendance records.
+     *
+     * @return array{total: int, updated: int, late: int, on_time: int, half_day: int, leave_deducted: int}
+     */
+    public function syncLateness(int $ownerId, ?string $startDate = null, ?string $endDate = null, ?int $employeeId = null): array
+    {
+        $setting = CompanySetting::query()->withoutGlobalScopes()->where('user_id', $ownerId)->first();
+
+        $query = EmployeeAttendance::query()->withoutGlobalScopes()
+            ->where('user_id', $ownerId)
+            ->with(['employee.allowances', 'shift']);
+
+        if (! empty($startDate) && ! empty($endDate)) {
+            if ($startDate === $endDate) {
+                $query->whereDate('attendance_date', $startDate);
+            } else {
+                $query->whereDate('attendance_date', '>=', $startDate)
+                    ->whereDate('attendance_date', '<=', $endDate);
+            }
+        } elseif (! empty($startDate)) {
+            $query->whereDate('attendance_date', $startDate);
+        }
+
+        if (! empty($employeeId)) {
+            $query->where('employee_id', $employeeId);
+        }
+
+        $records = $query->get();
+
+        $result = [
+            'total' => $records->count(),
+            'updated' => 0,
+            'late' => 0,
+            'on_time' => 0,
+            'half_day' => 0,
+            'leave_deducted' => 0,
+        ];
+
+        foreach ($records as $attendance) {
+            $employee = $attendance->employee;
+            $attendanceDate = Carbon::parse($attendance->attendance_date)->toDateString();
+
+            // When check_in_at is missing
+            if (empty($attendance->check_in_at)) {
+                if ($attendance->status === 'late') {
+                    $lateMinutes = (int) ($attendance->late_minutes ?? 0);
+                    $isHalfDay = (bool) ($attendance->is_half_day ?? false);
+                    $penalty = round($this->calculateLatePenalty($lateMinutes, $isHalfDay, $setting, $employee), 2);
+
+                    if ((float) ($attendance->late_penalty ?? 0) != $penalty) {
+                        $attendance->updateQuietly(['late_penalty' => $penalty]);
+                        $result['updated']++;
+                    }
+                    $result['late']++;
+                    if ($isHalfDay) {
+                        $result['half_day']++;
+                    }
+                } elseif ($attendance->status === 'present') {
+                    $result['on_time']++;
+                }
+                continue;
+            }
+
+            // Resolve shift for this attendance
+            $shift = $this->resolveShift([
+                'shift_id' => $attendance->shift_id,
+                'employee_id' => $attendance->employee_id,
+                'attendance_date' => $attendanceDate,
+                'check_in_at' => $attendance->check_in_at,
+            ], $ownerId);
+
+            $newShiftId = $attendance->shift_id ?: $shift?->id;
+
+            if (! $shift || (bool) $shift->is_day_off || empty($shift->start_time)) {
+                // Shift has no start time or is day off
+                if ($attendance->status === 'late') {
+                    $result['late']++;
+                } elseif ($attendance->status === 'present') {
+                    $result['on_time']++;
+                }
+                continue;
+            }
+
+            $timezone = $attendance->timezone ?: ($employee?->timezone ?: config('app.timezone'));
+            $shiftStart = Carbon::parse($attendanceDate.' '.$shift->start_time, $timezone);
+            $tolerance = $shift->late_tolerance_minutes !== null && (int) $shift->late_tolerance_minutes > 0
+                ? (int) $shift->late_tolerance_minutes
+                : (int) ($setting?->late_tolerance_minutes ?? 15);
+
+            $latestAllowed = $shiftStart->copy()->addMinutes($tolerance);
+            $checkIn = $attendance->check_in_at instanceof \DateTimeInterface
+                ? Carbon::instance($attendance->check_in_at)->setTimezone($timezone)
+                : Carbon::parse($attendance->check_in_at, config('app.timezone'))->setTimezone($timezone);
+
+            if ($checkIn->gt($latestAllowed)) {
+                // LATE
+                $lateMinutes = (int) $shiftStart->diffInMinutes($checkIn);
+                $cutoff = (int) ($setting?->late_half_day_cutoff_minutes ?? 60);
+                $isHalfDay = (bool) ($setting?->late_half_day_enabled ?? false) && $lateMinutes >= $cutoff;
+                $penalty = round($this->calculateLatePenalty($lateMinutes, $isHalfDay, $setting, $employee), 2);
+                $lateLevel = $isHalfDay ? 'half_day' : $this->lateLevel($lateMinutes);
+
+                $hasChanges = $attendance->status !== 'late'
+                    || (int) $attendance->late_minutes !== $lateMinutes
+                    || $attendance->late_level !== $lateLevel
+                    || (float) ($attendance->late_penalty ?? 0) != $penalty
+                    || (bool) ($attendance->is_half_day ?? false) !== $isHalfDay
+                    || (! empty($newShiftId) && empty($attendance->shift_id));
+
+                if ($hasChanges) {
+                    $update = [
+                        'status' => 'late',
+                        'late_minutes' => $lateMinutes,
+                        'late_level' => $lateLevel,
+                        'late_penalty' => $penalty,
+                        'is_half_day' => $isHalfDay,
+                    ];
+                    if (! empty($newShiftId) && empty($attendance->shift_id)) {
+                        $update['shift_id'] = $newShiftId;
+                    }
+                    $attendance->updateQuietly($update);
+                    $result['updated']++;
+                }
+
+                if ($isHalfDay && (bool) ($setting?->late_half_day_deduct_leave ?? false)) {
+                    $deducted = $this->syncHalfDayLeaveDeduction($ownerId, (int) $attendance->employee_id, $attendanceDate, $lateMinutes);
+                    if ($deducted) {
+                        $result['leave_deducted']++;
+                    }
+                }
+
+                $result['late']++;
+                if ($isHalfDay) {
+                    $result['half_day']++;
+                }
+            } else {
+                // ON TIME (PRESENT)
+                $hasChanges = $attendance->status === 'late'
+                    || $attendance->late_minutes !== null
+                    || $attendance->late_level !== null
+                    || (float) ($attendance->late_penalty ?? 0) > 0
+                    || (bool) ($attendance->is_half_day ?? false)
+                    || (! empty($newShiftId) && empty($attendance->shift_id));
+
+                if ($hasChanges) {
+                    $update = [
+                        'status' => 'present',
+                        'late_minutes' => null,
+                        'late_level' => null,
+                        'late_penalty' => 0.0,
+                        'is_half_day' => false,
+                    ];
+                    if (! empty($newShiftId) && empty($attendance->shift_id)) {
+                        $update['shift_id'] = $newShiftId;
+                    }
+                    $attendance->updateQuietly($update);
+                    $result['updated']++;
+                }
+
+                $result['on_time']++;
+            }
+        }
+
+        return $result;
+    }
+
     public function resolveStatusForAttendance(EmployeeAttendance $attendance, int $ownerId): string
     {
         return $this->resolveStatus([
@@ -395,7 +562,7 @@ class AttendanceStatusService
             ->first();
     }
 
-    private function syncHalfDayLeaveDeduction(int $ownerId, int $employeeId, string $date, int $lateMinutes): void
+    public function syncHalfDayLeaveDeduction(int $ownerId, int $employeeId, string $date, int $lateMinutes): bool
     {
         $existing = LeaveRequest::query()->withoutGlobalScopes()
             ->where('employee_id', $employeeId)
@@ -405,7 +572,7 @@ class AttendanceStatusService
             ->first();
 
         if ($existing) {
-            return;
+            return false;
         }
 
         try {
@@ -421,13 +588,14 @@ class AttendanceStatusService
                 'approved_at' => now(),
             ]);
 
-            app(LeaveBalanceService::class)->deductBalance($leave);
+            return (bool) app(LeaveBalanceService::class)->deductBalance($leave);
         } catch (\Throwable) {
             // Ignore if leave balance deduction fails or policy not found
+            return false;
         }
     }
 
-    private function lateLevel(int $lateMinutes): string
+    public function lateLevel(int $lateMinutes): string
     {
         if ($lateMinutes <= 30) {
             return 'level_1';

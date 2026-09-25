@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\AttendanceSettingUpdateRequest;
 use App\Models\CompanySetting;
+use App\Services\AttendanceStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -58,6 +59,20 @@ class AttendanceSettingController extends Controller
 
         return to_route('settings.attendance.edit')
             ->with('success', 'Pengaturan absensi berhasil diperbarui.');
+    }
+
+    public function syncLateness(Request $request, AttendanceStatusService $statusService): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $result = $statusService->syncLateness($ownerId);
+
+        $detailParts = ["{$result['total']} data diperiksa", "{$result['updated']} diperbarui", "{$result['late']} terlambat", "{$result['on_time']} tepat waktu"];
+        if ($result['leave_deducted'] > 0) {
+            $detailParts[] = "{$result['leave_deducted']} saldo cuti dipotong";
+        }
+
+        return to_route('settings.attendance.edit')
+            ->with('success', 'Sinkronisasi keterlambatan ke seluruh data presensi berhasil: '.implode(', ', $detailParts).'.');
     }
 
     private function settingFor(Request $request): CompanySetting

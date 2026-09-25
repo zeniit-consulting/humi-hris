@@ -249,6 +249,45 @@ class AttendanceController extends Controller
         return back()->with('success', "Sync selesai: {$result['clocked_out']} absensi ditutup, {$result['leave_deducted']} saldo cuti dipotong.");
     }
 
+    public function syncLateness(Request $request, AttendanceStatusService $statusService): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'date' => ['nullable', 'date'],
+            'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
+            'all' => ['nullable', 'boolean'],
+        ]);
+
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
+
+        if (! empty($validated['all'])) {
+            $startDate = null;
+            $endDate = null;
+        }
+
+        $employeeId = ! empty($validated['employee_id']) ? (int) $validated['employee_id'] : null;
+
+        $result = $statusService->syncLateness($ownerId, $startDate, $endDate, $employeeId);
+
+        $rangeInfo = $startDate && $endDate
+            ? ($startDate === $endDate ? "tanggal {$startDate}" : "rentang {$startDate} s/d {$endDate}")
+            : ($startDate ? "tanggal {$startDate}" : 'seluruh data presensi');
+
+        $detailParts = ["{$result['total']} data diperiksa", "{$result['updated']} diperbarui", "{$result['late']} terlambat", "{$result['on_time']} tepat waktu"];
+        if ($result['leave_deducted'] > 0) {
+            $detailParts[] = "{$result['leave_deducted']} saldo cuti dipotong (setengah hari)";
+        }
+
+        return back()->with(
+            'success',
+            "Sinkronisasi keterlambatan selesai ({$rangeInfo}): ".implode(', ', $detailParts).'.'
+        );
+    }
+
     /**
      * Store new attendance record.
      */

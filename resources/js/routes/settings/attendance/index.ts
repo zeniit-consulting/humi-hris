@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::edit
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:15
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:16
 * @route '/settings/attendance'
 */
 export const edit = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ edit.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::edit
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:15
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:16
 * @route '/settings/attendance'
 */
 edit.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ edit.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::edit
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:15
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:16
 * @route '/settings/attendance'
 */
 edit.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ edit.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::edit
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:15
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:16
 * @route '/settings/attendance'
 */
 edit.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ edit.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::edit
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:15
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:16
 * @route '/settings/attendance'
 */
 const editForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const editForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::edit
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:15
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:16
 * @route '/settings/attendance'
 */
 editForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ editForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::edit
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:15
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:16
 * @route '/settings/attendance'
 */
 editForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ edit.form = editForm
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::update
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:50
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:51
 * @route '/settings/attendance'
 */
 export const update = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -97,7 +97,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::update
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:50
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:51
 * @route '/settings/attendance'
 */
 update.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ update.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::update
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:50
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:51
 * @route '/settings/attendance'
 */
 update.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -116,7 +116,7 @@ update.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::update
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:50
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:51
 * @route '/settings/attendance'
 */
 const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -131,7 +131,7 @@ const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::update
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:50
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:51
 * @route '/settings/attendance'
 */
 updateForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -146,9 +146,66 @@ updateForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 update.form = updateForm
 
+/**
+* @see \App\Http\Controllers\Settings\AttendanceSettingController::syncLateness
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:64
+* @route '/settings/attendance/sync-lateness'
+*/
+export const syncLateness = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: syncLateness.url(options),
+    method: 'post',
+})
+
+syncLateness.definition = {
+    methods: ["post"],
+    url: '/settings/attendance/sync-lateness',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Settings\AttendanceSettingController::syncLateness
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:64
+* @route '/settings/attendance/sync-lateness'
+*/
+syncLateness.url = (options?: RouteQueryOptions) => {
+    return syncLateness.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Settings\AttendanceSettingController::syncLateness
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:64
+* @route '/settings/attendance/sync-lateness'
+*/
+syncLateness.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: syncLateness.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Settings\AttendanceSettingController::syncLateness
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:64
+* @route '/settings/attendance/sync-lateness'
+*/
+const syncLatenessForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: syncLateness.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Settings\AttendanceSettingController::syncLateness
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:64
+* @route '/settings/attendance/sync-lateness'
+*/
+syncLatenessForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: syncLateness.url(options),
+    method: 'post',
+})
+
+syncLateness.form = syncLatenessForm
+
 const attendance = {
     edit: Object.assign(edit, edit),
     update: Object.assign(update, update),
+    syncLateness: Object.assign(syncLateness, syncLateness),
 }
 
 export default attendance

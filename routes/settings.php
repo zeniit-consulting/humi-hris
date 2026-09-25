@@ -18,6 +18,7 @@ Route::middleware(['auth', 'account.not_suspended', 'admin.access'])->group(func
     Route::patch('settings/company', [CompanySettingController::class, 'update'])->name('company.update');
     Route::get('settings/attendance', [AttendanceSettingController::class, 'edit'])->name('settings.attendance.edit');
     Route::patch('settings/attendance', [AttendanceSettingController::class, 'update'])->name('settings.attendance.update');
+    Route::post('settings/attendance/sync-lateness', [AttendanceSettingController::class, 'syncLateness'])->name('settings.attendance.sync-lateness');
     Route::get('settings/payroll', [PayrollSettingController::class, 'edit'])->name('settings.payroll.edit');
     Route::patch('settings/payroll', [PayrollSettingController::class, 'update'])->name('settings.payroll.update');
     Route::get('settings/users', [SubUserController::class, 'index'])->name('settings.users.index');

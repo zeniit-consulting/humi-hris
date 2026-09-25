@@ -1,5 +1,6 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { AlertCircle, AlertTriangle, Clock, Plus, ShieldAlert, Trash2 } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { AlertCircle, AlertTriangle, Clock, Plus, RotateCcw, ShieldAlert, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -75,6 +76,8 @@ export default function AttendanceSettings({
         active_working_days: settings.active_working_days ?? 22,
     });
 
+    const [syncingLateness, setSyncingLateness] = useState(false);
+
     const addTierRow = () => {
         const currentTiers = form.data.late_penalty_tiers ?? [];
         const lastTier = currentTiers[currentTiers.length - 1];
@@ -128,9 +131,35 @@ export default function AttendanceSettings({
                     >
                         {/* Section 1: Toleransi & Aturan Keterlambatan */}
                         <div className="rounded-xl border bg-card p-5 shadow-sm space-y-5">
-                            <div className="flex items-center gap-2 pb-2 border-b">
-                                <Clock className="h-5 w-5 text-primary" />
-                                <h3 className="font-semibold text-base">Aturan Toleransi & Denda Keterlambatan</h3>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-5 w-5 text-primary" />
+                                    <h3 className="font-semibold text-base">Aturan Toleransi & Denda Keterlambatan</h3>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={syncingLateness}
+                                    onClick={() => {
+                                        setSyncingLateness(true);
+                                        router.post(
+                                            '/settings/attendance/sync-lateness',
+                                            {},
+                                            {
+                                                preserveScroll: true,
+                                                onFinish: () => setSyncingLateness(false),
+                                            },
+                                        );
+                                    }}
+                                >
+                                    {syncingLateness ? (
+                                        <RotateCcw className="mr-1.5 size-4 animate-spin" />
+                                    ) : (
+                                        <RotateCcw className="mr-1.5 size-4" />
+                                    )}
+                                    Sinkronkan ke Data Presensi
+                                </Button>
                             </div>
 
                             <div className="grid gap-4 sm:grid-cols-2">

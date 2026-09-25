@@ -143,6 +143,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
     Route::get('attendances/export', [AttendanceController::class, 'export'])->name('attendances.export');
     Route::get('attendances/employees/{employee}/monthly', [AttendanceController::class, 'showMonthly'])->name('attendances.monthly.show');
     Route::post('attendances/sync-missing-checkouts', [AttendanceController::class, 'syncMissingCheckouts'])->name('attendances.sync-missing-checkouts');
+    Route::post('attendances/sync-lateness', [AttendanceController::class, 'syncLateness'])->name('attendances.sync-lateness');
     Route::post('attendances', [AttendanceController::class, 'store'])->name('attendances.store');
     Route::put('attendances/{employeeAttendance}', [AttendanceController::class, 'update'])->name('attendances.update');
     Route::delete('attendances/{employeeAttendance}', [AttendanceController::class, 'destroy'])->name('attendances.destroy');

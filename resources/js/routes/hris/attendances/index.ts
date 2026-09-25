@@ -84,7 +84,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:317
+* @see app/Http/Controllers/Hris/AttendanceController.php:356
 * @route '/hris/attendances/export'
 */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -99,7 +99,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:317
+* @see app/Http/Controllers/Hris/AttendanceController.php:356
 * @route '/hris/attendances/export'
 */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -108,7 +108,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:317
+* @see app/Http/Controllers/Hris/AttendanceController.php:356
 * @route '/hris/attendances/export'
 */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -118,7 +118,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:317
+* @see app/Http/Controllers/Hris/AttendanceController.php:356
 * @route '/hris/attendances/export'
 */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -128,7 +128,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:317
+* @see app/Http/Controllers/Hris/AttendanceController.php:356
 * @route '/hris/attendances/export'
 */
 const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -138,7 +138,7 @@ const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:317
+* @see app/Http/Controllers/Hris/AttendanceController.php:356
 * @route '/hris/attendances/export'
 */
 exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -148,7 +148,7 @@ exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::exportMethod
-* @see app/Http/Controllers/Hris/AttendanceController.php:317
+* @see app/Http/Controllers/Hris/AttendanceController.php:356
 * @route '/hris/attendances/export'
 */
 exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -220,8 +220,64 @@ syncMissingCheckoutsForm.post = (options?: RouteQueryOptions): RouteFormDefiniti
 syncMissingCheckouts.form = syncMissingCheckoutsForm
 
 /**
+* @see \App\Http\Controllers\Hris\AttendanceController::syncLateness
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
+* @route '/hris/attendances/sync-lateness'
+*/
+export const syncLateness = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: syncLateness.url(options),
+    method: 'post',
+})
+
+syncLateness.definition = {
+    methods: ["post"],
+    url: '/hris/attendances/sync-lateness',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceController::syncLateness
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
+* @route '/hris/attendances/sync-lateness'
+*/
+syncLateness.url = (options?: RouteQueryOptions) => {
+    return syncLateness.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceController::syncLateness
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
+* @route '/hris/attendances/sync-lateness'
+*/
+syncLateness.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: syncLateness.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceController::syncLateness
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
+* @route '/hris/attendances/sync-lateness'
+*/
+const syncLatenessForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: syncLateness.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceController::syncLateness
+* @see app/Http/Controllers/Hris/AttendanceController.php:252
+* @route '/hris/attendances/sync-lateness'
+*/
+syncLatenessForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: syncLateness.url(options),
+    method: 'post',
+})
+
+syncLateness.form = syncLatenessForm
+
+/**
 * @see \App\Http\Controllers\Hris\AttendanceController::store
-* @see app/Http/Controllers/Hris/AttendanceController.php:255
+* @see app/Http/Controllers/Hris/AttendanceController.php:294
 * @route '/hris/attendances'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -236,7 +292,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::store
-* @see app/Http/Controllers/Hris/AttendanceController.php:255
+* @see app/Http/Controllers/Hris/AttendanceController.php:294
 * @route '/hris/attendances'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -245,7 +301,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::store
-* @see app/Http/Controllers/Hris/AttendanceController.php:255
+* @see app/Http/Controllers/Hris/AttendanceController.php:294
 * @route '/hris/attendances'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -255,7 +311,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::store
-* @see app/Http/Controllers/Hris/AttendanceController.php:255
+* @see app/Http/Controllers/Hris/AttendanceController.php:294
 * @route '/hris/attendances'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -265,7 +321,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::store
-* @see app/Http/Controllers/Hris/AttendanceController.php:255
+* @see app/Http/Controllers/Hris/AttendanceController.php:294
 * @route '/hris/attendances'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -277,7 +333,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::update
-* @see app/Http/Controllers/Hris/AttendanceController.php:289
+* @see app/Http/Controllers/Hris/AttendanceController.php:328
 * @route '/hris/attendances/{employeeAttendance}'
 */
 export const update = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -292,7 +348,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::update
-* @see app/Http/Controllers/Hris/AttendanceController.php:289
+* @see app/Http/Controllers/Hris/AttendanceController.php:328
 * @route '/hris/attendances/{employeeAttendance}'
 */
 update.url = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -325,7 +381,7 @@ update.url = (args: { employeeAttendance: number | { id: number } } | [employeeA
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::update
-* @see app/Http/Controllers/Hris/AttendanceController.php:289
+* @see app/Http/Controllers/Hris/AttendanceController.php:328
 * @route '/hris/attendances/{employeeAttendance}'
 */
 update.put = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -335,7 +391,7 @@ update.put = (args: { employeeAttendance: number | { id: number } } | [employeeA
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::update
-* @see app/Http/Controllers/Hris/AttendanceController.php:289
+* @see app/Http/Controllers/Hris/AttendanceController.php:328
 * @route '/hris/attendances/{employeeAttendance}'
 */
 const updateForm = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -350,7 +406,7 @@ const updateForm = (args: { employeeAttendance: number | { id: number } } | [emp
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::update
-* @see app/Http/Controllers/Hris/AttendanceController.php:289
+* @see app/Http/Controllers/Hris/AttendanceController.php:328
 * @route '/hris/attendances/{employeeAttendance}'
 */
 updateForm.put = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -367,7 +423,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::destroy
-* @see app/Http/Controllers/Hris/AttendanceController.php:307
+* @see app/Http/Controllers/Hris/AttendanceController.php:346
 * @route '/hris/attendances/{employeeAttendance}'
 */
 export const destroy = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -382,7 +438,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::destroy
-* @see app/Http/Controllers/Hris/AttendanceController.php:307
+* @see app/Http/Controllers/Hris/AttendanceController.php:346
 * @route '/hris/attendances/{employeeAttendance}'
 */
 destroy.url = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -415,7 +471,7 @@ destroy.url = (args: { employeeAttendance: number | { id: number } } | [employee
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::destroy
-* @see app/Http/Controllers/Hris/AttendanceController.php:307
+* @see app/Http/Controllers/Hris/AttendanceController.php:346
 * @route '/hris/attendances/{employeeAttendance}'
 */
 destroy.delete = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -425,7 +481,7 @@ destroy.delete = (args: { employeeAttendance: number | { id: number } } | [emplo
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::destroy
-* @see app/Http/Controllers/Hris/AttendanceController.php:307
+* @see app/Http/Controllers/Hris/AttendanceController.php:346
 * @route '/hris/attendances/{employeeAttendance}'
 */
 const destroyForm = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -440,7 +496,7 @@ const destroyForm = (args: { employeeAttendance: number | { id: number } } | [em
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::destroy
-* @see app/Http/Controllers/Hris/AttendanceController.php:307
+* @see app/Http/Controllers/Hris/AttendanceController.php:346
 * @route '/hris/attendances/{employeeAttendance}'
 */
 destroyForm.delete = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -460,6 +516,7 @@ const attendances = {
     export: Object.assign(exportMethod, exportMethod),
     monthly: Object.assign(monthly, monthly),
     syncMissingCheckouts: Object.assign(syncMissingCheckouts, syncMissingCheckouts),
+    syncLateness: Object.assign(syncLateness, syncLateness),
     store: Object.assign(store, store),
     update: Object.assign(update, update),
     destroy: Object.assign(destroy, destroy),
