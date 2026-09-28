@@ -1,7 +1,6 @@
 import ApprovalSettingController from './ApprovalSettingController'
 import EmployeeController from './EmployeeController'
 import SubCompanyController from './SubCompanyController'
-import ClientBillingController from './ClientBillingController'
 import ManpowerRequestController from './ManpowerRequestController'
 import EmployeeReprimandController from './EmployeeReprimandController'
 import EmployeeMasterController from './EmployeeMasterController'
@@ -16,19 +15,20 @@ import EmployeeAllowanceController from './EmployeeAllowanceController'
 import AttendanceController from './AttendanceController'
 import ClientVisitController from './ClientVisitController'
 import AttendanceScheduleController from './AttendanceScheduleController'
+import AttendanceCorrectionApprovalController from './AttendanceCorrectionApprovalController'
 import ScheduleController from './ScheduleController'
 import ShiftChangeApprovalController from './ShiftChangeApprovalController'
-import AttendanceCorrectionApprovalController from './AttendanceCorrectionApprovalController'
+import ClientBillingController from './ClientBillingController'
 import PayrollController from './PayrollController'
 import KasbonController from './KasbonController'
-import CompanyAssetController from './CompanyAssetController'
-import CompanyAssetProcurementRequestController from './CompanyAssetProcurementRequestController'
+import ReimbursementController from './ReimbursementController'
+import ReportController from './ReportController'
 import LeaveController from './LeaveController'
 import LeavePolicyController from './LeavePolicyController'
 import LeaveBalanceController from './LeaveBalanceController'
 import OvertimeController from './OvertimeController'
-import ReimbursementController from './ReimbursementController'
-import ReportController from './ReportController'
+import CompanyAssetController from './CompanyAssetController'
+import CompanyAssetProcurementRequestController from './CompanyAssetProcurementRequestController'
 import NotificationController from './NotificationController'
 import SurveyController from './SurveyController'
 
@@ -36,7 +36,6 @@ const Hris = {
     ApprovalSettingController: Object.assign(ApprovalSettingController, ApprovalSettingController),
     EmployeeController: Object.assign(EmployeeController, EmployeeController),
     SubCompanyController: Object.assign(SubCompanyController, SubCompanyController),
-    ClientBillingController: Object.assign(ClientBillingController, ClientBillingController),
     ManpowerRequestController: Object.assign(ManpowerRequestController, ManpowerRequestController),
     EmployeeReprimandController: Object.assign(EmployeeReprimandController, EmployeeReprimandController),
     EmployeeMasterController: Object.assign(EmployeeMasterController, EmployeeMasterController),
@@ -51,19 +50,20 @@ const Hris = {
     AttendanceController: Object.assign(AttendanceController, AttendanceController),
     ClientVisitController: Object.assign(ClientVisitController, ClientVisitController),
     AttendanceScheduleController: Object.assign(AttendanceScheduleController, AttendanceScheduleController),
+    AttendanceCorrectionApprovalController: Object.assign(AttendanceCorrectionApprovalController, AttendanceCorrectionApprovalController),
     ScheduleController: Object.assign(ScheduleController, ScheduleController),
     ShiftChangeApprovalController: Object.assign(ShiftChangeApprovalController, ShiftChangeApprovalController),
-    AttendanceCorrectionApprovalController: Object.assign(AttendanceCorrectionApprovalController, AttendanceCorrectionApprovalController),
+    ClientBillingController: Object.assign(ClientBillingController, ClientBillingController),
     PayrollController: Object.assign(PayrollController, PayrollController),
     KasbonController: Object.assign(KasbonController, KasbonController),
-    CompanyAssetController: Object.assign(CompanyAssetController, CompanyAssetController),
-    CompanyAssetProcurementRequestController: Object.assign(CompanyAssetProcurementRequestController, CompanyAssetProcurementRequestController),
+    ReimbursementController: Object.assign(ReimbursementController, ReimbursementController),
+    ReportController: Object.assign(ReportController, ReportController),
     LeaveController: Object.assign(LeaveController, LeaveController),
     LeavePolicyController: Object.assign(LeavePolicyController, LeavePolicyController),
     LeaveBalanceController: Object.assign(LeaveBalanceController, LeaveBalanceController),
     OvertimeController: Object.assign(OvertimeController, OvertimeController),
-    ReimbursementController: Object.assign(ReimbursementController, ReimbursementController),
-    ReportController: Object.assign(ReportController, ReportController),
+    CompanyAssetController: Object.assign(CompanyAssetController, CompanyAssetController),
+    CompanyAssetProcurementRequestController: Object.assign(CompanyAssetProcurementRequestController, CompanyAssetProcurementRequestController),
     NotificationController: Object.assign(NotificationController, NotificationController),
     SurveyController: Object.assign(SurveyController, SurveyController),
 }

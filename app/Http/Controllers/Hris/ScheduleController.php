@@ -21,6 +21,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -553,11 +554,39 @@ class ScheduleController extends Controller
         $end = $start->copy()->endOfMonth();
         $daysInMonth = $end->day;
 
+        $companySetting = \App\Models\CompanySetting::query()->where('user_id', $ownerId)->first();
+        $internalCompanyName = ($companySetting?->name ?: 'Internal') . ' (Internal)';
+
         $employees = Employee::query()
+            ->with('subCompany:id,name,code')
             ->where('user_id', $ownerId)
-            ->orderBy('first_name')
-            ->orderBy('last_name')
-            ->get();
+            ->where('is_active', true)
+            ->whereNull('offboarded_at')
+            ->where('employment_status', '!=', 'resigned')
+            ->get()
+            ->sort(function (Employee $a, Employee $b): int {
+                // Internal first
+                $aIsInternal = empty($a->sub_company_id);
+                $bIsInternal = empty($b->sub_company_id);
+
+                if ($aIsInternal !== $bIsInternal) {
+                    return $aIsInternal ? -1 : 1;
+                }
+
+                // If both are sub-companies, sort alphabetically by sub-company name
+                if (! $aIsInternal && ! $bIsInternal) {
+                    $aComp = strtolower(trim((string) ($a->subCompany?->name ?? '')));
+                    $bComp = strtolower(trim((string) ($b->subCompany?->name ?? '')));
+                    $cmp = strcmp($aComp, $bComp);
+                    if ($cmp !== 0) {
+                        return $cmp;
+                    }
+                }
+
+                // Then sort by employee ID ascending
+                return $a->id <=> $b->id;
+            })
+            ->values();
 
         $shifts = WorkShift::query()
             ->where('user_id', $ownerId)
@@ -572,19 +601,20 @@ class ScheduleController extends Controller
         $sheet->setCellValue('A1', 'Employee ID');
         $sheet->setCellValue('B1', 'Employee Name');
         $sheet->setCellValue('C1', 'Bulan');
-        $sheet->setCellValue('D1', $month);
+        $sheet->setCellValueExplicit('D1', $month, DataType::TYPE_STRING);
         $sheet->getStyle('A1:D1')->getFont()->setBold(true);
 
         // Header Table
         $sheet->setCellValue('A2', 'ID');
         $sheet->setCellValue('B2', 'Nama');
+        $sheet->setCellValue('C2', 'Perusahaan');
 
-        $col = 3;
+        $col = 4;
         for ($day = 1; $day <= $daysInMonth; $day++) {
             $sheet->setCellValue([$col, 2], $day);
             $col++;
         }
-        $lastColIndex = 2 + $daysInMonth;
+        $lastColIndex = 3 + $daysInMonth;
         $lastColLetter = Coordinate::stringFromColumnIndex($lastColIndex);
 
         // Header Table Styling
@@ -598,11 +628,11 @@ class ScheduleController extends Controller
         // Row 3: Example / Sample Row
         $sheet->setCellValue('A3', 'CONTOH');
         $sheet->setCellValue('B3', 'Contoh Format Pengisian (Abaikan / Hapus)');
+        $sheet->setCellValue('C3', $internalCompanyName);
         for ($day = 1; $day <= $daysInMonth; $day++) {
-            // Pattern example: e.g. Day Off on weekends or specific shift
             $dayOfWeek = $start->copy()->addDays($day - 1)->dayOfWeek;
             $code = in_array($dayOfWeek, [0, 6], true) ? 'OFF' : $sampleShiftCode;
-            $sheet->setCellValue([2 + $day, 3], $code);
+            $sheet->setCellValue([3 + $day, 3], $code);
         }
 
         $sheet->getStyle('A3:'.$lastColLetter.'3')->getFont()->setItalic(true)->getColor()->setARGB('FF7F7F7F');
@@ -612,8 +642,13 @@ class ScheduleController extends Controller
         // Employee Data Rows starting from row 4
         $row = 4;
         foreach ($employees as $employee) {
+            $companyName = $employee->sub_company_id && $employee->subCompany
+                ? $employee->subCompany->name
+                : $internalCompanyName;
+
             $sheet->setCellValue([1, $row], $employee->id);
             $sheet->setCellValue([2, $row], $employee->full_name);
+            $sheet->setCellValue([3, $row], $companyName);
             $row++;
         }
 
@@ -624,9 +659,9 @@ class ScheduleController extends Controller
         $sheet->getStyle($dataRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD9D9D9');
         $sheet->getStyle($dataRange)->getBorders()->getOutline()->setBorderStyle(Border::BORDER_MEDIUM)->getColor()->setARGB('FF808080');
 
-        // Align date columns to center
-        $dateColumnsRange = 'C2:'.$lastColLetter.$lastDataRow;
-        $sheet->getStyle($dateColumnsRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        // Alignments
+        $sheet->getStyle('A2:A'.$lastDataRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('D2:'.$lastColLetter.$lastDataRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // Table Keterangan Kode Jam Kerja
         $legendStartRow = $lastDataRow + 3;
@@ -663,11 +698,12 @@ class ScheduleController extends Controller
         $legendRange = 'A'.$legendHeaderRow.':E'.$legendLastRow;
         $sheet->getStyle($legendRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD9D9D9');
 
-        // Auto-fit column widths
-        $sheet->getColumnDimension('A')->setWidth(14);
-        $sheet->getColumnDimension('B')->setWidth(30);
-        for ($colIdx = 3; $colIdx <= $lastColIndex; $colIdx++) {
-            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($colIdx))->setWidth(7);
+        // Column widths
+        $sheet->getColumnDimension('A')->setWidth(10);
+        $sheet->getColumnDimension('B')->setWidth(28);
+        $sheet->getColumnDimension('C')->setWidth(24);
+        for ($colIdx = 4; $colIdx <= $lastColIndex; $colIdx++) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($colIdx))->setWidth(6);
         }
 
         $writer = new Xlsx($spreadsheet);
@@ -688,10 +724,11 @@ class ScheduleController extends Controller
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
+            'month' => ['nullable', 'string', 'max:20'],
         ]);
 
         $ownerId = $request->user()->accountOwnerId();
-        
+
         $shifts = WorkShift::query()->where('user_id', $ownerId)->get();
         $shiftByCode = [];
         $shiftByName = [];
@@ -700,61 +737,157 @@ class ScheduleController extends Controller
                 'code' => $shift->code,
                 'start_time' => $this->normalizeTime($shift->start_time),
                 'end_time' => $this->normalizeTime($shift->end_time),
-                'is_day_off' => $shift->is_day_off,
+                'is_day_off' => (bool) $shift->is_day_off,
             ];
-            $shiftByCode[strtolower($shift->code)] = $data;
-            $shiftByName[strtolower($shift->name)] = $data;
+            $codeLower = strtolower(trim((string) $shift->code));
+            $nameLower = strtolower(trim((string) $shift->name));
+
+            $shiftByCode[$codeLower] = $data;
+            $shiftByName[$nameLower] = $data;
+
+            // Handle numeric shift codes with leading zero stripped by spreadsheet (e.g. "0817" -> "817", "0008" -> "8")
+            $unpadded = ltrim($codeLower, '0');
+            if ($unpadded !== '' && $unpadded !== $codeLower) {
+                $shiftByCode[$unpadded] = $data;
+            }
+
+            // Also map 4-digit zero padded (e.g. if code was "817" and user typed "0817")
+            if (is_numeric($codeLower) && strlen($codeLower) < 4) {
+                $shiftByCode[str_pad($codeLower, 4, '0', STR_PAD_LEFT)] = $data;
+            }
+        }
+
+        // Built-in OFF / Libur aliases
+        $offData = [
+            'code' => 'OFF',
+            'start_time' => null,
+            'end_time' => null,
+            'is_day_off' => true,
+        ];
+        foreach (['off', 'libur', 'day off', 'dayoff', 'lbr', '-', 'holiday'] as $offAlias) {
+            if (! isset($shiftByCode[$offAlias])) {
+                $shiftByCode[$offAlias] = $offData;
+            }
+            if (! isset($shiftByName[$offAlias])) {
+                $shiftByName[$offAlias] = $offData;
+            }
         }
 
         $file = $request->file('file');
         $spreadsheet = IOFactory::load($file->getPathname());
         $sheet = $spreadsheet->getActiveSheet();
 
-        $month = $sheet->getCell('D1')->getValue();
+        $month = $this->parseImportMonth($sheet, $request->input('month'));
         if (! $month || ! preg_match('/^\d{4}-\d{2}$/', $month)) {
-            return back()->withErrors(['file' => 'Format bulan di D1 tidak valid (harus YYYY-MM).']);
+            return back()->withErrors(['file' => 'Format bulan tidak valid. Pastikan kolom bulan terisi format YYYY-MM (misal: 2026-09).']);
         }
 
         $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
         $daysInMonth = $start->copy()->endOfMonth()->day;
 
         $highestRow = $sheet->getHighestDataRow();
+        $highestCol = $sheet->getHighestDataColumn();
+        $highestColIndex = Coordinate::columnIndexFromString($highestCol);
 
-        // Valid employee IDs of current owner
-        $validEmployeeIds = Employee::query()
+        // Detect columns from Row 2
+        $idColIndex = 1;
+        $nameColIndex = 2;
+        $dayColumns = []; // [dayNumber => columnIndex]
+
+        for ($col = 1; $col <= $highestColIndex; $col++) {
+            $headerVal = trim((string) $sheet->getCell([$col, 2])->getValue());
+            if ($headerVal === '') {
+                continue;
+            }
+
+            if (is_numeric($headerVal) && (int) $headerVal >= 1 && (int) $headerVal <= 31) {
+                $dayColumns[(int) $headerVal] = $col;
+            } elseif (in_array(strtolower($headerVal), ['id', 'employee id', 'nik', 'kode', 'kode pegawai'], true)) {
+                $idColIndex = $col;
+            } elseif (in_array(strtolower($headerVal), ['nama', 'name', 'nama pegawai', 'nama karyawan'], true)) {
+                $nameColIndex = $col;
+            }
+        }
+
+        // Fallback for dayColumns if row 2 didn't contain explicit day numbers
+        if (empty($dayColumns)) {
+            $hasCompanyCol = strtolower(trim((string) $sheet->getCell([3, 2])->getValue())) === 'perusahaan';
+            $dayStartCol = $hasCompanyCol ? 4 : 3;
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $dayColumns[$d] = $dayStartCol + $d - 1;
+            }
+        }
+
+        // Load employees of current owner for matching (supports ID, code, or name)
+        $employees = Employee::query()
+            ->withoutGlobalScopes()
             ->where('user_id', $ownerId)
-            ->pluck('id')
-            ->flip()
-            ->all();
+            ->get();
+
+        $employeeById = $employees->keyBy('id');
+        $employeeByCode = $employees->keyBy(fn ($e) => strtolower(trim((string) $e->employee_code)));
+        $employeeByName = $employees->keyBy(fn ($e) => strtolower(trim((string) $e->full_name)));
 
         $rows = [];
         $errors = [];
         $now = now();
 
         for ($row = 3; $row <= $highestRow; $row++) {
-            $rawEmployeeId = $sheet->getCell([1, $row])->getValue();
-            if ($rawEmployeeId === null || $rawEmployeeId === '') {
+            $rawId = $sheet->getCell([$idColIndex, $row])->getValue();
+            $rawName = $sheet->getCell([$nameColIndex, $row])->getValue();
+
+            $idStr = trim((string) $rawId);
+            $nameStr = strtolower(trim((string) $rawName));
+
+            // Stop if reached legend table at bottom
+            if (str_starts_with($idStr, '===') || str_contains($idStr, 'TABEL KETERANGAN') || strtolower($idStr) === 'kode shift') {
+                break;
+            }
+
+            // Skip example / sample row
+            if (strtoupper($idStr) === 'CONTOH' || strtoupper($nameStr) === 'CONTOH' || str_contains($nameStr, 'contoh format')) {
                 continue;
             }
 
-            // Skip example / description header / non-numeric IDs
-            $cleanedId = trim((string) $rawEmployeeId);
-            if (! is_numeric($cleanedId)) {
+            // Skip empty rows
+            if ($idStr === '' && $nameStr === '') {
                 continue;
             }
 
-            $employeeId = (int) $cleanedId;
+            // Match employee by ID, employee_code, or full_name
+            $employee = null;
+            if ($idStr !== '' && is_numeric($idStr) && $employeeById->has((int) $idStr)) {
+                $employee = $employeeById->get((int) $idStr);
+            } elseif ($idStr !== '' && $employeeByCode->has(strtolower($idStr))) {
+                $employee = $employeeByCode->get(strtolower($idStr));
+            } elseif ($nameStr !== '' && $employeeByName->has($nameStr)) {
+                $employee = $employeeByName->get($nameStr);
+            }
 
-            // Only process employees belonging to this account owner
-            if (! isset($validEmployeeIds[$employeeId])) {
+            if (! $employee) {
+                // Check if this row actually has shift data before reporting error
+                $hasAnyData = false;
+                foreach ($dayColumns as $dayCol) {
+                    if (! empty($sheet->getCell([$dayCol, $row])->getValue())) {
+                        $hasAnyData = true;
+                        break;
+                    }
+                }
+                if ($hasAnyData) {
+                    $errors[] = "Baris {$row}: Karyawan '{$rawId}' - '{$rawName}' tidak ditemukan.";
+                }
                 continue;
             }
 
             for ($day = 1; $day <= $daysInMonth; $day++) {
-                $col = 2 + $day;
+                if (! isset($dayColumns[$day])) {
+                    continue;
+                }
+
+                $col = $dayColumns[$day];
                 $shiftInput = $sheet->getCell([$col, $row])->getValue();
 
-                if (empty($shiftInput)) {
+                if ($shiftInput === null || trim((string) $shiftInput) === '') {
                     continue;
                 }
 
@@ -765,16 +898,21 @@ class ScheduleController extends Controller
                     $template = $shiftByCode[$shiftInputStr];
                 } elseif (isset($shiftByName[$shiftInputStr])) {
                     $template = $shiftByName[$shiftInputStr];
+                } elseif (is_numeric($shiftInputStr)) {
+                    $padded = str_pad($shiftInputStr, 4, '0', STR_PAD_LEFT);
+                    if (isset($shiftByCode[$padded])) {
+                        $template = $shiftByCode[$padded];
+                    }
                 }
 
                 if (! $template) {
-                    $errors[] = "Baris {$row}, Tanggal {$day}: Shift '{$shiftInput}' tidak valid.";
+                    $errors[] = "Baris {$row}, Tanggal {$day}: Kode shift '{$shiftInput}' tidak valid.";
                     continue;
                 }
 
                 $rows[] = [
                     'user_id' => $ownerId,
-                    'employee_id' => $employeeId,
+                    'employee_id' => $employee->id,
                     'work_date' => $start->copy()->addDays($day - 1)->toDateString(),
                     'shift_code' => $template['code'],
                     'start_time' => $template['start_time'],
@@ -788,20 +926,86 @@ class ScheduleController extends Controller
         }
 
         if (! empty($errors)) {
-            return back()->withErrors(['file' => implode(' ', array_slice($errors, 0, 5)) . (count($errors) > 5 ? ' ...dan lainnya.' : '')]);
+            return back()->withErrors(['file' => implode(' ', array_slice($errors, 0, 5)) . (count($errors) > 5 ? ' ...dan ' . (count($errors) - 5) . ' kesalahan lainnya.' : '')]);
         }
 
-        if (! empty($rows)) {
-            foreach (array_chunk($rows, 500) as $chunk) {
-                EmployeeSchedule::query()->upsert(
-                    $chunk,
-                    ['employee_id', 'work_date'],
-                    ['shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at']
-                );
+        if (empty($rows)) {
+            return back()->withErrors(['file' => 'Tidak ada data jadwal yang berhasil diimpor. Pastikan baris karyawan dan kode shift sudah terisi.']);
+        }
+
+        foreach (array_chunk($rows, 500) as $chunk) {
+            EmployeeSchedule::query()->upsert(
+                $chunk,
+                ['employee_id', 'work_date'],
+                ['shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at']
+            );
+        }
+
+        return back()->with('success', sprintf('Berhasil mengimpor %d jadwal karyawan untuk bulan %s.', count($rows), $month));
+    }
+
+    /**
+     * Safely resolve import month from sheet header or request.
+     */
+    private function parseImportMonth($sheet, ?string $requestMonth): ?string
+    {
+        // Try cells D1, B1, C1, E1, A1 in row 1
+        foreach (['D1', 'B1', 'C1', 'E1', 'A1'] as $cellCoordinate) {
+            $cell = $sheet->getCell($cellCoordinate);
+            $val = $cell->getValue();
+
+            if ($val !== null && $val !== '') {
+                // If it is an Excel date serial number
+                if (is_numeric($val) && (float) $val > 30000 && (float) $val < 60000) {
+                    try {
+                        return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $val)->format('Y-m');
+                    } catch (\Throwable) {
+                    }
+                }
+
+                if ($val instanceof \DateTimeInterface) {
+                    return $val->format('Y-m');
+                }
+
+                $valStr = trim((string) $val);
+
+                if (preg_match('/^(\d{4})[-_\/.](\d{1,2})$/', $valStr, $matches)) {
+                    return sprintf('%04d-%02d', (int) $matches[1], (int) $matches[2]);
+                }
+
+                if (preg_match('/^(\d{1,2})[-_\/.](\d{4})$/', $valStr, $matches)) {
+                    return sprintf('%04d-%02d', (int) $matches[2], (int) $matches[1]);
+                }
+
+                try {
+                    $parsed = Carbon::parse($valStr);
+                    if ($parsed->year >= 2000 && $parsed->year <= 2100) {
+                        return $parsed->format('Y-m');
+                    }
+                } catch (\Throwable) {
+                }
+            }
+
+            // Also test formatted value
+            try {
+                $formatted = trim((string) $cell->getFormattedValue());
+                if (preg_match('/^(\d{4})[-_\/.](\d{1,2})$/', $formatted, $matches)) {
+                    return sprintf('%04d-%02d', (int) $matches[1], (int) $matches[2]);
+                }
+                $parsed = Carbon::parse($formatted);
+                if ($parsed->year >= 2000 && $parsed->year <= 2100) {
+                    return $parsed->format('Y-m');
+                }
+            } catch (\Throwable) {
             }
         }
 
-        return back()->with('success', sprintf('Berhasil mengimpor %d jadwal karyawan.', count($rows)));
+        // Fallback to request parameter
+        if ($requestMonth && preg_match('/^\d{4}-\d{2}$/', $requestMonth)) {
+            return $requestMonth;
+        }
+
+        return null;
     }
 
     /**

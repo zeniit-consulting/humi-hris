@@ -60,6 +60,7 @@ class EmployeeController extends Controller
             'sub_company_id' => ['nullable', 'string'],
             'status' => ['nullable', 'string'],
             'sort' => ['nullable', Rule::in([
+                'default',
                 'name',
                 'code',
                 'contact',
@@ -82,7 +83,7 @@ class EmployeeController extends Controller
             'division_id' => isset($rawFilters['division_id']) ? (string) $rawFilters['division_id'] : '',
             'sub_company_id' => $rawFilters['sub_company_id'] ?? '',
             'status' => $isResignedList ? '' : ($rawFilters['status'] ?? ''),
-            'sort' => $rawFilters['sort'] ?? 'name',
+            'sort' => $rawFilters['sort'] ?? 'sub_company',
             'direction' => $rawFilters['direction'] ?? 'asc',
             'division_search' => $rawFilters['division_search'] ?? '',
             'position_search' => $rawFilters['position_search'] ?? '',
@@ -133,10 +134,20 @@ class EmployeeController extends Controller
                 Division::query()->select('name')->whereColumn('divisions.id', 'employees.division_id'),
                 $filters['direction'],
             ))
-            ->when($filters['sort'] === 'sub_company', fn ($query) => $query->orderBy(
-                SubCompany::query()->select('name')->whereColumn('sub_companies.id', 'employees.sub_company_id'),
-                $filters['direction'],
-            ))
+            ->when(in_array($filters['sort'], ['sub_company', 'default'], true), function ($query) use ($filters): void {
+                $dir = $filters['direction'] === 'desc' ? 'desc' : 'asc';
+                $query
+                    ->orderByRaw('CASE WHEN employees.sub_company_id IS NULL THEN 0 ELSE 1 END '.$dir)
+                    ->orderBy(
+                        SubCompany::query()->select('name')->whereColumn('sub_companies.id', 'employees.sub_company_id'),
+                        $dir
+                    )
+                    ->orderBy('employees.id', $dir)
+                    ->orderBy('employees.employment_type', $dir)
+                    ->orderBy('employees.employment_status', $dir)
+                    ->orderBy('employees.first_name', $dir)
+                    ->orderBy('employees.last_name', $dir);
+            })
             ->when($filters['sort'] === 'position', fn ($query) => $query->orderBy(
                 Position::query()->select('name')->whereColumn('positions.id', 'employees.position_id'),
                 $filters['direction'],
@@ -179,6 +190,7 @@ class EmployeeController extends Controller
                 'pkwtt_activated_at' => $employee->pkwtt_activated_at?->format('Y-m-d'),
                 'pph21_method' => $employee->pph21_method,
                 'pph21_rate' => (int) $employee->pph21_rate,
+                'pph21_enabled' => (bool) ($employee->pph21_enabled ?? ($employee->pph21_method !== 'none')),
                 'ptkp_category' => $employee->ptkp_category,
                 'division_id' => $employee->division_id,
                 'sub_company_id' => $employee->sub_company_id,
@@ -621,8 +633,16 @@ class EmployeeController extends Controller
                 fn ($query) => $query->where('sub_company_id', $filters['sub_company_id']),
             )
             ->when(($filters['status'] ?? '') !== '', fn ($query) => $query->where('employment_status', $filters['status']))
-            ->orderBy('first_name')
-            ->orderBy('last_name')
+            ->orderByRaw('CASE WHEN employees.sub_company_id IS NULL THEN 0 ELSE 1 END asc')
+            ->orderBy(
+                SubCompany::query()->select('name')->whereColumn('sub_companies.id', 'employees.sub_company_id'),
+                'asc'
+            )
+            ->orderBy('employees.id', 'asc')
+            ->orderBy('employees.employment_type', 'asc')
+            ->orderBy('employees.employment_status', 'asc')
+            ->orderBy('employees.first_name', 'asc')
+            ->orderBy('employees.last_name', 'asc')
             ->get();
 
         $category = $filters['category'];
@@ -965,7 +985,10 @@ class EmployeeController extends Controller
                     'pkwtt_activated_at' => $this->normalizeImportedDate($row['pkwtt_activated_at'] ?? null),
                     'is_wfa' => $this->normalizeImportedBoolean($row['is_wfa'] ?? null, false),
                     'pph21_method' => $this->normalizeImportedPph21Method($row['pph21_method'] ?? null),
-                    'pph21_rate' => (int) ($this->normalizeImportedAmount($row['pph21_rate'] ?? null) ?? 0),
+                    'pph21_enabled' => $this->normalizeImportedPph21Method($row['pph21_method'] ?? null) !== 'none',
+                    'pph21_rate' => $this->normalizeImportedPph21Method($row['pph21_method'] ?? null) === 'none'
+                        ? 0
+                        : (int) ($this->normalizeImportedAmount($row['pph21_rate'] ?? null) ?? 0),
                     'ptkp_category' => $this->cleanPtkp($row['ptkp_category'] ?? null),
                     'division_id' => $division?->id,
                     'sub_company_id' => $subCompany?->id,
@@ -1033,7 +1056,7 @@ class EmployeeController extends Controller
                     'probation_end_date' => ['nullable', 'date'],
                     'pkwtt_activated_at' => ['nullable', 'date'],
                     'is_wfa' => ['boolean'],
-                    'pph21_method' => ['required', Rule::in(['ter_harian', 'gross', 'net', 'gross_up'])],
+                    'pph21_method' => ['required', Rule::in(['ter_harian', 'gross', 'net', 'gross_up', 'none'])],
                     'pph21_rate' => ['required', 'integer', 'min:0'],
                     'ptkp_category' => ['nullable', Rule::in(['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'])],
                     'division_id' => ['required', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
@@ -1240,6 +1263,19 @@ class EmployeeController extends Controller
     public function store(StoreEmployeeRequest $request): RedirectResponse
     {
         $validated = $this->prepareEmploymentLifecycle($request->validated());
+        $pph21Enabled = $request->has('pph21_enabled')
+            ? $request->boolean('pph21_enabled')
+            : (($validated['pph21_method'] ?? null) !== 'none');
+
+        if (! $pph21Enabled || ($validated['pph21_method'] ?? null) === 'none') {
+            $validated['pph21_enabled'] = false;
+            $validated['pph21_method'] = 'none';
+            $validated['pph21_rate'] = 0;
+            $validated['ptkp_category'] = null;
+        } else {
+            $validated['pph21_enabled'] = true;
+        }
+
         $fixedAllowances = $validated['fixed_allowances'] ?? [];
         $bankName = $this->nullableString($validated['bank_name'] ?? null);
         $accountNumber = $this->cleanIdentificationNumber($validated['account_number'] ?? null);
@@ -1320,6 +1356,18 @@ class EmployeeController extends Controller
         $accountHolderName = array_key_exists('account_holder_name', $validated) ? $this->nullableString($validated['account_holder_name']) : null;
         unset($validated['change_effective_date'], $validated['change_notes'], $validated['fixed_allowances'], $validated['bank_name'], $validated['account_number'], $validated['account_holder_name']);
         $validated = $this->prepareEmploymentLifecycle($validated, $employee);
+        $pph21Enabled = $request->has('pph21_enabled')
+            ? $request->boolean('pph21_enabled')
+            : (($validated['pph21_method'] ?? null) !== 'none');
+
+        if (! $pph21Enabled || ($validated['pph21_method'] ?? null) === 'none') {
+            $validated['pph21_enabled'] = false;
+            $validated['pph21_method'] = 'none';
+            $validated['pph21_rate'] = 0;
+            $validated['ptkp_category'] = null;
+        } else {
+            $validated['pph21_enabled'] = true;
+        }
 
         $this->ensurePositionMatchesDivision($validated['position_id'] ?? null, $validated['division_id'] ?? null);
 
@@ -2113,6 +2161,7 @@ class EmployeeController extends Controller
         $val = strtolower(trim((string) $value));
 
         return match ($val) {
+            'none', 'nonaktif', 'tidak', 'disabled', '0', 'off', 'bebas', 'tanpa' => 'none',
             'net', 'nett' => 'net',
             'gross_up', 'gross up' => 'gross_up',
             'ter_harian', 'harian' => 'ter_harian',

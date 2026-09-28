@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 const UserPortalController = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ UserPortalController.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 UserPortalController.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ UserPortalController.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 UserPortalController.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ UserPortalController.get = (options?: RouteQueryOptions): RouteDefinition<'get'>
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 UserPortalController.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ UserPortalController.head = (options?: RouteQueryOptions): RouteDefinition<'head
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 const UserPortalControllerForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const UserPortalControllerForm = (options?: RouteQueryOptions): RouteFormDefinit
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 UserPortalControllerForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ UserPortalControllerForm.get = (options?: RouteQueryOptions): RouteFormDefinitio
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 UserPortalControllerForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

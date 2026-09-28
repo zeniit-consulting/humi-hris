@@ -2256,6 +2256,149 @@ class EmployeeManagementTest extends TestCase
         $response->assertSessionHasErrors(['pph21_method', 'pph21_rate']);
     }
 
+    public function test_employee_can_be_stored_and_updated_with_pph21_disabled(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+            'code' => 'OPS',
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'code' => 'STF',
+            'level' => '4',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('hris.employees.index'))
+            ->post(route('hris.employees.store'), [
+                'full_name' => 'Karyawan Bebas Pajak',
+                'hire_date' => '2026-03-01',
+                'employment_status' => 'active',
+                'employment_type' => 'freelance',
+                'division_id' => $division->id,
+                'position_id' => $position->id,
+                'pph21_enabled' => false,
+                'is_active' => true,
+            ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('hris.employees.index'));
+
+        $employee = Employee::query()->where('first_name', 'Karyawan Bebas Pajak')->firstOrFail();
+        $this->assertFalse((bool) $employee->pph21_enabled);
+        $this->assertSame('none', $employee->pph21_method);
+        $this->assertEquals(0, (float) $employee->pph21_rate);
+
+        // Update employee enabling PPh21
+        $this->actingAs($user)
+            ->from(route('hris.employees.index'))
+            ->put(route('hris.employees.update', $employee), [
+                'employee_code' => $employee->employee_code,
+                'full_name' => 'Karyawan Bebas Pajak',
+                'hire_date' => '2026-03-01',
+                'employment_status' => 'active',
+                'employment_type' => 'freelance',
+                'division_id' => $division->id,
+                'position_id' => $position->id,
+                'pph21_enabled' => true,
+                'pph21_method' => 'gross',
+                'pph21_rate' => 50000,
+                'ptkp_category' => 'TK/0',
+                'is_active' => true,
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('hris.employees.index'));
+
+        $employee->refresh();
+        $this->assertTrue((bool) $employee->pph21_enabled);
+        $this->assertSame('gross', $employee->pph21_method);
+        $this->assertEquals(50000, (float) $employee->pph21_rate);
+    }
+
+    public function test_employee_table_defaults_to_sorting_by_company_internal_first_then_id_contract_and_name(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $subCompanyA = SubCompany::query()->create([
+            'user_id' => $user->id,
+            'code' => 'ASC',
+            'name' => 'Alpha Sub Company',
+        ]);
+        $subCompanyB = SubCompany::query()->create([
+            'user_id' => $user->id,
+            'code' => 'BSC',
+            'name' => 'Beta Sub Company',
+        ]);
+
+        $division = Division::factory()->create(['user_id' => $user->id]);
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'level' => '4',
+        ]);
+
+        // SubCompany A employee
+        $empSubA = Employee::factory()->create([
+            'user_id' => $user->id,
+            'sub_company_id' => $subCompanyA->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'first_name' => 'SubA',
+            'last_name' => 'Person',
+        ]);
+
+        // Internal employee 1
+        $empInternal2 = Employee::factory()->create([
+            'user_id' => $user->id,
+            'sub_company_id' => null,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'first_name' => 'InternalTwo',
+            'last_name' => 'Person',
+        ]);
+
+        // Internal employee 2
+        $empInternal1 = Employee::factory()->create([
+            'user_id' => $user->id,
+            'sub_company_id' => null,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'first_name' => 'InternalOne',
+            'last_name' => 'Person',
+        ]);
+
+        // SubCompany B employee
+        $empSubB = Employee::factory()->create([
+            'user_id' => $user->id,
+            'sub_company_id' => $subCompanyB->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'first_name' => 'SubB',
+            'last_name' => 'Person',
+        ]);
+
+        $firstInternalId = min($empInternal1->id, $empInternal2->id);
+        $secondInternalId = max($empInternal1->id, $empInternal2->id);
+
+        $this->actingAs($user)
+            ->get(route('hris.employees.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.sort', 'sub_company')
+                ->where('employees.data.0.id', $firstInternalId)
+                ->where('employees.data.1.id', $secondInternalId)
+                ->where('employees.data.2.id', $empSubA->id)
+                ->where('employees.data.3.id', $empSubB->id)
+            );
+    }
+
     public function test_employee_document_can_be_uploaded_and_downloaded(): void
     {
         Storage::fake('r2');

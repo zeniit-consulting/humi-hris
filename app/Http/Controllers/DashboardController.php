@@ -36,8 +36,8 @@ class DashboardController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        if ($user->role === 'user') {
-            return redirect()->to(RoleRedirect::for($user));
+        if ($user->role === 'user' || ($user->isSubAdmin() && \App\Support\DeviceDetector::isMobile($request))) {
+            return redirect()->to(RoleRedirect::for($user, $request));
         }
 
         $ownerId = $user->accountOwnerId();

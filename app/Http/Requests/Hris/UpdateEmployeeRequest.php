@@ -161,8 +161,18 @@ class UpdateEmployeeRequest extends FormRequest
             'probation_duration_months' => [
                 'nullable', 'integer', 'min:0', 'max:12',
             ],
-            'pph21_method' => ['required', Rule::in(['ter_harian', 'gross', 'net', 'gross_up'])],
-            'pph21_rate' => ['required', 'integer', 'min:0'],
+            'pph21_enabled' => ['nullable', 'boolean'],
+            'pph21_method' => [
+                Rule::requiredIf(fn () => $this->boolean('pph21_enabled', true) && $this->input('pph21_method') !== 'none'),
+                'nullable',
+                Rule::in(['ter_harian', 'gross', 'net', 'gross_up', 'none']),
+            ],
+            'pph21_rate' => [
+                Rule::requiredIf(fn () => $this->boolean('pph21_enabled', true) && $this->input('pph21_method') !== 'none'),
+                'nullable',
+                'integer',
+                'min:0',
+            ],
             'ptkp_category' => ['nullable', Rule::in(['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'])],
             'division_id' => ['required', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
             'sub_company_id' => [

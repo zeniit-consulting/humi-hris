@@ -113,6 +113,8 @@ class HandleInertiaRequests extends Middleware
             'permissions' => [
                 'can_manage_sub_users' => $request->user()?->canManageSubUsers() ?? false,
                 'can_manage_subscribers' => $request->user()?->isSuperAdmin() ?? false,
+                'allowed_modules' => $request->user()?->allowedModules(),
+                'is_sub_admin' => $request->user()?->isSubAdmin() ?? false,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

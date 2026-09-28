@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::index
-* @see app/Http/Controllers/Settings/SubUserController.php:20
+* @see app/Http/Controllers/Settings/SubUserController.php:21
 * @route '/settings/users'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::index
-* @see app/Http/Controllers/Settings/SubUserController.php:20
+* @see app/Http/Controllers/Settings/SubUserController.php:21
 * @route '/settings/users'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::index
-* @see app/Http/Controllers/Settings/SubUserController.php:20
+* @see app/Http/Controllers/Settings/SubUserController.php:21
 * @route '/settings/users'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::index
-* @see app/Http/Controllers/Settings/SubUserController.php:20
+* @see app/Http/Controllers/Settings/SubUserController.php:21
 * @route '/settings/users'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::index
-* @see app/Http/Controllers/Settings/SubUserController.php:20
+* @see app/Http/Controllers/Settings/SubUserController.php:21
 * @route '/settings/users'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::index
-* @see app/Http/Controllers/Settings/SubUserController.php:20
+* @see app/Http/Controllers/Settings/SubUserController.php:21
 * @route '/settings/users'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::index
-* @see app/Http/Controllers/Settings/SubUserController.php:20
+* @see app/Http/Controllers/Settings/SubUserController.php:21
 * @route '/settings/users'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::store
-* @see app/Http/Controllers/Settings/SubUserController.php:72
+* @see app/Http/Controllers/Settings/SubUserController.php:106
 * @route '/settings/users'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::store
-* @see app/Http/Controllers/Settings/SubUserController.php:72
+* @see app/Http/Controllers/Settings/SubUserController.php:106
 * @route '/settings/users'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::store
-* @see app/Http/Controllers/Settings/SubUserController.php:72
+* @see app/Http/Controllers/Settings/SubUserController.php:106
 * @route '/settings/users'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::store
-* @see app/Http/Controllers/Settings/SubUserController.php:72
+* @see app/Http/Controllers/Settings/SubUserController.php:106
 * @route '/settings/users'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::store
-* @see app/Http/Controllers/Settings/SubUserController.php:72
+* @see app/Http/Controllers/Settings/SubUserController.php:106
 * @route '/settings/users'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::update
-* @see app/Http/Controllers/Settings/SubUserController.php:100
+* @see app/Http/Controllers/Settings/SubUserController.php:171
 * @route '/settings/users/{subUser}'
 */
 export const update = (args: { subUser: string | number } | [subUser: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -153,7 +153,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::update
-* @see app/Http/Controllers/Settings/SubUserController.php:100
+* @see app/Http/Controllers/Settings/SubUserController.php:171
 * @route '/settings/users/{subUser}'
 */
 update.url = (args: { subUser: string | number } | [subUser: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -180,7 +180,7 @@ update.url = (args: { subUser: string | number } | [subUser: string | number ] |
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::update
-* @see app/Http/Controllers/Settings/SubUserController.php:100
+* @see app/Http/Controllers/Settings/SubUserController.php:171
 * @route '/settings/users/{subUser}'
 */
 update.put = (args: { subUser: string | number } | [subUser: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -190,7 +190,7 @@ update.put = (args: { subUser: string | number } | [subUser: string | number ] |
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::update
-* @see app/Http/Controllers/Settings/SubUserController.php:100
+* @see app/Http/Controllers/Settings/SubUserController.php:171
 * @route '/settings/users/{subUser}'
 */
 const updateForm = (args: { subUser: string | number } | [subUser: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -205,7 +205,7 @@ const updateForm = (args: { subUser: string | number } | [subUser: string | numb
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::update
-* @see app/Http/Controllers/Settings/SubUserController.php:100
+* @see app/Http/Controllers/Settings/SubUserController.php:171
 * @route '/settings/users/{subUser}'
 */
 updateForm.put = (args: { subUser: string | number } | [subUser: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -222,7 +222,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::destroy
-* @see app/Http/Controllers/Settings/SubUserController.php:130
+* @see app/Http/Controllers/Settings/SubUserController.php:208
 * @route '/settings/users/{subUser}'
 */
 export const destroy = (args: { subUser: string | number } | [subUser: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -237,7 +237,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::destroy
-* @see app/Http/Controllers/Settings/SubUserController.php:130
+* @see app/Http/Controllers/Settings/SubUserController.php:208
 * @route '/settings/users/{subUser}'
 */
 destroy.url = (args: { subUser: string | number } | [subUser: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -264,7 +264,7 @@ destroy.url = (args: { subUser: string | number } | [subUser: string | number ] 
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::destroy
-* @see app/Http/Controllers/Settings/SubUserController.php:130
+* @see app/Http/Controllers/Settings/SubUserController.php:208
 * @route '/settings/users/{subUser}'
 */
 destroy.delete = (args: { subUser: string | number } | [subUser: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -274,7 +274,7 @@ destroy.delete = (args: { subUser: string | number } | [subUser: string | number
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::destroy
-* @see app/Http/Controllers/Settings/SubUserController.php:130
+* @see app/Http/Controllers/Settings/SubUserController.php:208
 * @route '/settings/users/{subUser}'
 */
 const destroyForm = (args: { subUser: string | number } | [subUser: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -289,7 +289,7 @@ const destroyForm = (args: { subUser: string | number } | [subUser: string | num
 
 /**
 * @see \App\Http\Controllers\Settings\SubUserController::destroy
-* @see app/Http/Controllers/Settings/SubUserController.php:130
+* @see app/Http/Controllers/Settings/SubUserController.php:208
 * @route '/settings/users/{subUser}'
 */
 destroyForm.delete = (args: { subUser: string | number } | [subUser: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

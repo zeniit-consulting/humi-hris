@@ -60,184 +60,260 @@ type CompanyFeatures = {
 function buildNavGroups(
     lockedFeatures: string[],
     companyFeatures: CompanyFeatures = {},
+    allowedModules?: string[] | null,
 ): NavGroup[] {
     const locked = (key: string): Pick<NavItem, 'locked'> => ({
         locked: lockedFeatures.includes(key),
     });
 
-    const organizationItems: NavItem[] = [
-        {
-            title: 'Karyawan',
-            href: employeesIndex(),
-            icon: UsersRound,
-        },
-        ...(companyFeatures.show_sub_company_menu === false
-            ? []
-            : [
+    const can = (module: string) =>
+        !allowedModules || allowedModules.includes(module);
+
+    const organizationItems: NavItem[] = can('employees')
+        ? [
+              {
+                  title: 'Karyawan',
+                  href: employeesIndex(),
+                  icon: UsersRound,
+              },
+              ...(companyFeatures.show_sub_company_menu === false
+                  ? []
+                  : [
+                        {
+                            title: 'Sub Company',
+                            href: '/hris/sub-companies',
+                            icon: Building2,
+                        } satisfies NavItem,
+                    ]),
+              {
+                  title: 'Struktur Organisasi',
+                  href: '/hris/organization-chart',
+                  icon: GitBranch,
+              },
+              {
+                  title: 'Rekrutmen',
+                  href: '/hris/recruitment',
+                  icon: Briefcase,
+                  ...locked('recruitment'),
+              },
+              ...(companyFeatures.show_manpower_request_menu === false
+                  ? []
+                  : [
+                        {
+                            title: 'Manpower Request',
+                            href: '/hris/manpower-requests',
+                            icon: ClipboardList,
+                        } satisfies NavItem,
+                    ]),
+              {
+                  title: 'Teguran',
+                  href: '/hris/reprimands',
+                  icon: ScrollText,
+              },
+          ]
+        : [];
+
+    const workingTimeItems: NavItem[] = [
+        ...(can('attendances')
+            ? [
                   {
-                      title: 'Sub Company',
-                      href: '/hris/sub-companies',
-                      icon: Building2,
-                  } satisfies NavItem,
-              ]),
-        {
-            title: 'Struktur Organisasi',
-            href: '/hris/organization-chart',
-            icon: GitBranch,
-        },
-        {
-            title: 'Rekrutmen',
-            href: '/hris/recruitment',
-            icon: Briefcase,
-            ...locked('recruitment'),
-        },
-        ...(companyFeatures.show_manpower_request_menu === false
-            ? []
-            : [
+                      title: 'Kehadiran',
+                      href: attendancesIndex(),
+                      icon: CalendarDays,
+                  },
+              ]
+            : []),
+        ...(can('schedules')
+            ? [
                   {
-                      title: 'Manpower Request',
-                      href: '/hris/manpower-requests',
-                      icon: ClipboardList,
-                  } satisfies NavItem,
-              ]),
-        {
-            title: 'Teguran',
-            href: '/hris/reprimands',
-            icon: ScrollText,
-        },
+                      title: 'Jadwal Kerja',
+                      href: schedulesIndex(),
+                      icon: CalendarRange,
+                  },
+              ]
+            : []),
+        ...(can('attendances')
+            ? [
+                  {
+                      title: 'Kunjungan Client',
+                      href: '/hris/client-visits',
+                      icon: MapPinned,
+                  },
+              ]
+            : []),
+        ...(can('leaves')
+            ? [
+                  {
+                      title: 'Cuti',
+                      href: leavesIndex(),
+                      icon: CalendarClock,
+                  },
+              ]
+            : []),
+        ...(can('overtimes')
+            ? [
+                  {
+                      title: 'Lembur',
+                      href: overtimesIndex(),
+                      icon: Timer,
+                  },
+              ]
+            : []),
     ];
 
-    return [
+    const hasAnyApprovalAccess =
+        can('attendances') ||
+        can('schedules') ||
+        can('leaves') ||
+        can('overtimes');
+
+    const approvalItems: NavItem[] = [
+        ...(can('attendances')
+            ? [
+                  {
+                      title: 'Approval Absensi',
+                      href: '/hris/attendance-approvals',
+                      icon: CalendarDays,
+                  },
+              ]
+            : []),
+        ...(can('schedules')
+            ? [
+                  {
+                      title: 'Approval Jadwal',
+                      href: '/hris/shift-change-requests',
+                      icon: CalendarSync,
+                  },
+              ]
+            : []),
+        ...(can('leaves')
+            ? [
+                  {
+                      title: 'Approval Cuti',
+                      href: '/hris/leave-approvals',
+                      icon: CalendarClock,
+                  },
+              ]
+            : []),
+        ...(can('overtimes')
+            ? [
+                  {
+                      title: 'Approval Lembur',
+                      href: '/hris/overtime-approvals',
+                      icon: Timer,
+                  },
+              ]
+            : []),
+        ...(hasAnyApprovalAccess
+            ? [
+                  {
+                      title: 'Pengaturan Approval',
+                      href: '/hris/approval-settings',
+                      icon: SlidersHorizontal,
+                  },
+              ]
+            : []),
+    ];
+
+    const payrollItems: NavItem[] = can('payrolls')
+        ? [
+              {
+                  title: 'Penggajian',
+                  href: payrollsIndex(),
+                  icon: WalletCards,
+                  ...locked('payroll'),
+              },
+              {
+                  title: 'Kasbon',
+                  href: kasbonsIndex(),
+                  icon: HandCoins,
+                  ...locked('kasbon'),
+              },
+              {
+                  title: 'Reimbursement',
+                  href: '/hris/reimbursements',
+                  icon: ReceiptText,
+              },
+              {
+                  title: 'Billing Klien',
+                  href: '/hris/client-billings',
+                  icon: ReceiptText,
+              },
+              {
+                  title: 'Laporan',
+                  href: reportsIndex(),
+                  icon: FileText,
+              },
+          ]
+        : [];
+
+    const operationalItems: NavItem[] = [
+        ...(can('operational')
+            ? [
+                  {
+                      title: 'Notifikasi',
+                      href: '/hris/notifications',
+                      icon: BellRing,
+                  },
+                  {
+                      title: 'Survey',
+                      href: '/hris/surveys',
+                      icon: ClipboardList,
+                  },
+              ]
+            : []),
+        ...(can('employees') || can('operational')
+            ? [
+                  {
+                      title: 'Performance',
+                      href: '/hris/performances',
+                      icon: TrendingUp,
+                      ...locked('performance'),
+                  },
+              ]
+            : []),
+        ...(can('operational')
+            ? [
+                  {
+                      title: 'Asset Management',
+                      href: '/hris/assets',
+                      icon: PackageCheck,
+                      ...locked('assets'),
+                  },
+                  {
+                      title: 'Request Pengadaan Aset',
+                      href: '/hris/assets/procurement-requests',
+                      icon: ShoppingCart,
+                      ...locked('assets'),
+                  },
+              ]
+            : []),
+    ];
+
+    const groups: NavGroup[] = [
         {
             title: 'Organisasi',
             items: organizationItems,
         },
         {
             title: 'Waktu Kerja',
-            items: [
-                {
-                    title: 'Kehadiran',
-                    href: attendancesIndex(),
-                    icon: CalendarDays,
-                },
-                {
-                    title: 'Jadwal Kerja',
-                    href: schedulesIndex(),
-                    icon: CalendarRange,
-                },
-                {
-                    title: 'Kunjungan Client',
-                    href: '/hris/client-visits',
-                    icon: MapPinned,
-                },
-                {
-                    title: 'Cuti',
-                    href: leavesIndex(),
-                    icon: CalendarClock,
-                },
-                {
-                    title: 'Lembur',
-                    href: overtimesIndex(),
-                    icon: Timer,
-                },
-            ],
+            items: workingTimeItems,
         },
         {
             title: 'Approval',
-            items: [
-                {
-                    title: 'Approval Absensi',
-                    href: '/hris/attendance-approvals',
-                    icon: CalendarDays,
-                },
-                {
-                    title: 'Approval Jadwal',
-                    href: '/hris/shift-change-requests',
-                    icon: CalendarSync,
-                },
-                {
-                    title: 'Approval Cuti',
-                    href: '/hris/leave-approvals',
-                    icon: CalendarClock,
-                },
-                {
-                    title: 'Approval Lembur',
-                    href: '/hris/overtime-approvals',
-                    icon: Timer,
-                },
-                {
-                    title: 'Pengaturan Approval',
-                    href: '/hris/approval-settings',
-                    icon: SlidersHorizontal,
-                },
-            ],
+            items: approvalItems,
         },
         {
             title: 'Payroll',
-            items: [
-                {
-                    title: 'Penggajian',
-                    href: payrollsIndex(),
-                    icon: WalletCards,
-                    ...locked('payroll'),
-                },
-                {
-                    title: 'Kasbon',
-                    href: kasbonsIndex(),
-                    icon: HandCoins,
-                    ...locked('kasbon'),
-                },
-                {
-                    title: 'Reimbursement',
-                    href: '/hris/reimbursements',
-                    icon: ReceiptText,
-                },
-                {
-                    title: 'Billing Klien',
-                    href: '/hris/client-billings',
-                    icon: ReceiptText,
-                },
-                {
-                    title: 'Laporan',
-                    href: reportsIndex(),
-                    icon: FileText,
-                },
-            ],
+            items: payrollItems,
         },
         {
             title: 'Operasional',
-            items: [
-                {
-                    title: 'Notifikasi',
-                    href: '/hris/notifications',
-                    icon: BellRing,
-                },
-                {
-                    title: 'Survey',
-                    href: '/hris/surveys',
-                    icon: ClipboardList,
-                },
-                {
-                    title: 'Performance',
-                    href: '/hris/performances',
-                    icon: TrendingUp,
-                    ...locked('performance'),
-                },
-                {
-                    title: 'Asset Management',
-                    href: '/hris/assets',
-                    icon: PackageCheck,
-                    ...locked('assets'),
-                },
-                {
-                    title: 'Request Pengadaan Aset',
-                    href: '/hris/assets/procurement-requests',
-                    icon: ShoppingCart,
-                    ...locked('assets'),
-                },
-            ],
+            items: operationalItems,
         },
     ];
+
+    return groups.filter((group) => group.items.length > 0);
 }
 
 export function AppSidebar() {
@@ -245,7 +321,11 @@ export function AppSidebar() {
     const { subscription, permissions, companyFeatures } = usePage().props as {
         auth?: { user?: { role?: string } | null };
         subscription?: { locked_features?: string[] };
-        permissions?: { can_manage_subscribers?: boolean };
+        permissions?: {
+            can_manage_subscribers?: boolean;
+            allowed_modules?: string[] | null;
+            is_sub_admin?: boolean;
+        };
         companyFeatures?: CompanyFeatures;
     };
     const { auth } = usePage().props as {
@@ -268,6 +348,7 @@ export function AppSidebar() {
             : buildNavGroups(
                   subscription?.locked_features ?? [],
                   companyFeatures,
+                  permissions?.allowed_modules,
               );
 
     if (permissions?.can_manage_subscribers) {

@@ -286,6 +286,13 @@ class UserPortalSectionController extends Controller
 
     private function resolveSelfServiceEmployee(User $user): ?Employee
     {
+        if ($user->employee_id) {
+            $employee = Employee::query()->find($user->employee_id);
+            if ($employee) {
+                return $employee;
+            }
+        }
+
         if (! $user->email && ! $user->phone) {
             return null;
         }

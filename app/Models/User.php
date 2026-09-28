@@ -37,6 +37,8 @@ class User extends Authenticatable
         'password',
         'role',
         'parent_user_id',
+        'employee_id',
+        'permissions',
         'client_sub_company_id',
         'email_otp_code',
         'email_otp_sent_at',
@@ -85,6 +87,7 @@ class User extends Authenticatable
             'password_changed_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'permissions' => 'array',
         ];
     }
 
@@ -129,6 +132,11 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(SubCompany::class, 'sub_company_user')
             ->withTimestamps();
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
     }
 
     /**
@@ -179,6 +187,46 @@ class User extends Authenticatable
     public function isClientSupervisor(): bool
     {
         return $this->role === 'client_supervisor';
+    }
+
+    /**
+     * Determine whether this user is a sub-admin (admin staff or delegated admin under master).
+     */
+    public function isSubAdmin(): bool
+    {
+        return $this->role === 'admin_staff' || ($this->parent_user_id !== null && ! in_array($this->role, ['user', 'client_supervisor'], true));
+    }
+
+    /**
+     * Determine whether the user has permission to access the given module.
+     */
+    public function hasModulePermission(string $module): bool
+    {
+        // Master admin has full access to all modules
+        if ($this->parent_user_id === null || $this->role === 'superadmin') {
+            return true;
+        }
+
+        // Sub-admin with null permissions has full access to all modules
+        if ($this->permissions === null) {
+            return true;
+        }
+
+        return in_array($module, (array) $this->permissions, true);
+    }
+
+    /**
+     * Get the list of allowed modules for this user, or null if unrestricted.
+     *
+     * @return list<string>|null
+     */
+    public function allowedModules(): ?array
+    {
+        if ($this->parent_user_id === null || $this->role === 'superadmin' || $this->permissions === null) {
+            return null;
+        }
+
+        return array_values((array) $this->permissions);
     }
 
     /**

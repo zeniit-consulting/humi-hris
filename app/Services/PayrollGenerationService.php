@@ -366,9 +366,16 @@ class PayrollGenerationService
             }
         }
 
-        $pph21Method = (string) ($employee->pph21_method ?? 'gross');
-        $pph21Rate = round((float) ($employee->pph21_rate ?? 0), 2);
-        $monthlyTax = round($pph21Rate, 2);
+        $isPph21Active = (bool) ($employee->pph21_enabled ?? ($employee->pph21_method !== 'none'));
+        if (! $isPph21Active || $employee->pph21_method === 'none') {
+            $pph21Method = 'none';
+            $pph21Rate = 0.0;
+            $monthlyTax = 0.0;
+        } else {
+            $pph21Method = (string) ($employee->pph21_method ?? 'gross');
+            $pph21Rate = round((float) ($employee->pph21_rate ?? 0), 2);
+            $monthlyTax = round($pph21Rate, 2);
+        }
 
         [$pph21Allowance, $pph21Deduction, $pph21CompanyBorne] = $this->pph21Amounts(
             $pph21Method,
@@ -609,6 +616,7 @@ class PayrollGenerationService
             'net' => [0, 0, $monthlyTax],
             'gross_up' => [$monthlyTax, $monthlyTax, 0],
             'ter_harian' => [0, $monthlyTax, 0],
+            'none' => [0, 0, 0],
             default => [0, 0, 0],
         };
     }

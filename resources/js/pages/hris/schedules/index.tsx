@@ -260,8 +260,12 @@ export default function SchedulePage() {
         pattern: [],
     });
 
-    const importForm = useForm({
-        file: null as File | null,
+    const importForm = useForm<{
+        file: File | null;
+        month: string;
+    }>({
+        file: null,
+        month: filters.month || '',
     });
 
     const quickScheduleForm = useForm<QuickScheduleFormData>({
@@ -324,7 +328,11 @@ export default function SchedulePage() {
 
     const submitImport = (e: React.FormEvent) => {
         e.preventDefault();
-        importForm.post('/hris/schedules/import', {
+        importForm.transform((data) => ({
+            ...data,
+            month: filterState.month,
+        }));
+        importForm.post(`/hris/schedules/import?month=${encodeURIComponent(filterState.month)}`, {
             preserveScroll: true,
             onSuccess: () => {
                 setImportDialogOpen(false);
@@ -1720,13 +1728,23 @@ export default function SchedulePage() {
                     </div>
                 </DialogContent>
             </Dialog>
-            <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+            <Dialog
+                open={importDialogOpen}
+                onOpenChange={(open) => {
+                    setImportDialogOpen(open);
+                    if (open) {
+                        importForm.setData('month', filterState.month);
+                    } else {
+                        importForm.clearErrors();
+                    }
+                }}
+            >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Import Jadwal</DialogTitle>
                         <DialogDescription>
                             Download template dan isi jadwal karyawan untuk
-                            bulan {filterState.month}.
+                            bulan {filterState.month}. Pastikan kode shift sesuai dengan daftar shift yang tersedia.
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submitImport} className="grid gap-4 py-4">
@@ -1754,7 +1772,7 @@ export default function SchedulePage() {
                                     )
                                 }
                             />
-                            <InputError message={importForm.errors.file} />
+                            <InputError message={importForm.errors.file || importForm.errors.month} />
                         </div>
                         <div className="flex justify-end gap-2">
                             <Button

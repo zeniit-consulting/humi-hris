@@ -14,6 +14,7 @@ import {
     Plus,
     RotateCcw,
     Search,
+    ShieldCheck,
     Trash2,
     Upload,
     UserRoundCheck,
@@ -227,6 +228,7 @@ type Employee = {
     probation_duration_months: number | null;
     probation_end_date: string | null;
     pkwtt_activated_at: string | null;
+    pph21_enabled?: boolean;
     pph21_method: string;
     pph21_rate: string;
     ptkp_category: string | null;
@@ -327,6 +329,7 @@ type EmployeeFormData = {
     contract_duration_months: string;
     contract_end_date: string;
     probation_duration_months: string;
+    pph21_enabled: boolean;
     pph21_method: string;
     pph21_rate: string;
     ptkp_category: string;
@@ -422,6 +425,7 @@ type EmployeeDocumentFormData = {
 };
 
 type EmployeeSortKey =
+    | 'default'
     | 'name'
     | 'code'
     | 'contact'
@@ -577,6 +581,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     contract_duration_months: '',
     contract_end_date: '',
     probation_duration_months: '0',
+    pph21_enabled: true,
     pph21_method: 'gross',
     pph21_rate: '0',
     ptkp_category: '',
@@ -716,6 +721,7 @@ const typeLabels: Record<string, string> = {
 };
 
 const pph21MethodLabels: Record<string, string> = {
+    none: 'Nonaktif',
     ter_harian: 'TER Harian',
     gross: 'Gross',
     net: 'Net',
@@ -1049,6 +1055,7 @@ export default function EmployeesIndex() {
                 'contract_duration_months',
                 'contract_end_date',
                 'probation_duration_months',
+                'pph21_enabled',
                 'pph21_method',
                 'pph21_rate',
                 'ptkp_category',
@@ -1241,6 +1248,10 @@ export default function EmployeesIndex() {
                 employee.probation_duration_months !== null
                     ? String(employee.probation_duration_months)
                     : '0',
+            pph21_enabled:
+                employee.pph21_enabled ??
+                (employee.pph21_method !== 'none' &&
+                    employee.pph21_method !== ''),
             pph21_method: employee.pph21_method,
             pph21_rate: String(employee.pph21_rate ?? '0'),
             ptkp_category: employee.ptkp_category ?? '',
@@ -1372,31 +1383,33 @@ export default function EmployeesIndex() {
                 isValid = false;
             }
 
-            if (employeeForm.data.pph21_method.trim() === '') {
-                employeeForm.setError(
-                    'pph21_method',
-                    'Metode PPh21 wajib dipilih.',
-                );
-                isValid = false;
-            }
-
-            if (employeeForm.data.pph21_rate.trim() === '') {
-                employeeForm.setError(
-                    'pph21_rate',
-                    'Nominal PPh21 wajib diisi.',
-                );
-                isValid = false;
-            } else {
-                const rateValue = Number(
-                    employeeForm.data.pph21_rate.replace(/[^\d]/g, ''),
-                );
-
-                if (!Number.isInteger(rateValue) || rateValue < 0) {
+            if (employeeForm.data.pph21_enabled) {
+                if (employeeForm.data.pph21_method.trim() === '') {
                     employeeForm.setError(
-                        'pph21_rate',
-                        'Nominal PPh21 harus berupa angka bilangan bulat.',
+                        'pph21_method',
+                        'Metode PPh21 wajib dipilih.',
                     );
                     isValid = false;
+                }
+
+                if (employeeForm.data.pph21_rate.trim() === '') {
+                    employeeForm.setError(
+                        'pph21_rate',
+                        'Nominal PPh21 wajib diisi.',
+                    );
+                    isValid = false;
+                } else {
+                    const rateValue = Number(
+                        employeeForm.data.pph21_rate.replace(/[^\d]/g, ''),
+                    );
+
+                    if (!Number.isInteger(rateValue) || rateValue < 0) {
+                        employeeForm.setError(
+                            'pph21_rate',
+                            'Nominal PPh21 harus berupa angka bilangan bulat.',
+                        );
+                        isValid = false;
+                    }
                 }
             }
 
@@ -1838,7 +1851,7 @@ export default function EmployeesIndex() {
             division_id: '',
             sub_company_id: '',
             status: '',
-            sort: 'name' as const,
+            sort: 'sub_company' as const,
             direction: 'asc' as const,
             division_search: '',
             position_search: '',
@@ -2648,6 +2661,16 @@ export default function EmployeesIndex() {
                                                                     {employee.portal_user
                                                                         ? 'Kirim ulang undangan login'
                                                                         : 'Undang ke login portal'}
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => {
+                                                                        router.visit(
+                                                                            `/settings/users?assign_employee_id=${employee.id}`,
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    <ShieldCheck className="size-4 text-primary" />
+                                                                    Jadikan / Kelola Akses Admin
                                                                 </DropdownMenuItem>
                                                                 {employee.employment_type ===
                                                                     'PKWTT' &&
@@ -4602,132 +4625,173 @@ export default function EmployeesIndex() {
                                 )}
 
                                 <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="pph21_method">
-                                        Metode PPh21
+                                    <Label htmlFor="pph21_enabled">
+                                        Perhitungan PPh21
                                     </Label>
                                     <div className="space-y-1">
-                                        <Select
-                                            value={
-                                                employeeForm.data.pph21_method
-                                            }
-                                            onValueChange={(value) =>
-                                                employeeForm.setData(
-                                                    'pph21_method',
-                                                    value,
-                                                )
-                                            }
-                                        >
-                                            <SelectTrigger
-                                                id="pph21_method"
-                                                className="w-full"
-                                            >
-                                                <SelectValue placeholder="Pilih metode PPh21" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {options.pph21_methods.map(
-                                                    (method) => (
-                                                        <SelectItem
-                                                            key={method.value}
-                                                            value={method.value}
-                                                        >
-                                                            {method.label}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
+                                        <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                                            <input
+                                                id="pph21_enabled"
+                                                type="checkbox"
+                                                checked={employeeForm.data.pph21_enabled}
+                                                onChange={(e) => {
+                                                    const enabled = e.target.checked;
+                                                    employeeForm.setData((prev) => ({
+                                                        ...prev,
+                                                        pph21_enabled: enabled,
+                                                        pph21_method: enabled
+                                                            ? (prev.pph21_method === 'none' ? 'gross' : prev.pph21_method)
+                                                            : 'none',
+                                                        pph21_rate: enabled ? prev.pph21_rate : '0',
+                                                    }));
+                                                }}
+                                                className="size-4 rounded border-input text-primary focus:ring-primary"
+                                            />
+                                            <span>
+                                                {employeeForm.data.pph21_enabled
+                                                    ? 'Aktif (Dikenakan PPh21)'
+                                                    : 'Nonaktif / Bebas Pajak PPh21'}
+                                            </span>
+                                        </label>
                                         <p className="text-xs text-muted-foreground">
-                                            {
-                                                options.pph21_methods.find(
-                                                    (method) =>
-                                                        method.value ===
-                                                        employeeForm.data
-                                                            .pph21_method,
-                                                )?.description
-                                            }
+                                            {employeeForm.data.pph21_enabled
+                                                ? 'Hilangkan centang jika ingin menonaktifkan PPh21 untuk karyawan/freelance ini.'
+                                                : 'PPh21 dinonaktifkan. Seluruh input PPh21 disembunyikan dan karyawan tidak dipotong/dikenakan pajak pada payroll.'}
                                         </p>
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.pph21_method
-                                            }
-                                        />
                                     </div>
                                 </div>
 
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="pph21_rate">
-                                        Nominal PPh21
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <Input
-                                            id="pph21_rate"
-                                            type="text"
-                                            inputMode="numeric"
-                                            value={formatThousandDigits(
-                                                employeeForm.data.pph21_rate,
-                                            )}
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'pph21_rate',
-                                                    normalizeDigitInput(
-                                                        event.target.value,
-                                                    ),
-                                                )
-                                            }
-                                            placeholder="Contoh: 250.000"
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.pph21_rate
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="ptkp_category">
-                                        Kategori PTKP
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <Select
-                                            value={
-                                                employeeForm.data
-                                                    .ptkp_category || ''
-                                            }
-                                            onValueChange={(value) =>
-                                                employeeForm.setData(
-                                                    'ptkp_category',
-                                                    value,
-                                                )
-                                            }
-                                        >
-                                            <SelectTrigger
-                                                id="ptkp_category"
-                                                className="w-full"
-                                            >
-                                                <SelectValue placeholder="Pilih kategori PTKP" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {Object.entries(
-                                                    ptkpCategoryLabels,
-                                                ).map(([code, label]) => (
-                                                    <SelectItem
-                                                        key={code}
-                                                        value={code}
+                                {employeeForm.data.pph21_enabled && (
+                                    <>
+                                        <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                            <Label htmlFor="pph21_method">
+                                                Metode PPh21
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <Select
+                                                    value={
+                                                        employeeForm.data.pph21_method
+                                                    }
+                                                    onValueChange={(value) =>
+                                                        employeeForm.setData(
+                                                            'pph21_method',
+                                                            value,
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger
+                                                        id="pph21_method"
+                                                        className="w-full"
                                                     >
-                                                        {label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError
-                                            message={
-                                                employeeForm.errors
-                                                    .ptkp_category
-                                            }
-                                        />
-                                    </div>
-                                </div>
+                                                        <SelectValue placeholder="Pilih metode PPh21" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {options.pph21_methods.map(
+                                                            (method) => (
+                                                                <SelectItem
+                                                                    key={method.value}
+                                                                    value={method.value}
+                                                                >
+                                                                    {method.label}
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {
+                                                        options.pph21_methods.find(
+                                                            (method) =>
+                                                                method.value ===
+                                                                employeeForm.data
+                                                                    .pph21_method,
+                                                        )?.description
+                                                    }
+                                                </p>
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors.pph21_method
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                            <Label htmlFor="pph21_rate">
+                                                Nominal PPh21
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <Input
+                                                    id="pph21_rate"
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    value={formatThousandDigits(
+                                                        employeeForm.data.pph21_rate,
+                                                    )}
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'pph21_rate',
+                                                            normalizeDigitInput(
+                                                                event.target.value,
+                                                            ),
+                                                        )
+                                                    }
+                                                    placeholder="Contoh: 250.000"
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors.pph21_rate
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                            <Label htmlFor="ptkp_category">
+                                                Kategori PTKP
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <Select
+                                                    value={
+                                                        employeeForm.data
+                                                            .ptkp_category || ''
+                                                    }
+                                                    onValueChange={(value) =>
+                                                        employeeForm.setData(
+                                                            'ptkp_category',
+                                                            value,
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger
+                                                        id="ptkp_category"
+                                                        className="w-full"
+                                                    >
+                                                        <SelectValue placeholder="Pilih kategori PTKP" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {Object.entries(
+                                                            ptkpCategoryLabels,
+                                                        ).map(([code, label]) => (
+                                                            <SelectItem
+                                                                key={code}
+                                                                value={code}
+                                                            >
+                                                                {label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .ptkp_category
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
 
                                 <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                     <Label htmlFor="division_id">Divisi</Label>
@@ -5637,23 +5701,40 @@ export default function EmployeesIndex() {
                                             employeeForm.data.employment_type
                                         ] ?? employeeForm.data.employment_type}
                                     </p>
-                                    <p>
-                                        <span className="font-medium">
-                                            Metode PPh21:
-                                        </span>{' '}
-                                        {pph21MethodLabels[
-                                            employeeForm.data.pph21_method
-                                        ] ?? employeeForm.data.pph21_method}
-                                    </p>
-                                    <p>
-                                        <span className="font-medium">
-                                            Nominal PPh21:
-                                        </span>{' '}
-                                        Rp{' '}
-                                        {formatThousandDigits(
-                                            employeeForm.data.pph21_rate || '0',
-                                        ) || '0'}
-                                    </p>
+                                    {employeeForm.data.pph21_enabled &&
+                                    employeeForm.data.pph21_method !==
+                                        'none' ? (
+                                        <>
+                                            <p>
+                                                <span className="font-medium">
+                                                    Metode PPh21:
+                                                </span>{' '}
+                                                {pph21MethodLabels[
+                                                    employeeForm.data.pph21_method
+                                                ] ??
+                                                    employeeForm.data.pph21_method}
+                                            </p>
+                                            <p>
+                                                <span className="font-medium">
+                                                    Nominal PPh21:
+                                                </span>{' '}
+                                                Rp{' '}
+                                                {formatThousandDigits(
+                                                    employeeForm.data.pph21_rate ||
+                                                        '0',
+                                                ) || '0'}
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <p>
+                                            <span className="font-medium">
+                                                PPh21:
+                                            </span>{' '}
+                                            <span className="text-muted-foreground">
+                                                Nonaktif / Bebas Pajak
+                                            </span>
+                                        </p>
+                                    )}
                                     <p>
                                         <span className="font-medium">
                                             Rekening Bank:

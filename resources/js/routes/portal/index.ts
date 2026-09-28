@@ -86,7 +86,7 @@ login.form = loginForm
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -101,7 +101,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -110,7 +110,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -120,7 +120,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -130,7 +130,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -140,7 +140,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -150,7 +150,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\UserPortalController::__invoke
-* @see app/Http/Controllers/UserPortalController.php:17
+* @see app/Http/Controllers/UserPortalController.php:18
 * @route '/portal'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

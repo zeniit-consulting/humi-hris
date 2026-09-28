@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureAccountNotSuspended;
 use App\Http\Middleware\EnsureActiveSubscription;
 use App\Http\Middleware\EnsureAdminAccess;
 use App\Http\Middleware\EnsureBillingOwnerAccess;
+use App\Http\Middleware\EnsureModuleAccess;
 use App\Http\Middleware\RequireBearerToken;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'admin.access' => EnsureAdminAccess::class,
+            'module.access' => EnsureModuleAccess::class,
             'account.activated' => EnsureAccountActivated::class,
             'account.not_suspended' => EnsureAccountNotSuspended::class,
             'subscription.active' => EnsureActiveSubscription::class,
