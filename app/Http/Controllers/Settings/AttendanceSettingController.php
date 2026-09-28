@@ -48,14 +48,53 @@ class AttendanceSettingController extends Controller
         ]);
     }
 
-    public function update(AttendanceSettingUpdateRequest $request): RedirectResponse
+    public function update(AttendanceSettingUpdateRequest $request, AttendanceStatusService $statusService): RedirectResponse
     {
         $validated = $request->validated();
         if (isset($validated['attendance_revision_cutoff_day'])) {
             $validated['payroll_cutoff_day'] = $validated['attendance_revision_cutoff_day'];
         }
 
+        if (isset($validated['late_penalty_tiers']) && is_array($validated['late_penalty_tiers'])) {
+            $cleanedTiers = [];
+            foreach ($validated['late_penalty_tiers'] as $tier) {
+                if (! isset($tier['from_minute']) || $tier['from_minute'] === '') {
+                    continue;
+                }
+                $from = (int) $tier['from_minute'];
+                $to = isset($tier['to_minute']) && $tier['to_minute'] !== '' && $tier['to_minute'] !== null
+                    ? (int) $tier['to_minute']
+                    : null;
+                $amount = isset($tier['penalty_amount']) ? (float) $tier['penalty_amount'] : 0.0;
+                $desc = isset($tier['description']) ? trim((string) $tier['description']) : null;
+
+                $cleanedTiers[] = [
+                    'from_minute' => $from,
+                    'to_minute' => $to,
+                    'penalty_amount' => $amount,
+                    'description' => $desc,
+                ];
+            }
+
+            usort($cleanedTiers, fn ($a, $b) => $a['from_minute'] <=> $b['from_minute']);
+            $validated['late_penalty_tiers'] = $cleanedTiers;
+        }
+
+        $ownerId = $request->user()->accountOwnerId();
         $this->settingFor($request)->update($validated);
+
+        if (isset($validated['late_tolerance_minutes'])) {
+            \App\Models\WorkShift::query()
+                ->where('user_id', $ownerId)
+                ->update(['late_tolerance_minutes' => (int) $validated['late_tolerance_minutes']]);
+        }
+
+        // Auto-sync lateness for existing attendances of current month
+        $statusService->syncLateness(
+            $ownerId,
+            now()->startOfMonth()->toDateString(),
+            now()->endOfMonth()->toDateString()
+        );
 
         return to_route('settings.attendance.edit')
             ->with('success', 'Pengaturan absensi berhasil diperbarui.');

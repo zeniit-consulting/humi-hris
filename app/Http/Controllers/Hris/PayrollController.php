@@ -188,6 +188,7 @@ class PayrollController extends Controller
                         'private_insurance_nominal' => $item->private_insurance_nominal,
                         'kasbon_deduction' => $item->kasbon_deduction,
                         'denda_deduction' => $item->denda_deduction,
+                        'denda_breakdown' => $item->denda_breakdown ?? [],
                         'unpaid_leave_deduction' => $item->unpaid_leave_deduction,
                         'manual_deduction_total' => (float) ($item->manual_deduction_total ?? 0),
                         'manual_deduction_breakdown' => $item->manual_deduction_breakdown ?? [],
@@ -469,6 +470,140 @@ class PayrollController extends Controller
 
         return to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular'])
             ->with('success', 'Item payroll berhasil diperbarui.');
+    }
+
+    /**
+     * Revert or restore a specific penalty item from employee's payroll item.
+     */
+    public function revertDenda(PayrollRun $payrollRun, PayrollItem $payrollItem, Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+        abort_unless((int) $payrollItem->payroll_run_id === (int) $payrollRun->id, 404);
+
+        if ($payrollRun->is_saved) {
+            return back()->with('error', 'Payroll yang sudah disimpan tidak bisa diedit.');
+        }
+
+        if ($payrollRun->is_locked && (int) $payrollRun->locked_by !== (int) $request->user()->id) {
+            $lockedByName = $payrollRun->lockedBy?->name ?? 'Admin lain';
+
+            return back()->with('error', "Payroll sedang di-lock oleh {$lockedByName}. Hanya user tersebut yang dapat mengedit atau melakukan unlock.");
+        }
+
+        $validated = $request->validate([
+            'denda_id' => ['required', 'string'],
+            'action' => ['nullable', 'in:revert,restore,toggle'],
+        ]);
+
+        $dendaId = $validated['denda_id'];
+        $action = $validated['action'] ?? 'toggle';
+
+        $breakdown = $payrollItem->denda_breakdown ?? [];
+
+        // If breakdown is empty but denda_deduction > 0, synthesize a single denda item
+        if (empty($breakdown) && (float) $payrollItem->denda_deduction > 0) {
+            $breakdown = [
+                [
+                    'id' => 'legacy_denda',
+                    'type' => 'manual_denda',
+                    'type_label' => 'Potongan Denda',
+                    'reference_id' => null,
+                    'date' => $payrollRun->period_start?->toDateString(),
+                    'title' => 'Potongan Denda',
+                    'description' => 'Denda payroll',
+                    'amount' => (float) $payrollItem->denda_deduction,
+                    'is_reverted' => false,
+                ],
+            ];
+            if ($dendaId !== 'legacy_denda') {
+                $dendaId = 'legacy_denda';
+            }
+        }
+
+        $itemFound = false;
+        $isNowReverted = false;
+
+        foreach ($breakdown as &$entry) {
+            if ((string) ($entry['id'] ?? '') === $dendaId) {
+                $itemFound = true;
+                if ($action === 'revert') {
+                    $entry['is_reverted'] = true;
+                } elseif ($action === 'restore') {
+                    $entry['is_reverted'] = false;
+                } else {
+                    $entry['is_reverted'] = ! ((bool) ($entry['is_reverted'] ?? false));
+                }
+                $isNowReverted = (bool) $entry['is_reverted'];
+
+                if ($isNowReverted) {
+                    $entry['reverted_at'] = now()->toIso8601String();
+                    $entry['reverted_by'] = $request->user()->name;
+                } else {
+                    unset($entry['reverted_at'], $entry['reverted_by']);
+                }
+                break;
+            }
+        }
+        unset($entry);
+
+        if (! $itemFound) {
+            return back()->with('error', 'Item denda tidak ditemukan.');
+        }
+
+        $newDendaTotal = round(
+            (float) collect($breakdown)->where('is_reverted', false)->sum('amount'),
+            2
+        );
+
+        $bpjsTotalEmployee = round(
+            (float) $payrollItem->bpjs_kesehatan_employee
+            + (float) $payrollItem->bpjs_jht_employee
+            + (float) $payrollItem->bpjs_jp_employee
+            + (float) ($payrollItem->private_insurance_nominal ?? 0),
+            2
+        );
+
+        $deductionsTotal = round(
+            (float) $payrollItem->pph21_deduction
+            + (float) $payrollItem->kasbon_deduction
+            + $newDendaTotal
+            + (float) $payrollItem->unpaid_leave_deduction
+            + (float) ($payrollItem->manual_deduction_total ?? 0)
+            + $bpjsTotalEmployee,
+            2
+        );
+
+        $pph21DeductionForNet = $payrollItem->pph21_method === 'gross_up' ? 0 : (float) $payrollItem->pph21_deduction;
+        $netSalary = round(max(
+            ((float) $payrollItem->base_salary
+                + (float) $payrollItem->allowances_total
+                + (float) $payrollItem->overtime_pay)
+            - (
+                (float) $payrollItem->kasbon_deduction
+                + $newDendaTotal
+                + (float) $payrollItem->unpaid_leave_deduction
+                + $pph21DeductionForNet
+                + (float) ($payrollItem->manual_deduction_total ?? 0)
+                + $bpjsTotalEmployee
+            ),
+            0
+        ), 2);
+
+        $payrollItem->forceFill([
+            'denda_breakdown' => $breakdown,
+            'denda_deduction' => $newDendaTotal,
+            'deductions_total' => $deductionsTotal,
+            'net_salary' => $netSalary,
+        ])->save();
+
+        $this->refreshPayrollRunTotals($payrollRun);
+
+        $msg = $isNowReverted
+            ? 'Denda berhasil dibatalkan (tidak di-apply).'
+            : 'Denda berhasil diterapkan kembali.';
+
+        return back()->with('success', $msg);
     }
 
     /**

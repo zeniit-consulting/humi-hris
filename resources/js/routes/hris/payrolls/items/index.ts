@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::update
-* @see app/Http/Controllers/Hris/PayrollController.php:338
+* @see app/Http/Controllers/Hris/PayrollController.php:339
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}'
 */
 export const update = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -16,7 +16,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::update
-* @see app/Http/Controllers/Hris/PayrollController.php:338
+* @see app/Http/Controllers/Hris/PayrollController.php:339
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}'
 */
 update.url = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions) => {
@@ -46,7 +46,7 @@ update.url = (args: { payrollRun: number | { id: number }, payrollItem: number |
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::update
-* @see app/Http/Controllers/Hris/PayrollController.php:338
+* @see app/Http/Controllers/Hris/PayrollController.php:339
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}'
 */
 update.put = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -56,7 +56,7 @@ update.put = (args: { payrollRun: number | { id: number }, payrollItem: number |
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::update
-* @see app/Http/Controllers/Hris/PayrollController.php:338
+* @see app/Http/Controllers/Hris/PayrollController.php:339
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}'
 */
 const updateForm = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -71,7 +71,7 @@ const updateForm = (args: { payrollRun: number | { id: number }, payrollItem: nu
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::update
-* @see app/Http/Controllers/Hris/PayrollController.php:338
+* @see app/Http/Controllers/Hris/PayrollController.php:339
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}'
 */
 updateForm.put = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -87,8 +87,85 @@ updateForm.put = (args: { payrollRun: number | { id: number }, payrollItem: numb
 update.form = updateForm
 
 /**
+* @see \App\Http\Controllers\Hris\PayrollController::revertDenda
+* @see app/Http/Controllers/Hris/PayrollController.php:478
+* @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/revert-denda'
+*/
+export const revertDenda = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: revertDenda.url(args, options),
+    method: 'post',
+})
+
+revertDenda.definition = {
+    methods: ["post"],
+    url: '/hris/payrolls/{payrollRun}/items/{payrollItem}/revert-denda',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\PayrollController::revertDenda
+* @see app/Http/Controllers/Hris/PayrollController.php:478
+* @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/revert-denda'
+*/
+revertDenda.url = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions) => {
+    if (Array.isArray(args)) {
+        args = {
+            payrollRun: args[0],
+            payrollItem: args[1],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        payrollRun: typeof args.payrollRun === 'object'
+        ? args.payrollRun.id
+        : args.payrollRun,
+        payrollItem: typeof args.payrollItem === 'object'
+        ? args.payrollItem.id
+        : args.payrollItem,
+    }
+
+    return revertDenda.definition.url
+            .replace('{payrollRun}', parsedArgs.payrollRun.toString())
+            .replace('{payrollItem}', parsedArgs.payrollItem.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\PayrollController::revertDenda
+* @see app/Http/Controllers/Hris/PayrollController.php:478
+* @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/revert-denda'
+*/
+revertDenda.post = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: revertDenda.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\PayrollController::revertDenda
+* @see app/Http/Controllers/Hris/PayrollController.php:478
+* @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/revert-denda'
+*/
+const revertDendaForm = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: revertDenda.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\PayrollController::revertDenda
+* @see app/Http/Controllers/Hris/PayrollController.php:478
+* @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/revert-denda'
+*/
+revertDendaForm.post = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: revertDenda.url(args, options),
+    method: 'post',
+})
+
+revertDenda.form = revertDendaForm
+
+/**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslip
-* @see app/Http/Controllers/Hris/PayrollController.php:1320
+* @see app/Http/Controllers/Hris/PayrollController.php:1455
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/send-payslip'
 */
 export const sendPayslip = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -103,7 +180,7 @@ sendPayslip.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslip
-* @see app/Http/Controllers/Hris/PayrollController.php:1320
+* @see app/Http/Controllers/Hris/PayrollController.php:1455
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/send-payslip'
 */
 sendPayslip.url = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions) => {
@@ -133,7 +210,7 @@ sendPayslip.url = (args: { payrollRun: number | { id: number }, payrollItem: num
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslip
-* @see app/Http/Controllers/Hris/PayrollController.php:1320
+* @see app/Http/Controllers/Hris/PayrollController.php:1455
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/send-payslip'
 */
 sendPayslip.post = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -143,7 +220,7 @@ sendPayslip.post = (args: { payrollRun: number | { id: number }, payrollItem: nu
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslip
-* @see app/Http/Controllers/Hris/PayrollController.php:1320
+* @see app/Http/Controllers/Hris/PayrollController.php:1455
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/send-payslip'
 */
 const sendPayslipForm = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -153,7 +230,7 @@ const sendPayslipForm = (args: { payrollRun: number | { id: number }, payrollIte
 
 /**
 * @see \App\Http\Controllers\Hris\PayrollController::sendPayslip
-* @see app/Http/Controllers/Hris/PayrollController.php:1320
+* @see app/Http/Controllers/Hris/PayrollController.php:1455
 * @route '/hris/payrolls/{payrollRun}/items/{payrollItem}/send-payslip'
 */
 sendPayslipForm.post = (args: { payrollRun: number | { id: number }, payrollItem: number | { id: number } } | [payrollRun: number | { id: number }, payrollItem: number | { id: number } ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -165,6 +242,7 @@ sendPayslip.form = sendPayslipForm
 
 const items = {
     update: Object.assign(update, update),
+    revertDenda: Object.assign(revertDenda, revertDenda),
     sendPayslip: Object.assign(sendPayslip, sendPayslip),
 }
 

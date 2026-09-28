@@ -426,20 +426,82 @@ class PayrollGenerationService
         );
 
         $kasbonDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'kasbon');
-        $manualDendaDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'denda');
-        $attendanceLateDeduction = (float) $employee->attendances->sum(function ($att) use ($setting, $employee): float {
-            return app(\App\Services\AttendanceStatusService::class)->calculateLatePenaltyForAttendance(
+
+        $manualDendas = EmployeeDeduction::query()
+            ->withoutGlobalScopes()
+            ->where('user_id', $ownerId)
+            ->where('employee_id', $employee->id)
+            ->where('type', 'denda')
+            ->whereBetween('deduction_date', [$start->toDateString(), $end->toDateString()])
+            ->get();
+
+        $manualDendaDeduction = round((float) $manualDendas->sum('amount'), 2);
+        $manualBreakdownItems = $manualDendas->map(function ($denda) use ($start): array {
+            return [
+                'id' => 'manual_'.$denda->id,
+                'type' => 'manual_denda',
+                'type_label' => 'Denda Manual',
+                'reference_id' => $denda->id,
+                'date' => $denda->deduction_date?->toDateString() ?? $start->toDateString(),
+                'title' => 'Denda Manual',
+                'description' => ! empty($denda->notes) ? $denda->notes : 'Potongan denda manual',
+                'amount' => round((float) $denda->amount, 2),
+                'is_reverted' => false,
+            ];
+        })->values()->all();
+
+        $attendanceLateDeduction = 0.0;
+        $lateBreakdownItems = [];
+        foreach ($employee->attendances as $att) {
+            $penalty = app(\App\Services\AttendanceStatusService::class)->calculateLatePenaltyForAttendance(
                 $att,
                 $setting,
                 $employee,
                 syncAttendanceRecord: true,
             );
-        });
+            if ($penalty > 0) {
+                $attendanceLateDeduction += $penalty;
+                $dateStr = $att->attendance_date?->toDateString() ?? '';
+                $lateMin = (int) ($att->late_minutes ?? 0);
+                $desc = $lateMin > 0 ? "Terlambat {$lateMin} menit" : 'Terlambat presensi';
+                if ($att->is_half_day) {
+                    $desc .= ' (Setengah hari)';
+                }
+                $lateBreakdownItems[] = [
+                    'id' => 'late_'.$att->id,
+                    'type' => 'late_attendance',
+                    'type_label' => 'Keterlambatan Presensi',
+                    'reference_id' => $att->id,
+                    'date' => $dateStr,
+                    'title' => 'Denda Keterlambatan',
+                    'description' => $desc,
+                    'amount' => round($penalty, 2),
+                    'is_reverted' => false,
+                ];
+            }
+        }
+        $attendanceLateDeduction = round($attendanceLateDeduction, 2);
 
         // Jika karyawan tidak absen sampai masa cutoff maka termasuk potongan setengah hari prorate
-        $unrecordedCutoffDays = $this->unrecordedAttendanceCutoffDays($employee, $start, $end, $setting);
+        $unrecordedCutoffDates = $this->unrecordedAttendanceCutoffDates($employee, $start, $end, $setting);
         $halfDayProrateRate = round(0.5 * (($monthlyBaseSalary + (float) $employee->allowances->where('is_active', true)->sum('amount')) / $activeWorkingDays), 2);
-        $unrecordedCutoffDeduction = round($unrecordedCutoffDays * $halfDayProrateRate, 2);
+        $unrecordedCutoffDeduction = round(count($unrecordedCutoffDates) * $halfDayProrateRate, 2);
+        $unrecordedBreakdownItems = [];
+        foreach ($unrecordedCutoffDates as $missingDate) {
+            $unrecordedBreakdownItems[] = [
+                'id' => 'unrecorded_'.$missingDate,
+                'type' => 'unrecorded_cutoff',
+                'type_label' => 'Tidak Absen Cutoff',
+                'reference_id' => null,
+                'date' => $missingDate,
+                'title' => 'Tidak Absen Sampai Cutoff',
+                'description' => 'Potongan 0.5 hari kerja (prorata)',
+                'amount' => $halfDayProrateRate,
+                'is_reverted' => false,
+            ];
+        }
+
+        $dendaBreakdown = array_merge($lateBreakdownItems, $unrecordedBreakdownItems, $manualBreakdownItems);
 
         $manualDeductionBreakdown = [];
         $otherDeductions = EmployeeDeduction::query()
@@ -501,6 +563,7 @@ class PayrollGenerationService
             'private_insurance_nominal' => $hasPrivateInsurance ? $privateInsuranceNominal : 0.0,
             'kasbon_deduction' => $kasbonDeduction,
             'denda_deduction' => $dendaDeduction,
+            'denda_breakdown' => $dendaBreakdown,
             'unpaid_leave_deduction' => $unpaidLeaveDeduction,
             'manual_deduction_total' => $manualDeductionTotal,
             'manual_deduction_breakdown' => $manualDeductionBreakdown,
@@ -595,6 +658,7 @@ class PayrollGenerationService
                 'pph21_company_borne' => 0,
                 'kasbon_deduction' => 0,
                 'denda_deduction' => 0,
+                'denda_breakdown' => [],
                 'deductions_total' => 0,
                 'net_salary' => $thrAmount,
                 'thr_months_of_service' => min($monthsOfService, 12),
@@ -657,8 +721,16 @@ class PayrollGenerationService
 
     private function unrecordedAttendanceCutoffDays(Employee $employee, Carbon $start, Carbon $end, ?CompanySetting $setting): int
     {
+        return count($this->unrecordedAttendanceCutoffDates($employee, $start, $end, $setting));
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function unrecordedAttendanceCutoffDates(Employee $employee, Carbon $start, Carbon $end, ?CompanySetting $setting): array
+    {
         if (! (bool) ($setting?->unrecorded_cutoff_penalty_enabled ?? false)) {
-            return 0;
+            return [];
         }
 
         $cutoffDay = $setting->attendance_revision_cutoff_day ?? 'end_of_month';
@@ -674,7 +746,7 @@ class PayrollGenerationService
         );
         $approvedLeaves = $employee->leaveRequests;
 
-        $missingDays = 0;
+        $missingDates = [];
         $evalEnd = $end->copy()->min(now());
 
         for ($date = $start->copy(); $date->lte($evalEnd); $date->addDay()) {
@@ -703,10 +775,10 @@ class PayrollGenerationService
             });
 
             if (! $hasLeave) {
-                $missingDays++;
+                $missingDates[] = $dateStr;
             }
         }
 
-        return $missingDays;
+        return $missingDates;
     }
 }

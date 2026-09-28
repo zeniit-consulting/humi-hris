@@ -148,7 +148,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::syncLateness
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:64
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:103
 * @route '/settings/attendance/sync-lateness'
 */
 export const syncLateness = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -163,7 +163,7 @@ syncLateness.definition = {
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::syncLateness
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:64
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:103
 * @route '/settings/attendance/sync-lateness'
 */
 syncLateness.url = (options?: RouteQueryOptions) => {
@@ -172,7 +172,7 @@ syncLateness.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::syncLateness
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:64
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:103
 * @route '/settings/attendance/sync-lateness'
 */
 syncLateness.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -182,7 +182,7 @@ syncLateness.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::syncLateness
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:64
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:103
 * @route '/settings/attendance/sync-lateness'
 */
 const syncLatenessForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -192,7 +192,7 @@ const syncLatenessForm = (options?: RouteQueryOptions): RouteFormDefinition<'pos
 
 /**
 * @see \App\Http\Controllers\Settings\AttendanceSettingController::syncLateness
-* @see app/Http/Controllers/Settings/AttendanceSettingController.php:64
+* @see app/Http/Controllers/Settings/AttendanceSettingController.php:103
 * @route '/settings/attendance/sync-lateness'
 */
 syncLatenessForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

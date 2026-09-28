@@ -46,6 +46,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import {
     browserTimezone,
+    formatAttendanceDate,
     formatAttendanceTime,
     timezoneLabel,
     toAttendanceDateTimeInput,
@@ -290,7 +291,9 @@ export default function AttendancePage() {
         });
     };
 
-    const toggleSort = (sortBy: 'check_in_at' | 'check_out_at') => {
+    const toggleSort = (
+        sortBy: 'attendance_date' | 'check_in_at' | 'check_out_at',
+    ) => {
         const nextDir: Filters['sort_dir'] =
             filterState.sort_by === sortBy && filterState.sort_dir === 'asc'
                 ? 'desc'
@@ -566,6 +569,20 @@ export default function AttendancePage() {
                             <table className="w-full min-w-[920px] text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
+                                        <th className="px-3 py-2">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="-ml-3"
+                                                onClick={() =>
+                                                    toggleSort('attendance_date')
+                                                }
+                                            >
+                                                Tanggal
+                                                <ArrowDownWideNarrow className="size-3.5" />
+                                            </Button>
+                                        </th>
                                         <th className="px-3 py-2">Karyawan</th>
                                         <th className="px-3 py-2">
                                             Nama Shift
@@ -606,7 +623,7 @@ export default function AttendancePage() {
                                     {attendances.data.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={6}
+                                                colSpan={7}
                                                 className="px-3 py-6 text-center text-muted-foreground"
                                             >
                                                 Belum ada data kehadiran.
@@ -622,6 +639,11 @@ export default function AttendancePage() {
                                                     'bg-destructive/10 text-destructive',
                                             )}
                                         >
+                                            <td className="px-3 py-3 whitespace-nowrap font-medium text-foreground">
+                                                {formatAttendanceDate(
+                                                    row.attendance_date,
+                                                )}
+                                            </td>
                                             <td className="px-3 py-3">
                                                 {row.employee_label}
                                             </td>

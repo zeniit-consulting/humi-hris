@@ -2276,4 +2276,218 @@ class PayrollGenerationTest extends TestCase
 
         unlink($temp);
     }
+
+    public function test_payroll_generation_populates_denda_breakdown(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        CompanySetting::query()->create([
+            'user_id' => $user->id,
+            'late_penalty_enabled' => true,
+            'late_tolerance_minutes' => 15,
+            'late_penalty_type' => 'progressive',
+            'late_base_penalty_minutes' => 15,
+            'late_base_penalty_amount' => 25_000,
+            'late_incremental_penalty_amount' => 5_000,
+            'late_incremental_unit_minutes' => 5,
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 6_000_000,
+            'pph21_method' => 'none',
+            'pph21_rate' => 0,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        // Manual denda
+        EmployeeDeduction::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'type' => 'denda',
+            'amount' => 50_000,
+            'notes' => 'Denda keterlambatan briefing',
+            'deduction_date' => '2026-03-05',
+        ]);
+
+        // Attendance late
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-03-10',
+            'status' => 'late',
+            'late_minutes' => 20,
+            'late_penalty' => 30_000,
+            'check_in_at' => '2026-03-10 09:20:00',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.generate'), [
+                'period' => '2026-03',
+            ])
+            ->assertRedirect();
+
+        $item = PayrollItem::query()->where('employee_id', $employee->id)->firstOrFail();
+
+        $this->assertEquals(80_000, (float) $item->denda_deduction);
+        $this->assertIsArray($item->denda_breakdown);
+        $this->assertCount(2, $item->denda_breakdown);
+
+        $manualItem = collect($item->denda_breakdown)->firstWhere('type', 'manual_denda');
+        $this->assertNotNull($manualItem);
+        $this->assertEquals(50_000, $manualItem['amount']);
+        $this->assertFalse($manualItem['is_reverted']);
+
+        $lateItem = collect($item->denda_breakdown)->firstWhere('type', 'late_attendance');
+        $this->assertNotNull($lateItem);
+        $this->assertEquals(30_000, $lateItem['amount']);
+        $this->assertFalse($lateItem['is_reverted']);
+    }
+
+    public function test_can_revert_denda_item_and_recalculate_totals(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $run = PayrollRun::query()->create([
+            'user_id' => $user->id,
+            'period' => '2026-04',
+            'type' => 'regular',
+            'period_start' => '2026-04-01',
+            'period_end' => '2026-04-30',
+            'employees_count' => 1,
+            'total_base_salary' => 5_000_000,
+            'total_allowances' => 0,
+            'total_deductions' => 80_000,
+            'total_net_salary' => 4_920_000,
+            'is_saved' => false,
+            'is_locked' => false,
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 5_000_000,
+        ]);
+
+        $item = PayrollItem::query()->create([
+            'user_id' => $user->id,
+            'payroll_run_id' => $run->id,
+            'employee_id' => $employee->id,
+            'base_salary' => 5_000_000,
+            'allowances_total' => 0,
+            'denda_deduction' => 80_000,
+            'deductions_total' => 80_000,
+            'net_salary' => 4_920_000,
+            'denda_breakdown' => [
+                [
+                    'id' => 'late_101',
+                    'type' => 'late_attendance',
+                    'type_label' => 'Keterlambatan Presensi',
+                    'reference_id' => 101,
+                    'date' => '2026-04-10',
+                    'title' => 'Denda Keterlambatan',
+                    'description' => 'Terlambat 20 menit',
+                    'amount' => 30_000,
+                    'is_reverted' => false,
+                ],
+                [
+                    'id' => 'manual_202',
+                    'type' => 'manual_denda',
+                    'type_label' => 'Denda Manual',
+                    'reference_id' => 202,
+                    'date' => '2026-04-15',
+                    'title' => 'Denda Manual',
+                    'description' => 'Seragam rusak',
+                    'amount' => 50_000,
+                    'is_reverted' => false,
+                ],
+            ],
+        ]);
+
+        // Revert late_101 penalty (30,000)
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.items.revert-denda', [$run, $item]), [
+                'denda_id' => 'late_101',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $item->refresh();
+        $run->refresh();
+
+        // Denda should now be 50,000 (80,000 - 30,000)
+        $this->assertEquals(50_000, (float) $item->denda_deduction);
+        $this->assertEquals(50_000, (float) $item->deductions_total);
+        $this->assertEquals(4_950_000, (float) $item->net_salary);
+
+        // Run totals refreshed
+        $this->assertEquals(50_000, (float) $run->total_deductions);
+        $this->assertEquals(4_950_000, (float) $run->total_net_salary);
+
+        $revertedEntry = collect($item->denda_breakdown)->firstWhere('id', 'late_101');
+        $this->assertTrue($revertedEntry['is_reverted']);
+        $this->assertNotEmpty($revertedEntry['reverted_at']);
+        $this->assertEquals($user->name, $revertedEntry['reverted_by']);
+
+        // Test restoring the penalty
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.items.revert-denda', [$run, $item]), [
+                'denda_id' => 'late_101',
+                'action' => 'restore',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $item->refresh();
+        $run->refresh();
+
+        $this->assertEquals(80_000, (float) $item->denda_deduction);
+        $this->assertEquals(80_000, (float) $item->deductions_total);
+        $this->assertEquals(4_920_000, (float) $item->net_salary);
+
+        $restoredEntry = collect($item->denda_breakdown)->firstWhere('id', 'late_101');
+        $this->assertFalse($restoredEntry['is_reverted']);
+    }
+
+    public function test_cannot_revert_denda_if_payroll_is_saved(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $run = PayrollRun::query()->create([
+            'user_id' => $user->id,
+            'period' => '2026-05',
+            'type' => 'regular',
+            'period_start' => '2026-05-01',
+            'period_end' => '2026-05-31',
+            'is_saved' => true,
+        ]);
+
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+
+        $item = PayrollItem::query()->create([
+            'user_id' => $user->id,
+            'payroll_run_id' => $run->id,
+            'employee_id' => $employee->id,
+            'base_salary' => 5_000_000,
+            'denda_deduction' => 50_000,
+            'denda_breakdown' => [
+                [
+                    'id' => 'manual_1',
+                    'type' => 'manual_denda',
+                    'amount' => 50_000,
+                    'is_reverted' => false,
+                ],
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.payrolls.items.revert-denda', [$run, $item]), [
+                'denda_id' => 'manual_1',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $item->refresh();
+        $this->assertEquals(50_000, (float) $item->denda_deduction);
+    }
 }

@@ -11,10 +11,12 @@ import {
     Coins,
     Download,
     Filter,
+    Info,
     Lock,
     Unlock,
     Pencil,
     Plus,
+    RotateCcw,
     Send,
     Sparkles,
     Trash2,
@@ -86,6 +88,20 @@ type PayrollRun = {
     thr_reference_date?: string | null;
 };
 
+type DendaBreakdownItem = {
+    id: string;
+    type: 'manual_denda' | 'late_attendance' | 'unrecorded_cutoff' | string;
+    type_label?: string;
+    reference_id?: number | null;
+    date?: string | null;
+    title?: string;
+    description?: string;
+    amount: number;
+    is_reverted: boolean;
+    reverted_at?: string | null;
+    reverted_by?: string | null;
+};
+
 type PayrollItem = {
     id: number;
     employee_id: number;
@@ -128,6 +144,7 @@ type PayrollItem = {
     private_insurance_nominal?: string | number | null;
     kasbon_deduction: string;
     denda_deduction: string;
+    denda_breakdown?: DendaBreakdownItem[];
     unpaid_leave_deduction: string;
     manual_deduction_total?: string | number;
     manual_deduction_breakdown?: Record<string, number>;
@@ -308,11 +325,38 @@ export default function PayrollPage() {
         service_fee_total: '',
     });
     const [editingItem, setEditingItem] = useState<PayrollItem | null>(null);
+    const [dendaModalItem, setDendaModalItem] = useState<PayrollItem | null>(null);
+    const [revertingDendaId, setRevertingDendaId] = useState<string | null>(null);
     const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
     const [unlockPin, setUnlockPin] = useState('');
     const [isLockSubmitting, setIsLockSubmitting] = useState(false);
     const [sortKey, setSortKey] = useState<string>('employee');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+    const selectedDendaItem = useMemo(() => {
+        if (!dendaModalItem) return null;
+        return items.find((i) => i.id === dendaModalItem.id) ?? dendaModalItem;
+    }, [items, dendaModalItem]);
+
+    const handleToggleRevertDenda = (
+        item: PayrollItem,
+        dendaId: string,
+        currentIsReverted: boolean,
+    ) => {
+        if (!run) return;
+        setRevertingDendaId(dendaId);
+        router.post(
+            `/hris/payrolls/${run.id}/items/${item.id}/revert-denda`,
+            {
+                denda_id: dendaId,
+                action: currentIsReverted ? 'restore' : 'revert',
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => setRevertingDendaId(null),
+            },
+        );
+    };
 
     const handleSort = (key: string) => {
         if (sortKey === key) {
@@ -1760,10 +1804,27 @@ export default function PayrollPage() {
                                                             item.kasbon_deduction,
                                                         )}
                                                     </td>
-                                                    <td className="px-3 py-3">
-                                                        {formatCurrency(
-                                                            item.denda_deduction,
-                                                        )}
+                                                    <td className="px-3 py-3 whitespace-nowrap">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span
+                                                                className={
+                                                                    Number(item.denda_deduction ?? 0) > 0
+                                                                        ? 'font-medium text-destructive'
+                                                                        : 'text-muted-foreground'
+                                                                }
+                                                            >
+                                                                {formatCurrency(item.denda_deduction)}
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setDendaModalItem(item)}
+                                                                className="inline-flex size-6 items-center justify-center rounded text-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 transition-colors"
+                                                                title="Lihat rincian & kelola denda"
+                                                                aria-label="Lihat rincian denda"
+                                                            >
+                                                                <Info className="size-3.5" />
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                     <td className="px-3 py-3">
                                                         {formatCurrency(
@@ -2411,6 +2472,231 @@ export default function PayrollPage() {
                             </Button>
                         </div>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={!!selectedDendaItem}
+                onOpenChange={(open) => !open && setDendaModalItem(null)}
+            >
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Info className="size-5 text-blue-500" />
+                            Rincian Denda & Potongan Presensi
+                        </DialogTitle>
+                        <DialogDescription>
+                            Detail potongan denda untuk{' '}
+                            <span className="font-semibold text-foreground">
+                                {selectedDendaItem?.employee_label}
+                            </span>{' '}
+                            (Periode {run?.period})
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {selectedDendaItem ? (() => {
+                        const breakdown = selectedDendaItem.denda_breakdown ?? [];
+                        const hasLegacyWithoutBreakdown =
+                            breakdown.length === 0 &&
+                            Number(selectedDendaItem.denda_deduction ?? 0) > 0;
+                        const isPayrollLocked = !!run?.is_locked && !run?.is_locked_by_me;
+                        const isPayrollSaved = !!run?.is_saved;
+                        const isEditable = !isPayrollLocked && !isPayrollSaved;
+
+                        const activeTotal = Number(selectedDendaItem.denda_deduction ?? 0);
+                        const revertedTotal = breakdown
+                            .filter((b) => b.is_reverted)
+                            .reduce((sum, b) => sum + Number(b.amount || 0), 0);
+
+                        return (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3 p-3 bg-muted/40 rounded-lg border">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">
+                                            Total Denda Aktif (Di-apply)
+                                        </p>
+                                        <p className="text-lg font-bold text-destructive">
+                                            {formatCurrency(activeTotal)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">
+                                            Total Denda Dibatalkan (Reverted)
+                                        </p>
+                                        <p className="text-lg font-semibold text-muted-foreground line-through">
+                                            {formatCurrency(revertedTotal)}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="max-h-[360px] overflow-y-auto space-y-2.5 pr-1">
+                                    {breakdown.length === 0 && !hasLegacyWithoutBreakdown ? (
+                                        <div className="py-8 text-center text-muted-foreground text-sm">
+                                            Tidak ada catatan denda/potongan untuk karyawan ini pada periode ini.
+                                        </div>
+                                    ) : null}
+
+                                    {hasLegacyWithoutBreakdown ? (
+                                        <div className="flex items-center justify-between p-3 rounded-lg border bg-card text-card-foreground">
+                                            <div className="space-y-0.5">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant="outline" className="text-xs">
+                                                        Denda Payroll
+                                                    </Badge>
+                                                    <span className="text-sm font-medium">
+                                                        Potongan Denda
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Denda manual/eksternal yang tercatat pada item payroll.
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-semibold text-sm">
+                                                    {formatCurrency(selectedDendaItem.denda_deduction)}
+                                                </span>
+                                                {isEditable && (
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        disabled={revertingDendaId === 'legacy_denda'}
+                                                        onClick={() =>
+                                                            handleToggleRevertDenda(
+                                                                selectedDendaItem,
+                                                                'legacy_denda',
+                                                                false,
+                                                            )
+                                                        }
+                                                        className="h-8 gap-1.5"
+                                                    >
+                                                        <RotateCcw className="size-3.5" />
+                                                        {revertingDendaId === 'legacy_denda'
+                                                            ? 'Memproses...'
+                                                            : 'Batalkan Denda'}
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : null}
+
+                                    {breakdown.map((entry) => {
+                                        const isRevertingThis = revertingDendaId === entry.id;
+                                        const isReverted = !!entry.is_reverted;
+
+                                        return (
+                                            <div
+                                                key={entry.id}
+                                                className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                                                    isReverted
+                                                        ? 'bg-muted/30 border-dashed opacity-75'
+                                                        : 'bg-card border-border hover:border-border/80'
+                                                }`}
+                                            >
+                                                <div className="space-y-1 pr-3">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <Badge
+                                                            variant={
+                                                                entry.type === 'late_attendance'
+                                                                    ? 'secondary'
+                                                                    : entry.type === 'unrecorded_cutoff'
+                                                                    ? 'destructive'
+                                                                    : 'outline'
+                                                            }
+                                                            className="text-xs"
+                                                        >
+                                                            {entry.type_label ||
+                                                                (entry.type === 'late_attendance'
+                                                                    ? 'Presensi Terlambat'
+                                                                    : entry.type === 'unrecorded_cutoff'
+                                                                    ? 'Tidak Absen Cutoff'
+                                                                    : 'Denda Manual')}
+                                                        </Badge>
+                                                        {entry.date ? (
+                                                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                                <CalendarDays className="size-3" />
+                                                                {entry.date}
+                                                            </span>
+                                                        ) : null}
+                                                        {isReverted ? (
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px]"
+                                                            >
+                                                                Dibatalkan (Tidak Di-apply)
+                                                            </Badge>
+                                                        ) : null}
+                                                    </div>
+                                                    <p className="text-sm font-medium">
+                                                        {entry.title || 'Denda'}
+                                                        {entry.description
+                                                            ? ` — ${entry.description}`
+                                                            : ''}
+                                                    </p>
+                                                    {isReverted && entry.reverted_by ? (
+                                                        <p className="text-[11px] text-muted-foreground italic">
+                                                            Dibatalkan oleh {entry.reverted_by}
+                                                        </p>
+                                                    ) : null}
+                                                </div>
+
+                                                <div className="flex items-center gap-3 shrink-0">
+                                                    <span
+                                                        className={`font-semibold text-sm ${
+                                                            isReverted
+                                                                ? 'line-through text-muted-foreground'
+                                                                : 'text-foreground'
+                                                        }`}
+                                                    >
+                                                        {formatCurrency(entry.amount)}
+                                                    </span>
+
+                                                    {isEditable && (
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant={isReverted ? 'outline' : 'destructive'}
+                                                            disabled={isRevertingThis}
+                                                            onClick={() =>
+                                                                handleToggleRevertDenda(
+                                                                    selectedDendaItem,
+                                                                    entry.id,
+                                                                    isReverted,
+                                                                )
+                                                            }
+                                                            className="h-8 gap-1.5"
+                                                        >
+                                                            <RotateCcw className="size-3.5" />
+                                                            {isRevertingThis
+                                                                ? 'Memproses...'
+                                                                : isReverted
+                                                                ? 'Terapkan Lagi'
+                                                                : 'Batalkan Denda'}
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="flex justify-between items-center border-t pt-3">
+                                    <p className="text-xs text-muted-foreground">
+                                        {isEditable
+                                            ? '* Membatalkan denda akan otomatis mengurangi total potongan dan memperbarui gaji bersih karyawan.'
+                                            : '* Payroll sudah disimpan/dikunci. Pembatalan denda hanya bisa dilakukan saat payroll berstatus draft & terbuka.'}
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setDendaModalItem(null)}
+                                    >
+                                        Tutup
+                                    </Button>
+                                </div>
+                            </div>
+                        );
+                    })() : null}
                 </DialogContent>
             </Dialog>
         </AppLayout>

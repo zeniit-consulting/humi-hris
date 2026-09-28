@@ -34,7 +34,7 @@ class AttendanceController extends Controller
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'status' => ['nullable', 'string'],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
-            'sort_by' => ['nullable', 'in:employee,check_in_at,check_out_at'],
+            'sort_by' => ['nullable', 'in:employee,attendance_date,check_in_at,check_out_at'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
         ]);
 
@@ -66,7 +66,11 @@ class AttendanceController extends Controller
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']));
 
-        if ($filters['sort_by'] === 'check_in_at') {
+        if ($filters['sort_by'] === 'attendance_date') {
+            $attendancesQuery
+                ->orderBy('attendance_date', $filters['sort_dir'])
+                ->orderBy('employee_id', 'asc');
+        } elseif ($filters['sort_by'] === 'check_in_at') {
             $attendancesQuery
                 ->orderByRaw('check_in_at IS NULL')
                 ->orderBy('check_in_at', $filters['sort_dir']);
@@ -363,7 +367,7 @@ class AttendanceController extends Controller
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'status' => ['nullable', 'string'],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
-            'sort_by' => ['nullable', 'in:employee,check_in_at,check_out_at'],
+            'sort_by' => ['nullable', 'in:employee,attendance_date,check_in_at,check_out_at'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
         ]);
 
@@ -390,7 +394,9 @@ class AttendanceController extends Controller
             ->when($filters['status'] !== '', fn ($builder) => $builder->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($builder) => $builder->where('employee_id', $filters['employee_id']));
 
-        if ($filters['sort_by'] === 'check_in_at') {
+        if ($filters['sort_by'] === 'attendance_date') {
+            $query->orderBy('attendance_date', $filters['sort_dir'])->orderBy('employee_id', 'asc');
+        } elseif ($filters['sort_by'] === 'check_in_at') {
             $query->orderByRaw('check_in_at IS NULL')->orderBy('check_in_at', $filters['sort_dir']);
         } elseif ($filters['sort_by'] === 'check_out_at') {
             $query->orderByRaw('check_out_at IS NULL')->orderBy('check_out_at', $filters['sort_dir']);

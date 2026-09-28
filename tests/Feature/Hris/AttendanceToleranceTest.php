@@ -711,4 +711,134 @@ class AttendanceToleranceTest extends TestCase
         $this->assertSame(20, $att->late_minutes);
         $this->assertEquals(30000.00, (float) $att->late_penalty);
     }
+
+    public function test_tiered_penalty_properly_charges_zero_for_tolerance_tier(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+
+        $setting = \App\Models\CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => 'PT Test',
+                'late_penalty_enabled' => true,
+                'late_tolerance_minutes' => 0,
+                'late_penalty_type' => 'tiered',
+                'late_penalty_tiers' => [
+                    ['from_minute' => 1, 'to_minute' => 15, 'penalty_amount' => 0, 'description' => 'Toleransi'],
+                    ['from_minute' => 16, 'to_minute' => 30, 'penalty_amount' => 20000, 'description' => 'Terlambat 16-30 menit'],
+                    ['from_minute' => 31, 'to_minute' => 60, 'penalty_amount' => 50000, 'description' => 'Terlambat 31-60 menit'],
+                ],
+            ]
+        );
+
+        $service = app(\App\Services\AttendanceStatusService::class);
+
+        // 10 minutes late matches tier 1 (amount 0) -> must return 0.0, NOT highest tier 50000
+        $penalty = $service->calculateLatePenalty(10, false, $setting, $employee);
+        $this->assertSame(0.0, $penalty);
+
+        // 20 minutes late matches tier 2 (amount 20000)
+        $penalty20 = $service->calculateLatePenalty(20, false, $setting, $employee);
+        $this->assertEquals(20000.0, $penalty20);
+
+        // 40 minutes late matches tier 3 (amount 50000)
+        $penalty40 = $service->calculateLatePenalty(40, false, $setting, $employee);
+        $this->assertEquals(50000.0, $penalty40);
+
+        // Attendance record test
+        $att = EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-07-02',
+            'status' => 'late',
+            'late_minutes' => 10,
+            'late_penalty' => 50000.0, // previous incorrect penalty
+        ]);
+
+        $finalPenalty = $service->calculateLatePenaltyForAttendance($att, $setting, $employee, syncAttendanceRecord: true);
+        $this->assertSame(0.0, $finalPenalty);
+        $att->refresh();
+        $this->assertEquals(0.0, (float) $att->late_penalty);
+    }
+
+    public function test_tiered_penalty_properly_charges_zero_when_below_lowest_tier(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+
+        $setting = \App\Models\CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => 'PT Test',
+                'late_penalty_enabled' => true,
+                'late_penalty_type' => 'tiered',
+                'late_penalty_tiers' => [
+                    ['from_minute' => 16, 'to_minute' => 30, 'penalty_amount' => 20000, 'description' => 'Terlambat 16-30 menit'],
+                    ['from_minute' => 31, 'to_minute' => 60, 'penalty_amount' => 50000, 'description' => 'Terlambat 31-60 menit'],
+                ],
+            ]
+        );
+
+        $service = app(\App\Services\AttendanceStatusService::class);
+
+        // 10 minutes late is below 16 -> should be 0.0, NOT highest tier
+        $penalty = $service->calculateLatePenalty(10, false, $setting, $employee);
+        $this->assertSame(0.0, $penalty);
+    }
+
+    public function test_tiered_penalty_caps_at_highest_tier_when_exceeding_max_tier(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+
+        $setting = \App\Models\CompanySetting::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => 'PT Test',
+                'late_penalty_enabled' => true,
+                'late_penalty_type' => 'tiered',
+                'late_penalty_tiers' => [
+                    ['from_minute' => 1, 'to_minute' => 15, 'penalty_amount' => 0],
+                    ['from_minute' => 16, 'to_minute' => 30, 'penalty_amount' => 20000],
+                    ['from_minute' => 31, 'to_minute' => 60, 'penalty_amount' => 50000],
+                ],
+            ]
+        );
+
+        $service = app(\App\Services\AttendanceStatusService::class);
+
+        // 85 minutes late exceeds 60 -> capped at 50000
+        $penalty = $service->calculateLatePenalty(85, false, $setting, $employee);
+        $this->assertEquals(50000.0, $penalty);
+    }
+
+    public function test_admin_attendance_index_can_sort_by_attendance_date(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-07-01',
+            'status' => 'present',
+        ]);
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-07-02',
+            'status' => 'present',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('hris.attendances.index', [
+            'start_date' => '2026-07-01',
+            'end_date' => '2026-07-02',
+            'sort_by' => 'attendance_date',
+            'sort_dir' => 'desc',
+        ]));
+
+        $response->assertOk();
+    }
 }
+

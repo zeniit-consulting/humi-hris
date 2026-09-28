@@ -113,7 +113,7 @@ export default function AttendanceSettings({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pengaturan Absensi" />
             <SettingsLayout>
-                <div className="space-y-8">
+                <div className="space-y-8 w-full min-w-0 max-w-full">
                     <Heading
                         variant="small"
                         title="Pengaturan Absensi & Keterlambatan"
@@ -121,7 +121,7 @@ export default function AttendanceSettings({
                     />
 
                     <form
-                        className="space-y-6"
+                        className="space-y-6 w-full min-w-0 max-w-full"
                         onSubmit={(event) => {
                             event.preventDefault();
                             form.patch('/settings/attendance', {
@@ -130,16 +130,17 @@ export default function AttendanceSettings({
                         }}
                     >
                         {/* Section 1: Toleransi & Aturan Keterlambatan */}
-                        <div className="rounded-xl border bg-card p-5 shadow-sm space-y-5">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b">
-                                <div className="flex items-center gap-2">
-                                    <Clock className="h-5 w-5 text-primary" />
-                                    <h3 className="font-semibold text-base">Aturan Toleransi & Denda Keterlambatan</h3>
+                        <div className="rounded-xl border bg-card p-4 sm:p-5 shadow-sm space-y-5 w-full min-w-0 max-w-full overflow-hidden">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b w-full min-w-0">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <Clock className="h-5 w-5 text-primary shrink-0" />
+                                    <h3 className="font-semibold text-base truncate">Aturan Toleransi & Denda Keterlambatan</h3>
                                 </div>
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
+                                    className="shrink-0 w-full sm:w-auto"
                                     disabled={syncingLateness}
                                     onClick={() => {
                                         setSyncingLateness(true);
@@ -162,18 +163,18 @@ export default function AttendanceSettings({
                                 </Button>
                             </div>
 
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="late_tolerance_minutes" className="font-medium">
+                            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 w-full min-w-0">
+                                <div className="grid gap-2 min-w-0 w-full">
+                                    <Label htmlFor="late_tolerance_minutes" className="font-medium truncate">
                                         Batas Toleransi Keterlambatan (Menit)
                                     </Label>
-                                    <div className="relative">
+                                    <div className="relative w-full">
                                         <Input
                                             id="late_tolerance_minutes"
                                             type="number"
                                             min="0"
                                             max="480"
-                                            className="pr-16"
+                                            className="w-full pr-16"
                                             value={form.data.late_tolerance_minutes}
                                             onChange={(e) =>
                                                 form.setData('late_tolerance_minutes', Number(e.target.value))
@@ -189,13 +190,13 @@ export default function AttendanceSettings({
                                     <InputError message={form.errors.late_tolerance_minutes} />
                                 </div>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="late_penalty_type" className="font-medium">
+                                <div className="grid gap-2 min-w-0 w-full">
+                                    <Label htmlFor="late_penalty_type" className="font-medium truncate">
                                         Skema / Metode Denda Keterlambatan
                                     </Label>
                                     <select
                                         id="late_penalty_type"
-                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary"
+                                        className="h-9 w-full max-w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary truncate"
                                         value={form.data.late_penalty_type}
                                         onChange={(e) =>
                                             form.setData('late_penalty_type', e.target.value as 'tiered' | 'progressive')
@@ -233,9 +234,9 @@ export default function AttendanceSettings({
 
                             {/* Sub-section: Tiered Configuration Table */}
                             {form.data.late_penalty_enabled && form.data.late_penalty_type === 'tiered' && (
-                                <div className="space-y-3 pt-2">
-                                    <div className="flex items-center justify-between">
-                                        <div>
+                                <div className="space-y-3 pt-2 w-full min-w-0">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full min-w-0">
+                                        <div className="min-w-0">
                                             <Label className="font-medium">Tabel Jenjang Denda Bertahap</Label>
                                             <p className="text-xs text-muted-foreground">
                                                 Tentukan rentang menit keterlambatan (dihitung dari jam shift masuk) dan besaran dendanya.
@@ -246,20 +247,20 @@ export default function AttendanceSettings({
                                             variant="outline"
                                             size="sm"
                                             onClick={addTierRow}
-                                            className="h-8 gap-1 text-xs"
+                                            className="h-8 gap-1 text-xs shrink-0 self-start sm:self-auto"
                                         >
                                             <Plus className="h-3.5 w-3.5" />
                                             Tambah Jenjang
                                         </Button>
                                     </div>
 
-                                    <div className="overflow-x-auto rounded-lg border">
-                                        <table className="w-full min-w-[620px] text-left text-sm">
+                                    <div className="overflow-x-auto rounded-lg border w-full max-w-full">
+                                        <table className="w-full min-w-[500px] text-left text-sm">
                                             <thead className="bg-muted/60 text-xs font-semibold text-muted-foreground uppercase">
                                                 <tr>
-                                                    <th className="px-3 py-2 whitespace-nowrap">Dari (Menit)</th>
-                                                    <th className="px-3 py-2 whitespace-nowrap">Sampai (Menit)</th>
-                                                    <th className="px-3 py-2 whitespace-nowrap">Nominal Denda (Rp)</th>
+                                                    <th className="px-3 py-2 whitespace-nowrap w-24">Dari (Menit)</th>
+                                                    <th className="px-3 py-2 whitespace-nowrap w-28">Sampai (Menit)</th>
+                                                    <th className="px-3 py-2 whitespace-nowrap w-36">Nominal Denda (Rp)</th>
                                                     <th className="px-3 py-2 whitespace-nowrap">Keterangan</th>
                                                     <th className="px-3 py-2 text-center w-12 whitespace-nowrap">Aksi</th>
                                                 </tr>
@@ -271,7 +272,7 @@ export default function AttendanceSettings({
                                                             <Input
                                                                 type="number"
                                                                 min="0"
-                                                                className="h-8 w-24 text-xs"
+                                                                className="h-8 w-20 sm:w-24 text-xs"
                                                                 value={tier.from_minute}
                                                                 onChange={(e) =>
                                                                     updateTierField(index, 'from_minute', Number(e.target.value))
@@ -283,7 +284,7 @@ export default function AttendanceSettings({
                                                                 type="number"
                                                                 min="0"
                                                                 placeholder="Tak terhingga"
-                                                                className="h-8 w-28 text-xs"
+                                                                className="h-8 w-24 sm:w-28 text-xs"
                                                                 value={tier.to_minute ?? ''}
                                                                 onChange={(e) =>
                                                                     updateTierField(
@@ -299,7 +300,7 @@ export default function AttendanceSettings({
                                                                 type="number"
                                                                 min="0"
                                                                 step="1000"
-                                                                className="h-8 w-36 text-xs font-mono"
+                                                                className="h-8 w-28 sm:w-36 text-xs font-mono"
                                                                 value={tier.penalty_amount}
                                                                 onChange={(e) =>
                                                                     updateTierField(index, 'penalty_amount', Number(e.target.value))
@@ -309,7 +310,7 @@ export default function AttendanceSettings({
                                                         <td className="p-2">
                                                             <Input
                                                                 type="text"
-                                                                className="h-8 text-xs"
+                                                                className="h-8 text-xs min-w-[120px] w-full"
                                                                 value={tier.description ?? ''}
                                                                 placeholder="Contoh: Terlambat 16-30 menit"
                                                                 onChange={(e) =>
@@ -345,16 +346,16 @@ export default function AttendanceSettings({
 
                             {/* Sub-section: Progressive/Per-minute Configuration */}
                             {form.data.late_penalty_enabled && form.data.late_penalty_type === 'progressive' && (
-                                <div className="grid gap-4 sm:grid-cols-3 pt-2 bg-muted/20 p-4 rounded-lg border">
-                                    <div className="grid gap-1.5">
-                                        <Label htmlFor="late_base_penalty_minutes" className="text-xs font-medium">
+                                <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 pt-2 bg-muted/20 p-4 rounded-lg border w-full min-w-0">
+                                    <div className="grid gap-1.5 min-w-0 w-full">
+                                        <Label htmlFor="late_base_penalty_minutes" className="text-xs font-medium truncate">
                                             Mulai Denda Setelah (Menit)
                                         </Label>
                                         <Input
                                             id="late_base_penalty_minutes"
                                             type="number"
                                             min="0"
-                                            className="h-8 text-xs"
+                                            className="h-8 text-xs w-full"
                                             value={form.data.late_base_penalty_minutes}
                                             onChange={(e) =>
                                                 form.setData('late_base_penalty_minutes', Number(e.target.value))
@@ -363,8 +364,8 @@ export default function AttendanceSettings({
                                         <span className="text-[11px] text-muted-foreground">Contoh: Menit ke-15</span>
                                     </div>
 
-                                    <div className="grid gap-1.5">
-                                        <Label htmlFor="late_base_penalty_amount" className="text-xs font-medium">
+                                    <div className="grid gap-1.5 min-w-0 w-full">
+                                        <Label htmlFor="late_base_penalty_amount" className="text-xs font-medium truncate">
                                             Denda Pertama (Rp)
                                         </Label>
                                         <Input
@@ -372,7 +373,7 @@ export default function AttendanceSettings({
                                             type="number"
                                             min="0"
                                             step="1000"
-                                            className="h-8 text-xs font-mono"
+                                            className="h-8 text-xs font-mono w-full"
                                             value={form.data.late_base_penalty_amount}
                                             onChange={(e) =>
                                                 form.setData('late_base_penalty_amount', Number(e.target.value))
@@ -381,8 +382,8 @@ export default function AttendanceSettings({
                                         <span className="text-[11px] text-muted-foreground">Contoh: Rp 10.000</span>
                                     </div>
 
-                                    <div className="grid gap-1.5">
-                                        <Label htmlFor="late_incremental_penalty_amount" className="text-xs font-medium">
+                                    <div className="grid gap-1.5 min-w-0 w-full">
+                                        <Label htmlFor="late_incremental_penalty_amount" className="text-xs font-medium truncate">
                                             Tambahan Denda per Menit (Rp)
                                         </Label>
                                         <Input
@@ -390,23 +391,23 @@ export default function AttendanceSettings({
                                             type="number"
                                             min="0"
                                             step="500"
-                                            className="h-8 text-xs font-mono"
+                                            className="h-8 text-xs font-mono w-full"
                                             value={form.data.late_incremental_penalty_amount}
                                             onChange={(e) =>
                                                 form.setData('late_incremental_penalty_amount', Number(e.target.value))
                                             }
                                         />
-                                        <span className="text-[11px] text-muted-foreground">Contoh: Rp 1.000 / menit berikutnya</span>
+                                        <span className="text-[11px] text-muted-foreground">Contoh: Rp 1.000 / menit</span>
                                     </div>
                                 </div>
                             )}
                         </div>
 
                         {/* Section 2: Aturan Potong Prorata Harian (Keterlambatan Maksimal) */}
-                        <div className="rounded-xl border bg-card p-5 shadow-sm space-y-5">
-                            <div className="flex items-center gap-2 pb-2 border-b">
-                                <AlertTriangle className="h-5 w-5 text-amber-500" />
-                                <h3 className="font-semibold text-base">Aturan Keterlambatan Maksimal (Potong Prorata Harian)</h3>
+                        <div className="rounded-xl border bg-card p-4 sm:p-5 shadow-sm space-y-5 w-full min-w-0 max-w-full overflow-hidden">
+                            <div className="flex items-center gap-2 pb-2 border-b w-full min-w-0">
+                                <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+                                <h3 className="font-semibold text-base truncate">Aturan Keterlambatan Maksimal (Potong Prorata Harian)</h3>
                             </div>
 
                             <div className="rounded-lg border bg-muted/40 p-4">
@@ -431,18 +432,18 @@ export default function AttendanceSettings({
                             </div>
 
                             {form.data.late_half_day_enabled && (
-                                <div className="grid gap-4 sm:grid-cols-2 pt-2">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="late_half_day_cutoff_minutes" className="font-medium">
+                                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 pt-2 w-full min-w-0">
+                                    <div className="grid gap-2 min-w-0 w-full">
+                                        <Label htmlFor="late_half_day_cutoff_minutes" className="font-medium truncate">
                                             Batas Maksimal Terlambat (Menit)
                                         </Label>
-                                        <div className="relative">
+                                        <div className="relative w-full">
                                             <Input
                                                 id="late_half_day_cutoff_minutes"
                                                 type="number"
                                                 min="1"
                                                 max="480"
-                                                className="pr-16"
+                                                className="w-full pr-16"
                                                 value={form.data.late_half_day_cutoff_minutes}
                                                 onChange={(e) =>
                                                     form.setData('late_half_day_cutoff_minutes', Number(e.target.value))
@@ -458,19 +459,19 @@ export default function AttendanceSettings({
                                         <InputError message={form.errors.late_half_day_cutoff_minutes} />
                                     </div>
 
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="late_half_day_penalty_type" className="font-medium">
+                                    <div className="grid gap-2 min-w-0 w-full">
+                                        <Label htmlFor="late_half_day_penalty_type" className="font-medium truncate">
                                             Metode Denda Keterlambatan Maksimal
                                         </Label>
                                         <select
                                             id="late_half_day_penalty_type"
-                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary"
+                                            className="h-9 w-full max-w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary truncate"
                                             value={form.data.late_half_day_penalty_type}
                                             onChange={(e) =>
                                                 form.setData('late_half_day_penalty_type', e.target.value as 'nominal' | 'prorate_half_day')
                                             }
                                         >
-                                            <option value="prorate_half_day">Potong Setengah Hari Prorate Gaji (Gapok + Tunjangan Tetap)</option>
+                                            <option value="prorate_half_day">Potong Setengah Hari Prorate Gaji</option>
                                             <option value="nominal">Nominal Tetap (Rp)</option>
                                         </select>
                                         <p className="text-xs text-muted-foreground">
@@ -481,9 +482,9 @@ export default function AttendanceSettings({
                                     </div>
 
                                     {form.data.late_half_day_penalty_type === 'prorate_half_day' && (
-                                        <div className="sm:col-span-2 rounded-lg border bg-blue-50/60 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 p-3.5 text-xs text-blue-900 dark:text-blue-200">
+                                        <div className="sm:col-span-2 rounded-lg border bg-blue-50/60 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 p-3.5 text-xs text-blue-900 dark:text-blue-200 w-full min-w-0">
                                             <p className="font-semibold mb-1">Rumus Perhitungan Potong Prorata Harian (50%):</p>
-                                            <p className="font-mono text-[11px] bg-background/80 p-2 rounded border border-blue-200 dark:border-blue-800">
+                                            <p className="font-mono text-[11px] bg-background/80 p-2 rounded border border-blue-200 dark:border-blue-800 break-words">
                                                 Denda = 50% × (Gaji Pokok + Total Tunjangan Tetap Aktif) ÷ {settings.active_working_days ?? 22} Hari Kerja
                                             </p>
                                             <p className="mt-1 text-muted-foreground text-[11px]">
@@ -493,8 +494,8 @@ export default function AttendanceSettings({
                                     )}
 
                                     {form.data.late_half_day_penalty_type === 'nominal' && (
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="late_half_day_penalty_amount" className="font-medium">
+                                        <div className="grid gap-2 min-w-0 w-full">
+                                            <Label htmlFor="late_half_day_penalty_amount" className="font-medium truncate">
                                                 Nominal Denda Tambahan (Rp)
                                             </Label>
                                             <Input
@@ -502,7 +503,7 @@ export default function AttendanceSettings({
                                                 type="number"
                                                 min="0"
                                                 step="1000"
-                                                className="font-mono"
+                                                className="font-mono w-full"
                                                 value={form.data.late_half_day_penalty_amount}
                                                 onChange={(e) =>
                                                     form.setData('late_half_day_penalty_amount', Number(e.target.value))
@@ -514,7 +515,7 @@ export default function AttendanceSettings({
                                         </div>
                                     )}
 
-                                    <div className="sm:col-span-2 rounded-lg border bg-amber-500/10 border-amber-500/20 p-4">
+                                    <div className="sm:col-span-2 rounded-lg border bg-amber-500/10 border-amber-500/20 p-4 w-full min-w-0">
                                         <label className="flex items-start gap-3 cursor-pointer">
                                             <input
                                                 type="checkbox"
@@ -539,15 +540,15 @@ export default function AttendanceSettings({
                         </div>
 
                         {/* Section 3: Pengaturan Umum Absensi & Verifikasi */}
-                        <div className="rounded-xl border bg-card p-5 shadow-sm space-y-5">
+                        <div className="rounded-xl border bg-card p-4 sm:p-5 shadow-sm space-y-5 w-full min-w-0 max-w-full overflow-hidden">
                             <div className="flex items-center gap-2 pb-2 border-b">
                                 <ShieldAlert className="h-5 w-5 text-primary" />
                                 <h3 className="font-semibold text-base">Pengaturan Umum & Keamanan Absensi</h3>
                             </div>
 
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="missing_clock_out_request_days">
+                            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 w-full min-w-0">
+                                <div className="grid gap-2 min-w-0 w-full">
+                                    <Label htmlFor="missing_clock_out_request_days" className="font-medium truncate">
                                         Batas Lupa Absen Pulang (H+N)
                                     </Label>
                                     <Input
@@ -555,6 +556,7 @@ export default function AttendanceSettings({
                                         type="number"
                                         min="0"
                                         max="31"
+                                        className="w-full"
                                         value={form.data.missing_clock_out_request_days}
                                         onChange={(event) =>
                                             form.setData(
@@ -571,13 +573,13 @@ export default function AttendanceSettings({
                                     />
                                 </div>
 
-                                <div className="grid gap-2">
-                                    <Label className="font-medium text-slate-800 dark:text-slate-200">
+                                <div className="grid gap-2 min-w-0 w-full">
+                                    <Label className="font-medium text-slate-800 dark:text-slate-200 truncate">
                                         Siklus Cut-off Terintegrasi (Payroll & Absensi)
                                     </Label>
-                                    <div className="rounded-lg border bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 p-3 text-xs space-y-1.5">
+                                    <div className="rounded-lg border bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 p-3 text-xs space-y-1.5 w-full min-w-0">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="font-semibold text-blue-900 dark:text-blue-200">
+                                            <span className="font-semibold text-blue-900 dark:text-blue-200 truncate">
                                                 {form.data.attendance_revision_cutoff_day === 'end_of_month'
                                                     ? 'Akhir Bulan (Tgl 1 s/d Akhir Bulan)'
                                                     : `Tanggal ${form.data.attendance_revision_cutoff_day} Setiap Bulan`}

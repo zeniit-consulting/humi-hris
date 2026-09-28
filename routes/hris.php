@@ -199,6 +199,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
             Route::post('payrolls/{payrollRun}/save', [PayrollController::class, 'save'])->name('payrolls.save');
             Route::post('payrolls/{payrollRun}/send-payslips', [PayrollController::class, 'sendPayslips'])->name('payrolls.send-payslips');
             Route::put('payrolls/{payrollRun}/items/{payrollItem}', [PayrollController::class, 'updateItem'])->name('payrolls.items.update');
+            Route::post('payrolls/{payrollRun}/items/{payrollItem}/revert-denda', [PayrollController::class, 'revertDenda'])->name('payrolls.items.revert-denda');
             Route::post('payrolls/{payrollRun}/items/{payrollItem}/send-payslip', [PayrollController::class, 'sendPayslip'])->name('payrolls.items.send-payslip');
             Route::get('payrolls/{payrollRun}/export', [PayrollController::class, 'exportCsv'])->name('payrolls.export');
             Route::get('payrolls/{payrollRun}/export/csv', [PayrollController::class, 'exportCsv'])->name('payrolls.export.csv');

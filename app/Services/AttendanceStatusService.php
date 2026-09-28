@@ -43,9 +43,7 @@ class AttendanceStatusService
 
         $setting = CompanySetting::query()->where('user_id', $ownerId)->first();
 
-        $tolerance = $shift->late_tolerance_minutes !== null && (int) $shift->late_tolerance_minutes > 0
-            ? (int) $shift->late_tolerance_minutes
-            : (int) ($setting?->late_tolerance_minutes ?? 15);
+        $tolerance = (int) ($setting?->late_tolerance_minutes ?? $shift->late_tolerance_minutes ?? 15);
 
         $attendanceDate = Carbon::parse($data['attendance_date'])->toDateString();
         $shiftStart = Carbon::parse($attendanceDate.' '.$shift->start_time, $timezone);
@@ -153,6 +151,7 @@ class AttendanceStatusService
         usort($tiers, fn ($a, $b) => ((int) ($a['from_minute'] ?? 0)) <=> ((int) ($b['from_minute'] ?? 0)));
 
         $matchedPenalty = 0.0;
+        $matched = false;
         $firstNonZeroPenalty = 0.0;
         $highestTierPenalty = 0.0;
         $maxTierMinute = 0;
@@ -168,30 +167,37 @@ class AttendanceStatusService
                 ? (int) $tier['to_minute']
                 : null;
 
-            if ($to !== null && $to > $maxTierMinute) {
-                $maxTierMinute = $to;
-                $highestTierPenalty = $amount;
-            } elseif ($to === null) {
+            if ($to !== null) {
+                if ($to > $maxTierMinute) {
+                    $maxTierMinute = $to;
+                    $highestTierPenalty = $amount;
+                }
+            } else {
                 $highestTierPenalty = $amount;
             }
 
             if ($lateMinutes >= $from && ($to === null || $lateMinutes <= $to)) {
                 $matchedPenalty = $amount;
+                $matched = true;
                 break;
             }
         }
 
-        // If lateMinutes > max tier minute and no tier matched, cap at highest tier
-        if ($matchedPenalty === 0.0 && $lateMinutes > 0 && $highestTierPenalty > 0) {
-            $matchedPenalty = $highestTierPenalty;
+        if ($matched) {
+            return $matchedPenalty;
+        }
+
+        // If lateMinutes exceeds the maximum configured tier minute, cap at highest tier penalty
+        if ($maxTierMinute > 0 && $lateMinutes > $maxTierMinute && $highestTierPenalty > 0) {
+            return $highestTierPenalty;
         }
 
         // If status was late but lateMinutes <= 0 (e.g. no exact time provided), fallback to first non-zero tier
-        if ($matchedPenalty === 0.0 && $lateMinutes <= 0 && $firstNonZeroPenalty > 0) {
-            $matchedPenalty = $firstNonZeroPenalty;
+        if ($lateMinutes <= 0 && $firstNonZeroPenalty > 0) {
+            return $firstNonZeroPenalty;
         }
 
-        return $matchedPenalty;
+        return 0.0;
     }
 
     public function calculateLatePenaltyForAttendance(
@@ -208,7 +214,6 @@ class AttendanceStatusService
             return (float) ($attendance->late_penalty ?? 0);
         }
 
-        $existingPenalty = (float) ($attendance->late_penalty ?? 0);
         $lateMinutes = (int) ($attendance->late_minutes ?? 0);
         $isHalfDay = (bool) ($attendance->is_half_day ?? false);
 
@@ -221,9 +226,7 @@ class AttendanceStatusService
 
         // If late_minutes is not set, but attendance has check_in_at and a valid shift with start_time
         if ($lateMinutes <= 0 && ! empty($attendance->check_in_at) && $shift && ! $shift->is_day_off && ! empty($shift->start_time)) {
-            $tolerance = $shift->late_tolerance_minutes !== null && (int) $shift->late_tolerance_minutes > 0
-                ? (int) $shift->late_tolerance_minutes
-                : (int) ($setting->late_tolerance_minutes ?? 15);
+            $tolerance = (int) ($setting->late_tolerance_minutes ?? $shift->late_tolerance_minutes ?? 15);
 
             $timezone = $attendance->timezone ?: config('app.timezone');
             $attendanceDate = Carbon::parse($attendance->attendance_date)->toDateString();
@@ -243,18 +246,38 @@ class AttendanceStatusService
         $isLate = $attendance->status === 'late' || $lateMinutes > 0 || $isHalfDay;
 
         if (! $isLate) {
+            if ($syncAttendanceRecord && $attendance->exists && (float) ($attendance->late_penalty ?? 0) > 0) {
+                $attendance->updateQuietly(['late_penalty' => 0.0]);
+            }
+
             return 0.0;
         }
 
+        $existingPenalty = (float) ($attendance->late_penalty ?? 0);
+        $type = $setting->late_penalty_type ?? 'tiered';
+        $hasConfiguredRules = $type === 'progressive' || ! empty($setting->late_penalty_tiers) || ((bool) ($setting->late_half_day_enabled ?? false) && $isHalfDay);
+
+        if (! (bool) $setting->late_penalty_enabled && ! ((bool) ($setting->late_half_day_enabled ?? false) && $isHalfDay)) {
+            if ($syncAttendanceRecord && $attendance->exists && $existingPenalty > 0) {
+                $attendance->updateQuietly(['late_penalty' => 0.0]);
+            }
+
+            return 0.0;
+        }
+
+        if (! $hasConfiguredRules && $existingPenalty > 0) {
+            return $existingPenalty;
+        }
+
         $calculatedPenalty = $this->calculateLatePenalty($lateMinutes, $isHalfDay, $setting, $employee);
-        $finalPenalty = $calculatedPenalty > 0 ? $calculatedPenalty : $existingPenalty;
+        $finalPenalty = $hasConfiguredRules ? $calculatedPenalty : $existingPenalty;
 
         if ($syncAttendanceRecord && $attendance->exists) {
             $updateData = [];
-            if ($finalPenalty > 0 && (float) ($attendance->late_penalty ?? 0) != $finalPenalty) {
+            if ((float) ($attendance->late_penalty ?? 0) !== (float) $finalPenalty) {
                 $updateData['late_penalty'] = $finalPenalty;
             }
-            if ($lateMinutes > 0 && (int) ($attendance->late_minutes ?? 0) != $lateMinutes) {
+            if ($lateMinutes > 0 && (int) ($attendance->late_minutes ?? 0) !== $lateMinutes) {
                 $updateData['late_minutes'] = $lateMinutes;
             }
             if ($isHalfDay && ! (bool) ($attendance->is_half_day ?? false)) {
@@ -357,9 +380,7 @@ class AttendanceStatusService
 
             $timezone = $attendance->timezone ?: ($employee?->timezone ?: config('app.timezone'));
             $shiftStart = Carbon::parse($attendanceDate.' '.$shift->start_time, $timezone);
-            $tolerance = $shift->late_tolerance_minutes !== null && (int) $shift->late_tolerance_minutes > 0
-                ? (int) $shift->late_tolerance_minutes
-                : (int) ($setting?->late_tolerance_minutes ?? 15);
+            $tolerance = (int) ($setting?->late_tolerance_minutes ?? $shift->late_tolerance_minutes ?? 15);
 
             $latestAllowed = $shiftStart->copy()->addMinutes($tolerance);
             $checkIn = $attendance->check_in_at instanceof \DateTimeInterface

@@ -83,3 +83,23 @@ export function toAttendanceDateTimeInput(
 
     return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }
+
+export function formatAttendanceDate(value: string | null | undefined): string {
+    if (!value) {
+        return '-';
+    }
+
+    const [year, month, day] = value.split('-').map(Number);
+    if (!year || !month || !day) {
+        return value;
+    }
+
+    const date = new Date(year, month - 1, day);
+
+    return new Intl.DateTimeFormat('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    }).format(date);
+}
+
