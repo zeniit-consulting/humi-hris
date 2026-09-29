@@ -23,6 +23,7 @@ class AttendanceSettingController extends Controller
             'settings' => [
                 'missing_clock_out_request_days' => $setting->missing_clock_out_request_days ?? 2,
                 'require_face_recognition' => (bool) ($setting->require_face_recognition ?? false),
+                'backup_attendance_enabled' => (bool) ($setting->backup_attendance_enabled ?? false),
                 'attendance_revision_cutoff_day' => $cutoffDay,
                 'payroll_cutoff_day' => $cutoffDay,
                 'late_penalty_enabled' => (bool) ($setting->late_penalty_enabled ?? false),
@@ -53,6 +54,10 @@ class AttendanceSettingController extends Controller
         $validated = $request->validated();
         if (isset($validated['attendance_revision_cutoff_day'])) {
             $validated['payroll_cutoff_day'] = $validated['attendance_revision_cutoff_day'];
+        }
+
+        if ($request->has('backup_attendance_enabled')) {
+            $validated['backup_attendance_enabled'] = $request->boolean('backup_attendance_enabled');
         }
 
         if (isset($validated['late_penalty_tiers']) && is_array($validated['late_penalty_tiers'])) {

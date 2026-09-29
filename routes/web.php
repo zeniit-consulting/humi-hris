@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\SubscriberManagementController;
 use App\Http\Controllers\Api\Mobile\V1\AttendanceController;
 use App\Http\Controllers\Api\Mobile\V1\AttendanceCorrectionRequestController;
+use App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController;
 use App\Http\Controllers\Api\Mobile\V1\KasbonController;
 use App\Http\Controllers\Api\Mobile\V1\LeaveController;
 use App\Http\Controllers\Api\Mobile\V1\OvertimeController;
@@ -398,6 +399,10 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::delete('portal/api/attendances/{employeeAttendance}', [AttendanceController::class, 'destroy'])->name('portal.api.attendances.destroy');
     Route::get('portal/api/attendance-requests', [AttendanceCorrectionRequestController::class, 'index'])->name('portal.api.attendance-requests.index');
     Route::post('portal/api/attendance-requests', [AttendanceCorrectionRequestController::class, 'store'])->name('portal.api.attendance-requests.store');
+    Route::get('portal/api/backup-attendance/colleagues', [BackupAttendanceController::class, 'colleagues'])->name('portal.api.backup-attendance.colleagues');
+    Route::get('portal/api/backup-attendance/status', [BackupAttendanceController::class, 'status'])->name('portal.api.backup-attendance.status');
+    Route::post('portal/api/backup-attendance/check-in', [BackupAttendanceController::class, 'checkIn'])->name('portal.api.backup-attendance.check-in');
+    Route::post('portal/api/backup-attendance/check-out', [BackupAttendanceController::class, 'checkOut'])->name('portal.api.backup-attendance.check-out');
     Route::get('portal/api/leaves', [LeaveController::class, 'index'])->name('portal.api.leaves.index');
     Route::post('portal/api/leaves', [LeaveController::class, 'store'])->name('portal.api.leaves.store');
     Route::put('portal/api/leaves/{leave}', [LeaveController::class, 'update'])->name('portal.api.leaves.update');
@@ -435,6 +440,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::get('portal/check-out', [UserPortalSectionController::class, 'checkOut'])->name('portal.check-out');
     Route::get('portal/shift-change', [UserPortalSectionController::class, 'shiftChange'])->name('portal.shift-change');
     Route::get('portal/attendance-request', [UserPortalSectionController::class, 'attendanceRequest'])->name('portal.attendance-request');
+    Route::get('portal/backup-attendance', [UserPortalSectionController::class, 'backupAttendance'])->name('portal.backup-attendance');
     Route::get('portal/leaves', [UserPortalSectionController::class, 'leaves'])->name('portal.leaves');
     Route::get('portal/overtimes', [UserPortalSectionController::class, 'overtimes'])->name('portal.overtimes');
     Route::get('portal/kasbons', [UserPortalSectionController::class, 'kasbons'])->name('portal.kasbons');

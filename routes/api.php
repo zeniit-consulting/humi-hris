@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Mobile\V1\AttendanceController;
 use App\Http\Controllers\Api\Mobile\V1\AttendanceCorrectionRequestController;
+use App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController;
 use App\Http\Controllers\Api\Mobile\V1\AuthController;
 use App\Http\Controllers\Api\Mobile\V1\DashboardController;
 use App\Http\Controllers\Api\Mobile\V1\EmployeeController;
@@ -56,6 +57,10 @@ Route::prefix('mobile/v1')->name('mobile.v1.')->group(function (): void {
         Route::get('portal/summary', [PortalController::class, 'summary'])->name('portal.summary');
         Route::get('portal/attendance-requests', [AttendanceCorrectionRequestController::class, 'index'])->name('portal.attendance-requests.index');
         Route::post('portal/attendance-requests', [AttendanceCorrectionRequestController::class, 'store'])->name('portal.attendance-requests.store');
+        Route::get('portal/backup-attendance/colleagues', [BackupAttendanceController::class, 'colleagues'])->name('portal.backup-attendance.colleagues');
+        Route::get('portal/backup-attendance/status', [BackupAttendanceController::class, 'status'])->name('portal.backup-attendance.status');
+        Route::post('portal/backup-attendance/check-in', [BackupAttendanceController::class, 'checkIn'])->name('portal.backup-attendance.check-in');
+        Route::post('portal/backup-attendance/check-out', [BackupAttendanceController::class, 'checkOut'])->name('portal.backup-attendance.check-out');
         Route::get('portal/shift-change-requests', [ShiftChangeRequestController::class, 'index'])->name('portal.shift-change-requests.index');
         Route::post('portal/shift-change-requests', [ShiftChangeRequestController::class, 'store'])->name('portal.shift-change-requests.store');
         Route::get('master/options', [MasterController::class, 'index'])->name('master.index');

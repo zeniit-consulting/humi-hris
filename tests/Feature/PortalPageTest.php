@@ -272,6 +272,7 @@ class PortalPageTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.user.email', 'portal@example.com')
             ->assertJsonPath('data.employee.email', 'portal@example.com')
+            ->assertJsonStructure(['data' => ['company' => ['name', 'logo_url']]])
             ->assertJsonPath('data.quick_action.attendance.status', 'present')
             ->assertJsonPath('data.cards.annual_leave_days', 2)
             ->assertJsonPath('data.cards.payroll_preview.period', now()->format('Y-m'))

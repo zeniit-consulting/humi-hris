@@ -3,12 +3,15 @@ import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     ImagePlus,
     LoaderCircle,
+    LocateFixed,
     MapPin,
     Plus,
+    Search,
     Trash2,
     Upload,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { geocodeAddress } from '@/lib/geocoding';
 import CompanySettingController from '@/actions/App/Http/Controllers/Settings/CompanySettingController';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
@@ -234,6 +237,126 @@ export default function Profile({
         company.show_outsourcing_dashboard,
         company.show_sub_company_menu,
     ]);
+
+    const [isLocatingPrimary, setIsLocatingPrimary] = useState(false);
+    const [isGeocodingPrimary, setIsGeocodingPrimary] = useState(false);
+    const [locationError, setLocationError] = useState<string | null>(null);
+    const [addressGeocodeSuccess, setAddressGeocodeSuccess] = useState<string | null>(null);
+    const [isLocatingAttendance, setIsLocatingAttendance] = useState(false);
+    const [attendanceLocationError, setAttendanceLocationError] = useState<string | null>(null);
+
+    const handleGeocodePrimaryAddress = async () => {
+        const address = primaryLocation.address.trim();
+        if (!address) {
+            setReverseGeocodeError(
+                'Ketik alamat terlebih dahulu pada kolom alamat untuk melacak di peta.',
+            );
+            return;
+        }
+
+        setIsGeocodingPrimary(true);
+        setReverseGeocodeError(null);
+        setAddressGeocodeSuccess(null);
+
+        try {
+            const result = await geocodeAddress(address);
+            if (result) {
+                setPrimaryLocation((current) => ({
+                    ...current,
+                    latitude: result.latitude.toFixed(7),
+                    longitude: result.longitude.toFixed(7),
+                }));
+                setAddressGeocodeSuccess(
+                    'Titik koordinat berhasil dilacak dan disematkan di peta.',
+                );
+            } else {
+                setReverseGeocodeError(
+                    'Alamat tidak dapat ditemukan di peta. Coba perjelas nama jalan, kelurahan, atau kota.',
+                );
+            }
+        } catch {
+            setReverseGeocodeError(
+                'Terjadi kesalahan saat melacak alamat. Silakan coba lagi.',
+            );
+        } finally {
+            setIsGeocodingPrimary(false);
+        }
+    };
+
+    const handleLocatePrimaryLocation = () => {
+        if (!navigator.geolocation) {
+            setLocationError('Geolocation tidak didukung oleh browser Anda.');
+            return;
+        }
+
+        setIsLocatingPrimary(true);
+        setLocationError(null);
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setIsLocatingPrimary(false);
+                handlePrimaryLocationSelect(
+                    position.coords.latitude,
+                    position.coords.longitude,
+                );
+            },
+            (error) => {
+                setIsLocatingPrimary(false);
+                let message = 'Gagal mendeteksi lokasi perangkat.';
+                if (error.code === error.PERMISSION_DENIED) {
+                    message = 'Izin akses lokasi ditolak oleh browser. Mohon izinkan akses lokasi pada browser Anda.';
+                } else if (error.code === error.POSITION_UNAVAILABLE) {
+                    message = 'Informasi lokasi tidak tersedia pada perangkat.';
+                } else if (error.code === error.TIMEOUT) {
+                    message = 'Waktu permintaan lokasi habis (timeout).';
+                }
+                setLocationError(message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0,
+            },
+        );
+    };
+
+    const handleLocateAttendanceLocation = (index: number) => {
+        if (!navigator.geolocation) {
+            setAttendanceLocationError('Geolocation tidak didukung oleh browser Anda.');
+            return;
+        }
+
+        setIsLocatingAttendance(true);
+        setAttendanceLocationError(null);
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setIsLocatingAttendance(false);
+                handleAttendanceLocationSelect(
+                    index,
+                    position.coords.latitude,
+                    position.coords.longitude,
+                );
+            },
+            (error) => {
+                setIsLocatingAttendance(false);
+                let message = 'Gagal mendeteksi lokasi perangkat.';
+                if (error.code === error.PERMISSION_DENIED) {
+                    message = 'Izin akses lokasi ditolak oleh browser. Mohon izinkan akses lokasi pada browser Anda.';
+                } else if (error.code === error.POSITION_UNAVAILABLE) {
+                    message = 'Informasi lokasi tidak tersedia pada perangkat.';
+                } else if (error.code === error.TIMEOUT) {
+                    message = 'Waktu permintaan lokasi habis (timeout).';
+                }
+                setAttendanceLocationError(message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0,
+            },
+        );
+    };
 
     const handlePrimaryLocationSelect = async (
         latitude: number,
@@ -911,15 +1034,34 @@ export default function Profile({
                                         </div>
 
                                         <div className="grid gap-2 md:col-span-2">
-                                            <Label htmlFor="location_address">
-                                                Alamat lokasi utama
-                                            </Label>
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <Label htmlFor="location_address">
+                                                    Alamat lokasi utama
+                                                </Label>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={handleGeocodePrimaryAddress}
+                                                    disabled={isGeocodingPrimary || isResolvingAddress}
+                                                    className="h-8 gap-1.5 self-start text-xs sm:self-auto shrink-0"
+                                                >
+                                                    {isGeocodingPrimary ? (
+                                                        <LoaderCircle className="size-3.5 animate-spin" />
+                                                    ) : (
+                                                        <Search className="size-3.5" />
+                                                    )}
+                                                    {isGeocodingPrimary
+                                                        ? 'Melacak alamat...'
+                                                        : 'Lacak Alamat di Peta'}
+                                                </Button>
+                                            </div>
                                             <textarea
                                                 id="location_address"
                                                 className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                 value={primaryLocation.address}
                                                 name="location_address"
-                                                onChange={(event) =>
+                                                onChange={(event) => {
                                                     setPrimaryLocation(
                                                         (current) => ({
                                                             ...current,
@@ -927,8 +1069,10 @@ export default function Profile({
                                                                 event.target
                                                                     .value,
                                                         }),
-                                                    )
-                                                }
+                                                    );
+                                                    setReverseGeocodeError(null);
+                                                    setAddressGeocodeSuccess(null);
+                                                }}
                                                 placeholder="Alamat kantor pusat"
                                             />
                                             {isResolvingAddress ? (
@@ -936,6 +1080,11 @@ export default function Profile({
                                                     <LoaderCircle className="size-3 animate-spin" />
                                                     Mengambil alamat dari titik
                                                     map...
+                                                </p>
+                                            ) : null}
+                                            {addressGeocodeSuccess ? (
+                                                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                                                    {addressGeocodeSuccess}
                                                 </p>
                                             ) : null}
                                             {reverseGeocodeError ? (
@@ -965,17 +1114,61 @@ export default function Profile({
                                                 }
                                             />
 
-                                            <div>
-                                                <Label>
-                                                    Pilih titik lokasi di map
-                                                </Label>
-                                                <p className="mt-1 text-xs text-slate-500">
-                                                    Klik pada map untuk mengisi
-                                                    latitude, longitude, dan
-                                                    alamat lokasi utama secara
-                                                    otomatis.
-                                                </p>
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <div>
+                                                    <Label>
+                                                        Pilih titik lokasi di map
+                                                    </Label>
+                                                    <p className="mt-1 text-xs text-slate-500">
+                                                        Klik pada map atau gunakan tombol lokasi perangkat untuk mengisi
+                                                        latitude, longitude, dan
+                                                        alamat lokasi utama secara
+                                                        otomatis.
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={handleGeocodePrimaryAddress}
+                                                        disabled={isGeocodingPrimary}
+                                                        className="h-8 gap-1.5 self-start text-xs sm:self-auto shrink-0"
+                                                    >
+                                                        {isGeocodingPrimary ? (
+                                                            <LoaderCircle className="size-3.5 animate-spin" />
+                                                        ) : (
+                                                            <Search className="size-3.5" />
+                                                        )}
+                                                        {isGeocodingPrimary
+                                                            ? 'Melacak...'
+                                                            : 'Lacak dari Alamat'}
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={handleLocatePrimaryLocation}
+                                                        disabled={isLocatingPrimary}
+                                                        className="h-8 gap-1.5 self-start text-xs sm:self-auto shrink-0"
+                                                    >
+                                                        {isLocatingPrimary ? (
+                                                            <LoaderCircle className="size-3.5 animate-spin" />
+                                                        ) : (
+                                                            <LocateFixed className="size-3.5" />
+                                                        )}
+                                                        {isLocatingPrimary
+                                                            ? 'Mencari lokasi...'
+                                                            : 'Locate My Location'}
+                                                    </Button>
+                                                </div>
                                             </div>
+
+                                            {locationError ? (
+                                                <p className="text-xs text-rose-600 dark:text-rose-400">
+                                                    {locationError}
+                                                </p>
+                                            ) : null}
 
                                             <div className="overflow-hidden rounded-lg border bg-white">
                                                 <LocationMapPicker
@@ -1366,14 +1559,43 @@ export default function Profile({
                                 >
                                     <DialogContent className="max-w-3xl">
                                         <DialogHeader>
-                                            <DialogTitle>
-                                                Pilih titik lokasi absensi
-                                            </DialogTitle>
-                                            <DialogDescription>
-                                                Klik peta untuk menyimpan
-                                                latitude dan longitude pada
-                                                lokasi ini.
-                                            </DialogDescription>
+                                            <div className="flex flex-wrap items-center justify-between gap-3 pr-6">
+                                                <div>
+                                                    <DialogTitle>
+                                                        Pilih titik lokasi absensi
+                                                    </DialogTitle>
+                                                    <DialogDescription>
+                                                        Klik peta atau gunakan lokasi perangkat untuk menyimpan
+                                                        latitude dan longitude pada
+                                                        lokasi ini.
+                                                    </DialogDescription>
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        mapPickerIndex !== null &&
+                                                        handleLocateAttendanceLocation(mapPickerIndex)
+                                                    }
+                                                    disabled={isLocatingAttendance}
+                                                    className="h-8 gap-1.5 shrink-0 text-xs"
+                                                >
+                                                    {isLocatingAttendance ? (
+                                                        <LoaderCircle className="size-3.5 animate-spin" />
+                                                    ) : (
+                                                        <LocateFixed className="size-3.5" />
+                                                    )}
+                                                    {isLocatingAttendance
+                                                        ? 'Mencari...'
+                                                        : 'Locate My Location'}
+                                                </Button>
+                                            </div>
+                                            {attendanceLocationError ? (
+                                                <p className="text-xs text-rose-600 dark:text-rose-400">
+                                                    {attendanceLocationError}
+                                                </p>
+                                            ) : null}
                                         </DialogHeader>
                                         {mapPickerIndex !== null &&
                                         attendanceLocations[mapPickerIndex] ? (

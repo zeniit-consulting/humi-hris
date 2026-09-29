@@ -21,6 +21,9 @@ class EmployeeAttendance extends Model
         'user_id',
         'employee_id',
         'shift_id',
+        'is_backup',
+        'backup_for_employee_id',
+        'backup_by_employee_id',
         'attendance_date',
         'timezone',
         'status',
@@ -49,6 +52,7 @@ class EmployeeAttendance extends Model
     {
         return [
             'attendance_date' => 'date',
+            'is_backup' => 'boolean',
             'late_minutes' => 'integer',
             'late_penalty' => 'decimal:2',
             'is_half_day' => 'boolean',
@@ -68,6 +72,22 @@ class EmployeeAttendance extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    /**
+     * Get employee being backed up.
+     */
+    public function backupForEmployee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'backup_for_employee_id');
+    }
+
+    /**
+     * Get employee performing the backup.
+     */
+    public function backupByEmployee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'backup_by_employee_id');
     }
 
     /**

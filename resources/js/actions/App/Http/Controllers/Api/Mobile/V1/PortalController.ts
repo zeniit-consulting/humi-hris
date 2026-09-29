@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 const summaryfab4dca6dc7fbcdf0f4e49c954b03729 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ summaryfab4dca6dc7fbcdf0f4e49c954b03729.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 summaryfab4dca6dc7fbcdf0f4e49c954b03729.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ summaryfab4dca6dc7fbcdf0f4e49c954b03729.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 summaryfab4dca6dc7fbcdf0f4e49c954b03729.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ summaryfab4dca6dc7fbcdf0f4e49c954b03729.get = (options?: RouteQueryOptions): Rou
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 summaryfab4dca6dc7fbcdf0f4e49c954b03729.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ summaryfab4dca6dc7fbcdf0f4e49c954b03729.head = (options?: RouteQueryOptions): Ro
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 const summaryfab4dca6dc7fbcdf0f4e49c954b03729Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const summaryfab4dca6dc7fbcdf0f4e49c954b03729Form = (options?: RouteQueryOptions
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 summaryfab4dca6dc7fbcdf0f4e49c954b03729Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ summaryfab4dca6dc7fbcdf0f4e49c954b03729Form.get = (options?: RouteQueryOptions):
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 summaryfab4dca6dc7fbcdf0f4e49c954b03729Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -81,7 +81,7 @@ summaryfab4dca6dc7fbcdf0f4e49c954b03729Form.head = (options?: RouteQueryOptions)
 summaryfab4dca6dc7fbcdf0f4e49c954b03729.form = summaryfab4dca6dc7fbcdf0f4e49c954b03729Form
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 const summary8444c38db3cb3fa686498eb03d3ad9c7 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -96,7 +96,7 @@ summary8444c38db3cb3fa686498eb03d3ad9c7.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 summary8444c38db3cb3fa686498eb03d3ad9c7.url = (options?: RouteQueryOptions) => {
@@ -105,7 +105,7 @@ summary8444c38db3cb3fa686498eb03d3ad9c7.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 summary8444c38db3cb3fa686498eb03d3ad9c7.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -115,7 +115,7 @@ summary8444c38db3cb3fa686498eb03d3ad9c7.get = (options?: RouteQueryOptions): Rou
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 summary8444c38db3cb3fa686498eb03d3ad9c7.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -125,7 +125,7 @@ summary8444c38db3cb3fa686498eb03d3ad9c7.head = (options?: RouteQueryOptions): Ro
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 const summary8444c38db3cb3fa686498eb03d3ad9c7Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -135,7 +135,7 @@ const summary8444c38db3cb3fa686498eb03d3ad9c7Form = (options?: RouteQueryOptions
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 summary8444c38db3cb3fa686498eb03d3ad9c7Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -145,7 +145,7 @@ summary8444c38db3cb3fa686498eb03d3ad9c7Form.get = (options?: RouteQueryOptions):
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 summary8444c38db3cb3fa686498eb03d3ad9c7Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

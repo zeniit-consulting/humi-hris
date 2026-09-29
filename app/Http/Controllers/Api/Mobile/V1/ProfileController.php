@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Api\Mobile\V1;
 use App\Http\Controllers\Api\Concerns\InteractsWithMobileApiResponse;
 use App\Http\Controllers\Api\Mobile\V1\Concerns\InteractsWithSelfService;
 use App\Http\Controllers\Controller;
+use App\Models\CompanySetting;
 use App\Models\EmployeeBankAccount;
 use App\Models\FcmDeviceToken;
 use App\Models\User;
 use App\Services\EmployeeProfileCompletionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -75,6 +77,10 @@ class ProfileController extends Controller
             'has_push_notification_device' => FcmDeviceToken::query()
                 ->where('user_id', $user->id)
                 ->exists(),
+            'company' => [
+                'name' => ($companySetting = CompanySetting::query()->where('user_id', $user->accountOwnerId())->first())?->name,
+                'logo_url' => $companySetting?->logo_path ? Storage::disk('public')->url($companySetting->logo_path) : null,
+            ],
         ], 'Profile data retrieved successfully.');
     }
 
@@ -87,8 +93,13 @@ class ProfileController extends Controller
         $user = $request->user();
         $employee = $this->resolveRequiredSelfServiceEmployee($user);
 
+        if ($request->has('phone')) {
+            $phoneInput = preg_replace('/[\s\-]/', '', (string) $request->input('phone'));
+            $request->merge(['phone' => $phoneInput]);
+        }
+
         $validated = $request->validate([
-            'phone' => ['required', 'string', 'max:20', 'regex:/^(\+62|0)[0-9]{9,12}$/'],
+            'phone' => ['required', 'string', 'max:20', 'regex:/^(\+?62|0)[0-9]{8,13}$/'],
             'address' => ['required', 'string', 'max:500'],
             'gender' => ['nullable', 'string', 'in:male,female,other'],
             'birth_date' => ['nullable', 'date'],
@@ -105,6 +116,8 @@ class ProfileController extends Controller
             'biological_mother_name' => ['nullable', 'string', 'max:100'],
             'emergency_contact_name' => ['nullable', 'string', 'max:100'],
             'emergency_contact_phone' => ['nullable', 'string', 'max:30'],
+        ], [
+            'phone.regex' => 'Format nomor HP harus valid (contoh: 08123456789 atau +628123456789).',
         ]);
 
         $employee->update($validated);

@@ -14,7 +14,7 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone' => ['required', 'string', 'max:20', 'regex:/^(\+62|0)[0-9]{9,12}$/'],
+            'phone' => ['required', 'string', 'max:20', 'regex:/^(\+?62|0)[0-9]{8,13}$/'],
             'address' => ['required', 'string', 'max:500'],
         ];
     }
@@ -22,7 +22,7 @@ class UpdateProfileRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'phone.regex' => 'Format nomor HP harus dimulai dengan +62 atau 0 diikuti 9-12 digit.',
+            'phone.regex' => 'Format nomor HP harus valid (contoh: 08123456789 atau +628123456789).',
             'address.required' => 'Alamat tidak boleh kosong.',
         ];
     }

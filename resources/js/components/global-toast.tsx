@@ -21,6 +21,14 @@ type FlashProps = {
 
 const TOAST_TIMEOUT = 3600;
 
+export function showToast(message: string, type: ToastType = 'success') {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+            new CustomEvent('app-toast', { detail: { type, message } }),
+        );
+    }
+}
+
 export default function GlobalToast() {
     const { flash } = usePage<FlashProps>().props;
     const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -80,6 +88,26 @@ export default function GlobalToast() {
             window.clearTimeout(timer);
         };
     }, [flash?.error, flash?.success, pushToast]);
+
+    useEffect(() => {
+        const handleCustomToast = (event: Event) => {
+            const customEvent = event as CustomEvent<{
+                type?: ToastType;
+                message: string;
+            }>;
+            if (customEvent.detail?.message) {
+                pushToast(
+                    customEvent.detail.type ?? 'success',
+                    customEvent.detail.message,
+                );
+            }
+        };
+
+        window.addEventListener('app-toast', handleCustomToast);
+        return () => {
+            window.removeEventListener('app-toast', handleCustomToast);
+        };
+    }, [pushToast]);
 
     useEffect(() => {
         const unbindStart = router.on('start', (event) => {

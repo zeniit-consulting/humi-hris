@@ -6,6 +6,7 @@ export type MobileResponse<T> = {
 
 export type PortalLinkMap = {
     attendance: string;
+    backup_attendance?: string;
     leaves: string;
     overtimes: string;
     kasbons?: string;
@@ -186,6 +187,14 @@ export const translatePortalError = (
         [
             /unauthenticated/i,
             'Sesi Anda sudah berakhir. Silakan login kembali.',
+        ],
+        [
+            /the phone field format is invalid/i,
+            'Format nomor telepon tidak valid. Gunakan format 08xx atau +62xx.',
+        ],
+        [
+            /format nomor hp harus/i,
+            'Format nomor telepon tidak valid. Gunakan format 08xx atau +62xx.',
         ],
         [/the employee id field is required/i, 'Data karyawan wajib diisi.'],
         [/the shift id field is required/i, 'Shift wajib diisi.'],

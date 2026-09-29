@@ -2,6 +2,7 @@ import AuthController from './AuthController'
 import DashboardController from './DashboardController'
 import PortalController from './PortalController'
 import AttendanceCorrectionRequestController from './AttendanceCorrectionRequestController'
+import BackupAttendanceController from './BackupAttendanceController'
 import ShiftChangeRequestController from './ShiftChangeRequestController'
 import MasterController from './MasterController'
 import EmployeeController from './EmployeeController'
@@ -17,6 +18,7 @@ const V1 = {
     DashboardController: Object.assign(DashboardController, DashboardController),
     PortalController: Object.assign(PortalController, PortalController),
     AttendanceCorrectionRequestController: Object.assign(AttendanceCorrectionRequestController, AttendanceCorrectionRequestController),
+    BackupAttendanceController: Object.assign(BackupAttendanceController, BackupAttendanceController),
     ShiftChangeRequestController: Object.assign(ShiftChangeRequestController, ShiftChangeRequestController),
     MasterController: Object.assign(MasterController, MasterController),
     EmployeeController: Object.assign(EmployeeController, EmployeeController),

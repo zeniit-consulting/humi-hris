@@ -44,6 +44,13 @@ class UserPortalSectionController extends Controller
         return $this->renderForUser($request, 'portal/attendance-request', 'Request Absensi');
     }
 
+    public function backupAttendance(Request $request): Response|RedirectResponse
+    {
+        abort_unless(CompanySetting::backupAttendanceEnabledFor($request->user()), 404);
+
+        return $this->renderForUser($request, 'portal/backup-attendance', 'Backup Absensi');
+    }
+
     public function leaves(Request $request): Response|RedirectResponse
     {
         return $this->renderForUser($request, 'portal/leaves', 'Leave');

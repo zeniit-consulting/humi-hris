@@ -1,10 +1,11 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 import attendanceRequests from './attendance-requests'
+import backupAttendance from './backup-attendance'
 import shiftChangeRequests from './shift-change-requests'
 import attendanceLocation from './attendance-location'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 export const summary = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -19,7 +20,7 @@ summary.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 summary.url = (options?: RouteQueryOptions) => {
@@ -28,7 +29,7 @@ summary.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 summary.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -38,7 +39,7 @@ summary.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 summary.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -48,7 +49,7 @@ summary.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 const summaryForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -58,7 +59,7 @@ const summaryForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 summaryForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -68,7 +69,7 @@ summaryForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/api/mobile/v1/portal/summary'
 */
 summaryForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -167,6 +168,7 @@ attendancePolicy.form = attendancePolicyForm
 const portal = {
     summary: Object.assign(summary, summary),
     attendanceRequests: Object.assign(attendanceRequests, attendanceRequests),
+    backupAttendance: Object.assign(backupAttendance, backupAttendance),
     shiftChangeRequests: Object.assign(shiftChangeRequests, shiftChangeRequests),
     attendancePolicy: Object.assign(attendancePolicy, attendancePolicy),
     attendanceLocation: Object.assign(attendanceLocation, attendanceLocation),

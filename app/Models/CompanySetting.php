@@ -23,6 +23,7 @@ class CompanySetting extends Model
         'details',
         'telegram_group_chat_id',
         'portal_kasbon_enabled',
+        'backup_attendance_enabled',
         'employee_activation_otp_enabled',
         'show_sub_company_menu',
         'show_manpower_request_menu',
@@ -104,6 +105,7 @@ class CompanySetting extends Model
             'late_half_day_deduct_leave' => 'boolean',
             'attendance_locations' => 'array',
             'portal_kasbon_enabled' => 'boolean',
+            'backup_attendance_enabled' => 'boolean',
             'employee_activation_otp_enabled' => 'boolean',
             'show_sub_company_menu' => 'boolean',
             'show_manpower_request_menu' => 'boolean',
@@ -132,6 +134,19 @@ class CompanySetting extends Model
             'bpjs_jp_wage_cap' => 'decimal:2',
             'bpjs_jkk_rate' => 'float',
         ];
+    }
+
+    public static function backupAttendanceEnabledFor(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        $value = static::query()
+            ->where('user_id', $user->accountOwnerId())
+            ->value('backup_attendance_enabled');
+
+        return $value === null ? true : (bool) $value;
     }
 
     public static function portalKasbonEnabledFor(User $user): bool

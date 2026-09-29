@@ -3,9 +3,12 @@ import {
     ArrowDownWideNarrow,
     CalendarDays,
     CalendarRange,
+    Camera,
     Clock,
     Download,
+    ExternalLink,
     Eye,
+    FileText,
     Filter,
     Pencil,
     Plus,
@@ -82,12 +85,20 @@ type AttendanceRecord = {
     timezone: string | null;
     shift_name: string;
     status: string;
+    is_backup?: boolean;
+    backup_for_employee?: { id: number; employee_code: string; full_name: string } | null;
+    backup_by_employee?: { id: number; employee_code: string; full_name: string } | null;
     late_minutes: number | null;
+    late_duration_label?: string;
     late_level: string | null;
     late_penalty?: number;
     is_half_day?: boolean;
     check_in_at: string | null;
     check_out_at: string | null;
+    check_in_photo_url?: string | null;
+    check_out_photo_url?: string | null;
+    face_similarity_score?: number | null;
+    has_photo?: boolean;
     notes: string | null;
 };
 
@@ -145,6 +156,15 @@ const lateLevelLabelMap: Record<string, string> = {
     half_day: 'Potong Prorata Harian',
 };
 
+const formatLateDuration = (minutes: number | null | undefined): string => {
+    if (minutes === null || minutes === undefined || minutes <= 0) {
+        return '-';
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours} jam ${mins} menit`;
+};
+
 const defaultAttendanceForm: AttendanceFormData = {
     employee_id: '',
     attendance_date: '',
@@ -171,6 +191,8 @@ export default function AttendancePage() {
     const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(
         null,
     );
+    const [selectedPhotoRecord, setSelectedPhotoRecord] =
+        useState<AttendanceRecord | null>(null);
 
     const attendanceForm = useForm<AttendanceFormData>(defaultAttendanceForm);
 
@@ -313,22 +335,22 @@ export default function AttendancePage() {
         });
     };
 
-    const attendanceExportQuery = new URLSearchParams(
-        Object.entries({
-            start_date: filterState.start_date ?? filterState.date ?? '',
-            end_date: filterState.end_date ?? filterState.date ?? '',
-            status: filterState.status,
-            employee_id: filterState.employee_id,
-            sort_by: filterState.sort_by,
-            sort_dir: filterState.sort_dir,
-            timezone: browserTimezone(),
-        }).filter(([, value]) => value !== ''),
-    ).toString();
+    const getExportUrl = (format: 'pdf' | 'xls') => {
+        const params = new URLSearchParams(
+            Object.entries({
+                start_date: filterState.start_date ?? filterState.date ?? '',
+                end_date: filterState.end_date ?? filterState.date ?? '',
+                status: filterState.status,
+                employee_id: filterState.employee_id,
+                sort_by: filterState.sort_by,
+                sort_dir: filterState.sort_dir,
+                timezone: browserTimezone(),
+                format,
+            }).filter(([, value]) => value !== ''),
+        );
 
-    const attendanceExportUrl =
-        attendanceExportQuery === ''
-            ? '/hris/attendances/export'
-            : `/hris/attendances/export?${attendanceExportQuery}`;
+        return `/hris/attendances/export?${params.toString()}`;
+    };
 
     const dateRangeDisplay = filterState.start_date && filterState.end_date
         ? filterState.start_date === filterState.end_date
@@ -554,14 +576,30 @@ export default function AttendancePage() {
                                 Rentang tanggal aktif: {dateRangeDisplay}
                             </CardDescription>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
                             <SimplePagination data={attendances} />
-                            <Button asChild size="sm" variant="outline">
-                                <a href={attendanceExportUrl}>
-                                    <Download className="size-4" />
-                                    Export .xls
-                                </a>
-                            </Button>
+                            <div className="flex items-center gap-1.5">
+                                <Button asChild size="sm" variant="outline" className="border-primary/20 text-primary hover:bg-primary/5">
+                                    <a
+                                        href={getExportUrl('pdf')}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        title="Download Laporan PDF dengan Kop Perusahaan"
+                                    >
+                                        <FileText className="size-4" />
+                                        Export PDF
+                                    </a>
+                                </Button>
+                                <Button asChild size="sm" variant="outline">
+                                    <a
+                                        href={getExportUrl('xls')}
+                                        title="Download Laporan Spreadsheet Excel"
+                                    >
+                                        <Download className="size-4" />
+                                        Export Excel
+                                    </a>
+                                </Button>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -665,6 +703,11 @@ export default function AttendancePage() {
                                                         row.status
                                                     ] ?? row.status}
                                                 </Badge>
+                                                {row.is_backup && row.backup_for_employee ? (
+                                                    <span className="inline-block w-fit text-[10px] bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300 font-semibold px-1.5 py-0.5 rounded mt-1">
+                                                        Backup: {row.backup_for_employee.full_name}
+                                                    </span>
+                                                ) : null}
                                                 {row.late_level ? (
                                                     <div className="mt-1 text-xs text-destructive flex flex-col gap-0.5">
                                                         <span>
@@ -672,8 +715,8 @@ export default function AttendancePage() {
                                                                 row.late_level
                                                             ] ?? row.late_level}
                                                             {row.late_minutes !==
-                                                            null
-                                                                ? ` - ${row.late_minutes}m`
+                                                            null && row.late_minutes > 0
+                                                                ? ` - ${formatLateDuration(row.late_minutes)}`
                                                                 : ''}
                                                         </span>
                                                         {row.late_penalty && row.late_penalty > 0 ? (
@@ -687,22 +730,79 @@ export default function AttendancePage() {
                                                             </span>
                                                         ) : null}
                                                     </div>
+                                                ) : row.status === 'late' && row.late_minutes && row.late_minutes > 0 ? (
+                                                    <div className="mt-1 text-xs text-destructive flex flex-col gap-0.5">
+                                                        <span>{formatLateDuration(row.late_minutes)}</span>
+                                                    </div>
                                                 ) : null}
                                             </td>
                                             <td className="px-3 py-3">
-                                                {formatAttendanceTime(
-                                                    row.check_in_at,
-                                                    row.timezone,
+                                                <div>
+                                                    {formatAttendanceTime(
+                                                        row.check_in_at,
+                                                        row.timezone,
+                                                    )}
+                                                </div>
+                                                {row.check_in_photo_url && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setSelectedPhotoRecord(
+                                                                row,
+                                                            )
+                                                        }
+                                                        className="mt-1 inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors"
+                                                        title="Tampilkan foto check-in"
+                                                    >
+                                                        <Camera className="size-3" />
+                                                        Foto Masuk
+                                                    </button>
                                                 )}
                                             </td>
                                             <td className="px-3 py-3">
-                                                {formatAttendanceTime(
-                                                    row.check_out_at,
-                                                    row.timezone,
+                                                <div>
+                                                    {formatAttendanceTime(
+                                                        row.check_out_at,
+                                                        row.timezone,
+                                                    )}
+                                                </div>
+                                                {row.check_out_photo_url && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setSelectedPhotoRecord(
+                                                                row,
+                                                            )
+                                                        }
+                                                        className="mt-1 inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors"
+                                                        title="Tampilkan foto check-out"
+                                                    >
+                                                        <Camera className="size-3" />
+                                                        Foto Pulang
+                                                    </button>
                                                 )}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <div className="flex gap-1.5">
+                                                    <ActionIconButton
+                                                        label="Tampilkan foto kehadiran"
+                                                        icon={Camera}
+                                                        variant={
+                                                            row.has_photo
+                                                                ? 'default'
+                                                                : 'outline'
+                                                        }
+                                                        className={
+                                                            row.has_photo
+                                                                ? 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20'
+                                                                : 'text-muted-foreground'
+                                                        }
+                                                        onClick={() =>
+                                                            setSelectedPhotoRecord(
+                                                                row,
+                                                            )
+                                                        }
+                                                    />
                                                     <ActionIconButton
                                                         label="Detail kehadiran"
                                                         icon={Eye}
@@ -774,9 +874,25 @@ export default function AttendancePage() {
                             <p>
                                 Keterlambatan:{' '}
                                 {detailRecord.late_level
-                                    ? `${lateLevelLabelMap[detailRecord.late_level] ?? detailRecord.late_level} (${detailRecord.late_minutes ?? 0} menit)`
-                                    : '-'}
+                                    ? `${lateLevelLabelMap[detailRecord.late_level] ?? detailRecord.late_level} (${formatLateDuration(detailRecord.late_minutes)})`
+                                    : (detailRecord.late_minutes && detailRecord.late_minutes > 0 ? formatLateDuration(detailRecord.late_minutes) : '-')}
                             </p>
+                            {detailRecord.is_backup && detailRecord.backup_for_employee ? (
+                                <p>
+                                    Backup Untuk:{' '}
+                                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                                        {detailRecord.backup_for_employee.full_name} ({detailRecord.backup_for_employee.employee_code})
+                                    </span>
+                                </p>
+                            ) : null}
+                            {detailRecord.backup_by_employee ? (
+                                <p>
+                                    Dibackup Oleh:{' '}
+                                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                                        {detailRecord.backup_by_employee.full_name} ({detailRecord.backup_by_employee.employee_code})
+                                    </span>
+                                </p>
+                            ) : null}
                             <p>
                                 Check-in:{' '}
                                 {formatAttendanceTime(
@@ -798,6 +914,98 @@ export default function AttendancePage() {
                                     : `Mengikuti perangkat admin (${timezoneLabel(null)})`}
                             </p>
                             <p>Catatan: {detailRecord.notes ?? '-'}</p>
+
+                            {/* Foto Kehadiran Section in Detail */}
+                            <div className="mt-2 rounded-lg border bg-muted/30 p-3">
+                                <div className="mb-2 flex items-center justify-between">
+                                    <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                                        <Camera className="size-3.5 text-primary" />
+                                        Foto Verifikasi Kehadiran
+                                    </span>
+                                    {(detailRecord.check_in_photo_url ||
+                                        detailRecord.check_out_photo_url) && (
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-6 px-2 text-xs text-primary"
+                                            onClick={() =>
+                                                setSelectedPhotoRecord(
+                                                    detailRecord,
+                                                )
+                                            }
+                                        >
+                                            Perbesar
+                                        </Button>
+                                    )}
+                                </div>
+                                {detailRecord.check_in_photo_url ||
+                                detailRecord.check_out_photo_url ? (
+                                    <div className="grid grid-cols-2 gap-2.5">
+                                        <div className="flex flex-col items-center rounded border bg-card p-2 text-center">
+                                            <span className="mb-1 text-[11px] font-medium text-muted-foreground">
+                                                Foto Masuk
+                                            </span>
+                                            {detailRecord.check_in_photo_url ? (
+                                                <a
+                                                    href={
+                                                        detailRecord.check_in_photo_url
+                                                    }
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="group relative block aspect-4/3 w-full overflow-hidden rounded border"
+                                                >
+                                                    <img
+                                                        src={
+                                                            detailRecord.check_in_photo_url
+                                                        }
+                                                        alt="Foto Masuk"
+                                                        className="size-full object-cover transition-transform group-hover:scale-105"
+                                                    />
+                                                </a>
+                                            ) : (
+                                                <div className="flex aspect-4/3 w-full items-center justify-center rounded border border-dashed text-[10px] text-muted-foreground">
+                                                    Tidak ada foto
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex flex-col items-center rounded border bg-card p-2 text-center">
+                                            <span className="mb-1 text-[11px] font-medium text-muted-foreground">
+                                                Foto Pulang
+                                            </span>
+                                            {detailRecord.check_out_photo_url ? (
+                                                <a
+                                                    href={
+                                                        detailRecord.check_out_photo_url
+                                                    }
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="group relative block aspect-4/3 w-full overflow-hidden rounded border"
+                                                >
+                                                    <img
+                                                        src={
+                                                            detailRecord.check_out_photo_url
+                                                        }
+                                                        alt="Foto Pulang"
+                                                        className="size-full object-cover transition-transform group-hover:scale-105"
+                                                    />
+                                                </a>
+                                            ) : (
+                                                <div className="flex aspect-4/3 w-full items-center justify-center rounded border border-dashed text-[10px] text-muted-foreground">
+                                                    Tidak ada foto
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-muted-foreground">
+                                        Belum ada foto verifikasi wajah untuk
+                                        absensi ini.
+                                    </p>
+                                )}
+                            </div>
+
                             <div className="pt-2">
                                 <Button asChild size="sm" variant="outline">
                                     <Link
@@ -812,6 +1020,196 @@ export default function AttendancePage() {
                                         <CalendarRange className="size-4" />
                                         Lihat bulan ini
                                     </Link>
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal Dedicated Tampilkan Foto Kehadiran */}
+            <Dialog
+                open={selectedPhotoRecord !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setSelectedPhotoRecord(null);
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Camera className="size-5 text-primary" />
+                            Foto Kehadiran & Verifikasi Wajah
+                        </DialogTitle>
+                        <DialogDescription>
+                            {selectedPhotoRecord?.employee_label} •{' '}
+                            {selectedPhotoRecord &&
+                                formatAttendanceDate(
+                                    selectedPhotoRecord.attendance_date,
+                                )}{' '}
+                            (Shift: {selectedPhotoRecord?.shift_name ?? '-'})
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {selectedPhotoRecord && (
+                        <div className="space-y-4">
+                            {selectedPhotoRecord.check_in_photo_url ||
+                            selectedPhotoRecord.check_out_photo_url ? (
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    {/* Foto Masuk */}
+                                    <div className="flex flex-col rounded-lg border bg-card p-3 shadow-xs">
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <span className="text-xs font-semibold uppercase text-muted-foreground">
+                                                Foto Masuk (Check-In)
+                                            </span>
+                                            <span className="text-xs font-medium text-foreground">
+                                                {formatAttendanceTime(
+                                                    selectedPhotoRecord.check_in_at,
+                                                    selectedPhotoRecord.timezone,
+                                                )}
+                                            </span>
+                                        </div>
+
+                                        {selectedPhotoRecord.check_in_photo_url ? (
+                                            <div className="group relative aspect-4/3 w-full overflow-hidden rounded-md border bg-slate-950/5">
+                                                <img
+                                                    src={
+                                                        selectedPhotoRecord.check_in_photo_url
+                                                    }
+                                                    alt="Foto Masuk"
+                                                    className="size-full object-cover transition duration-300 group-hover:scale-105"
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 backdrop-blur-xs transition duration-200 group-hover:opacity-100">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="secondary"
+                                                        asChild
+                                                    >
+                                                        <a
+                                                            href={
+                                                                selectedPhotoRecord.check_in_photo_url
+                                                            }
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                        >
+                                                            <ExternalLink className="size-3.5" />
+                                                            Buka Foto Penuh
+                                                        </a>
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex aspect-4/3 w-full flex-col items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground">
+                                                <Camera className="mb-1 size-8 opacity-40" />
+                                                Tidak ada foto check-in
+                                            </div>
+                                        )}
+
+                                        {selectedPhotoRecord.face_similarity_score !==
+                                            null &&
+                                            selectedPhotoRecord.face_similarity_score !==
+                                                undefined && (
+                                                <div className="mt-2.5 flex items-center justify-between rounded bg-muted/50 px-2 py-1 text-xs">
+                                                    <span className="text-muted-foreground">
+                                                        Kecocokan Wajah:
+                                                    </span>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="font-mono text-emerald-600 dark:text-emerald-400"
+                                                    >
+                                                        {(
+                                                            selectedPhotoRecord.face_similarity_score *
+                                                            100
+                                                        ).toFixed(1)}
+                                                        %
+                                                    </Badge>
+                                                </div>
+                                            )}
+                                    </div>
+
+                                    {/* Foto Pulang */}
+                                    <div className="flex flex-col rounded-lg border bg-card p-3 shadow-xs">
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <span className="text-xs font-semibold uppercase text-muted-foreground">
+                                                Foto Pulang (Check-Out)
+                                            </span>
+                                            <span className="text-xs font-medium text-foreground">
+                                                {formatAttendanceTime(
+                                                    selectedPhotoRecord.check_out_at,
+                                                    selectedPhotoRecord.timezone,
+                                                )}
+                                            </span>
+                                        </div>
+
+                                        {selectedPhotoRecord.check_out_photo_url ? (
+                                            <div className="group relative aspect-4/3 w-full overflow-hidden rounded-md border bg-slate-950/5">
+                                                <img
+                                                    src={
+                                                        selectedPhotoRecord.check_out_photo_url
+                                                    }
+                                                    alt="Foto Pulang"
+                                                    className="size-full object-cover transition duration-300 group-hover:scale-105"
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 backdrop-blur-xs transition duration-200 group-hover:opacity-100">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="secondary"
+                                                        asChild
+                                                    >
+                                                        <a
+                                                            href={
+                                                                selectedPhotoRecord.check_out_photo_url
+                                                            }
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                        >
+                                                            <ExternalLink className="size-3.5" />
+                                                            Buka Foto Penuh
+                                                        </a>
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex aspect-4/3 w-full flex-col items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground">
+                                                <Camera className="mb-1 size-8 opacity-40" />
+                                                Tidak ada foto check-out
+                                            </div>
+                                        )}
+
+                                        {selectedPhotoRecord.check_out_at && (
+                                            <div className="mt-2.5 flex items-center justify-between rounded bg-muted/50 px-2 py-1 text-xs">
+                                                <span className="text-muted-foreground">
+                                                    Status Pulang:
+                                                </span>
+                                                <Badge variant="outline">
+                                                    Clock-Out Tercatat
+                                                </Badge>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                                    <Camera className="mx-auto mb-2 size-10 opacity-30" />
+                                    <p className="font-medium text-foreground">
+                                        Belum Ada Foto Verifikasi Wajah
+                                    </p>
+                                    <p className="mt-1 text-xs">
+                                        Data kehadiran ini tidak memiliki foto
+                                        verifikasi (misalnya diinput manual oleh
+                                        admin atau verifikasi wajah dinonaktifkan
+                                        saat absensi dilakukan).
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="flex justify-end pt-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setSelectedPhotoRecord(null)}
+                                >
+                                    Tutup
                                 </Button>
                             </div>
                         </div>

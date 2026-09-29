@@ -278,9 +278,11 @@ class StoreEmployeeRequest extends FormRequest
     private function normalizeEmploymentType(mixed $value): string
     {
         return match (strtolower((string) $value)) {
-            'permanent' => 'PKWTT',
-            'contract' => 'PKWT',
-            'internship', 'freelance' => 'FL',
+            'permanent', 'tetap' => 'PKWTT',
+            'contract', 'kontrak' => 'PKWT',
+            'internship', 'magang', 'freelance' => 'FL',
+            'daily worker', 'daily_worker', 'harian' => 'DW',
+            'outsourcing' => 'OS',
             default => strtoupper((string) $value),
         };
     }

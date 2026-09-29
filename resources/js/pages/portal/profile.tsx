@@ -13,6 +13,7 @@ import {
     UserRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import {
@@ -94,9 +95,17 @@ type ProfileData = {
         }>;
     };
     has_push_notification_device: boolean;
+    company?: {
+        name?: string | null;
+        logo_url?: string | null;
+    } | null;
 };
 
 type PortalSummary = {
+    company?: {
+        name?: string | null;
+        logo_url?: string | null;
+    } | null;
     employee: {
         id: number;
         employee_code?: string;
@@ -192,11 +201,18 @@ function ProfileAccordion({
 }
 
 export default function PortalProfilePage({ pageTitle }: Props) {
+    const { companyLogoUrl } = usePage<{ companyLogoUrl?: string | null }>().props;
     const [portal, setPortal] = useState<PortalSummary | null>(null);
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isEnablingPush, setIsEnablingPush] = useState(false);
     const [openSection, setOpenSection] = useState('personal');
+
+    const effectiveAvatarUrl =
+        profile?.employee?.face_photo_url ||
+        profile?.company?.logo_url ||
+        portal?.company?.logo_url ||
+        companyLogoUrl;
 
     // Face recognition enrollment state
     const [isEnrollingFace, setIsEnrollingFace] = useState(false);
@@ -602,10 +618,22 @@ export default function PortalProfilePage({ pageTitle }: Props) {
             <div className="min-w-0 space-y-3">
                 <section className="profile-identity-hero overflow-hidden rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-accent-strong)] px-4 py-5 text-[var(--portal-color-paper)] shadow-[var(--portal-shadow-material)]">
                     <div className="flex min-w-0 items-center gap-3">
-                        <span className="flex size-14 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)] bg-white/15 text-lg font-extrabold text-[var(--portal-color-paper)]">
-                            {initials(
-                                portal?.employee?.full_name ?? 'Humi Karyawan',
-                            )}
+                        <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-[var(--portal-radius-control)] bg-white/15 text-lg font-extrabold text-[var(--portal-color-paper)]">
+                            <span>
+                                {initials(
+                                    portal?.employee?.full_name ?? 'Humi Karyawan',
+                                )}
+                            </span>
+                            {effectiveAvatarUrl ? (
+                                <img
+                                    src={effectiveAvatarUrl}
+                                    alt={portal?.employee?.full_name ?? 'Profil'}
+                                    className="absolute inset-0 size-full object-cover bg-white"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            ) : null}
                         </span>
                         <div className="min-w-0">
                             <p className="text-xs font-semibold tracking-[0.16em] text-[var(--portal-color-paper)] uppercase">

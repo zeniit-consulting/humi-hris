@@ -23,6 +23,7 @@ use App\Models\WorkShift;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class PortalController extends Controller
 {
@@ -302,6 +303,10 @@ class PortalController extends Controller
 
             return $this->success([
                 'user' => $this->userPayload($user),
+                'company' => [
+                    'name' => $companySetting?->name,
+                    'logo_url' => $companySetting?->logo_path ? Storage::disk('public')->url($companySetting->logo_path) : null,
+                ],
                 'today' => [
                     'date' => $today->toDateString(),
                     'formatted' => $today->locale('id')->translatedFormat('l, d F'),
@@ -448,6 +453,7 @@ class PortalController extends Controller
                 'features' => [
                     'kasbon' => CompanySetting::portalKasbonEnabledFor($user),
                     'approvals' => $hasApprovalLine,
+                    'backup_attendance' => CompanySetting::backupAttendanceEnabledFor($user),
                 ],
                 'overtime_events' => collect($companySetting?->overtime_events ?? [])
                     ->filter(function (array $event) use ($employee) {
@@ -461,6 +467,9 @@ class PortalController extends Controller
                     ->all(),
                 'links' => array_filter([
                     'attendance' => route('portal.attendance'),
+                    'backup_attendance' => CompanySetting::backupAttendanceEnabledFor($user)
+                        ? route('portal.backup-attendance')
+                        : null,
                     'schedules' => route('portal.attendance'),
                     'leaves' => route('portal.leaves'),
                     'overtimes' => route('portal.overtimes'),

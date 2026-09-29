@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ComponentProps, FormEvent } from 'react';
+import { geocodeAddress } from '@/lib/geocoding';
 import InputError from '@/components/input-error';
 import { MapboxLocationMap } from '@/components/mapbox-location-map';
 import { Badge } from '@/components/ui/badge';
@@ -163,6 +164,11 @@ export default function SubCompaniesIndex() {
         useState<AttendanceLocation | null>(null);
     const [locationDialogOpen, setLocationDialogOpen] = useState(false);
     const [isLocating, setIsLocating] = useState(false);
+    const [isGeocoding, setIsGeocoding] = useState(false);
+    const [geocodeMessage, setGeocodeMessage] = useState<{
+        type: 'success' | 'error';
+        text: string;
+    } | null>(null);
 
     const filterForm = useForm({
         search: filters.search,
@@ -279,6 +285,43 @@ export default function SubCompaniesIndex() {
         );
     };
 
+    const handleTrackAddress = async () => {
+        const address = locationForm.data.address?.trim();
+        if (!address) {
+            setGeocodeMessage({
+                type: 'error',
+                text: 'Ketik alamat lokasi terlebih dahulu untuk melacak titik di peta.',
+            });
+            return;
+        }
+
+        setIsGeocoding(true);
+        setGeocodeMessage(null);
+
+        try {
+            const result = await geocodeAddress(address);
+            if (result) {
+                handleMapSelect(result.latitude, result.longitude);
+                setGeocodeMessage({
+                    type: 'success',
+                    text: 'Titik koordinat berhasil ditemukan dan disematkan di peta.',
+                });
+            } else {
+                setGeocodeMessage({
+                    type: 'error',
+                    text: 'Alamat tidak ditemukan di peta. Coba perjelas nama jalan, kelurahan, atau kota.',
+                });
+            }
+        } catch {
+            setGeocodeMessage({
+                type: 'error',
+                text: 'Terjadi kesalahan saat melacak alamat. Silakan coba lagi.',
+            });
+        } finally {
+            setIsGeocoding(false);
+        }
+    };
+
     const selectedCompany = useMemo(
         () =>
             subCompanies.data.find(
@@ -372,6 +415,7 @@ export default function SubCompaniesIndex() {
         setEditingLocation(null);
         locationForm.clearErrors();
         locationForm.setData(LOCATION_DEFAULT);
+        setGeocodeMessage(null);
     };
 
     const openCreateLocationDialog = () => {
@@ -949,9 +993,10 @@ export default function SubCompaniesIndex() {
                             id="location_address"
                             label="Alamat lokasi"
                             value={locationForm.data.address}
-                            onChange={(value) =>
-                                locationForm.setData('address', value)
-                            }
+                            onChange={(value) => {
+                                locationForm.setData('address', value);
+                                setGeocodeMessage(null);
+                            }}
                             error={locationForm.errors.address}
                         />
                         <div className="space-y-2">
@@ -962,25 +1007,54 @@ export default function SubCompaniesIndex() {
                                         <span className="text-rose-500">*</span>
                                     </Label>
                                     <p className="text-xs text-muted-foreground">
-                                        Klik kursor pada peta untuk menentukan titik koordinat lokasi absen.
+                                        Klik kursor pada peta atau gunakan tombol di samping untuk menentukan titik koordinat lokasi absen.
                                     </p>
                                 </div>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleUseCurrentLocation}
-                                    disabled={isLocating}
-                                    className="h-8 gap-1.5 self-start text-xs sm:self-auto"
-                                >
-                                    {isLocating ? (
-                                        <Loader2 className="size-3.5 animate-spin" />
-                                    ) : (
-                                        <Navigation className="size-3.5" />
-                                    )}
-                                    {isLocating ? 'Mencari...' : 'Lokasi Saya'}
-                                </Button>
+                                <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleTrackAddress}
+                                        disabled={isGeocoding}
+                                        className="h-8 gap-1.5 text-xs"
+                                    >
+                                        {isGeocoding ? (
+                                            <Loader2 className="size-3.5 animate-spin" />
+                                        ) : (
+                                            <Search className="size-3.5" />
+                                        )}
+                                        {isGeocoding ? 'Melacak...' : 'Lacak dari Alamat'}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleUseCurrentLocation}
+                                        disabled={isLocating}
+                                        className="h-8 gap-1.5 text-xs"
+                                    >
+                                        {isLocating ? (
+                                            <Loader2 className="size-3.5 animate-spin" />
+                                        ) : (
+                                            <Navigation className="size-3.5" />
+                                        )}
+                                        {isLocating ? 'Mencari...' : 'Lokasi Saya'}
+                                    </Button>
+                                </div>
                             </div>
+
+                            {geocodeMessage ? (
+                                <p
+                                    className={`text-xs ${
+                                        geocodeMessage.type === 'success'
+                                            ? 'text-emerald-600 dark:text-emerald-400'
+                                            : 'text-amber-600 dark:text-amber-400'
+                                    }`}
+                                >
+                                    {geocodeMessage.text}
+                                </p>
+                            ) : null}
 
                             <div className="overflow-hidden rounded-lg border bg-muted/20">
                                 <MapboxLocationMap

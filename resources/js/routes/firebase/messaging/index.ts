@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
-* @see routes/web.php:53
+* @see routes/web.php:54
 * @route '/firebase-messaging-worker'
 */
 export const serviceWorker = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ serviceWorker.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:53
+* @see routes/web.php:54
 * @route '/firebase-messaging-worker'
 */
 serviceWorker.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ serviceWorker.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:53
+* @see routes/web.php:54
 * @route '/firebase-messaging-worker'
 */
 serviceWorker.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -31,7 +31,7 @@ serviceWorker.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:53
+* @see routes/web.php:54
 * @route '/firebase-messaging-worker'
 */
 serviceWorker.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -40,7 +40,7 @@ serviceWorker.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 })
 
 /**
-* @see routes/web.php:53
+* @see routes/web.php:54
 * @route '/firebase-messaging-worker'
 */
 const serviceWorkerForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -49,7 +49,7 @@ const serviceWorkerForm = (options?: RouteQueryOptions): RouteFormDefinition<'ge
 })
 
 /**
-* @see routes/web.php:53
+* @see routes/web.php:54
 * @route '/firebase-messaging-worker'
 */
 serviceWorkerForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -58,7 +58,7 @@ serviceWorkerForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'
 })
 
 /**
-* @see routes/web.php:53
+* @see routes/web.php:54
 * @route '/firebase-messaging-worker'
 */
 serviceWorkerForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

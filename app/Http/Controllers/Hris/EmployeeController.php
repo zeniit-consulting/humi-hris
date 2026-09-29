@@ -33,8 +33,12 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -794,81 +798,334 @@ class EmployeeController extends Controller
      */
     public function downloadImportTemplate(): StreamedResponse
     {
-        $fileName = 'employee_import_template.xlsx';
-        $headers = [
-            'employee_code',
-            'full_name',
-            'email',
-            'phone',
-            'gender',
-            'birth_place',
-            'birth_date',
-            'division_code',
-            'position_code',
-            'hire_date',
-            'employment_status',
-            'employment_type',
-            'base_salary',
-            'fixed_allowance',
-            'bank_name',
-            'account_number',
-            'account_holder_name',
-            'ktp_number',
-            'address',
+        $fileName = 'Template_Impor_Karyawan.xlsx';
+        $ownerId = request()->user()->accountOwnerId();
+
+        $divisions = Division::query()->where('user_id', $ownerId)->orderBy('name')->get();
+        $positions = Position::query()->where('user_id', $ownerId)->orderBy('name')->get();
+        $subCompanies = SubCompany::query()->where('user_id', $ownerId)->orderBy('name')->get();
+
+        $firstDivision = $divisions->first();
+        $sampleDivisionName = $firstDivision ? $firstDivision->name : 'Operasional';
+
+        $firstPosition = $firstDivision
+            ? ($positions->firstWhere('division_id', $firstDivision->id) ?? $positions->first())
+            : $positions->first();
+        $samplePositionName = $firstPosition ? $firstPosition->name : 'Staff Operasional';
+
+        $firstSubCompany = $subCompanies->first();
+        $sampleSubCompanyName = $firstSubCompany ? $firstSubCompany->name : '';
+
+        $columns = [
+            [
+                'header' => 'Kode Pegawai',
+                'sample' => 'CONTOH-001',
+                'status' => 'Opsional',
+                'format' => 'CONTOH-001 (atau kosongkan)',
+                'guide' => 'Kode unik pegawai. Kosongkan jika ingin dibuatkan otomatis oleh sistem.',
+            ],
+            [
+                'header' => 'Nama Lengkap',
+                'sample' => 'Budi Pratama (CONTOH - HAPUS/UBAH)',
+                'status' => 'WAJIB',
+                'format' => 'Teks nama lengkap',
+                'guide' => 'Nama lengkap karyawan tanpa gelar.',
+            ],
+            [
+                'header' => 'Email',
+                'sample' => 'budi.pratama@example.com',
+                'status' => 'Opsional',
+                'format' => 'email@domain.com',
+                'guide' => 'Email aktif dan unik untuk akses login aplikasi web & portal.',
+            ],
+            [
+                'header' => 'No. Telepon / WhatsApp',
+                'sample' => '081234567890',
+                'status' => 'Opsional',
+                'format' => '08xxxxxxxxxx atau +628xxxxxxxxxx',
+                'guide' => 'Nomor WhatsApp terdaftar untuk pengiriman notifikasi & OTP login portal.',
+            ],
+            [
+                'header' => 'Jenis Kelamin',
+                'sample' => 'Laki-laki',
+                'status' => 'Opsional',
+                'format' => 'Pilihan teks',
+                'guide' => 'Pilihan nilai yang diterima: Laki-laki, Perempuan, male, female.',
+            ],
+            [
+                'header' => 'Tempat Lahir',
+                'sample' => 'Semarang',
+                'status' => 'Opsional',
+                'format' => 'Nama kota kelahiran',
+                'guide' => 'Kota tempat lahir sesuai KTP.',
+            ],
+            [
+                'header' => 'Tanggal Lahir',
+                'sample' => '1995-08-17',
+                'status' => 'Opsional',
+                'format' => 'YYYY-MM-DD (contoh: 1995-08-17)',
+                'guide' => 'Tanggal lahir format YYYY-MM-DD.',
+            ],
+            [
+                'header' => 'Divisi',
+                'sample' => $sampleDivisionName,
+                'status' => 'WAJIB',
+                'format' => 'Nama atau Kode Divisi',
+                'guide' => 'Wajib sesuai dengan nama atau kode divisi yang terdaftar pada tabel referensi di bawah.',
+            ],
+            [
+                'header' => 'Jabatan',
+                'sample' => $samplePositionName,
+                'status' => 'WAJIB',
+                'format' => 'Nama atau Kode Jabatan',
+                'guide' => 'Wajib sesuai dengan nama atau kode jabatan yang terdaftar pada tabel referensi di bawah.',
+            ],
+            [
+                'header' => 'Sub Company',
+                'sample' => $sampleSubCompanyName,
+                'status' => 'Opsional',
+                'format' => 'Nama atau Kode Sub Company',
+                'guide' => 'Isi jika karyawan ditempatkan di sub-company / outsourcing (lihat tabel referensi). Kosongkan jika internal.',
+            ],
+            [
+                'header' => 'Kode Atasan',
+                'sample' => '-',
+                'status' => 'Opsional',
+                'format' => 'Kode pegawai atasan atau -',
+                'guide' => 'Kode pegawai atasan langsung untuk alur persetujuan (approval workflow).',
+            ],
+            [
+                'header' => 'Tanggal Masuk',
+                'sample' => '2024-01-01',
+                'status' => 'Opsional',
+                'format' => 'YYYY-MM-DD (contoh: 2024-01-01)',
+                'guide' => 'Tanggal awal mulai bekerja. Default: tanggal hari ini.',
+            ],
+            [
+                'header' => 'Status Karyawan',
+                'sample' => 'Aktif',
+                'status' => 'Opsional',
+                'format' => 'Pilihan teks',
+                'guide' => 'Pilihan yang diterima: Aktif, Percobaan, Cuti, Keluar (atau active, probation, on_leave, resigned). Default: Aktif.',
+            ],
+            [
+                'header' => 'Tipe Karyawan',
+                'sample' => 'PKWTT',
+                'status' => 'Opsional',
+                'format' => 'Pilihan teks',
+                'guide' => 'Pilihan yang diterima: PKWTT, PKWT, Freelance, Daily Worker (atau Tetap, Kontrak, FL, DW). Default: PKWTT.',
+            ],
+            [
+                'header' => 'Gaji Pokok',
+                'sample' => '5000000',
+                'status' => 'Opsional',
+                'format' => 'Angka nominal tanpa titik/koma/Rp',
+                'guide' => 'Nominal gaji pokok per bulan. Default: 0.',
+            ],
+            [
+                'header' => 'Tunjangan Tetap',
+                'sample' => '500000',
+                'status' => 'Opsional',
+                'format' => 'Angka nominal tanpa titik/koma/Rp',
+                'guide' => 'Nominal tunjangan tetap operasional bulanan. Default: 0.',
+            ],
+            [
+                'header' => 'Nama Bank',
+                'sample' => 'BCA',
+                'status' => 'Opsional',
+                'format' => 'Nama bank penggajian',
+                'guide' => 'Contoh: BCA, MANDIRI, BRI, BNI, BSI, CIMB, PERMATA, DANAMON, JAGO, SEABANK, dll.',
+            ],
+            [
+                'header' => 'Nomor Rekening',
+                'sample' => '1234567890',
+                'status' => 'Opsional',
+                'format' => 'Hanya digit angka rekening',
+                'guide' => 'Nomor rekening bank penggajian karyawan.',
+            ],
+            [
+                'header' => 'Nama Pemilik Rekening',
+                'sample' => 'Budi Pratama',
+                'status' => 'Opsional',
+                'format' => 'Nama pemilik di buku tabungan',
+                'guide' => 'Nama pemilik rekening bank. Default: Nama lengkap karyawan.',
+            ],
+            [
+                'header' => 'NIK / No. KTP',
+                'sample' => '3374011708950001',
+                'status' => 'Opsional',
+                'format' => '16 digit angka',
+                'guide' => 'Nomor Induk Kependudukan (NIK KTP).',
+            ],
+            [
+                'header' => 'Alamat KTP',
+                'sample' => 'Jl. Pemuda No. 10, Semarang',
+                'status' => 'Opsional',
+                'format' => 'Teks alamat',
+                'guide' => 'Alamat domisili atau identitas resmi karyawan sesuai KTP.',
+            ],
+            [
+                'header' => 'Alamat Domisili',
+                'sample' => 'Jl. Pemuda No. 10, Semarang',
+                'status' => 'Opsional',
+                'format' => 'Teks alamat',
+                'guide' => 'Alamat tempat tinggal saat ini (kos/rumah domisili).',
+            ],
+            [
+                'header' => 'Metode PPh 21',
+                'sample' => 'gross',
+                'status' => 'Opsional',
+                'format' => 'Pilihan metode pajak',
+                'guide' => 'Pilihan yang diterima: gross, net, gross_up, none, ter_harian. Default: gross.',
+            ],
+            [
+                'header' => 'Kategori PTKP',
+                'sample' => 'TK/0',
+                'status' => 'Opsional',
+                'format' => 'Kode PTKP',
+                'guide' => 'Pilihan yang diterima: TK/0, TK/1, TK/2, TK/3, K/0, K/1, K/2, K/3. Default: TK/0.',
+            ],
         ];
 
-        return response()->streamDownload(function () use ($headers): void {
+        return response()->streamDownload(function () use ($columns, $divisions, $positions, $subCompanies): void {
             $spreadsheet = new Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->setTitle('Template Karyawan');
 
-            foreach ($headers as $index => $header) {
-                $col = Coordinate::stringFromColumnIndex($index + 1);
-                $sheet->setCellValue($col.'1', $header);
-                $sheet->getColumnDimension($col)->setAutoSize(true);
+            $colCount = count($columns);
+            $lastColLetter = Coordinate::stringFromColumnIndex($colCount);
+
+            // Row 1: Headers
+            foreach ($columns as $index => $colDef) {
+                $colLetter = Coordinate::stringFromColumnIndex($index + 1);
+                $sheet->setCellValue($colLetter.'1', $colDef['header']);
             }
 
-            $lastCol = Coordinate::stringFromColumnIndex(count($headers));
-            $sheet->getStyle('A1:'.$lastCol.'1')->getFont()->setBold(true);
+            // Header Styling (matching Schedule template: FFE2EFDA soft green, bold, center, bordered)
+            $sheet->getStyle('A1:'.$lastColLetter.'1')->getFont()->setBold(true);
+            $sheet->getStyle('A1:'.$lastColLetter.'1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('A1:'.$lastColLetter.'1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE2EFDA');
+            $sheet->getStyle('A1:'.$lastColLetter.'1')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD9D9D9');
+            $sheet->getStyle('A1:'.$lastColLetter.'1')->getBorders()->getOutline()->setBorderStyle(Border::BORDER_MEDIUM)->getColor()->setARGB('FF808080');
 
+            // Row 2: Sample dummy row (matching Schedule template: Italic, FF7F7F7F gray, FFF2F2F2 soft gray fill)
+            foreach ($columns as $index => $colDef) {
+                $colLetter = Coordinate::stringFromColumnIndex($index + 1);
+                $sheet->setCellValueExplicit($colLetter.'2', (string) $colDef['sample'], DataType::TYPE_STRING);
+            }
+            $sheet->getStyle('A2:'.$lastColLetter.'2')->getFont()->setItalic(true)->getColor()->setARGB('FF7F7F7F');
+            $sheet->getStyle('A2:'.$lastColLetter.'2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2F2F2');
+            $sheet->getStyle('A2:'.$lastColLetter.'2')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD9D9D9');
+
+            // Auto-size columns for Sheet 1
+            for ($i = 1; $i <= $colCount; $i++) {
+                $colLetter = Coordinate::stringFromColumnIndex($i);
+                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+            }
+
+            // Sheet 2: Panduan & Pilihan Data
             $helpSheet = $spreadsheet->createSheet();
-            $helpSheet->setTitle('Panduan Kolom');
+            $helpSheet->setTitle('Panduan & Pilihan Data');
+
             $helpSheet->setCellValue('A1', 'Nama Kolom');
-            $helpSheet->setCellValue('B1', 'Wajib / Opsional');
-            $helpSheet->setCellValue('C1', 'Keterangan & Format');
-            $helpSheet->getStyle('A1:C1')->getFont()->setBold(true);
+            $helpSheet->setCellValue('B1', 'Status');
+            $helpSheet->setCellValue('C1', 'Format / Contoh');
+            $helpSheet->setCellValue('D1', 'Pilihan Nilai yang Diterima Sistem & Keterangan');
 
-            $guides = [
-                ['employee_code', 'Opsional', 'Kode unik pegawai (contoh: EMP-001). Kosongkan jika ingin dibuatkan otomatis oleh sistem.'],
-                ['full_name', 'WAJIB', 'Nama lengkap karyawan (contoh: Sabrina Ayu Fitriyah).'],
-                ['email', 'Opsional', 'Email aktif karyawan (contoh: sabrina@example.com).'],
-                ['phone', 'Opsional', 'Nomor HP / WhatsApp (contoh: 0882005766747).'],
-                ['gender', 'Opsional', 'Jenis kelamin: male / female (atau Laki-laki / Perempuan).'],
-                ['birth_place', 'Opsional', 'Kota tempat lahir (contoh: Semarang).'],
-                ['birth_date', 'Opsional', 'Tanggal lahir format YYYY-MM-DD (contoh: 2000-12-26).'],
-                ['division_code', 'WAJIB', 'Nama atau Kode Divisi yang terdaftar (contoh: FnB Services atau FNB).'],
-                ['position_code', 'WAJIB', 'Nama atau Kode Jabatan yang terdaftar (contoh: Fulltimer atau POS-FT).'],
-                ['hire_date', 'Opsional', 'Tanggal masuk kerja format YYYY-MM-DD (contoh: 2023-10-06). Default: tanggal hari ini.'],
-                ['employment_status', 'Opsional', 'Status kerja: active / probation (atau Aktif / Percobaan). Default: active.'],
-                ['employment_type', 'Opsional', 'Tipe kerja: PKWTT / PKWT (atau Tetap / Kontrak). Default: PKWTT.'],
-                ['base_salary', 'Opsional', 'Gaji pokok nominal angka (contoh: 3200000). Default: 0.'],
-                ['fixed_allowance', 'Opsional', 'Tunjangan tetap nominal angka (contoh: 800000).'],
-                ['bank_name', 'Opsional', 'Nama bank penggajian (contoh: MANDIRI, BCA, BRI, BNI).'],
-                ['account_number', 'Opsional', 'Nomor rekening bank penggajian (contoh: 1350020990899).'],
-                ['account_holder_name', 'Opsional', 'Nama pemilik rekening di buku tabungan. Default: nama karyawan.'],
-                ['ktp_number', 'Opsional', 'Nomor Induk Kependudukan (NIK) 16 digit.'],
-                ['address', 'Opsional', 'Alamat domisili atau KTP karyawan.'],
-            ];
+            $helpHeaderRange = 'A1:D1';
+            $helpSheet->getStyle($helpHeaderRange)->getFont()->setBold(true);
+            $helpSheet->getStyle($helpHeaderRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFDDEBF7');
+            $helpSheet->getStyle($helpHeaderRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-            foreach ($guides as $idx => $guide) {
-                $r = $idx + 2;
-                $helpSheet->setCellValue('A'.$r, $guide[0]);
-                $helpSheet->setCellValue('B'.$r, $guide[1]);
-                $helpSheet->setCellValue('C'.$r, $guide[2]);
+            $r = 2;
+            foreach ($columns as $colDef) {
+                $helpSheet->setCellValue('A'.$r, $colDef['header']);
+                $helpSheet->setCellValue('B'.$r, $colDef['status']);
+                $helpSheet->setCellValue('C'.$r, $colDef['format']);
+                $helpSheet->setCellValue('D'.$r, $colDef['guide']);
+
+                $helpSheet->getStyle('B'.$r)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $r++;
             }
+            $helpLastGuideRow = $r - 1;
+            $helpSheet->getStyle('A1:D'.$helpLastGuideRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD9D9D9');
+
+            // Reference Tables in Sheet 2
+            $refStartRow = $helpLastGuideRow + 3;
+
+            // Division reference table
+            $helpSheet->setCellValue('A'.$refStartRow, '=== DAFTAR DIVISI TERDAFTAR (REFERENSI) ===');
+            $helpSheet->getStyle('A'.$refStartRow)->getFont()->setBold(true)->getColor()->setARGB('FF1F4E78');
+            $refDivHeader = $refStartRow + 1;
+            $helpSheet->setCellValue('A'.$refDivHeader, 'Kode Divisi');
+            $helpSheet->setCellValue('B'.$refDivHeader, 'Nama Divisi');
+            $helpSheet->getStyle('A'.$refDivHeader.':B'.$refDivHeader)->getFont()->setBold(true);
+            $helpSheet->getStyle('A'.$refDivHeader.':B'.$refDivHeader)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE2EFDA');
+
+            $dRow = $refDivHeader + 1;
+            foreach ($divisions as $division) {
+                $helpSheet->setCellValue('A'.$dRow, $division->code ?: '-');
+                $helpSheet->setCellValue('B'.$dRow, $division->name);
+                $dRow++;
+            }
+            if ($divisions->isEmpty()) {
+                $helpSheet->setCellValue('A'.$dRow, '-');
+                $helpSheet->setCellValue('B'.$dRow, '(Belum ada divisi terdaftar)');
+                $dRow++;
+            }
+            $helpSheet->getStyle('A'.$refDivHeader.':B'.($dRow - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD9D9D9');
+
+            // Position reference table
+            $refPosStart = $dRow + 2;
+            $helpSheet->setCellValue('A'.$refPosStart, '=== DAFTAR JABATAN TERDAFTAR (REFERENSI) ===');
+            $helpSheet->getStyle('A'.$refPosStart)->getFont()->setBold(true)->getColor()->setARGB('FF1F4E78');
+            $refPosHeader = $refPosStart + 1;
+            $helpSheet->setCellValue('A'.$refPosHeader, 'Kode Jabatan');
+            $helpSheet->setCellValue('B'.$refPosHeader, 'Nama Jabatan');
+            $helpSheet->setCellValue('C'.$refPosHeader, 'Divisi Terkait');
+            $helpSheet->getStyle('A'.$refPosHeader.':C'.$refPosHeader)->getFont()->setBold(true);
+            $helpSheet->getStyle('A'.$refPosHeader.':C'.$refPosHeader)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE2EFDA');
+
+            $pRow = $refPosHeader + 1;
+            foreach ($positions as $position) {
+                $divName = $divisions->firstWhere('id', $position->division_id)?->name ?? '-';
+                $helpSheet->setCellValue('A'.$pRow, $position->code ?: '-');
+                $helpSheet->setCellValue('B'.$pRow, $position->name);
+                $helpSheet->setCellValue('C'.$pRow, $divName);
+                $pRow++;
+            }
+            if ($positions->isEmpty()) {
+                $helpSheet->setCellValue('A'.$pRow, '-');
+                $helpSheet->setCellValue('B'.$pRow, '(Belum ada jabatan terdaftar)');
+                $helpSheet->setCellValue('C'.$pRow, '-');
+                $pRow++;
+            }
+            $helpSheet->getStyle('A'.$refPosHeader.':C'.($pRow - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD9D9D9');
+
+            // Sub Company reference table
+            if ($subCompanies->isNotEmpty()) {
+                $refSubStart = $pRow + 2;
+                $helpSheet->setCellValue('A'.$refSubStart, '=== DAFTAR SUB COMPANY TERDAFTAR (REFERENSI) ===');
+                $helpSheet->getStyle('A'.$refSubStart)->getFont()->setBold(true)->getColor()->setARGB('FF1F4E78');
+                $refSubHeader = $refSubStart + 1;
+                $helpSheet->setCellValue('A'.$refSubHeader, 'Kode Sub Company');
+                $helpSheet->setCellValue('B'.$refSubHeader, 'Nama Sub Company');
+                $helpSheet->getStyle('A'.$refSubHeader.':B'.$refSubHeader)->getFont()->setBold(true);
+                $helpSheet->getStyle('A'.$refSubHeader.':B'.$refSubHeader)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE2EFDA');
+
+                $sRow = $refSubHeader + 1;
+                foreach ($subCompanies as $subCompany) {
+                    $helpSheet->setCellValue('A'.$sRow, $subCompany->code ?: '-');
+                    $helpSheet->setCellValue('B'.$sRow, $subCompany->name);
+                    $sRow++;
+                }
+                $helpSheet->getStyle('A'.$refSubHeader.':B'.($sRow - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD9D9D9');
+            }
+
             $helpSheet->getColumnDimension('A')->setAutoSize(true);
             $helpSheet->getColumnDimension('B')->setAutoSize(true);
             $helpSheet->getColumnDimension('C')->setAutoSize(true);
+            $helpSheet->getColumnDimension('D')->setAutoSize(true);
 
             $spreadsheet->setActiveSheetIndex(0);
 
@@ -1794,6 +2051,8 @@ class EmployeeController extends Controller
         $headerAliases = [
             'kode pegawai' => 'employee_code',
             'kode_pegawai' => 'employee_code',
+            'kode karyawan' => 'employee_code',
+            'kode_karyawan' => 'employee_code',
             'kode' => 'employee_code',
             'id karyawan' => 'employee_code',
             'id_karyawan' => 'employee_code',
@@ -1815,6 +2074,11 @@ class EmployeeController extends Controller
             'nomor hp' => 'phone',
             'nomor_hp' => 'phone',
             'hp' => 'phone',
+            'no. telepon / whatsapp' => 'phone',
+            'no telepon / whatsapp' => 'phone',
+            'telepon / whatsapp' => 'phone',
+            'no. hp / whatsapp' => 'phone',
+            'no hp / whatsapp' => 'phone',
             'jenis kelamin' => 'gender',
             'jenis_kelamin' => 'gender',
             'gender' => 'gender',
@@ -1857,6 +2121,10 @@ class EmployeeController extends Controller
             'nomor ktp' => 'ktp_number',
             'ktp' => 'ktp_number',
             'nik' => 'ktp_number',
+            'nik / no. ktp' => 'ktp_number',
+            'nik / no ktp' => 'ktp_number',
+            'nik/no. ktp' => 'ktp_number',
+            'nik/no ktp' => 'ktp_number',
             'npwp' => 'npwp_number',
             'nomor npwp' => 'npwp_number',
             'no npwp' => 'npwp_number',
@@ -1879,6 +2147,7 @@ class EmployeeController extends Controller
             'gaji' => 'base_salary',
             'gapok' => 'base_salary',
             'metode pph21' => 'pph21_method',
+            'metode pph 21' => 'pph21_method',
             'metode_pph21' => 'pph21_method',
             'tarif pph21' => 'pph21_rate',
             'tarif_pph21' => 'pph21_rate',
@@ -2013,6 +2282,16 @@ class EmployeeController extends Controller
             $name = trim((string) ($rowAssociative['full_name'] ?? ''));
             $code = trim((string) ($rowAssociative['employee_code'] ?? ''));
             if ($name === '' && $code === '') {
+                continue;
+            }
+
+            // Skip example / sample row
+            $isSample = strtoupper($code) === 'CONTOH'
+                || str_starts_with(strtoupper($code), 'CONTOH')
+                || strtoupper($name) === 'CONTOH'
+                || str_contains(strtolower($name), 'contoh')
+                || str_contains(strtolower($name), 'format pengisian');
+            if ($isSample) {
                 continue;
             }
 
@@ -2215,13 +2494,11 @@ class EmployeeController extends Controller
     private function normalizeEmploymentType(mixed $value): string
     {
         return match (strtolower($this->nullableString($value) ?? '')) {
-            'permanent' => 'PKWTT',
-            'contract' => 'PKWT',
-            'internship', 'freelance' => 'FL',
-            'fl' => 'FL',
-            'pkwt' => 'PKWT',
-            'pkwtt' => 'PKWTT',
-            'os' => 'OS',
+            'permanent', 'tetap', 'pkwtt' => 'PKWTT',
+            'contract', 'kontrak', 'pkwt' => 'PKWT',
+            'internship', 'magang', 'freelance', 'fl' => 'FL',
+            'daily worker', 'daily_worker', 'dw', 'harian' => 'DW',
+            'outsourcing', 'os' => 'OS',
             default => 'PKWTT',
         };
     }

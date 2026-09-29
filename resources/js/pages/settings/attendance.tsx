@@ -21,6 +21,7 @@ export type LatePenaltyTier = {
 type Settings = {
     missing_clock_out_request_days: number;
     require_face_recognition?: boolean;
+    backup_attendance_enabled?: boolean;
     attendance_revision_cutoff_day: string;
     payroll_cutoff_day?: string;
     late_penalty_enabled?: boolean;
@@ -53,6 +54,7 @@ export default function AttendanceSettings({
     const form = useForm<Settings>({
         missing_clock_out_request_days: settings.missing_clock_out_request_days ?? 2,
         require_face_recognition: settings.require_face_recognition ?? false,
+        backup_attendance_enabled: settings.backup_attendance_enabled ?? false,
         attendance_revision_cutoff_day: settings.attendance_revision_cutoff_day ?? 'end_of_month',
         payroll_cutoff_day: settings.payroll_cutoff_day ?? settings.attendance_revision_cutoff_day ?? 'end_of_month',
         unrecorded_cutoff_penalty_enabled: settings.unrecorded_cutoff_penalty_enabled ?? false,
@@ -646,6 +648,30 @@ export default function AttendanceSettings({
                                         </span>
                                         <p className="text-xs text-muted-foreground">
                                             Saat diaktifkan, karyawan wajib melakukan verifikasi live detection wajah yang cocok dengan master foto wajah sebelum dapat clock-in atau clock-out.
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="rounded-lg border p-4">
+                                <label className="flex items-start gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="mt-1 size-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                        checked={form.data.backup_attendance_enabled}
+                                        onChange={(e) =>
+                                            form.setData(
+                                                'backup_attendance_enabled',
+                                                e.target.checked,
+                                            )
+                                        }
+                                    />
+                                    <div className="space-y-1">
+                                        <span className="text-sm font-medium leading-none">
+                                            Aktifkan Fitur Backup Absensi (Kehadiran Rekan Kerja)
+                                        </span>
+                                        <p className="text-xs text-muted-foreground">
+                                            Saat diaktifkan, karyawan dapat melakukan absensi backup untuk rekan kerja yang berhalangan hadir dalam satu company / sub-company melalui menu backup kehadiran di portal karyawan.
                                         </p>
                                     </div>
                                 </label>

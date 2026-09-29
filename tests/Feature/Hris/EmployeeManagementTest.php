@@ -1628,16 +1628,20 @@ class EmployeeManagementTest extends TestCase
         $response = $this->actingAs($user)->get(route('hris.employees.import-template'));
 
         $response->assertOk();
-        $response->assertDownload('employee_import_template.xlsx');
+        $response->assertDownload('Template_Impor_Karyawan.xlsx');
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
         $temporaryFile = tmpfile();
         fwrite($temporaryFile, $response->streamedContent());
         $temporaryPath = stream_get_meta_data($temporaryFile)['uri'];
         $spreadsheet = IOFactory::load($temporaryPath);
-        $headers = $spreadsheet->getActiveSheet()->rangeToArray('A1:AF1')[0];
+        $sheet = $spreadsheet->getActiveSheet();
+        $headers = $sheet->rangeToArray('A1:AF1')[0];
 
-        $this->assertContains('birth_place', $headers);
+        $this->assertContains('Tempat Lahir', $headers);
+        $this->assertContains('Nama Lengkap', $headers);
+        $this->assertContains('Divisi', $headers);
+        $this->assertNotNull($spreadsheet->getSheetByName('Panduan & Pilihan Data'));
 
         $spreadsheet->disconnectWorksheets();
         fclose($temporaryFile);

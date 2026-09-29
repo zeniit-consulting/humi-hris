@@ -1,7 +1,7 @@
 // Hallmark · audience: karyawan · use: melihat status kerja dan melakukan absensi · tone: utilitarian
 // Hallmark · genre: modern-minimal · macrostructure: Operational Workbench · theme: Starline-adapted · anchor: Humi teal
 // Hallmark · pre-emit critique: P4 H5 E4 S5 R4 V4 · contrast: pass (46–50) · responsive: pass (36, 59, 61–69)
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
     BellRing,
@@ -17,6 +17,7 @@ import {
     ReceiptText,
     RotateCcw,
     ScanLine,
+    UserCheck,
     Wallet,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -51,6 +52,10 @@ type PortalSummary = {
         email: string;
         role: string | null;
     };
+    company?: {
+        name?: string | null;
+        logo_url?: string | null;
+    } | null;
     today: {
         date: string;
         formatted: string;
@@ -63,6 +68,7 @@ type PortalSummary = {
         employment_status: string | null;
         employment_type: string | null;
         is_wfa: boolean;
+        face_photo_url?: string | null;
         division: { id: number; name: string } | null;
         position: { id: number; name: string } | null;
     } | null;
@@ -121,6 +127,7 @@ type PortalSummary = {
     }>;
     links: {
         attendance: string;
+        backup_attendance?: string;
         leaves: string;
         overtimes: string;
         kasbons?: string;
@@ -132,6 +139,7 @@ type PortalSummary = {
     };
     features?: {
         kasbon?: boolean;
+        backup_attendance?: boolean;
     };
 };
 
@@ -151,6 +159,7 @@ type AttentionItem = {
 
 const fallbackLinks: PortalSummary['links'] = {
     attendance: '/portal/attendance',
+    backup_attendance: '/portal/backup-attendance',
     leaves: '/portal/leaves',
     overtimes: '/portal/overtimes',
     reimbursements: '/portal/reimbursements',
@@ -162,6 +171,7 @@ const fallbackLinks: PortalSummary['links'] = {
 
 const quickLinks = [
     { key: 'attendance', label: 'Absensi', icon: ScanLine },
+    { key: 'backup_attendance', label: 'Backup Absensi', icon: UserCheck },
     { key: 'leaves', label: 'Cuti', icon: CalendarDays },
     { key: 'overtimes', label: 'Lembur', icon: Clock3 },
     { key: 'kasbons', label: 'Kasbon', icon: HandCoins },
@@ -242,12 +252,18 @@ const initials = (value: string) =>
         .toUpperCase();
 
 export default function PortalPage() {
+    const { companyLogoUrl } = usePage<{ companyLogoUrl?: string | null }>().props;
     const [summary, setSummary] = useState<PortalSummary | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [loadFailed, setLoadFailed] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
     const cancelLogoutRef = useRef<HTMLButtonElement>(null);
+
+    const effectiveAvatarUrl =
+        summary?.employee?.face_photo_url ||
+        summary?.company?.logo_url ||
+        companyLogoUrl;
 
     useEffect(() => {
         let cancelled = false;
@@ -319,11 +335,15 @@ export default function PortalPage() {
     const links = summary?.links ?? fallbackLinks;
     const visibleQuickLinks = useMemo(
         () =>
-            quickLinks.filter(
-                (item) =>
-                    item.key !== 'kasbons' ||
-                    summary?.features?.kasbon === true,
-            ),
+            quickLinks.filter((item) => {
+                if (item.key === 'kasbons') {
+                    return summary?.features?.kasbon === true;
+                }
+                if (item.key === 'backup_attendance') {
+                    return summary?.features?.backup_attendance === true;
+                }
+                return true;
+            }),
         [summary],
     );
     const attendanceFocus = useMemo(
@@ -409,8 +429,18 @@ export default function PortalPage() {
                                 className="portal-pressable portal-focus-ring flex min-h-14 min-w-0 items-center gap-3 rounded-[var(--portal-radius-control)] pr-2"
                                 aria-label="Buka profil"
                             >
-                                <span className="flex size-12 shrink-0 items-center justify-center rounded-[var(--portal-radius-control)] bg-white/15 font-bold text-[var(--portal-color-paper)]">
-                                    {initials(headlineName)}
+                                <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--portal-radius-control)] bg-white/15 font-bold text-[var(--portal-color-paper)]">
+                                    <span>{initials(headlineName)}</span>
+                                    {effectiveAvatarUrl ? (
+                                        <img
+                                            src={effectiveAvatarUrl}
+                                            alt={headlineName}
+                                            className="absolute inset-0 size-full object-cover bg-white"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                        />
+                                    ) : null}
                                 </span>
                                 <span className="min-w-0 text-left">
                                     <span className="block text-base font-bold text-[var(--portal-color-paper)]">

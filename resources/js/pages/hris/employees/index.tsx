@@ -5,6 +5,7 @@ import {
     ArrowUp,
     ArrowUpDown,
     ChevronDown,
+    Copy,
     Download,
     Eye,
     Filter,
@@ -23,6 +24,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import ActionIconButton from '@/components/action-icon-button';
+import { showToast } from '@/components/global-toast';
 import InputError from '@/components/input-error';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -1508,10 +1510,53 @@ export default function EmployeesIndex() {
         setDetailEmployee(employee);
     };
 
-    const activatePortalUser = (employee: Employee) => {
-        router.post(`/hris/employees/${employee.id}/invite-user`, undefined, {
-            preserveScroll: true,
-        });
+    const copyPortalInvitation = async (employee: Employee) => {
+        const loginUrl =
+            typeof window !== 'undefined'
+                ? `${window.location.origin}/portal/login`
+                : '/portal/login';
+
+        const text = [
+            `*Undangan Login Portal Karyawan HUMI*`,
+            ``,
+            `Halo *${employee.full_name}*, akun portal Anda telah aktif. Berikut adalah informasi untuk masuk ke aplikasi HUMI:`,
+            ``,
+            `🌐 *Tautan Portal:* ${loginUrl}`,
+            `🆔 *ID Karyawan:* ${employee.employee_code}`,
+            `📱 *No. WhatsApp:* ${employee.phone || '-'}`,
+            `📧 *Email:* ${employee.email || '-'}`,
+            ``,
+            `*Petunjuk Login:*`,
+            `1. Buka tautan portal di atas pada browser handphone atau komputer Anda.`,
+            `2. Masukkan ID Karyawan dan No. WhatsApp terdaftar Anda.`,
+            `3. Klik tombol *Masuk* untuk mulai mengakses portal, presensi kehadiran, perizinan cuti, dan slip gaji.`,
+            ``,
+            `Simpan pesan ini dengan baik. Terima kasih!`,
+        ].join('\n');
+
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+            showToast(
+                `Teks undangan login untuk ${employee.full_name} berhasil disalin ke clipboard!`,
+            );
+        } catch {
+            showToast(
+                'Gagal menyalin teks undangan ke clipboard.',
+                'error',
+            );
+        }
     };
 
     const openPkwttActivationDialog = (employee: Employee) => {
@@ -2652,15 +2697,13 @@ export default function EmployeesIndex() {
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem
                                                                     onClick={() =>
-                                                                        activatePortalUser(
+                                                                        copyPortalInvitation(
                                                                             employee,
                                                                         )
                                                                     }
                                                                 >
-                                                                    <UserRoundCheck className="size-4" />
-                                                                    {employee.portal_user
-                                                                        ? 'Kirim ulang undangan login'
-                                                                        : 'Undang ke login portal'}
+                                                                    <Copy className="size-4" />
+                                                                    Salin Teks Undangan Login
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem
                                                                     onClick={() => {
@@ -5853,7 +5896,6 @@ export default function EmployeesIndex() {
                                                     employeeForm.errors
                                                         .bpjs_kesehatan_number
                                                 }
-                                                placeholder="Nomor kartu BPJS Kesehatan"
                                             />
                                             <div className="flex flex-wrap items-center gap-4">
                                                 <div className="flex items-center gap-2">

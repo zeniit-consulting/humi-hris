@@ -11,12 +11,15 @@ use App\Models\EmployeeAttendance;
 use App\Models\EmployeeSchedule;
 use App\Services\AttendanceStatusService;
 use App\Services\MissingCheckoutLeaveSyncService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceController extends Controller
@@ -57,7 +60,7 @@ class AttendanceController extends Controller
         ];
 
         $attendancesQuery = EmployeeAttendance::query()
-            ->with('employee:id,employee_code,first_name,last_name')
+            ->with(['employee:id,employee_code,first_name,last_name', 'backupForEmployee:id,employee_code,first_name,last_name', 'backupByEmployee:id,employee_code,first_name,last_name'])
             ->when(
                 $filters['start_date'] === $filters['end_date'],
                 fn ($query) => $query->whereDate('attendance_date', $filters['start_date']),
@@ -113,12 +116,28 @@ class AttendanceController extends Controller
                 'timezone' => $attendance->timezone,
                 'shift_name' => (string) ($shiftSchedule?->shift_code ?? 'OFF'),
                 'status' => $attendance->status,
+                'is_backup' => (bool) ($attendance->is_backup ?? false),
+                'backup_for_employee' => $attendance->backupForEmployee ? [
+                    'id' => $attendance->backupForEmployee->id,
+                    'employee_code' => $attendance->backupForEmployee->employee_code,
+                    'full_name' => $attendance->backupForEmployee->full_name,
+                ] : null,
+                'backup_by_employee' => $attendance->backupByEmployee ? [
+                    'id' => $attendance->backupByEmployee->id,
+                    'employee_code' => $attendance->backupByEmployee->employee_code,
+                    'full_name' => $attendance->backupByEmployee->full_name,
+                ] : null,
                 'late_minutes' => $attendance->late_minutes,
+                'late_duration_label' => $this->formatLateDuration($attendance->late_minutes),
                 'late_level' => $attendance->late_level,
                 'late_penalty' => (float) ($attendance->late_penalty ?? 0),
                 'is_half_day' => (bool) ($attendance->is_half_day ?? false),
                 'check_in_at' => $attendance->check_in_at?->toIso8601String(),
                 'check_out_at' => $attendance->check_out_at?->toIso8601String(),
+                'check_in_photo_url' => $attendance->check_in_photo_url,
+                'check_out_photo_url' => $attendance->check_out_photo_url,
+                'face_similarity_score' => $attendance->face_similarity_score !== null ? (float) $attendance->face_similarity_score : null,
+                'has_photo' => ! empty($attendance->check_in_photo_url) || ! empty($attendance->check_out_photo_url),
                 'notes' => $attendance->notes,
             ];
         });
@@ -162,7 +181,7 @@ class AttendanceController extends Controller
         $end = $start->copy()->endOfMonth();
 
         $attendanceByDate = EmployeeAttendance::query()
-            ->with('shift:id,code,name,start_time,end_time,is_day_off')
+            ->with(['shift:id,code,name,start_time,end_time,is_day_off', 'backupForEmployee:id,employee_code,first_name,last_name', 'backupByEmployee:id,employee_code,first_name,last_name'])
             ->where('employee_id', $employee->id)
             ->whereBetween('attendance_date', [$start->toDateString(), $end->toDateString()])
             ->orderBy('attendance_date')
@@ -190,12 +209,23 @@ class AttendanceController extends Controller
                     ?? $scheduleByDate->get($dateKey)?->shift_code
                     ?? 'OFF',
                 'status' => $attendance->status,
+                'is_backup' => (bool) ($attendance->is_backup ?? false),
+                'backup_for_employee' => $attendance->backupForEmployee ? [
+                    'id' => $attendance->backupForEmployee->id,
+                    'employee_code' => $attendance->backupForEmployee->employee_code,
+                    'full_name' => $attendance->backupForEmployee->full_name,
+                ] : null,
                 'late_minutes' => $attendance->late_minutes,
+                'late_duration_label' => $this->formatLateDuration($attendance->late_minutes),
                 'late_level' => $attendance->late_level,
                 'late_penalty' => (float) ($attendance->late_penalty ?? 0),
                 'is_half_day' => (bool) ($attendance->is_half_day ?? false),
                 'check_in_at' => $attendance->check_in_at?->toIso8601String(),
                 'check_out_at' => $attendance->check_out_at?->toIso8601String(),
+                'check_in_photo_url' => $attendance->check_in_photo_url,
+                'check_out_photo_url' => $attendance->check_out_photo_url,
+                'face_similarity_score' => $attendance->face_similarity_score !== null ? (float) $attendance->face_similarity_score : null,
+                'has_photo' => ! empty($attendance->check_in_photo_url) || ! empty($attendance->check_out_photo_url),
                 'notes' => $attendance->notes,
                 'is_missing' => false,
             ] : [
@@ -210,6 +240,10 @@ class AttendanceController extends Controller
                 'is_half_day' => false,
                 'check_in_at' => null,
                 'check_out_at' => null,
+                'check_in_photo_url' => null,
+                'check_out_photo_url' => null,
+                'face_similarity_score' => null,
+                'has_photo' => false,
                 'notes' => null,
                 'is_missing' => true,
             ]);
@@ -355,9 +389,9 @@ class AttendanceController extends Controller
     }
 
     /**
-     * Export attendance records to XLS-compatible file.
+     * Export attendance records to XLS or PDF file.
      */
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request): SymfonyResponse
     {
         $ownerId = $request->user()->accountOwnerId();
 
@@ -369,10 +403,12 @@ class AttendanceController extends Controller
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'sort_by' => ['nullable', 'in:employee,attendance_date,check_in_at,check_out_at'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
+            'format' => ['nullable', 'in:xls,pdf'],
         ]);
 
         $startDate = $validated['start_date'] ?? $validated['date'] ?? today()->toDateString();
         $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
+        $format = $validated['format'] ?? 'xls';
 
         $filters = [
             'date' => $startDate,
@@ -382,10 +418,11 @@ class AttendanceController extends Controller
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
             'sort_by' => $validated['sort_by'] ?? 'employee',
             'sort_dir' => $validated['sort_dir'] ?? 'asc',
+            'format' => $format,
         ];
 
         $query = EmployeeAttendance::query()
-            ->with('employee:id,employee_code,first_name,last_name')
+            ->with(['employee:id,employee_code,first_name,last_name', 'backupForEmployee:id,employee_code,first_name,last_name', 'backupByEmployee:id,employee_code,first_name,last_name'])
             ->when(
                 $filters['start_date'] === $filters['end_date'],
                 fn ($builder) => $builder->whereDate('attendance_date', $filters['start_date']),
@@ -408,29 +445,98 @@ class AttendanceController extends Controller
         $company = CompanySetting::query()
             ->where('user_id', $ownerId)
             ->first();
-        $fileName = 'attendances_'.now()->format('Ymd_His').'.xls';
         $timezone = $this->deviceTimezone($request);
+        $timezoneAbbr = $this->formatTimezoneAbbr($timezone);
 
-        return response()->streamDownload(function () use ($rows, $company, $filters, $timezone): void {
-            $escape = fn (mixed $value): string => e((string) ($value ?? ''));
-            $companyName = $company?->name ?: 'Perusahaan';
-            $companyDetails = $company?->details ?: '-';
-            $generatedAt = now()->setTimezone($timezone)->format('Y-m-d H:i:s');
-            $statusLabels = [
-                'present' => 'Hadir',
-                'late' => 'Terlambat',
-                'on_leave' => 'Cuti',
-                'absent' => 'Absen',
+        $statusLabels = [
+            'present' => 'Hadir',
+            'late' => 'Terlambat',
+            'on_leave' => 'Cuti',
+            'absent' => 'Absen',
+        ];
+        $dateRangeLabel = $filters['start_date'] === $filters['end_date']
+            ? $filters['start_date']
+            : "{$filters['start_date']} s/d {$filters['end_date']}";
+        $companyName = $company?->name ?: 'Perusahaan';
+        $companyDetails = $company?->details ?: '';
+        $companyAddress = $company?->location_address ?: '';
+
+        if ($format === 'pdf') {
+            $companyLogoSrc = null;
+            if ($company?->logo_path && Storage::disk('public')->exists($company->logo_path)) {
+                $logoData = Storage::disk('public')->get($company->logo_path);
+                $mime = Storage::disk('public')->mimeType($company->logo_path) ?: 'image/png';
+                $companyLogoSrc = 'data:'.$mime.';base64,'.base64_encode($logoData);
+            } elseif (file_exists(public_path('logo-color.png'))) {
+                $logoData = file_get_contents(public_path('logo-color.png'));
+                $companyLogoSrc = 'data:image/png;base64,'.base64_encode($logoData);
+            }
+
+            $mappedRows = $rows->map(function (EmployeeAttendance $row) use ($statusLabels, $timezone) {
+                $rowTz = $this->validTimezone($row->timezone) ?? $timezone;
+                $rowTzAbbr = $this->formatTimezoneAbbr($rowTz);
+
+                $lateInfo = '-';
+                if ($row->late_level) {
+                    $lateInfo = $this->lateLevelLabel($row->late_level);
+                    if ($row->late_minutes !== null && $row->late_minutes > 0) {
+                        $lateInfo .= " ({$this->formatLateDuration($row->late_minutes)})";
+                    }
+                } elseif ($row->late_minutes !== null && $row->late_minutes > 0) {
+                    $lateInfo = $this->formatLateDuration($row->late_minutes);
+                }
+
+                return [
+                    'attendance_date' => $row->attendance_date?->format('Y-m-d') ?? '-',
+                    'employee_code' => $row->employee?->employee_code ?? '-',
+                    'full_name' => $row->employee?->full_name ?? '-',
+                    'status' => $row->status,
+                    'status_label' => $statusLabels[$row->status] ?? $row->status,
+                    'late_info' => $lateInfo,
+                    'check_in' => $this->localExportTime($row->check_in_at, $rowTz),
+                    'check_out' => $this->localExportTime($row->check_out_at, $rowTz),
+                    'timezone' => $rowTzAbbr,
+                    'notes' => $row->notes,
+                ];
+            });
+
+            $summary = [
+                'total' => $rows->count(),
+                'present' => $rows->where('status', 'present')->count(),
+                'late' => $rows->where('status', 'late')->count(),
+                'on_leave' => $rows->where('status', 'on_leave')->count(),
+                'absent' => $rows->where('status', 'absent')->count(),
             ];
-            $dateRangeLabel = $filters['start_date'] === $filters['end_date']
-                ? $filters['start_date']
-                : "{$filters['start_date']} s/d {$filters['end_date']}";
+
+            $fileName = 'Laporan_Kehadiran_'.now()->format('Ymd_His').'.pdf';
+
+            return Pdf::loadView('hris.attendances.export', [
+                'documentTitle' => $fileName,
+                'companyName' => $companyName,
+                'companyDetails' => $companyDetails,
+                'companyAddress' => $companyAddress,
+                'companyLogoSrc' => $companyLogoSrc,
+                'dateRangeLabel' => $dateRangeLabel,
+                'statusFilterLabel' => $filters['status'] !== '' ? ($statusLabels[$filters['status']] ?? $filters['status']) : 'Semua',
+                'timezoneAbbr' => $timezoneAbbr,
+                'summary' => $summary,
+                'rows' => $mappedRows,
+                'generatedAt' => now()->setTimezone($timezone)->locale('id')->translatedFormat('d F Y H:i'),
+            ])
+                ->setPaper('a4', 'landscape')
+                ->download($fileName);
+        }
+
+        $fileName = 'attendances_'.now()->format('Ymd_His').'.xls';
+
+        return response()->streamDownload(function () use ($rows, $companyName, $companyDetails, $filters, $timezone, $timezoneAbbr, $statusLabels, $dateRangeLabel): void {
+            $escape = fn (mixed $value): string => e((string) ($value ?? ''));
+            $generatedAt = now()->setTimezone($timezone)->format('Y-m-d H:i:s');
 
             echo '<!DOCTYPE html><html><head><meta charset="UTF-8">';
             echo '<style>
                 body { font-family: Arial, sans-serif; color: #111827; }
                 .report { position: relative; }
-                .watermark { position: absolute; top: 260px; left: 95px; color: #d1d5db; font-size: 54px; font-weight: 700; opacity: .38; transform: rotate(-28deg); z-index: 0; }
                 table { border-collapse: collapse; width: 100%; position: relative; z-index: 1; }
                 th, td { border: 1px solid #9ca3af; padding: 7px; font-size: 12px; vertical-align: top; }
                 th { background: #e5e7eb; font-weight: 700; text-align: left; }
@@ -439,20 +545,19 @@ class AttendanceController extends Controller
                 .title { font-size: 16px; font-weight: 700; padding-top: 10px; }
                 .meta { color: #374151; font-size: 12px; }
             </style></head><body><div class="report">';
-            echo '<div class="watermark">Generated by Humi</div>';
             echo '<table class="header">';
             echo '<tr><td class="company" colspan="7">'.$escape($companyName).'</td></tr>';
             echo '<tr><td colspan="7">'.nl2br($escape($companyDetails)).'</td></tr>';
             echo '<tr><td class="title" colspan="7">Laporan Kehadiran</td></tr>';
             echo '<tr><td class="meta" colspan="7">Tanggal laporan: '.$escape($dateRangeLabel).'</td></tr>';
             echo '<tr><td class="meta" colspan="7">Status: '.$escape($filters['status'] !== '' ? ($statusLabels[$filters['status']] ?? $filters['status']) : 'Semua').'</td></tr>';
-            echo '<tr><td class="meta" colspan="7">Timezone: '.$escape($timezone).'</td></tr>';
+            echo '<tr><td class="meta" colspan="7">Zona Waktu: '.$escape($timezoneAbbr).'</td></tr>';
             echo '<tr><td class="meta" colspan="7">Generated at: '.$escape($generatedAt).'</td></tr>';
             echo '<tr><td colspan="7">&nbsp;</td></tr>';
             echo '</table>';
             echo '<table>';
             echo '<thead><tr>';
-            foreach (['Tanggal', 'Kode Pegawai', 'Nama Pegawai', 'Status', 'Level Terlambat', 'Menit Terlambat', 'Check In', 'Check Out', 'Zona Waktu', 'Catatan'] as $heading) {
+            foreach (['Tanggal', 'Kode Pegawai', 'Nama Pegawai', 'Status', 'Level Terlambat', 'Keterlambatan', 'Check In', 'Check Out', 'Zona Waktu', 'Catatan'] as $heading) {
                 echo '<th>'.$escape($heading).'</th>';
             }
             echo '</tr></thead><tbody>';
@@ -468,11 +573,11 @@ class AttendanceController extends Controller
                 echo '<td>'.$escape($row->employee?->full_name).'</td>';
                 echo '<td>'.$escape($statusLabels[$row->status] ?? $row->status).'</td>';
                 echo '<td>'.$escape($this->lateLevelLabel($row->late_level)).'</td>';
-                echo '<td>'.$escape($row->late_minutes).'</td>';
+                echo '<td>'.$escape($row->late_minutes !== null && $row->late_minutes > 0 ? $this->formatLateDuration($row->late_minutes) : '-').'</td>';
                 $rowTimezone = $this->validTimezone($row->timezone) ?? $timezone;
                 echo '<td>'.$escape($this->localExportTime($row->check_in_at, $rowTimezone)).'</td>';
                 echo '<td>'.$escape($this->localExportTime($row->check_out_at, $rowTimezone)).'</td>';
-                echo '<td>'.$escape($rowTimezone).'</td>';
+                echo '<td>'.$escape($this->formatTimezoneAbbr($rowTimezone)).'</td>';
                 echo '<td>'.$escape($row->notes).'</td>';
                 echo '</tr>';
             }
@@ -483,6 +588,20 @@ class AttendanceController extends Controller
         }, $fileName, [
             'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
         ]);
+    }
+
+    private function formatTimezoneAbbr(?string $timezone): string
+    {
+        $tz = trim((string) $timezone);
+
+        return match ($tz) {
+            'Asia/Jakarta', 'Asia/Pontianak', 'WIB' => 'WIB',
+            'Asia/Makassar', 'Asia/Ujung_Pandang', 'WITA' => 'WITA',
+            'Asia/Jayapura', 'WIT' => 'WIT',
+            default => str_contains($tz, 'Makassar') || str_contains($tz, 'WITA')
+                ? 'WITA'
+                : (str_contains($tz, 'Jayapura') || str_contains($tz, 'WIT') ? 'WIT' : 'WIB'),
+        };
     }
 
     private function localExportTime(mixed $value, string $timezone): ?string
@@ -502,6 +621,18 @@ class AttendanceController extends Controller
             'level_3' => 'Level 3',
             default => '-',
         };
+    }
+
+    public function formatLateDuration(?int $minutes): string
+    {
+        if ($minutes === null || $minutes <= 0) {
+            return '-';
+        }
+
+        $hours = intdiv($minutes, 60);
+        $mins = $minutes % 60;
+
+        return "{$hours} jam {$mins} menit";
     }
 
     private function deviceTimezone(Request $request): string

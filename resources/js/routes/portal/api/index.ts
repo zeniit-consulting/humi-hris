@@ -3,6 +3,7 @@ import pushDevices from './push-devices'
 import webPushSubscriptions from './web-push-subscriptions'
 import attendances from './attendances'
 import attendanceRequests from './attendance-requests'
+import backupAttendance from './backup-attendance'
 import leaves from './leaves'
 import overtimes from './overtimes'
 import kasbons from './kasbons'
@@ -19,7 +20,7 @@ import performances from './performances'
 import clientVisits from './client-visits'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 export const summary = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +35,7 @@ summary.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 summary.url = (options?: RouteQueryOptions) => {
@@ -43,7 +44,7 @@ summary.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 summary.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +54,7 @@ summary.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 summary.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +64,7 @@ summary.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 const summaryForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +74,7 @@ const summaryForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 summaryForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -83,7 +84,7 @@ summaryForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
-* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/PortalController.php:32
 * @route '/portal/api/summary'
 */
 summaryForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -104,6 +105,7 @@ const api = {
     webPushSubscriptions: Object.assign(webPushSubscriptions, webPushSubscriptions),
     attendances: Object.assign(attendances, attendances),
     attendanceRequests: Object.assign(attendanceRequests, attendanceRequests),
+    backupAttendance: Object.assign(backupAttendance, backupAttendance),
     leaves: Object.assign(leaves, leaves),
     overtimes: Object.assign(overtimes, overtimes),
     kasbons: Object.assign(kasbons, kasbons),
