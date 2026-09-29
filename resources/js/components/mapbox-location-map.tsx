@@ -40,34 +40,6 @@ const mapboxAccessToken =
 
 const mapStyle = 'mapbox://styles/mapbox/streets-v12';
 
-const tileAttribution =
-    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
-
-const fallbackRasterStyle: mapboxgl.Style = {
-    version: 8,
-    sources: {
-        cartoVoyager: {
-            type: 'raster',
-            tiles: [
-                'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-                'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-                'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-            ],
-            tileSize: 256,
-            attribution: tileAttribution,
-        },
-    },
-    layers: [
-        {
-            id: 'carto-voyager',
-            type: 'raster',
-            source: 'cartoVoyager',
-            minzoom: 0,
-            maxzoom: 20,
-        },
-    ],
-};
-
 const escapeHtml = (value: string) =>
     value
         .replaceAll('&', '&amp;')
@@ -157,7 +129,9 @@ export function MapboxLocationMap({
     const onSelectRef = useRef(onSelect);
     const initialCenterRef = useRef(center);
     const initialZoomRef = useRef(zoom);
-    const [mapError, setMapError] = useState<string | null>(null);
+    const [mapError, setMapError] = useState<string | null>(
+        mapboxAccessToken ? null : 'Mapbox access token belum dikonfigurasi.',
+    );
     const circleData = useMemo<GeoJSON.FeatureCollection>(() => {
         return {
             type: 'FeatureCollection',
@@ -217,21 +191,18 @@ export function MapboxLocationMap({
     }, [onSelect]);
 
     useEffect(() => {
-        if (!containerRef.current || mapRef.current) {
+        if (!mapboxAccessToken || !containerRef.current || mapRef.current) {
             return;
         }
 
-        if (mapboxAccessToken) {
-            mapboxgl.accessToken = mapboxAccessToken;
-        }
+        mapboxgl.accessToken = mapboxAccessToken;
 
         let map: mapboxgl.Map;
-        let hasFallenBack = !mapboxAccessToken;
 
         try {
             map = new mapboxgl.Map({
                 container: containerRef.current,
-                style: mapboxAccessToken ? mapStyle : fallbackRasterStyle,
+                style: mapStyle,
                 center: [
                     initialCenterRef.current.longitude,
                     initialCenterRef.current.latitude,
@@ -309,17 +280,7 @@ export function MapboxLocationMap({
                 message.includes('Forbidden') ||
                 message.includes('token');
 
-            if (isAuthOrQuotaError && !hasFallenBack) {
-                hasFallenBack = true;
-                console.warn(
-                    'Mapbox tile error (401/403). Falling back to OpenStreetMap / CARTO raster tiles.',
-                    event.error,
-                );
-                map.setStyle(fallbackRasterStyle);
-                return;
-            }
-
-            if (event.error && !map.isStyleLoaded() && isAuthOrQuotaError && hasFallenBack) {
+            if (event.error && !map.isStyleLoaded() && isAuthOrQuotaError) {
                 setMapError('Akses Mapbox tidak valid atau token kedaluwarsa.');
             } else {
                 console.warn('Mapbox non-fatal warning/error:', event.error);
