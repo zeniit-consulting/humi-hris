@@ -40,6 +40,34 @@ const mapboxAccessToken =
 
 const mapStyle = 'mapbox://styles/mapbox/streets-v12';
 
+const tileAttribution =
+    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
+
+const fallbackRasterStyle: mapboxgl.Style = {
+    version: 8,
+    sources: {
+        cartoVoyager: {
+            type: 'raster',
+            tiles: [
+                'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+            ],
+            tileSize: 256,
+            attribution: tileAttribution,
+        },
+    },
+    layers: [
+        {
+            id: 'carto-voyager',
+            type: 'raster',
+            source: 'cartoVoyager',
+            minzoom: 0,
+            maxzoom: 20,
+        },
+    ],
+};
+
 const escapeHtml = (value: string) =>
     value
         .replaceAll('&', '&amp;')
@@ -129,9 +157,7 @@ export function MapboxLocationMap({
     const onSelectRef = useRef(onSelect);
     const initialCenterRef = useRef(center);
     const initialZoomRef = useRef(zoom);
-    const [mapError, setMapError] = useState<string | null>(
-        mapboxAccessToken ? null : 'Mapbox access token belum dikonfigurasi.',
-    );
+    const [mapError, setMapError] = useState<string | null>(null);
     const circleData = useMemo<GeoJSON.FeatureCollection>(() => {
         return {
             type: 'FeatureCollection',
@@ -159,7 +185,9 @@ export function MapboxLocationMap({
                 })),
         };
     }, [locations]);
-    const initialCircleDataRef = useRef(circleData);
+    const circleDataRef = useRef(circleData);
+    circleDataRef.current = circleData;
+
     const routeLineData = useMemo<GeoJSON.FeatureCollection>(() => {
         return {
             type: 'FeatureCollection',
@@ -181,25 +209,29 @@ export function MapboxLocationMap({
                 })),
         };
     }, [routeLines]);
-    const initialRouteLineDataRef = useRef(routeLineData);
+    const routeLineDataRef = useRef(routeLineData);
+    routeLineDataRef.current = routeLineData;
 
     useEffect(() => {
         onSelectRef.current = onSelect;
     }, [onSelect]);
 
     useEffect(() => {
-        if (!mapboxAccessToken || !containerRef.current || mapRef.current) {
+        if (!containerRef.current || mapRef.current) {
             return;
         }
 
-        mapboxgl.accessToken = mapboxAccessToken;
+        if (mapboxAccessToken) {
+            mapboxgl.accessToken = mapboxAccessToken;
+        }
 
         let map: mapboxgl.Map;
+        let hasFallenBack = !mapboxAccessToken;
 
         try {
             map = new mapboxgl.Map({
                 container: containerRef.current,
-                style: mapStyle,
+                style: mapboxAccessToken ? mapStyle : fallbackRasterStyle,
                 center: [
                     initialCenterRef.current.longitude,
                     initialCenterRef.current.latitude,
@@ -216,16 +248,79 @@ export function MapboxLocationMap({
             return;
         }
 
+        const setupLayers = () => {
+            if (!map.getSource('attendance-radius')) {
+                map.addSource('attendance-radius', {
+                    type: 'geojson',
+                    data: circleDataRef.current,
+                });
+                map.addLayer({
+                    id: 'attendance-radius-fill',
+                    type: 'fill',
+                    source: 'attendance-radius',
+                    paint: {
+                        'fill-color': '#14b8a6',
+                        'fill-opacity': 0.16,
+                    },
+                });
+                map.addLayer({
+                    id: 'attendance-radius-line',
+                    type: 'line',
+                    source: 'attendance-radius',
+                    paint: {
+                        'line-color': '#0f766e',
+                        'line-width': 2,
+                        'line-opacity': 0.86,
+                    },
+                });
+            }
+
+            if (!map.getSource('visit-route-lines')) {
+                map.addSource('visit-route-lines', {
+                    type: 'geojson',
+                    data: routeLineDataRef.current,
+                });
+                map.addLayer({
+                    id: 'visit-route-lines',
+                    type: 'line',
+                    source: 'visit-route-lines',
+                    paint: {
+                        'line-color': ['get', 'color'],
+                        'line-width': 4,
+                        'line-opacity': 0.9,
+                    },
+                });
+            }
+        };
+
+        map.on('style.load', () => {
+            setupLayers();
+        });
+
         map.on('error', (event) => {
-            if (event.error && !map.isStyleLoaded()) {
-                const message = event.error.message || 'Map gagal dimuat.';
-                if (
-                    message.includes('401') ||
-                    message.includes('Unauthorized') ||
-                    message.includes('token')
-                ) {
-                    setMapError('Akses Mapbox tidak valid atau token kedaluwarsa.');
-                }
+            const errorStatus = (event.error as { status?: number } | undefined)?.status;
+            const message = event.error?.message || '';
+            const isAuthOrQuotaError =
+                errorStatus === 401 ||
+                errorStatus === 403 ||
+                message.includes('401') ||
+                message.includes('403') ||
+                message.includes('Unauthorized') ||
+                message.includes('Forbidden') ||
+                message.includes('token');
+
+            if (isAuthOrQuotaError && !hasFallenBack) {
+                hasFallenBack = true;
+                console.warn(
+                    'Mapbox tile error (401/403). Falling back to OpenStreetMap / CARTO raster tiles.',
+                    event.error,
+                );
+                map.setStyle(fallbackRasterStyle);
+                return;
+            }
+
+            if (event.error && !map.isStyleLoaded() && isAuthOrQuotaError && hasFallenBack) {
+                setMapError('Akses Mapbox tidak valid atau token kedaluwarsa.');
             } else {
                 console.warn('Mapbox non-fatal warning/error:', event.error);
             }
@@ -242,43 +337,7 @@ export function MapboxLocationMap({
 
         map.on('load', () => {
             map.resize();
-            map.addSource('attendance-radius', {
-                type: 'geojson',
-                data: initialCircleDataRef.current,
-            });
-            map.addLayer({
-                id: 'attendance-radius-fill',
-                type: 'fill',
-                source: 'attendance-radius',
-                paint: {
-                    'fill-color': '#14b8a6',
-                    'fill-opacity': 0.16,
-                },
-            });
-            map.addLayer({
-                id: 'attendance-radius-line',
-                type: 'line',
-                source: 'attendance-radius',
-                paint: {
-                    'line-color': '#0f766e',
-                    'line-width': 2,
-                    'line-opacity': 0.86,
-                },
-            });
-            map.addSource('visit-route-lines', {
-                type: 'geojson',
-                data: initialRouteLineDataRef.current,
-            });
-            map.addLayer({
-                id: 'visit-route-lines',
-                type: 'line',
-                source: 'visit-route-lines',
-                paint: {
-                    'line-color': ['get', 'color'],
-                    'line-width': 4,
-                    'line-opacity': 0.9,
-                },
-            });
+            setupLayers();
         });
 
         map.on('click', (event) => {
@@ -336,7 +395,7 @@ export function MapboxLocationMap({
         if (map.isStyleLoaded()) {
             updateSource();
         } else {
-            map.once('load', updateSource);
+            map.once('style.load', updateSource);
         }
     }, [circleData]);
 
@@ -357,7 +416,7 @@ export function MapboxLocationMap({
         if (map.isStyleLoaded()) {
             updateSource();
         } else {
-            map.once('load', updateSource);
+            map.once('style.load', updateSource);
         }
     }, [routeLineData]);
 
