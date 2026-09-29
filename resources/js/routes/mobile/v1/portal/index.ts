@@ -1,4 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
+import attendanceRequests from './attendance-requests'
+import shiftChangeRequests from './shift-change-requests'
 import attendanceLocation from './attendance-location'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PortalController::summary
@@ -164,6 +166,8 @@ attendancePolicy.form = attendancePolicyForm
 
 const portal = {
     summary: Object.assign(summary, summary),
+    attendanceRequests: Object.assign(attendanceRequests, attendanceRequests),
+    shiftChangeRequests: Object.assign(shiftChangeRequests, shiftChangeRequests),
     attendancePolicy: Object.assign(attendancePolicy, attendancePolicy),
     attendanceLocation: Object.assign(attendanceLocation, attendanceLocation),
 }

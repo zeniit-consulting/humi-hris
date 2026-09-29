@@ -440,14 +440,69 @@ export const updateBankAccount = {
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::enrollFace
 * @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
-* @route '/portal/api/profile/enroll-face'
+* @route '/api/mobile/v1/profile/enroll-face'
 */
-export const enrollFace = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
-    url: enrollFace.url(options),
+const enrollFacea39a1442a528cb3f1eb643a64eb901f4 = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: enrollFacea39a1442a528cb3f1eb643a64eb901f4.url(options),
     method: 'post',
 })
 
-enrollFace.definition = {
+enrollFacea39a1442a528cb3f1eb643a64eb901f4.definition = {
+    methods: ["post"],
+    url: '/api/mobile/v1/profile/enroll-face',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::enrollFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
+* @route '/api/mobile/v1/profile/enroll-face'
+*/
+enrollFacea39a1442a528cb3f1eb643a64eb901f4.url = (options?: RouteQueryOptions) => {
+    return enrollFacea39a1442a528cb3f1eb643a64eb901f4.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::enrollFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
+* @route '/api/mobile/v1/profile/enroll-face'
+*/
+enrollFacea39a1442a528cb3f1eb643a64eb901f4.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: enrollFacea39a1442a528cb3f1eb643a64eb901f4.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::enrollFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
+* @route '/api/mobile/v1/profile/enroll-face'
+*/
+const enrollFacea39a1442a528cb3f1eb643a64eb901f4Form = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: enrollFacea39a1442a528cb3f1eb643a64eb901f4.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::enrollFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
+* @route '/api/mobile/v1/profile/enroll-face'
+*/
+enrollFacea39a1442a528cb3f1eb643a64eb901f4Form.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: enrollFacea39a1442a528cb3f1eb643a64eb901f4.url(options),
+    method: 'post',
+})
+
+enrollFacea39a1442a528cb3f1eb643a64eb901f4.form = enrollFacea39a1442a528cb3f1eb643a64eb901f4Form
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::enrollFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
+* @route '/portal/api/profile/enroll-face'
+*/
+const enrollFace35001c96b32b7deaa8a3b07b622dd474 = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: enrollFace35001c96b32b7deaa8a3b07b622dd474.url(options),
+    method: 'post',
+})
+
+enrollFace35001c96b32b7deaa8a3b07b622dd474.definition = {
     methods: ["post"],
     url: '/portal/api/profile/enroll-face',
 } satisfies RouteDefinition<["post"]>
@@ -457,8 +512,8 @@ enrollFace.definition = {
 * @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
 * @route '/portal/api/profile/enroll-face'
 */
-enrollFace.url = (options?: RouteQueryOptions) => {
-    return enrollFace.definition.url + queryParams(options)
+enrollFace35001c96b32b7deaa8a3b07b622dd474.url = (options?: RouteQueryOptions) => {
+    return enrollFace35001c96b32b7deaa8a3b07b622dd474.definition.url + queryParams(options)
 }
 
 /**
@@ -466,8 +521,8 @@ enrollFace.url = (options?: RouteQueryOptions) => {
 * @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
 * @route '/portal/api/profile/enroll-face'
 */
-enrollFace.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
-    url: enrollFace.url(options),
+enrollFace35001c96b32b7deaa8a3b07b622dd474.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: enrollFace35001c96b32b7deaa8a3b07b622dd474.url(options),
     method: 'post',
 })
 
@@ -476,8 +531,8 @@ enrollFace.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 * @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
 * @route '/portal/api/profile/enroll-face'
 */
-const enrollFaceForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-    action: enrollFace.url(options),
+const enrollFace35001c96b32b7deaa8a3b07b622dd474Form = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: enrollFace35001c96b32b7deaa8a3b07b622dd474.url(options),
     method: 'post',
 })
 
@@ -486,12 +541,17 @@ const enrollFaceForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'
 * @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:182
 * @route '/portal/api/profile/enroll-face'
 */
-enrollFaceForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-    action: enrollFace.url(options),
+enrollFace35001c96b32b7deaa8a3b07b622dd474Form.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: enrollFace35001c96b32b7deaa8a3b07b622dd474.url(options),
     method: 'post',
 })
 
-enrollFace.form = enrollFaceForm
+enrollFace35001c96b32b7deaa8a3b07b622dd474.form = enrollFace35001c96b32b7deaa8a3b07b622dd474Form
+
+export const enrollFace = {
+    '/api/mobile/v1/profile/enroll-face': enrollFacea39a1442a528cb3f1eb643a64eb901f4,
+    '/portal/api/profile/enroll-face': enrollFace35001c96b32b7deaa8a3b07b622dd474,
+}
 
 const ProfileController = { show, updateProfile, updateBankAccount, enrollFace }
 
