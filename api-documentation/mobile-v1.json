@@ -120,6 +120,68 @@
       }
     },
     {
+      "name": "Daftar pengajuan koreksi absensi",
+      "method": "GET",
+      "path": "/portal/attendance-requests",
+      "auth_required": true,
+      "headers": {
+        "X-Timezone": "Opsional. IANA timezone perangkat."
+      },
+      "response_data": {
+        "items": "Daftar pengajuan koreksi absensi milik karyawan yang sedang login.",
+        "eligible_missing_clock_out_dates": "Daftar tanggal yang eligible untuk pengajuan lupa clock out."
+      }
+    },
+    {
+      "name": "Buat pengajuan koreksi absensi",
+      "method": "POST",
+      "path": "/portal/attendance-requests",
+      "auth_required": true,
+      "body": {
+        "request_type": "manual_attendance",
+        "attendance_date": "2026-07-29",
+        "shift_id": 1,
+        "check_in_at": "2026-07-29T08:00:00+08:00",
+        "check_out_at": "2026-07-29T17:00:00+08:00",
+        "reason": "Lupa melakukan clock in"
+      },
+      "headers": {
+        "X-Timezone": "Opsional. IANA timezone perangkat."
+      },
+      "required_fields": ["attendance_date", "reason"],
+      "validation": {
+        "request_type": ["manual_attendance", "missing_clock_out"],
+        "check_out_at": "Wajib untuk request_type missing_clock_out.",
+        "reason": "maksimum 1000 karakter"
+      }
+    },
+    {
+      "name": "Daftar pengajuan perubahan shift",
+      "method": "GET",
+      "path": "/portal/shift-change-requests",
+      "auth_required": true,
+      "response_data": {
+        "items": "Daftar pengajuan perubahan shift milik karyawan yang sedang login."
+      }
+    },
+    {
+      "name": "Buat pengajuan perubahan shift",
+      "method": "POST",
+      "path": "/portal/shift-change-requests",
+      "auth_required": true,
+      "body": {
+        "requested_date": "2026-08-01",
+        "requested_shift_id": 2,
+        "reason": "Ada kebutuhan operasional."
+      },
+      "required_fields": ["requested_date", "requested_shift_id"],
+      "validation": {
+        "requested_date": "Tanggal hari ini atau setelahnya.",
+        "requested_shift_id": "Harus merupakan shift milik perusahaan.",
+        "reason": "opsional, maksimum 1000 karakter"
+      }
+    },
+    {
       "name": "Kebijakan lokasi absensi karyawan",
       "method": "GET",
       "path": "/portal/attendance-policy",
@@ -186,10 +248,10 @@
     {
       "name": "Detail karyawan",
       "method": "GET",
-      "path": "/employees/{employee_id}",
+      "path": "/employees/{employee}",
       "auth_required": true,
       "path_parameters": {
-        "employee_id": "ID karyawan"
+        "employee": "ID karyawan atau parameter model Employee"
       }
     },
     {
@@ -232,17 +294,17 @@
     {
       "name": "Ubah presensi",
       "method": "PUT",
-      "path": "/attendances/{attendance_id}",
+      "path": "/attendances/{employeeAttendance}",
       "auth_required": true,
       "path_parameters": {
-        "attendance_id": "ID presensi"
+        "employeeAttendance": "ID presensi atau parameter model EmployeeAttendance"
       },
       "body": "Gunakan struktur body yang sama seperti Buat presensi."
     },
     {
       "name": "Hapus presensi",
       "method": "DELETE",
-      "path": "/attendances/{attendance_id}",
+      "path": "/attendances/{employeeAttendance}",
       "auth_required": true
     },
     {
@@ -274,14 +336,14 @@
     {
       "name": "Ubah pengajuan cuti",
       "method": "PUT",
-      "path": "/leaves/{leave_id}",
+      "path": "/leaves/{leave}",
       "auth_required": true,
       "body": "Gunakan struktur body yang sama seperti Buat pengajuan cuti."
     },
     {
       "name": "Hapus pengajuan cuti",
       "method": "DELETE",
-      "path": "/leaves/{leave_id}",
+      "path": "/leaves/{leave}",
       "auth_required": true
     },
     {
@@ -314,14 +376,14 @@
     {
       "name": "Ubah pengajuan lembur",
       "method": "PUT",
-      "path": "/overtimes/{overtime_id}",
+      "path": "/overtimes/{overtime}",
       "auth_required": true,
       "body": "Gunakan struktur body yang sama seperti Buat pengajuan lembur."
     },
     {
       "name": "Hapus pengajuan lembur",
       "method": "DELETE",
-      "path": "/overtimes/{overtime_id}",
+      "path": "/overtimes/{overtime}",
       "auth_required": true
     },
     {
@@ -354,14 +416,14 @@
     {
       "name": "Ubah kasbon",
       "method": "PUT",
-      "path": "/kasbons/{kasbon_id}",
+      "path": "/kasbons/{employeeDeduction}",
       "auth_required": true,
       "body": "Gunakan struktur body yang sama seperti Buat kasbon."
     },
     {
       "name": "Hapus kasbon",
       "method": "DELETE",
-      "path": "/kasbons/{kasbon_id}",
+      "path": "/kasbons/{employeeDeduction}",
       "auth_required": true
     },
     {
@@ -395,10 +457,10 @@
     {
       "name": "Simpan payroll draft",
       "method": "POST",
-      "path": "/payrolls/{payroll_run_id}/save",
+      "path": "/payrolls/{payrollRun}/save",
       "auth_required": true,
       "path_parameters": {
-        "payroll_run_id": "ID payroll run"
+        "payrollRun": "ID payroll run atau parameter model PayrollRun"
       },
       "body": "Payload item payroll mengikuti data hasil endpoint preview atau generate."
     },
@@ -438,11 +500,29 @@
       "path": "/profile/bank-account",
       "auth_required": true,
       "body": "Gunakan field rekening yang dikirim oleh endpoint GET /profile sebagai acuan."
+    },
+    {
+      "name": "Daftarkan wajah karyawan",
+      "method": "POST",
+      "path": "/profile/enroll-face",
+      "auth_required": true,
+      "body": {
+        "face_embedding": "Array berisi tepat 128 angka numerik.",
+        "face_photo": "Opsional. Data URL/base64 image."
+      },
+      "required_fields": ["face_embedding"],
+      "validation": {
+        "face_embedding": "Array tepat 128 elemen numerik.",
+        "face_photo": "Opsional, harus berupa data:image/... jika dikirim."
+      }
     }
   ],
   "implementation_notes": [
     "Resource diakses sesuai cakupan akun pemilik perusahaan atau sub-user yang terkait.",
     "Gunakan ISO 8601 beserta offset timezone untuk field waktu presensi, misalnya 2026-07-29T08:00:00+08:00.",
-    "Mobile app karyawan berbasis OTP, pengajuan koreksi absensi, perubahan jadwal, dan registrasi perangkat FCM belum diekspos melalui route /api/mobile/v1 pada dokumentasi ini."
+    "Dokumentasi ini disinkronkan dengan routes/api.php pada prefix /api/mobile/v1.",
+    "Endpoint portal-login dilindungi throttle:10,1 selain validasi kredensial employee_code dan phone.",
+    "Endpoint portal dan resource mobile yang membutuhkan autentikasi menggunakan Sanctum Bearer token dengan ability mobile.",
+    "Pengajuan koreksi absensi, perubahan shift, dan enrollment wajah sekarang diekspos melalui route /api/mobile/v1."
   ]
 }

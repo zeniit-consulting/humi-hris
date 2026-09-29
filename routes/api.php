@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Mobile\V1\AttendanceController;
+use App\Http\Controllers\Api\Mobile\V1\AttendanceCorrectionRequestController;
 use App\Http\Controllers\Api\Mobile\V1\AuthController;
 use App\Http\Controllers\Api\Mobile\V1\DashboardController;
 use App\Http\Controllers\Api\Mobile\V1\EmployeeController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\Mobile\V1\OvertimeController;
 use App\Http\Controllers\Api\Mobile\V1\PayrollController;
 use App\Http\Controllers\Api\Mobile\V1\PortalController;
 use App\Http\Controllers\Api\Mobile\V1\ProfileController;
+use App\Http\Controllers\Api\Mobile\V1\ShiftChangeRequestController;
 use App\Http\Controllers\Api\PakasirWebhookController;
 use App\Http\Controllers\Api\ThirdParty\V1\AttendanceController as ThirdPartyAttendanceController;
 use App\Http\Controllers\Api\ThirdParty\V1\AuthController as ThirdPartyAuthController;
@@ -52,6 +54,10 @@ Route::prefix('mobile/v1')->name('mobile.v1.')->group(function (): void {
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])->name('dashboard.summary');
         Route::get('portal/summary', [PortalController::class, 'summary'])->name('portal.summary');
+        Route::get('portal/attendance-requests', [AttendanceCorrectionRequestController::class, 'index'])->name('portal.attendance-requests.index');
+        Route::post('portal/attendance-requests', [AttendanceCorrectionRequestController::class, 'store'])->name('portal.attendance-requests.store');
+        Route::get('portal/shift-change-requests', [ShiftChangeRequestController::class, 'index'])->name('portal.shift-change-requests.index');
+        Route::post('portal/shift-change-requests', [ShiftChangeRequestController::class, 'store'])->name('portal.shift-change-requests.store');
         Route::get('master/options', [MasterController::class, 'index'])->name('master.index');
 
         Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
@@ -87,5 +93,6 @@ Route::prefix('mobile/v1')->name('mobile.v1.')->group(function (): void {
         Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
         Route::put('profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
         Route::put('profile/bank-account', [ProfileController::class, 'updateBankAccount'])->name('profile.bank-account.update');
+        Route::post('profile/enroll-face', [ProfileController::class, 'enrollFace'])->name('profile.enroll-face');
     });
 });

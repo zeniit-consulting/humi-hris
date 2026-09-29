@@ -1524,4 +1524,75 @@ class MobileApiTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath('success', false);
     }
+
+    public function test_mobile_portal_employee_can_list_own_attendance_correction_requests(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'email' => 'mobile-attendance-request@example.test',
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'email' => $user->email,
+        ]);
+
+        Sanctum::actingAs($user, ['mobile']);
+
+        $this->getJson('/api/mobile/v1/portal/attendance-requests')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'data' => [
+                    'items',
+                    'eligible_missing_clock_out_dates',
+                ],
+            ]);
+    }
+
+    public function test_mobile_portal_employee_can_list_own_shift_change_requests(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'email' => 'mobile-shift-change-request@example.test',
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'email' => $user->email,
+        ]);
+
+        Sanctum::actingAs($user, ['mobile']);
+
+        $this->getJson('/api/mobile/v1/portal/shift-change-requests')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'data' => ['items'],
+            ]);
+    }
+
+    public function test_mobile_portal_employee_can_enroll_face_profile(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'email' => 'mobile-face-enrollment@example.test',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'email' => $user->email,
+        ]);
+
+        Sanctum::actingAs($user, ['mobile']);
+
+        $this->postJson('/api/mobile/v1/profile/enroll-face', [
+            'face_embedding' => array_fill(0, 128, 0.25),
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.face_enrolled', true);
+
+        $this->assertNotNull($employee->fresh()->face_enrolled_at);
+    }
 }
