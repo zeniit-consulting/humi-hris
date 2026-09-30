@@ -136,6 +136,17 @@ class PayrollController extends Controller
                 ->map(function ($item) {
                     $primaryBank = $item->employee?->bankAccounts?->firstWhere('is_primary', true)
                         ?? $item->employee?->bankAccounts?->first();
+                    [$lateDeduction, $attendanceDeduction] = $this->splitDenda($item);
+
+                    $allowanceBreakdown = $item->allowance_breakdown ?? [];
+                    $fixedAllowancesTotal = (float) collect($allowanceBreakdown)->sum();
+                    if ($fixedAllowancesTotal == 0 && (float) $item->allowances_total > 0) {
+                        $fixedAllowancesTotal = max(0, (float) $item->allowances_total - (float) collect($item->variable_allowance_breakdown ?? [])->sum() - (float) collect($item->bonus_breakdown ?? [])->sum());
+                    }
+                    $variableAllowancesTotal = (float) collect($item->variable_allowance_breakdown ?? [])->sum();
+                    $bonusTotal = (float) collect($item->bonus_breakdown ?? [])->sum();
+                    $overtimePay = (float) $item->overtime_pay;
+                    $totalTunjangan = round($fixedAllowancesTotal + $variableAllowancesTotal + $overtimePay + $bonusTotal, 2);
 
                     return [
                         'id' => $item->id,
@@ -162,6 +173,10 @@ class PayrollController extends Controller
                             : false,
                         'base_salary' => $item->base_salary,
                         'allowances_total' => $item->allowances_total,
+                        'fixed_allowances_total' => round($fixedAllowancesTotal, 2),
+                        'variable_allowances_total' => round($variableAllowancesTotal, 2),
+                        'bonus_total' => round($bonusTotal, 2),
+                        'total_allowances' => round($totalTunjangan, 2),
                         'is_prorated' => $item->is_prorated,
                         'proration_working_days' => $item->proration_working_days,
                         'proration_payable_days' => $item->proration_payable_days,
@@ -189,6 +204,8 @@ class PayrollController extends Controller
                         'kasbon_deduction' => $item->kasbon_deduction,
                         'denda_deduction' => $item->denda_deduction,
                         'denda_breakdown' => $item->denda_breakdown ?? [],
+                        'late_deduction' => $lateDeduction,
+                        'attendance_deduction' => $attendanceDeduction,
                         'unpaid_leave_deduction' => $item->unpaid_leave_deduction,
                         'manual_deduction_total' => (float) ($item->manual_deduction_total ?? 0),
                         'manual_deduction_breakdown' => $item->manual_deduction_breakdown ?? [],
@@ -766,7 +783,8 @@ class PayrollController extends Controller
                 $headers[] = 'Iuran BPJS Kesehatan';
                 $headers[] = 'Iuran Asuransi Swasta';
                 $headers[] = 'Potongan Kasbon';
-                $headers[] = 'Potongan Denda';
+                $headers[] = 'Denda Keterlambatan';
+                $headers[] = 'Potongan Kehadiran';
                 $headers[] = 'Potongan Unpaid Leave';
                 $headers[] = 'Potongan Lainnya';
                 $headers[] = 'Total Potongan';
@@ -789,7 +807,8 @@ class PayrollController extends Controller
                 $totalBpjsKesEmployee = 0;
                 $totalPrivateInsurance = 0;
                 $totalKasbon = 0;
-                $totalDenda = 0;
+                $totalDendaLate = 0;
+                $totalAttendanceDeduction = 0;
                 $totalUnpaidLeave = 0;
                 $totalManualDeduction = 0;
                 $totalDeductions = 0;
@@ -829,7 +848,9 @@ class PayrollController extends Controller
                     $totalBpjsKesEmployee += (float) $item->bpjs_kesehatan_employee;
                     $totalPrivateInsurance += (float) $item->private_insurance_nominal;
                     $totalKasbon += (float) $item->kasbon_deduction;
-                    $totalDenda += (float) $item->denda_deduction;
+                    [$itemLate, $itemAttendance] = $this->splitDenda($item);
+                    $totalDendaLate += $itemLate;
+                    $totalAttendanceDeduction += $itemAttendance;
                     $totalUnpaidLeave += (float) $item->unpaid_leave_deduction;
                     $totalManualDeduction += (float) ($item->manual_deduction_total ?? 0);
                     $totalDeductions += (float) $item->deductions_total;
@@ -871,7 +892,8 @@ class PayrollController extends Controller
                 $totalsRow[] = (int) round($totalBpjsKesEmployee);
                 $totalsRow[] = (int) round($totalPrivateInsurance);
                 $totalsRow[] = (int) round($totalKasbon);
-                $totalsRow[] = (int) round($totalDenda);
+                $totalsRow[] = (int) round($totalDendaLate);
+                $totalsRow[] = (int) round($totalAttendanceDeduction);
                 $totalsRow[] = (int) round($totalUnpaidLeave);
                 $totalsRow[] = (int) round($totalManualDeduction);
                 $totalsRow[] = (int) round($totalDeductions);
@@ -939,7 +961,9 @@ class PayrollController extends Controller
                     $row[] = (int) round((float) $item->bpjs_kesehatan_employee);
                     $row[] = (int) round((float) $item->private_insurance_nominal);
                     $row[] = (int) round((float) $item->kasbon_deduction);
-                    $row[] = (int) round((float) $item->denda_deduction);
+                    [$itemLate, $itemAttendance] = $this->splitDenda($item);
+                    $row[] = (int) round($itemLate);
+                    $row[] = (int) round($itemAttendance);
                     $row[] = (int) round((float) $item->unpaid_leave_deduction);
                     $row[] = (int) round((float) ($item->manual_deduction_total ?? 0));
                     $row[] = (int) round((float) $item->deductions_total);
@@ -1109,7 +1133,8 @@ class PayrollController extends Controller
                 $headers[] = 'Iuran BPJS Kesehatan';
                 $headers[] = 'Iuran Asuransi Swasta';
                 $headers[] = 'Potongan Kasbon';
-                $headers[] = 'Potongan Denda';
+                $headers[] = 'Denda Keterlambatan';
+                $headers[] = 'Potongan Kehadiran';
                 $headers[] = 'Potongan Unpaid Leave';
                 $headers[] = 'Potongan Lainnya';
                 $headers[] = 'Total Potongan';
@@ -1196,7 +1221,9 @@ class PayrollController extends Controller
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->bpjs_kesehatan_employee));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->private_insurance_nominal));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->kasbon_deduction));
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->denda_deduction));
+                    [$itemLate, $itemAttendance] = $this->splitDenda($item);
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round($itemLate));
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round($itemAttendance));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->unpaid_leave_deduction));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) ($item->manual_deduction_total ?? 0)));
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colNum++)."{$currentRow}", (int) round((float) $item->deductions_total));
@@ -1470,4 +1497,42 @@ class PayrollController extends Controller
 
         return back()->with('success', 'Payslip karyawan masuk queue pengiriman WhatsApp.');
     }
+
+    /**
+     * Split denda into late deduction (Denda Keterlambatan) and attendance deduction (Potongan Kehadiran).
+     *
+     * @return array{0: float, 1: float} [late_deduction, attendance_deduction]
+     */
+    private function splitDenda(PayrollItem $item): array
+    {
+        $breakdown = $item->denda_breakdown ?? [];
+        $lateDeduction = 0.0;
+        $attendanceDeduction = 0.0;
+
+        if (! empty($breakdown)) {
+            foreach ($breakdown as $entry) {
+                if (! empty($entry['is_reverted'])) {
+                    continue;
+                }
+
+                $amount = (float) ($entry['amount'] ?? 0);
+                $type = (string) ($entry['type'] ?? '');
+                $desc = strtolower((string) ($entry['description'] ?? ''));
+                $title = strtolower((string) ($entry['title'] ?? ''));
+                $isHalfDay = ! empty($entry['is_half_day']) || str_contains($desc, 'setengah hari') || str_contains($title, 'setengah hari');
+
+                if ($type === 'unrecorded_cutoff' || ($type === 'late_attendance' && $isHalfDay)) {
+                    $attendanceDeduction += $amount;
+                } else {
+                    $lateDeduction += $amount;
+                }
+            }
+        } else {
+            $lateDeduction = (float) $item->denda_deduction;
+            $attendanceDeduction = 0.0;
+        }
+
+        return [round($lateDeduction, 2), round($attendanceDeduction, 2)];
+    }
 }
+

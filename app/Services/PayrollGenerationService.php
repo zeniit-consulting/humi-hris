@@ -366,22 +366,6 @@ class PayrollGenerationService
             }
         }
 
-        $isPph21Active = (bool) ($employee->pph21_enabled ?? ($employee->pph21_method !== 'none'));
-        if (! $isPph21Active || $employee->pph21_method === 'none') {
-            $pph21Method = 'none';
-            $pph21Rate = 0.0;
-            $monthlyTax = 0.0;
-        } else {
-            $pph21Method = (string) ($employee->pph21_method ?? 'gross');
-            $pph21Rate = round((float) ($employee->pph21_rate ?? 0), 2);
-            $monthlyTax = round($pph21Rate, 2);
-        }
-
-        [$pph21Allowance, $pph21Deduction, $pph21CompanyBorne] = $this->pph21Amounts(
-            $pph21Method,
-            $monthlyTax,
-        );
-
         // BPJS calculation: applies when company has BPJS enabled and employee has bpjs active and configured
         $bpjsWageBase = $monthlyBaseSalary + (float) $employee->allowances->sum('amount');
         $hasBpjsKes = (bool) ($setting?->bpjs_kesehatan_enabled ?? false)
@@ -425,6 +409,60 @@ class PayrollGenerationService
             privateInsuranceNominal: $privateInsuranceNominal,
         );
 
+        // PPh 21 Calculation
+        $isPph21Active = (bool) ($employee->pph21_enabled ?? ($employee->pph21_method !== 'none'));
+        if (! $isPph21Active || $employee->pph21_method === 'none') {
+            $pph21Method = 'none';
+            $pph21Rate = 0.0;
+            $pph21Allowance = 0.0;
+            $pph21Deduction = 0.0;
+            $pph21CompanyBorne = 0.0;
+        } elseif (in_array($employee->pph21_method, ['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'], true)) {
+            $pph21Method = (string) $employee->pph21_method;
+
+            // Taxable Gross Income for TER Bulanan:
+            // Base salary (prorated if applicable) + Allowances + Overtime + Taxable company benefits (BPJS JKK, JKM, BPJS Kes)
+            $taxableBenefits = round(
+                (float) ($bpjs['bpjs_jkk_company'] ?? 0)
+                + (float) ($bpjs['bpjs_jkm_company'] ?? 0)
+                + (float) ($bpjs['bpjs_kesehatan_company'] ?? 0),
+                2
+            );
+            $taxableGross = round($baseSalary + $allowancesTotal + $overtimePay + $taxableBenefits, 2);
+
+            $terCalculator = app(Pph21TerCalculatorService::class);
+            $ptkpCategory = (string) ($employee->ptkp_category ?: 'TK/0');
+            $terResult = $terCalculator->calculateMonthly($ptkpCategory, $taxableGross, $pph21Method);
+
+            $pph21Rate = (float) $terResult['tax_rate_percent'];
+            $pph21Allowance = (float) $terResult['allowance'];
+            $pph21Deduction = (float) $terResult['deduction'];
+            $pph21CompanyBorne = (float) $terResult['company_borne'];
+        } elseif ($employee->pph21_method === 'ter_harian') {
+            $pph21Method = 'ter_harian';
+            if ($isDailyWorker && $paidAttendanceDays > 0 && $dailyWage > 0) {
+                $terCalculator = app(Pph21TerCalculatorService::class);
+                $dailyResult = $terCalculator->calculateDaily($dailyWage, $paidAttendanceDays);
+                $pph21Rate = (float) $dailyResult['tax_rate_percent'];
+                $pph21Allowance = 0.0;
+                $pph21Deduction = (float) $dailyResult['tax_amount'];
+                $pph21CompanyBorne = 0.0;
+            } else {
+                $pph21Rate = round((float) ($employee->pph21_rate ?? 0), 2);
+                $monthlyTax = round($pph21Rate, 2);
+                [$pph21Allowance, $pph21Deduction, $pph21CompanyBorne] = $this->pph21Amounts($pph21Method, $monthlyTax);
+            }
+        } else {
+            $pph21Method = (string) ($employee->pph21_method ?? 'gross');
+            $pph21Rate = round((float) ($employee->pph21_rate ?? 0), 2);
+            $monthlyTax = round($pph21Rate, 2);
+
+            [$pph21Allowance, $pph21Deduction, $pph21CompanyBorne] = $this->pph21Amounts(
+                $pph21Method,
+                $monthlyTax,
+            );
+        }
+
         $kasbonDeduction = $this->deductionTotal($ownerId, $employee, $start, $end, 'kasbon');
 
         $manualDendas = EmployeeDeduction::query()
@@ -464,19 +502,21 @@ class PayrollGenerationService
                 $dateStr = $att->attendance_date?->toDateString() ?? '';
                 $lateMin = (int) ($att->late_minutes ?? 0);
                 $desc = $lateMin > 0 ? "Terlambat {$lateMin} menit" : 'Terlambat presensi';
-                if ($att->is_half_day) {
+                $isHalfDay = (bool) ($att->is_half_day ?? false);
+                if ($isHalfDay) {
                     $desc .= ' (Setengah hari)';
                 }
                 $lateBreakdownItems[] = [
                     'id' => 'late_'.$att->id,
                     'type' => 'late_attendance',
-                    'type_label' => 'Keterlambatan Presensi',
+                    'type_label' => $isHalfDay ? 'Keterlambatan (Potong Setengah Hari)' : 'Keterlambatan Presensi',
                     'reference_id' => $att->id,
                     'date' => $dateStr,
-                    'title' => 'Denda Keterlambatan',
+                    'title' => $isHalfDay ? 'Potongan Setengah Hari (Terlambat)' : 'Denda Keterlambatan',
                     'description' => $desc,
                     'amount' => round($penalty, 2),
                     'is_reverted' => false,
+                    'is_half_day' => $isHalfDay,
                 ];
             }
         }
@@ -526,7 +566,7 @@ class PayrollGenerationService
 
         // BPJS Perusahaan dan Tunjangan PPH dikategorikan sebagai benefit, tidak dihitung ke dalam gaji
         $takeHomePayDeductions = round(
-            $kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + ($pph21Method === 'gross_up' ? 0 : $pph21Deduction) + $manualDeductionTotal + $bpjs['bpjs_total_employee'],
+            $kasbonDeduction + $dendaDeduction + $unpaidLeaveDeduction + (in_array($pph21Method, ['gross_up', 'ter_bulanan_gross_up'], true) ? 0 : $pph21Deduction) + $manualDeductionTotal + $bpjs['bpjs_total_employee'],
             2
         );
         $netSalary = round(max(($baseSalary + $allowancesTotal + $overtimePay) - $takeHomePayDeductions, 0), 2);
@@ -676,9 +716,9 @@ class PayrollGenerationService
     private function pph21Amounts(string $method, float $monthlyTax): array
     {
         return match ($method) {
-            'gross' => [0, $monthlyTax, 0],
-            'net' => [0, 0, $monthlyTax],
-            'gross_up' => [$monthlyTax, $monthlyTax, 0],
+            'gross', 'ter_bulanan' => [0, $monthlyTax, 0],
+            'net', 'ter_bulanan_net' => [0, 0, $monthlyTax],
+            'gross_up', 'ter_bulanan_gross_up' => [$monthlyTax, $monthlyTax, 0],
             'ter_harian' => [0, $monthlyTax, 0],
             'none' => [0, 0, 0],
             default => [0, 0, 0],

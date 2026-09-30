@@ -529,6 +529,21 @@ class EmployeeController extends Controller
                     ->values(),
                 'pph21_methods' => [
                     [
+                        'value' => 'ter_bulanan',
+                        'label' => 'TER Bulanan (Gross - PP 58/2023)',
+                        'description' => 'Otomatis dihitung berdasarkan PP 58/2023 sesuai PTKP dan gaji bruto bulanan. PPh21 dipotong dari gaji.',
+                    ],
+                    [
+                        'value' => 'ter_bulanan_net',
+                        'label' => 'TER Bulanan (Net / Ditanggung Perusahaan)',
+                        'description' => 'Otomatis dihitung berdasarkan PP 58/2023. PPh21 ditanggung penuh oleh perusahaan.',
+                    ],
+                    [
+                        'value' => 'ter_bulanan_gross_up',
+                        'label' => 'TER Bulanan (Gross Up / Tunjangan Pajak)',
+                        'description' => 'Otomatis dihitung dengan formula gross-up PP 58/2023. Karyawan mendapat tunjangan pajak sebanding potongan.',
+                    ],
+                    [
                         'value' => 'ter_harian',
                         'label' => 'Mekanisme TER Harian (Pegawai Tidak Tetap)',
                         'description' => 'Untuk pegawai tidak tetap atau tenaga lepas dengan upah harian/mingguan/satuan.',
@@ -976,7 +991,7 @@ class EmployeeController extends Controller
                 'sample' => 'gross',
                 'status' => 'Opsional',
                 'format' => 'Pilihan metode pajak',
-                'guide' => 'Pilihan yang diterima: gross, net, gross_up, none, ter_harian. Default: gross.',
+                'guide' => 'Pilihan yang diterima: ter_bulanan, ter_bulanan_net, ter_bulanan_gross_up, ter_harian, gross, net, gross_up, none. Default: ter_bulanan.',
             ],
             [
                 'header' => 'Kategori PTKP',
@@ -1313,7 +1328,7 @@ class EmployeeController extends Controller
                     'probation_end_date' => ['nullable', 'date'],
                     'pkwtt_activated_at' => ['nullable', 'date'],
                     'is_wfa' => ['boolean'],
-                    'pph21_method' => ['required', Rule::in(['ter_harian', 'gross', 'net', 'gross_up', 'none'])],
+                    'pph21_method' => ['required', Rule::in(['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up', 'ter_harian', 'gross', 'net', 'gross_up', 'none'])],
                     'pph21_rate' => ['required', 'integer', 'min:0'],
                     'ptkp_category' => ['nullable', Rule::in(['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'])],
                     'division_id' => ['required', 'integer', Rule::exists('divisions', 'id')->where('user_id', $ownerId)],
@@ -1531,6 +1546,10 @@ class EmployeeController extends Controller
             $validated['ptkp_category'] = null;
         } else {
             $validated['pph21_enabled'] = true;
+            if (in_array($validated['pph21_method'] ?? null, ['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'], true)) {
+                $validated['pph21_rate'] = (int) ($validated['pph21_rate'] ?? 0);
+                $validated['ptkp_category'] = $validated['ptkp_category'] ?? 'TK/0';
+            }
         }
 
         $fixedAllowances = $validated['fixed_allowances'] ?? [];
@@ -1624,6 +1643,10 @@ class EmployeeController extends Controller
             $validated['ptkp_category'] = null;
         } else {
             $validated['pph21_enabled'] = true;
+            if (in_array($validated['pph21_method'] ?? null, ['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'], true)) {
+                $validated['pph21_rate'] = (int) ($validated['pph21_rate'] ?? 0);
+                $validated['ptkp_category'] = $validated['ptkp_category'] ?? ($employee->ptkp_category ?: 'TK/0');
+            }
         }
 
         $this->ensurePositionMatchesDivision($validated['position_id'] ?? null, $validated['division_id'] ?? null);
@@ -2441,6 +2464,9 @@ class EmployeeController extends Controller
 
         return match ($val) {
             'none', 'nonaktif', 'tidak', 'disabled', '0', 'off', 'bebas', 'tanpa' => 'none',
+            'ter_bulanan', 'ter bulanan', 'ter_a', 'ter_b', 'ter_c', 'ter' => 'ter_bulanan',
+            'ter_bulanan_net', 'ter bulanan net', 'ter net' => 'ter_bulanan_net',
+            'ter_bulanan_gross_up', 'ter bulanan gross up', 'ter gross up' => 'ter_bulanan_gross_up',
             'net', 'nett' => 'net',
             'gross_up', 'gross up' => 'gross_up',
             'ter_harian', 'harian' => 'ter_harian',

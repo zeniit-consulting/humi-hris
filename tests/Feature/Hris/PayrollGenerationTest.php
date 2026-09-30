@@ -2490,4 +2490,163 @@ class PayrollGenerationTest extends TestCase
         $item->refresh();
         $this->assertEquals(50_000, (float) $item->denda_deduction);
     }
+
+    public function test_generated_payroll_separates_denda_into_late_deduction_and_attendance_deduction(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $run = PayrollRun::query()->create([
+            'user_id' => $user->id,
+            'period' => '2026-06',
+            'type' => 'regular',
+            'period_start' => '2026-06-01',
+            'period_end' => '2026-06-30',
+            'is_saved' => false,
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-SPLIT-01',
+            'first_name' => 'Budi',
+            'last_name' => 'Santoso',
+        ]);
+
+        $item = PayrollItem::query()->create([
+            'user_id' => $user->id,
+            'payroll_run_id' => $run->id,
+            'employee_id' => $employee->id,
+            'base_salary' => 6_000_000,
+            'denda_deduction' => 80_000,
+            'denda_breakdown' => [
+                [
+                    'id' => 'late_1',
+                    'type' => 'late_attendance',
+                    'title' => 'Denda Keterlambatan',
+                    'amount' => 30_000,
+                    'is_reverted' => false,
+                ],
+                [
+                    'id' => 'unrecorded_1',
+                    'type' => 'unrecorded_cutoff',
+                    'title' => 'Tidak Absen Sampai Cutoff',
+                    'amount' => 50_000,
+                    'is_reverted' => false,
+                ],
+            ],
+            'deductions_total' => 80_000,
+            'net_salary' => 5_920_000,
+        ]);
+
+        // 1. Verify index inertia props
+        $response = $this->actingAs($user)->get(route('hris.payrolls.index', ['period' => '2026-06']));
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('hris/payrolls/index')
+            ->has('items', 1)
+            ->where('items.0.late_deduction', 30_000)
+            ->where('items.0.attendance_deduction', 50_000)
+        );
+
+        // 2. Verify CSV export has Denda Keterlambatan & Potongan Kehadiran columns
+        $csvResponse = $this->actingAs($user)->get(route('hris.payrolls.export.csv', $run))->assertOk();
+        $csvContent = ltrim($csvResponse->streamedContent(), "\xEF\xBB\xBF");
+        $lines = explode("\n", trim($csvContent));
+        $headerRow = str_getcsv($lines[1]);
+        $this->assertContains('Denda Keterlambatan', $headerRow);
+        $this->assertContains('Potongan Kehadiran', $headerRow);
+        $this->assertNotContains('Potongan Denda', $headerRow);
+    }
+
+    public function test_generated_payroll_routes_half_day_late_penalty_to_attendance_deduction_and_calculates_allowance_totals(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $run = PayrollRun::query()->create([
+            'user_id' => $user->id,
+            'period' => '2026-07',
+            'type' => 'regular',
+            'period_start' => '2026-07-01',
+            'period_end' => '2026-07-31',
+            'is_saved' => false,
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-HALFDAY-01',
+            'first_name' => 'Siti',
+            'last_name' => 'Rahma',
+        ]);
+
+        PayrollItem::query()->create([
+            'user_id' => $user->id,
+            'payroll_run_id' => $run->id,
+            'employee_id' => $employee->id,
+            'base_salary' => 5_000_000,
+            'allowances_total' => 500_000,
+            'allowance_breakdown' => [
+                'Transport' => 300_000,
+                'Makan' => 200_000,
+            ],
+            'variable_allowance_breakdown' => [
+                'Insentif Proyek' => 150_000,
+            ],
+            'bonus_breakdown' => [
+                'Bonus Kinerja' => 250_000,
+            ],
+            'overtime_pay' => 100_000,
+            'overtime_hours' => 2,
+            'denda_deduction' => 190_000,
+            'denda_breakdown' => [
+                [
+                    'id' => 'late_regular',
+                    'type' => 'late_attendance',
+                    'title' => 'Denda Keterlambatan',
+                    'amount' => 25_000,
+                    'is_half_day' => false,
+                    'is_reverted' => false,
+                ],
+                [
+                    'id' => 'late_half_day',
+                    'type' => 'late_attendance',
+                    'title' => 'Potongan Setengah Hari (Terlambat)',
+                    'amount' => 100_000,
+                    'is_half_day' => true,
+                    'is_reverted' => false,
+                ],
+                [
+                    'id' => 'unrecorded_1',
+                    'type' => 'unrecorded_cutoff',
+                    'title' => 'Tidak Absen Sampai Cutoff',
+                    'amount' => 50_000,
+                    'is_reverted' => false,
+                ],
+                [
+                    'id' => 'manual_1',
+                    'type' => 'manual_denda',
+                    'title' => 'Denda Lain',
+                    'amount' => 15_000,
+                    'is_reverted' => false,
+                ],
+            ],
+            'deductions_total' => 190_000,
+            'net_salary' => 5_810_000,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('hris.payrolls.index', ['period' => '2026-07']));
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('hris/payrolls/index')
+            ->has('items', 1)
+            // Regular late (25k) + manual denda (15k) = 40k in late_deduction
+            ->where('items.0.late_deduction', 40_000)
+            // Half day late (100k) + unrecorded cutoff (50k) = 150k in attendance_deduction
+            ->where('items.0.attendance_deduction', 150_000)
+            // Allowances
+            ->where('items.0.fixed_allowances_total', 500_000)
+            ->where('items.0.variable_allowances_total', 150_000)
+            ->where('items.0.bonus_total', 250_000)
+            // Total Tunjangan = 500k + 150k + 100k (lembur) + 250k (bonus) = 1_000_000
+            ->where('items.0.total_allowances', 1_000_000)
+        );
+    }
 }

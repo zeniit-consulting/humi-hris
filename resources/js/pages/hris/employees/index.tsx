@@ -584,9 +584,9 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     contract_end_date: '',
     probation_duration_months: '0',
     pph21_enabled: true,
-    pph21_method: 'gross',
+    pph21_method: 'ter_bulanan',
     pph21_rate: '0',
-    ptkp_category: '',
+    ptkp_category: 'TK/0',
     division_id: '',
     sub_company_id: '',
     attendance_location_ids: [],
@@ -724,10 +724,22 @@ const typeLabels: Record<string, string> = {
 
 const pph21MethodLabels: Record<string, string> = {
     none: 'Nonaktif',
+    ter_bulanan: 'TER Bulanan (Gross - PP 58/2023)',
+    ter_bulanan_net: 'TER Bulanan (Net / Ditanggung Perusahaan)',
+    ter_bulanan_gross_up: 'TER Bulanan (Gross Up / Tunjangan Pajak)',
     ter_harian: 'TER Harian',
-    gross: 'Gross',
-    net: 'Net',
-    gross_up: 'Gross Up',
+    gross: 'Manual Gross',
+    net: 'Manual Net',
+    gross_up: 'Manual Gross Up',
+};
+
+const ptkpToTerCategory = (ptkp: string | null | undefined): 'A' | 'B' | 'C' => {
+    if (!ptkp) return 'A';
+    const upper = ptkp.toUpperCase().trim();
+    if (['TK/0', 'TK/1', 'K/0'].includes(upper)) return 'A';
+    if (['TK/2', 'TK/3', 'K/1', 'K/2'].includes(upper)) return 'B';
+    if (upper === 'K/3') return 'C';
+    return 'A';
 };
 
 const ptkpCategoryLabels: Record<string, string> = {
@@ -1394,24 +1406,30 @@ export default function EmployeesIndex() {
                     isValid = false;
                 }
 
-                if (employeeForm.data.pph21_rate.trim() === '') {
-                    employeeForm.setError(
-                        'pph21_rate',
-                        'Nominal PPh21 wajib diisi.',
-                    );
-                    isValid = false;
-                } else {
-                    const rateValue = Number(
-                        employeeForm.data.pph21_rate.replace(/[^\d]/g, ''),
-                    );
+                const isTerBulanan = ['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'].includes(employeeForm.data.pph21_method);
 
-                    if (!Number.isInteger(rateValue) || rateValue < 0) {
+                if (!isTerBulanan) {
+                    if (employeeForm.data.pph21_rate.trim() === '') {
                         employeeForm.setError(
                             'pph21_rate',
-                            'Nominal PPh21 harus berupa angka bilangan bulat.',
+                            'Nominal PPh21 wajib diisi.',
                         );
                         isValid = false;
+                    } else {
+                        const rateValue = Number(
+                            employeeForm.data.pph21_rate.replace(/[^\d]/g, ''),
+                        );
+
+                        if (!Number.isInteger(rateValue) || rateValue < 0) {
+                            employeeForm.setError(
+                                'pph21_rate',
+                                'Nominal PPh21 harus berupa angka bilangan bulat.',
+                            );
+                            isValid = false;
+                        }
                     }
+                } else if (!employeeForm.data.ptkp_category) {
+                    employeeForm.setData('ptkp_category', 'TK/0');
                 }
             }
 
@@ -4760,36 +4778,6 @@ export default function EmployeesIndex() {
                                         </div>
 
                                         <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                            <Label htmlFor="pph21_rate">
-                                                Nominal PPh21
-                                            </Label>
-                                            <div className="space-y-1">
-                                                <Input
-                                                    id="pph21_rate"
-                                                    type="text"
-                                                    inputMode="numeric"
-                                                    value={formatThousandDigits(
-                                                        employeeForm.data.pph21_rate,
-                                                    )}
-                                                    onChange={(event) =>
-                                                        employeeForm.setData(
-                                                            'pph21_rate',
-                                                            normalizeDigitInput(
-                                                                event.target.value,
-                                                            ),
-                                                        )
-                                                    }
-                                                    placeholder="Contoh: 250.000"
-                                                />
-                                                <InputError
-                                                    message={
-                                                        employeeForm.errors.pph21_rate
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                             <Label htmlFor="ptkp_category">
                                                 Kategori PTKP
                                             </Label>
@@ -4833,6 +4821,52 @@ export default function EmployeesIndex() {
                                                 />
                                             </div>
                                         </div>
+
+                                        {['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'].includes(
+                                            employeeForm.data.pph21_method,
+                                        ) ? (
+                                            <div className="rounded-md border border-sky-200 bg-sky-50/50 p-3 text-xs text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/20 dark:text-sky-300">
+                                                <div className="flex items-center gap-2 font-medium">
+                                                    <span className="rounded bg-sky-200 px-1.5 py-0.5 text-[11px] font-semibold text-sky-900 dark:bg-sky-900 dark:text-sky-100">
+                                                        TER Kategori {ptkpToTerCategory(employeeForm.data.ptkp_category)}
+                                                    </span>
+                                                    <span>Perhitungan Otomatis PP 58/2023 & PMK 168/2023</span>
+                                                </div>
+                                                <p className="mt-1 text-muted-foreground dark:text-sky-400/80">
+                                                    PPh 21 dihitung otomatis dari penghasilan bruto bulanan (Gaji Pokok + Tunjangan + Lembur + BPJS porsi perusahaan) sesuai tarif TER Kategori {ptkpToTerCategory(employeeForm.data.ptkp_category)}.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                                <Label htmlFor="pph21_rate">
+                                                    Nominal PPh21
+                                                </Label>
+                                                <div className="space-y-1">
+                                                    <Input
+                                                        id="pph21_rate"
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        value={formatThousandDigits(
+                                                            employeeForm.data.pph21_rate,
+                                                        )}
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'pph21_rate',
+                                                                normalizeDigitInput(
+                                                                    event.target.value,
+                                                                ),
+                                                            )
+                                                        }
+                                                        placeholder="Contoh: 250.000"
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors.pph21_rate
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                     </>
                                 )}
 
@@ -5757,16 +5791,27 @@ export default function EmployeesIndex() {
                                                 ] ??
                                                     employeeForm.data.pph21_method}
                                             </p>
-                                            <p>
-                                                <span className="font-medium">
-                                                    Nominal PPh21:
-                                                </span>{' '}
-                                                Rp{' '}
-                                                {formatThousandDigits(
-                                                    employeeForm.data.pph21_rate ||
-                                                        '0',
-                                                ) || '0'}
-                                            </p>
+                                            {['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'].includes(
+                                                employeeForm.data.pph21_method,
+                                            ) ? (
+                                                <p>
+                                                    <span className="font-medium">
+                                                        Kategori TER Bulanan:
+                                                    </span>{' '}
+                                                    Kategori {ptkpToTerCategory(employeeForm.data.ptkp_category)} (Otomatis PP 58/2023)
+                                                </p>
+                                            ) : (
+                                                <p>
+                                                    <span className="font-medium">
+                                                        Nominal PPh21:
+                                                    </span>{' '}
+                                                    Rp{' '}
+                                                    {formatThousandDigits(
+                                                        employeeForm.data.pph21_rate ||
+                                                            '0',
+                                                    ) || '0'}
+                                                </p>
+                                            )}
                                         </>
                                     ) : (
                                         <p>

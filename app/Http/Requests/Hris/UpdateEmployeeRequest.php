@@ -97,6 +97,15 @@ class UpdateEmployeeRequest extends FormRequest
             $normalizedPayload['emergency_contact_phone'] = WhatsAppPhone::normalize((string) $this->input('emergency_contact_phone'));
         }
 
+        if ($this->has('pph21_method') && in_array($this->input('pph21_method'), ['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'], true)) {
+            if (! $this->filled('pph21_rate')) {
+                $normalizedPayload['pph21_rate'] = 0;
+            }
+            if (! $this->filled('ptkp_category')) {
+                $normalizedPayload['ptkp_category'] = 'TK/0';
+            }
+        }
+
         if ($normalizedPayload !== []) {
             $this->merge($normalizedPayload);
         }
@@ -165,10 +174,10 @@ class UpdateEmployeeRequest extends FormRequest
             'pph21_method' => [
                 Rule::requiredIf(fn () => $this->boolean('pph21_enabled', true) && $this->input('pph21_method') !== 'none'),
                 'nullable',
-                Rule::in(['ter_harian', 'gross', 'net', 'gross_up', 'none']),
+                Rule::in(['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up', 'ter_harian', 'gross', 'net', 'gross_up', 'none']),
             ],
             'pph21_rate' => [
-                Rule::requiredIf(fn () => $this->boolean('pph21_enabled', true) && $this->input('pph21_method') !== 'none'),
+                Rule::requiredIf(fn () => $this->boolean('pph21_enabled', true) && ! in_array($this->input('pph21_method'), ['none', 'ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'], true)),
                 'nullable',
                 'integer',
                 'min:0',

@@ -280,7 +280,7 @@
                         <h2 class="panel-title">Deduction & Tax</h2>
                         <table class="money-table">
                             <tbody>
-                                @if ((float) ($slip->pph21_deduction ?? 0) > 0 && ($slip->pph21_method !== 'gross_up'))
+                                @if ((float) ($slip->pph21_deduction ?? 0) > 0 && ! in_array($slip->pph21_method, ['gross_up', 'ter_bulanan_gross_up'], true))
                                     <tr>
                                         <td>PPh21</td>
                                         <td>(Rp {{ number_format((float) $slip->pph21_deduction, 0, ',', '.') }})</td>
@@ -316,10 +316,40 @@
                                         <td>(Rp {{ number_format((float) $slip->kasbon_deduction, 0, ',', '.') }})</td>
                                     </tr>
                                 @endif
-                                @if ((float) ($slip->denda_deduction ?? 0) > 0)
+                                @php
+                                    $slipBreakdown = $slip->denda_breakdown ?? [];
+                                    $slipLate = 0.0;
+                                    $slipAtt = 0.0;
+                                    if (! empty($slipBreakdown)) {
+                                        foreach ($slipBreakdown as $b) {
+                                            if (! empty($b['is_reverted'])) {
+                                                continue;
+                                            }
+                                            $amt = (float) ($b['amount'] ?? 0);
+                                            $bType = (string) ($b['type'] ?? '');
+                                            $bDesc = strtolower((string) ($b['description'] ?? ''));
+                                            $bTitle = strtolower((string) ($b['title'] ?? ''));
+                                            $bHalfDay = ! empty($b['is_half_day']) || str_contains($bDesc, 'setengah hari') || str_contains($bTitle, 'setengah hari');
+                                            if ($bType === 'unrecorded_cutoff' || ($bType === 'late_attendance' && $bHalfDay)) {
+                                                $slipAtt += $amt;
+                                            } else {
+                                                $slipLate += $amt;
+                                            }
+                                        }
+                                    } else {
+                                        $slipLate = (float) ($slip->denda_deduction ?? 0);
+                                    }
+                                @endphp
+                                @if ($slipLate > 0)
                                     <tr>
-                                        <td>Denda</td>
-                                        <td>(Rp {{ number_format((float) $slip->denda_deduction, 0, ',', '.') }})</td>
+                                        <td>Denda Keterlambatan</td>
+                                        <td>(Rp {{ number_format($slipLate, 0, ',', '.') }})</td>
+                                    </tr>
+                                @endif
+                                @if ($slipAtt > 0)
+                                    <tr>
+                                        <td>Potongan Kehadiran</td>
+                                        <td>(Rp {{ number_format($slipAtt, 0, ',', '.') }})</td>
                                     </tr>
                                 @endif
                                 @if ((float) ($slip->unpaid_leave_deduction ?? 0) > 0)
@@ -347,7 +377,8 @@
                     || ((float) ($slip->bpjs_jht_company ?? 0) > 0)
                     || ((float) ($slip->bpjs_jp_company ?? 0) > 0);
                 $hasPphAllowance = (float) ($slip->pph21_allowance ?? 0) > 0;
-                $hasBenefit = $hasCompanyBpjs || $hasPphAllowance;
+                $hasPphCompanyBorne = (float) ($slip->pph21_company_borne ?? 0) > 0;
+                $hasBenefit = $hasCompanyBpjs || $hasPphAllowance || $hasPphCompanyBorne;
             @endphp
 
             @if ($hasBenefit)
@@ -389,6 +420,12 @@
                             <tr>
                                 <td>Tunjangan PPh21 (Perusahaan)</td>
                                 <td>Rp {{ number_format((float) $slip->pph21_allowance, 0, ',', '.') }}</td>
+                            </tr>
+                        @endif
+                        @if ($hasPphCompanyBorne)
+                            <tr>
+                                <td>PPh21 Ditanggung Perusahaan</td>
+                                <td>Rp {{ number_format((float) $slip->pph21_company_borne, 0, ',', '.') }}</td>
                             </tr>
                         @endif
                     </tbody>

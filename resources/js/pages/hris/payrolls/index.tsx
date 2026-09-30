@@ -97,6 +97,7 @@ type DendaBreakdownItem = {
     title?: string;
     description?: string;
     amount: number;
+    is_half_day?: boolean;
     is_reverted: boolean;
     reverted_at?: string | null;
     reverted_by?: string | null;
@@ -121,6 +122,10 @@ type PayrollItem = {
     can_send_payslip: boolean;
     base_salary: string;
     allowances_total: string;
+    fixed_allowances_total?: string | number;
+    variable_allowances_total?: string | number;
+    bonus_total?: string | number;
+    total_allowances?: string | number;
     is_prorated: boolean;
     proration_working_days: number | null;
     proration_payable_days: number | null;
@@ -145,6 +150,8 @@ type PayrollItem = {
     kasbon_deduction: string;
     denda_deduction: string;
     denda_breakdown?: DendaBreakdownItem[];
+    late_deduction?: string | number;
+    attendance_deduction?: string | number;
     unpaid_leave_deduction: string;
     manual_deduction_total?: string | number;
     manual_deduction_breakdown?: Record<string, number>;
@@ -274,6 +281,18 @@ const getEmploymentBadgeLabel = (status?: string | null, type?: string | null) =
 };
 
 const pph21Label = (method: string | null) => {
+    if (method === 'ter_bulanan') {
+        return 'TER Bulanan';
+    }
+
+    if (method === 'ter_bulanan_net') {
+        return 'TER Bulanan (Net)';
+    }
+
+    if (method === 'ter_bulanan_gross_up') {
+        return 'TER Bulanan (Gross Up)';
+    }
+
     if (method === 'ter_harian') {
         return 'TER Harian';
     }
@@ -291,6 +310,75 @@ const pph21Label = (method: string | null) => {
     }
 
     return '-';
+};
+
+const isHalfDayEntry = (e: DendaBreakdownItem): boolean => {
+    return Boolean(e.is_half_day) ||
+        (e.description?.toLowerCase().includes('setengah hari') ?? false) ||
+        (e.title?.toLowerCase().includes('setengah hari') ?? false);
+};
+
+const getLateDeduction = (item: PayrollItem): number => {
+    if (item.late_deduction !== undefined && item.late_deduction !== null) {
+        return Number(item.late_deduction);
+    }
+    const breakdown = item.denda_breakdown ?? [];
+    if (breakdown.length > 0) {
+        return breakdown
+            .filter((e) => !e.is_reverted && e.type !== 'unrecorded_cutoff' && !(e.type === 'late_attendance' && isHalfDayEntry(e)))
+            .reduce((sum, e) => sum + Number(e.amount ?? 0), 0);
+    }
+    return Number(item.denda_deduction ?? 0);
+};
+
+const getAttendanceDeduction = (item: PayrollItem): number => {
+    if (item.attendance_deduction !== undefined && item.attendance_deduction !== null) {
+        return Number(item.attendance_deduction);
+    }
+    const breakdown = item.denda_breakdown ?? [];
+    if (breakdown.length > 0) {
+        return breakdown
+            .filter((e) => !e.is_reverted && (e.type === 'unrecorded_cutoff' || (e.type === 'late_attendance' && isHalfDayEntry(e))))
+            .reduce((sum, e) => sum + Number(e.amount ?? 0), 0);
+    }
+    return 0;
+};
+
+const getFixedAllowancesTotal = (item: PayrollItem): number => {
+    if (item.fixed_allowances_total !== undefined && item.fixed_allowances_total !== null) {
+        return Number(item.fixed_allowances_total);
+    }
+    const breakdown = item.allowance_breakdown ?? {};
+    const sum = Object.values(breakdown).reduce((acc, val) => acc + Number(val || 0), 0);
+    if (sum === 0 && Number(item.allowances_total || 0) > 0) {
+        const varSum = Object.values(item.variable_allowance_breakdown ?? {}).reduce((acc, val) => acc + Number(val || 0), 0);
+        const bonSum = Object.values(item.bonus_breakdown ?? {}).reduce((acc, val) => acc + Number(val || 0), 0);
+        return Math.max(0, Number(item.allowances_total || 0) - varSum - bonSum);
+    }
+    return sum;
+};
+
+const getVariableAllowancesTotal = (item: PayrollItem): number => {
+    if (item.variable_allowances_total !== undefined && item.variable_allowances_total !== null) {
+        return Number(item.variable_allowances_total);
+    }
+    const breakdown = item.variable_allowance_breakdown ?? {};
+    return Object.values(breakdown).reduce((acc, val) => acc + Number(val || 0), 0);
+};
+
+const getBonusTotal = (item: PayrollItem): number => {
+    if (item.bonus_total !== undefined && item.bonus_total !== null) {
+        return Number(item.bonus_total);
+    }
+    const breakdown = item.bonus_breakdown ?? {};
+    return Object.values(breakdown).reduce((acc, val) => acc + Number(val || 0), 0);
+};
+
+const getTotalTunjangan = (item: PayrollItem): number => {
+    if (item.total_allowances !== undefined && item.total_allowances !== null) {
+        return Number(item.total_allowances);
+    }
+    return getFixedAllowancesTotal(item) + getVariableAllowancesTotal(item) + Number(item.overtime_pay || 0) + getBonusTotal(item);
 };
 
 export default function PayrollPage() {
@@ -399,12 +487,25 @@ export default function PayrollPage() {
                     valB = Number(b.base_salary ?? 0);
                     break;
                 case 'allowances_total':
-                    valA = Number(a.allowances_total ?? 0);
-                    valB = Number(b.allowances_total ?? 0);
+                case 'fixed_allowances_total':
+                    valA = getFixedAllowancesTotal(a);
+                    valB = getFixedAllowancesTotal(b);
+                    break;
+                case 'variable_allowances_total':
+                    valA = getVariableAllowancesTotal(a);
+                    valB = getVariableAllowancesTotal(b);
                     break;
                 case 'overtime_pay':
                     valA = Number(a.overtime_pay ?? 0);
                     valB = Number(b.overtime_pay ?? 0);
+                    break;
+                case 'bonus_total':
+                    valA = getBonusTotal(a);
+                    valB = getBonusTotal(b);
+                    break;
+                case 'total_allowances':
+                    valA = getTotalTunjangan(a);
+                    valB = getTotalTunjangan(b);
                     break;
                 case 'pph21_rate':
                     valA = Number(a.pph21_rate ?? 0);
@@ -421,6 +522,14 @@ export default function PayrollPage() {
                 case 'denda_deduction':
                     valA = Number(a.denda_deduction ?? 0);
                     valB = Number(b.denda_deduction ?? 0);
+                    break;
+                case 'late_deduction':
+                    valA = getLateDeduction(a);
+                    valB = getLateDeduction(b);
+                    break;
+                case 'attendance_deduction':
+                    valA = getAttendanceDeduction(a);
+                    valB = getAttendanceDeduction(b);
                     break;
                 case 'unpaid_leave_deduction':
                     valA = Number(a.unpaid_leave_deduction ?? 0);
@@ -1520,11 +1629,25 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('allowances_total')}
-                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                    onClick={() => handleSort('fixed_allowances_total')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground whitespace-nowrap"
                                                 >
-                                                    Tunjangan
-                                                    {sortKey === 'allowances_total' ? (
+                                                    Tunjangan Tetap
+                                                    {sortKey === 'fixed_allowances_total' || sortKey === 'allowances_total' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('variable_allowances_total')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground whitespace-nowrap"
+                                                >
+                                                    Tunjangan Tidak Tetap
+                                                    {sortKey === 'variable_allowances_total' ? (
                                                         sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
@@ -1539,6 +1662,34 @@ export default function PayrollPage() {
                                                 >
                                                     Lembur
                                                     {sortKey === 'overtime_pay' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('bonus_total')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                >
+                                                    Bonus
+                                                    {sortKey === 'bonus_total' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('total_allowances')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground whitespace-nowrap"
+                                                >
+                                                    Total Tunjangan
+                                                    {sortKey === 'total_allowances' ? (
                                                         sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
@@ -1590,11 +1741,25 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('denda_deduction')}
-                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
+                                                    onClick={() => handleSort('late_deduction')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground whitespace-nowrap"
                                                 >
-                                                    Denda
-                                                    {sortKey === 'denda_deduction' ? (
+                                                    Denda Keterlambatan
+                                                    {sortKey === 'late_deduction' ? (
+                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                                                    )}
+                                                </button>
+                                            </th>
+                                            <th className="px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSort('attendance_deduction')}
+                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground whitespace-nowrap"
+                                                >
+                                                    Potongan Kehadiran
+                                                    {sortKey === 'attendance_deduction' ? (
                                                         sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
@@ -1666,7 +1831,7 @@ export default function PayrollPage() {
                                         {sortedItems.length === 0 && (
                                             <tr>
                                                 <td
-                                                    colSpan={17}
+                                                    colSpan={22}
                                                     className="px-3 py-8 text-center text-muted-foreground"
                                                 >
                                                     Belum ada data payroll di
@@ -1680,6 +1845,12 @@ export default function PayrollPage() {
                                             const totalBpjsEmp = Number(item.bpjs_total_employee ?? 0);
                                             const totalBpjsComp = Number(item.bpjs_total_company ?? 0);
                                             const statusBadge = getEmploymentBadgeLabel(item.employment_status, item.employment_type);
+                                            const lateDeduction = getLateDeduction(item);
+                                            const attendanceDeduction = getAttendanceDeduction(item);
+                                            const fixedAllowancesTotal = getFixedAllowancesTotal(item);
+                                            const variableAllowancesTotal = getVariableAllowancesTotal(item);
+                                            const bonusTotal = getBonusTotal(item);
+                                            const totalTunjangan = getTotalTunjangan(item);
 
                                             return (
                                                 <tr
@@ -1754,18 +1925,40 @@ export default function PayrollPage() {
                                                     </td>
                                                     <td className="px-3 py-3">
                                                         <p className="font-medium">
-                                                            {formatCurrency(
-                                                                item.allowances_total,
-                                                            )}
+                                                            {formatCurrency(fixedAllowancesTotal)}
                                                         </p>
+                                                        {Object.keys(item.allowance_breakdown ?? {}).length > 0 && (
+                                                            <div className="text-[11px] text-muted-foreground space-y-0.5 mt-0.5">
+                                                                {Object.entries(item.allowance_breakdown ?? {}).slice(0, 2).map(([name, amt]) => (
+                                                                    <div key={name} className="truncate max-w-[140px]" title={`${name}: ${formatCurrency(amt)}`}>
+                                                                        {name}: {formatCurrency(amt)}
+                                                                    </div>
+                                                                ))}
+                                                                {Object.keys(item.allowance_breakdown ?? {}).length > 2 && (
+                                                                    <div>+{Object.keys(item.allowance_breakdown ?? {}).length - 2} lainnya</div>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </td>
                                                     <td className="px-3 py-3">
-                                                        {Number(
-                                                            item.overtime_pay ?? 0,
-                                                        ) > 0 ? (
-                                                            formatCurrency(
-                                                                item.overtime_pay,
-                                                            )
+                                                        {variableAllowancesTotal > 0 ? (
+                                                            <div>
+                                                                <p className="font-medium">
+                                                                    {formatCurrency(variableAllowancesTotal)}
+                                                                </p>
+                                                                {Object.keys(item.variable_allowance_breakdown ?? {}).length > 0 && (
+                                                                    <div className="text-[11px] text-muted-foreground space-y-0.5 mt-0.5">
+                                                                        {Object.entries(item.variable_allowance_breakdown ?? {}).slice(0, 2).map(([name, amt]) => (
+                                                                            <div key={name} className="truncate max-w-[140px]" title={`${name}: ${formatCurrency(amt)}`}>
+                                                                                {name}: {formatCurrency(amt)}
+                                                                            </div>
+                                                                        ))}
+                                                                        {Object.keys(item.variable_allowance_breakdown ?? {}).length > 2 && (
+                                                                            <div>+{Object.keys(item.variable_allowance_breakdown ?? {}).length - 2} lainnya</div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         ) : (
                                                             <span className="text-muted-foreground">
                                                                 -
@@ -1773,13 +1966,74 @@ export default function PayrollPage() {
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-3">
+                                                        {Number(
+                                                            item.overtime_pay ?? 0,
+                                                        ) > 0 ? (
+                                                            <div>
+                                                                <p className="font-medium">
+                                                                    {formatCurrency(
+                                                                        item.overtime_pay,
+                                                                    )}
+                                                                </p>
+                                                                {Number(item.overtime_hours ?? 0) > 0 && (
+                                                                    <p className="text-[11px] text-muted-foreground">
+                                                                        {Number(item.overtime_hours)} jam
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">
+                                                                -
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {bonusTotal > 0 ? (
+                                                            <div>
+                                                                <p className="font-medium">
+                                                                    {formatCurrency(bonusTotal)}
+                                                                </p>
+                                                                {Object.keys(item.bonus_breakdown ?? {}).length > 0 && (
+                                                                    <div className="text-[11px] text-muted-foreground space-y-0.5 mt-0.5">
+                                                                        {Object.entries(item.bonus_breakdown ?? {}).slice(0, 2).map(([name, amt]) => (
+                                                                            <div key={name} className="truncate max-w-[140px]" title={`${name}: ${formatCurrency(amt)}`}>
+                                                                                {name}: {formatCurrency(amt)}
+                                                                            </div>
+                                                                        ))}
+                                                                        {Object.keys(item.bonus_breakdown ?? {}).length > 2 && (
+                                                                            <div>+{Object.keys(item.bonus_breakdown ?? {}).length - 2} lainnya</div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">
+                                                                -
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        <p className="font-semibold text-foreground">
+                                                            {formatCurrency(totalTunjangan)}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-3 py-3">
                                                         <p className="font-medium">
                                                             {formatCurrency(
-                                                                item.pph21_rate ?? 0,
+                                                                Number(item.pph21_deduction ?? 0) > 0
+                                                                    ? Number(item.pph21_deduction)
+                                                                    : (Number(item.pph21_company_borne ?? 0) > 0
+                                                                        ? Number(item.pph21_company_borne)
+                                                                        : (Number(item.pph21_allowance ?? 0) > 0
+                                                                            ? Number(item.pph21_allowance)
+                                                                            : Number(item.pph21_rate ?? 0)))
                                                             )}
                                                         </p>
                                                         <span className="text-xs text-muted-foreground">
                                                             {pph21Label(item.pph21_method)}
+                                                            {['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'].includes(item.pph21_method ?? '') && Number(item.pph21_rate ?? 0) > 0
+                                                                ? ` (${Number(item.pph21_rate)}%)`
+                                                                : ''}
                                                         </span>
                                                     </td>
                                                     <td className="px-3 py-3">
@@ -1808,22 +2062,48 @@ export default function PayrollPage() {
                                                         <div className="flex items-center gap-1.5">
                                                             <span
                                                                 className={
-                                                                    Number(item.denda_deduction ?? 0) > 0
+                                                                    lateDeduction > 0
                                                                         ? 'font-medium text-destructive'
                                                                         : 'text-muted-foreground'
                                                                 }
                                                             >
-                                                                {formatCurrency(item.denda_deduction)}
+                                                                {formatCurrency(lateDeduction)}
                                                             </span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setDendaModalItem(item)}
-                                                                className="inline-flex size-6 items-center justify-center rounded text-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 transition-colors"
-                                                                title="Lihat rincian & kelola denda"
-                                                                aria-label="Lihat rincian denda"
+                                                            {lateDeduction > 0 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setDendaModalItem(item)}
+                                                                    className="inline-flex size-6 items-center justify-center rounded text-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 transition-colors"
+                                                                    title="Lihat rincian & kelola denda keterlambatan"
+                                                                    aria-label="Lihat rincian denda keterlambatan"
+                                                                >
+                                                                    <Info className="size-3.5" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3 py-3 whitespace-nowrap">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span
+                                                                className={
+                                                                    attendanceDeduction > 0
+                                                                        ? 'font-medium text-destructive'
+                                                                        : 'text-muted-foreground'
+                                                                }
                                                             >
-                                                                <Info className="size-3.5" />
-                                                            </button>
+                                                                {formatCurrency(attendanceDeduction)}
+                                                            </span>
+                                                            {attendanceDeduction > 0 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setDendaModalItem(item)}
+                                                                    className="inline-flex size-6 items-center justify-center rounded text-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 transition-colors"
+                                                                    title="Lihat rincian & kelola potongan kehadiran"
+                                                                    aria-label="Lihat rincian potongan kehadiran"
+                                                                >
+                                                                    <Info className="size-3.5" />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </td>
                                                     <td className="px-3 py-3">
@@ -2504,26 +2784,44 @@ export default function PayrollPage() {
                         const isEditable = !isPayrollLocked && !isPayrollSaved;
 
                         const activeTotal = Number(selectedDendaItem.denda_deduction ?? 0);
+                        const lateActive = getLateDeduction(selectedDendaItem);
+                        const attActive = getAttendanceDeduction(selectedDendaItem);
                         const revertedTotal = breakdown
                             .filter((b) => b.is_reverted)
                             .reduce((sum, b) => sum + Number(b.amount || 0), 0);
 
                         return (
                             <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-3 p-3 bg-muted/40 rounded-lg border">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-muted/40 rounded-lg border">
                                     <div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Total Denda Aktif (Di-apply)
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Denda Keterlambatan
                                         </p>
-                                        <p className="text-lg font-bold text-destructive">
+                                        <p className="text-base font-bold text-destructive">
+                                            {formatCurrency(lateActive)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Potongan Kehadiran
+                                        </p>
+                                        <p className="text-base font-bold text-destructive">
+                                            {formatCurrency(attActive)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Total Denda Aktif
+                                        </p>
+                                        <p className="text-base font-bold text-foreground">
                                             {formatCurrency(activeTotal)}
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Total Denda Dibatalkan (Reverted)
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Total Dibatalkan
                                         </p>
-                                        <p className="text-lg font-semibold text-muted-foreground line-through">
+                                        <p className="text-base font-semibold text-muted-foreground line-through">
                                             {formatCurrency(revertedTotal)}
                                         </p>
                                     </div>
