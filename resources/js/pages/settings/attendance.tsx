@@ -1,11 +1,20 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { AlertCircle, AlertTriangle, Clock, Plus, RotateCcw, ShieldAlert, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import SearchableSelect from '@/components/ui/searchable-select';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
@@ -16,6 +25,11 @@ export type LatePenaltyTier = {
     to_minute: number | null | '';
     penalty_amount: number;
     description?: string;
+};
+
+export type EmployeeOption = {
+    id: number;
+    label: string;
 };
 
 type Settings = {
@@ -48,8 +62,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function AttendanceSettings({
     settings,
+    employees = [],
 }: {
     settings: Settings;
+    employees?: EmployeeOption[];
 }) {
     const form = useForm<Settings>({
         missing_clock_out_request_days: settings.missing_clock_out_request_days ?? 2,
@@ -78,7 +94,39 @@ export default function AttendanceSettings({
         active_working_days: settings.active_working_days ?? 22,
     });
 
-    const [syncingLateness, setSyncingLateness] = useState(false);
+    const [syncLatenessOpen, setSyncLatenessOpen] = useState(false);
+    const [syncScope, setSyncScope] = useState<'range' | 'all'>('range');
+    const [syncStartDate, setSyncStartDate] = useState(() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+    });
+    const [syncEndDate, setSyncEndDate] = useState(() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    });
+    const [syncEmployeeId, setSyncEmployeeId] = useState('__all');
+    const [isSyncingLateness, setIsSyncingLateness] = useState(false);
+
+    const submitSyncLateness = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setIsSyncingLateness(true);
+        router.post(
+            '/settings/attendance/sync-lateness',
+            {
+                start_date: syncScope === 'range' ? syncStartDate : null,
+                end_date: syncScope === 'range' ? syncEndDate : null,
+                employee_id: syncEmployeeId === '__all' ? null : syncEmployeeId,
+                all: syncScope === 'all',
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setIsSyncingLateness(false);
+                    setSyncLatenessOpen(false);
+                },
+            },
+        );
+    };
 
     const addTierRow = () => {
         const currentTiers = form.data.late_penalty_tiers ?? [];
@@ -143,25 +191,10 @@ export default function AttendanceSettings({
                                     variant="outline"
                                     size="sm"
                                     className="shrink-0 w-full sm:w-auto"
-                                    disabled={syncingLateness}
-                                    onClick={() => {
-                                        setSyncingLateness(true);
-                                        router.post(
-                                            '/settings/attendance/sync-lateness',
-                                            {},
-                                            {
-                                                preserveScroll: true,
-                                                onFinish: () => setSyncingLateness(false),
-                                            },
-                                        );
-                                    }}
+                                    onClick={() => setSyncLatenessOpen(true)}
                                 >
-                                    {syncingLateness ? (
-                                        <RotateCcw className="mr-1.5 size-4 animate-spin" />
-                                    ) : (
-                                        <RotateCcw className="mr-1.5 size-4" />
-                                    )}
-                                    Sinkronkan ke Data Presensi
+                                    <Clock className="mr-1.5 size-4" />
+                                    Sync Keterlambatan
                                 </Button>
                             </div>
 
@@ -691,6 +724,123 @@ export default function AttendanceSettings({
                     </form>
                 </div>
             </SettingsLayout>
+
+            <Dialog open={syncLatenessOpen} onOpenChange={setSyncLatenessOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2">
+                            <Clock className="size-5 text-primary" />
+                            <DialogTitle>Sinkronisasi Keterlambatan Presensi</DialogTitle>
+                        </div>
+                        <DialogDescription>
+                            Sistem akan menghitung ulang menit keterlambatan, status kehadiran (hadir / terlambat), level denda, dan aturan cuti setengah hari untuk data presensi yang sudah tercatat berdasarkan jadwal kerja dan toleransi terbaru.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={submitSyncLateness} className="space-y-4 pt-2">
+                        <div className="space-y-2.5 rounded-lg border bg-muted/40 p-3">
+                            <Label className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
+                                Cakupan Data Presensi
+                            </Label>
+                            <div className="grid gap-2">
+                                <label className="flex items-center gap-2.5 text-sm cursor-pointer font-medium">
+                                    <input
+                                        type="radio"
+                                        name="sync_scope"
+                                        checked={syncScope === 'range'}
+                                        onChange={() => setSyncScope('range')}
+                                        className="size-4 text-primary"
+                                    />
+                                    <span>Rentang Tanggal Tertentu</span>
+                                </label>
+                                <label className="flex items-center gap-2.5 text-sm cursor-pointer font-medium">
+                                    <input
+                                        type="radio"
+                                        name="sync_scope"
+                                        checked={syncScope === 'all'}
+                                        onChange={() => setSyncScope('all')}
+                                        className="size-4 text-primary"
+                                    />
+                                    <span>Seluruh Riwayat Data Presensi</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {syncScope === 'range' && (
+                            <div className="grid gap-2">
+                                <Label>Rentang Tanggal Sinkronisasi</Label>
+                                <DateRangePicker
+                                    value={{
+                                        from: syncStartDate,
+                                        to: syncEndDate,
+                                    }}
+                                    onChange={(range) => {
+                                        setSyncStartDate(range.from);
+                                        setSyncEndDate(range.to ?? range.from);
+                                    }}
+                                    placeholder="Pilih rentang tanggal sinkronisasi..."
+                                />
+                            </div>
+                        )}
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="sync_employee_id">Filter Karyawan (Opsional)</Label>
+                            <SearchableSelect
+                                id="sync_employee_id"
+                                value={syncEmployeeId}
+                                onValueChange={setSyncEmployeeId}
+                                placeholder="Semua karyawan"
+                                searchPlaceholder="Cari karyawan..."
+                                options={[
+                                    { value: '__all', label: 'Semua Karyawan' },
+                                    ...employees.map((emp) => ({
+                                        value: String(emp.id),
+                                        label: emp.label,
+                                    })),
+                                ]}
+                                className="w-full"
+                            />
+                        </div>
+
+                        <div className="rounded-md bg-blue-50/80 dark:bg-blue-950/30 p-3 text-xs text-blue-800 dark:text-blue-300 space-y-1">
+                            <p className="font-semibold flex items-center gap-1.5">
+                                <Clock className="size-3.5" />
+                                Informasi Aturan:
+                            </p>
+                            <p>
+                                • Presensi yang check-in sebelum melewati batas toleransi akan otomatis diperbarui menjadi <strong>Hadir</strong> (denda &amp; menit keterlambatan direset).
+                            </p>
+                            <p>
+                                • Presensi yang melebihi batas toleransi akan diperbarui menjadi <strong>Terlambat</strong> dan dendanya dihitung ulang sesuai skema denda aktif.
+                            </p>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setSyncLatenessOpen(false)}
+                                disabled={isSyncingLateness}
+                            >
+                                Batal
+                            </Button>
+                            <Button type="submit" disabled={isSyncingLateness}>
+                                {isSyncingLateness ? (
+                                    <>
+                                        <RotateCcw className="size-4 animate-spin mr-1.5" />
+                                        Menyinkronkan...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Clock className="size-4 mr-1.5" />
+                                        Mulai Sinkronisasi
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

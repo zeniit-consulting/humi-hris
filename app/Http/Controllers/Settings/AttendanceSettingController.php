@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\AttendanceSettingUpdateRequest;
 use App\Models\CompanySetting;
+use App\Models\Employee;
 use App\Services\AttendanceStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,7 +21,20 @@ class AttendanceSettingController extends Controller
 
         $cutoffDay = (string) ($setting->payroll_cutoff_day ?? $setting->attendance_revision_cutoff_day ?? 'end_of_month');
 
+        $employees = Employee::query()
+            ->withoutGlobalScopes()
+            ->where('user_id', $request->user()->accountOwnerId())
+            ->where('is_active', true)
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get(['id', 'employee_code', 'first_name', 'last_name'])
+            ->map(fn ($emp) => [
+                'id' => $emp->id,
+                'label' => trim("{$emp->employee_code} - {$emp->first_name} {$emp->last_name}"),
+            ]);
+
         return Inertia::render('settings/attendance', [
+            'employees' => $employees,
             'settings' => [
                 'missing_clock_out_request_days' => $setting->missing_clock_out_request_days ?? 2,
                 'require_face_recognition' => (bool) ($setting->require_face_recognition ?? false),
@@ -108,15 +123,38 @@ class AttendanceSettingController extends Controller
     public function syncLateness(Request $request, AttendanceStatusService $statusService): RedirectResponse
     {
         $ownerId = $request->user()->accountOwnerId();
-        $result = $statusService->syncLateness($ownerId);
+
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'date' => ['nullable', 'date'],
+            'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
+            'all' => ['nullable', 'boolean'],
+        ]);
+
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
+
+        if (! empty($validated['all'])) {
+            $startDate = null;
+            $endDate = null;
+        }
+
+        $employeeId = ! empty($validated['employee_id']) ? (int) $validated['employee_id'] : null;
+
+        $result = $statusService->syncLateness($ownerId, $startDate, $endDate, $employeeId);
+
+        $rangeInfo = $startDate && $endDate
+            ? ($startDate === $endDate ? "tanggal {$startDate}" : "rentang {$startDate} s/d {$endDate}")
+            : ($startDate ? "tanggal {$startDate}" : 'seluruh data presensi');
 
         $detailParts = ["{$result['total']} data diperiksa", "{$result['updated']} diperbarui", "{$result['late']} terlambat", "{$result['on_time']} tepat waktu"];
         if ($result['leave_deducted'] > 0) {
-            $detailParts[] = "{$result['leave_deducted']} saldo cuti dipotong";
+            $detailParts[] = "{$result['leave_deducted']} saldo cuti dipotong (setengah hari)";
         }
 
         return to_route('settings.attendance.edit')
-            ->with('success', 'Sinkronisasi keterlambatan ke seluruh data presensi berhasil: '.implode(', ', $detailParts).'.');
+            ->with('success', "Sinkronisasi keterlambatan selesai ({$rangeInfo}): ".implode(', ', $detailParts).'.');
     }
 
     private function settingFor(Request $request): CompanySetting

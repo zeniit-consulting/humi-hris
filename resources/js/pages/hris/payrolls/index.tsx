@@ -2759,7 +2759,7 @@ export default function PayrollPage() {
                 open={!!selectedDendaItem}
                 onOpenChange={(open) => !open && setDendaModalItem(null)}
             >
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl w-full">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Info className="size-5 text-blue-500" />
@@ -2791,43 +2791,43 @@ export default function PayrollPage() {
                             .reduce((sum, b) => sum + Number(b.amount || 0), 0);
 
                         return (
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-muted/40 rounded-lg border">
-                                    <div>
-                                        <p className="text-[11px] text-muted-foreground">
+                            <div className="space-y-4 min-w-0">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-muted/40 rounded-lg border min-w-0">
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] text-muted-foreground truncate">
                                             Denda Keterlambatan
                                         </p>
-                                        <p className="text-base font-bold text-destructive">
+                                        <p className="text-base font-bold text-destructive truncate">
                                             {formatCurrency(lateActive)}
                                         </p>
                                     </div>
-                                    <div>
-                                        <p className="text-[11px] text-muted-foreground">
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] text-muted-foreground truncate">
                                             Potongan Kehadiran
                                         </p>
-                                        <p className="text-base font-bold text-destructive">
+                                        <p className="text-base font-bold text-destructive truncate">
                                             {formatCurrency(attActive)}
                                         </p>
                                     </div>
-                                    <div>
-                                        <p className="text-[11px] text-muted-foreground">
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] text-muted-foreground truncate">
                                             Total Denda Aktif
                                         </p>
-                                        <p className="text-base font-bold text-foreground">
+                                        <p className="text-base font-bold text-foreground truncate">
                                             {formatCurrency(activeTotal)}
                                         </p>
                                     </div>
-                                    <div>
-                                        <p className="text-[11px] text-muted-foreground">
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] text-muted-foreground truncate">
                                             Total Dibatalkan
                                         </p>
-                                        <p className="text-base font-semibold text-muted-foreground line-through">
+                                        <p className="text-base font-semibold text-muted-foreground line-through truncate">
                                             {formatCurrency(revertedTotal)}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="max-h-[360px] overflow-y-auto space-y-2.5 pr-1">
+                                <div className="max-h-[360px] overflow-y-auto overflow-x-hidden space-y-2.5 pr-1 min-w-0">
                                     {breakdown.length === 0 && !hasLegacyWithoutBreakdown ? (
                                         <div className="py-8 text-center text-muted-foreground text-sm">
                                             Tidak ada catatan denda/potongan untuk karyawan ini pada periode ini.
@@ -2835,8 +2835,8 @@ export default function PayrollPage() {
                                     ) : null}
 
                                     {hasLegacyWithoutBreakdown ? (
-                                        <div className="flex items-center justify-between p-3 rounded-lg border bg-card text-card-foreground">
-                                            <div className="space-y-0.5">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border bg-card text-card-foreground min-w-0">
+                                            <div className="space-y-0.5 min-w-0 flex-1">
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant="outline" className="text-xs">
                                                         Denda Payroll
@@ -2845,12 +2845,12 @@ export default function PayrollPage() {
                                                         Potongan Denda
                                                     </span>
                                                 </div>
-                                                <p className="text-xs text-muted-foreground">
+                                                <p className="text-xs text-muted-foreground break-words">
                                                     Denda manual/eksternal yang tercatat pada item payroll.
                                                 </p>
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <span className="font-semibold text-sm">
+                                            <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
+                                                <span className="font-semibold text-sm whitespace-nowrap">
                                                     {formatCurrency(selectedDendaItem.denda_deduction)}
                                                 </span>
                                                 {isEditable && (
@@ -2866,7 +2866,7 @@ export default function PayrollPage() {
                                                                 false,
                                                             )
                                                         }
-                                                        className="h-8 gap-1.5"
+                                                        className="h-8 gap-1.5 whitespace-nowrap"
                                                     >
                                                         <RotateCcw className="size-3.5" />
                                                         {revertingDendaId === 'legacy_denda'
@@ -2885,18 +2885,18 @@ export default function PayrollPage() {
                                         return (
                                             <div
                                                 key={entry.id}
-                                                className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                                                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border transition-colors min-w-0 ${
                                                     isReverted
                                                         ? 'bg-muted/30 border-dashed opacity-75'
                                                         : 'bg-card border-border hover:border-border/80'
                                                 }`}
                                             >
-                                                <div className="space-y-1 pr-3">
+                                                <div className="space-y-1 min-w-0 flex-1 pr-0 sm:pr-2">
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <Badge
                                                             variant={
                                                                 entry.type === 'late_attendance'
-                                                                    ? 'secondary'
+                                                                    ? (isHalfDayEntry(entry) ? 'destructive' : 'secondary')
                                                                     : entry.type === 'unrecorded_cutoff'
                                                                     ? 'destructive'
                                                                     : 'outline'
@@ -2925,22 +2925,22 @@ export default function PayrollPage() {
                                                             </Badge>
                                                         ) : null}
                                                     </div>
-                                                    <p className="text-sm font-medium">
+                                                    <p className="text-sm font-medium break-words">
                                                         {entry.title || 'Denda'}
                                                         {entry.description
                                                             ? ` — ${entry.description}`
                                                             : ''}
                                                     </p>
                                                     {isReverted && entry.reverted_by ? (
-                                                        <p className="text-[11px] text-muted-foreground italic">
+                                                        <p className="text-[11px] text-muted-foreground italic break-words">
                                                             Dibatalkan oleh {entry.reverted_by}
                                                         </p>
                                                     ) : null}
                                                 </div>
 
-                                                <div className="flex items-center gap-3 shrink-0">
+                                                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
                                                     <span
-                                                        className={`font-semibold text-sm ${
+                                                        className={`font-semibold text-sm whitespace-nowrap ${
                                                             isReverted
                                                                 ? 'line-through text-muted-foreground'
                                                                 : 'text-foreground'
@@ -2962,7 +2962,7 @@ export default function PayrollPage() {
                                                                     isReverted,
                                                                 )
                                                             }
-                                                            className="h-8 gap-1.5"
+                                                            className="h-8 gap-1.5 whitespace-nowrap"
                                                         >
                                                             <RotateCcw className="size-3.5" />
                                                             {isRevertingThis
@@ -2978,8 +2978,8 @@ export default function PayrollPage() {
                                     })}
                                 </div>
 
-                                <div className="flex justify-between items-center border-t pt-3">
-                                    <p className="text-xs text-muted-foreground">
+                                <div className="flex flex-col-reverse sm:flex-row justify-between items-start sm:items-center gap-3 border-t pt-3 min-w-0">
+                                    <p className="text-xs text-muted-foreground min-w-0 flex-1 break-words">
                                         {isEditable
                                             ? '* Membatalkan denda akan otomatis mengurangi total potongan dan memperbarui gaji bersih karyawan.'
                                             : '* Payroll sudah disimpan/dikunci. Pembatalan denda hanya bisa dilakukan saat payroll berstatus draft & terbuka.'}
@@ -2988,6 +2988,7 @@ export default function PayrollPage() {
                                         type="button"
                                         variant="outline"
                                         onClick={() => setDendaModalItem(null)}
+                                        className="shrink-0 w-full sm:w-auto"
                                     >
                                         Tutup
                                     </Button>
