@@ -1,7 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
-const DEFAULT_IMAGE = '/icons/icon-512.png';
+const DEFAULT_IMAGE = '/og-image.png';
 
 type StructuredData = Record<string, unknown> | Record<string, unknown>[];
 
