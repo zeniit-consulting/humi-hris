@@ -42,6 +42,7 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
@@ -3836,39 +3837,43 @@ export default function EmployeesIndex() {
                 }}
             >
                 <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-                            <ScanFace className="size-6" />
-                        </div>
-                        <DialogTitle className="text-center">
-                            Hapus Verifikasi Wajah?
-                        </DialogTitle>
-                        <DialogDescription className="text-center text-xs text-muted-foreground pt-1 leading-relaxed">
-                            Apakah Anda yakin ingin menghapus data biometrik verifikasi wajah untuk{' '}
-                            <span className="font-semibold text-foreground">
-                                {resetFaceEmployee?.full_name} ({resetFaceEmployee?.employee_code})
-                            </span>
-                            ? Karyawan harus mendaftarkan ulang foto wajahnya melalui portal karyawan sebelum dapat melakukan presensi dengan biometrik wajah.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="mt-4 flex gap-2 sm:justify-end">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setResetFaceEmployee(null)}
-                            disabled={isResettingFace}
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            onClick={handleResetFace}
-                            disabled={isResettingFace}
-                        >
-                            {isResettingFace ? 'Menghapus...' : 'Hapus Verifikasi Wajah'}
-                        </Button>
-                    </DialogFooter>
+                    {resetFaceEmployee && (
+                        <>
+                            <DialogHeader>
+                                <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                                    <ScanFace className="size-6" />
+                                </div>
+                                <DialogTitle className="text-center">
+                                    Hapus Verifikasi Wajah?
+                                </DialogTitle>
+                                <DialogDescription className="text-center text-xs text-muted-foreground pt-1 leading-relaxed">
+                                    Apakah Anda yakin ingin menghapus data biometrik verifikasi wajah untuk{' '}
+                                    <span className="font-semibold text-foreground">
+                                        {resetFaceEmployee.full_name} ({resetFaceEmployee.employee_code})
+                                    </span>
+                                    ? Karyawan harus mendaftarkan ulang foto wajahnya melalui portal karyawan sebelum dapat melakukan presensi dengan biometrik wajah.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter className="mt-4 flex gap-2 sm:justify-end">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setResetFaceEmployee(null)}
+                                    disabled={isResettingFace}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    onClick={handleResetFace}
+                                    disabled={isResettingFace}
+                                >
+                                    {isResettingFace ? 'Menghapus...' : 'Hapus Verifikasi Wajah'}
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
                 </DialogContent>
             </Dialog>
 
