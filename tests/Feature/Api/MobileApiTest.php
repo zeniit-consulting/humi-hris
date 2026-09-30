@@ -1595,4 +1595,61 @@ class MobileApiTest extends TestCase
 
         $this->assertNotNull($employee->fresh()->face_enrolled_at);
     }
+
+    public function test_mobile_portal_employee_can_delete_face_profile(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'email' => 'mobile-face-delete@example.test',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'face_embedding' => array_fill(0, 128, 0.25),
+            'face_photo_url' => 'https://example.com/faces/sample.jpg',
+            'face_enrolled_at' => now(),
+        ]);
+
+        Sanctum::actingAs($user, ['mobile']);
+
+        $this->deleteJson('/api/mobile/v1/profile/delete-face')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.face_enrolled', false)
+            ->assertJsonPath('data.face_photo_url', null);
+
+        $fresh = $employee->fresh();
+        $this->assertNull($fresh->face_embedding);
+        $this->assertNull($fresh->face_photo_url);
+        $this->assertNull($fresh->face_enrolled_at);
+    }
+
+    public function test_portal_web_employee_can_delete_face_profile(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'email' => 'portal-web-face-delete@example.test',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'face_embedding' => array_fill(0, 128, 0.25),
+            'face_photo_url' => 'https://example.com/faces/sample.jpg',
+            'face_enrolled_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/portal/api/profile/delete-face')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.face_enrolled', false);
+
+        $fresh = $employee->fresh();
+        $this->assertNull($fresh->face_embedding);
+        $this->assertNull($fresh->face_photo_url);
+        $this->assertNull($fresh->face_enrolled_at);
+    }
 }
+

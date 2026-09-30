@@ -422,6 +422,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::put('portal/api/profile', [MobileProfileController::class, 'updateProfile'])->name('portal.api.profile.update');
     Route::put('portal/api/profile/bank-account', [MobileProfileController::class, 'updateBankAccount'])->name('portal.api.profile.bank-account.update');
     Route::post('portal/api/profile/enroll-face', [MobileProfileController::class, 'enrollFace'])->name('portal.api.profile.enroll-face');
+    Route::match(['delete', 'post'], 'portal/api/profile/delete-face', [MobileProfileController::class, 'deleteFace'])->name('portal.api.profile.delete-face');
     Route::get('portal/api/announcements', [PortalResourceController::class, 'announcements'])->name('portal.api.announcements.index');
     Route::get('portal/api/surveys', [PortalResourceController::class, 'surveys'])->name('portal.api.surveys.index');
     Route::post('portal/api/surveys/{survey}/responses', [PortalResourceController::class, 'submitSurvey'])->name('portal.api.surveys.responses.store');

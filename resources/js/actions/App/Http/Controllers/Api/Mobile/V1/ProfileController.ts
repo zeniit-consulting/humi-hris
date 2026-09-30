@@ -553,6 +553,182 @@ export const enrollFace = {
     '/portal/api/profile/enroll-face': enrollFace35001c96b32b7deaa8a3b07b622dd474,
 }
 
-const ProfileController = { show, updateProfile, updateBankAccount, enrollFace }
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+const deleteFacebf3360d5bf82863dc42358299c7ccfa7 = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: deleteFacebf3360d5bf82863dc42358299c7ccfa7.url(options),
+    method: 'delete',
+})
+
+deleteFacebf3360d5bf82863dc42358299c7ccfa7.definition = {
+    methods: ["delete","post"],
+    url: '/api/mobile/v1/profile/delete-face',
+} satisfies RouteDefinition<["delete","post"]>
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+deleteFacebf3360d5bf82863dc42358299c7ccfa7.url = (options?: RouteQueryOptions) => {
+    return deleteFacebf3360d5bf82863dc42358299c7ccfa7.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+deleteFacebf3360d5bf82863dc42358299c7ccfa7.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: deleteFacebf3360d5bf82863dc42358299c7ccfa7.url(options),
+    method: 'delete',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+deleteFacebf3360d5bf82863dc42358299c7ccfa7.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: deleteFacebf3360d5bf82863dc42358299c7ccfa7.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+const deleteFacebf3360d5bf82863dc42358299c7ccfa7Form = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: deleteFacebf3360d5bf82863dc42358299c7ccfa7.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'DELETE',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+deleteFacebf3360d5bf82863dc42358299c7ccfa7Form.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: deleteFacebf3360d5bf82863dc42358299c7ccfa7.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'DELETE',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+deleteFacebf3360d5bf82863dc42358299c7ccfa7Form.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: deleteFacebf3360d5bf82863dc42358299c7ccfa7.url(options),
+    method: 'post',
+})
+
+deleteFacebf3360d5bf82863dc42358299c7ccfa7.form = deleteFacebf3360d5bf82863dc42358299c7ccfa7Form
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/portal/api/profile/delete-face'
+*/
+const deleteFaced788aaae6587b5152dbfb05409d0b1fc = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: deleteFaced788aaae6587b5152dbfb05409d0b1fc.url(options),
+    method: 'delete',
+})
+
+deleteFaced788aaae6587b5152dbfb05409d0b1fc.definition = {
+    methods: ["delete","post"],
+    url: '/portal/api/profile/delete-face',
+} satisfies RouteDefinition<["delete","post"]>
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/portal/api/profile/delete-face'
+*/
+deleteFaced788aaae6587b5152dbfb05409d0b1fc.url = (options?: RouteQueryOptions) => {
+    return deleteFaced788aaae6587b5152dbfb05409d0b1fc.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/portal/api/profile/delete-face'
+*/
+deleteFaced788aaae6587b5152dbfb05409d0b1fc.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: deleteFaced788aaae6587b5152dbfb05409d0b1fc.url(options),
+    method: 'delete',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/portal/api/profile/delete-face'
+*/
+deleteFaced788aaae6587b5152dbfb05409d0b1fc.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: deleteFaced788aaae6587b5152dbfb05409d0b1fc.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/portal/api/profile/delete-face'
+*/
+const deleteFaced788aaae6587b5152dbfb05409d0b1fcForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: deleteFaced788aaae6587b5152dbfb05409d0b1fc.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'DELETE',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/portal/api/profile/delete-face'
+*/
+deleteFaced788aaae6587b5152dbfb05409d0b1fcForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: deleteFaced788aaae6587b5152dbfb05409d0b1fc.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'DELETE',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/portal/api/profile/delete-face'
+*/
+deleteFaced788aaae6587b5152dbfb05409d0b1fcForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: deleteFaced788aaae6587b5152dbfb05409d0b1fc.url(options),
+    method: 'post',
+})
+
+deleteFaced788aaae6587b5152dbfb05409d0b1fc.form = deleteFaced788aaae6587b5152dbfb05409d0b1fcForm
+
+export const deleteFace = {
+    '/api/mobile/v1/profile/delete-face': deleteFacebf3360d5bf82863dc42358299c7ccfa7,
+    '/portal/api/profile/delete-face': deleteFaced788aaae6587b5152dbfb05409d0b1fc,
+}
+
+const ProfileController = { show, updateProfile, updateBankAccount, enrollFace, deleteFace }
 
 export default ProfileController

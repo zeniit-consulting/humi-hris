@@ -76,6 +76,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         Route::post('employees/{employee}/offboard', [EmployeeController::class, 'offboard'])->name('employees.offboard');
         Route::post('employees', [EmployeeController::class, 'store'])->middleware('employee.limit')->name('employees.store');
         Route::put('employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+        Route::delete('employees/{employee}/face', [EmployeeController::class, 'resetFace'])->name('employees.reset-face');
         Route::delete('employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
 
         Route::get('organization-chart', [OrganizationChartController::class, 'index'])->name('organization-chart.index');

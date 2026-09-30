@@ -515,6 +515,15 @@
         "face_embedding": "Array tepat 128 elemen numerik.",
         "face_photo": "Opsional, harus berupa data:image/... jika dikirim."
       }
+    },
+    {
+      "name": "Hapus pendaftaran verifikasi wajah karyawan",
+      "method": "DELETE",
+      "path": "/profile/delete-face",
+      "auth_required": true,
+      "body": null,
+      "required_fields": [],
+      "validation": {}
     }
   ],
   "implementation_notes": [

@@ -231,6 +231,9 @@ class EmployeeController extends Controller
                 'emergency_contact_phone' => $employee->emergency_contact_phone,
                 'emergency_contact_relationship' => $employee->emergency_contact_relationship,
                 'notes' => $employee->notes,
+                'face_enrolled' => ! empty($employee->face_embedding),
+                'face_photo_url' => $employee->face_photo_url,
+                'face_enrolled_at' => $employee->face_enrolled_at?->format('Y-m-d H:i'),
                 'is_active' => $employee->is_active,
                 'division' => $employee->division ? [
                     'id' => $employee->division->id,
@@ -1918,6 +1921,36 @@ class EmployeeController extends Controller
         });
 
         return back()->with('success', 'Offboarding karyawan berhasil diproses.');
+    }
+
+    /**
+     * Hapus data biometrik verifikasi wajah karyawan dari sisi admin.
+     */
+    public function resetFace(Employee $employee): RedirectResponse
+    {
+        if ($employee->face_photo_url) {
+            try {
+                $path = parse_url($employee->face_photo_url, PHP_URL_PATH);
+                if ($path) {
+                    $relative = ltrim(preg_replace('#^/storage/#', '', $path), '/');
+                    if (\App\Support\R2Storage::isConfigured()) {
+                        \App\Support\R2Storage::disk()->delete($relative);
+                    } else {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($relative);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore storage cleanup error
+            }
+        }
+
+        $employee->update([
+            'face_embedding' => null,
+            'face_photo_url' => null,
+            'face_enrolled_at' => null,
+        ]);
+
+        return back()->with('success', 'Data verifikasi biometrik wajah karyawan berhasil dihapus.');
     }
 
     /**

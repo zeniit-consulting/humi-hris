@@ -17,6 +17,14 @@ import { usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
     formatDate,
     notifyPortal,
     requestApi,
@@ -216,6 +224,8 @@ export default function PortalProfilePage({ pageTitle }: Props) {
 
     // Face recognition enrollment state
     const [isEnrollingFace, setIsEnrollingFace] = useState(false);
+    const [isDeletingFace, setIsDeletingFace] = useState(false);
+    const [isConfirmDeleteFaceOpen, setIsConfirmDeleteFaceOpen] = useState(false);
     const [faceEnrollError, setFaceEnrollError] = useState<string | null>(null);
     const [faceEnrollSuccess, setFaceEnrollSuccess] = useState<string | null>(null);
     const [isFaceCameraOpen, setIsFaceCameraOpen] = useState(false);
@@ -486,6 +496,30 @@ export default function PortalProfilePage({ pageTitle }: Props) {
         } finally {
             setIsEnrollingFace(false);
             setFaceModelLoading(false);
+        }
+    };
+
+    const handleDeleteFace = async () => {
+        try {
+            setIsDeletingFace(true);
+            setFaceEnrollError(null);
+            setFaceEnrollSuccess(null);
+
+            await requestApi('/portal/api/profile/delete-face', 'POST');
+
+            setIsConfirmDeleteFaceOpen(false);
+            setFaceEnrollSuccess('Data master verifikasi wajah berhasil dihapus.');
+            notifyPortal('success', 'Data verifikasi wajah berhasil dihapus.');
+            await loadData();
+        } catch (err) {
+            const message =
+                err instanceof Error
+                    ? err.message
+                    : 'Gagal menghapus data verifikasi wajah.';
+            setFaceEnrollError(message);
+            notifyPortal('error', message);
+        } finally {
+            setIsDeletingFace(false);
         }
     };
     const primaryBank = (profile?.bank_accounts ?? []).find((b) => b.is_primary);
@@ -1253,34 +1287,50 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                         </p>
 
                         {profile?.employee?.face_enrolled ? (
-                            <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
-                                {profile.employee.face_photo_url ? (
-                                    <img
-                                        src={profile.employee.face_photo_url}
-                                        alt="Foto Master Wajah"
-                                        onError={(e) => {
-                                            // Fallback if image path 404s
-                                            e.currentTarget.style.display = 'none';
-                                            const parent = e.currentTarget.parentElement;
-                                            if (parent) {
-                                                const fallback = parent.querySelector('.face-fallback-icon');
-                                                if (fallback) fallback.classList.remove('hidden');
-                                            }
-                                        }}
-                                        className="size-16 rounded-lg object-cover border-2 border-emerald-500 shadow-sm"
-                                    />
-                                ) : null}
-                                <div className={`size-16 rounded-lg border-2 border-emerald-500 bg-emerald-100/80 flex items-center justify-center text-emerald-700 shadow-sm face-fallback-icon ${profile.employee.face_photo_url ? 'hidden' : ''}`}>
-                                    <ScanFace className="size-8" />
+                            <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 space-y-3">
+                                <div className="flex items-center gap-4">
+                                    {profile.employee.face_photo_url ? (
+                                        <img
+                                            src={profile.employee.face_photo_url}
+                                            alt="Foto Master Wajah"
+                                            onError={(e) => {
+                                                // Fallback if image path 404s
+                                                e.currentTarget.style.display = 'none';
+                                                const parent = e.currentTarget.parentElement;
+                                                if (parent) {
+                                                    const fallback = parent.querySelector('.face-fallback-icon');
+                                                    if (fallback) fallback.classList.remove('hidden');
+                                                }
+                                            }}
+                                            className="size-16 rounded-lg object-cover border-2 border-emerald-500 shadow-sm shrink-0"
+                                        />
+                                    ) : null}
+                                    <div className={`size-16 rounded-lg border-2 border-emerald-500 bg-emerald-100/80 flex items-center justify-center text-emerald-700 shadow-sm shrink-0 face-fallback-icon ${profile.employee.face_photo_url ? 'hidden' : ''}`}>
+                                        <ScanFace className="size-8" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                                            <CheckCircle2 className="size-3.5" />
+                                            Master Wajah Terverifikasi
+                                        </span>
+                                        <p className="mt-1 text-xs text-emerald-950 font-medium">
+                                            Wajah Anda sudah aktif untuk presensi biometrik.
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                                        <CheckCircle2 className="size-3.5" />
-                                        Master Wajah Terverifikasi
+                                <div className="flex items-center justify-between border-t border-emerald-200/70 pt-2.5">
+                                    <span className="text-xs text-slate-500">
+                                        Hapus data biometrik wajah ini?
                                     </span>
-                                    <p className="mt-1 text-xs text-emerald-950 font-medium">
-                                        Wajah Anda sudah aktif untuk presensi biometrik.
-                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsConfirmDeleteFaceOpen(true)}
+                                        disabled={isDeletingFace}
+                                        className="inline-flex items-center gap-1.5 rounded-lg border border-rose-300 bg-white px-2.5 py-1 text-xs font-semibold text-rose-700 shadow-xs hover:bg-rose-50 hover:border-rose-400 active:scale-[0.98] transition cursor-pointer disabled:opacity-50"
+                                    >
+                                        <Trash2 className="size-3.5 text-rose-600" />
+                                        <span>Hapus Wajah</span>
+                                    </button>
                                 </div>
                             </div>
                         ) : null}
@@ -1336,35 +1386,45 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                         </div>
                     </div>
                 </ProfileAccordion>
-
-                <ProfileAccordion
-                    section="telegram"
-                    title="Integrasi Telegram Bot"
-                    description="Hubungkan akun untuk notifikasi cuti, lembur, dan slip gaji"
-                    icon={BellRing}
-                    isOpen={openSection === 'telegram'}
-                    onOpen={setOpenSection}
-                >
-                    <div className="space-y-3">
-                        <p className="text-sm text-slate-600">
-                            Dapatkan notifikasi persetujuan cuti/lembur secara instan dan unduh slip gaji langsung dari Telegram.
-                        </p>
-                        <div className="rounded-lg border border-sky-200 bg-sky-50/80 p-3 text-xs text-sky-900">
-                            <p className="font-semibold">Cara Menghubungkan Telegram:</p>
-                            <ol className="mt-1.5 list-decimal space-y-1 pl-4">
-                                <li>Buka bot Telegram HRIS di perangkat Anda.</li>
-                                <li>
-                                    Ketik perintah berikut di chat bot:
-                                    <code className="mt-1 block rounded bg-white px-2 py-1 font-mono text-sky-800 border">
-                                        /link {profile?.employee?.employee_code ?? 'KODE_ANDA'} {profile?.employee?.email ?? 'EMAIL_ANDA'}
-                                    </code>
-                                </li>
-                                <li>Bot akan otomatis mengonfirmasi status penautan akun Anda.</li>
-                            </ol>
-                        </div>
-                    </div>
-                </ProfileAccordion>
             </div>
+
+            {/* Modal Konfirmasi Hapus Wajah */}
+            <Dialog
+                open={isConfirmDeleteFaceOpen}
+                onOpenChange={setIsConfirmDeleteFaceOpen}
+            >
+                <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+                    <DialogHeader>
+                        <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                            <Trash2 className="size-6" />
+                        </div>
+                        <DialogTitle className="text-center text-base font-bold text-slate-900">
+                            Hapus Verifikasi Wajah?
+                        </DialogTitle>
+                        <DialogDescription className="text-center text-xs text-slate-500 pt-1 leading-relaxed">
+                            Data master biometrik dan foto wajah Anda akan dihapus dari sistem. Anda tidak akan dapat melakukan presensi dengan verifikasi wajah sebelum mendaftarkan kembali foto wajah Anda.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="mt-4 flex flex-row gap-2 sm:justify-end">
+                        <button
+                            type="button"
+                            onClick={() => setIsConfirmDeleteFaceOpen(false)}
+                            disabled={isDeletingFace}
+                            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleDeleteFace}
+                            disabled={isDeletingFace}
+                            className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-semibold text-white hover:bg-rose-700 active:bg-rose-800 disabled:opacity-60 transition"
+                        >
+                            {isDeletingFace ? 'Menghapus...' : 'Ya, Hapus Wajah'}
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </PortalShell>
     );
 }

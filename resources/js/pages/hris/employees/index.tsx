@@ -14,6 +14,7 @@ import {
     Pencil,
     Plus,
     RotateCcw,
+    ScanFace,
     Search,
     ShieldCheck,
     Trash2,
@@ -271,6 +272,9 @@ type Employee = {
     emergency_contact_phone: string | null;
     emergency_contact_relationship: string | null;
     notes: string | null;
+    face_enrolled?: boolean;
+    face_photo_url?: string | null;
+    face_enrolled_at?: string | null;
     is_active: boolean;
     division: {
         id: number;
@@ -1007,6 +1011,9 @@ export default function EmployeesIndex() {
         useState<Employee | null>(null);
     const [activatingPkwttEmployee, setActivatingPkwttEmployee] =
         useState<Employee | null>(null);
+    const [resetFaceEmployee, setResetFaceEmployee] =
+        useState<Employee | null>(null);
+    const [isResettingFace, setIsResettingFace] = useState(false);
     const [contractEndMode, setContractEndMode] = useState<
         'duration' | 'manual'
     >('duration');
@@ -1632,6 +1639,30 @@ export default function EmployeesIndex() {
                 },
             },
         );
+    };
+
+    const handleResetFace = () => {
+        if (!resetFaceEmployee) return;
+
+        setIsResettingFace(true);
+        router.delete(`/hris/employees/${resetFaceEmployee.id}/face`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast(
+                    `Data verifikasi wajah untuk ${resetFaceEmployee.full_name} berhasil dihapus.`,
+                );
+                setResetFaceEmployee(null);
+            },
+            onError: () => {
+                showToast(
+                    'Gagal menghapus data verifikasi wajah karyawan.',
+                    'error',
+                );
+            },
+            onFinish: () => {
+                setIsResettingFace(false);
+            },
+        });
     };
 
     const submitEmployeeForm = (event: FormEvent<HTMLFormElement>) => {
@@ -2733,6 +2764,23 @@ export default function EmployeesIndex() {
                                                                     <ShieldCheck className="size-4 text-primary" />
                                                                     Jadikan / Kelola Akses Admin
                                                                 </DropdownMenuItem>
+                                                                {Boolean(
+                                                                    employee.face_enrolled ||
+                                                                        employee.face_photo_url ||
+                                                                        employee.face_enrolled_at,
+                                                                ) && (
+                                                                    <DropdownMenuItem
+                                                                        onClick={() =>
+                                                                            setResetFaceEmployee(
+                                                                                employee,
+                                                                            )
+                                                                        }
+                                                                        className="text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+                                                                    >
+                                                                        <ScanFace className="size-4 text-rose-500" />
+                                                                        Hapus Verifikasi Wajah
+                                                                    </DropdownMenuItem>
+                                                                )}
                                                                 {employee.employment_type ===
                                                                     'PKWTT' &&
                                                                     employee.employment_status ===
@@ -3345,6 +3393,59 @@ export default function EmployeesIndex() {
                                     </div>
                                 )}
                             </div>
+                            <div className="flex flex-col gap-2 rounded-md border p-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <ScanFace className="size-4 text-primary" />
+                                        <p className="font-medium text-foreground">
+                                            Biometrik Verifikasi Wajah
+                                        </p>
+                                    </div>
+                                    {Boolean(
+                                        detailEmployee.face_enrolled ||
+                                            detailEmployee.face_photo_url ||
+                                            detailEmployee.face_enrolled_at,
+                                    ) && (
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={() => {
+                                                setResetFaceEmployee(detailEmployee);
+                                            }}
+                                            className="h-7 text-xs"
+                                        >
+                                            <Trash2 className="size-3.5 mr-1" />
+                                            Hapus Wajah
+                                        </Button>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-3 pt-1">
+                                    {detailEmployee.face_photo_url ? (
+                                        <img
+                                            src={detailEmployee.face_photo_url}
+                                            alt={detailEmployee.full_name}
+                                            className="size-12 rounded-lg object-cover border"
+                                        />
+                                    ) : (
+                                        <div className="size-12 rounded-lg border bg-muted flex items-center justify-center text-muted-foreground">
+                                            <ScanFace className="size-6" />
+                                        </div>
+                                    )}
+                                    <div className="space-y-0.5 text-xs">
+                                        <p className="font-medium text-foreground">
+                                            {detailEmployee.face_enrolled || detailEmployee.face_photo_url
+                                                ? 'Master Wajah Terdaftar'
+                                                : 'Belum Terdaftar'}
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                            {detailEmployee.face_enrolled_at
+                                                ? `Didaftarkan: ${detailEmployee.face_enrolled_at}`
+                                                : 'Karyawan belum mendaftarkan biometrik wajah'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                             <div className="flex flex-col gap-3 rounded-md border p-3">
                                 <p className="font-medium">
                                     Histori Kepegawaian
@@ -3724,6 +3825,50 @@ export default function EmployeesIndex() {
                             </div>
                         </form>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Konfirmasi Hapus Verifikasi Wajah Karyawan */}
+            <Dialog
+                open={resetFaceEmployee !== null}
+                onOpenChange={(open) => {
+                    if (!open) setResetFaceEmployee(null);
+                }}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                            <ScanFace className="size-6" />
+                        </div>
+                        <DialogTitle className="text-center">
+                            Hapus Verifikasi Wajah?
+                        </DialogTitle>
+                        <DialogDescription className="text-center text-xs text-muted-foreground pt-1 leading-relaxed">
+                            Apakah Anda yakin ingin menghapus data biometrik verifikasi wajah untuk{' '}
+                            <span className="font-semibold text-foreground">
+                                {resetFaceEmployee?.full_name} ({resetFaceEmployee?.employee_code})
+                            </span>
+                            ? Karyawan harus mendaftarkan ulang foto wajahnya melalui portal karyawan sebelum dapat melakukan presensi dengan biometrik wajah.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="mt-4 flex gap-2 sm:justify-end">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setResetFaceEmployee(null)}
+                            disabled={isResettingFace}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleResetFace}
+                            disabled={isResettingFace}
+                        >
+                            {isResettingFace ? 'Menghapus...' : 'Hapus Verifikasi Wajah'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

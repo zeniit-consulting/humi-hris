@@ -476,15 +476,9 @@ class AttendanceController extends Controller
                 $rowTz = $this->validTimezone($row->timezone) ?? $timezone;
                 $rowTzAbbr = $this->formatTimezoneAbbr($rowTz);
 
-                $lateInfo = '-';
-                if ($row->late_level) {
-                    $lateInfo = $this->lateLevelLabel($row->late_level);
-                    if ($row->late_minutes !== null && $row->late_minutes > 0) {
-                        $lateInfo .= " ({$this->formatLateDuration($row->late_minutes)})";
-                    }
-                } elseif ($row->late_minutes !== null && $row->late_minutes > 0) {
-                    $lateInfo = $this->formatLateDuration($row->late_minutes);
-                }
+                $lateInfo = $row->late_minutes !== null && $row->late_minutes > 0
+                    ? $this->formatLateDuration($row->late_minutes)
+                    : '-';
 
                 return [
                     'attendance_date' => $row->attendance_date?->format('Y-m-d') ?? '-',
@@ -557,13 +551,13 @@ class AttendanceController extends Controller
             echo '</table>';
             echo '<table>';
             echo '<thead><tr>';
-            foreach (['Tanggal', 'Kode Pegawai', 'Nama Pegawai', 'Status', 'Level Terlambat', 'Keterlambatan', 'Check In', 'Check Out', 'Zona Waktu', 'Catatan'] as $heading) {
+            foreach (['Tanggal', 'Kode Pegawai', 'Nama Pegawai', 'Status', 'Keterlambatan', 'Check In', 'Check Out', 'Zona Waktu', 'Catatan'] as $heading) {
                 echo '<th>'.$escape($heading).'</th>';
             }
             echo '</tr></thead><tbody>';
 
             if ($rows->isEmpty()) {
-                echo '<tr><td colspan="10">Tidak ada data kehadiran.</td></tr>';
+                echo '<tr><td colspan="9">Tidak ada data kehadiran.</td></tr>';
             }
 
             foreach ($rows as $row) {
@@ -572,7 +566,6 @@ class AttendanceController extends Controller
                 echo '<td>'.$escape($row->employee?->employee_code).'</td>';
                 echo '<td>'.$escape($row->employee?->full_name).'</td>';
                 echo '<td>'.$escape($statusLabels[$row->status] ?? $row->status).'</td>';
-                echo '<td>'.$escape($this->lateLevelLabel($row->late_level)).'</td>';
                 echo '<td>'.$escape($row->late_minutes !== null && $row->late_minutes > 0 ? $this->formatLateDuration($row->late_minutes) : '-').'</td>';
                 $rowTimezone = $this->validTimezone($row->timezone) ?? $timezone;
                 echo '<td>'.$escape($this->localExportTime($row->check_in_at, $rowTimezone)).'</td>';

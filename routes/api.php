@@ -99,5 +99,6 @@ Route::prefix('mobile/v1')->name('mobile.v1.')->group(function (): void {
         Route::put('profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
         Route::put('profile/bank-account', [ProfileController::class, 'updateBankAccount'])->name('profile.bank-account.update');
         Route::post('profile/enroll-face', [ProfileController::class, 'enrollFace'])->name('profile.enroll-face');
+        Route::match(['delete', 'post'], 'profile/delete-face', [ProfileController::class, 'deleteFace'])->name('profile.delete-face');
     });
 });

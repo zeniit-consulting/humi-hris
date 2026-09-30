@@ -241,4 +241,42 @@ class ProfileController extends Controller
             'face_enrolled_at' => $employee->face_enrolled_at?->toIso8601String(),
         ], 'Master foto wajah berhasil didaftarkan.');
     }
+
+    /**
+     * Hapus pendaftaran biometrik master wajah karyawan.
+     */
+    public function deleteFace(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $employee = $this->resolveRequiredSelfServiceEmployee($user);
+
+        if ($employee->face_photo_url) {
+            try {
+                $path = parse_url($employee->face_photo_url, PHP_URL_PATH);
+                if ($path) {
+                    $relative = ltrim(preg_replace('#^/storage/#', '', $path), '/');
+                    if (\App\Support\R2Storage::isConfigured()) {
+                        \App\Support\R2Storage::disk()->delete($relative);
+                    } else {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($relative);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore storage error
+            }
+        }
+
+        $employee->update([
+            'face_embedding' => null,
+            'face_photo_url' => null,
+            'face_enrolled_at' => null,
+        ]);
+
+        return $this->success([
+            'face_enrolled' => false,
+            'face_photo_url' => null,
+            'face_enrolled_at' => null,
+        ], 'Data pengenalan verifikasi wajah berhasil dihapus.');
+    }
 }

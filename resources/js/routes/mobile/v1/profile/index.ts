@@ -203,11 +203,98 @@ enrollFaceForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'>
 
 enrollFace.form = enrollFaceForm
 
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+export const deleteFace = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: deleteFace.url(options),
+    method: 'delete',
+})
+
+deleteFace.definition = {
+    methods: ["delete","post"],
+    url: '/api/mobile/v1/profile/delete-face',
+} satisfies RouteDefinition<["delete","post"]>
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+deleteFace.url = (options?: RouteQueryOptions) => {
+    return deleteFace.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+deleteFace.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: deleteFace.url(options),
+    method: 'delete',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+deleteFace.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: deleteFace.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+const deleteFaceForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: deleteFace.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'DELETE',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+deleteFaceForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: deleteFace.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'DELETE',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\Mobile\V1\ProfileController::deleteFace
+* @see app/Http/Controllers/Api/Mobile/V1/ProfileController.php:248
+* @route '/api/mobile/v1/profile/delete-face'
+*/
+deleteFaceForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: deleteFace.url(options),
+    method: 'post',
+})
+
+deleteFace.form = deleteFaceForm
+
 const profile = {
     show: Object.assign(show, show),
     update: Object.assign(update, update),
     bankAccount: Object.assign(bankAccount, bankAccount),
     enrollFace: Object.assign(enrollFace, enrollFace),
+    deleteFace: Object.assign(deleteFace, deleteFace),
 }
 
 export default profile

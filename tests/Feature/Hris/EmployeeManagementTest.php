@@ -2753,4 +2753,29 @@ class EmployeeManagementTest extends TestCase
             true
         );
     }
+
+    public function test_admin_can_reset_employee_face_verification(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Doni',
+            'last_name' => 'Tata',
+            'face_embedding' => array_fill(0, 128, 0.35),
+            'face_photo_url' => 'https://example.com/faces/doni.jpg',
+            'face_enrolled_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('hris.employees.reset-face', $employee->id));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $fresh = $employee->fresh();
+        $this->assertNull($fresh->face_embedding);
+        $this->assertNull($fresh->face_photo_url);
+        $this->assertNull($fresh->face_enrolled_at);
+    }
 }
+
