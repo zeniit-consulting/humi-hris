@@ -181,21 +181,9 @@ export default function AttendanceSettings({
                     >
                         {/* Section 1: Toleransi & Aturan Keterlambatan */}
                         <div className="rounded-xl border bg-card p-4 sm:p-5 shadow-sm space-y-5 w-full min-w-0 max-w-full overflow-hidden">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b w-full min-w-0">
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <Clock className="h-5 w-5 text-primary shrink-0" />
-                                    <h3 className="font-semibold text-base truncate">Aturan Toleransi & Denda Keterlambatan</h3>
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="shrink-0 w-full sm:w-auto"
-                                    onClick={() => setSyncLatenessOpen(true)}
-                                >
-                                    <Clock className="mr-1.5 size-4" />
-                                    Sync Keterlambatan
-                                </Button>
+                            <div className="flex items-center gap-2 pb-3 border-b w-full min-w-0">
+                                <Clock className="h-5 w-5 text-primary shrink-0" />
+                                <h3 className="font-semibold text-base truncate">Aturan Toleransi & Denda Keterlambatan</h3>
                             </div>
 
                             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 w-full min-w-0">
@@ -711,9 +699,18 @@ export default function AttendanceSettings({
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                             <Button disabled={form.processing} className="min-w-[150px]">
                                 {form.processing ? 'Menyimpan...' : 'Simpan Pengaturan'}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setSyncLatenessOpen(true)}
+                                className="gap-1.5"
+                            >
+                                <Clock className="size-4" />
+                                Sync Keterlambatan
                             </Button>
                             {form.recentlySuccessful && (
                                 <span className="text-xs text-emerald-600 font-medium animate-fade-in">
