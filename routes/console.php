@@ -111,3 +111,6 @@ Schedule::command('payroll:auto-generate')->monthlyOn(1, '01:00');
 
 // Automation: mark absent employees who had a work schedule but no attendance record
 Schedule::command('attendance:auto-absent')->dailyAt('23:00');
+
+// Automation: process employees reaching their scheduled offboarding date
+Schedule::command('employee:process-offboarding')->dailyAt('00:05');

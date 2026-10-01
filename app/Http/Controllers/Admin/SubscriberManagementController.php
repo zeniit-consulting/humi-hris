@@ -59,10 +59,7 @@ class SubscriberManagementController extends Controller
                 $company = CompanySetting::query()
                     ->where('user_id', $user->id)
                     ->value('name');
-                $activeEmployees = Employee::query()
-                    ->where('user_id', $user->id)
-                    ->where('employment_status', 'active')
-                    ->count();
+                $activeEmployees = $this->subscriptionService->getEmployeeCount($user);
                 $latestInvoice = SubscriptionInvoice::query()
                     ->where('user_id', $user->id)
                     ->latest('created_at')

@@ -168,7 +168,7 @@ class SubscriptionService
     {
         return Employee::query()
             ->where('user_id', $user->accountOwnerId())
-            ->where('employment_status', 'active')
+            ->active()
             ->count();
     }
 

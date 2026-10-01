@@ -75,7 +75,7 @@ class AuthController extends Controller
             ->where('employee_code', $employeeCode)
             ->first();
 
-        if (! $employee instanceof Employee || ! $employee->is_active || $employee->employment_status === 'resigned' || $employee->offboarded_at !== null) {
+        if (! $employee instanceof Employee || ! $employee->is_active || $employee->employment_status === 'resigned' || ($employee->offboarded_at !== null && $employee->offboarded_at->lte(today()))) {
             return $this->validationError('Akun portal karyawan tidak aktif.', [
                 'employee_code' => ['Akun portal karyawan tidak aktif.'],
             ]);

@@ -99,7 +99,7 @@ class UserPortalAccountService
         bool $sendCredentialMessage,
         ?string $invitationPassword = null,
     ): ?User {
-        if (! $employee->is_active || $employee->employment_status === 'resigned') {
+        if (! $employee->is_active || $employee->employment_status === 'resigned' || ($employee->offboarded_at !== null && $employee->offboarded_at->lte(today()))) {
             return null;
         }
 

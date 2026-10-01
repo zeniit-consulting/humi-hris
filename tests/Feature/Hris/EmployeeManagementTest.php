@@ -981,6 +981,114 @@ class EmployeeManagementTest extends TestCase
             ->assertSessionHasErrors('employee_code');
     }
 
+    public function test_admin_can_schedule_future_offboarding_and_employee_remains_active(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'level' => '3',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'hire_date' => '2026-01-01',
+            'employment_status' => 'active',
+            'is_active' => true,
+        ]);
+
+        $futureDate = now()->addDays(14)->toDateString();
+
+        $response = $this->actingAs($user)
+            ->from(route('hris.employees.index'))
+            ->post(route('hris.employees.offboard', $employee), [
+                'offboarded_at' => $futureDate,
+                'offboarding_reason' => 'resigned',
+                'offboarding_notes' => '1 month notice period',
+            ]);
+
+        $response
+            ->assertRedirect(route('hris.employees.index'))
+            ->assertSessionHas('success');
+
+        $employee->refresh();
+
+        // Employee remains active until offboarded_at arrives
+        $this->assertTrue($employee->is_active);
+        $this->assertSame('active', $employee->employment_status);
+        $this->assertSame($futureDate, $employee->offboarded_at?->format('Y-m-d'));
+        $this->assertSame('resigned', $employee->offboarding_reason);
+        $this->assertSame('1 month notice period', $employee->offboarding_notes);
+        $this->assertTrue($employee->isOffboardScheduled());
+
+        $this->assertDatabaseHas('employee_employment_histories', [
+            'employee_id' => $employee->id,
+            'event_type' => 'offboarding_scheduled',
+            'effective_date' => $futureDate.' 00:00:00',
+            'created_by_user_id' => $user->id,
+        ]);
+    }
+
+    public function test_admin_can_cancel_scheduled_offboarding(): void
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $division = Division::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $position = Position::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'level' => '3',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'hire_date' => '2026-01-01',
+            'employment_status' => 'active',
+            'is_active' => true,
+            'offboarded_at' => now()->addDays(14)->toDateString(),
+            'offboarding_reason' => 'resigned',
+            'offboarding_notes' => 'Notice period',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('hris.employees.index'))
+            ->delete(route('hris.employees.cancel-offboard', $employee));
+
+        $response
+            ->assertRedirect(route('hris.employees.index'))
+            ->assertSessionHas('success');
+
+        $employee->refresh();
+
+        $this->assertNull($employee->offboarded_at);
+        $this->assertNull($employee->offboarding_reason);
+        $this->assertNull($employee->offboarding_notes);
+        $this->assertTrue($employee->is_active);
+        $this->assertFalse($employee->isOffboardScheduled());
+
+        $this->assertDatabaseHas('employee_employment_histories', [
+            'employee_id' => $employee->id,
+            'event_type' => 'offboarding_cancelled',
+            'created_by_user_id' => $user->id,
+        ]);
+    }
+
     public function test_admin_can_rehire_offboarded_employee(): void
     {
         $user = User::factory()->create([

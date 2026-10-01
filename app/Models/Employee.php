@@ -335,6 +335,41 @@ class Employee extends Model
     }
 
     /**
+     * Scope query to active employees (including probation, on_leave, and future offboarding).
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true)
+            ->whereIn('employment_status', ['active', 'probation', 'on_leave'])
+            ->where(function ($sub): void {
+                $sub->whereNull('offboarded_at')
+                    ->orWhereDate('offboarded_at', '>', today());
+            });
+    }
+
+    /**
+     * Scope query to resigned / offboarded employees whose offboard date has arrived or who are marked resigned.
+     */
+    public function scopeResigned(Builder $query): Builder
+    {
+        return $query->where(function ($sub): void {
+            $sub->where('employment_status', 'resigned')
+                ->orWhere(function ($dateSub): void {
+                    $dateSub->whereNotNull('offboarded_at')
+                        ->whereDate('offboarded_at', '<=', today());
+                });
+        });
+    }
+
+    /**
+     * Check if this employee has an offboarding scheduled for a future date.
+     */
+    public function isOffboardScheduled(): bool
+    {
+        return $this->offboarded_at !== null && $this->offboarded_at->isFuture();
+    }
+
+    /**
      * Get the employee's age formatted as "xx tahun".
      */
     public function getAgeFormattedAttribute(): string

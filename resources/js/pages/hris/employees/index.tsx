@@ -225,6 +225,7 @@ type Employee = {
     offboarded_at: string | null;
     offboarding_reason: string | null;
     offboarding_notes: string | null;
+    is_offboard_scheduled?: boolean;
     employment_status: string;
     employment_type: string;
     contract_duration_months: number | null;
@@ -1642,6 +1643,28 @@ export default function EmployeesIndex() {
         );
     };
 
+    const handleCancelOffboard = (employee: Employee) => {
+        if (
+            !confirm(
+                `Batalkan jadwal offboarding untuk ${employee.full_name}? Karyawan akan tetap aktif.`,
+            )
+        ) {
+            return;
+        }
+
+        router.delete(`/hris/employees/${employee.id}/offboard`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast(
+                    `Jadwal offboarding untuk ${employee.full_name} berhasil dibatalkan.`,
+                );
+            },
+            onError: () => {
+                showToast('Gagal membatalkan jadwal offboarding.', 'error');
+            },
+        });
+    };
+
     const handleResetFace = () => {
         if (!resetFaceEmployee) return;
 
@@ -2664,27 +2687,45 @@ export default function EmployeesIndex() {
                                                     })()}
                                                 </td>
                                                 <td className="px-2 py-2">
-                                                    <Badge
-                                                        className={
-                                                            isResigned
-                                                                ? 'h-5 border-red-900 bg-red-950 px-1.5 text-[10px] text-white hover:bg-red-950'
-                                                                : 'h-5 px-1.5 text-[10px]'
-                                                        }
-                                                        variant={
-                                                            isResigned
-                                                                ? 'outline'
-                                                                : employee.employment_status ===
-                                                                    'active'
-                                                                  ? 'default'
-                                                                  : 'secondary'
-                                                        }
-                                                    >
-                                                        {statusLabels[
-                                                            employee
-                                                                .employment_status
-                                                        ] ??
-                                                            employee.employment_status}
-                                                    </Badge>
+                                                    <div className="flex flex-col items-start gap-1">
+                                                        <Badge
+                                                            className={
+                                                                isResigned
+                                                                    ? 'h-5 border-red-900 bg-red-950 px-1.5 text-[10px] text-white hover:bg-red-950'
+                                                                    : 'h-5 px-1.5 text-[10px]'
+                                                            }
+                                                            variant={
+                                                                isResigned
+                                                                    ? 'outline'
+                                                                    : employee.employment_status ===
+                                                                        'active'
+                                                                      ? 'default'
+                                                                      : 'secondary'
+                                                            }
+                                                        >
+                                                            {statusLabels[
+                                                                employee
+                                                                    .employment_status
+                                                            ] ??
+                                                                employee.employment_status}
+                                                        </Badge>
+                                                        {(employee.is_offboard_scheduled ||
+                                                            (employee.offboarded_at !==
+                                                                null &&
+                                                                employee.offboarded_at >
+                                                                    todayDate())) &&
+                                                            employee.offboarded_at && (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="h-5 border-amber-500/50 bg-amber-50 px-1.5 text-[10px] font-normal text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400"
+                                                                >
+                                                                    Akan Resign:{' '}
+                                                                    {formatDateDisplay(
+                                                                        employee.offboarded_at,
+                                                                    )}
+                                                                </Badge>
+                                                            )}
+                                                    </div>
                                                 </td>
                                                 <td className="sticky right-0 z-10 bg-background px-2 py-2 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.25)]">
                                                     <div className="flex items-center justify-end gap-1">
@@ -2800,8 +2841,11 @@ export default function EmployeesIndex() {
                                                                     )}
                                                                 {employee.employment_status ===
                                                                 'resigned' ||
-                                                                employee.offboarded_at !==
-                                                                    null ? (
+                                                                (employee.offboarded_at !==
+                                                                    null &&
+                                                                    !employee.is_offboard_scheduled &&
+                                                                    employee.offboarded_at <=
+                                                                        todayDate()) ? (
                                                                     <DropdownMenuItem
                                                                         onClick={() => {
                                                                             openEditEmployeeDialog(
@@ -2827,6 +2871,37 @@ export default function EmployeesIndex() {
                                                                         kembali
                                                                         (Re-hire)
                                                                     </DropdownMenuItem>
+                                                                ) : employee.is_offboard_scheduled ||
+                                                                  (employee.offboarded_at !==
+                                                                      null &&
+                                                                      employee.offboarded_at >
+                                                                          todayDate()) ? (
+                                                                    <>
+                                                                        <DropdownMenuItem
+                                                                            onClick={() =>
+                                                                                openOffboardingDialog(
+                                                                                    employee,
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <UserRoundX className="size-4 text-amber-600" />
+                                                                            Ubah
+                                                                            Jadwal
+                                                                            Offboarding
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem
+                                                                            onClick={() =>
+                                                                                handleCancelOffboard(
+                                                                                    employee,
+                                                                                )
+                                                                            }
+                                                                            className="text-rose-600 focus:bg-rose-50 focus:text-rose-600"
+                                                                        >
+                                                                            <RotateCcw className="size-4" />
+                                                                            Batalkan
+                                                                            Offboarding
+                                                                        </DropdownMenuItem>
+                                                                    </>
                                                                 ) : (
                                                                     <DropdownMenuItem
                                                                         onClick={() =>
@@ -3698,9 +3773,7 @@ export default function EmployeesIndex() {
                     <DialogHeader>
                         <DialogTitle>Offboarding Karyawan</DialogTitle>
                         <DialogDescription>
-                            Proses ini akan mengubah status karyawan menjadi
-                            resign, menonaktifkan data aktif, suspend akun
-                            portal, dan melepas direct report dari karyawan ini.
+                            Atur tanggal offboarding karyawan. Jika tanggal di masa depan, karyawan tetap aktif sampai tanggal tersebut tiba.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -3807,6 +3880,22 @@ export default function EmployeesIndex() {
                                 />
                             </div>
 
+                            {offboardingForm.data.offboarded_at > todayDate() ? (
+                                <div className="rounded-md border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
+                                    <p className="font-medium">Offboarding Terjadwal</p>
+                                    <p className="mt-0.5">
+                                        Tanggal offboarding di masa depan. Karyawan tetap berstatus aktif, dapat login dan absen hingga tanggal tersebut, serta belum dipindahkan ke daftar karyawan resign.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="rounded-md border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
+                                    <p className="font-medium">Offboarding Langsung</p>
+                                    <p className="mt-0.5">
+                                        Karyawan akan langsung dinonaktifkan, akun portal disuspend, dan dipindahkan ke daftar karyawan resign.
+                                    </p>
+                                </div>
+                            )}
+
                             <div className="flex justify-end gap-2">
                                 <Button
                                     type="button"
@@ -3817,11 +3906,19 @@ export default function EmployeesIndex() {
                                 </Button>
                                 <Button
                                     type="submit"
-                                    variant="destructive"
+                                    variant={
+                                        offboardingForm.data.offboarded_at >
+                                        todayDate()
+                                            ? 'default'
+                                            : 'destructive'
+                                    }
                                     disabled={offboardingForm.processing}
                                 >
                                     <UserRoundX className="size-4" />
-                                    Proses Offboarding
+                                    {offboardingForm.data.offboarded_at >
+                                    todayDate()
+                                        ? 'Jadwalkan Offboarding'
+                                        : 'Proses Offboarding Sekarang'}
                                 </Button>
                             </div>
                         </form>

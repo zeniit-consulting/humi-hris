@@ -26,9 +26,7 @@ class OrganizationChartController extends Controller
                 'division:id,name',
                 'employees' => fn ($query) => $query
                     ->where('user_id', $ownerId)
-                    ->where('is_active', true)
-                    ->whereNull('offboarded_at')
-                    ->whereNotIn('employment_status', ['resigned', 'terminated', 'inactive'])
+                    ->active()
                     ->orderBy('first_name')
                     ->orderBy('last_name'),
             ])
@@ -223,7 +221,7 @@ class OrganizationChartController extends Controller
             ->all();
 
         $employees = $position->employees
-            ->filter(fn ($entry) => $entry->is_active && $entry->offboarded_at === null && ! in_array($entry->employment_status, ['resigned', 'terminated', 'inactive'], true))
+            ->filter(fn ($entry) => $entry->is_active && ($entry->offboarded_at === null || $entry->isOffboardScheduled()) && in_array($entry->employment_status, ['active', 'probation', 'on_leave'], true))
             ->sortBy(fn ($entry) => strtolower($entry->full_name))
             ->values();
 

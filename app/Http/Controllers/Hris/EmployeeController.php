@@ -15,6 +15,7 @@ use App\Models\Position;
 use App\Models\SubCompany;
 use App\Models\User;
 use App\Services\EmployeeEmploymentHistoryService;
+use App\Services\EmployeeOffboardingService;
 use App\Services\UserPortalAccountService;
 use App\Support\WhatsAppPhone;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -46,6 +47,10 @@ use Throwable;
 
 class EmployeeController extends Controller
 {
+    public function __construct(
+        private readonly EmployeeOffboardingService $offboardingService,
+    ) {}
+
     /**
      * Display the HRIS employee dashboard page.
      */
@@ -54,6 +59,9 @@ class EmployeeController extends Controller
         $user = $request->user();
         $ownerId = $user->accountOwnerId();
         $isResignedList = $request->routeIs('hris.employees.resigned');
+
+        $this->offboardingService->processMaturedOffboardings($ownerId);
+
         $subCompanyScopeIds = $user->parent_user_id && $user->role !== 'user'
             ? $user->subCompanyScopeIds()
             : null;
@@ -106,8 +114,8 @@ class EmployeeController extends Controller
             ])
             ->when(
                 $isResignedList,
-                fn ($query) => $query->where('employment_status', 'resigned'),
-                fn ($query) => $query->where('employment_status', '!=', 'resigned'),
+                fn ($query) => $query->resigned(),
+                fn ($query) => $query->active(),
             )
             ->when($filters['search'] !== '', function ($query) use ($filters): void {
                 $query->where(function ($builder) use ($filters): void {
@@ -183,6 +191,7 @@ class EmployeeController extends Controller
                 'offboarded_at' => $employee->offboarded_at?->format('Y-m-d'),
                 'offboarding_reason' => $employee->offboarding_reason,
                 'offboarding_notes' => $employee->offboarding_notes,
+                'is_offboard_scheduled' => $employee->isOffboardScheduled(),
                 'employment_status' => $employee->employment_status,
                 'employment_type' => $employee->employment_type,
                 'daily_wage' => $employee->daily_wage,
@@ -500,20 +509,17 @@ class EmployeeController extends Controller
             'stats' => [
                 'employees_total' => Employee::query()
                     ->when($subCompanyScopeIds !== null, fn ($query) => $query->whereIn('sub_company_id', $subCompanyScopeIds))
-                    ->where('is_active', true)
-                    ->where('employment_status', '!=', 'resigned')
+                    ->active()
                     ->count(),
                 'employees_active' => Employee::query()
                     ->when($subCompanyScopeIds !== null, fn ($query) => $query->whereIn('sub_company_id', $subCompanyScopeIds))
-                    ->where('is_active', true)
-                    ->where('employment_status', '!=', 'resigned')
+                    ->active()
                     ->count(),
                 'employees_by_type' => collect(Employee::EMPLOYMENT_TYPES)
                     ->mapWithKeys(fn (string $type) => [
                         $type => Employee::query()
                             ->when($subCompanyScopeIds !== null, fn ($query) => $query->whereIn('sub_company_id', $subCompanyScopeIds))
-                            ->where('is_active', true)
-                            ->where('employment_status', '!=', 'resigned')
+                            ->active()
                             ->where('employment_type', $type)
                             ->count(),
                     ])
@@ -1854,7 +1860,6 @@ class EmployeeController extends Controller
     public function offboard(
         Request $request,
         Employee $employee,
-        EmployeeEmploymentHistoryService $historyService,
     ): RedirectResponse {
         $validated = $request->validate([
             'offboarded_at' => ['required', 'date', 'after_or_equal:'.$employee->hire_date?->format('Y-m-d')],
@@ -1872,55 +1877,22 @@ class EmployeeController extends Controller
             'offboarding_reason.in' => 'Alasan offboarding tidak valid.',
         ]);
 
-        if (! $employee->is_active && $employee->employment_status === 'resigned' && $employee->offboarded_at !== null) {
+        if (! $employee->is_active && $employee->employment_status === 'resigned' && $employee->offboarded_at !== null && Carbon::parse($employee->offboarded_at)->lte(today())) {
             return back()->with('error', 'Karyawan ini sudah melalui proses offboarding.');
         }
 
-        DB::transaction(function () use ($employee, $validated, $request, $historyService): void {
-            $before = $employee->only(['employment_status', 'division_id', 'position_id']);
+        $result = $this->offboardingService->scheduleOrExecuteOffboard($employee, $validated, $request->user());
 
-            $employee->forceFill([
-                'employment_status' => 'resigned',
-                'is_active' => false,
-                'offboarded_at' => $validated['offboarded_at'],
-                'offboarding_reason' => $validated['offboarding_reason'],
-                'offboarding_notes' => $validated['offboarding_notes'] ?? null,
-            ])->save();
+        return back()->with('success', $result['message']);
+    }
 
-            $historyService->recordChanges(
-                $employee->fresh(),
-                $before,
-                $validated['offboarded_at'],
-                $validated['offboarding_notes'] ?? $this->offboardingReasonLabel($validated['offboarding_reason']),
-                $request->user(),
-            );
+    public function cancelOffboard(
+        Request $request,
+        Employee $employee,
+    ): RedirectResponse {
+        $this->offboardingService->cancelOffboard($employee, $request->user());
 
-            $employee->directReports()->update(['manager_id' => null]);
-
-            $portalUsers = $this->portalUserQuery($employee)->get(['id']);
-            $portalUserIds = $portalUsers->modelKeys();
-
-            if ($portalUserIds !== []) {
-                User::query()
-                    ->whereKey($portalUserIds)
-                    ->update([
-                        'suspended_at' => now(),
-                        'suspension_reason' => 'Employee offboarding: '.$this->offboardingReasonLabel($validated['offboarding_reason']),
-                        'suspended_by' => $request->user()?->id,
-                        'remember_token' => null,
-                    ]);
-
-                DB::table('sessions')
-                    ->whereIn('user_id', $portalUserIds)
-                    ->delete();
-
-                foreach ($portalUsers as $portalUser) {
-                    $portalUser->tokens()->delete();
-                }
-            }
-        });
-
-        return back()->with('success', 'Offboarding karyawan berhasil diproses.');
+        return back()->with('success', 'Jadwal offboarding karyawan berhasil dibatalkan.');
     }
 
     /**

@@ -59,7 +59,7 @@ class FortifyServiceProvider extends ServiceProvider
                 ->where(fn ($query) => $query
                     ->where('is_active', false)
                     ->orWhere('employment_status', 'resigned')
-                    ->orWhereNotNull('offboarded_at'))
+                    ->orWhere(fn ($sub) => $sub->whereNotNull('offboarded_at')->whereDate('offboarded_at', '<=', today())))
                 ->exists()) {
                 return null;
             }

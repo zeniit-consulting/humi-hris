@@ -131,7 +131,7 @@ class EmployeeMasterController extends Controller
             'positionOptions' => $positionOptions,
             'filters' => $normalizedFilters,
             'stats' => [
-                'employees_total' => Employee::query()->where('is_active', true)->where('employment_status', '!=', 'resigned')->count(),
+                'employees_total' => Employee::query()->active()->count(),
                 'divisions_total' => Division::query()->count(),
                 'positions_total' => Position::query()->count(),
             ],

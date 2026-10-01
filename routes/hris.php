@@ -74,6 +74,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         Route::post('employees/{employee}/invite-user', [EmployeeController::class, 'invitePortalUser'])->name('employees.invite-user');
         Route::post('employees/{employee}/activate-pkwtt', [EmployeeController::class, 'activatePkwtt'])->name('employees.activate-pkwtt');
         Route::post('employees/{employee}/offboard', [EmployeeController::class, 'offboard'])->name('employees.offboard');
+        Route::delete('employees/{employee}/offboard', [EmployeeController::class, 'cancelOffboard'])->name('employees.cancel-offboard');
         Route::post('employees', [EmployeeController::class, 'store'])->middleware('employee.limit')->name('employees.store');
         Route::put('employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
         Route::delete('employees/{employee}/face', [EmployeeController::class, 'resetFace'])->name('employees.reset-face');

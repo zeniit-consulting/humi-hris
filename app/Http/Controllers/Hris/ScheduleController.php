@@ -47,9 +47,7 @@ class ScheduleController extends Controller
 
         $employees = Employee::query()
             ->where('user_id', $ownerId)
-            ->where('is_active', true)
-            ->whereNull('offboarded_at')
-            ->where('employment_status', '!=', 'resigned')
+            ->active()
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get(['id', 'employee_code', 'first_name', 'last_name']);
@@ -198,9 +196,7 @@ class ScheduleController extends Controller
         if ($scope === 'all') {
             return Employee::query()
                 ->where('user_id', $ownerId)
-                ->where('is_active', true)
-                ->whereNull('offboarded_at')
-                ->where('employment_status', '!=', 'resigned')
+                ->active()
                 ->orderBy('id')
                 ->pluck('id')
                 ->map(fn (int $id): int => (int) $id)
@@ -221,9 +217,7 @@ class ScheduleController extends Controller
             return Employee::query()
                 ->where('user_id', $ownerId)
                 ->whereIn('id', $ids)
-                ->where('is_active', true)
-                ->whereNull('offboarded_at')
-                ->where('employment_status', '!=', 'resigned')
+                ->active()
                 ->pluck('id')
                 ->map(fn (int $id): int => (int) $id)
                 ->all();
@@ -435,9 +429,7 @@ class ScheduleController extends Controller
         if (! empty($validated['apply_to_schedule'])) {
             $employeeIds = Employee::query()
                 ->where('user_id', $ownerId)
-                ->where('is_active', true)
-                ->whereNull('offboarded_at')
-                ->where('employment_status', '!=', 'resigned')
+                ->active()
                 ->pluck('id');
 
             $offShift = WorkShift::query()->firstOrCreate(
@@ -560,9 +552,7 @@ class ScheduleController extends Controller
         $employees = Employee::query()
             ->with('subCompany:id,name,code')
             ->where('user_id', $ownerId)
-            ->where('is_active', true)
-            ->whereNull('offboarded_at')
-            ->where('employment_status', '!=', 'resigned')
+            ->active()
             ->get()
             ->sort(function (Employee $a, Employee $b): int {
                 // Internal first

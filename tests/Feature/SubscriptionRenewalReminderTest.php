@@ -159,4 +159,62 @@ class SubscriptionRenewalReminderTest extends TestCase
 
         Carbon::setTestNow();
     }
+
+    public function test_subscription_service_counts_active_probation_on_leave_and_future_offboard_employees(): void
+    {
+        $user = User::factory()->create();
+
+        // 1. Active employee -> counted
+        \App\Models\Employee::factory()->create([
+            'user_id' => $user->id,
+            'employment_status' => 'active',
+            'is_active' => true,
+            'offboarded_at' => null,
+        ]);
+
+        // 2. Probation employee -> counted
+        \App\Models\Employee::factory()->create([
+            'user_id' => $user->id,
+            'employment_status' => 'probation',
+            'is_active' => true,
+            'offboarded_at' => null,
+        ]);
+
+        // 3. On-leave employee -> counted
+        \App\Models\Employee::factory()->create([
+            'user_id' => $user->id,
+            'employment_status' => 'on_leave',
+            'is_active' => true,
+            'offboarded_at' => null,
+        ]);
+
+        // 4. Employee with future offboarding date -> counted
+        \App\Models\Employee::factory()->create([
+            'user_id' => $user->id,
+            'employment_status' => 'active',
+            'is_active' => true,
+            'offboarded_at' => now()->addDays(10)->toDateString(),
+        ]);
+
+        // 5. Past offboarded / resigned employee -> NOT counted
+        \App\Models\Employee::factory()->create([
+            'user_id' => $user->id,
+            'employment_status' => 'resigned',
+            'is_active' => false,
+            'offboarded_at' => now()->subDay()->toDateString(),
+        ]);
+
+        // 6. Inactive employee -> NOT counted
+        \App\Models\Employee::factory()->create([
+            'user_id' => $user->id,
+            'employment_status' => 'active',
+            'is_active' => false,
+            'offboarded_at' => null,
+        ]);
+
+        $service = app(\App\Services\SubscriptionService::class);
+        $count = $service->getEmployeeCount($user);
+
+        $this->assertSame(4, $count);
+    }
 }
