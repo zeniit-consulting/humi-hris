@@ -16,10 +16,12 @@ use App\Models\User;
 use App\Models\WorkShift;
 use App\Services\AttendanceStatusService;
 use App\Services\AutoOvertimeService;
+use App\Support\AttendancePhoto;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
 class AttendanceController extends Controller
@@ -212,73 +214,75 @@ class AttendanceController extends Controller
             return $this->error('Masih ada absensi yang belum clock out.');
         }
 
-        $existingAttendance = EmployeeAttendance::query()
-            ->where('employee_id', $validated['employee_id'])
-            ->whereDate('attendance_date', $validated['attendance_date'])
-            ->first();
+        $lockKey = "att_store_{$validated['employee_id']}_{$validated['attendance_date']}";
 
-        if ($existingAttendance) {
-            return $this->error('Absensi untuk tanggal ini sudah ada.');
-        }
+        return Cache::lock($lockKey, 10)->block(5, function () use ($request, $validated, $user, $employee, $timezone, $statusService): JsonResponse {
+            $existingAttendance = EmployeeAttendance::query()
+                ->where('employee_id', $validated['employee_id'])
+                ->whereDate('attendance_date', $validated['attendance_date'])
+                ->where('is_backup', false)
+                ->first();
 
-        $validated['shift_id'] ??= $this->resolveAttendanceShiftId(
-            $validated['employee_id'],
-            $validated['attendance_date'],
-            $validated['check_in_at'] ?? null,
-            $user->accountOwnerId(),
-            $timezone,
-        );
-
-        $checkInPhotoUrl = null;
-        if (! empty($validated['check_in_photo']) && str_starts_with($validated['check_in_photo'], 'data:image/')) {
-            try {
-                $imageParts = explode(';base64,', $validated['check_in_photo']);
-                if (count($imageParts) === 2) {
-                    $imageTypeAux = explode('image/', $imageParts[0]);
-                    $imageType = $imageTypeAux[1] ?? 'jpg';
-                    $imageBase64 = base64_decode($imageParts[1], true);
-                    if ($imageBase64 !== false) {
-                        $filename = 'attendances/in_'.$validated['employee_id'].'_'.time().'.'.$imageType;
-                        if (\App\Support\R2Storage::isConfigured()) {
-                            \App\Support\R2Storage::disk()->put($filename, $imageBase64);
-                            $checkInPhotoUrl = \App\Support\R2Storage::url($filename);
-                        } else {
-                            \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $imageBase64);
-                            $checkInPhotoUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($filename);
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                // Ignore upload failure
+            if ($existingAttendance) {
+                return $this->error('Absensi untuk tanggal ini sudah ada.', 422);
             }
-        }
 
-        $payload = [
-            'employee_id' => $validated['employee_id'],
-            'shift_id' => $validated['shift_id'] ?? null,
-            'attendance_date' => $validated['attendance_date'],
-            'timezone' => $timezone,
-            'status' => $validated['status'],
-            'check_in_at' => $validated['check_in_at'] ?? null,
-            'check_in_latitude' => $validated['check_in_latitude'] ?? null,
-            'check_in_longitude' => $validated['check_in_longitude'] ?? null,
-            'check_in_photo_url' => $checkInPhotoUrl,
-            'check_out_at' => $validated['check_out_at'] ?? null,
-            'check_out_latitude' => $validated['check_out_latitude'] ?? null,
-            'check_out_longitude' => $validated['check_out_longitude'] ?? null,
-            'face_similarity_score' => $validated['face_similarity_score'] ?? null,
-            'notes' => $validated['notes'] ?? null,
-        ];
+            $validated['shift_id'] ??= $this->resolveAttendanceShiftId(
+                $validated['employee_id'],
+                $validated['attendance_date'],
+                $validated['check_in_at'] ?? null,
+                $user->accountOwnerId(),
+                $timezone,
+            );
 
-        $payload = array_merge($payload, $statusService->resolveStatusAttributes($payload, $user->accountOwnerId(), $timezone));
+            $checkInPhotoUrl = null;
+            if (! empty($validated['check_in_photo'])) {
+                $photoResult = AttendancePhoto::validate($validated['check_in_photo']);
+                if (! $photoResult['valid']) {
+                    return $this->error($photoResult['error'] ?? 'Foto presensi tidak valid atau blank.', 422);
+                }
+                $checkInPhotoUrl = AttendancePhoto::storePhoto(
+                    $photoResult['binary'],
+                    'in',
+                    (int) $validated['employee_id'],
+                    $photoResult['ext'] ?? 'jpg'
+                );
+            }
 
-        $attendance = EmployeeAttendance::query()->create($payload);
+            $payload = [
+                'employee_id' => $validated['employee_id'],
+                'shift_id' => $validated['shift_id'] ?? null,
+                'attendance_date' => $validated['attendance_date'],
+                'timezone' => $timezone,
+                'status' => $validated['status'],
+                'check_in_at' => $validated['check_in_at'] ?? null,
+                'check_in_latitude' => $validated['check_in_latitude'] ?? null,
+                'check_in_longitude' => $validated['check_in_longitude'] ?? null,
+                'check_in_photo_url' => $checkInPhotoUrl,
+                'check_out_at' => $validated['check_out_at'] ?? null,
+                'check_out_latitude' => $validated['check_out_latitude'] ?? null,
+                'check_out_longitude' => $validated['check_out_longitude'] ?? null,
+                'face_similarity_score' => $validated['face_similarity_score'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+            ];
 
-        app(AutoOvertimeService::class)->syncFromAttendance($attendance, $user->accountOwnerId(), $timezone);
+            $payload = array_merge($payload, $statusService->resolveStatusAttributes($payload, $user->accountOwnerId(), $timezone));
 
-        $attendance->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes']);
+            try {
+                $attendance = EmployeeAttendance::query()->create($payload);
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ($e->getCode() === '23000' || ($e->errorInfo[1] ?? null) === 1062) {
+                    return $this->error('Absensi untuk tanggal ini sudah ada.', 422);
+                }
+                throw $e;
+            }
 
-        return $this->success($this->payload($attendance, $timezone), 'Absensi berhasil disimpan.', 201);
+            app(AutoOvertimeService::class)->syncFromAttendance($attendance, $user->accountOwnerId(), $timezone);
+
+            $attendance->load(['employee:id,employee_code,first_name,last_name', 'shift:id,code,name,start_time,end_time,is_day_off,late_tolerance_minutes']);
+
+            return $this->success($this->payload($attendance, $timezone), 'Absensi berhasil disimpan.', 201);
+        });
     }
 
     public function update(UpdateAttendanceRequest $request, EmployeeAttendance $employeeAttendance, AttendanceStatusService $statusService): JsonResponse
@@ -319,27 +323,17 @@ class AttendanceController extends Controller
             return $this->error('Clock out hanya bisa dilakukan maksimal 3 hari dari tanggal absensi.');
         }
 
-        if (! empty($validated['check_out_photo']) && str_starts_with($validated['check_out_photo'], 'data:image/')) {
-            try {
-                $imageParts = explode(';base64,', $validated['check_out_photo']);
-                if (count($imageParts) === 2) {
-                    $imageTypeAux = explode('image/', $imageParts[0]);
-                    $imageType = $imageTypeAux[1] ?? 'jpg';
-                    $imageBase64 = base64_decode($imageParts[1], true);
-                    if ($imageBase64 !== false) {
-                        $filename = 'attendances/out_'.$employee->id.'_'.time().'.'.$imageType;
-                        if (\App\Support\R2Storage::isConfigured()) {
-                            \App\Support\R2Storage::disk()->put($filename, $imageBase64);
-                            $validated['check_out_photo_url'] = \App\Support\R2Storage::url($filename);
-                        } else {
-                            \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $imageBase64);
-                            $validated['check_out_photo_url'] = \Illuminate\Support\Facades\Storage::disk('public')->url($filename);
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                // Ignore upload failure
+        if (! empty($validated['check_out_photo'])) {
+            $photoResult = AttendancePhoto::validate($validated['check_out_photo']);
+            if (! $photoResult['valid']) {
+                return $this->error($photoResult['error'] ?? 'Foto presensi pulang tidak valid atau blank.', 422);
             }
+            $validated['check_out_photo_url'] = AttendancePhoto::storePhoto(
+                $photoResult['binary'],
+                'out',
+                (int) $employee->id,
+                $photoResult['ext'] ?? 'jpg'
+            );
         }
         unset($validated['check_out_photo'], $validated['check_in_photo']);
 

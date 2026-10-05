@@ -9,6 +9,7 @@ export type MapLocation = {
     latitude: number;
     longitude: number;
     radiusMeters?: number;
+    variant?: 'office' | 'user' | 'selected';
 };
 
 export type MapCoordinates = {
@@ -405,7 +406,7 @@ export function MapboxLocationMap({
             );
 
             const marker = new mapboxgl.Marker({
-                element: createMarkerElement('office'),
+                element: createMarkerElement(location.variant ?? 'office'),
                 anchor: 'bottom',
             })
                 .setLngLat([location.longitude, location.latitude])

@@ -160,7 +160,7 @@ class TelegramNotificationService
 
         $employeeIds = $employees->pluck('id')->all();
 
-        $attendances = EmployeeAttendance::withoutGlobalScopes()
+        $attendances = EmployeeAttendance::withoutGlobalScope('account_owner')
             ->whereIn('employee_id', $employeeIds)
             ->where('attendance_date', $dateStr)
             ->get()

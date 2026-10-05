@@ -34,7 +34,12 @@ class LeaveController extends Controller
             'date' => ['nullable', 'date'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'per_page' => ['nullable', 'in:10,25,50'],
         ]);
+
+        $perPage = in_array((int) ($validated['per_page'] ?? $request->input('per_page')), [10, 25, 50], true)
+            ? (int) ($validated['per_page'] ?? $request->input('per_page'))
+            : 10;
 
         $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
         $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
@@ -45,6 +50,7 @@ class LeaveController extends Controller
             'date' => $startDate ?? '',
             'start_date' => $startDate ?? '',
             'end_date' => $endDate ?? '',
+            'per_page' => $perPage,
         ];
 
         $leaves = LeaveRequest::query()
@@ -56,7 +62,7 @@ class LeaveController extends Controller
                     ->whereDate('end_date', '>=', $filters['start_date']);
             })
             ->orderByDesc('start_date')
-            ->paginate(12)
+            ->paginate($perPage)
             ->withQueryString()
             ->through(fn (LeaveRequest $leave) => [
                 'id' => $leave->id,
@@ -103,18 +109,24 @@ class LeaveController extends Controller
         $ownerId = $request->user()->accountOwnerId();
 
         $validated = $request->validate([
-            'status' => ['nullable', Rule::in(['pending', 'approved', 'rejected', 'cancelled'])],
+            'status' => ['nullable', 'string'],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'date' => ['nullable', 'date'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
+        $status = 'pending';
+        if ($request->has('status')) {
+            $rawStatus = (string) $request->input('status', '');
+            $status = in_array($rawStatus, ['pending', 'approved', 'rejected', 'cancelled'], true) ? $rawStatus : '';
+        }
+
         $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
         $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
 
         $filters = [
-            'status' => $validated['status'] ?? 'pending',
+            'status' => $status,
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
             'date' => $startDate ?? '',
             'start_date' => $startDate ?? '',

@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::invoices
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:168
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:165
 * @route '/admin/invoices'
 */
 export const invoices = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ invoices.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::invoices
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:168
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:165
 * @route '/admin/invoices'
 */
 invoices.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ invoices.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::invoices
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:168
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:165
 * @route '/admin/invoices'
 */
 invoices.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ invoices.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::invoices
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:168
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:165
 * @route '/admin/invoices'
 */
 invoices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ invoices.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::invoices
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:168
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:165
 * @route '/admin/invoices'
 */
 const invoicesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const invoicesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::invoices
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:168
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:165
 * @route '/admin/invoices'
 */
 invoicesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ invoicesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::invoices
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:168
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:165
 * @route '/admin/invoices'
 */
 invoicesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -163,7 +163,7 @@ invoices.form = invoicesForm
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::auditLogs
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:222
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:219
 * @route '/admin/audit-logs'
 */
 export const auditLogs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -178,7 +178,7 @@ auditLogs.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::auditLogs
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:222
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:219
 * @route '/admin/audit-logs'
 */
 auditLogs.url = (options?: RouteQueryOptions) => {
@@ -187,7 +187,7 @@ auditLogs.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::auditLogs
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:222
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:219
 * @route '/admin/audit-logs'
 */
 auditLogs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -197,7 +197,7 @@ auditLogs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::auditLogs
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:222
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:219
 * @route '/admin/audit-logs'
 */
 auditLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -207,7 +207,7 @@ auditLogs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::auditLogs
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:222
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:219
 * @route '/admin/audit-logs'
 */
 const auditLogsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -217,7 +217,7 @@ const auditLogsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> 
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::auditLogs
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:222
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:219
 * @route '/admin/audit-logs'
 */
 auditLogsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -227,7 +227,7 @@ auditLogsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::auditLogs
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:222
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:219
 * @route '/admin/audit-logs'
 */
 auditLogsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -244,7 +244,7 @@ auditLogs.form = auditLogsForm
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::updateSubscription
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:294
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:291
 * @route '/admin/subscribers/{subscriber}/subscription'
 */
 export const updateSubscription = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -259,7 +259,7 @@ updateSubscription.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::updateSubscription
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:294
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:291
 * @route '/admin/subscribers/{subscriber}/subscription'
 */
 updateSubscription.url = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -292,7 +292,7 @@ updateSubscription.url = (args: { subscriber: number | { id: number } } | [subsc
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::updateSubscription
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:294
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:291
 * @route '/admin/subscribers/{subscriber}/subscription'
 */
 updateSubscription.put = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -302,7 +302,7 @@ updateSubscription.put = (args: { subscriber: number | { id: number } } | [subsc
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::updateSubscription
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:294
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:291
 * @route '/admin/subscribers/{subscriber}/subscription'
 */
 const updateSubscriptionForm = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -317,7 +317,7 @@ const updateSubscriptionForm = (args: { subscriber: number | { id: number } } | 
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::updateSubscription
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:294
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:291
 * @route '/admin/subscribers/{subscriber}/subscription'
 */
 updateSubscriptionForm.put = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -334,7 +334,7 @@ updateSubscription.form = updateSubscriptionForm
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::suspend
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:398
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:395
 * @route '/admin/subscribers/{subscriber}/suspend'
 */
 export const suspend = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -349,7 +349,7 @@ suspend.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::suspend
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:398
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:395
 * @route '/admin/subscribers/{subscriber}/suspend'
 */
 suspend.url = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -382,7 +382,7 @@ suspend.url = (args: { subscriber: number | { id: number } } | [subscriber: numb
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::suspend
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:398
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:395
 * @route '/admin/subscribers/{subscriber}/suspend'
 */
 suspend.post = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -392,7 +392,7 @@ suspend.post = (args: { subscriber: number | { id: number } } | [subscriber: num
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::suspend
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:398
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:395
 * @route '/admin/subscribers/{subscriber}/suspend'
 */
 const suspendForm = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -402,7 +402,7 @@ const suspendForm = (args: { subscriber: number | { id: number } } | [subscriber
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::suspend
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:398
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:395
 * @route '/admin/subscribers/{subscriber}/suspend'
 */
 suspendForm.post = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -414,7 +414,7 @@ suspend.form = suspendForm
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::reactivate
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:426
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:423
 * @route '/admin/subscribers/{subscriber}/reactivate'
 */
 export const reactivate = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -429,7 +429,7 @@ reactivate.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::reactivate
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:426
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:423
 * @route '/admin/subscribers/{subscriber}/reactivate'
 */
 reactivate.url = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -462,7 +462,7 @@ reactivate.url = (args: { subscriber: number | { id: number } } | [subscriber: n
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::reactivate
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:426
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:423
 * @route '/admin/subscribers/{subscriber}/reactivate'
 */
 reactivate.post = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -472,7 +472,7 @@ reactivate.post = (args: { subscriber: number | { id: number } } | [subscriber: 
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::reactivate
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:426
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:423
 * @route '/admin/subscribers/{subscriber}/reactivate'
 */
 const reactivateForm = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -482,7 +482,7 @@ const reactivateForm = (args: { subscriber: number | { id: number } } | [subscri
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::reactivate
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:426
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:423
 * @route '/admin/subscribers/{subscriber}/reactivate'
 */
 reactivateForm.post = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -494,7 +494,7 @@ reactivate.form = reactivateForm
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::approveInvoice
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:352
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:349
 * @route '/admin/subscribers/invoices/{invoice}/approve'
 */
 export const approveInvoice = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -509,7 +509,7 @@ approveInvoice.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::approveInvoice
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:352
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:349
 * @route '/admin/subscribers/invoices/{invoice}/approve'
 */
 approveInvoice.url = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -542,7 +542,7 @@ approveInvoice.url = (args: { invoice: number | { id: number } } | [invoice: num
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::approveInvoice
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:352
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:349
 * @route '/admin/subscribers/invoices/{invoice}/approve'
 */
 approveInvoice.post = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -552,7 +552,7 @@ approveInvoice.post = (args: { invoice: number | { id: number } } | [invoice: nu
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::approveInvoice
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:352
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:349
 * @route '/admin/subscribers/invoices/{invoice}/approve'
 */
 const approveInvoiceForm = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -562,7 +562,7 @@ const approveInvoiceForm = (args: { invoice: number | { id: number } } | [invoic
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::approveInvoice
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:352
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:349
 * @route '/admin/subscribers/invoices/{invoice}/approve'
 */
 approveInvoiceForm.post = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -574,7 +574,7 @@ approveInvoice.form = approveInvoiceForm
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::cancelInvoice
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:375
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:372
 * @route '/admin/subscribers/invoices/{invoice}/cancel'
 */
 export const cancelInvoice = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -589,7 +589,7 @@ cancelInvoice.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::cancelInvoice
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:375
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:372
 * @route '/admin/subscribers/invoices/{invoice}/cancel'
 */
 cancelInvoice.url = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -622,7 +622,7 @@ cancelInvoice.url = (args: { invoice: number | { id: number } } | [invoice: numb
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::cancelInvoice
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:375
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:372
 * @route '/admin/subscribers/invoices/{invoice}/cancel'
 */
 cancelInvoice.post = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -632,7 +632,7 @@ cancelInvoice.post = (args: { invoice: number | { id: number } } | [invoice: num
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::cancelInvoice
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:375
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:372
 * @route '/admin/subscribers/invoices/{invoice}/cancel'
 */
 const cancelInvoiceForm = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -642,7 +642,7 @@ const cancelInvoiceForm = (args: { invoice: number | { id: number } } | [invoice
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::cancelInvoice
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:375
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:372
 * @route '/admin/subscribers/invoices/{invoice}/cancel'
 */
 cancelInvoiceForm.post = (args: { invoice: number | { id: number } } | [invoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

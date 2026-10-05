@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::tracking
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:105
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:111
 * @route '/hris/reprimands/tracking/{employee}'
 */
 export const tracking = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ tracking.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::tracking
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:105
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:111
 * @route '/hris/reprimands/tracking/{employee}'
 */
 tracking.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -130,7 +130,7 @@ tracking.url = (args: { employee: number | { id: number } } | [employee: number 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::tracking
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:105
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:111
 * @route '/hris/reprimands/tracking/{employee}'
 */
 tracking.get = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -140,7 +140,7 @@ tracking.get = (args: { employee: number | { id: number } } | [employee: number 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::tracking
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:105
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:111
 * @route '/hris/reprimands/tracking/{employee}'
 */
 tracking.head = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -150,7 +150,7 @@ tracking.head = (args: { employee: number | { id: number } } | [employee: number
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::tracking
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:105
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:111
 * @route '/hris/reprimands/tracking/{employee}'
 */
 const trackingForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -160,7 +160,7 @@ const trackingForm = (args: { employee: number | { id: number } } | [employee: n
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::tracking
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:105
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:111
 * @route '/hris/reprimands/tracking/{employee}'
 */
 trackingForm.get = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -170,7 +170,7 @@ trackingForm.get = (args: { employee: number | { id: number } } | [employee: num
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::tracking
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:105
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:111
 * @route '/hris/reprimands/tracking/{employee}'
 */
 trackingForm.head = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -187,7 +187,7 @@ tracking.form = trackingForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::store
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:66
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:72
 * @route '/hris/reprimands'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -202,7 +202,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::store
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:66
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:72
 * @route '/hris/reprimands'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -211,7 +211,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::store
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:66
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:72
 * @route '/hris/reprimands'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -221,7 +221,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::store
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:66
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:72
 * @route '/hris/reprimands'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -231,7 +231,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::store
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:66
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:72
 * @route '/hris/reprimands'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -243,7 +243,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::update
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:82
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:88
 * @route '/hris/reprimands/{reprimand}'
 */
 export const update = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -258,7 +258,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::update
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:82
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:88
 * @route '/hris/reprimands/{reprimand}'
 */
 update.url = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -291,7 +291,7 @@ update.url = (args: { reprimand: number | { id: number } } | [reprimand: number 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::update
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:82
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:88
 * @route '/hris/reprimands/{reprimand}'
 */
 update.put = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -301,7 +301,7 @@ update.put = (args: { reprimand: number | { id: number } } | [reprimand: number 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::update
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:82
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:88
 * @route '/hris/reprimands/{reprimand}'
 */
 const updateForm = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -316,7 +316,7 @@ const updateForm = (args: { reprimand: number | { id: number } } | [reprimand: n
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::update
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:82
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:88
 * @route '/hris/reprimands/{reprimand}'
 */
 updateForm.put = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -333,7 +333,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::destroy
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:93
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:99
 * @route '/hris/reprimands/{reprimand}'
 */
 export const destroy = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -348,7 +348,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::destroy
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:93
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:99
 * @route '/hris/reprimands/{reprimand}'
 */
 destroy.url = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -381,7 +381,7 @@ destroy.url = (args: { reprimand: number | { id: number } } | [reprimand: number
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::destroy
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:93
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:99
 * @route '/hris/reprimands/{reprimand}'
 */
 destroy.delete = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -391,7 +391,7 @@ destroy.delete = (args: { reprimand: number | { id: number } } | [reprimand: num
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::destroy
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:93
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:99
 * @route '/hris/reprimands/{reprimand}'
 */
 const destroyForm = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -406,7 +406,7 @@ const destroyForm = (args: { reprimand: number | { id: number } } | [reprimand: 
 
 /**
 * @see \App\Http\Controllers\Hris\EmployeeReprimandController::destroy
-* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:93
+* @see app/Http/Controllers/Hris/EmployeeReprimandController.php:99
 * @route '/hris/reprimands/{reprimand}'
 */
 destroyForm.delete = (args: { reprimand: number | { id: number } } | [reprimand: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

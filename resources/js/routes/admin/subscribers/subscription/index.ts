@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::update
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:294
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:291
 * @route '/admin/subscribers/{subscriber}/subscription'
 */
 export const update = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -16,7 +16,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::update
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:294
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:291
 * @route '/admin/subscribers/{subscriber}/subscription'
 */
 update.url = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ update.url = (args: { subscriber: number | { id: number } } | [subscriber: numbe
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::update
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:294
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:291
 * @route '/admin/subscribers/{subscriber}/subscription'
 */
 update.put = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -59,7 +59,7 @@ update.put = (args: { subscriber: number | { id: number } } | [subscriber: numbe
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::update
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:294
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:291
 * @route '/admin/subscribers/{subscriber}/subscription'
 */
 const updateForm = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -74,7 +74,7 @@ const updateForm = (args: { subscriber: number | { id: number } } | [subscriber:
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::update
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:294
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:291
 * @route '/admin/subscribers/{subscriber}/subscription'
 */
 updateForm.put = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

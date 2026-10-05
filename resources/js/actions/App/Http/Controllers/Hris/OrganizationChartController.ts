@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::updateExclusions
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:118
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:116
 * @route '/hris/organization-chart/exclusions'
 */
 export const updateExclusions = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ updateExclusions.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::updateExclusions
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:118
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:116
 * @route '/hris/organization-chart/exclusions'
 */
 updateExclusions.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ updateExclusions.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::updateExclusions
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:118
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:116
 * @route '/hris/organization-chart/exclusions'
 */
 updateExclusions.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ updateExclusions.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::updateExclusions
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:118
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:116
 * @route '/hris/organization-chart/exclusions'
 */
 const updateExclusionsForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const updateExclusionsForm = (options?: RouteQueryOptions): RouteFormDefinition<
 
 /**
 * @see \App\Http\Controllers\Hris\OrganizationChartController::updateExclusions
-* @see app/Http/Controllers/Hris/OrganizationChartController.php:118
+* @see app/Http/Controllers/Hris/OrganizationChartController.php:116
 * @route '/hris/organization-chart/exclusions'
 */
 updateExclusionsForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

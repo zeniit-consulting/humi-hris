@@ -16,6 +16,7 @@ import {
     notifyPortal,
     requestApi,
     translatePortalError,
+    captureValidVideoSnapshot,
 } from './lib';
 import type { PortalLinkMap } from './lib';
 import { PortalShell } from './shell';
@@ -91,6 +92,7 @@ export default function PortalBackupAttendancePage({ pageTitle }: Props) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const isSubmittingRef = useRef<boolean>(false);
 
     const fallbackLinks: PortalLinkMap = {
         attendance: '/portal/attendance',
@@ -200,18 +202,12 @@ export default function PortalBackupAttendancePage({ pageTitle }: Props) {
 
     const capturePhotoFromVideo = () => {
         if (!videoRef.current) return;
-        const canvas = document.createElement('canvas');
-        canvas.width = videoRef.current.videoWidth || 480;
-        canvas.height = videoRef.current.videoHeight || 640;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            // Mirror selfie view
-            ctx.translate(canvas.width, 0);
-            ctx.scale(-1, 1);
-            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        const snapshot = captureValidVideoSnapshot(videoRef.current, { mirror: true, quality: 0.85 });
+        if (!snapshot) {
+            notifyPortal('error', 'Kamera belum siap atau gambar terlalu gelap/blank. Harap pastikan pencahayaan cukup.');
+            return;
         }
-        const base64 = canvas.toDataURL('image/jpeg', 0.82);
-        setCapturedPhoto(base64);
+        setCapturedPhoto(snapshot.base64);
         stopCamera();
     };
 
@@ -229,13 +225,17 @@ export default function PortalBackupAttendancePage({ pageTitle }: Props) {
 
     const handleCheckIn = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmittingRef.current || isSubmitting) return;
+
         if (!selectedColleagueId) {
             notifyPortal('error', 'Pilih rekan kerja yang akan dibackup.');
             return;
         }
 
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
+
         try {
-            setIsSubmitting(true);
             const payload = {
                 backup_for_employee_id: Number(selectedColleagueId),
                 check_in_latitude: coordinates?.latitude ?? null,
@@ -258,15 +258,18 @@ export default function PortalBackupAttendancePage({ pageTitle }: Props) {
                     : 'Gagal melakukan backup absensi.'
             );
         } finally {
+            isSubmittingRef.current = false;
             setIsSubmitting(false);
         }
     };
 
     const handleCheckOut = async () => {
-        if (!activeBackup) return;
+        if (!activeBackup || isSubmittingRef.current || isSubmitting) return;
+
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
 
         try {
-            setIsSubmitting(true);
             const payload = {
                 check_out_latitude: coordinates?.latitude ?? null,
                 check_out_longitude: coordinates?.longitude ?? null,
@@ -285,6 +288,7 @@ export default function PortalBackupAttendancePage({ pageTitle }: Props) {
                     : 'Gagal clock out backup absensi.'
             );
         } finally {
+            isSubmittingRef.current = false;
             setIsSubmitting(false);
         }
     };
@@ -293,7 +297,7 @@ export default function PortalBackupAttendancePage({ pageTitle }: Props) {
 
     return (
         <PortalShell
-            title="BACKUP ABSENSI"
+            title="BACKUP"
             eyebrow="Absensi Pengganti Rekan"
             active="attendance"
             links={fallbackLinks}

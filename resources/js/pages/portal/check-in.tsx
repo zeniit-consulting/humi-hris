@@ -14,6 +14,7 @@ import {
     localDateString,
     requestApi,
     translatePortalError,
+    captureValidVideoSnapshot,
 } from './lib';
 import type { PortalLinkMap } from './lib';
 import { PortalShell } from './shell';
@@ -174,6 +175,8 @@ export function PortalAttendanceLocationPage({
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const isSubmittingRef = useRef<boolean>(false);
+    const isCapturingRef = useRef<boolean>(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -350,6 +353,7 @@ export function PortalAttendanceLocationPage({
     // ================= FACE RECOGNITION CAMERA & VERIFICATION =================
     const startCamera = async () => {
         try {
+            isCapturingRef.current = false;
             setFaceDetectionStatus('detecting');
             setFaceStatusMessage('Memulai kamera & memuat model AI...');
             setIsCameraActive(true);
@@ -456,32 +460,38 @@ export function PortalAttendanceLocationPage({
     };
 
     const captureSnapshotAndSubmit = (score: number | null) => {
+        if (isCapturingRef.current || isSubmittingRef.current) return;
+
+        const snapshot = captureValidVideoSnapshot(videoRef.current, {
+            mirror: true,
+            quality: 0.85,
+        });
+
+        if (!snapshot) {
+            setFaceStatusMessage(
+                'Gambar kamera belum siap atau terlalu gelap. Tetap hadap ke kamera...',
+            );
+            return;
+        }
+
+        isCapturingRef.current = true;
         if (scanIntervalRef.current) {
             clearInterval(scanIntervalRef.current);
             scanIntervalRef.current = null;
         }
 
-        if (!videoRef.current) return;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = videoRef.current.videoWidth || 480;
-        canvas.height = videoRef.current.videoHeight || 640;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            // Mirror image horizontally for standard selfie view
-            ctx.translate(canvas.width, 0);
-            ctx.scale(-1, 1);
-            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        }
-        const base64 = canvas.toDataURL('image/jpeg', 0.82);
-        setCapturedPhotoBase64(base64);
+        setCapturedPhotoBase64(snapshot.base64);
         stopCamera();
 
         // Submit attendance with face photo payload
-        void executeAttendanceSubmit(base64, score);
+        void executeAttendanceSubmit(snapshot.base64, score);
     };
 
     const handleActionClick = () => {
+        if (isSubmitting || isSubmittingRef.current) {
+            return;
+        }
+
         if (isOutsideRadius) {
             handleDetectLocation();
             return;
@@ -508,11 +518,18 @@ export function PortalAttendanceLocationPage({
             return;
         }
 
+        if (isSubmittingRef.current) {
+            return;
+        }
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
+
         try {
-            setIsSubmitting(true);
 
             if (mode === 'clock-out') {
                 if (!openAttendance) {
+                    isSubmittingRef.current = false;
+                    setIsSubmitting(false);
                     notifyPortal(
                         'error',
                         'Tidak ada absensi aktif untuk clock out.',
@@ -563,6 +580,9 @@ export function PortalAttendanceLocationPage({
             );
             window.location.href = '/portal';
         } catch (submitError) {
+            isSubmittingRef.current = false;
+            isCapturingRef.current = false;
+            setIsSubmitting(false);
             setIsFaceModalOpen(false);
             notifyPortal(
                 'error',
@@ -577,8 +597,6 @@ export function PortalAttendanceLocationPage({
                       ? 'Jam pulang gagal.'
                       : 'Absensi masuk gagal.',
             );
-        } finally {
-            setIsSubmitting(false);
         }
     };
 

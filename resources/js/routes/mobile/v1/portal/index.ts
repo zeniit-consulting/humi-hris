@@ -86,7 +86,7 @@ summary.form = summaryForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::attendancePolicy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:105
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:107
 * @route '/api/mobile/v1/portal/attendance-policy'
 */
 export const attendancePolicy = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -101,7 +101,7 @@ attendancePolicy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::attendancePolicy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:105
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:107
 * @route '/api/mobile/v1/portal/attendance-policy'
 */
 attendancePolicy.url = (options?: RouteQueryOptions) => {
@@ -110,7 +110,7 @@ attendancePolicy.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::attendancePolicy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:105
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:107
 * @route '/api/mobile/v1/portal/attendance-policy'
 */
 attendancePolicy.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -120,7 +120,7 @@ attendancePolicy.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::attendancePolicy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:105
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:107
 * @route '/api/mobile/v1/portal/attendance-policy'
 */
 attendancePolicy.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -130,7 +130,7 @@ attendancePolicy.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::attendancePolicy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:105
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:107
 * @route '/api/mobile/v1/portal/attendance-policy'
 */
 const attendancePolicyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -140,7 +140,7 @@ const attendancePolicyForm = (options?: RouteQueryOptions): RouteFormDefinition<
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::attendancePolicy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:105
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:107
 * @route '/api/mobile/v1/portal/attendance-policy'
 */
 attendancePolicyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -150,7 +150,7 @@ attendancePolicyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'g
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\AttendanceController::attendancePolicy
-* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:105
+* @see app/Http/Controllers/Api/Mobile/V1/AttendanceController.php:107
 * @route '/api/mobile/v1/portal/attendance-policy'
 */
 attendancePolicyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

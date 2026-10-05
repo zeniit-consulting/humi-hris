@@ -34,7 +34,8 @@ class StoreAttendanceRequest extends FormRequest
                 Rule::unique('employee_attendances', 'attendance_date')
                     ->where(fn ($query) => $query
                         ->where('employee_id', $this->integer('employee_id'))
-                        ->where('user_id', $ownerId)),
+                        ->where('user_id', $ownerId))
+                    ->withoutTrashed(),
             ],
             'status' => ['required', Rule::in(['present', 'late', 'on_leave', 'absent'])],
             'check_in_at' => ['nullable', 'date'],

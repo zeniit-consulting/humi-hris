@@ -26,12 +26,25 @@ class ShiftChangeApprovalController extends Controller
             'status' => ['nullable', Rule::in(['pending', 'approved', 'rejected'])],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
+        $status = 'pending';
+        if ($request->has('status')) {
+            $rawStatus = (string) $request->input('status', '');
+            $status = in_array($rawStatus, ['pending', 'approved', 'rejected'], true) ? $rawStatus : '';
+        }
+
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
+
         $filters = [
-            'status' => $validated['status'] ?? 'pending',
+            'status' => $status,
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
-            'date' => $validated['date'] ?? '',
+            'date' => $startDate ?? '',
+            'start_date' => $startDate ?? '',
+            'end_date' => $endDate ?? '',
         ];
 
         $query = ShiftChangeRequest::query()
@@ -46,7 +59,9 @@ class ShiftChangeApprovalController extends Controller
             ->where('user_id', $ownerId)
             ->when($filters['status'] !== '', fn ($builder) => $builder->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($builder) => $builder->where('employee_id', $filters['employee_id']))
-            ->when($filters['date'] !== '', fn ($builder) => $builder->whereDate('requested_date', $filters['date']))
+            ->when($filters['start_date'] !== '' && $filters['end_date'] !== '', function ($builder) use ($filters) {
+                $builder->whereBetween('requested_date', [$filters['start_date'], $filters['end_date']]);
+            })
             ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
             ->orderBy('requested_date')
             ->orderByDesc('id');
@@ -155,7 +170,7 @@ class ShiftChangeApprovalController extends Controller
             'position_name' => $request->employee?->position?->name,
             'requested_date' => $request->requested_date?->format('Y-m-d'),
             'requested_date_label' => $request->requested_date
-                ? Carbon::parse($request->requested_date)->translatedFormat('d M Y')
+                ? Carbon::parse($request->requested_date)->translatedFormat('d F Y')
                 : '-',
             'current_shift' => $this->shiftPayload($request->currentShift),
             'requested_shift' => $this->shiftPayload($request->requestedShift),

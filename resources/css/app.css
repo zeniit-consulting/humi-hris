@@ -260,12 +260,7 @@
     .portal-page {
         min-width: 0;
         overflow-wrap: anywhere;
-        background: linear-gradient(
-            160deg,
-            var(--portal-color-canvas) 0%,
-            var(--portal-color-paper) 46%,
-            var(--portal-color-accent-soft) 100%
-        );
+        background: #ffffff;
         color: var(--portal-color-ink);
         font-family: var(--portal-font-body);
     }

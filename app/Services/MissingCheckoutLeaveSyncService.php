@@ -17,7 +17,7 @@ class MissingCheckoutLeaveSyncService
         $deductLeave = (bool) ($setting?->auto_deduct_leave_for_missing_checkout ?? false);
         $result = ['clocked_out' => 0, 'leave_deducted' => 0, 'skipped' => 0];
 
-        $attendances = EmployeeAttendance::query()->withoutGlobalScopes()
+        $attendances = EmployeeAttendance::query()->withoutGlobalScope('account_owner')
             ->where('user_id', $ownerId)
             ->whereDate('attendance_date', $date)
             ->whereNotNull('check_in_at')

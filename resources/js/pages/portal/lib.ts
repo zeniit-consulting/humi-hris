@@ -292,3 +292,99 @@ export const formatCurrency = (value: string | number | null) => {
         maximumFractionDigits: 0,
     }).format(numericValue);
 };
+
+export function isCanvasBlank(canvas: HTMLCanvasElement): boolean {
+    const ctx = canvas.getContext('2d');
+    if (!ctx || canvas.width === 0 || canvas.height === 0) {
+        return true;
+    }
+
+    try {
+        const sampleSize = 16;
+        const stepX = Math.max(1, Math.floor(canvas.width / sampleSize));
+        const stepY = Math.max(1, Math.floor(canvas.height / sampleSize));
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+        let totalLuminance = 0;
+        let minLum = 255;
+        let maxLum = 0;
+        let samplesCount = 0;
+
+        for (let y = 0; y < canvas.height; y += stepY) {
+            for (let x = 0; x < canvas.width; x += stepX) {
+                const index = (y * canvas.width + x) * 4;
+                const r = imgData[index];
+                const g = imgData[index + 1];
+                const b = imgData[index + 2];
+                const a = imgData[index + 3];
+
+                if (a < 50) {
+                    continue; // transparent pixel
+                }
+
+                const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                totalLuminance += lum;
+                if (lum < minLum) minLum = lum;
+                if (lum > maxLum) maxLum = lum;
+                samplesCount++;
+            }
+        }
+
+        if (samplesCount === 0) {
+            return true;
+        }
+
+        const avgLum = totalLuminance / samplesCount;
+
+        // Black frame or solid flat monochrome frame with no contrast
+        return avgLum < 8 || (maxLum - minLum < 3 && (avgLum < 15 || avgLum > 240));
+    } catch {
+        return false;
+    }
+}
+
+export function captureValidVideoSnapshot(
+    video: HTMLVideoElement | null,
+    options: { mirror?: boolean; quality?: number } = {},
+): { base64: string; width: number; height: number } | null {
+    if (!video) {
+        return null;
+    }
+
+    // Video must have valid dimensions and decoded data
+    if (
+        video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
+        video.videoWidth === 0 ||
+        video.videoHeight === 0
+    ) {
+        return null;
+    }
+
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        return null;
+    }
+
+    if (options.mirror ?? true) {
+        ctx.translate(width, 0);
+        ctx.scale(-1, 1);
+    }
+
+    ctx.drawImage(video, 0, 0, width, height);
+
+    if (isCanvasBlank(canvas)) {
+        return null;
+    }
+
+    const quality = options.quality ?? 0.85;
+    const base64 = canvas.toDataURL('image/jpeg', quality);
+
+    return { base64, width, height };
+}
+

@@ -32,7 +32,12 @@ class OvertimeController extends Controller
             'date' => ['nullable', 'date'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'per_page' => ['nullable', 'in:10,25,50'],
         ]);
+
+        $perPage = in_array((int) ($validated['per_page'] ?? $request->input('per_page')), [10, 25, 50], true)
+            ? (int) ($validated['per_page'] ?? $request->input('per_page'))
+            : 10;
 
         $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
         $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
@@ -43,6 +48,7 @@ class OvertimeController extends Controller
             'date' => $startDate ?? '',
             'start_date' => $startDate ?? '',
             'end_date' => $endDate ?? '',
+            'per_page' => $perPage,
         ];
 
         $overtimes = OvertimeRequest::query()
@@ -53,7 +59,7 @@ class OvertimeController extends Controller
                 $query->whereBetween('work_date', [$filters['start_date'], $filters['end_date']]);
             })
             ->orderByDesc('work_date')
-            ->paginate(12)
+            ->paginate($perPage)
             ->withQueryString()
             ->through(fn (OvertimeRequest $overtime) => [
                 'id' => $overtime->id,
@@ -112,11 +118,17 @@ class OvertimeController extends Controller
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
+        $status = 'pending';
+        if ($request->has('status')) {
+            $rawStatus = (string) $request->input('status', '');
+            $status = in_array($rawStatus, ['pending', 'approved', 'rejected'], true) ? $rawStatus : '';
+        }
+
         $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
         $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
 
         $filters = [
-            'status' => $validated['status'] ?? 'pending',
+            'status' => $status,
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
             'date' => $startDate ?? '',
             'start_date' => $startDate ?? '',

@@ -14,11 +14,13 @@ use App\Models\User;
 use App\Models\WorkShift;
 use App\Services\AttendanceStatusService;
 use App\Services\AutoOvertimeService;
+use App\Support\AttendancePhoto;
 use App\Support\R2Storage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class BackupAttendanceController extends Controller
@@ -199,172 +201,166 @@ class BackupAttendanceController extends Controller
         $ownerId = $user->accountOwnerId();
         $timezone = $this->deviceTimezone($request, $employee->timezone);
 
-        // Check if current employee already has an unclosed backup attendance
-        $openBackup = EmployeeAttendance::query()
-            ->where('employee_id', $employee->id)
-            ->where('is_backup', true)
-            ->whereNull('check_out_at')
-            ->first();
+        $lockKey = "backup_att_store_{$employee->id}_{$validated['backup_for_employee_id']}";
 
-        if ($openBackup) {
-            return $this->error('Masih ada absensi backup yang belum clock out.', 422);
-        }
+        return Cache::lock($lockKey, 10)->block(5, function () use ($validated, $user, $employee, $ownerId, $timezone, $statusService): JsonResponse {
+            // Check if current employee already has an unclosed backup attendance
+            $openBackup = EmployeeAttendance::query()
+                ->where('employee_id', $employee->id)
+                ->where('is_backup', true)
+                ->whereNull('check_out_at')
+                ->first();
 
-        // Verify colleague X exists and is in the same company / sub-company
-        $targetEmployee = Employee::query()
-            ->where('user_id', $ownerId)
-            ->where('id', $validated['backup_for_employee_id'])
-            ->where('id', '!=', $employee->id)
-            ->where('employment_status', '!=', 'resigned')
-            ->when(
-                $employee->sub_company_id !== null,
-                fn ($q) => $q->where('sub_company_id', $employee->sub_company_id),
-                fn ($q) => $q->whereNull('sub_company_id')
-            )
-            ->first();
-
-        if (! $targetEmployee) {
-            return $this->error('Karyawan yang dipilih tidak terdaftar dalam company atau sub-company yang sama.', 422);
-        }
-
-        // Check if colleague X already attended work today
-        $targetAttendance = EmployeeAttendance::query()
-            ->where('employee_id', $targetEmployee->id)
-            ->whereDate('attendance_date', today())
-            ->whereIn('status', ['present', 'late'])
-            ->first();
-
-        if ($targetAttendance) {
-            return $this->error('Karyawan yang dipilih sudah melakukan absensi kehadiran hari ini.', 422);
-        }
-
-        // Check if colleague X was already backed up today
-        $existingBackup = EmployeeAttendance::query()
-            ->where('is_backup', true)
-            ->where('backup_for_employee_id', $targetEmployee->id)
-            ->whereDate('attendance_date', today())
-            ->whereNotNull('check_in_at')
-            ->first();
-
-        if ($existingBackup) {
-            return $this->error('Karyawan yang dipilih sudah dibackup hari ini.', 422);
-        }
-
-        // Check location radius if onsite
-        $this->ensureWithinAttendanceRadius(
-            $user,
-            $employee,
-            $validated['check_in_latitude'] ?? null,
-            $validated['check_in_longitude'] ?? null
-        );
-
-        // Process photo if provided
-        $checkInPhotoUrl = null;
-        if (! empty($validated['check_in_photo']) && str_starts_with($validated['check_in_photo'], 'data:image/')) {
-            try {
-                $imageParts = explode(';base64,', $validated['check_in_photo']);
-                if (count($imageParts) === 2) {
-                    $imageTypeAux = explode('image/', $imageParts[0]);
-                    $imageType = $imageTypeAux[1] ?? 'jpg';
-                    $imageBase64 = base64_decode($imageParts[1], true);
-                    if ($imageBase64 !== false) {
-                        $filename = 'attendances/backup_in_'.$employee->id.'_'.time().'.'.$imageType;
-                        if (R2Storage::isConfigured()) {
-                            R2Storage::disk()->put($filename, $imageBase64);
-                            $checkInPhotoUrl = R2Storage::url($filename);
-                        } else {
-                            Storage::disk('public')->put($filename, $imageBase64);
-                            $checkInPhotoUrl = Storage::disk('public')->url($filename);
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                // Ignore upload failure
+            if ($openBackup) {
+                return $this->error('Masih ada absensi backup yang belum clock out.', 422);
             }
-        }
 
-        // Resolve shift: use User X's shift today if available, or default shift
-        $todayDate = today()->toDateString();
-        $targetSchedule = EmployeeSchedule::query()
-            ->where('employee_id', $targetEmployee->id)
-            ->whereDate('work_date', $todayDate)
-            ->first();
-
-        $shiftId = null;
-        if ($targetSchedule && $targetSchedule->shift_code) {
-            $shift = WorkShift::query()
+            // Verify colleague X exists and is in the same company / sub-company
+            $targetEmployee = Employee::query()
                 ->where('user_id', $ownerId)
-                ->where('code', $targetSchedule->shift_code)
+                ->where('id', $validated['backup_for_employee_id'])
+                ->where('id', '!=', $employee->id)
+                ->where('employment_status', '!=', 'resigned')
+                ->when(
+                    $employee->sub_company_id !== null,
+                    fn ($q) => $q->where('sub_company_id', $employee->sub_company_id),
+                    fn ($q) => $q->whereNull('sub_company_id')
+                )
                 ->first();
-            $shiftId = $shift?->id;
-        }
 
-        if (! $shiftId) {
-            $defaultShift = WorkShift::query()
-                ->where('user_id', $ownerId)
-                ->where('is_day_off', false)
+            if (! $targetEmployee) {
+                return $this->error('Karyawan yang dipilih tidak terdaftar dalam company atau sub-company yang sama.', 422);
+            }
+
+            // Check if colleague X already attended work today
+            $targetAttendance = EmployeeAttendance::query()
+                ->where('employee_id', $targetEmployee->id)
+                ->whereDate('attendance_date', today())
+                ->whereIn('status', ['present', 'late'])
                 ->first();
-            $shiftId = $defaultShift?->id;
-        }
 
-        $now = now()->setTimezone(config('app.timezone'));
+            if ($targetAttendance) {
+                return $this->error('Karyawan yang dipilih sudah melakukan absensi kehadiran hari ini.', 422);
+            }
 
-        $notesText = 'Backup kehadiran untuk '.$targetEmployee->full_name.(! empty($validated['notes']) ? ' ('.$validated['notes'].')' : '');
+            // Check if colleague X was already backed up today
+            $existingBackup = EmployeeAttendance::query()
+                ->where('is_backup', true)
+                ->where('backup_for_employee_id', $targetEmployee->id)
+                ->whereDate('attendance_date', today())
+                ->whereNotNull('check_in_at')
+                ->first();
 
-        $payload = [
-            'user_id' => $ownerId,
-            'employee_id' => $employee->id,
-            'shift_id' => $shiftId,
-            'is_backup' => true,
-            'backup_for_employee_id' => $targetEmployee->id,
-            'backup_by_employee_id' => $employee->id,
-            'attendance_date' => $todayDate,
-            'timezone' => $timezone,
-            'status' => 'present',
-            'check_in_at' => $now,
-            'check_in_latitude' => $validated['check_in_latitude'] ?? null,
-            'check_in_longitude' => $validated['check_in_longitude'] ?? null,
-            'check_in_photo_url' => $checkInPhotoUrl,
-            'notes' => $notesText,
-        ];
+            if ($existingBackup) {
+                return $this->error('Karyawan yang dipilih sudah dibackup hari ini.', 422);
+            }
 
-        $statusAttrs = $statusService->resolveStatusAttributes($payload, $ownerId, $timezone);
-        $payload = array_merge($payload, $statusAttrs);
+            // Check location radius if onsite
+            $this->ensureWithinAttendanceRadius(
+                $user,
+                $employee,
+                $validated['check_in_latitude'] ?? null,
+                $validated['check_in_longitude'] ?? null
+            );
 
-        $attendance = EmployeeAttendance::query()->create($payload);
+            // Process photo if provided
+            $checkInPhotoUrl = null;
+            if (! empty($validated['check_in_photo'])) {
+                $photoResult = AttendancePhoto::validate($validated['check_in_photo']);
+                if (! $photoResult['valid']) {
+                    return $this->error($photoResult['error'] ?? 'Foto presensi backup tidak valid atau blank.', 422);
+                }
+                $checkInPhotoUrl = AttendancePhoto::storePhoto(
+                    $photoResult['binary'],
+                    'backup_in',
+                    (int) $employee->id,
+                    $photoResult['ext'] ?? 'jpg'
+                );
+            }
 
-        // Record User X as absent and backed up by User Y
-        $userXRow = EmployeeAttendance::query()
-            ->where('employee_id', $targetEmployee->id)
-            ->whereDate('attendance_date', $todayDate)
-            ->first();
+            // Resolve shift: use User X's shift today if available, or default shift
+            $todayDate = today()->toDateString();
+            $targetSchedule = EmployeeSchedule::query()
+                ->where('employee_id', $targetEmployee->id)
+                ->whereDate('work_date', $todayDate)
+                ->first();
 
-        if ($userXRow) {
-            $userXRow->update([
-                'notes' => 'Tidak hadir kerja - Dibackup oleh '.$employee->full_name,
-                'backup_by_employee_id' => $employee->id,
-            ]);
-        } else {
-            EmployeeAttendance::query()->create([
+            $shiftId = null;
+            if ($targetSchedule && $targetSchedule->shift_code) {
+                $shift = WorkShift::query()
+                    ->where('user_id', $ownerId)
+                    ->where('code', $targetSchedule->shift_code)
+                    ->first();
+                $shiftId = $shift?->id;
+            }
+
+            if (! $shiftId) {
+                $defaultShift = WorkShift::query()
+                    ->where('user_id', $ownerId)
+                    ->where('is_day_off', false)
+                    ->first();
+                $shiftId = $defaultShift?->id;
+            }
+
+            $now = now()->setTimezone(config('app.timezone'));
+
+            $notesText = 'Backup kehadiran untuk '.$targetEmployee->full_name.(! empty($validated['notes']) ? ' ('.$validated['notes'].')' : '');
+
+            $payload = [
                 'user_id' => $ownerId,
-                'employee_id' => $targetEmployee->id,
+                'employee_id' => $employee->id,
                 'shift_id' => $shiftId,
                 'is_backup' => true,
                 'backup_for_employee_id' => $targetEmployee->id,
                 'backup_by_employee_id' => $employee->id,
                 'attendance_date' => $todayDate,
                 'timezone' => $timezone,
-                'status' => 'absent',
-                'notes' => 'Tidak hadir kerja - Dibackup oleh '.$employee->full_name,
+                'status' => 'present',
+                'check_in_at' => $now,
+                'check_in_latitude' => $validated['check_in_latitude'] ?? null,
+                'check_in_longitude' => $validated['check_in_longitude'] ?? null,
+                'check_in_photo_url' => $checkInPhotoUrl,
+                'notes' => $notesText,
+            ];
+
+            $statusAttrs = $statusService->resolveStatusAttributes($payload, $ownerId, $timezone);
+            $payload = array_merge($payload, $statusAttrs);
+
+            $attendance = EmployeeAttendance::query()->create($payload);
+
+            // Record User X as absent and backed up by User Y
+            $userXRow = EmployeeAttendance::query()
+                ->where('employee_id', $targetEmployee->id)
+                ->whereDate('attendance_date', $todayDate)
+                ->first();
+
+            if ($userXRow) {
+                $userXRow->update([
+                    'notes' => 'Tidak hadir kerja - Dibackup oleh '.$employee->full_name,
+                    'backup_by_employee_id' => $employee->id,
+                ]);
+            } else {
+                EmployeeAttendance::query()->create([
+                    'user_id' => $ownerId,
+                    'employee_id' => $targetEmployee->id,
+                    'shift_id' => $shiftId,
+                    'is_backup' => true,
+                    'backup_for_employee_id' => $targetEmployee->id,
+                    'backup_by_employee_id' => $employee->id,
+                    'attendance_date' => $todayDate,
+                    'timezone' => $timezone,
+                    'status' => 'absent',
+                    'notes' => 'Tidak hadir kerja - Dibackup oleh '.$employee->full_name,
+                ]);
+            }
+
+            $attendance->load([
+                'backupForEmployee:id,employee_code,first_name,last_name',
+                'shift:id,code,name,start_time,end_time',
             ]);
-        }
 
-        $attendance->load([
-            'backupForEmployee:id,employee_code,first_name,last_name',
-            'shift:id,code,name,start_time,end_time',
-        ]);
-
-        return $this->success($attendance, 'Absensi backup berhasil dicatat.', 201);
+            return $this->success($attendance, 'Absensi backup berhasil dicatat.', 201);
+        });
     }
 
     /**
@@ -407,27 +403,17 @@ class BackupAttendanceController extends Controller
         );
 
         $checkOutPhotoUrl = null;
-        if (! empty($validated['check_out_photo']) && str_starts_with($validated['check_out_photo'], 'data:image/')) {
-            try {
-                $imageParts = explode(';base64,', $validated['check_out_photo']);
-                if (count($imageParts) === 2) {
-                    $imageTypeAux = explode('image/', $imageParts[0]);
-                    $imageType = $imageTypeAux[1] ?? 'jpg';
-                    $imageBase64 = base64_decode($imageParts[1], true);
-                    if ($imageBase64 !== false) {
-                        $filename = 'attendances/backup_out_'.$employee->id.'_'.time().'.'.$imageType;
-                        if (R2Storage::isConfigured()) {
-                            R2Storage::disk()->put($filename, $imageBase64);
-                            $checkOutPhotoUrl = R2Storage::url($filename);
-                        } else {
-                            Storage::disk('public')->put($filename, $imageBase64);
-                            $checkOutPhotoUrl = Storage::disk('public')->url($filename);
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                // Ignore upload failure
+        if (! empty($validated['check_out_photo'])) {
+            $photoResult = AttendancePhoto::validate($validated['check_out_photo']);
+            if (! $photoResult['valid']) {
+                return $this->error($photoResult['error'] ?? 'Foto presensi backup tidak valid atau blank.', 422);
             }
+            $checkOutPhotoUrl = AttendancePhoto::storePhoto(
+                $photoResult['binary'],
+                'backup_out',
+                (int) $employee->id,
+                $photoResult['ext'] ?? 'jpg'
+            );
         }
 
         $now = now()->setTimezone(config('app.timezone'));

@@ -652,7 +652,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
             <div className="min-w-0 space-y-3">
                 <section className="profile-identity-hero overflow-hidden rounded-[var(--portal-radius-surface)] bg-[var(--portal-color-accent-strong)] px-4 py-5 text-[var(--portal-color-paper)] shadow-[var(--portal-shadow-material)]">
                     <div className="flex min-w-0 items-center gap-3">
-                        <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-[var(--portal-radius-control)] bg-white/15 text-lg font-extrabold text-[var(--portal-color-paper)]">
+                        <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 text-lg font-extrabold text-[var(--portal-color-paper)]">
                             <span>
                                 {initials(
                                     portal?.employee?.full_name ?? 'Humi Karyawan',
@@ -662,7 +662,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                 <img
                                     src={effectiveAvatarUrl}
                                     alt={portal?.employee?.full_name ?? 'Profil'}
-                                    className="absolute inset-0 size-full object-cover bg-white"
+                                    className="absolute inset-0 size-full rounded-full object-cover bg-white"
                                     onError={(e) => {
                                         e.currentTarget.style.display = 'none';
                                     }}
@@ -701,77 +701,6 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     </div>
                 </section>
 
-                {profile?.profile_completion && (
-                    <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-4 py-4 shadow-[var(--portal-shadow-raised)]">
-                        <div className="flex min-w-0 items-start justify-between gap-4">
-                            <div className="min-w-0">
-                                <p className="font-semibold tracking-[0.14em] text-[var(--portal-color-muted)] text-[var(--portal-text-label)] uppercase">
-                                    Kelengkapan profil
-                                </p>
-                                <h2 className="mt-1 font-bold tracking-[-0.04em] text-[var(--portal-color-ink)] text-[var(--portal-text-md)]">
-                                    {profile.profile_completion.percent}%
-                                    lengkap
-                                </h2>
-                            </div>
-                            <span
-                                className={`shrink-0 rounded-[var(--portal-radius-pill)] px-3 py-1.5 font-semibold text-[var(--portal-text-xs)] ${
-                                    profile.profile_completion.is_complete
-                                        ? 'bg-[var(--portal-color-success-soft)] text-[var(--portal-color-success)]'
-                                        : 'bg-[var(--portal-color-warning-soft)] text-[var(--portal-color-warning)]'
-                                }`}
-                            >
-                                {profile.profile_completion.is_complete
-                                    ? 'Lengkap'
-                                    : `${profile.profile_completion.missing_count} perlu diisi`}
-                            </span>
-                        </div>
-                        <div className="mt-3 h-2 overflow-hidden rounded-[var(--portal-radius-pill)] bg-[var(--portal-color-surface-raised)]">
-                            <div
-                                className={`h-full rounded-[var(--portal-radius-pill)] ${
-                                    profile.profile_completion.is_complete
-                                        ? 'bg-[var(--portal-color-success)]'
-                                        : 'bg-[var(--portal-color-warning)]'
-                                }`}
-                                style={{
-                                    width: `${profile.profile_completion.percent}%`,
-                                }}
-                            />
-                        </div>
-                        <details className="mt-3 rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface-raised)] px-3 py-2.5">
-                            <summary className="cursor-pointer font-semibold text-[var(--portal-color-ink)] text-[var(--portal-text-sm)]">
-                                Lihat detail kelengkapan
-                            </summary>
-                            <div className="mt-2 space-y-1.5">
-                                {profile.profile_completion.items.map(
-                                    (item) => (
-                                        <div
-                                            key={item.key}
-                                            className="flex min-w-0 items-start gap-2"
-                                        >
-                                            <CheckCircle2
-                                                className={`mt-0.5 size-4 shrink-0 ${
-                                                    item.complete
-                                                        ? 'text-[var(--portal-color-success)]'
-                                                        : 'text-[var(--portal-color-muted)]'
-                                                }`}
-                                                aria-hidden="true"
-                                            />
-                                            <div className="min-w-0">
-                                                <p className="font-semibold text-[var(--portal-color-ink)] text-[var(--portal-text-sm)]">
-                                                    {item.label}
-                                                </p>
-                                                <p className="text-[var(--portal-color-muted)] text-[var(--portal-text-xs)]">
-                                                    {item.description}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ),
-                                )}
-                            </div>
-                        </details>
-                    </section>
-                )}
-
                 {showAttendanceNotificationSetup ? (
                     <section className="rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] p-4 shadow-[var(--portal-shadow-raised)]">
                         <div className="flex items-center gap-3">
@@ -809,13 +738,13 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     isOpen={openSection === 'personal'}
                     onOpen={setOpenSection}
                 >
-                    <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
                         {personalDetails.slice(0, 14).map((item) => (
                             <div key={item.label} className="min-w-0">
-                                <dt className="text-xs text-[var(--portal-color-muted)]">
+                                <dt className="text-xs font-medium text-[var(--portal-color-muted)]">
                                     {item.label}
                                 </dt>
-                                <dd className="mt-0.5 truncate text-sm font-semibold text-[var(--portal-color-ink)]">
+                                <dd className="mt-0.5 text-sm font-semibold text-[var(--portal-color-ink)] [overflow-wrap:anywhere]">
                                     {formatProfileValue(item.value)}
                                 </dd>
                             </div>
@@ -831,13 +760,13 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     isOpen={openSection === 'identity'}
                     onOpen={setOpenSection}
                 >
-                    <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
                         {personalDetails.slice(14, 22).map((item) => (
                             <div key={item.label} className="min-w-0">
-                                <dt className="text-xs text-[var(--portal-color-muted)]">
+                                <dt className="text-xs font-medium text-[var(--portal-color-muted)]">
                                     {item.label}
                                 </dt>
-                                <dd className="mt-0.5 truncate text-sm font-semibold text-[var(--portal-color-ink)]">
+                                <dd className="mt-0.5 text-sm font-semibold text-[var(--portal-color-ink)] [overflow-wrap:anywhere]">
                                     {formatProfileValue(item.value)}
                                 </dd>
                             </div>
@@ -853,19 +782,18 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     isOpen={openSection === 'contact'}
                     onOpen={setOpenSection}
                 >
-                    <form onSubmit={handleSaveProfile} className="space-y-3">
+                    <form onSubmit={handleSaveProfile} className="space-y-4">
                         <div>
-                            <p className="text-sm font-semibold text-[var(--portal-color-ink)]">
+                            <p className="text-sm font-bold text-[var(--portal-color-ink)]">
                                 Perbarui data kontak dan keluarga
                             </p>
-                            <p className="mt-1 text-[var(--portal-color-muted)] text-[var(--portal-text-sm)]">
-                                Isi informasi yang diperlukan agar profil tetap
-                                akurat.
+                            <p className="mt-0.5 text-xs text-[var(--portal-color-muted)]">
+                                Isi informasi yang diperlukan agar profil kepegawaian Anda tetap akurat.
                             </p>
                         </div>
-                        <div className="grid gap-3 md:grid-cols-2">
+                        <div className="grid gap-3 sm:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-900">
+                                <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                     Gender
                                 </label>
                                 <select
@@ -876,7 +804,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                             e.target.value,
                                         )
                                     }
-                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                    className="portal-focus-ring mt-1.5 min-h-11 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 text-sm text-[var(--portal-color-ink)]"
                                 >
                                     <option value="">Pilih gender</option>
                                     <option value="male">Laki-laki</option>
@@ -886,7 +814,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-900">
+                                <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                     Tanggal Lahir
                                 </label>
                                 <input
@@ -898,14 +826,14 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                             e.target.value,
                                         )
                                     }
-                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                    className="portal-focus-ring mt-1.5 min-h-11 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 text-sm text-[var(--portal-color-ink)]"
                                 />
                             </div>
                         </div>
 
-                        <div className="grid gap-3 md:grid-cols-2">
+                        <div className="grid gap-3 sm:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-900">
+                                <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                     Pendidikan Terakhir
                                 </label>
                                 <input
@@ -918,12 +846,12 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                         )
                                     }
                                     placeholder="Contoh: S1"
-                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                    className="portal-focus-ring mt-1.5 min-h-11 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 text-sm text-[var(--portal-color-ink)]"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-900">
+                                <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                     Status Pernikahan
                                 </label>
                                 <select
@@ -934,7 +862,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                             e.target.value,
                                         )
                                     }
-                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                    className="portal-focus-ring mt-1.5 min-h-11 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 text-sm text-[var(--portal-color-ink)]"
                                 >
                                     <option value="">Pilih status</option>
                                     <option value="single">
@@ -949,9 +877,9 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                             </div>
                         </div>
 
-                        <div className="grid gap-3 md:grid-cols-2">
+                        <div className="grid gap-3 sm:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-900">
+                                <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                     Jumlah Anak
                                 </label>
                                 <input
@@ -965,12 +893,12 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                             e.target.value,
                                         )
                                     }
-                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                    className="portal-focus-ring mt-1.5 min-h-11 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 text-sm text-[var(--portal-color-ink)]"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-900">
+                                <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                     Nomor Telepon
                                 </label>
                                 <input
@@ -983,14 +911,14 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                         )
                                     }
                                     placeholder="+62812345678 atau 081234567890"
-                                    className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                    className="portal-focus-ring mt-1.5 min-h-11 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 text-sm text-[var(--portal-color-ink)]"
                                     required
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-slate-900">
+                            <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                 Alamat
                             </label>
                             <textarea
@@ -1003,15 +931,16 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                 }
                                 placeholder="Masukkan alamat lengkap Anda"
                                 maxLength={500}
-                                className="mt-1.5 min-h-20 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none focus:border-stone-400"
+                                rows={3}
+                                className="portal-focus-ring mt-1.5 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 py-2 text-sm text-[var(--portal-color-ink)]"
                                 required
                             />
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-[11px] text-[var(--portal-color-muted)]">
                                 {formProfile.address.length}/500 karakter
                             </p>
                         </div>
 
-                        <div className="grid gap-3 md:grid-cols-2">
+                        <div className="grid gap-3 sm:grid-cols-2">
                             {[
                                 ['family_card_number', 'No. KK'],
                                 ['ktp_number', 'No. KTP'],
@@ -1025,7 +954,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                 ['sim_c_number', 'SIM C'],
                             ].map(([field, label]) => (
                                 <div key={field}>
-                                    <label className="block text-sm font-semibold text-slate-900">
+                                    <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                         {label}
                                     </label>
                                     <input
@@ -1041,13 +970,13 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                                 e.target.value.slice(0, 32),
                                             )
                                         }
-                                        className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                        className="portal-focus-ring mt-1.5 min-h-11 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 text-sm text-[var(--portal-color-ink)]"
                                     />
                                 </div>
                             ))}
                         </div>
 
-                        <div className="grid gap-3 md:grid-cols-2">
+                        <div className="grid gap-3 sm:grid-cols-2">
                             {[
                                 ['biological_mother_name', 'Nama Ibu Kandung'],
                                 ['emergency_contact_name', 'Kontak Darurat'],
@@ -1057,7 +986,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                 ],
                             ].map(([field, label]) => (
                                 <div key={field}>
-                                    <label className="block text-sm font-semibold text-slate-900">
+                                    <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                         {label}
                                     </label>
                                     <input
@@ -1073,7 +1002,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                                 e.target.value.slice(0, 100),
                                             )
                                         }
-                                        className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                        className="portal-focus-ring mt-1.5 min-h-11 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 text-sm text-[var(--portal-color-ink)]"
                                     />
                                 </div>
                             ))}
@@ -1082,17 +1011,17 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className="portal-primary-bg inline-flex h-11 w-full items-center justify-center gap-2 rounded-[9px] text-sm font-semibold disabled:opacity-60"
+                            className="portal-primary-bg portal-pressable portal-focus-ring inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--portal-radius-control)] text-sm font-bold disabled:opacity-60"
                         >
                             {isSaving ? (
                                 <>
                                     <div className="inline-block size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                    Menyimpan...
+                                    <span>Menyimpan...</span>
                                 </>
                             ) : (
                                 <>
                                     <Save className="size-4" />
-                                    Simpan Profil
+                                    <span>Simpan Profil</span>
                                 </>
                             )}
                         </button>
@@ -1107,9 +1036,9 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     isOpen={openSection === 'bank'}
                     onOpen={setOpenSection}
                 >
-                    <form onSubmit={handleSaveBank} className="space-y-3">
+                    <form onSubmit={handleSaveBank} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-semibold text-slate-900">
+                            <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                 Nama Bank
                             </label>
                             <select
@@ -1120,7 +1049,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                         bank_name: e.target.value,
                                     }))
                                 }
-                                className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                className="portal-focus-ring mt-1.5 min-h-11 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 text-sm text-[var(--portal-color-ink)]"
                                 required
                             >
                                 <option value="">Pilih Bank</option>
@@ -1149,7 +1078,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-slate-900">
+                            <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                 Nomor Rekening
                             </label>
                             <input
@@ -1169,16 +1098,16 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                 }}
                                 placeholder="Contoh: 1234567890"
                                 maxLength={30}
-                                className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                className="portal-focus-ring mt-1.5 min-h-11 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 text-sm text-[var(--portal-color-ink)]"
                                 required
                             />
-                            <p className="mt-1 text-xs text-slate-500">
-                                10-30 digit angka
+                            <p className="mt-1 text-[11px] text-[var(--portal-color-muted)]">
+                                10-30 digit angka rekening
                             </p>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-slate-900">
+                            <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                 Nama Pemilik Rekening
                             </label>
                             <input
@@ -1191,7 +1120,7 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                     }))
                                 }
                                 placeholder="Nama lengkap pemilik rekening"
-                                className="mt-1.5 h-11 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-stone-400"
+                                className="portal-focus-ring mt-1.5 min-h-11 w-full rounded-[var(--portal-radius-control)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface)] px-3 text-sm text-[var(--portal-color-ink)]"
                                 required
                             />
                         </div>
@@ -1199,50 +1128,49 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className="portal-primary-bg inline-flex h-11 w-full items-center justify-center gap-2 rounded-[9px] text-sm font-semibold disabled:opacity-60"
+                            className="portal-primary-bg portal-pressable portal-focus-ring inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--portal-radius-control)] text-sm font-bold disabled:opacity-60"
                         >
                             {isSaving ? (
                                 <>
                                     <div className="inline-block size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                    Menyimpan...
+                                    <span>Menyimpan...</span>
                                 </>
                             ) : (
                                 <>
                                     <Save className="size-4" />
-                                    Simpan Rekening
+                                    <span>Simpan Rekening</span>
                                 </>
                             )}
                         </button>
                     </form>
 
                     {primaryBank ? (
-                        <div className="mt-5 rounded-[12px] border border-stone-200 bg-stone-50 p-4">
-                            <p className="text-xs font-semibold tracking-[0.22em] text-slate-500 uppercase">
+                        <div className="mt-4 rounded-[var(--portal-radius-surface)] border border-[var(--portal-color-rule)] bg-[var(--portal-color-surface-raised)] p-3.5">
+                            <p className="text-xs font-semibold tracking-wider text-[var(--portal-color-muted)] uppercase">
                                 Rekening Tersimpan
                             </p>
-                            <div className="mt-3 space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-600">
+                            <div className="mt-2.5 space-y-2">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-[var(--portal-color-muted)]">
                                         Bank
                                     </span>
-                                    <span className="font-semibold text-slate-900">
+                                    <span className="font-semibold text-[var(--portal-color-ink)]">
                                         {primaryBank.bank_name}
                                     </span>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-600">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-[var(--portal-color-muted)]">
                                         Nomor Rekening
                                     </span>
-                                    <span className="font-semibold text-slate-900">
-                                        ****
-                                        {primaryBank.account_number.slice(-4)}
+                                    <span className="font-semibold text-[var(--portal-color-ink)]">
+                                        ****{primaryBank.account_number.slice(-4)}
                                     </span>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-600">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-[var(--portal-color-muted)]">
                                         Atas Nama
                                     </span>
-                                    <span className="font-semibold text-slate-900">
+                                    <span className="font-semibold text-[var(--portal-color-ink)]">
                                         {primaryBank.account_holder_name}
                                     </span>
                                 </div>
@@ -1262,9 +1190,8 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     onOpen={setOpenSection}
                 >
                     <div className="rounded-[var(--portal-radius-control)] bg-[var(--portal-color-surface-raised)] px-4 py-3">
-                        <p className="text-sm text-slate-600">
-                            Untuk mengubah email, silakan hubungi HR atau
-                            administrator sistem.
+                        <p className="text-xs text-[var(--portal-color-muted)] leading-relaxed">
+                            Untuk mengubah email akun, silakan hubungi tim HR atau administrator sistem Anda.
                         </p>
                     </div>
                 </ProfileAccordion>
@@ -1282,13 +1209,13 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                     onOpen={setOpenSection}
                 >
                     <div className="space-y-4">
-                        <p className="text-sm text-slate-600">
+                        <p className="text-xs leading-relaxed text-[var(--portal-color-muted)]">
                             Daftarkan foto wajah Anda sekali untuk digunakan sebagai verifikasi biometrik saat melakukan presensi (Clock-in / Clock-out).
                         </p>
 
                         {profile?.employee?.face_enrolled ? (
-                            <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 space-y-3">
-                                <div className="flex items-center gap-4">
+                            <div className="rounded-[var(--portal-radius-control)] border border-emerald-200 bg-emerald-50/70 p-3.5 space-y-3">
+                                <div className="flex items-center gap-3.5">
                                     {profile.employee.face_photo_url ? (
                                         <img
                                             src={profile.employee.face_photo_url}
@@ -1302,11 +1229,11 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                                     if (fallback) fallback.classList.remove('hidden');
                                                 }
                                             }}
-                                            className="size-16 rounded-lg object-cover border-2 border-emerald-500 shadow-sm shrink-0"
+                                            className="size-14 rounded-xl object-cover border-2 border-emerald-500 shadow-xs shrink-0"
                                         />
                                     ) : null}
-                                    <div className={`size-16 rounded-lg border-2 border-emerald-500 bg-emerald-100/80 flex items-center justify-center text-emerald-700 shadow-sm shrink-0 face-fallback-icon ${profile.employee.face_photo_url ? 'hidden' : ''}`}>
-                                        <ScanFace className="size-8" />
+                                    <div className={`size-14 rounded-xl border-2 border-emerald-500 bg-emerald-100/80 flex items-center justify-center text-emerald-700 shadow-xs shrink-0 face-fallback-icon ${profile.employee.face_photo_url ? 'hidden' : ''}`}>
+                                        <ScanFace className="size-7" />
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
@@ -1319,14 +1246,14 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between border-t border-emerald-200/70 pt-2.5">
-                                    <span className="text-xs text-slate-500">
+                                    <span className="text-xs text-[var(--portal-color-muted)]">
                                         Hapus data biometrik wajah ini?
                                     </span>
                                     <button
                                         type="button"
                                         onClick={() => setIsConfirmDeleteFaceOpen(true)}
                                         disabled={isDeletingFace}
-                                        className="inline-flex items-center gap-1.5 rounded-lg border border-rose-300 bg-white px-2.5 py-1 text-xs font-semibold text-rose-700 shadow-xs hover:bg-rose-50 hover:border-rose-400 active:scale-[0.98] transition cursor-pointer disabled:opacity-50"
+                                        className="portal-pressable portal-focus-ring inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1 text-xs font-semibold text-rose-700 shadow-xs hover:bg-rose-50 disabled:opacity-50"
                                     >
                                         <Trash2 className="size-3.5 text-rose-600" />
                                         <span>Hapus Wajah</span>
@@ -1336,36 +1263,36 @@ export default function PortalProfilePage({ pageTitle }: Props) {
                         ) : null}
 
                         {faceEnrollError && (
-                            <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800 font-medium">
+                            <div className="rounded-[var(--portal-radius-control)] border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800 font-medium">
                                 {faceEnrollError}
                             </div>
                         )}
 
                         {faceEnrollSuccess && (
-                            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 font-medium">
+                            <div className="rounded-[var(--portal-radius-control)] border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 font-medium">
                                 {faceEnrollSuccess}
                             </div>
                         )}
 
                         <div className="space-y-2">
-                            <label className="block text-sm font-semibold text-slate-900">
+                            <label className="block text-xs font-semibold text-[var(--portal-color-ink-soft)]">
                                 {profile?.employee?.face_enrolled
                                     ? 'Perbarui Foto Master Wajah'
                                     : 'Upload Foto Master Wajah'}
                             </label>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-[var(--portal-color-muted)]">
                                 Ambil selfie atau upload foto wajah dari galeri yang jelas menghadap ke depan tanpa masker/kacamata hitam.
                             </p>
 
-                            <div className="pt-2">
-                                <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-stone-300 bg-stone-50/80 p-5 hover:bg-stone-100 transition cursor-pointer">
-                                    <Camera className="size-8 text-stone-400 mb-2" />
-                                    <span className="text-sm font-semibold text-stone-700">
+                            <div className="pt-1">
+                                <label className="portal-pressable portal-focus-ring flex flex-col items-center justify-center rounded-[var(--portal-radius-surface)] border-2 border-dashed border-[var(--portal-color-rule)] bg-[var(--portal-color-surface-raised)] p-5 hover:bg-[var(--portal-color-surface)] transition cursor-pointer">
+                                    <Camera className="size-7 text-[var(--portal-color-muted)] mb-1.5" />
+                                    <span className="text-xs font-bold text-[var(--portal-color-ink)]">
                                         {isEnrollingFace
                                             ? (faceModelLoading ? 'Memuat model AI...' : 'Mengekstrak vektor wajah...')
                                             : 'Pilih / Ambil Foto Wajah'}
                                     </span>
-                                    <span className="text-xs text-stone-400 mt-1">
+                                    <span className="text-[11px] text-[var(--portal-color-muted)] mt-0.5">
                                         JPG, JPEG, PNG (Maks 5MB)
                                     </span>
                                     <input

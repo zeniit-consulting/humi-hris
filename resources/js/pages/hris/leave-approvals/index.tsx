@@ -34,6 +34,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { formatLongDate } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 type LinkItem = { url: string | null; label: string; active: boolean };
@@ -102,7 +103,13 @@ const badgeVariant = (status: string) =>
 export default function LeaveApprovalPage() {
     const { leaves, employees, filters, statusOptions, stats, approvalLevels } =
         usePage<PageProps>().props;
-    const [filterState, setFilterState] = useState(filters);
+    const [filterState, setFilterState] = useState<Filters>({
+        status: filters.status ?? '',
+        employee_id: filters.employee_id ?? '',
+        date: filters.date ?? '',
+        start_date: filters.start_date ?? '',
+        end_date: filters.end_date ?? '',
+    });
     const [detailRow, setDetailRow] = useState<LeaveRow | null>(null);
     const [rejectRow, setRejectRow] = useState<LeaveRow | null>(null);
     const [previewAttachment, setPreviewAttachment] = useState<{
@@ -113,11 +120,13 @@ export default function LeaveApprovalPage() {
     const rejectForm = useForm({ rejection_reason: '' });
 
     useEffect(() => {
-        const timeoutId = window.setTimeout(() => {
-            setFilterState(filters);
-        }, 0);
-
-        return () => window.clearTimeout(timeoutId);
+        setFilterState({
+            status: filters.status ?? '',
+            employee_id: filters.employee_id ?? '',
+            date: filters.date ?? '',
+            start_date: filters.start_date ?? '',
+            end_date: filters.end_date ?? '',
+        });
     }, [filters]);
 
     const applyFilter = (event: FormEvent<HTMLFormElement>) => {
@@ -131,7 +140,7 @@ export default function LeaveApprovalPage() {
 
     const resetFilter = () => {
         const reset: Filters = {
-            status: 'pending',
+            status: '',
             employee_id: '',
             date: '',
             start_date: '',
@@ -150,6 +159,7 @@ export default function LeaveApprovalPage() {
         if (!rejectRow) return;
         rejectForm.post(`${pageUrl}/${rejectRow.id}/reject`, {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
                 setRejectRow(null);
                 rejectForm.reset();
@@ -170,13 +180,40 @@ export default function LeaveApprovalPage() {
             <div className="space-y-4 p-4">
                 <div className="grid gap-4 md:grid-cols-3">
                     {[
-                        ['Menunggu', stats.pending],
-                        ['Disetujui', stats.approved],
-                        ['Ditolak', stats.rejected],
-                    ].map(([label, value]) => (
+                        ['Menunggu', stats.pending, 'pending'],
+                        ['Disetujui', stats.approved, 'approved'],
+                        ['Ditolak', stats.rejected, 'rejected'],
+                    ].map(([label, value, statusKey]) => (
                         <Card
                             key={label}
-                            className={`gap-2 py-3 ${label === 'Menunggu' ? 'border-amber-200 bg-amber-50/70 dark:border-amber-950 dark:bg-amber-950/25' : label === 'Disetujui' ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-950 dark:bg-emerald-950/25' : 'border-rose-200 bg-rose-50/70 dark:border-rose-950 dark:bg-rose-950/25'}`}
+                            role="button"
+                            onClick={() => {
+                                const nextStatus =
+                                    filterState.status === statusKey
+                                        ? ''
+                                        : statusKey;
+                                const nextFilters: Filters = {
+                                    ...filterState,
+                                    status: nextStatus,
+                                };
+                                setFilterState(nextFilters);
+                                router.get(pageUrl, nextFilters, {
+                                    preserveState: true,
+                                    preserveScroll: true,
+                                    replace: true,
+                                });
+                            }}
+                            className={`cursor-pointer transition-all hover:scale-[1.01] gap-2 py-3 ${
+                                filterState.status === statusKey
+                                    ? 'ring-2 ring-primary ring-offset-2 '
+                                    : ''
+                            }${
+                                label === 'Menunggu'
+                                    ? 'border-amber-200 bg-amber-50/70 dark:border-amber-950 dark:bg-amber-950/25'
+                                    : label === 'Disetujui'
+                                      ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-950 dark:bg-emerald-950/25'
+                                      : 'border-rose-200 bg-rose-50/70 dark:border-rose-950 dark:bg-rose-950/25'
+                            }`}
                         >
                             <CardHeader className="px-4 pb-0">
                                 <CardDescription>{label}</CardDescription>
@@ -195,21 +232,21 @@ export default function LeaveApprovalPage() {
                     <CardContent>
                         <form
                             onSubmit={applyFilter}
-                            className="grid gap-3 md:grid-cols-[240px_220px_170px_auto]"
+                            className="grid gap-3 md:grid-cols-[260px_220px_180px_auto]"
                         >
                             <div className="grid gap-2">
                                 <Label htmlFor="date">Rentang Tanggal</Label>
                                 <DateRangePicker
                                     value={{
-                                        from: filterState.start_date ?? filterState.date,
-                                        to: filterState.end_date ?? filterState.date,
+                                        from: filterState.start_date || filterState.date || undefined,
+                                        to: filterState.end_date || filterState.date || undefined,
                                     }}
                                     onChange={(range) => {
                                         setFilterState((p) => ({
                                             ...p,
-                                            start_date: range.from,
-                                            end_date: range.to ?? range.from,
-                                            date: range.from,
+                                            start_date: range.from || '',
+                                            end_date: range.to ?? range.from ?? '',
+                                            date: range.from || '',
                                         }));
                                     }}
                                     placeholder="Semua tanggal..."
@@ -242,9 +279,13 @@ export default function LeaveApprovalPage() {
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label>Status</Label>
+                                <Label htmlFor="filter_status">Status</Label>
                                 <Select
-                                    value={filterState.status || '__all'}
+                                    value={
+                                        filterState.status === ''
+                                            ? '__all'
+                                            : filterState.status
+                                    }
                                     onValueChange={(value) =>
                                         setFilterState((p) => ({
                                             ...p,
@@ -253,8 +294,8 @@ export default function LeaveApprovalPage() {
                                         }))
                                     }
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Semua" />
+                                    <SelectTrigger id="filter_status">
+                                        <SelectValue placeholder="Semua status" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="__all">
@@ -342,8 +383,11 @@ export default function LeaveApprovalPage() {
                                                 </div>
                                             </td>
                                             <td className="px-3 py-3">
-                                                {row.start_date} s/d{' '}
-                                                {row.end_date}
+                                                <div className="font-medium">
+                                                    {row.start_date === row.end_date
+                                                        ? formatLongDate(row.start_date)
+                                                        : `${formatLongDate(row.start_date)} s/d ${formatLongDate(row.end_date)}`}
+                                                </div>
                                                 <div className="text-xs text-muted-foreground">
                                                     {row.total_days} hari
                                                 </div>
@@ -367,8 +411,8 @@ export default function LeaveApprovalPage() {
                                                     approvalLevels === 2
                                                         ? `Menunggu ${row.approval_stage + 1}/2`
                                                         : (statusLabels[
-                                                              row.status
-                                                          ] ?? row.status)}
+                                                               row.status
+                                                           ] ?? row.status)}
                                                 </Badge>
                                             </td>
                                             <td className="px-3 py-3">
@@ -407,6 +451,7 @@ export default function LeaveApprovalPage() {
                                                                         undefined,
                                                                         {
                                                                             preserveScroll: true,
+                                                                            preserveState: true,
                                                                         },
                                                                     )
                                                                 }
@@ -449,9 +494,11 @@ export default function LeaveApprovalPage() {
                     {detailRow && (
                         <div className="space-y-3 text-sm">
                             <p>
-                                <strong>Periode:</strong> {detailRow.start_date}{' '}
-                                s/d {detailRow.end_date} ({detailRow.total_days}{' '}
-                                hari)
+                                <strong>Periode:</strong>{' '}
+                                {detailRow.start_date === detailRow.end_date
+                                    ? formatLongDate(detailRow.start_date)
+                                    : `${formatLongDate(detailRow.start_date)} s/d ${formatLongDate(detailRow.end_date)}`}{' '}
+                                ({detailRow.total_days} hari)
                             </p>
                             <p>
                                 <strong>Jenis:</strong>{' '}

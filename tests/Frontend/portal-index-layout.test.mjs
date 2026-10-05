@@ -18,7 +18,7 @@ test('portal home uses a horizontal Quick Menu and compact one-row statistics', 
 });
 
 test('portal home prioritizes the employee greeting over the position label', () => {
-    assert.match(source, /text-base font-bold[\s\S]{0,200}Halo, \{firstName\}/);
+    assert.match(source, /text-\[1\.15rem\] font-bold[\s\S]{0,200}Halo, \{firstName\}/);
     assert.match(
         source,
         /text-xs font-normal[\s\S]{0,200}employee\?\.position\?\.name/,

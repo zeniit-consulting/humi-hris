@@ -42,7 +42,12 @@ class PerformanceController extends Controller
             'position_id' => ['nullable', 'integer', Rule::exists('positions', 'id')->where('user_id', $ownerId)],
             'manager_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'search' => ['nullable', 'string', 'max:100'],
+            'per_page' => ['nullable', 'in:10,25,50'],
         ]);
+
+        $perPage = in_array((int) ($rawFilters['per_page'] ?? $request->input('per_page')), [10, 25, 50], true)
+            ? (int) ($rawFilters['per_page'] ?? $request->input('per_page'))
+            : 10;
 
         $filters = [
             'period_id' => isset($rawFilters['period_id']) ? (string) $rawFilters['period_id'] : '',
@@ -51,6 +56,7 @@ class PerformanceController extends Controller
             'position_id' => isset($rawFilters['position_id']) ? (string) $rawFilters['position_id'] : '',
             'manager_id' => isset($rawFilters['manager_id']) ? (string) $rawFilters['manager_id'] : '',
             'search' => $rawFilters['search'] ?? '',
+            'per_page' => $perPage,
         ];
 
         $reviewsQuery = PerformanceReview::query()
@@ -86,7 +92,7 @@ class PerformanceController extends Controller
 
         $reviews = $reviewsQuery
             ->latest()
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString()
             ->through(fn (PerformanceReview $review) => $this->reviewPayload($review));
 

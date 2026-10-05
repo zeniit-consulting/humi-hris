@@ -303,7 +303,7 @@ class AttendanceStatusService
     {
         $setting = CompanySetting::query()->withoutGlobalScopes()->where('user_id', $ownerId)->first();
 
-        $query = EmployeeAttendance::query()->withoutGlobalScopes()
+        $query = EmployeeAttendance::query()->withoutGlobalScope('account_owner')
             ->where('user_id', $ownerId)
             ->with(['employee.allowances', 'shift']);
 

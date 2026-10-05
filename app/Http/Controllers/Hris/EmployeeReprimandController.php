@@ -22,12 +22,18 @@ class EmployeeReprimandController extends Controller
             'status' => ['nullable', Rule::in(EmployeeReprimand::STATUSES)],
             'level' => ['nullable', Rule::in(EmployeeReprimand::LEVELS)],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
+            'per_page' => ['nullable', 'in:10,25,50'],
         ]);
+
+        $perPage = in_array((int) ($validated['per_page'] ?? $request->input('per_page')), [10, 25, 50], true)
+            ? (int) ($validated['per_page'] ?? $request->input('per_page'))
+            : 10;
 
         $filters = [
             'status' => $validated['status'] ?? 'active',
             'level' => $validated['level'] ?? '',
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
+            'per_page' => $perPage,
         ];
 
         $reprimands = EmployeeReprimand::query()
@@ -38,7 +44,7 @@ class EmployeeReprimandController extends Controller
             ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']))
             ->orderByDesc('issued_date')
             ->orderByDesc('id')
-            ->paginate(12)
+            ->paginate($perPage)
             ->withQueryString()
             ->through(fn (EmployeeReprimand $reprimand): array => $this->payload($reprimand));
 

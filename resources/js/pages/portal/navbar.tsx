@@ -80,8 +80,13 @@ export function PortalNavbar({ active, links }: PortalNavbarProps) {
                             <item.icon
                                 aria-hidden="true"
                                 className="size-[18px]"
+                                strokeWidth={isActive ? 2.75 : 2}
                             />
-                            <span className="max-w-full truncate text-[11px] font-semibold tracking-[-0.01em]">
+                            <span
+                                className={`max-w-full truncate text-[11px] tracking-[-0.01em] ${
+                                    isActive ? 'font-bold' : 'font-medium'
+                                }`}
+                            >
                                 {item.label}
                             </span>
                         </a>

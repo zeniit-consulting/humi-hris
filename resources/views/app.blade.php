@@ -4,6 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="facebook-domain-verification" content="2xfuntvrjxp6z7ve63sph7h6flo9rz" />
         <meta name="theme-color" content="#006069">
         <meta name="theme-color" content="#006069" media="(prefers-color-scheme: light)">
         <meta name="theme-color" content="#006069" media="(prefers-color-scheme: dark)">
@@ -83,17 +84,20 @@
 
         <!-- Meta Pixel Code -->
         <script>
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '1331584195833501');
-            fbq('track', 'PageView');
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1790990881922456');
+        fbq('track', 'PageView');
         </script>
+        <noscript><img height="1" width="1" style="display:none"
+        src="https://www.facebook.com/tr?id=1790990881922456&ev=PageView&noscript=1"
+        /></noscript>
         <!-- End Meta Pixel Code -->
 
         @viteReactRefresh
@@ -101,9 +105,6 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
-        <noscript><img height="1" width="1" style="display:none"
-            src="https://www.facebook.com/tr?id=1331584195833501&ev=PageView&noscript=1"
-        /></noscript>
         @inertia
     </body>
 </html>

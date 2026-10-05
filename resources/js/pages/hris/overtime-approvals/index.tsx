@@ -13,6 +13,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import {
     Dialog,
     DialogContent,
@@ -32,12 +33,19 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { formatLongDate } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 type LinkItem = { url: string | null; label: string; active: boolean };
 type Paginator<T> = { data: T[]; links: LinkItem[]; total: number };
 type EmployeeOption = { id: number; label: string };
-type Filters = { status: string; employee_id: string; date: string };
+type Filters = {
+    status: string;
+    employee_id: string;
+    date?: string;
+    start_date?: string;
+    end_date?: string;
+};
 type OvertimeRow = {
     id: number;
     employee_label: string;
@@ -79,17 +87,25 @@ const badgeVariant = (status: string) =>
 export default function OvertimeApprovalPage() {
     const { overtimes, employees, filters, statusOptions, stats } =
         usePage<PageProps>().props;
-    const [filterState, setFilterState] = useState(filters);
+    const [filterState, setFilterState] = useState<Filters>({
+        status: filters.status ?? '',
+        employee_id: filters.employee_id ?? '',
+        date: filters.date ?? '',
+        start_date: filters.start_date ?? '',
+        end_date: filters.end_date ?? '',
+    });
     const [detailRow, setDetailRow] = useState<OvertimeRow | null>(null);
     const [rejectRow, setRejectRow] = useState<OvertimeRow | null>(null);
     const rejectForm = useForm({ notes: '' });
 
     useEffect(() => {
-        const timeoutId = window.setTimeout(() => {
-            setFilterState(filters);
-        }, 0);
-
-        return () => window.clearTimeout(timeoutId);
+        setFilterState({
+            status: filters.status ?? '',
+            employee_id: filters.employee_id ?? '',
+            date: filters.date ?? '',
+            start_date: filters.start_date ?? '',
+            end_date: filters.end_date ?? '',
+        });
     }, [filters]);
 
     const applyFilter = (event: FormEvent<HTMLFormElement>) => {
@@ -102,7 +118,13 @@ export default function OvertimeApprovalPage() {
     };
 
     const resetFilter = () => {
-        const reset = { status: 'pending', employee_id: '', date: '' };
+        const reset: Filters = {
+            status: '',
+            employee_id: '',
+            date: '',
+            start_date: '',
+            end_date: '',
+        };
         setFilterState(reset);
         router.get(pageUrl, reset, {
             preserveState: true,
@@ -116,6 +138,7 @@ export default function OvertimeApprovalPage() {
         if (!rejectRow) return;
         rejectForm.post(`${pageUrl}/${rejectRow.id}/reject`, {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
                 setRejectRow(null);
                 rejectForm.reset();
@@ -129,13 +152,40 @@ export default function OvertimeApprovalPage() {
             <div className="space-y-4 p-4">
                 <div className="grid gap-4 md:grid-cols-3">
                     {[
-                        ['Menunggu', stats.pending],
-                        ['Disetujui', stats.approved],
-                        ['Ditolak', stats.rejected],
-                    ].map(([label, value]) => (
+                        ['Menunggu', stats.pending, 'pending'],
+                        ['Disetujui', stats.approved, 'approved'],
+                        ['Ditolak', stats.rejected, 'rejected'],
+                    ].map(([label, value, statusKey]) => (
                         <Card
                             key={label}
-                            className={`gap-2 py-3 ${label === 'Menunggu' ? 'border-amber-200 bg-amber-50/70 dark:border-amber-950 dark:bg-amber-950/25' : label === 'Disetujui' ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-950 dark:bg-emerald-950/25' : 'border-rose-200 bg-rose-50/70 dark:border-rose-950 dark:bg-rose-950/25'}`}
+                            role="button"
+                            onClick={() => {
+                                const nextStatus =
+                                    filterState.status === statusKey
+                                        ? ''
+                                        : statusKey;
+                                const nextFilters: Filters = {
+                                    ...filterState,
+                                    status: nextStatus,
+                                };
+                                setFilterState(nextFilters);
+                                router.get(pageUrl, nextFilters, {
+                                    preserveState: true,
+                                    preserveScroll: true,
+                                    replace: true,
+                                });
+                            }}
+                            className={`cursor-pointer transition-all hover:scale-[1.01] gap-2 py-3 ${
+                                filterState.status === statusKey
+                                    ? 'ring-2 ring-primary ring-offset-2 '
+                                    : ''
+                            }${
+                                label === 'Menunggu'
+                                    ? 'border-amber-200 bg-amber-50/70 dark:border-amber-950 dark:bg-amber-950/25'
+                                    : label === 'Disetujui'
+                                      ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-950 dark:bg-emerald-950/25'
+                                      : 'border-rose-200 bg-rose-50/70 dark:border-rose-950 dark:bg-rose-950/25'
+                            }`}
                         >
                             <CardHeader className="px-4 pb-0">
                                 <CardDescription>{label}</CardDescription>
@@ -154,25 +204,25 @@ export default function OvertimeApprovalPage() {
                     <CardContent>
                         <form
                             onSubmit={applyFilter}
-                            className="grid gap-3 md:grid-cols-[220px_220px_170px_auto]"
+                            className="grid gap-3 md:grid-cols-[260px_220px_180px_auto]"
                         >
                             <div className="grid gap-2">
-                                <Label htmlFor="date">Tanggal</Label>
-                                <div className="relative">
-                                    <CalendarDays className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        id="date"
-                                        type="date"
-                                        value={filterState.date}
-                                        onChange={(e) =>
-                                            setFilterState((p) => ({
-                                                ...p,
-                                                date: e.target.value,
-                                            }))
-                                        }
-                                        className="pl-9"
-                                    />
-                                </div>
+                                <Label htmlFor="date">Rentang Tanggal</Label>
+                                <DateRangePicker
+                                    value={{
+                                        from: filterState.start_date || filterState.date || undefined,
+                                        to: filterState.end_date || filterState.date || undefined,
+                                    }}
+                                    onChange={(range) => {
+                                        setFilterState((p) => ({
+                                            ...p,
+                                            start_date: range.from || '',
+                                            end_date: range.to ?? range.from ?? '',
+                                            date: range.from || '',
+                                        }));
+                                    }}
+                                    placeholder="Semua tanggal..."
+                                />
                             </div>
                             <div className="grid gap-2">
                                 <Label>Karyawan</Label>
@@ -300,8 +350,8 @@ export default function OvertimeApprovalPage() {
                                                         .join(' • ') || '-'}
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                {row.work_date}
+                                            <td className="px-3 py-3 font-medium">
+                                                {formatLongDate(row.work_date)}
                                             </td>
                                             <td className="px-3 py-3">
                                                 {row.start_time} -{' '}
@@ -348,6 +398,7 @@ export default function OvertimeApprovalPage() {
                                                                         undefined,
                                                                         {
                                                                             preserveScroll: true,
+                                                                            preserveState: true,
                                                                         },
                                                                     )
                                                                 }
@@ -390,7 +441,7 @@ export default function OvertimeApprovalPage() {
                     {detailRow && (
                         <div className="space-y-3 text-sm">
                             <p>
-                                <strong>Tanggal:</strong> {detailRow.work_date}
+                                <strong>Tanggal:</strong> {formatLongDate(detailRow.work_date)}
                             </p>
                             <p>
                                 <strong>Jam:</strong> {detailRow.start_time} -{' '}

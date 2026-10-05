@@ -171,13 +171,64 @@ const fallbackLinks: PortalSummary['links'] = {
 
 const quickLinks = [
     { key: 'attendance', label: 'Absensi', icon: ScanLine },
-    { key: 'backup_attendance', label: 'Backup Absensi', icon: UserCheck },
+    { key: 'backup_attendance', label: 'Backup', icon: UserCheck },
     { key: 'leaves', label: 'Cuti', icon: CalendarDays },
     { key: 'overtimes', label: 'Lembur', icon: Clock3 },
     { key: 'kasbons', label: 'Kasbon', icon: HandCoins },
     { key: 'reimbursements', label: 'Reimburse', icon: ReceiptText },
     { key: 'payroll', label: 'Payroll', icon: Wallet },
 ] as const;
+
+const quickLinkPastels: Record<
+    string,
+    {
+        card: string;
+        badge: string;
+        label: string;
+    }
+> = {
+    attendance: {
+        card: 'bg-emerald-50/80 border-emerald-200/80 hover:bg-emerald-100/70',
+        badge: 'bg-emerald-100/90 text-emerald-700',
+        label: 'text-emerald-950',
+    },
+    backup_attendance: {
+        card: 'bg-sky-50/80 border-sky-200/80 hover:bg-sky-100/70',
+        badge: 'bg-sky-100/90 text-sky-700',
+        label: 'text-sky-950',
+    },
+    leaves: {
+        card: 'bg-amber-50/80 border-amber-200/80 hover:bg-amber-100/70',
+        badge: 'bg-amber-100/90 text-amber-700',
+        label: 'text-amber-950',
+    },
+    overtimes: {
+        card: 'bg-purple-50/80 border-purple-200/80 hover:bg-purple-100/70',
+        badge: 'bg-purple-100/90 text-purple-700',
+        label: 'text-purple-950',
+    },
+    kasbons: {
+        card: 'bg-rose-50/80 border-rose-200/80 hover:bg-rose-100/70',
+        badge: 'bg-rose-100/90 text-rose-700',
+        label: 'text-rose-950',
+    },
+    reimbursements: {
+        card: 'bg-indigo-50/80 border-indigo-200/80 hover:bg-indigo-100/70',
+        badge: 'bg-indigo-100/90 text-indigo-700',
+        label: 'text-indigo-950',
+    },
+    payroll: {
+        card: 'bg-teal-50/80 border-teal-200/80 hover:bg-teal-100/70',
+        badge: 'bg-teal-100/90 text-teal-700',
+        label: 'text-teal-950',
+    },
+};
+
+const defaultQuickLinkPastel = {
+    card: 'border-[var(--portal-color-accent)] bg-[var(--portal-color-surface-glass)] hover:bg-[var(--portal-color-surface)]',
+    badge: 'bg-[var(--portal-color-accent-subtle)] text-[var(--portal-color-accent-strong)]',
+    label: 'text-[var(--portal-color-ink)]',
+};
 
 const formatRupiah = (amount: number | string | null | undefined) => {
     const num = Math.round(Number(amount ?? 0));
@@ -419,7 +470,7 @@ export default function PortalPage() {
                 />
             </Head>
 
-            <div className="portal-page min-h-screen overflow-x-clip">
+            <div className="portal-page min-h-screen overflow-x-clip bg-white">
                 <PortalToastViewport />
                 <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-32 sm:max-w-xl sm:px-6 md:max-w-2xl">
                     <div className="portal-top-header -mx-4 -mt-[max(1rem,env(safe-area-inset-top))] rounded-b-[var(--portal-radius-surface)] bg-[var(--portal-color-accent-strong)] px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-28 shadow-[var(--portal-shadow-raised)] sm:-mx-6 sm:px-6 sm:pb-32">
@@ -429,13 +480,13 @@ export default function PortalPage() {
                                 className="portal-pressable portal-focus-ring flex min-h-14 min-w-0 items-center gap-3 rounded-[var(--portal-radius-control)] pr-2"
                                 aria-label="Buka profil"
                             >
-                                <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--portal-radius-control)] bg-white/15 font-bold text-[var(--portal-color-paper)]">
+                                <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 font-bold text-[var(--portal-color-paper)]">
                                     <span>{initials(headlineName)}</span>
                                     {effectiveAvatarUrl ? (
                                         <img
                                             src={effectiveAvatarUrl}
                                             alt={headlineName}
-                                            className="absolute inset-0 size-full object-cover bg-white"
+                                            className="absolute inset-0 size-full rounded-full object-cover bg-white"
                                             onError={(e) => {
                                                 e.currentTarget.style.display = 'none';
                                             }}
@@ -443,7 +494,7 @@ export default function PortalPage() {
                                     ) : null}
                                 </span>
                                 <span className="min-w-0 text-left">
-                                    <span className="block text-base font-bold text-[var(--portal-color-paper)]">
+                                    <span className="block text-[1.15rem] font-bold text-[var(--portal-color-paper)]">
                                         Halo, {firstName}
                                     </span>
                                     <span className="block truncate text-xs font-normal text-[var(--portal-color-paper)]">
@@ -455,7 +506,7 @@ export default function PortalPage() {
                             <button
                                 type="button"
                                 onClick={() => setLogoutConfirmOpen(true)}
-                                className="portal-pressable portal-focus-ring flex size-11 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/10 text-[var(--portal-color-paper)]"
+                                className="portal-pressable portal-focus-ring flex size-11 shrink-0 items-center justify-center rounded-full border border-rose-200 bg-rose-100/90 text-rose-700 shadow-sm transition-colors hover:bg-rose-200"
                                 aria-label="Keluar dari portal"
                             >
                                 <LogOut className="size-[18px]" />
@@ -534,11 +585,58 @@ export default function PortalPage() {
 
                                         <a
                                             href={attendanceFocus.href}
-                                            className="portal-pressable portal-focus-ring mt-4 flex min-h-12 items-center justify-between rounded-[var(--portal-radius-control)] bg-[var(--portal-color-accent-strong)] px-4 text-sm font-bold whitespace-nowrap text-[var(--portal-color-accent-ink)]"
+                                            className="portal-pressable portal-focus-ring mt-4 flex min-h-12 items-center justify-between rounded-[var(--portal-radius-control)] bg-[#fb8500] px-4 text-sm font-bold whitespace-nowrap text-white shadow-sm transition-colors hover:bg-[#e07700]"
                                         >
                                             {attendanceFocus.actionLabel}
                                             <ChevronRight className="size-5" />
                                         </a>
+                                    </div>
+                                </section>
+
+                                <section aria-labelledby="quick-menu">
+                                    <h2
+                                        id="quick-menu"
+                                        className="portal-display text-[0.95rem] font-extrabold tracking-[-0.04em]"
+                                    >
+                                        Quick Menu
+                                    </h2>
+                                    <div className="portal-horizontal-scroll -mx-4 mt-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
+                                        <ul
+                                            aria-label="Quick Menu"
+                                            className="flex w-max gap-3"
+                                        >
+                                            {visibleQuickLinks.map((item) => {
+                                                const href =
+                                                    links[
+                                                        item.key as keyof PortalSummary['links']
+                                                    ] ?? '#';
+                                                const pastel =
+                                                    quickLinkPastels[item.key] ??
+                                                    defaultQuickLinkPastel;
+                                                return (
+                                                    <li
+                                                        key={item.key}
+                                                        className="w-32 shrink-0"
+                                                    >
+                                                        <a
+                                                            href={href}
+                                                            className={`portal-pressable portal-focus-ring flex min-h-24 flex-col justify-between rounded-[var(--portal-radius-control)] border p-3.5 shadow-[var(--portal-shadow-raised)] transition-colors ${pastel.card}`}
+                                                        >
+                                                            <span
+                                                                className={`flex size-8 items-center justify-center rounded-lg ${pastel.badge}`}
+                                                            >
+                                                                <item.icon className="size-4.5" />
+                                                            </span>
+                                                            <span
+                                                                className={`text-sm font-semibold whitespace-nowrap ${pastel.label}`}
+                                                            >
+                                                                {item.label}
+                                                            </span>
+                                                        </a>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
                                     </div>
                                 </section>
 
@@ -554,33 +652,87 @@ export default function PortalPage() {
                                             label="Cuti tahunan"
                                             value={`${summary?.cards.annual_leave_days ?? 0} hari`}
                                             icon={CalendarDays}
+                                            cardClassName="border-emerald-200/80 bg-emerald-50/70"
+                                            labelClassName="text-emerald-800/80"
+                                            badgeClassName="bg-emerald-100/90 text-emerald-700"
+                                            valueClassName="text-emerald-950"
                                         />
                                         <a
                                             href={links.attendance}
-                                            className="portal-pressable portal-focus-ring rounded-[var(--portal-radius-control)] border border-white/70 bg-[var(--portal-color-surface-glass)] p-3 shadow-[var(--portal-shadow-raised)]"
+                                            className={`portal-pressable portal-focus-ring rounded-[var(--portal-radius-control)] border p-3 shadow-[var(--portal-shadow-raised)] transition-colors ${
+                                                (summary?.cards.attendance_penalty ?? 0) > 0
+                                                    ? 'border-amber-200/80 bg-amber-50/70'
+                                                    : 'border-teal-200/80 bg-teal-50/70'
+                                            }`}
                                         >
-                                            <span className="flex items-center justify-between gap-2 text-[var(--portal-color-muted)]">
+                                            <span
+                                                className={`flex items-center justify-between gap-2 ${
+                                                    (summary?.cards.attendance_penalty ?? 0) > 0
+                                                        ? 'text-amber-800/80'
+                                                        : 'text-teal-800/80'
+                                                }`}
+                                            >
                                                 <span className="text-xs font-medium">
                                                     Denda absensi
                                                 </span>
-                                                {(summary?.cards.attendance_penalty ?? 0) > 0 ? (
-                                                    <AlertCircle className="size-4 text-[var(--portal-color-warning)]" />
-                                                ) : (
-                                                    <CircleCheck className="size-4 text-[var(--portal-color-success)]" />
-                                                )}
+                                                <span
+                                                    className={`flex size-6 items-center justify-center rounded-md ${
+                                                        (summary?.cards.attendance_penalty ?? 0) > 0
+                                                            ? 'bg-amber-100/90 text-amber-700'
+                                                            : 'bg-teal-100/90 text-teal-700'
+                                                    }`}
+                                                >
+                                                    {(summary?.cards.attendance_penalty ?? 0) > 0 ? (
+                                                        <AlertCircle className="size-3.5" />
+                                                    ) : (
+                                                        <CircleCheck className="size-3.5" />
+                                                    )}
+                                                </span>
                                             </span>
-                                            <span className="portal-tabular mt-3 block text-sm font-bold text-[var(--portal-color-ink)]">
+                                            <span
+                                                className={`portal-tabular mt-3 block text-sm font-bold ${
+                                                    (summary?.cards.attendance_penalty ?? 0) > 0
+                                                        ? 'text-amber-950'
+                                                        : 'text-teal-950'
+                                                }`}
+                                            >
                                                 {formatRupiah(summary?.cards.attendance_penalty ?? 0)}
                                             </span>
                                         </a>
-                                        <div className="rounded-[var(--portal-radius-control)] border border-white/70 bg-[var(--portal-color-surface-glass)] p-3 shadow-[var(--portal-shadow-raised)]">
-                                            <span className="flex items-center justify-between gap-2 text-[var(--portal-color-muted)]">
+                                        <div
+                                            className={`rounded-[var(--portal-radius-control)] border p-3 shadow-[var(--portal-shadow-raised)] ${
+                                                attentionItems.length > 0
+                                                    ? 'border-purple-200/80 bg-purple-50/70'
+                                                    : 'border-sky-200/80 bg-sky-50/70'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`flex items-center justify-between gap-2 ${
+                                                    attentionItems.length > 0
+                                                        ? 'text-purple-800/80'
+                                                        : 'text-sky-800/80'
+                                                }`}
+                                            >
                                                 <span className="text-xs font-medium">
                                                     Perlu perhatian
                                                 </span>
-                                                <BellRing className="size-4 text-[var(--portal-color-accent-strong)]" />
+                                                <span
+                                                    className={`flex size-6 items-center justify-center rounded-md ${
+                                                        attentionItems.length > 0
+                                                            ? 'bg-purple-100/90 text-purple-700'
+                                                            : 'bg-sky-100/90 text-sky-700'
+                                                    }`}
+                                                >
+                                                    <BellRing className="size-3.5" />
+                                                </span>
                                             </span>
-                                            <span className="portal-tabular mt-3 block text-sm font-bold text-[var(--portal-color-ink)]">
+                                            <span
+                                                className={`portal-tabular mt-3 block text-sm font-bold ${
+                                                    attentionItems.length > 0
+                                                        ? 'text-purple-950'
+                                                        : 'text-sky-950'
+                                                }`}
+                                            >
                                                 {attentionItems.length} item
                                             </span>
                                         </div>
@@ -634,44 +786,6 @@ export default function PortalPage() {
                                         </div>
                                     </section>
                                 ) : null}
-
-                                <section aria-labelledby="quick-menu">
-                                    <h2
-                                        id="quick-menu"
-                                        className="portal-display text-[0.95rem] font-extrabold tracking-[-0.04em]"
-                                    >
-                                        Quick Menu
-                                    </h2>
-                                    <div className="portal-horizontal-scroll -mx-4 mt-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
-                                        <ul
-                                            aria-label="Quick Menu"
-                                            className="flex w-max gap-3"
-                                        >
-                                            {visibleQuickLinks.map((item) => {
-                                                const href =
-                                                    links[
-                                                        item.key as keyof PortalSummary['links']
-                                                    ] ?? '#';
-                                                return (
-                                                    <li
-                                                        key={item.key}
-                                                        className="w-32 shrink-0"
-                                                    >
-                                                        <a
-                                                            href={href}
-                                                            className="portal-pressable portal-focus-ring flex min-h-24 flex-col justify-between rounded-[var(--portal-radius-control)] border border-[var(--portal-color-accent)] bg-[var(--portal-color-surface-glass)] p-3.5 shadow-[var(--portal-shadow-raised)]"
-                                                        >
-                                                            <item.icon className="size-5 text-[var(--portal-color-accent-strong)]" />
-                                                            <span className="text-sm font-semibold whitespace-nowrap">
-                                                                {item.label}
-                                                            </span>
-                                                        </a>
-                                                    </li>
-                                                );
-                                            })}
-                                        </ul>
-                                    </div>
-                                </section>
 
                                 <section aria-labelledby="aktivitas-terbaru">
                                     <div className="flex items-center justify-between gap-4">
@@ -792,7 +906,7 @@ export default function PortalPage() {
                                     href="/logout"
                                     method="post"
                                     as="button"
-                                    className="portal-pressable portal-focus-ring inline-flex min-h-12 items-center justify-center rounded-[var(--portal-radius-control)] bg-[var(--portal-color-danger)] text-sm font-bold whitespace-nowrap text-[var(--portal-color-accent-ink)]"
+                                    className="portal-pressable portal-focus-ring inline-flex min-h-12 items-center justify-center rounded-[var(--portal-radius-control)] border border-rose-200 bg-rose-100 text-sm font-bold whitespace-nowrap text-rose-700 transition-colors hover:bg-rose-200"
                                 >
                                     Keluar
                                 </Link>
@@ -809,18 +923,36 @@ function SummaryCard({
     label,
     value,
     icon: Icon,
+    cardClassName = 'border-emerald-200/80 bg-emerald-50/70',
+    labelClassName = 'text-emerald-800/80',
+    badgeClassName = 'bg-emerald-100/90 text-emerald-700',
+    valueClassName = 'text-emerald-950',
 }: {
     label: string;
     value: string;
     icon: LucideIcon;
+    cardClassName?: string;
+    labelClassName?: string;
+    badgeClassName?: string;
+    valueClassName?: string;
 }) {
     return (
-        <div className="rounded-[var(--portal-radius-control)] border border-white/70 bg-[var(--portal-color-surface-glass)] p-3.5 shadow-[var(--portal-shadow-raised)]">
-            <span className="flex items-center justify-between gap-2 text-[var(--portal-color-muted)]">
+        <div
+            className={`rounded-[var(--portal-radius-control)] border p-3.5 shadow-[var(--portal-shadow-raised)] ${cardClassName}`}
+        >
+            <span
+                className={`flex items-center justify-between gap-2 ${labelClassName}`}
+            >
                 <span className="text-xs font-medium">{label}</span>
-                <Icon className="size-4 text-[var(--portal-color-accent-strong)]" />
+                <span
+                    className={`flex size-6 items-center justify-center rounded-md ${badgeClassName}`}
+                >
+                    <Icon className="size-3.5" />
+                </span>
             </span>
-            <span className="portal-tabular mt-3 block text-sm font-bold text-[var(--portal-color-ink)]">
+            <span
+                className={`portal-tabular mt-3 block text-sm font-bold ${valueClassName}`}
+            >
                 {value}
             </span>
         </div>

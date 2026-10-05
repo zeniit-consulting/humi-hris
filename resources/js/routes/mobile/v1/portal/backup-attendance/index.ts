@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::colleagues
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:33
 * @route '/api/mobile/v1/portal/backup-attendance/colleagues'
 */
 export const colleagues = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ colleagues.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::colleagues
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:33
 * @route '/api/mobile/v1/portal/backup-attendance/colleagues'
 */
 colleagues.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ colleagues.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::colleagues
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:33
 * @route '/api/mobile/v1/portal/backup-attendance/colleagues'
 */
 colleagues.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ colleagues.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::colleagues
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:33
 * @route '/api/mobile/v1/portal/backup-attendance/colleagues'
 */
 colleagues.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ colleagues.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::colleagues
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:33
 * @route '/api/mobile/v1/portal/backup-attendance/colleagues'
 */
 const colleaguesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const colleaguesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::colleagues
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:33
 * @route '/api/mobile/v1/portal/backup-attendance/colleagues'
 */
 colleaguesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ colleaguesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::colleagues
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:31
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:33
 * @route '/api/mobile/v1/portal/backup-attendance/colleagues'
 */
 colleaguesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ colleagues.form = colleaguesForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::status
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:107
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:109
 * @route '/api/mobile/v1/portal/backup-attendance/status'
 */
 export const status = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ status.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::status
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:107
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:109
 * @route '/api/mobile/v1/portal/backup-attendance/status'
 */
 status.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ status.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::status
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:107
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:109
 * @route '/api/mobile/v1/portal/backup-attendance/status'
 */
 status.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ status.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::status
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:107
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:109
 * @route '/api/mobile/v1/portal/backup-attendance/status'
 */
 status.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ status.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::status
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:107
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:109
 * @route '/api/mobile/v1/portal/backup-attendance/status'
 */
 const statusForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const statusForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::status
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:107
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:109
 * @route '/api/mobile/v1/portal/backup-attendance/status'
 */
 statusForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ statusForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::status
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:107
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:109
 * @route '/api/mobile/v1/portal/backup-attendance/status'
 */
 statusForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -163,7 +163,7 @@ status.form = statusForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::checkIn
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:181
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:183
 * @route '/api/mobile/v1/portal/backup-attendance/check-in'
 */
 export const checkIn = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -178,7 +178,7 @@ checkIn.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::checkIn
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:181
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:183
 * @route '/api/mobile/v1/portal/backup-attendance/check-in'
 */
 checkIn.url = (options?: RouteQueryOptions) => {
@@ -187,7 +187,7 @@ checkIn.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::checkIn
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:181
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:183
 * @route '/api/mobile/v1/portal/backup-attendance/check-in'
 */
 checkIn.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -197,7 +197,7 @@ checkIn.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::checkIn
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:181
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:183
 * @route '/api/mobile/v1/portal/backup-attendance/check-in'
 */
 const checkInForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -207,7 +207,7 @@ const checkInForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::checkIn
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:181
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:183
 * @route '/api/mobile/v1/portal/backup-attendance/check-in'
 */
 checkInForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -219,7 +219,7 @@ checkIn.form = checkInForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::checkOut
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:373
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:369
 * @route '/api/mobile/v1/portal/backup-attendance/check-out'
 */
 export const checkOut = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -234,7 +234,7 @@ checkOut.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::checkOut
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:373
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:369
 * @route '/api/mobile/v1/portal/backup-attendance/check-out'
 */
 checkOut.url = (options?: RouteQueryOptions) => {
@@ -243,7 +243,7 @@ checkOut.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::checkOut
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:373
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:369
 * @route '/api/mobile/v1/portal/backup-attendance/check-out'
 */
 checkOut.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -253,7 +253,7 @@ checkOut.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::checkOut
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:373
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:369
 * @route '/api/mobile/v1/portal/backup-attendance/check-out'
 */
 const checkOutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -263,7 +263,7 @@ const checkOutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\BackupAttendanceController::checkOut
-* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:373
+* @see app/Http/Controllers/Api/Mobile/V1/BackupAttendanceController.php:369
 * @route '/api/mobile/v1/portal/backup-attendance/check-out'
 */
 checkOutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

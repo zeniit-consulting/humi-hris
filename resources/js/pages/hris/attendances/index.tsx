@@ -13,6 +13,7 @@ import {
     Pencil,
     Plus,
     RotateCcw,
+    Trash2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -193,8 +194,27 @@ export default function AttendancePage() {
     );
     const [selectedPhotoRecord, setSelectedPhotoRecord] =
         useState<AttendanceRecord | null>(null);
+    const [deleteRecord, setDeleteRecord] = useState<AttendanceRecord | null>(
+        null,
+    );
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const attendanceForm = useForm<AttendanceFormData>(defaultAttendanceForm);
+
+    const handleDelete = () => {
+        if (!deleteRecord) return;
+        setIsDeleting(true);
+        router.delete(`/hris/attendances/${deleteRecord.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setDeleteRecord(null);
+                setIsDeleting(false);
+            },
+            onError: () => {
+                setIsDeleting(false);
+            },
+        });
+    };
 
     useEffect(() => {
         setFilterState(filters);
@@ -785,6 +805,15 @@ export default function AttendancePage() {
                                                             )
                                                         }
                                                     />
+                                                    <ActionIconButton
+                                                        label="Hapus kehadiran"
+                                                        icon={Trash2}
+                                                        variant="outline"
+                                                        className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
+                                                        onClick={() =>
+                                                            setDeleteRecord(row)
+                                                        }
+                                                    />
                                                 </div>
                                             </td>
                                         </tr>
@@ -1345,6 +1374,51 @@ export default function AttendancePage() {
                             </Button>
                         </div>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Konfirmasi Hapus Kehadiran */}
+            <Dialog
+                open={deleteRecord !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeleteRecord(null);
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Hapus Kehadiran?</DialogTitle>
+                        <DialogDescription>
+                            Apakah Anda yakin ingin menghapus data kehadiran untuk karyawan{' '}
+                            <strong className="text-foreground">
+                                {deleteRecord?.employee_label}
+                            </strong>{' '}
+                            pada tanggal{' '}
+                            <strong className="text-foreground">
+                                {deleteRecord?.attendance_date}
+                            </strong>
+                            ? Data absensi ini akan dihapus.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="mt-4 flex justify-end gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={isDeleting}
+                            onClick={() => setDeleteRecord(null)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            disabled={isDeleting}
+                            onClick={handleDelete}
+                        >
+                            {isDeleting ? 'Menghapus...' : 'Hapus Kehadiran'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

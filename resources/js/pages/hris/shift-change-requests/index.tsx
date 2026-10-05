@@ -21,6 +21,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import {
     Dialog,
     DialogContent,
@@ -40,6 +41,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { formatLongDate } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 type PaginatorLink = {
@@ -91,7 +93,9 @@ type ShiftChangeRow = {
 type Filters = {
     status: string;
     employee_id: string;
-    date: string;
+    date?: string;
+    start_date?: string;
+    end_date?: string;
 };
 
 type PageProps = {
@@ -174,7 +178,13 @@ export default function ShiftChangeApprovalPage() {
     const { requests, employees, filters, statusOptions, stats } =
         usePage<PageProps>().props;
 
-    const [filterState, setFilterState] = useState<Filters>(filters);
+    const [filterState, setFilterState] = useState<Filters>({
+        status: filters.status ?? '',
+        employee_id: filters.employee_id ?? '',
+        date: filters.date ?? '',
+        start_date: filters.start_date ?? '',
+        end_date: filters.end_date ?? '',
+    });
     const [detailRow, setDetailRow] = useState<ShiftChangeRow | null>(null);
     const [rejectRow, setRejectRow] = useState<ShiftChangeRow | null>(null);
     const rejectForm = useForm<RejectFormData>({
@@ -182,7 +192,13 @@ export default function ShiftChangeApprovalPage() {
     });
 
     useEffect(() => {
-        setFilterState(filters);
+        setFilterState({
+            status: filters.status ?? '',
+            employee_id: filters.employee_id ?? '',
+            date: filters.date ?? '',
+            start_date: filters.start_date ?? '',
+            end_date: filters.end_date ?? '',
+        });
     }, [filters]);
 
     const applyFilter = (event: FormEvent<HTMLFormElement>) => {
@@ -196,10 +212,12 @@ export default function ShiftChangeApprovalPage() {
     };
 
     const resetFilter = () => {
-        const reset = {
-            status: 'pending',
+        const reset: Filters = {
+            status: '',
             employee_id: '',
             date: '',
+            start_date: '',
+            end_date: '',
         };
 
         setFilterState(reset);
@@ -213,6 +231,7 @@ export default function ShiftChangeApprovalPage() {
     const approveRequest = (row: ShiftChangeRow) => {
         router.post(`${pageUrl}/${row.id}/approve`, undefined, {
             preserveScroll: true,
+            preserveState: true,
         });
     };
 
@@ -231,6 +250,7 @@ export default function ShiftChangeApprovalPage() {
 
         rejectForm.post(`${pageUrl}/${rejectRow.id}/reject`, {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
                 setRejectRow(null);
                 rejectForm.reset();
@@ -244,30 +264,50 @@ export default function ShiftChangeApprovalPage() {
 
             <div className="space-y-4 p-4">
                 <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="gap-2 border-amber-200 bg-amber-50/70 py-3 dark:border-amber-950 dark:bg-amber-950/25">
-                        <CardHeader className="px-4 pb-0">
-                            <CardDescription>Menunggu</CardDescription>
-                            <CardTitle className="text-2xl">
-                                {stats.pending}
-                            </CardTitle>
-                        </CardHeader>
-                    </Card>
-                    <Card className="gap-2 border-emerald-200 bg-emerald-50/70 py-3 dark:border-emerald-950 dark:bg-emerald-950/25">
-                        <CardHeader className="px-4 pb-0">
-                            <CardDescription>Disetujui</CardDescription>
-                            <CardTitle className="text-2xl">
-                                {stats.approved}
-                            </CardTitle>
-                        </CardHeader>
-                    </Card>
-                    <Card className="gap-2 border-rose-200 bg-rose-50/70 py-3 dark:border-rose-950 dark:bg-rose-950/25">
-                        <CardHeader className="px-4 pb-0">
-                            <CardDescription>Ditolak</CardDescription>
-                            <CardTitle className="text-2xl">
-                                {stats.rejected}
-                            </CardTitle>
-                        </CardHeader>
-                    </Card>
+                    {[
+                        ['Menunggu', stats.pending, 'pending'],
+                        ['Disetujui', stats.approved, 'approved'],
+                        ['Ditolak', stats.rejected, 'rejected'],
+                    ].map(([label, value, statusKey]) => (
+                        <Card
+                            key={label}
+                            role="button"
+                            onClick={() => {
+                                const nextStatus =
+                                    filterState.status === statusKey
+                                        ? ''
+                                        : statusKey;
+                                const nextFilters: Filters = {
+                                    ...filterState,
+                                    status: nextStatus,
+                                };
+                                setFilterState(nextFilters);
+                                router.get(pageUrl, nextFilters, {
+                                    preserveState: true,
+                                    preserveScroll: true,
+                                    replace: true,
+                                });
+                            }}
+                            className={`cursor-pointer transition-all hover:scale-[1.01] gap-2 py-3 ${
+                                filterState.status === statusKey
+                                    ? 'ring-2 ring-primary ring-offset-2 '
+                                    : ''
+                            }${
+                                label === 'Menunggu'
+                                    ? 'border-amber-200 bg-amber-50/70 dark:border-amber-950 dark:bg-amber-950/25'
+                                    : label === 'Disetujui'
+                                      ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-950 dark:bg-emerald-950/25'
+                                      : 'border-rose-200 bg-rose-50/70 dark:border-rose-950 dark:bg-rose-950/25'
+                            }`}
+                        >
+                            <CardHeader className="px-4 pb-0">
+                                <CardDescription>{label}</CardDescription>
+                                <CardTitle className="text-2xl">
+                                    {value}
+                                </CardTitle>
+                            </CardHeader>
+                        </Card>
+                    ))}
                 </div>
 
                 <Card>
@@ -282,25 +322,25 @@ export default function ShiftChangeApprovalPage() {
                     <CardContent>
                         <form
                             onSubmit={applyFilter}
-                            className="grid gap-3 md:grid-cols-[220px_220px_170px_auto]"
+                            className="grid gap-3 md:grid-cols-[260px_220px_180px_auto]"
                         >
                             <div className="grid gap-2">
-                                <Label htmlFor="filter_date">Tanggal</Label>
-                                <div className="relative">
-                                    <CalendarDays className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        id="filter_date"
-                                        type="date"
-                                        value={filterState.date}
-                                        onChange={(event) =>
-                                            setFilterState((prev) => ({
-                                                ...prev,
-                                                date: event.target.value,
-                                            }))
-                                        }
-                                        className="pl-9"
-                                    />
-                                </div>
+                                <Label htmlFor="filter_date">Rentang Tanggal</Label>
+                                <DateRangePicker
+                                    value={{
+                                        from: filterState.start_date || filterState.date || undefined,
+                                        to: filterState.end_date || filterState.date || undefined,
+                                    }}
+                                    onChange={(range) => {
+                                        setFilterState((prev) => ({
+                                            ...prev,
+                                            start_date: range.from || '',
+                                            end_date: range.to ?? range.from ?? '',
+                                            date: range.from || '',
+                                        }));
+                                    }}
+                                    placeholder="Semua tanggal..."
+                                />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="filter_employee">
@@ -367,7 +407,7 @@ export default function ShiftChangeApprovalPage() {
                                                 value={status}
                                             >
                                                 {statusLabelMap[status] ??
-                                                    status}
+                                                     status}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -449,8 +489,8 @@ export default function ShiftChangeApprovalPage() {
                                                         .join(' • ') || '-'}
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                {row.requested_date_label}
+                                            <td className="px-3 py-3 font-medium">
+                                                {formatLongDate(row.requested_date)}
                                             </td>
                                             <td className="px-3 py-3">
                                                 {formatShift(row.current_shift)}
@@ -539,7 +579,7 @@ export default function ShiftChangeApprovalPage() {
                                     {detailRow.employee_label}
                                 </p>
                                 <p className="text-muted-foreground">
-                                    {detailRow.requested_date_label}
+                                    {formatLongDate(detailRow.requested_date)}
                                 </p>
                             </div>
                             <div className="grid gap-3 md:grid-cols-2">

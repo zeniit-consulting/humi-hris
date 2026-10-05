@@ -84,7 +84,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::suspend
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:398
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:395
 * @route '/admin/subscribers/{subscriber}/suspend'
 */
 export const suspend = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -99,7 +99,7 @@ suspend.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::suspend
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:398
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:395
 * @route '/admin/subscribers/{subscriber}/suspend'
 */
 suspend.url = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -132,7 +132,7 @@ suspend.url = (args: { subscriber: number | { id: number } } | [subscriber: numb
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::suspend
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:398
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:395
 * @route '/admin/subscribers/{subscriber}/suspend'
 */
 suspend.post = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -142,7 +142,7 @@ suspend.post = (args: { subscriber: number | { id: number } } | [subscriber: num
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::suspend
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:398
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:395
 * @route '/admin/subscribers/{subscriber}/suspend'
 */
 const suspendForm = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -152,7 +152,7 @@ const suspendForm = (args: { subscriber: number | { id: number } } | [subscriber
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::suspend
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:398
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:395
 * @route '/admin/subscribers/{subscriber}/suspend'
 */
 suspendForm.post = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -164,7 +164,7 @@ suspend.form = suspendForm
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::reactivate
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:426
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:423
 * @route '/admin/subscribers/{subscriber}/reactivate'
 */
 export const reactivate = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -179,7 +179,7 @@ reactivate.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::reactivate
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:426
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:423
 * @route '/admin/subscribers/{subscriber}/reactivate'
 */
 reactivate.url = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -212,7 +212,7 @@ reactivate.url = (args: { subscriber: number | { id: number } } | [subscriber: n
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::reactivate
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:426
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:423
 * @route '/admin/subscribers/{subscriber}/reactivate'
 */
 reactivate.post = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -222,7 +222,7 @@ reactivate.post = (args: { subscriber: number | { id: number } } | [subscriber: 
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::reactivate
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:426
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:423
 * @route '/admin/subscribers/{subscriber}/reactivate'
 */
 const reactivateForm = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -232,7 +232,7 @@ const reactivateForm = (args: { subscriber: number | { id: number } } | [subscri
 
 /**
 * @see \App\Http\Controllers\Admin\SubscriberManagementController::reactivate
-* @see app/Http/Controllers/Admin/SubscriberManagementController.php:426
+* @see app/Http/Controllers/Admin/SubscriberManagementController.php:423
 * @route '/admin/subscribers/{subscriber}/reactivate'
 */
 reactivateForm.post = (args: { subscriber: number | { id: number } } | [subscriber: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

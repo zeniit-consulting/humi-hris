@@ -28,18 +28,25 @@ class UpdateAttendanceRequest extends FormRequest
         $attendance = $this->route('employeeAttendance');
         $ownerId = $this->user()->accountOwnerId();
 
+        $isDateUnchanged = $attendance && $this->filled('attendance_date') && (
+            (is_string($attendance->attendance_date) && $attendance->attendance_date === (string) $this->input('attendance_date')) ||
+            ($attendance->attendance_date instanceof \DateTimeInterface && $attendance->attendance_date->format('Y-m-d') === (string) $this->input('attendance_date'))
+        );
+
+        $attendanceDateRules = ['required', 'date'];
+        if (! $isDateUnchanged) {
+            $attendanceDateRules[] = Rule::unique('employee_attendances', 'attendance_date')
+                ->where(fn ($query) => $query
+                    ->where('employee_id', $this->integer('employee_id'))
+                    ->where('user_id', $ownerId))
+                ->ignore($attendance->id)
+                ->withoutTrashed();
+        }
+
         return [
             'employee_id' => ['required', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'shift_id' => ['nullable', 'integer', Rule::exists('work_shifts', 'id')->where('user_id', $ownerId)],
-            'attendance_date' => [
-                'required',
-                'date',
-                Rule::unique('employee_attendances', 'attendance_date')
-                    ->where(fn ($query) => $query
-                        ->where('employee_id', $this->integer('employee_id'))
-                        ->where('user_id', $ownerId))
-                    ->ignore($attendance->id),
-            ],
+            'attendance_date' => $attendanceDateRules,
             'status' => ['required', Rule::in(['present', 'late', 'on_leave', 'absent'])],
             'check_in_at' => ['nullable', 'date'],
             'check_in_latitude' => ['nullable', 'numeric', 'between:-90,90'],

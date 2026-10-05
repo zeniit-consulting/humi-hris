@@ -1,6 +1,13 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 export type PaginationLink = {
@@ -27,6 +34,11 @@ interface SimplePaginationProps {
     className?: string;
     preserveScroll?: boolean;
     preserveState?: boolean;
+    showPerPage?: boolean;
+    perPageOptions?: number[];
+    onPerPageChange?: (perPage: number) => void;
+    perPageParam?: string;
+    pageParam?: string;
 }
 
 export function SimplePagination({
@@ -34,6 +46,11 @@ export function SimplePagination({
     className,
     preserveScroll = true,
     preserveState = true,
+    showPerPage = true,
+    perPageOptions = [10, 25, 50],
+    onPerPageChange,
+    perPageParam = 'per_page',
+    pageParam,
 }: SimplePaginationProps) {
     const total = data.total ?? (Array.isArray(data.data) ? data.data.length : 0);
 
@@ -46,7 +63,7 @@ export function SimplePagination({
         }
     }
 
-    const perPage = data.per_page ?? (Array.isArray(data.data) && data.data.length > 0 ? data.data.length : 15);
+    const perPage = data.per_page ?? (Array.isArray(data.data) && data.data.length > 0 ? data.data.length : 10);
     const calculatedFrom = total === 0 ? 0 : (activePage - 1) * perPage + 1;
     const calculatedTo = total === 0 ? 0 : Math.min(activePage * perPage, total);
 
@@ -75,13 +92,87 @@ export function SimplePagination({
     const hasPrev = Boolean(prevUrl);
     const hasNext = Boolean(nextUrl);
 
+    const allowedOptions = perPageOptions.map(String);
+    const currentPerPage = allowedOptions.includes(String(perPage))
+        ? String(perPage)
+        : '10';
+
+    const handlePerPageChange = (value: string) => {
+        const nextPerPage = Number(value);
+        if (onPerPageChange) {
+            onPerPageChange(nextPerPage);
+            return;
+        }
+
+        if (typeof window !== 'undefined') {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set(perPageParam, value);
+
+            let targetPageParam = pageParam;
+            if (!targetPageParam) {
+                const sampleUrl = prevUrl ?? nextUrl;
+                if (sampleUrl) {
+                    try {
+                        const parsed = new URL(sampleUrl, window.location.origin);
+                        for (const key of parsed.searchParams.keys()) {
+                            if (key === 'page' || key.endsWith('_page')) {
+                                targetPageParam = key;
+                                break;
+                            }
+                        }
+                    } catch {
+                        // ignore error
+                    }
+                }
+            }
+
+            currentUrl.searchParams.set(targetPageParam ?? 'page', '1');
+
+            router.get(
+                currentUrl.pathname + currentUrl.search,
+                {},
+                {
+                    preserveState,
+                    preserveScroll,
+                },
+            );
+        }
+    };
+
     if (total === 0) {
         return null;
     }
 
     return (
-        <div className={cn('flex items-center justify-end gap-3 text-sm text-muted-foreground', className)}>
-            <span className="tabular-nums select-none">
+        <div className={cn('flex flex-wrap items-center justify-end gap-3 text-sm text-muted-foreground', className)}>
+            {showPerPage && (
+                <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        Tampilkan:
+                    </span>
+                    <Select
+                        value={currentPerPage}
+                        onValueChange={handlePerPageChange}
+                    >
+                        <SelectTrigger
+                            size="sm"
+                            className="h-8 w-[72px] text-xs"
+                            aria-label="Jumlah baris per halaman"
+                        >
+                            <SelectValue placeholder={currentPerPage} />
+                        </SelectTrigger>
+                        <SelectContent side="top" align="end">
+                            {perPageOptions.map((opt) => (
+                                <SelectItem key={opt} value={String(opt)}>
+                                    {opt}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+
+            <span className="tabular-nums select-none whitespace-nowrap">
                 {from}–{to} of {total}
             </span>
             <div className="flex items-center gap-1">

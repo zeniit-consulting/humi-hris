@@ -159,6 +159,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         Route::post('attendances/sync-lateness', [AttendanceController::class, 'syncLateness'])->name('attendances.sync-lateness');
         Route::post('attendances', [AttendanceController::class, 'store'])->name('attendances.store');
         Route::put('attendances/{employeeAttendance}', [AttendanceController::class, 'update'])->name('attendances.update');
+        Route::post('attendances/{employeeAttendance}/photo', [AttendanceController::class, 'uploadPhoto'])->name('attendances.photo.upload');
         Route::delete('attendances/{employeeAttendance}', [AttendanceController::class, 'destroy'])->name('attendances.destroy');
         Route::post('attendances/schedules', [AttendanceScheduleController::class, 'store'])->name('attendances.schedules.store');
 

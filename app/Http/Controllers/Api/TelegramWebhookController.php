@@ -372,7 +372,7 @@ class TelegramWebhookController extends Controller
 
     private function approveAttendance(AttendanceCorrectionRequest $item, User $actor): void
     {
-        $attendance = EmployeeAttendance::withoutGlobalScopes()->firstOrNew([
+        $attendance = EmployeeAttendance::withoutGlobalScope('account_owner')->firstOrNew([
             'employee_id' => $item->employee_id,
             'attendance_date' => $item->attendance_date,
         ]);

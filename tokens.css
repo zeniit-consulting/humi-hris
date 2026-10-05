@@ -60,7 +60,7 @@
     --landing-z-sticky: 200;
 
     --portal-color-paper: oklch(0.985 0.006 195);
-    --portal-color-canvas: oklch(0.955 0.017 205);
+    --portal-color-canvas: #ffffff;
     --portal-color-surface: oklch(0.997 0.003 195);
     --portal-color-surface-raised: oklch(0.955 0.014 195);
     --portal-color-surface-glass: oklch(0.997 0.003 195 / 0.78);

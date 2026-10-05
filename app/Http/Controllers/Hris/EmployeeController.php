@@ -88,7 +88,12 @@ class EmployeeController extends Controller
             'direction' => ['nullable', Rule::in(['asc', 'desc'])],
             'division_search' => ['nullable', 'string', 'max:100'],
             'position_search' => ['nullable', 'string', 'max:100'],
+            'per_page' => ['nullable', Rule::in([10, 25, 50, '10', '25', '50'])],
         ]);
+
+        $perPage = in_array((int) ($rawFilters['per_page'] ?? $request->input('per_page')), [10, 25, 50], true)
+            ? (int) ($rawFilters['per_page'] ?? $request->input('per_page'))
+            : 10;
 
         $filters = [
             'search' => $rawFilters['search'] ?? '',
@@ -99,6 +104,7 @@ class EmployeeController extends Controller
             'direction' => $rawFilters['direction'] ?? 'asc',
             'division_search' => $rawFilters['division_search'] ?? '',
             'position_search' => $rawFilters['position_search'] ?? '',
+            'per_page' => $perPage,
         ];
 
         $employees = Employee::query()
@@ -169,7 +175,7 @@ class EmployeeController extends Controller
             ->when($filters['sort'] === 'base_salary', fn ($query) => $query->orderBy('base_salary', $filters['direction']))
             ->when($filters['sort'] === 'status', fn ($query) => $query->orderBy('employment_status', $filters['direction']))
             ->orderBy('id')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString()
             ->through(fn (Employee $employee) => [
                 'id' => $employee->id,

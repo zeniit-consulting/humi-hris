@@ -21,15 +21,28 @@ class AttendanceCorrectionApprovalController extends Controller
         $ownerId = $request->user()->accountOwnerId();
 
         $validated = $request->validate([
-            'status' => ['nullable', Rule::in(['pending', 'approved', 'rejected'])],
+            'status' => ['nullable', 'string'],
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
+        $status = 'pending';
+        if ($request->has('status')) {
+            $rawStatus = (string) $request->input('status', '');
+            $status = in_array($rawStatus, ['pending', 'approved', 'rejected'], true) ? $rawStatus : '';
+        }
+
+        $startDate = $validated['start_date'] ?? $validated['date'] ?? null;
+        $endDate = $validated['end_date'] ?? $validated['date'] ?? $startDate;
+
         $filters = [
-            'status' => $validated['status'] ?? 'pending',
+            'status' => $status,
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
-            'date' => $validated['date'] ?? '',
+            'date' => $startDate ?? '',
+            'start_date' => $startDate ?? '',
+            'end_date' => $endDate ?? '',
         ];
 
         $requests = AttendanceCorrectionRequest::query()
@@ -37,7 +50,15 @@ class AttendanceCorrectionApprovalController extends Controller
             ->where('user_id', $ownerId)
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->when($filters['employee_id'] !== '', fn ($query) => $query->where('employee_id', $filters['employee_id']))
-            ->when($filters['date'] !== '', fn ($query) => $query->whereDate('attendance_date', $filters['date']))
+            ->when($filters['start_date'] !== '' && $filters['end_date'] !== '', function ($query) use ($filters) {
+                if ($filters['start_date'] === $filters['end_date']) {
+                    $query->whereDate('attendance_date', $filters['start_date']);
+                } else {
+                    $query->whereBetween('attendance_date', [$filters['start_date'], $filters['end_date']]);
+                }
+            })
+            ->when($filters['start_date'] !== '' && $filters['end_date'] === '', fn ($query) => $query->whereDate('attendance_date', '>=', $filters['start_date']))
+            ->when($filters['start_date'] === '' && $filters['end_date'] !== '', fn ($query) => $query->whereDate('attendance_date', '<=', $filters['end_date']))
             ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
             ->orderByDesc('attendance_date')
             ->paginate(15)

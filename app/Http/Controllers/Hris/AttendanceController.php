@@ -11,6 +11,7 @@ use App\Models\EmployeeAttendance;
 use App\Models\EmployeeSchedule;
 use App\Services\AttendanceStatusService;
 use App\Services\MissingCheckoutLeaveSyncService;
+use App\Support\AttendancePhoto;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,7 +40,12 @@ class AttendanceController extends Controller
             'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'sort_by' => ['nullable', 'in:employee,attendance_date,check_in_at,check_out_at'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
+            'per_page' => ['nullable', 'in:10,25,50'],
         ]);
+
+        $perPage = in_array((int) ($validated['per_page'] ?? $request->input('per_page')), [10, 25, 50], true)
+            ? (int) ($validated['per_page'] ?? $request->input('per_page'))
+            : 10;
 
         $employees = Employee::query()
             ->orderBy('first_name')
@@ -57,6 +63,7 @@ class AttendanceController extends Controller
             'employee_id' => isset($validated['employee_id']) ? (string) $validated['employee_id'] : '',
             'sort_by' => $validated['sort_by'] ?? 'employee',
             'sort_dir' => $validated['sort_dir'] ?? 'asc',
+            'per_page' => $perPage,
         ];
 
         $attendancesQuery = EmployeeAttendance::query()
@@ -86,7 +93,7 @@ class AttendanceController extends Controller
         }
 
         $attendancesPaginator = $attendancesQuery
-            ->paginate(12)
+            ->paginate($perPage)
             ->withQueryString();
 
         $employeeIds = collect($attendancesPaginator->items())

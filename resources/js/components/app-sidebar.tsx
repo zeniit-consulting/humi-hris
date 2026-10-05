@@ -135,7 +135,7 @@ function buildNavGroups(
         ...(can('attendances')
             ? [
                   {
-                      title: 'Kunjungan Client',
+                      title: 'Kunjungan Klien',
                       href: '/hris/client-visits',
                       icon: MapPinned,
                   },
