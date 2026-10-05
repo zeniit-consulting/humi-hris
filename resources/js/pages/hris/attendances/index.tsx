@@ -14,8 +14,9 @@ import {
     Plus,
     RotateCcw,
     Trash2,
+    Upload,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import ActionIconButton from '@/components/action-icon-button';
 import InputError from '@/components/input-error';
