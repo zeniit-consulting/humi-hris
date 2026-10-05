@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Models\WorkShift;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DuplicateAttendanceAndBlankPhotoTest extends TestCase
@@ -385,6 +387,49 @@ class DuplicateAttendanceAndBlankPhotoTest extends TestCase
 
         $response->assertRedirect();
         $this->assertSoftDeleted('employee_attendances', ['id' => $attendance->id]);
+    }
+
+    public function test_admin_can_reupload_attendance_photo(): void
+    {
+        Storage::fake('public');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $employee = Employee::factory()->create([
+            'user_id' => $admin->id,
+        ]);
+
+        $attendance = EmployeeAttendance::query()->create([
+            'user_id' => $admin->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-10-04',
+            'status' => 'present',
+            'check_in_at' => '2026-10-04 14:05:00',
+            'check_in_photo_url' => null,
+            'check_out_photo_url' => null,
+        ]);
+
+        $fileIn = UploadedFile::fake()->image('checkin_replacement.jpg', 300, 300);
+        $fileOut = UploadedFile::fake()->image('checkout_replacement.jpg', 300, 300);
+
+        // Upload check-in photo
+        $responseIn = $this->actingAs($admin)->post(route('hris.attendances.photo.upload', $attendance), [
+            'type' => 'in',
+            'photo' => $fileIn,
+        ]);
+
+        $responseIn->assertRedirect();
+        $attendance->refresh();
+        $this->assertNotNull($attendance->check_in_photo_url);
+
+        // Upload check-out photo
+        $responseOut = $this->actingAs($admin)->post(route('hris.attendances.photo.upload', $attendance), [
+            'type' => 'out',
+            'photo' => $fileOut,
+        ]);
+
+        $responseOut->assertRedirect();
+        $attendance->refresh();
+        $this->assertNotNull($attendance->check_out_photo_url);
     }
 }
 

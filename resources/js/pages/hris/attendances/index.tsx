@@ -199,8 +199,43 @@ export default function AttendancePage() {
         null,
     );
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+    const inPhotoInputRef = useRef<HTMLInputElement | null>(null);
+    const outPhotoInputRef = useRef<HTMLInputElement | null>(null);
 
     const attendanceForm = useForm<AttendanceFormData>(defaultAttendanceForm);
+
+    const handleUploadPhoto = (
+        attendanceId: number,
+        type: 'in' | 'out',
+        file: File,
+    ) => {
+        setIsUploadingPhoto(true);
+        const formData = new FormData();
+        formData.append('type', type);
+        formData.append('photo', file);
+
+        router.post(`/hris/attendances/${attendanceId}/photo`, formData, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsUploadingPhoto(false);
+            },
+            onError: () => {
+                setIsUploadingPhoto(false);
+            },
+        });
+    };
+
+    useEffect(() => {
+        if (selectedPhotoRecord) {
+            const updated = attendances.data.find(
+                (a) => a.id === selectedPhotoRecord.id,
+            );
+            if (updated) {
+                setSelectedPhotoRecord(updated);
+            }
+        }
+    }, [attendances.data]);
 
     const handleDelete = () => {
         if (!deleteRecord) return;
@@ -1106,6 +1141,24 @@ export default function AttendancePage() {
                                                     </Badge>
                                                 </div>
                                             )}
+
+                                        <div className="mt-3 border-t pt-2.5">
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={isUploadingPhoto}
+                                                className="w-full h-8 text-xs gap-1.5"
+                                                onClick={() => inPhotoInputRef.current?.click()}
+                                            >
+                                                <Upload className="size-3.5" />
+                                                {isUploadingPhoto
+                                                    ? 'Mengunggah...'
+                                                    : selectedPhotoRecord.check_in_photo_url
+                                                      ? 'Upload Ulang Foto Masuk'
+                                                      : 'Upload Foto Masuk'}
+                                            </Button>
+                                        </div>
                                     </div>
 
                                     {/* Foto Pulang */}
@@ -1167,6 +1220,24 @@ export default function AttendancePage() {
                                                 </Badge>
                                             </div>
                                         )}
+
+                                        <div className="mt-3 border-t pt-2.5">
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={isUploadingPhoto}
+                                                className="w-full h-8 text-xs gap-1.5"
+                                                onClick={() => outPhotoInputRef.current?.click()}
+                                            >
+                                                <Upload className="size-3.5" />
+                                                {isUploadingPhoto
+                                                    ? 'Mengunggah...'
+                                                    : selectedPhotoRecord.check_out_photo_url
+                                                      ? 'Upload Ulang Foto Pulang'
+                                                      : 'Upload Foto Pulang'}
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             ) : (
@@ -1176,13 +1247,70 @@ export default function AttendancePage() {
                                         Belum Ada Foto Verifikasi Wajah
                                     </p>
                                     <p className="mt-1 text-xs">
-                                        Data kehadiran ini tidak memiliki foto
-                                        verifikasi (misalnya diinput manual oleh
-                                        admin atau verifikasi wajah dinonaktifkan
-                                        saat absensi dilakukan).
+                                        Data kehadiran ini belum memiliki foto verifikasi atau foto sebelumnya rusak/blank. Anda dapat mengunggah foto pengganti di bawah ini.
                                     </p>
+                                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            disabled={isUploadingPhoto}
+                                            className="h-8 text-xs gap-1.5"
+                                            onClick={() => inPhotoInputRef.current?.click()}
+                                        >
+                                            <Upload className="size-3.5" />
+                                            {isUploadingPhoto ? 'Mengunggah...' : 'Upload Foto Masuk'}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            disabled={isUploadingPhoto}
+                                            className="h-8 text-xs gap-1.5"
+                                            onClick={() => outPhotoInputRef.current?.click()}
+                                        >
+                                            <Upload className="size-3.5" />
+                                            {isUploadingPhoto ? 'Mengunggah...' : 'Upload Foto Pulang'}
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
+
+                            {/* Hidden file inputs for photo upload */}
+                            <input
+                                ref={inPhotoInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file && selectedPhotoRecord) {
+                                        handleUploadPhoto(
+                                            selectedPhotoRecord.id,
+                                            'in',
+                                            file,
+                                        );
+                                    }
+                                    e.target.value = '';
+                                }}
+                            />
+                            <input
+                                ref={outPhotoInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file && selectedPhotoRecord) {
+                                        handleUploadPhoto(
+                                            selectedPhotoRecord.id,
+                                            'out',
+                                            file,
+                                        );
+                                    }
+                                    e.target.value = '';
+                                }}
+                            />
 
                             <div className="flex justify-end pt-2">
                                 <Button

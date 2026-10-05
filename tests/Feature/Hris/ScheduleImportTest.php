@@ -368,4 +368,43 @@ class ScheduleImportTest extends TestCase
 
         @unlink($tempPath);
     }
+
+    public function test_schedule_index_returns_monthly_matrix(): void
+    {
+        $user = User::factory()->create();
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        EmployeeSchedule::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-10-01',
+            'shift_code' => '0817',
+            'start_time' => '08:00:00',
+            'end_time' => '17:00:00',
+            'is_day_off' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get('/hris/schedules?month=2026-10');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('hris/schedules/index')
+            ->has('monthlyMatrix')
+            ->has('monthlyMatrix.days', 31)
+            ->has('monthlyMatrix.rows', 1)
+            ->where('monthlyMatrix.rows.0.employee_name', 'John Doe')
+            ->where('monthlyMatrix.rows.0.schedules.2026-10-01.shift_code', '0817')
+            ->where('monthlyMatrix.rows.0.schedules.2026-10-01.is_day_off', false)
+            ->where('monthlyMatrix.rows.0.total_work_days', 1)
+            ->where('monthlyMatrix.rows.0.total_off_days', 30)
+        );
+    }
 }
+

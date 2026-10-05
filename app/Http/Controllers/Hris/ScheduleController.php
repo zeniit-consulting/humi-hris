@@ -69,6 +69,7 @@ class ScheduleController extends Controller
             'scheduleDays' => $this->buildScheduleDays($filters['month'], $filters['employee_id'], $shiftTemplates),
             'shiftTemplates' => $shiftTemplates,
             'holidays' => $this->holidaysForMonth($ownerId, $filters['month']),
+            'monthlyMatrix' => $this->buildMonthlyMatrix($filters['month'], $employees, $ownerId),
         ]);
     }
 
@@ -533,6 +534,116 @@ class ScheduleController extends Controller
         }
 
         return $days;
+    }
+
+    /**
+     * Build horizontal monthly matrix for all active employees.
+     *
+     * @param \Illuminate\Support\Collection<int, Employee> $employees
+     * @return array{days: array<int, array<string, mixed>>, rows: array<int, array<string, mixed>>}
+     */
+    private function buildMonthlyMatrix(string $month, $employees, int $ownerId): array
+    {
+        if ($month === '') {
+            return ['days' => [], 'rows' => []];
+        }
+
+        $start = Carbon::createFromFormat('Y-m-d', $month.'-01')->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+
+        $holidays = PublicHoliday::query()
+            ->where('user_id', $ownerId)
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->get()
+            ->keyBy(fn (PublicHoliday $h) => $h->date->toDateString());
+
+        $days = [];
+        $cursor = $start->copy();
+        while ($cursor->lte($end)) {
+            $dateStr = $cursor->toDateString();
+            $holiday = $holidays->get($dateStr);
+
+            $days[] = [
+                'date' => $dateStr,
+                'day' => (int) $cursor->day,
+                'day_name' => $cursor->locale('id')->isoFormat('ddd'),
+                'is_monday' => $cursor->isMonday(),
+                'is_sunday' => $cursor->isSunday(),
+                'is_saturday' => $cursor->isSaturday(),
+                'is_holiday' => $holiday !== null,
+                'holiday_name' => $holiday?->name,
+            ];
+
+            $cursor->addDay();
+        }
+
+        $employeeIds = $employees->pluck('id')->all();
+
+        $schedules = EmployeeSchedule::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('employee_id', $employeeIds)
+            ->whereBetween('work_date', [$start->toDateString(), $end->toDateString()])
+            ->get(['id', 'employee_id', 'work_date', 'shift_code', 'start_time', 'end_time', 'is_day_off', 'notes'])
+            ->groupBy('employee_id');
+
+        $rows = [];
+        foreach ($employees as $employee) {
+            $empSchedules = $schedules->get($employee->id, collect())->keyBy(function ($item) {
+                return Carbon::parse($item->work_date)->toDateString();
+            });
+
+            $scheduleMap = [];
+            $totalWork = 0;
+            $totalOff = 0;
+
+            foreach ($days as $day) {
+                $dateStr = $day['date'];
+                $sched = $empSchedules->get($dateStr);
+
+                if ($sched) {
+                    $isOff = (bool) $sched->is_day_off || $sched->shift_code === 'OFF';
+                    $scheduleMap[$dateStr] = [
+                        'id' => $sched->id,
+                        'shift_code' => $sched->shift_code,
+                        'start_time' => $this->normalizeTime($sched->start_time),
+                        'end_time' => $this->normalizeTime($sched->end_time),
+                        'is_day_off' => $isOff,
+                        'notes' => $sched->notes,
+                    ];
+
+                    if ($isOff) {
+                        $totalOff++;
+                    } else {
+                        $totalWork++;
+                    }
+                } else {
+                    $scheduleMap[$dateStr] = [
+                        'id' => null,
+                        'shift_code' => 'OFF',
+                        'start_time' => null,
+                        'end_time' => null,
+                        'is_day_off' => true,
+                        'notes' => null,
+                    ];
+                    $totalOff++;
+                }
+            }
+
+            $rows[] = [
+                'employee_id' => $employee->id,
+                'employee_code' => $employee->employee_code,
+                'employee_name' => $employee->full_name,
+                'employee_label' => $employee->employee_code.' - '.$employee->full_name,
+                'schedules' => $scheduleMap,
+                'total_work_days' => $totalWork,
+                'total_off_days' => $totalOff,
+            ];
+        }
+
+        return [
+            'days' => $days,
+            'rows' => $rows,
+        ];
     }
 
     /**
