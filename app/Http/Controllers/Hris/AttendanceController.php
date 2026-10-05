@@ -378,11 +378,79 @@ class AttendanceController extends Controller
         $validated['timezone'] = $timezone;
         $validated = array_merge($validated, $statusService->resolveStatusAttributes($validated, $request->user()->accountOwnerId(), $timezone));
 
+        if ($request->hasFile('check_in_photo')) {
+            $file = $request->file('check_in_photo');
+            $binary = file_get_contents($file->getRealPath());
+            $ext = $file->getClientOriginalExtension() ?: 'jpg';
+            $validated['check_in_photo_url'] = AttendancePhoto::storePhoto($binary, 'in', (int) $employeeAttendance->employee_id, $ext);
+        } elseif (! empty($validated['check_in_photo']) && str_starts_with($validated['check_in_photo'], 'data:image/')) {
+            $photoResult = AttendancePhoto::validate($validated['check_in_photo']);
+            if ($photoResult['valid']) {
+                $validated['check_in_photo_url'] = AttendancePhoto::storePhoto($photoResult['binary'], 'in', (int) $employeeAttendance->employee_id, $photoResult['ext'] ?? 'jpg');
+            }
+        }
+        unset($validated['check_in_photo']);
+
+        if ($request->hasFile('check_out_photo')) {
+            $file = $request->file('check_out_photo');
+            $binary = file_get_contents($file->getRealPath());
+            $ext = $file->getClientOriginalExtension() ?: 'jpg';
+            $validated['check_out_photo_url'] = AttendancePhoto::storePhoto($binary, 'out', (int) $employeeAttendance->employee_id, $ext);
+        } elseif (! empty($validated['check_out_photo']) && str_starts_with($validated['check_out_photo'], 'data:image/')) {
+            $photoResult = AttendancePhoto::validate($validated['check_out_photo']);
+            if ($photoResult['valid']) {
+                $validated['check_out_photo_url'] = AttendancePhoto::storePhoto($photoResult['binary'], 'out', (int) $employeeAttendance->employee_id, $photoResult['ext'] ?? 'jpg');
+            }
+        }
+        unset($validated['check_out_photo']);
+
         $employeeAttendance->update($validated);
 
         app(\App\Services\AutoOvertimeService::class)->syncFromAttendance($employeeAttendance, $request->user()->accountOwnerId(), $timezone);
 
         return back();
+    }
+
+    /**
+     * Upload or re-upload attendance photo.
+     */
+    public function uploadPhoto(Request $request, EmployeeAttendance $employeeAttendance): RedirectResponse
+    {
+        $request->validate([
+            'type' => ['required', 'in:in,out'],
+            'photo' => ['required'],
+        ]);
+
+        $type = $request->input('type');
+        $binary = null;
+        $ext = 'jpg';
+
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            $binary = file_get_contents($file->getRealPath());
+            $ext = $file->getClientOriginalExtension() ?: 'jpg';
+        } elseif (is_string($request->input('photo')) && str_starts_with($request->input('photo'), 'data:image/')) {
+            $photoResult = AttendancePhoto::validate($request->input('photo'));
+            if (! $photoResult['valid']) {
+                return back()->withErrors(['photo' => $photoResult['error'] ?? 'Format foto tidak valid.']);
+            }
+            $binary = $photoResult['binary'];
+            $ext = $photoResult['ext'] ?? 'jpg';
+        }
+
+        if ($binary === null) {
+            return back()->withErrors(['photo' => 'File foto tidak ditemukan atau tidak valid.']);
+        }
+
+        $photoUrl = AttendancePhoto::storePhoto($binary, $type, (int) $employeeAttendance->employee_id, $ext);
+
+        if ($type === 'in') {
+            $employeeAttendance->update(['check_in_photo_url' => $photoUrl]);
+        } else {
+            $employeeAttendance->update(['check_out_photo_url' => $photoUrl]);
+        }
+
+        return back()->with('success', 'Foto kehadiran berhasil diperbarui.');
     }
 
     /**
