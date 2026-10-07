@@ -33,6 +33,7 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
@@ -120,7 +121,7 @@ type Filters = {
     end_date?: string;
     status: string;
     employee_id: string;
-    sort_by: 'employee' | 'check_in_at' | 'check_out_at';
+    sort_by: 'employee' | 'check_in_at' | 'check_out_at' | 'attendance_date';
     sort_dir: 'asc' | 'desc';
 };
 
