@@ -118,6 +118,7 @@ Route::get('robots.txt', function () {
         $lines[] = 'Allow: /hris-outsourcing';
         $lines[] = 'Allow: /hris-retail-fnb';
         $lines[] = 'Allow: /hris-manufaktur-shift';
+        $lines[] = 'Allow: /software-hris';
 
         foreach ($privatePaths as $path) {
             $lines[] = 'Disallow: '.$path;
@@ -158,6 +159,7 @@ Route::get('llms.txt', function () {
         '- Solusi HRIS untuk outsourcing: '.$baseUrl.'/hris-outsourcing',
         '- Solusi HRIS untuk retail dan F&B: '.$baseUrl.'/hris-retail-fnb',
         '- Solusi HRIS untuk manufaktur shift: '.$baseUrl.'/hris-manufaktur-shift',
+        '- Software HRIS Indonesia: '.$baseUrl.'/software-hris',
         '',
         '## Sumber publik',
         '- Berita dan panduan HRIS: '.$baseUrl.'/berita',
@@ -230,6 +232,12 @@ Route::get('sitemap.xml', function () {
         [
             'loc' => $baseUrl.'/hris-manufaktur-shift',
             'priority' => '0.9',
+            'changefreq' => 'weekly',
+            'lastmod' => now()->toAtomString(),
+        ],
+        [
+            'loc' => $baseUrl.'/software-hris',
+            'priority' => '1.0',
             'changefreq' => 'weekly',
             'lastmod' => now()->toAtomString(),
         ],
@@ -314,6 +322,12 @@ Route::get('hris-manufaktur-shift', function () {
         'canRegister' => Features::enabled(Features::registration()),
     ]);
 })->name('landing.manufaktur-shift');
+
+Route::get('software-hris', function () {
+    return Inertia::render('landing/software-hris', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('landing.software-hris');
 
 Route::get('features', function () {
     return Inertia::render('features');

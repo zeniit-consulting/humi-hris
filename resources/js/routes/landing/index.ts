@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
-* @see routes/web.php:297
+* @see routes/web.php:305
 * @route '/hris-outsourcing'
 */
 export const outsourcing = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ outsourcing.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:297
+* @see routes/web.php:305
 * @route '/hris-outsourcing'
 */
 outsourcing.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ outsourcing.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:297
+* @see routes/web.php:305
 * @route '/hris-outsourcing'
 */
 outsourcing.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -31,7 +31,7 @@ outsourcing.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:297
+* @see routes/web.php:305
 * @route '/hris-outsourcing'
 */
 outsourcing.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -40,7 +40,7 @@ outsourcing.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:297
+* @see routes/web.php:305
 * @route '/hris-outsourcing'
 */
 const outsourcingForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -49,7 +49,7 @@ const outsourcingForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'
 })
 
 /**
-* @see routes/web.php:297
+* @see routes/web.php:305
 * @route '/hris-outsourcing'
 */
 outsourcingForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -58,7 +58,7 @@ outsourcingForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> 
 })
 
 /**
-* @see routes/web.php:297
+* @see routes/web.php:305
 * @route '/hris-outsourcing'
 */
 outsourcingForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -74,7 +74,7 @@ outsourcingForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 outsourcing.form = outsourcingForm
 
 /**
-* @see routes/web.php:304
+* @see routes/web.php:312
 * @route '/hris-retail-fnb'
 */
 export const retailFnb = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -88,7 +88,7 @@ retailFnb.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:304
+* @see routes/web.php:312
 * @route '/hris-retail-fnb'
 */
 retailFnb.url = (options?: RouteQueryOptions) => {
@@ -96,7 +96,7 @@ retailFnb.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:304
+* @see routes/web.php:312
 * @route '/hris-retail-fnb'
 */
 retailFnb.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -105,7 +105,7 @@ retailFnb.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:304
+* @see routes/web.php:312
 * @route '/hris-retail-fnb'
 */
 retailFnb.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -114,7 +114,7 @@ retailFnb.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:304
+* @see routes/web.php:312
 * @route '/hris-retail-fnb'
 */
 const retailFnbForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -123,7 +123,7 @@ const retailFnbForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> 
 })
 
 /**
-* @see routes/web.php:304
+* @see routes/web.php:312
 * @route '/hris-retail-fnb'
 */
 retailFnbForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ retailFnbForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 })
 
 /**
-* @see routes/web.php:304
+* @see routes/web.php:312
 * @route '/hris-retail-fnb'
 */
 retailFnbForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -148,7 +148,7 @@ retailFnbForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 retailFnb.form = retailFnbForm
 
 /**
-* @see routes/web.php:311
+* @see routes/web.php:319
 * @route '/hris-manufaktur-shift'
 */
 export const manufakturShift = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -162,7 +162,7 @@ manufakturShift.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:311
+* @see routes/web.php:319
 * @route '/hris-manufaktur-shift'
 */
 manufakturShift.url = (options?: RouteQueryOptions) => {
@@ -170,7 +170,7 @@ manufakturShift.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:311
+* @see routes/web.php:319
 * @route '/hris-manufaktur-shift'
 */
 manufakturShift.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -179,7 +179,7 @@ manufakturShift.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => (
 })
 
 /**
-* @see routes/web.php:311
+* @see routes/web.php:319
 * @route '/hris-manufaktur-shift'
 */
 manufakturShift.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -188,7 +188,7 @@ manufakturShift.head = (options?: RouteQueryOptions): RouteDefinition<'head'> =>
 })
 
 /**
-* @see routes/web.php:311
+* @see routes/web.php:319
 * @route '/hris-manufaktur-shift'
 */
 const manufakturShiftForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -197,7 +197,7 @@ const manufakturShiftForm = (options?: RouteQueryOptions): RouteFormDefinition<'
 })
 
 /**
-* @see routes/web.php:311
+* @see routes/web.php:319
 * @route '/hris-manufaktur-shift'
 */
 manufakturShiftForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -206,7 +206,7 @@ manufakturShiftForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'ge
 })
 
 /**
-* @see routes/web.php:311
+* @see routes/web.php:319
 * @route '/hris-manufaktur-shift'
 */
 manufakturShiftForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -221,10 +221,85 @@ manufakturShiftForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'g
 
 manufakturShift.form = manufakturShiftForm
 
+/**
+* @see routes/web.php:326
+* @route '/software-hris'
+*/
+export const softwareHris = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: softwareHris.url(options),
+    method: 'get',
+})
+
+softwareHris.definition = {
+    methods: ["get","head"],
+    url: '/software-hris',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see routes/web.php:326
+* @route '/software-hris'
+*/
+softwareHris.url = (options?: RouteQueryOptions) => {
+    return softwareHris.definition.url + queryParams(options)
+}
+
+/**
+* @see routes/web.php:326
+* @route '/software-hris'
+*/
+softwareHris.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: softwareHris.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:326
+* @route '/software-hris'
+*/
+softwareHris.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: softwareHris.url(options),
+    method: 'head',
+})
+
+/**
+* @see routes/web.php:326
+* @route '/software-hris'
+*/
+const softwareHrisForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: softwareHris.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:326
+* @route '/software-hris'
+*/
+softwareHrisForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: softwareHris.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:326
+* @route '/software-hris'
+*/
+softwareHrisForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: softwareHris.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+softwareHris.form = softwareHrisForm
+
 const landing = {
     outsourcing: Object.assign(outsourcing, outsourcing),
     retailFnb: Object.assign(retailFnb, retailFnb),
     manufakturShift: Object.assign(manufakturShift, manufakturShift),
+    softwareHris: Object.assign(softwareHris, softwareHris),
 }
 
 export default landing

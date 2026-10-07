@@ -40,14 +40,13 @@ class LandingPageTest extends TestCase
         $this->assertStringContainsString('&lt; 10 mnt', $source);
         $this->assertStringContainsString('99.9%', $source);
         $this->assertStringContainsString('/humi-dashboard-preview.webp', $source);
-        $this->assertStringContainsString('rounded-[2%]', $source);
-        $this->assertStringContainsString('bg-white', $source);
+        $this->assertStringContainsString('rounded-[var(--landing-radius-panel)]', $source);
         $this->assertStringContainsString('/humi-wordmark.png', $source);
         $this->assertStringContainsString('fixed inset-x-0 top-0', $source);
         $this->assertStringContainsString('mx-auto flex h-18 w-full', $source);
         $this->assertStringNotContainsString('w-fit max-w-full', $source);
-        $this->assertStringContainsString('text-[40px]', $source);
-        $this->assertStringContainsString('leading-[56px]', $source);
+        $this->assertStringContainsString('text-[44px]', $source);
+        $this->assertStringContainsString('leading-[1.18]', $source);
         $this->assertStringContainsString('whitespace-nowrap', $source);
         $this->assertStringNotContainsString('text-[clamp(3.25rem,7.3vw,8rem)]', $source);
     }
@@ -103,6 +102,18 @@ class LandingPageTest extends TestCase
                 ->where('article.slug', 'apa-itu-hris-cara-memilih-software-hris-indonesia')
                 ->has('article.faqs', 3)
                 ->has('relatedArticles', 3)
+            );
+    }
+
+    public function test_software_hris_landing_page_is_available(): void
+    {
+        $this->withoutVite();
+
+        $this->get('/software-hris')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('landing/software-hris')
+                ->where('canRegister', true)
             );
     }
 

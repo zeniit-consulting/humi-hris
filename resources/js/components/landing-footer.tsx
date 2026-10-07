@@ -26,7 +26,7 @@ export function LandingFooter({
                             />
                             Humi HRIS
                         </span>
-                        <p className="mt-6 max-w-[16ch] text-3xl font-semibold tracking-tight [overflow-wrap:anywhere] text-[var(--landing-color-paper)] sm:text-5xl md:text-6xl md:leading-[1.05]">
+                        <p className="mt-4 max-w-[26ch] text-xl font-semibold tracking-tight [overflow-wrap:anywhere] text-[var(--landing-color-paper)] sm:text-2xl md:text-3xl md:leading-snug">
                             Data yang sama. Keputusan yang lebih mudah.
                         </p>
                         <p className="mt-6 max-w-[36ch] text-sm leading-6 text-[var(--landing-color-paper)]/70">
@@ -55,6 +55,12 @@ export function LandingFooter({
                                     className="whitespace-nowrap transition-colors hover:text-[var(--landing-color-accent)]"
                                 >
                                     Fitur
+                                </Link>
+                                <Link
+                                    href="/software-hris"
+                                    className="whitespace-nowrap transition-colors hover:text-[var(--landing-color-accent)] font-semibold text-[var(--landing-color-accent)]"
+                                >
+                                    Software HRIS
                                 </Link>
                                 <Link
                                     href="/#pricing"
