@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::exportMethod
-* @see app/Http/Controllers/Hris/OvertimeController.php:344
+* @see app/Http/Controllers/Hris/OvertimeController.php:414
 * @route '/hris/overtimes/export'
 */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::exportMethod
-* @see app/Http/Controllers/Hris/OvertimeController.php:344
+* @see app/Http/Controllers/Hris/OvertimeController.php:414
 * @route '/hris/overtimes/export'
 */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::exportMethod
-* @see app/Http/Controllers/Hris/OvertimeController.php:344
+* @see app/Http/Controllers/Hris/OvertimeController.php:414
 * @route '/hris/overtimes/export'
 */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::exportMethod
-* @see app/Http/Controllers/Hris/OvertimeController.php:344
+* @see app/Http/Controllers/Hris/OvertimeController.php:414
 * @route '/hris/overtimes/export'
 */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::exportMethod
-* @see app/Http/Controllers/Hris/OvertimeController.php:344
+* @see app/Http/Controllers/Hris/OvertimeController.php:414
 * @route '/hris/overtimes/export'
 */
 const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::exportMethod
-* @see app/Http/Controllers/Hris/OvertimeController.php:344
+* @see app/Http/Controllers/Hris/OvertimeController.php:414
 * @route '/hris/overtimes/export'
 */
 exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::exportMethod
-* @see app/Http/Controllers/Hris/OvertimeController.php:344
+* @see app/Http/Controllers/Hris/OvertimeController.php:414
 * @route '/hris/overtimes/export'
 */
 exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -241,6 +241,118 @@ approvalsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 })
 
 approvals.form = approvalsForm
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkApprove
+* @see app/Http/Controllers/Hris/OvertimeController.php:232
+* @route '/hris/overtime-approvals/bulk-approve'
+*/
+export const bulkApprove = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+bulkApprove.definition = {
+    methods: ["post"],
+    url: '/hris/overtime-approvals/bulk-approve',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkApprove
+* @see app/Http/Controllers/Hris/OvertimeController.php:232
+* @route '/hris/overtime-approvals/bulk-approve'
+*/
+bulkApprove.url = (options?: RouteQueryOptions) => {
+    return bulkApprove.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkApprove
+* @see app/Http/Controllers/Hris/OvertimeController.php:232
+* @route '/hris/overtime-approvals/bulk-approve'
+*/
+bulkApprove.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkApprove
+* @see app/Http/Controllers/Hris/OvertimeController.php:232
+* @route '/hris/overtime-approvals/bulk-approve'
+*/
+const bulkApproveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkApprove.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkApprove
+* @see app/Http/Controllers/Hris/OvertimeController.php:232
+* @route '/hris/overtime-approvals/bulk-approve'
+*/
+bulkApproveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkApprove.url(options),
+    method: 'post',
+})
+
+bulkApprove.form = bulkApproveForm
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkReject
+* @see app/Http/Controllers/Hris/OvertimeController.php:272
+* @route '/hris/overtime-approvals/bulk-reject'
+*/
+export const bulkReject = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkReject.url(options),
+    method: 'post',
+})
+
+bulkReject.definition = {
+    methods: ["post"],
+    url: '/hris/overtime-approvals/bulk-reject',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkReject
+* @see app/Http/Controllers/Hris/OvertimeController.php:272
+* @route '/hris/overtime-approvals/bulk-reject'
+*/
+bulkReject.url = (options?: RouteQueryOptions) => {
+    return bulkReject.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkReject
+* @see app/Http/Controllers/Hris/OvertimeController.php:272
+* @route '/hris/overtime-approvals/bulk-reject'
+*/
+bulkReject.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkReject.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkReject
+* @see app/Http/Controllers/Hris/OvertimeController.php:272
+* @route '/hris/overtime-approvals/bulk-reject'
+*/
+const bulkRejectForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkReject.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkReject
+* @see app/Http/Controllers/Hris/OvertimeController.php:272
+* @route '/hris/overtime-approvals/bulk-reject'
+*/
+bulkRejectForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkReject.url(options),
+    method: 'post',
+})
+
+bulkReject.form = bulkRejectForm
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::approve
@@ -404,7 +516,7 @@ reject.form = rejectForm
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::store
-* @see app/Http/Controllers/Hris/OvertimeController.php:235
+* @see app/Http/Controllers/Hris/OvertimeController.php:305
 * @route '/hris/overtimes'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -419,7 +531,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::store
-* @see app/Http/Controllers/Hris/OvertimeController.php:235
+* @see app/Http/Controllers/Hris/OvertimeController.php:305
 * @route '/hris/overtimes'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -428,7 +540,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::store
-* @see app/Http/Controllers/Hris/OvertimeController.php:235
+* @see app/Http/Controllers/Hris/OvertimeController.php:305
 * @route '/hris/overtimes'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -438,7 +550,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::store
-* @see app/Http/Controllers/Hris/OvertimeController.php:235
+* @see app/Http/Controllers/Hris/OvertimeController.php:305
 * @route '/hris/overtimes'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -448,7 +560,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::store
-* @see app/Http/Controllers/Hris/OvertimeController.php:235
+* @see app/Http/Controllers/Hris/OvertimeController.php:305
 * @route '/hris/overtimes'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -460,7 +572,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::update
-* @see app/Http/Controllers/Hris/OvertimeController.php:284
+* @see app/Http/Controllers/Hris/OvertimeController.php:354
 * @route '/hris/overtimes/{overtime}'
 */
 export const update = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -475,7 +587,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::update
-* @see app/Http/Controllers/Hris/OvertimeController.php:284
+* @see app/Http/Controllers/Hris/OvertimeController.php:354
 * @route '/hris/overtimes/{overtime}'
 */
 update.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -508,7 +620,7 @@ update.url = (args: { overtime: number | { id: number } } | [overtime: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::update
-* @see app/Http/Controllers/Hris/OvertimeController.php:284
+* @see app/Http/Controllers/Hris/OvertimeController.php:354
 * @route '/hris/overtimes/{overtime}'
 */
 update.put = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -518,7 +630,7 @@ update.put = (args: { overtime: number | { id: number } } | [overtime: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::update
-* @see app/Http/Controllers/Hris/OvertimeController.php:284
+* @see app/Http/Controllers/Hris/OvertimeController.php:354
 * @route '/hris/overtimes/{overtime}'
 */
 const updateForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -533,7 +645,7 @@ const updateForm = (args: { overtime: number | { id: number } } | [overtime: num
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::update
-* @see app/Http/Controllers/Hris/OvertimeController.php:284
+* @see app/Http/Controllers/Hris/OvertimeController.php:354
 * @route '/hris/overtimes/{overtime}'
 */
 updateForm.put = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -550,7 +662,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::destroy
-* @see app/Http/Controllers/Hris/OvertimeController.php:334
+* @see app/Http/Controllers/Hris/OvertimeController.php:404
 * @route '/hris/overtimes/{overtime}'
 */
 export const destroy = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -565,7 +677,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::destroy
-* @see app/Http/Controllers/Hris/OvertimeController.php:334
+* @see app/Http/Controllers/Hris/OvertimeController.php:404
 * @route '/hris/overtimes/{overtime}'
 */
 destroy.url = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -598,7 +710,7 @@ destroy.url = (args: { overtime: number | { id: number } } | [overtime: number |
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::destroy
-* @see app/Http/Controllers/Hris/OvertimeController.php:334
+* @see app/Http/Controllers/Hris/OvertimeController.php:404
 * @route '/hris/overtimes/{overtime}'
 */
 destroy.delete = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -608,7 +720,7 @@ destroy.delete = (args: { overtime: number | { id: number } } | [overtime: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::destroy
-* @see app/Http/Controllers/Hris/OvertimeController.php:334
+* @see app/Http/Controllers/Hris/OvertimeController.php:404
 * @route '/hris/overtimes/{overtime}'
 */
 const destroyForm = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -623,7 +735,7 @@ const destroyForm = (args: { overtime: number | { id: number } } | [overtime: nu
 
 /**
 * @see \App\Http\Controllers\Hris\OvertimeController::destroy
-* @see app/Http/Controllers/Hris/OvertimeController.php:334
+* @see app/Http/Controllers/Hris/OvertimeController.php:404
 * @route '/hris/overtimes/{overtime}'
 */
 destroyForm.delete = (args: { overtime: number | { id: number } } | [overtime: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -638,6 +750,6 @@ destroyForm.delete = (args: { overtime: number | { id: number } } | [overtime: n
 
 destroy.form = destroyForm
 
-const OvertimeController = { index, exportMethod, approvals, approve, reject, store, update, destroy, export: exportMethod }
+const OvertimeController = { index, exportMethod, approvals, bulkApprove, bulkReject, approve, reject, store, update, destroy, export: exportMethod }
 
 export default OvertimeController

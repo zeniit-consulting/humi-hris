@@ -145,6 +145,92 @@ class AttendanceCorrectionApprovalController extends Controller
         return back()->with('success', 'Request absensi ditolak.');
     }
 
+    public function bulkApprove(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+        ]);
+
+        $requests = AttendanceCorrectionRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('id', $validated['ids'])
+            ->where('status', 'pending')
+            ->get();
+
+        $approvedCount = 0;
+        foreach ($requests as $item) {
+            try {
+                if (app(ApprovalWorkflowService::class)->approve($item, $request->user()) === ApprovalWorkflowService::ADVANCED) {
+                    $approvedCount++;
+                    continue;
+                }
+
+                DB::transaction(function () use ($request, $item, $ownerId): void {
+                    $attendance = EmployeeAttendance::query()->firstOrNew([
+                        'employee_id' => $item->employee_id,
+                        'attendance_date' => $item->attendance_date->toDateString(),
+                    ]);
+
+                    $attendance->fill([
+                        'user_id' => $ownerId,
+                        'shift_id' => $item->shift_id ?? $attendance->shift_id,
+                        'timezone' => $item->timezone ?? $attendance->timezone,
+                        'status' => 'present',
+                        'check_in_at' => $item->check_in_at ?? $attendance->check_in_at,
+                        'check_out_at' => $item->check_out_at ?? $attendance->check_out_at,
+                        'notes' => trim((string) ($attendance->notes ? $attendance->notes.'; ' : '').'Approved manual attendance request #'.$item->id),
+                    ]);
+                    $attendance->save();
+
+                    app(\App\Services\AutoOvertimeService::class)->syncFromAttendance($attendance, $ownerId, $attendance->timezone);
+
+                    $item->update([
+                        'status' => 'approved',
+                        'approved_by' => $request->user()->id,
+                        'approved_at' => now(),
+                        'rejection_reason' => null,
+                    ]);
+                });
+                $approvedCount++;
+            } catch (\Throwable $e) {
+                // Skip if current user cannot approve this stage or item is not valid
+                continue;
+            }
+        }
+
+        return back()->with('success', "{$approvedCount} pengajuan absensi berhasil disetujui.");
+    }
+
+    public function bulkReject(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+            'rejection_reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        $requests = AttendanceCorrectionRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('id', $validated['ids'])
+            ->where('status', 'pending')
+            ->get();
+
+        $rejectedCount = 0;
+        foreach ($requests as $item) {
+            try {
+                app(ApprovalWorkflowService::class)->reject($item, $request->user(), $validated['rejection_reason']);
+                $rejectedCount++;
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return back()->with('success', "{$rejectedCount} pengajuan absensi berhasil ditolak.");
+    }
+
     /**
      * @return array<string, mixed>
      */

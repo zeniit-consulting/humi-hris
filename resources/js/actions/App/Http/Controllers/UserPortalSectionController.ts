@@ -1677,7 +1677,7 @@ previewPayslip.form = previewPayslipForm
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:157
+* @see app/Http/Controllers/UserPortalSectionController.php:165
 * @route '/portal/payroll/export'
 */
 export const exportPayslip = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1692,7 +1692,7 @@ exportPayslip.definition = {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:157
+* @see app/Http/Controllers/UserPortalSectionController.php:165
 * @route '/portal/payroll/export'
 */
 exportPayslip.url = (options?: RouteQueryOptions) => {
@@ -1701,7 +1701,7 @@ exportPayslip.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:157
+* @see app/Http/Controllers/UserPortalSectionController.php:165
 * @route '/portal/payroll/export'
 */
 exportPayslip.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1711,7 +1711,7 @@ exportPayslip.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:157
+* @see app/Http/Controllers/UserPortalSectionController.php:165
 * @route '/portal/payroll/export'
 */
 const exportPayslipForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1721,7 +1721,7 @@ const exportPayslipForm = (options?: RouteQueryOptions): RouteFormDefinition<'po
 
 /**
 * @see \App\Http\Controllers\UserPortalSectionController::exportPayslip
-* @see app/Http/Controllers/UserPortalSectionController.php:157
+* @see app/Http/Controllers/UserPortalSectionController.php:165
 * @route '/portal/payroll/export'
 */
 exportPayslipForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

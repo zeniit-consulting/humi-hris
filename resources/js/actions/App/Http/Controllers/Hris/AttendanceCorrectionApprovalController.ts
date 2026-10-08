@@ -81,6 +81,118 @@ indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 index.form = indexForm
 
 /**
+* @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::bulkApprove
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:148
+* @route '/hris/attendance-approvals/bulk-approve'
+*/
+export const bulkApprove = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+bulkApprove.definition = {
+    methods: ["post"],
+    url: '/hris/attendance-approvals/bulk-approve',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::bulkApprove
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:148
+* @route '/hris/attendance-approvals/bulk-approve'
+*/
+bulkApprove.url = (options?: RouteQueryOptions) => {
+    return bulkApprove.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::bulkApprove
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:148
+* @route '/hris/attendance-approvals/bulk-approve'
+*/
+bulkApprove.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::bulkApprove
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:148
+* @route '/hris/attendance-approvals/bulk-approve'
+*/
+const bulkApproveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkApprove.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::bulkApprove
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:148
+* @route '/hris/attendance-approvals/bulk-approve'
+*/
+bulkApproveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkApprove.url(options),
+    method: 'post',
+})
+
+bulkApprove.form = bulkApproveForm
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::bulkReject
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:206
+* @route '/hris/attendance-approvals/bulk-reject'
+*/
+export const bulkReject = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkReject.url(options),
+    method: 'post',
+})
+
+bulkReject.definition = {
+    methods: ["post"],
+    url: '/hris/attendance-approvals/bulk-reject',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::bulkReject
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:206
+* @route '/hris/attendance-approvals/bulk-reject'
+*/
+bulkReject.url = (options?: RouteQueryOptions) => {
+    return bulkReject.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::bulkReject
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:206
+* @route '/hris/attendance-approvals/bulk-reject'
+*/
+bulkReject.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkReject.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::bulkReject
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:206
+* @route '/hris/attendance-approvals/bulk-reject'
+*/
+const bulkRejectForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkReject.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::bulkReject
+* @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:206
+* @route '/hris/attendance-approvals/bulk-reject'
+*/
+bulkRejectForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkReject.url(options),
+    method: 'post',
+})
+
+bulkReject.form = bulkRejectForm
+
+/**
 * @see \App\Http\Controllers\Hris\AttendanceCorrectionApprovalController::approve
 * @see app/Http/Controllers/Hris/AttendanceCorrectionApprovalController.php:97
 * @route '/hris/attendance-approvals/{attendanceRequest}/approve'
@@ -240,6 +352,6 @@ rejectForm.post = (args: { attendanceRequest: number | { id: number } } | [atten
 
 reject.form = rejectForm
 
-const AttendanceCorrectionApprovalController = { index, approve, reject }
+const AttendanceCorrectionApprovalController = { index, bulkApprove, bulkReject, approve, reject }
 
 export default AttendanceCorrectionApprovalController

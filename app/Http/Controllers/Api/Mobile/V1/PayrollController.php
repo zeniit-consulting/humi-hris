@@ -31,6 +31,12 @@ class PayrollController extends Controller
             ->where('period', $period)
             ->first();
 
+        if ($user && $this->isSelfServiceUser($user)) {
+            if ($run && ! $run->isReleased() && ! $run->is_saved) {
+                $run = null;
+            }
+        }
+
         return $this->success($this->payload($period, $run, $user));
     }
 
@@ -48,9 +54,12 @@ class PayrollController extends Controller
     public function save(PayrollRun $payrollRun, Request $request): JsonResponse
     {
         $payrollRun->update([
+            'status' => 'released',
             'is_saved' => true,
             'saved_at' => now(),
             'saved_by' => $request->user()?->id,
+            'released_at' => now(),
+            'released_by' => $request->user()?->id,
         ]);
 
         $payrollRun->load('items.employee:id,employee_code,first_name,last_name');
@@ -68,7 +77,7 @@ class PayrollController extends Controller
         $employee = $this->resolveRequiredSelfServiceEmployee($user);
         $year = $request->input('year', now()->year);
 
-        // Ambil semua payroll run tahun ini yang sudah saved (is_saved = true)
+        // Ambil semua payroll run tahun ini yang sudah dirilis (status = released atau is_saved = true)
         $payrolls = PayrollRun::query()
             ->with([
                 'items' => fn ($q) => $q
@@ -78,7 +87,10 @@ class PayrollController extends Controller
             ->where('user_id', $user->accountOwnerId())
             ->where('type', 'regular') // Hanya regular payroll, bukan THR
             ->whereYear('period_start', $year)
-            ->where('is_saved', true)
+            ->where(function ($q) {
+                $q->where('status', 'released')
+                    ->orWhere('is_saved', true);
+            })
             ->orderByDesc('period')
             ->get();
 

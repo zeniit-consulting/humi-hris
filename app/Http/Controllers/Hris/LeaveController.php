@@ -235,6 +235,70 @@ class LeaveController extends Controller
         return back()->with('success', 'Pengajuan cuti ditolak.');
     }
 
+    public function bulkApprove(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+        ]);
+
+        $requests = LeaveRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('id', $validated['ids'])
+            ->where('status', 'pending')
+            ->get();
+
+        $approvedCount = 0;
+        foreach ($requests as $leave) {
+            try {
+                $result = app(LeaveApprovalService::class)->approve($leave, $request->user());
+                $leave->loadMissing('employee');
+                app(\App\Services\WhatsAppNotificationService::class)->notifyLeaveStatus($leave);
+                $approvedCount++;
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return back()->with('success', "{$approvedCount} pengajuan cuti berhasil disetujui.");
+    }
+
+    public function bulkReject(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+            'rejection_reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        $requests = LeaveRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('id', $validated['ids'])
+            ->where('status', 'pending')
+            ->get();
+
+        $rejectedCount = 0;
+        foreach ($requests as $leave) {
+            try {
+                $leave->update([
+                    'status' => 'rejected',
+                    'approved_at' => now(),
+                    'approved_by' => $request->user()->id,
+                    'rejection_reason' => $validated['rejection_reason'],
+                ]);
+                $leave->loadMissing('employee');
+                app(\App\Services\WhatsAppNotificationService::class)->notifyLeaveStatus($leave);
+                $rejectedCount++;
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return back()->with('success', "{$rejectedCount} pengajuan cuti berhasil ditolak.");
+    }
+
     /**
      * Store leave request.
      */

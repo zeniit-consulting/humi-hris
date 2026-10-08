@@ -36,6 +36,9 @@ class PayrollRun extends Model
         'is_saved',
         'saved_at',
         'saved_by',
+        'status',
+        'released_at',
+        'released_by',
         'is_locked',
         'locked_at',
         'locked_by',
@@ -55,6 +58,7 @@ class PayrollRun extends Model
             'generated_at' => 'datetime',
             'is_saved' => 'boolean',
             'saved_at' => 'datetime',
+            'released_at' => 'datetime',
             'is_locked' => 'boolean',
             'locked_at' => 'datetime',
             'total_base_salary' => 'decimal:2',
@@ -90,10 +94,28 @@ class PayrollRun extends Model
     }
 
     /**
+     * Get user who released this payroll.
+     */
+    public function releasedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'released_by');
+    }
+
+    /**
      * Get user who locked this payroll.
      */
     public function lockedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'locked_by');
+    }
+
+    public function isDraft(): bool
+    {
+        return ($this->status ?? 'draft') === 'draft';
+    }
+
+    public function isReleased(): bool
+    {
+        return ($this->status ?? 'draft') === 'released';
     }
 }

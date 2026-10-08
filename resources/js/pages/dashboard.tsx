@@ -33,6 +33,20 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    DashboardAnalyticsSection,
+    type EmployeeMobilitySummary,
+    type InsuranceBurnrateSummary,
+    type PayrollBurnrateSummary,
+    type ReimburseRateSummary,
+} from '@/components/dashboard-analytics-charts';
+import {
+    type ExecutiveInsightsData,
+} from '@/components/dashboard-executive-qa';
+import {
+    DashboardPieChartsSection,
+    type PieChartsData,
+} from '@/components/dashboard-pie-charts';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -206,6 +220,11 @@ const formatRupiahCompact = (value: number | string) => {
 export default function Dashboard({
     stats,
     attendanceChart,
+    executiveInsights,
+    payrollBurnrate,
+    insuranceBurnrate,
+    employeeMobility,
+    reimburseRate,
     filters,
     availablePeriods = [],
     actionQueue,
@@ -213,9 +232,15 @@ export default function Dashboard({
     recentRequests,
     contractReminders,
     outsourcing,
+    pieCharts,
 }: {
     stats: DashboardStats;
     attendanceChart: AttendancePoint[];
+    executiveInsights: ExecutiveInsightsData;
+    payrollBurnrate: PayrollBurnrateSummary;
+    insuranceBurnrate: InsuranceBurnrateSummary;
+    employeeMobility: EmployeeMobilitySummary;
+    reimburseRate: ReimburseRateSummary;
     filters: DashboardFilters;
     availablePeriods?: Array<{ value: string; label: string }>;
     actionQueue: ActionQueue;
@@ -223,56 +248,14 @@ export default function Dashboard({
     recentRequests: RecentRequests;
     contractReminders: ContractReminders;
     outsourcing: OutsourcingSummary;
+    pieCharts?: PieChartsData;
 }) {
     const { auth, companyFeatures } = usePage().props as {
         auth?: { user?: { name?: string | null } | null };
         companyFeatures?: { show_outsourcing_dashboard?: boolean };
     };
     const [outsourcingOpen, setOutsourcingOpen] = useState(true);
-    const maxAttendanceValue = Math.max(
-        ...attendanceChart.flatMap((day) => [
-            day.present,
-            day.late,
-            day.on_leave,
-            day.absent,
-        ]),
-        1,
-    );
-    const genderEntries: Array<{
-        key: string;
-        label: string;
-        color: string;
-        total: number;
-    }> = [
-        { key: 'male', label: 'Laki-laki', color: '#0f766e' },
-        { key: 'female', label: 'Perempuan', color: '#14b8a6' },
-        { key: 'other', label: 'Lainnya', color: '#f59e0b' },
-        { key: 'unknown', label: 'Belum diisi', color: '#cbd5e1' },
-    ].map((item) => ({ ...item, total: stats.gender[item.key] ?? 0 }));
-    const genderTotal = genderEntries.reduce(
-        (total, item) => total + item.total,
-        0,
-    );
-    let genderOffset = 0;
-    const genderGradient = genderEntries
-        .map((item) => {
-            const start =
-                genderTotal > 0 ? (genderOffset / genderTotal) * 100 : 0;
-            genderOffset += item.total;
-            const end =
-                genderTotal > 0 ? (genderOffset / genderTotal) * 100 : 0;
-            return `${item.color} ${start}% ${end}%`;
-        })
-        .join(', ');
     const userName = auth?.user?.name?.trim() || 'User';
-    const rangeOptions: Array<{
-        value: DashboardFilters['range'];
-        label: string;
-    }> = [
-        { value: 'today', label: 'Hari Ini' },
-        { value: 'this_week', label: 'Minggu Ini' },
-        { value: 'this_month', label: 'Bulan Ini' },
-    ];
     const applyOutsourcingFilter = (
         next: Partial<
             Pick<
@@ -414,18 +397,8 @@ export default function Dashboard({
                     </div>
                 )}
 
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-8">
-                    <Card className="gap-2 border-sky-200 bg-sky-50/70 py-3 dark:border-sky-950 dark:bg-sky-950/25">
-                        <CardHeader className="px-4 pb-0">
-                            <CardDescription className="truncate text-[11px] leading-none">
-                                Total Karyawan
-                            </CardDescription>
-                            <CardTitle className="text-2xl">
-                                {stats.total_employees}
-                            </CardTitle>
-                        </CardHeader>
-                    </Card>
-
+                {/* Stats Widget: Karyawan Aktif, Hadir, Cuti, Total Payroll, Turnover Rate */}
+                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                     <Card className="gap-2 border-emerald-200 bg-emerald-50/70 py-3 dark:border-emerald-950 dark:bg-emerald-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription className="truncate text-[11px] leading-none">
@@ -440,21 +413,10 @@ export default function Dashboard({
                     <Card className="gap-2 border-violet-200 bg-violet-50/70 py-3 dark:border-violet-950 dark:bg-violet-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription className="truncate text-[11px] leading-none">
-                                Hadir Hari Ini
+                                Hadir
                             </CardDescription>
                             <CardTitle className="text-2xl">
                                 {stats.present_today}
-                            </CardTitle>
-                        </CardHeader>
-                    </Card>
-
-                    <Card className="gap-2 border-amber-200 bg-amber-50/70 py-3 dark:border-amber-950 dark:bg-amber-950/25">
-                        <CardHeader className="px-4 pb-0">
-                            <CardDescription className="truncate text-[11px] leading-none">
-                                Terlambat
-                            </CardDescription>
-                            <CardTitle className="text-2xl">
-                                {stats.late_today}
                             </CardTitle>
                         </CardHeader>
                     </Card>
@@ -470,255 +432,63 @@ export default function Dashboard({
                         </CardHeader>
                     </Card>
 
+                    <Card className="gap-2 border-sky-200 bg-sky-50/70 py-3 dark:border-sky-950 dark:bg-sky-950/25">
+                        <CardHeader className="px-4 pb-0">
+                            <CardDescription className="truncate text-[11px] leading-none">
+                                Total Payroll
+                            </CardDescription>
+                            <CardTitle className="text-2xl">
+                                {formatRupiahCompact(stats.monthly_payroll_burn)}
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+
                     <Card className="gap-2 border-rose-200 bg-rose-50/70 py-3 dark:border-rose-950 dark:bg-rose-950/25">
                         <CardHeader className="px-4 pb-0">
                             <CardDescription className="truncate text-[11px] leading-none">
-                                Absen
+                                Turnover Rate
                             </CardDescription>
                             <CardTitle className="text-2xl">
-                                {stats.absent_today}
-                            </CardTitle>
-                        </CardHeader>
-                    </Card>
-
-                    <Card className="gap-2 border-cyan-200 bg-cyan-50/70 py-3 dark:border-cyan-950 dark:bg-cyan-950/25">
-                        <CardHeader className="px-4 pb-0">
-                            <CardDescription className="truncate text-[11px] leading-none">
-                                Total Divisi
-                            </CardDescription>
-                            <CardTitle className="text-2xl">
-                                {stats.total_divisions}
-                            </CardTitle>
-                        </CardHeader>
-                    </Card>
-
-                    <Card className="gap-2 border-fuchsia-200 bg-fuchsia-50/70 py-3 dark:border-fuchsia-950 dark:bg-fuchsia-950/25">
-                        <CardHeader className="px-4 pb-0">
-                            <CardDescription className="truncate text-[11px] leading-none">
-                                Total Jabatan
-                            </CardDescription>
-                            <CardTitle className="text-2xl">
-                                {stats.total_positions}
+                                {stats.attrition_ytd}%
                             </CardTitle>
                         </CardHeader>
                     </Card>
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-10">
-                    <Card className="flex flex-col gap-0 py-0 lg:col-span-5">
-                        <CardHeader className="px-4 py-3">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <CardTitle>Chart Kehadiran</CardTitle>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {rangeOptions.map((option) => (
-                                        <Button
-                                            key={option.value}
-                                            type="button"
-                                            size="sm"
-                                            variant={
-                                                filters.range === option.value
-                                                    ? 'default'
-                                                    : 'outline'
-                                            }
-                                            onClick={() =>
-                                                router.get(
-                                                    dashboard.url(),
-                                                    { ...filters, range: option.value },
-                                                    {
-                                                        preserveState: true,
-                                                        preserveScroll: true,
-                                                        replace: true,
-                                                    },
-                                                )
-                                            }
-                                        >
-                                            {option.label}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </div>
-                            <CardDescription>
-                                Komposisi hadir, terlambat, cuti, dan absen per hari.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex flex-1 flex-col justify-between px-4 pb-4">
-                            <div className="mb-3 flex flex-wrap gap-1.5 text-xs">
-                                <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
-                                    <span className="size-2 rounded-full bg-emerald-500" />
-                                    Hadir
-                                </div>
-                                <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
-                                    <span className="size-2 rounded-full bg-amber-500" />
-                                    Terlambat
-                                </div>
-                                <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
-                                    <span className="size-2 rounded-full bg-blue-500" />
-                                    Cuti
-                                </div>
-                                <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5">
-                                    <span className="size-2 rounded-full bg-slate-300" />
-                                    Absen
-                                </div>
-                            </div>
+                {/* 4 Pie Charts: Gender per Divisi, Total Payroll per Divisi, Total Reimburse per Divisi, Resign Reason */}
+                {pieCharts && <DashboardPieChartsSection data={pieCharts} />}
 
-                            <div className="overflow-x-auto">
-                                <div className="min-w-[400px]">
-                                    <svg
-                                        viewBox="0 0 760 240"
-                                        className="h-56 w-full"
-                                        role="img"
-                                        aria-label="Line chart kehadiran"
-                                    >
-                                        {[0, 1, 2, 3, 4].map((line) => {
-                                            const y = 24 + line * 42;
-                                            return (
-                                                <line
-                                                    key={line}
-                                                    x1="36"
-                                                    x2="744"
-                                                    y1={y}
-                                                    y2={y}
-                                                    stroke="currentColor"
-                                                    className="text-border"
-                                                    strokeDasharray="4 4"
-                                                />
-                                            );
-                                        })}
-                                        {[
-                                            {
-                                                key: 'present',
-                                                color: '#10b981',
-                                                label: 'Hadir',
-                                            },
-                                            {
-                                                key: 'late',
-                                                color: '#f59e0b',
-                                                label: 'Terlambat',
-                                            },
-                                            {
-                                                key: 'on_leave',
-                                                color: '#3b82f6',
-                                                label: 'Cuti',
-                                            },
-                                            {
-                                                key: 'absent',
-                                                color: '#94a3b8',
-                                                label: 'Absen',
-                                            },
-                                        ].map((series) => {
-                                            const points = attendanceChart
-                                                .map((day, index) => {
-                                                    const x =
-                                                        attendanceChart.length ===
-                                                        1
-                                                             ? 380
-                                                            : 36 +
-                                                              (index /
-                                                                  (attendanceChart.length -
-                                                                      1)) *
-                                                                  708;
-                                                    const y =
-                                                        204 -
-                                                        (Number(
-                                                            day[
-                                                                series.key as keyof AttendancePoint
-                                                            ],
-                                                        ) /
-                                                            maxAttendanceValue) *
-                                                            180;
-                                                    return `${x},${y}`;
-                                                })
-                                                .join(' ');
-                                            return (
-                                                <polyline
-                                                    key={series.key}
-                                                    points={points}
-                                                    fill="none"
-                                                    stroke={series.color}
-                                                    strokeWidth="3"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                />
-                                            );
-                                        })}
-                                    </svg>
-                                    <div className="flex justify-between gap-2 px-6 text-xs text-muted-foreground">
-                                        {attendanceChart.map((day) => (
-                                            <span key={day.date}>
-                                                {day.label}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                {/* Grafik Finansial & Mobilitas SDM: Payroll Burnrate, Insurance Burnrate, Employee Mobility, Reimburse Rate */}
+                <DashboardAnalyticsSection
+                    payrollBurnrate={payrollBurnrate}
+                    insuranceBurnrate={insuranceBurnrate}
+                    employeeMobility={employeeMobility}
+                    reimburseRate={reimburseRate}
+                />
 
-                    <Card className="flex flex-col justify-between lg:col-span-2">
-                        <CardHeader className="px-4 py-3">
-                            <CardTitle>Gender</CardTitle>
-                            <CardDescription>
-                                Distribusi karyawan aktif.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="px-4 pb-4">
-                            <div
-                                className="mx-auto size-36 rounded-full"
-                                style={{
-                                    background: `conic-gradient(${genderGradient || '#e2e8f0 0 100%'})`,
-                                }}
-                            >
-                                <div className="flex size-full items-center justify-center p-6">
-                                    <div className="flex size-full items-center justify-center rounded-full bg-card text-center">
-                                        <div>
-                                            <p className="text-xl font-bold">
-                                                {genderTotal}
-                                            </p>
-                                            <p className="text-[11px] text-muted-foreground">
-                                                Karyawan
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                {/* Reminder Terkini */}
+                <Card className="flex flex-col gap-0 py-0 shadow-xs">
+                    <CardHeader className="px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <CardTitle className="text-base font-semibold">
+                                    Reminder Terkini
+                                </CardTitle>
+                                <CardDescription className="text-xs">
+                                    Aktivitas penting, keterlambatan absensi, pengajuan cuti/klaim, dan jatuh tempo kontrak.
+                                </CardDescription>
                             </div>
-                            <div className="mt-4 space-y-1.5 text-xs">
-                                {genderEntries.map((item) => (
-                                    <div
-                                        key={item.key}
-                                        className="flex items-center justify-between gap-2"
-                                    >
-                                        <span className="inline-flex items-center gap-1.5">
-                                            <span
-                                                className="size-2 rounded-full"
-                                                style={{
-                                                    backgroundColor: item.color,
-                                                }}
-                                            />
-                                            {item.label}
-                                        </span>
-                                        <span className="font-semibold">
-                                            {item.total}
-                                        </span>
-                                    </div>
-                                ))}
+                            <CalendarClock className="size-5 text-muted-foreground" />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 px-4 pb-4">
+                        {reminders.length === 0 ? (
+                            <div className="flex h-32 items-center justify-center rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+                                Tidak ada reminder atau aktivitas terkini.
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="flex flex-col gap-0 py-0 lg:col-span-3">
-                        <CardHeader className="px-4 py-3">
-                            <div className="flex items-center justify-between gap-3">
-                                <CardTitle>Reminder Terkini</CardTitle>
-                                <CalendarClock className="size-5 text-muted-foreground" />
-                            </div>
-                        </CardHeader>
-                        <CardContent className="flex-1 px-4 pb-4">
-                            {reminders.length === 0 ? (
-                                <div className="flex h-64 items-center justify-center rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
-                                    Tidak ada reminder atau aktivitas terkini.
-                                </div>
-                            ) : (
-                                <div className="max-h-[340px] space-y-2 overflow-y-auto pr-1">
+                        ) : (
+                            <div className="max-h-[360px] overflow-y-auto pr-1">
+                                <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                                     {reminders.map((item) => (
                                         <Link
                                             key={item.id}
@@ -744,10 +514,10 @@ export default function Dashboard({
                                         </Link>
                                     ))}
                                 </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 {companyFeatures?.show_outsourcing_dashboard !== false ? (
                     <Collapsible

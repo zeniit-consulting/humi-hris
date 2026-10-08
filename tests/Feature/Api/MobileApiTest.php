@@ -306,7 +306,7 @@ class MobileApiTest extends TestCase
             'email' => 'other@example.com',
         ]);
 
-        $run = PayrollRun::factory()->create([
+        $run = PayrollRun::factory()->released()->create([
             'user_id' => $owner->id,
             'period' => now()->format('Y-m'),
         ]);

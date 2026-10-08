@@ -11,6 +11,7 @@ import {
     Coins,
     Download,
     Filter,
+    FileText,
     Info,
     Lock,
     Unlock,
@@ -71,6 +72,10 @@ type PayrollRun = {
     generated_at: string | null;
     is_saved: boolean;
     saved_at: string | null;
+    status?: 'draft' | 'released';
+    released_at?: string | null;
+    released_by?: number | null;
+    released_by_name?: string | null;
     is_locked?: boolean;
     locked_at?: string | null;
     locked_by?: number | null;
@@ -418,8 +423,13 @@ export default function PayrollPage() {
     const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
     const [unlockPin, setUnlockPin] = useState('');
     const [isLockSubmitting, setIsLockSubmitting] = useState(false);
+    const [releaseDialogOpen, setReleaseDialogOpen] = useState(false);
+    const [isReleaseSubmitting, setIsReleaseSubmitting] = useState(false);
     const [sortKey, setSortKey] = useState<string>('employee');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+    const isPayrollReleased = Boolean(run && (run.status === 'released' || run.is_saved));
+    const isPayrollDraft = Boolean(run && !isPayrollReleased);
 
     const selectedDendaItem = useMemo(() => {
         if (!dendaModalItem) return null;
@@ -741,6 +751,22 @@ export default function PayrollPage() {
         );
     };
 
+    const handleRelease = () => {
+        if (!run) return;
+        setIsReleaseSubmitting(true);
+        router.post(
+            `/hris/payrolls/${run.id}/release`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setReleaseDialogOpen(false);
+                },
+                onFinish: () => setIsReleaseSubmitting(false),
+            },
+        );
+    };
+
     const handleSendPayslips = () => {
         if (!run) {
             return;
@@ -759,7 +785,7 @@ export default function PayrollPage() {
     };
 
     const handleLock = () => {
-        if (!run || run.is_saved) return;
+        if (!run || isPayrollReleased) return;
         setIsLockSubmitting(true);
         router.post(
             `/hris/payrolls/${run.id}/lock`,
@@ -773,7 +799,7 @@ export default function PayrollPage() {
 
     const handleUnlock = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!run || run.is_saved || !unlockPin) return;
+        if (!run || isPayrollReleased || !unlockPin) return;
         setIsLockSubmitting(true);
         router.post(
             `/hris/payrolls/${run.id}/lock`,
@@ -907,42 +933,54 @@ export default function PayrollPage() {
                         <div className="flex flex-wrap items-center gap-2">
                             {type === 'regular' ? (
                                 <>
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        onClick={handleSave}
-                                        disabled={!run || run.is_saved || (run.is_locked && !run.is_locked_by_me)}
-                                        className="whitespace-nowrap"
-                                    >
-                                        <Sparkles className="size-4" />
-                                        {run?.is_saved
-                                            ? 'Payroll Tersimpan'
-                                            : 'Simpan Payroll'}
-                                    </Button>
-
-                                    {run && !run.is_saved && (
-                                        run.is_locked ? (
-                                            <Button
-                                                type="button"
-                                                variant={run.is_locked_by_me ? 'outline' : 'destructive'}
-                                                onClick={() => setUnlockDialogOpen(true)}
-                                                disabled={isLockSubmitting}
-                                                className="whitespace-nowrap"
-                                            >
-                                                <Unlock className="size-4" />
-                                                {run.is_locked_by_me ? 'Unlock Payroll (Saya)' : `Unlock Payroll (${run.locked_by_name ?? 'Admin'})`}
-                                            </Button>
-                                        ) : (
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={handleLock}
-                                                disabled={isLockSubmitting}
-                                                className="whitespace-nowrap"
-                                            >
-                                                <Lock className="size-4" />
-                                                Lock Payroll
-                                            </Button>
+                                    {isPayrollReleased ? (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled
+                                            className="border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 whitespace-nowrap"
+                                        >
+                                            <CheckCircle2 className="size-4" />
+                                            Payroll Telah Dirilis
+                                        </Button>
+                                    ) : (
+                                        run && (
+                                            run.is_locked ? (
+                                                <>
+                                                    <Button
+                                                        type="button"
+                                                        variant="default"
+                                                        onClick={() => setReleaseDialogOpen(true)}
+                                                        disabled={isReleaseSubmitting || Boolean(run.is_locked && !run.is_locked_by_me)}
+                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white whitespace-nowrap shadow-sm"
+                                                        title="Rilis payroll agar karyawan dapat mengakses payslip di portal"
+                                                    >
+                                                        <Send className="size-4" />
+                                                        Release Payroll
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant={run.is_locked_by_me ? 'outline' : 'destructive'}
+                                                        onClick={() => setUnlockDialogOpen(true)}
+                                                        disabled={isLockSubmitting}
+                                                        className="whitespace-nowrap"
+                                                    >
+                                                        <Unlock className="size-4" />
+                                                        {run.is_locked_by_me ? 'Unlock Payroll (Saya)' : `Unlock Payroll (${run.locked_by_name ?? 'Admin'})`}
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={handleLock}
+                                                    disabled={isLockSubmitting}
+                                                    className="whitespace-nowrap"
+                                                >
+                                                    <Lock className="size-4" />
+                                                    Lock Payroll
+                                                </Button>
+                                            )
                                         )
                                     )}
 
@@ -952,7 +990,7 @@ export default function PayrollPage() {
                                         onClick={handleSendPayslips}
                                         disabled={
                                             !run ||
-                                            !run.is_saved ||
+                                            !isPayrollReleased ||
                                             items.length === 0 ||
                                             sendingPayslips
                                         }
@@ -974,7 +1012,7 @@ export default function PayrollPage() {
                                                     href={`/hris/payrolls/${run.id}/export/csv${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                 >
                                                     <Download className="mr-1.5 size-3.5" />
-                                                    {run.is_saved ? 'Download CSV' : 'Download Draft CSV'}
+                                                    {isPayrollReleased ? 'Download CSV' : 'Download Draft CSV'}
                                                 </a>
                                             </Button>
                                             <Button
@@ -986,12 +1024,12 @@ export default function PayrollPage() {
                                                     href={`/hris/payrolls/${run.id}/export/excel${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                 >
                                                     <Download className="mr-1.5 size-3.5" />
-                                                    {run.is_saved ? 'Download Excel' : 'Download Draft Excel'}
+                                                    {isPayrollReleased ? 'Download Excel' : 'Download Draft Excel'}
                                                 </a>
                                             </Button>
                                         </>
                                     )}
-                                    {run && run.is_saved && (
+                                    {run && isPayrollReleased && (
                                         <>
                                             <Button
                                                 variant="outline"
@@ -1022,18 +1060,56 @@ export default function PayrollPage() {
                                 </>
                             ) : (
                                 <>
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        onClick={handleSave}
-                                        disabled={!run || run.is_saved || (run.is_locked && !run.is_locked_by_me)}
-                                        className="whitespace-nowrap"
-                                    >
-                                        <Sparkles className="size-4" />
-                                        {run?.is_saved
-                                            ? 'THR Tersimpan'
-                                            : 'Simpan THR'}
-                                    </Button>
+                                    {isPayrollReleased ? (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled
+                                            className="border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 whitespace-nowrap"
+                                        >
+                                            <CheckCircle2 className="size-4" />
+                                            THR Telah Dirilis
+                                        </Button>
+                                    ) : (
+                                        run && (
+                                            run.is_locked ? (
+                                                <>
+                                                    <Button
+                                                        type="button"
+                                                        variant="default"
+                                                        onClick={() => setReleaseDialogOpen(true)}
+                                                        disabled={isReleaseSubmitting || Boolean(run.is_locked && !run.is_locked_by_me)}
+                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white whitespace-nowrap shadow-sm"
+                                                        title="Rilis THR agar karyawan dapat mengakses payslip di portal"
+                                                    >
+                                                        <Send className="size-4" />
+                                                        Release THR
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant={run.is_locked_by_me ? 'outline' : 'destructive'}
+                                                        onClick={() => setUnlockDialogOpen(true)}
+                                                        disabled={isLockSubmitting}
+                                                        className="whitespace-nowrap"
+                                                    >
+                                                        <Unlock className="size-4" />
+                                                        {run.is_locked_by_me ? 'Unlock THR (Saya)' : `Unlock THR (${run.locked_by_name ?? 'Admin'})`}
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={handleLock}
+                                                    disabled={isLockSubmitting}
+                                                    className="whitespace-nowrap"
+                                                >
+                                                    <Lock className="size-4" />
+                                                    Lock THR
+                                                </Button>
+                                            )
+                                        )
+                                    )}
 
                                     {run && (
                                         <>
@@ -1046,7 +1122,7 @@ export default function PayrollPage() {
                                                     href={`/hris/payrolls/${run.id}/export/csv${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                 >
                                                     <Download className="mr-1.5 size-3.5" />
-                                                    {run.is_saved ? 'Download CSV' : 'Download Draft CSV'}
+                                                    {isPayrollReleased ? 'Download CSV' : 'Download Draft CSV'}
                                                 </a>
                                             </Button>
                                             <Button
@@ -1058,36 +1134,10 @@ export default function PayrollPage() {
                                                     href={`/hris/payrolls/${run.id}/export/excel${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                 >
                                                     <Download className="mr-1.5 size-3.5" />
-                                                    {run.is_saved ? 'Download Excel' : 'Download Draft Excel'}
+                                                    {isPayrollReleased ? 'Download Excel' : 'Download Draft Excel'}
                                                 </a>
                                             </Button>
                                         </>
-                                    )}
-
-                                    {run && !run.is_saved && (
-                                        run.is_locked ? (
-                                            <Button
-                                                type="button"
-                                                variant={run.is_locked_by_me ? 'outline' : 'destructive'}
-                                                onClick={() => setUnlockDialogOpen(true)}
-                                                disabled={isLockSubmitting}
-                                                className="whitespace-nowrap"
-                                            >
-                                                <Unlock className="size-4" />
-                                                {run.is_locked_by_me ? 'Unlock THR (Saya)' : `Unlock THR (${run.locked_by_name ?? 'Admin'})`}
-                                            </Button>
-                                        ) : (
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={handleLock}
-                                                disabled={isLockSubmitting}
-                                                className="whitespace-nowrap"
-                                            >
-                                                <Lock className="size-4" />
-                                                Lock THR
-                                            </Button>
-                                        )
                                     )}
                                 </>
                             )}
@@ -1095,7 +1145,7 @@ export default function PayrollPage() {
                     </CardContent>
                 </Card>
 
-                {type === 'regular' && run && !run.is_saved && (
+                {type === 'regular' && run && isPayrollDraft && (
                     <Card
                         className={
                             payrollReadiness.status === 'ready'
@@ -1112,13 +1162,13 @@ export default function PayrollPage() {
                                 ) : (
                                     <AlertTriangle className="size-4 text-amber-700" />
                                 )}
-                                Checklist sebelum payroll disimpan
+                                Checklist sebelum payroll dirilis
                             </CardTitle>
                             <CardDescription>
                                 {payrollReadiness.warning_count === 0 &&
                                 payrollReadiness.error_count === 0
-                                    ? 'Payroll siap disimpan.'
-                                    : `${payrollReadiness.warning_count} warning dan ${payrollReadiness.error_count} error ditemukan. Warning tidak memblokir penyimpanan.`}
+                                    ? 'Payroll siap dirilis ke karyawan.'
+                                    : `${payrollReadiness.warning_count} warning dan ${payrollReadiness.error_count} error ditemukan. Warning tidak memblokir perilisan.`}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -1293,19 +1343,53 @@ export default function PayrollPage() {
                                         Periode: {run.period_start} s/d {run.period_end}
                                     </Badge>
                                 )}
+                                {run && (
+                                    <Badge
+                                        variant={isPayrollReleased ? 'default' : 'outline'}
+                                        className={
+                                            isPayrollReleased
+                                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white gap-1 px-2.5 py-0.5 text-xs font-semibold'
+                                                : 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300 gap-1 px-2.5 py-0.5 text-xs font-semibold'
+                                        }
+                                    >
+                                        {isPayrollReleased ? (
+                                            <>
+                                                <CheckCircle2 className="size-3.5" />
+                                                Status: Release
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FileText className="size-3.5" />
+                                                Status: Draft
+                                            </>
+                                        )}
+                                    </Badge>
+                                )}
+                                {run && isPayrollDraft && (
+                                    <Badge
+                                        variant={run.is_locked ? (run.is_locked_by_me ? 'secondary' : 'destructive') : 'outline'}
+                                        className="gap-1 px-2.5 py-0.5 text-xs"
+                                    >
+                                        {run.is_locked ? (
+                                            <>
+                                                <Lock className="size-3.5" />
+                                                {run.is_locked_by_me ? 'Terkunci (Lock)' : `Di-lock oleh ${run.locked_by_name ?? 'Admin'}`}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Unlock className="size-3.5" />
+                                                Terbuka (Unlocked)
+                                            </>
+                                        )}
+                                    </Badge>
+                                )}
                             </CardTitle>
-                            {run && !run.is_saved && run.is_locked && (
-                                <Badge variant={run.is_locked_by_me ? "secondary" : "destructive"} className="gap-1 px-2.5 py-1">
-                                    <Lock className="size-3.5" />
-                                    {run.is_locked_by_me ? 'Di-lock oleh Anda (Akses Edit Aktif)' : `Di-lock oleh ${run.locked_by_name ?? 'Admin'} (Read Only)`}
-                                </Badge>
-                            )}
                         </div>
                         <CardDescription>
                             {run?.generated_at
-                                ? run.is_saved
-                                    ? `Generated ${formatDeviceDateTime(run.generated_at)} • Disimpan ${formatDeviceDateTime(run.saved_at)}`
-                                    : `Generated pada ${formatDeviceDateTime(run.generated_at)} • Belum disimpan`
+                                ? isPayrollReleased
+                                    ? `Status: Release • Dirilis ${formatDeviceDateTime(run.released_at ?? run.saved_at)} • Generated ${formatDeviceDateTime(run.generated_at)}`
+                                    : `Status: Draft • Generated pada ${formatDeviceDateTime(run.generated_at)} • Belum dirilis ke karyawan`
                                 : type === 'thr'
                                   ? 'Belum ada data THR untuk periode ini. Klik "Generate THR".'
                                   : 'Belum ada data payroll untuk periode ini. Klik "Generate Payroll".'}
@@ -2154,7 +2238,7 @@ export default function PayrollPage() {
                                                                     )
                                                                 }
                                                                 disabled={
-                                                                    run?.is_saved ||
+                                                                    isPayrollReleased ||
                                                                     Boolean(run?.is_locked && !run?.is_locked_by_me)
                                                                 }
                                                                 className="whitespace-nowrap"
@@ -2172,7 +2256,7 @@ export default function PayrollPage() {
                                                                     )
                                                                 }
                                                                 disabled={
-                                                                    !run?.is_saved ||
+                                                                    !isPayrollReleased ||
                                                                     !item.can_send_payslip ||
                                                                     sendingPayslipItemIds.includes(
                                                                         item.id,
@@ -2700,6 +2784,50 @@ export default function PayrollPage() {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={releaseDialogOpen} onOpenChange={setReleaseDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                            <Send className="size-5" />
+                            Release {type === 'thr' ? 'THR' : 'Payroll'} ({periodState})
+                        </DialogTitle>
+                        <DialogDescription className="space-y-2 pt-2 text-sm">
+                            <span>
+                                Apakah Anda yakin ingin merilis {type === 'thr' ? 'THR' : 'payroll'} periode <strong>{periodState}</strong>?
+                            </span>
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-3">
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
+                            <p className="font-semibold mb-1">Perhatian Akses Karyawan:</p>
+                            <p>
+                                Setelah dirilis, status payroll akan berubah menjadi <strong>Release</strong> dan seluruh slip gaji (payslip) periode ini <strong>dapat langsung diakses dan diunduh oleh karyawan</strong> melalui portal mandiri dan aplikasi mobile.
+                            </p>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setReleaseDialogOpen(false)}
+                                disabled={isReleaseSubmitting}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="button"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                onClick={handleRelease}
+                                disabled={isReleaseSubmitting}
+                            >
+                                {isReleaseSubmitting ? 'Merilis...' : 'Ya, Release Sekarang'}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             <Dialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
@@ -2780,8 +2908,7 @@ export default function PayrollPage() {
                             breakdown.length === 0 &&
                             Number(selectedDendaItem.denda_deduction ?? 0) > 0;
                         const isPayrollLocked = !!run?.is_locked && !run?.is_locked_by_me;
-                        const isPayrollSaved = !!run?.is_saved;
-                        const isEditable = !isPayrollLocked && !isPayrollSaved;
+                        const isEditable = !isPayrollLocked && !isPayrollReleased;
 
                         const activeTotal = Number(selectedDendaItem.denda_deduction ?? 0);
                         const lateActive = getLateDeduction(selectedDendaItem);

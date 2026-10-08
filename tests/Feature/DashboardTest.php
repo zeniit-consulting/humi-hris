@@ -463,4 +463,167 @@ class DashboardTest extends TestCase
                 ->where('recentRequests.items.0.type', 'Cuti/Sakit')
             );
     }
+
+    public function test_dashboard_includes_financial_and_mobility_analytics_charts(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $this->actingAs($user);
+
+        $response = $this->get(route('dashboard'));
+
+        $response->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('dashboard')
+                ->has('payrollBurnrate', fn (AssertableInertia $p) => $p
+                    ->has('current_burnrate')
+                    ->has('previous_burnrate')
+                    ->has('growth_rate')
+                    ->has('avg_per_employee')
+                    ->has('trend', 6)
+                )
+                ->has('insuranceBurnrate', fn (AssertableInertia $p) => $p
+                    ->has('current_insurance_burn')
+                    ->has('bpjs_kesehatan_current')
+                    ->has('bpjs_tk_current')
+                    ->has('ratio_to_payroll')
+                    ->has('trend', 6)
+                )
+                ->has('employeeMobility', fn (AssertableInertia $p) => $p
+                    ->has('total_hires')
+                    ->has('total_exits')
+                    ->has('total_mutations')
+                    ->has('net_growth')
+                    ->has('avg_turnover_rate')
+                    ->has('trend', 6)
+                )
+                ->has('reimburseRate', fn (AssertableInertia $p) => $p
+                    ->has('current_approved_amount')
+                    ->has('current_total_count')
+                    ->has('current_approval_rate')
+                    ->has('avg_claim_amount')
+                    ->has('trend', 6)
+                )
+            );
+    }
+
+    public function test_dashboard_includes_executive_qa_insights(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $this->actingAs($user);
+
+        $response = $this->get(route('dashboard'));
+
+        $response->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('dashboard')
+                ->has('executiveInsights', fn (AssertableInertia $p) => $p
+                    ->has('active_employees', fn (AssertableInertia $sub) => $sub
+                        ->has('total')
+                        ->has('active')
+                        ->has('active_rate')
+                        ->has('pkwtt_count')
+                        ->has('pkwt_count')
+                        ->has('probation_count')
+                        ->has('resigned_count')
+                    )
+                    ->has('payroll_cost', fn (AssertableInertia $sub) => $sub
+                        ->has('total_cost')
+                        ->has('base_cost')
+                        ->has('allowance_cost')
+                        ->has('growth_rate')
+                        ->has('avg_per_employee')
+                        ->has('is_projected')
+                    )
+                    ->has('attendance_improvement', fn (AssertableInertia $sub) => $sub
+                        ->has('verdict')
+                        ->has('verdict_label')
+                        ->has('verdict_badge')
+                        ->has('attendance_rate')
+                        ->has('prev_attendance_rate')
+                        ->has('attendance_diff')
+                        ->has('late_rate')
+                        ->has('prev_late_rate')
+                        ->has('late_diff')
+                        ->has('present_count')
+                        ->has('late_count')
+                        ->has('absent_count')
+                    )
+                    ->has('department_shortage', fn (AssertableInertia $sub) => $sub
+                        ->has('total_shortage')
+                        ->has('departments')
+                    )
+                    ->has('frequent_late_and_absent', fn (AssertableInertia $sub) => $sub
+                        ->has('top_late')
+                        ->has('top_absent')
+                    )
+                    ->has('contract_expiring', fn (AssertableInertia $sub) => $sub
+                        ->has('total_expiring')
+                        ->has('items')
+                    )
+                    ->has('turnover_rate', fn (AssertableInertia $sub) => $sub
+                        ->has('rate')
+                        ->has('status')
+                        ->has('status_label')
+                        ->has('retention_rate')
+                        ->has('resigned_ytd')
+                        ->has('active_employees')
+                    )
+                )
+            );
+    }
+
+    public function test_dashboard_includes_pie_charts_breakdown(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $division = Division::factory()->create(['user_id' => $user->id, 'name' => 'Teknologi']);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'gender' => 'male',
+            'is_active' => true,
+            'base_salary' => 15_000_000,
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'gender' => 'female',
+            'is_active' => true,
+            'base_salary' => 12_000_000,
+        ]);
+
+        Employee::factory()->create([
+            'user_id' => $user->id,
+            'gender' => 'male',
+            'is_active' => false,
+            'employment_status' => 'resigned',
+            'offboarding_reason' => 'resigned',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('dashboard')
+                ->has('pieCharts', fn (AssertableInertia $pie) => $pie
+                    ->has('gender_by_division', fn (AssertableInertia $sub) => $sub
+                        ->has('divisions')
+                        ->has('overall')
+                    )
+                    ->has('payroll_by_division', fn (AssertableInertia $sub) => $sub
+                        ->has('total')
+                        ->has('divisions')
+                    )
+                    ->has('reimburse_by_division', fn (AssertableInertia $sub) => $sub
+                        ->has('total')
+                        ->has('divisions')
+                    )
+                    ->has('resign_reasons', fn (AssertableInertia $sub) => $sub
+                        ->has('total')
+                        ->has('reasons')
+                    )
+                )
+            );
+    }
 }

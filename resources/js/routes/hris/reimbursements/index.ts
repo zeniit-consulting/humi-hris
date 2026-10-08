@@ -162,6 +162,118 @@ exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'
 exportMethod.form = exportMethodForm
 
 /**
+* @see \App\Http\Controllers\Hris\ReimbursementController::bulkApprove
+* @see app/Http/Controllers/Hris/ReimbursementController.php:216
+* @route '/hris/reimbursements/bulk-approve'
+*/
+export const bulkApprove = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+bulkApprove.definition = {
+    methods: ["post"],
+    url: '/hris/reimbursements/bulk-approve',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\ReimbursementController::bulkApprove
+* @see app/Http/Controllers/Hris/ReimbursementController.php:216
+* @route '/hris/reimbursements/bulk-approve'
+*/
+bulkApprove.url = (options?: RouteQueryOptions) => {
+    return bulkApprove.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\ReimbursementController::bulkApprove
+* @see app/Http/Controllers/Hris/ReimbursementController.php:216
+* @route '/hris/reimbursements/bulk-approve'
+*/
+bulkApprove.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ReimbursementController::bulkApprove
+* @see app/Http/Controllers/Hris/ReimbursementController.php:216
+* @route '/hris/reimbursements/bulk-approve'
+*/
+const bulkApproveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkApprove.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ReimbursementController::bulkApprove
+* @see app/Http/Controllers/Hris/ReimbursementController.php:216
+* @route '/hris/reimbursements/bulk-approve'
+*/
+bulkApproveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkApprove.url(options),
+    method: 'post',
+})
+
+bulkApprove.form = bulkApproveForm
+
+/**
+* @see \App\Http\Controllers\Hris\ReimbursementController::bulkReject
+* @see app/Http/Controllers/Hris/ReimbursementController.php:244
+* @route '/hris/reimbursements/bulk-reject'
+*/
+export const bulkReject = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkReject.url(options),
+    method: 'post',
+})
+
+bulkReject.definition = {
+    methods: ["post"],
+    url: '/hris/reimbursements/bulk-reject',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\ReimbursementController::bulkReject
+* @see app/Http/Controllers/Hris/ReimbursementController.php:244
+* @route '/hris/reimbursements/bulk-reject'
+*/
+bulkReject.url = (options?: RouteQueryOptions) => {
+    return bulkReject.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\ReimbursementController::bulkReject
+* @see app/Http/Controllers/Hris/ReimbursementController.php:244
+* @route '/hris/reimbursements/bulk-reject'
+*/
+bulkReject.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkReject.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ReimbursementController::bulkReject
+* @see app/Http/Controllers/Hris/ReimbursementController.php:244
+* @route '/hris/reimbursements/bulk-reject'
+*/
+const bulkRejectForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkReject.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ReimbursementController::bulkReject
+* @see app/Http/Controllers/Hris/ReimbursementController.php:244
+* @route '/hris/reimbursements/bulk-reject'
+*/
+bulkRejectForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkReject.url(options),
+    method: 'post',
+})
+
+bulkReject.form = bulkRejectForm
+
+/**
 * @see \App\Http\Controllers\Hris\ReimbursementController::approve
 * @see app/Http/Controllers/Hris/ReimbursementController.php:197
 * @route '/hris/reimbursements/{reimbursement}/approve'
@@ -323,7 +435,7 @@ reject.form = rejectForm
 
 /**
 * @see \App\Http\Controllers\Hris\ReimbursementController::status
-* @see app/Http/Controllers/Hris/ReimbursementController.php:216
+* @see app/Http/Controllers/Hris/ReimbursementController.php:273
 * @route '/hris/reimbursements/{reimbursement}/status'
 */
 export const status = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -338,7 +450,7 @@ status.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ReimbursementController::status
-* @see app/Http/Controllers/Hris/ReimbursementController.php:216
+* @see app/Http/Controllers/Hris/ReimbursementController.php:273
 * @route '/hris/reimbursements/{reimbursement}/status'
 */
 status.url = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -371,7 +483,7 @@ status.url = (args: { reimbursement: number | { id: number } } | [reimbursement:
 
 /**
 * @see \App\Http\Controllers\Hris\ReimbursementController::status
-* @see app/Http/Controllers/Hris/ReimbursementController.php:216
+* @see app/Http/Controllers/Hris/ReimbursementController.php:273
 * @route '/hris/reimbursements/{reimbursement}/status'
 */
 status.post = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -381,7 +493,7 @@ status.post = (args: { reimbursement: number | { id: number } } | [reimbursement
 
 /**
 * @see \App\Http\Controllers\Hris\ReimbursementController::status
-* @see app/Http/Controllers/Hris/ReimbursementController.php:216
+* @see app/Http/Controllers/Hris/ReimbursementController.php:273
 * @route '/hris/reimbursements/{reimbursement}/status'
 */
 const statusForm = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -391,7 +503,7 @@ const statusForm = (args: { reimbursement: number | { id: number } } | [reimburs
 
 /**
 * @see \App\Http\Controllers\Hris\ReimbursementController::status
-* @see app/Http/Controllers/Hris/ReimbursementController.php:216
+* @see app/Http/Controllers/Hris/ReimbursementController.php:273
 * @route '/hris/reimbursements/{reimbursement}/status'
 */
 statusForm.post = (args: { reimbursement: number | { id: number } } | [reimbursement: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -404,6 +516,8 @@ status.form = statusForm
 const reimbursements = {
     index: Object.assign(index, index),
     export: Object.assign(exportMethod, exportMethod),
+    bulkApprove: Object.assign(bulkApprove, bulkApprove),
+    bulkReject: Object.assign(bulkReject, bulkReject),
     approve: Object.assign(approve, approve),
     reject: Object.assign(reject, reject),
     status: Object.assign(status, status),

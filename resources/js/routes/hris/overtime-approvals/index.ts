@@ -81,6 +81,118 @@ indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 index.form = indexForm
 
 /**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkApprove
+* @see app/Http/Controllers/Hris/OvertimeController.php:232
+* @route '/hris/overtime-approvals/bulk-approve'
+*/
+export const bulkApprove = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+bulkApprove.definition = {
+    methods: ["post"],
+    url: '/hris/overtime-approvals/bulk-approve',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkApprove
+* @see app/Http/Controllers/Hris/OvertimeController.php:232
+* @route '/hris/overtime-approvals/bulk-approve'
+*/
+bulkApprove.url = (options?: RouteQueryOptions) => {
+    return bulkApprove.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkApprove
+* @see app/Http/Controllers/Hris/OvertimeController.php:232
+* @route '/hris/overtime-approvals/bulk-approve'
+*/
+bulkApprove.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkApprove
+* @see app/Http/Controllers/Hris/OvertimeController.php:232
+* @route '/hris/overtime-approvals/bulk-approve'
+*/
+const bulkApproveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkApprove.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkApprove
+* @see app/Http/Controllers/Hris/OvertimeController.php:232
+* @route '/hris/overtime-approvals/bulk-approve'
+*/
+bulkApproveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkApprove.url(options),
+    method: 'post',
+})
+
+bulkApprove.form = bulkApproveForm
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkReject
+* @see app/Http/Controllers/Hris/OvertimeController.php:272
+* @route '/hris/overtime-approvals/bulk-reject'
+*/
+export const bulkReject = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkReject.url(options),
+    method: 'post',
+})
+
+bulkReject.definition = {
+    methods: ["post"],
+    url: '/hris/overtime-approvals/bulk-reject',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkReject
+* @see app/Http/Controllers/Hris/OvertimeController.php:272
+* @route '/hris/overtime-approvals/bulk-reject'
+*/
+bulkReject.url = (options?: RouteQueryOptions) => {
+    return bulkReject.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkReject
+* @see app/Http/Controllers/Hris/OvertimeController.php:272
+* @route '/hris/overtime-approvals/bulk-reject'
+*/
+bulkReject.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkReject.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkReject
+* @see app/Http/Controllers/Hris/OvertimeController.php:272
+* @route '/hris/overtime-approvals/bulk-reject'
+*/
+const bulkRejectForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkReject.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\OvertimeController::bulkReject
+* @see app/Http/Controllers/Hris/OvertimeController.php:272
+* @route '/hris/overtime-approvals/bulk-reject'
+*/
+bulkRejectForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkReject.url(options),
+    method: 'post',
+})
+
+bulkReject.form = bulkRejectForm
+
+/**
 * @see \App\Http\Controllers\Hris\OvertimeController::approve
 * @see app/Http/Controllers/Hris/OvertimeController.php:197
 * @route '/hris/overtime-approvals/{overtime}/approve'
@@ -242,6 +354,8 @@ reject.form = rejectForm
 
 const overtimeApprovals = {
     index: Object.assign(index, index),
+    bulkApprove: Object.assign(bulkApprove, bulkApprove),
+    bulkReject: Object.assign(bulkReject, bulkReject),
     approve: Object.assign(approve, approve),
     reject: Object.assign(reject, reject),
 }

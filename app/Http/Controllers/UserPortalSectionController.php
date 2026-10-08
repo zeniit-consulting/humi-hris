@@ -147,6 +147,14 @@ class UserPortalSectionController extends Controller
 
         $run = $this->findPayrollRunForEmployee($employee, $validated['period']);
 
+        if ($run && ! $run->isReleased() && ! $run->is_saved) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Slip gaji periode ini masih berstatus draft dan belum dirilis oleh admin.',
+                'data' => $this->payrollPreviewPayload($validated['period'], null, $employee),
+            ], 422);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Slip gaji berhasil diverifikasi.',
@@ -175,7 +183,7 @@ class UserPortalSectionController extends Controller
 
         $run = $this->findPayrollRunForEmployee($employee, $period);
 
-        abort_unless($run !== null && $run->items->isNotEmpty(), 404);
+        abort_unless($run !== null && ($run->isReleased() || $run->is_saved) && $run->items->isNotEmpty(), 404);
 
         $slip = $run->items->first();
 

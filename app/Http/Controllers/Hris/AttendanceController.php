@@ -41,6 +41,8 @@ class AttendanceController extends Controller
             'sort_by' => ['nullable', 'in:employee,attendance_date,check_in_at,check_out_at'],
             'sort_dir' => ['nullable', 'in:asc,desc'],
             'per_page' => ['nullable', 'in:10,25,50'],
+            'range' => ['nullable', 'in:today,this_week,this_month'],
+            'horizontal_range' => ['nullable', 'in:this_week,this_month,custom'],
         ]);
 
         $perPage = in_array((int) ($validated['per_page'] ?? $request->input('per_page')), [10, 25, 50], true)
@@ -64,6 +66,7 @@ class AttendanceController extends Controller
             'sort_by' => $validated['sort_by'] ?? 'employee',
             'sort_dir' => $validated['sort_dir'] ?? 'asc',
             'per_page' => $perPage,
+            'horizontal_range' => $validated['horizontal_range'] ?? 'this_week',
         ];
 
         $attendancesQuery = EmployeeAttendance::query()
@@ -155,8 +158,218 @@ class AttendanceController extends Controller
             ->groupBy('status')
             ->pluck('total', 'status');
 
+        $chartRange = $validated['range'] ?? 'this_week';
+        $today = Carbon::today();
+
+        $chartStartDate = match ($chartRange) {
+            'today' => $today->copy(),
+            'this_month' => $today->copy()->startOfMonth(),
+            default => $today->copy()->startOfWeek(),
+        };
+
+        $chartEndDate = match ($chartRange) {
+            'today' => $today->copy(),
+            'this_month' => $today->copy()->endOfMonth(),
+            default => $today->copy(),
+        };
+
+        $dailyRaw = EmployeeAttendance::query()
+            ->where('user_id', $ownerId)
+            ->selectRaw('attendance_date, status, COUNT(*) as total')
+            ->whereBetween('attendance_date', [$chartStartDate->toDateString(), $chartEndDate->toDateString()])
+            ->groupBy('attendance_date', 'status')
+            ->orderBy('attendance_date')
+            ->get();
+
+        $dailyGrouped = $dailyRaw->groupBy(
+            fn (EmployeeAttendance $attendance) => $attendance->attendance_date->toDateString()
+        );
+
+        $dates = collect();
+        $cursor = $chartStartDate->copy();
+
+        while ($cursor->lte($chartEndDate)) {
+            $dates->push($cursor->copy());
+            $cursor->addDay();
+        }
+
+        $activeEmployees = Employee::query()
+            ->where('user_id', $ownerId)
+            ->where('is_active', true)
+            ->count();
+
+        $attendanceChart = $dates->map(function (Carbon $date) use ($dailyGrouped, $activeEmployees) {
+            $dateKey = $date->toDateString();
+            $rows = collect($dailyGrouped->get($dateKey, []));
+            $counts = $rows->pluck('total', 'status');
+
+            $present = (int) ($counts['present'] ?? 0);
+            $late = (int) ($counts['late'] ?? 0);
+            $onLeave = (int) ($counts['on_leave'] ?? 0);
+            $fallbackAbsent = max($activeEmployees - ($present + $late + $onLeave), 0);
+            $absent = (int) ($counts['absent'] ?? $fallbackAbsent);
+
+            $attendanceRate = $activeEmployees > 0
+                ? round((($present + $late) / $activeEmployees) * 100, 1)
+                : 0;
+
+            return [
+                'date' => $dateKey,
+                'label' => $date->format('d M'),
+                'present' => $present,
+                'late' => $late,
+                'on_leave' => $onLeave,
+                'absent' => $absent,
+                'attendance_rate' => $attendanceRate,
+            ];
+        })->values();
+
+        $horizontalRange = $validated['horizontal_range'] ?? 'this_week';
+
+        if ($horizontalRange === 'this_month') {
+            $hStartDate = today()->startOfMonth();
+            $hEndDate = today()->endOfMonth();
+        } elseif ($horizontalRange === 'custom' && $filters['start_date'] !== $filters['end_date']) {
+            $hStartDate = Carbon::parse($filters['start_date']);
+            $hEndDate = Carbon::parse($filters['end_date']);
+            if ($hEndDate->diffInDays($hStartDate) > 31) {
+                $hEndDate = $hStartDate->copy()->addDays(31);
+            }
+        } else {
+            $hStartDate = today()->startOfWeek();
+            $hEndDate = today()->endOfWeek();
+        }
+
+        $allEmployees = Employee::query()
+            ->where('user_id', $ownerId)
+            ->where('is_active', true)
+            ->when($filters['employee_id'] !== '', fn ($q) => $q->where('id', $filters['employee_id']))
+            ->orderBy('employee_code')
+            ->get(['id', 'employee_code', 'first_name', 'last_name', 'timezone']);
+
+        $allAttendances = EmployeeAttendance::query()
+            ->where('user_id', $ownerId)
+            ->whereBetween('attendance_date', [$hStartDate->toDateString(), $hEndDate->toDateString()])
+            ->when($filters['employee_id'] !== '', fn ($q) => $q->where('employee_id', $filters['employee_id']))
+            ->get(['id', 'employee_id', 'attendance_date', 'status', 'check_in_at', 'check_out_at', 'late_minutes'])
+            ->groupBy(fn ($a) => $a->employee_id.'_'.$a->attendance_date->toDateString());
+
+        $allSchedules = EmployeeSchedule::query()
+            ->where('user_id', $ownerId)
+            ->whereBetween('work_date', [$hStartDate->toDateString(), $hEndDate->toDateString()])
+            ->when($filters['employee_id'] !== '', fn ($q) => $q->where('employee_id', $filters['employee_id']))
+            ->get(['id', 'employee_id', 'work_date', 'shift_code', 'is_day_off', 'start_time', 'end_time'])
+            ->groupBy(fn ($s) => $s->employee_id.'_'.$s->work_date->toDateString());
+
+        $hDates = collect();
+        $curr = $hStartDate->copy();
+        while ($curr->lte($hEndDate)) {
+            $dayName = match ($curr->dayOfWeek) {
+                Carbon::MONDAY => 'Sen',
+                Carbon::TUESDAY => 'Sel',
+                Carbon::WEDNESDAY => 'Rab',
+                Carbon::THURSDAY => 'Kam',
+                Carbon::FRIDAY => 'Jum',
+                Carbon::SATURDAY => 'Sab',
+                Carbon::SUNDAY => 'Min',
+            };
+            $hDates->push([
+                'date' => $curr->toDateString(),
+                'day_name' => $dayName,
+                'day_num' => $curr->format('d'),
+                'month_short' => $curr->translatedFormat('M'),
+                'is_today' => $curr->isToday(),
+                'is_weekend' => $curr->isWeekend(),
+                'is_past' => $curr->lt(today()),
+            ]);
+            $curr->addDay();
+        }
+
+        $horizontalRows = $allEmployees->map(function (Employee $emp) use ($hDates, $allAttendances, $allSchedules) {
+            $days = [];
+            $summary = [
+                'present' => 0,
+                'late' => 0,
+                'on_leave' => 0,
+                'absent' => 0,
+                'missing' => 0,
+            ];
+
+            foreach ($hDates as $dateInfo) {
+                $dateKey = $dateInfo['date'];
+                $sched = $allSchedules->get($emp->id.'_'.$dateKey)?->first();
+                $att = $allAttendances->get($emp->id.'_'.$dateKey)?->first();
+
+                $shiftCode = $sched?->shift_code;
+                $isDayOff = (bool) ($sched?->is_day_off ?? false);
+
+                if ($att) {
+                    $status = $att->status;
+                    if ($status === 'present' && ($att->late_minutes ?? 0) > 0) {
+                        $status = 'late';
+                    }
+                    if (isset($summary[$status])) {
+                        $summary[$status]++;
+                    }
+                } else {
+                    if ($isDayOff || $shiftCode === 'OFF' || ($dateInfo['is_weekend'] && ! $sched)) {
+                        $status = 'off';
+                    } elseif ($dateInfo['is_past'] || $dateInfo['is_today']) {
+                        $status = 'missing';
+                        $summary['missing']++;
+                    } else {
+                        $status = 'scheduled';
+                    }
+                }
+
+                $statusLabel = match ($status) {
+                    'present' => 'Hadir',
+                    'late' => 'Terlambat'.($att && $att->late_minutes ? " ({$att->late_minutes}m)" : ''),
+                    'on_leave' => 'Cuti',
+                    'absent' => 'Absen',
+                    'missing' => 'Tidak Absen',
+                    'off' => 'Libur (OFF)',
+                    'scheduled' => 'Terjadwal',
+                    default => ucfirst($status),
+                };
+
+                $cellShiftCode = $shiftCode ?: ($status === 'off' ? 'OFF' : ($sched ? 'REG' : '-'));
+
+                $checkInStr = $att?->check_in_at ? Carbon::parse($att->check_in_at)->format('H:i') : null;
+                $checkOutStr = $att?->check_out_at ? Carbon::parse($att->check_out_at)->format('H:i') : null;
+
+                $days[$dateKey] = [
+                    'shift_code' => $cellShiftCode,
+                    'status' => $status,
+                    'status_label' => $statusLabel,
+                    'check_in' => $checkInStr,
+                    'check_out' => $checkOutStr,
+                    'late_minutes' => $att?->late_minutes,
+                ];
+            }
+
+            return [
+                'employee_id' => $emp->id,
+                'employee_code' => $emp->employee_code,
+                'employee_name' => $emp->full_name,
+                'days' => $days,
+                'summary' => $summary,
+            ];
+        })->values();
+
+        $horizontalView = [
+            'dates' => $hDates->values(),
+            'rows' => $horizontalRows,
+            'range' => $horizontalRange,
+            'start_date' => $hStartDate->toDateString(),
+            'end_date' => $hEndDate->toDateString(),
+        ];
+
         return Inertia::render('hris/attendances/index', [
             'attendances' => $attendances,
+            'attendanceChart' => $attendanceChart,
+            'chartRange' => $chartRange,
+            'horizontalView' => $horizontalView,
             'employees' => $employees->map(fn (Employee $employee) => [
                 'id' => $employee->id,
                 'label' => $employee->employee_code.' - '.$employee->full_name,
@@ -166,7 +379,7 @@ class AttendanceController extends Controller
                 'present' => (int) ($todaySummaryRows['present'] ?? 0),
                 'late' => (int) ($todaySummaryRows['late'] ?? 0),
                 'on_leave' => (int) ($todaySummaryRows['on_leave'] ?? 0),
-                'absent' => (int) ($todaySummaryRows['absent'] ?? 0),
+                'absent' => (int) ($todaySummaryRows['absent'] ?? $fallbackAbsent ?? 0),
             ],
             'statusOptions' => ['present', 'late', 'on_leave', 'absent'],
         ]);

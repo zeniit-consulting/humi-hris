@@ -30,7 +30,31 @@ class PayrollRunFactory extends Factory
             'is_saved' => false,
             'saved_at' => null,
             'saved_by' => null,
+            'status' => 'draft',
+            'released_at' => null,
+            'released_by' => null,
         ];
+    }
+
+    public function draft(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'draft',
+            'is_saved' => false,
+            'released_at' => null,
+            'released_by' => null,
+        ]);
+    }
+
+    public function released(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'released',
+            'is_saved' => true,
+            'is_locked' => true,
+            'released_at' => now(),
+            'saved_at' => now(),
+        ]);
     }
 }
 

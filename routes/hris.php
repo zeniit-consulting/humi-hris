@@ -164,6 +164,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         Route::post('attendances/schedules', [AttendanceScheduleController::class, 'store'])->name('attendances.schedules.store');
 
         Route::get('attendance-approvals', [AttendanceCorrectionApprovalController::class, 'index'])->name('attendance-approvals.index');
+        Route::post('attendance-approvals/bulk-approve', [AttendanceCorrectionApprovalController::class, 'bulkApprove'])->name('attendance-approvals.bulk-approve');
+        Route::post('attendance-approvals/bulk-reject', [AttendanceCorrectionApprovalController::class, 'bulkReject'])->name('attendance-approvals.bulk-reject');
         Route::post('attendance-approvals/{attendanceRequest}/approve', [AttendanceCorrectionApprovalController::class, 'approve'])->name('attendance-approvals.approve');
         Route::post('attendance-approvals/{attendanceRequest}/reject', [AttendanceCorrectionApprovalController::class, 'reject'])->name('attendance-approvals.reject');
     });
@@ -183,6 +185,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         Route::get('schedules/import/template', [ScheduleController::class, 'importTemplate'])->name('schedules.import.template');
         Route::post('schedules/import', [ScheduleController::class, 'import'])->name('schedules.import');
         Route::get('shift-change-requests', [ShiftChangeApprovalController::class, 'index'])->name('shift-change-requests.index');
+        Route::post('shift-change-requests/bulk-approve', [ShiftChangeApprovalController::class, 'bulkApprove'])->name('shift-change-requests.bulk-approve');
+        Route::post('shift-change-requests/bulk-reject', [ShiftChangeApprovalController::class, 'bulkReject'])->name('shift-change-requests.bulk-reject');
         Route::post('shift-change-requests/{shiftChangeRequest}/approve', [ShiftChangeApprovalController::class, 'approve'])->name('shift-change-requests.approve');
         Route::post('shift-change-requests/{shiftChangeRequest}/reject', [ShiftChangeApprovalController::class, 'reject'])->name('shift-change-requests.reject');
     });
@@ -200,6 +204,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
             Route::post('payrolls/thr/generate', [PayrollController::class, 'generateThr'])->name('payrolls.thr.generate');
             Route::post('payrolls/{payrollRun}/lock', [PayrollController::class, 'toggleLock'])->name('payrolls.lock');
             Route::post('payrolls/{payrollRun}/save', [PayrollController::class, 'save'])->name('payrolls.save');
+            Route::post('payrolls/{payrollRun}/release', [PayrollController::class, 'release'])->name('payrolls.release');
             Route::post('payrolls/{payrollRun}/send-payslips', [PayrollController::class, 'sendPayslips'])->name('payrolls.send-payslips');
             Route::put('payrolls/{payrollRun}/items/{payrollItem}', [PayrollController::class, 'updateItem'])->name('payrolls.items.update');
             Route::post('payrolls/{payrollRun}/items/{payrollItem}/revert-denda', [PayrollController::class, 'revertDenda'])->name('payrolls.items.revert-denda');
@@ -218,6 +223,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
 
         Route::get('reimbursements', [ReimbursementController::class, 'index'])->name('reimbursements.index');
         Route::get('reimbursements/export', [ReimbursementController::class, 'export'])->name('reimbursements.export');
+        Route::post('reimbursements/bulk-approve', [ReimbursementController::class, 'bulkApprove'])->name('reimbursements.bulk-approve');
+        Route::post('reimbursements/bulk-reject', [ReimbursementController::class, 'bulkReject'])->name('reimbursements.bulk-reject');
         Route::post('reimbursements/{reimbursement}/approve', [ReimbursementController::class, 'approve'])->name('reimbursements.approve');
         Route::post('reimbursements/{reimbursement}/reject', [ReimbursementController::class, 'reject'])->name('reimbursements.reject');
         Route::post('reimbursements/{reimbursement}/status', [ReimbursementController::class, 'updateStatus'])->name('reimbursements.status');
@@ -231,6 +238,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         Route::get('leaves', [LeaveController::class, 'index'])->name('leaves.index');
         Route::get('leaves/export', [LeaveController::class, 'export'])->name('leaves.export');
         Route::get('leave-approvals', [LeaveController::class, 'approvals'])->name('leave-approvals.index');
+        Route::post('leave-approvals/bulk-approve', [LeaveController::class, 'bulkApprove'])->name('leave-approvals.bulk-approve');
+        Route::post('leave-approvals/bulk-reject', [LeaveController::class, 'bulkReject'])->name('leave-approvals.bulk-reject');
         Route::post('leave-approvals/{leave}/approve', [LeaveController::class, 'approve'])->name('leave-approvals.approve');
         Route::post('leave-approvals/{leave}/reject', [LeaveController::class, 'reject'])->name('leave-approvals.reject');
 
@@ -255,6 +264,8 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
         Route::get('overtimes', [OvertimeController::class, 'index'])->name('overtimes.index');
         Route::get('overtimes/export', [OvertimeController::class, 'export'])->name('overtimes.export');
         Route::get('overtime-approvals', [OvertimeController::class, 'approvals'])->name('overtime-approvals.index');
+        Route::post('overtime-approvals/bulk-approve', [OvertimeController::class, 'bulkApprove'])->name('overtime-approvals.bulk-approve');
+        Route::post('overtime-approvals/bulk-reject', [OvertimeController::class, 'bulkReject'])->name('overtime-approvals.bulk-reject');
         Route::post('overtime-approvals/{overtime}/approve', [OvertimeController::class, 'approve'])->name('overtime-approvals.approve');
         Route::post('overtime-approvals/{overtime}/reject', [OvertimeController::class, 'reject'])->name('overtime-approvals.reject');
         Route::post('overtimes', [OvertimeController::class, 'store'])->name('overtimes.store');

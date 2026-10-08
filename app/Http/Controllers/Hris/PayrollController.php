@@ -48,6 +48,7 @@ class PayrollController extends Controller
         $run = PayrollRun::query()
             ->with([
                 'lockedBy:id,name',
+                'releasedBy:id,name',
                 'items.employee:id,employee_code,first_name,last_name,phone,sub_company_id,division_id,hire_date,offboarded_at,base_salary,is_active,employment_status,employment_type',
                 'items.employee.subCompany:id,code,name',
                 'items.employee.division:id,name',
@@ -112,6 +113,10 @@ class PayrollController extends Controller
                 'id' => $run->id,
                 'period' => $run->period,
                 'type' => $run->type,
+                'status' => $run->status ?? ($run->is_saved ? 'released' : 'draft'),
+                'released_at' => $run->released_at?->toIso8601String(),
+                'released_by' => $run->released_by,
+                'released_by_name' => $run->releasedBy?->name,
                 'period_start' => $run->period_start?->format('Y-m-d'),
                 'period_end' => $run->period_end?->format('Y-m-d'),
                 'thr_reference_date' => $run->thr_reference_date?->format('Y-m-d'),
@@ -277,9 +282,12 @@ class PayrollController extends Controller
         $summary = $readiness->summarize($ownerId, $payrollRun->period, $payrollRun);
 
         $payrollRun->update([
+            'status' => 'released',
             'is_saved' => true,
             'saved_at' => now(),
             'saved_by' => $request->user()?->id,
+            'released_at' => now(),
+            'released_by' => $request->user()?->id,
         ]);
 
         $redirect = to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular']);
@@ -295,6 +303,45 @@ class PayrollController extends Controller
     }
 
     /**
+     * Release the locked draft payroll so employees can access their payslips.
+     */
+    public function release(PayrollRun $payrollRun, Request $request, PayrollReadinessService $readiness): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+
+        if ($payrollRun->isReleased()) {
+            return back()->with('info', 'Payroll periode ini sudah dirilis sebelumnya.');
+        }
+
+        if (! $payrollRun->is_locked) {
+            return back()->with('error', 'Kunci (lock) draft payroll terlebih dahulu sebelum melakukan release.');
+        }
+
+        $summary = $readiness->summarize($ownerId, $payrollRun->period, $payrollRun);
+
+        $payrollRun->update([
+            'status' => 'released',
+            'is_saved' => true,
+            'saved_at' => $payrollRun->saved_at ?? now(),
+            'saved_by' => $payrollRun->saved_by ?? $request->user()?->id,
+            'released_at' => now(),
+            'released_by' => $request->user()?->id,
+        ]);
+
+        $redirect = to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular']);
+
+        if (($summary['warning_count'] ?? 0) > 0 || ($summary['error_count'] ?? 0) > 0) {
+            return $redirect->with(
+                'warning',
+                'Payroll berhasil dirilis ke karyawan dengan '.($summary['warning_count'] ?? 0).' warning dan '.($summary['error_count'] ?? 0).' error checklist readiness.'
+            );
+        }
+
+        return $redirect->with('success', 'Payroll berhasil dirilis. Payslip kini sudah dapat diakses oleh seluruh karyawan.');
+    }
+
+    /**
      * Lock or unlock the payroll run.
      */
      public function toggleLock(PayrollRun $payrollRun, Request $request): RedirectResponse
@@ -302,8 +349,8 @@ class PayrollController extends Controller
          $ownerId = $request->user()->accountOwnerId();
          abort_if((int) $payrollRun->user_id !== $ownerId, 403);
  
-         if ($payrollRun->is_saved) {
-             return back()->with('error', 'Payroll yang sudah difinalisasi/disimpan tidak memerlukan lock/unlock.');
+         if ($payrollRun->isReleased()) {
+             return back()->with('error', 'Payroll yang sudah dirilis tidak memerlukan lock/unlock.');
          }
  
          $user = $request->user();
@@ -359,7 +406,7 @@ class PayrollController extends Controller
         abort_if((int) $payrollRun->user_id !== $ownerId, 403);
         abort_unless((int) $payrollItem->payroll_run_id === (int) $payrollRun->id, 404);
 
-        if ($payrollRun->is_saved) {
+        if ($payrollRun->isReleased() || $payrollRun->is_saved) {
             return back()->with('error', 'Payroll yang sudah disimpan tidak bisa diedit.');
         }
 
@@ -498,8 +545,8 @@ class PayrollController extends Controller
         abort_if((int) $payrollRun->user_id !== $ownerId, 403);
         abort_unless((int) $payrollItem->payroll_run_id === (int) $payrollRun->id, 404);
 
-        if ($payrollRun->is_saved) {
-            return back()->with('error', 'Payroll yang sudah disimpan tidak bisa diedit.');
+        if ($payrollRun->isReleased() || $payrollRun->is_saved) {
+            return back()->with('error', 'Payroll yang sudah dirilis/disimpan tidak bisa diedit.');
         }
 
         if ($payrollRun->is_locked && (int) $payrollRun->locked_by !== (int) $request->user()->id) {
@@ -1437,7 +1484,7 @@ class PayrollController extends Controller
 
     public function sendPayslips(PayrollRun $payrollRun, Request $request): RedirectResponse
     {
-        if (! $payrollRun->is_saved) {
+        if (! $payrollRun->is_saved && ! $payrollRun->isReleased()) {
             return back()->with('error', 'Simpan payroll terlebih dahulu sebelum mengirim payslip ke WhatsApp.');
         }
 
@@ -1481,7 +1528,7 @@ class PayrollController extends Controller
 
     public function sendPayslip(PayrollRun $payrollRun, PayrollItem $payrollItem, Request $request): RedirectResponse
     {
-        if (! $payrollRun->is_saved) {
+        if (! $payrollRun->is_saved && ! $payrollRun->isReleased()) {
             return back()->with('error', 'Simpan payroll terlebih dahulu sebelum mengirim payslip ke WhatsApp.');
         }
 

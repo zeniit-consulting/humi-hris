@@ -4,12 +4,15 @@ import {
     CalendarDays,
     CalendarRange,
     Camera,
+    ChevronDown,
     Clock,
     Download,
     ExternalLink,
     Eye,
+    EyeOff,
     FileText,
     Filter,
+    List,
     Pencil,
     Plus,
     RotateCcw,
@@ -19,6 +22,19 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import ActionIconButton from '@/components/action-icon-button';
+import {
+    AttendanceChartCard,
+    type AttendancePoint,
+} from '@/components/attendance-chart-card';
+import {
+    AttendanceHorizontalMatrix,
+    type HorizontalViewData,
+} from '@/components/attendance-horizontal-matrix';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -123,6 +139,7 @@ type Filters = {
     employee_id: string;
     sort_by: 'employee' | 'check_in_at' | 'check_out_at' | 'attendance_date';
     sort_dir: 'asc' | 'desc';
+    horizontal_range?: string;
 };
 
 type PageProps = {
@@ -136,6 +153,9 @@ type PageProps = {
         absent: number;
     };
     statusOptions: string[];
+    attendanceChart?: AttendancePoint[];
+    chartRange?: string;
+    horizontalView?: HorizontalViewData;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -183,10 +203,74 @@ function monthlyAttendanceUrl(employeeId: number, period: string) {
 }
 
 export default function AttendancePage() {
-    const { attendances, employees, filters, todaySummary, statusOptions } =
-        usePage<PageProps>().props;
+    const {
+        attendances,
+        employees,
+        filters,
+        todaySummary,
+        statusOptions,
+        attendanceChart = [],
+        chartRange = 'this_week',
+        horizontalView,
+    } = usePage<PageProps>().props;
 
     const [filterState, setFilterState] = useState<Filters>(filters);
+    const [viewMode, setViewMode] = useState<'table' | 'horizontal'>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('hris_attendance_view_mode');
+            return saved === 'horizontal' ? 'horizontal' : 'table';
+        }
+        return 'table';
+    });
+
+    const handleToggleViewMode = (mode: 'table' | 'horizontal') => {
+        setViewMode(mode);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('hris_attendance_view_mode', mode);
+        }
+    };
+
+    const handleHorizontalRangeChange = (range: string) => {
+        const nextFilter = {
+            ...filterState,
+            horizontal_range: range,
+        };
+        setFilterState(nextFilter);
+        router.get(
+            attendancesIndex.url(),
+            nextFilter,
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+    };
+
+    const [showChart, setShowChart] = useState<boolean>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('hris_attendance_show_chart');
+            return saved !== null ? saved === 'true' : true;
+        }
+        return true;
+    });
+    const [showFilter, setShowFilter] = useState<boolean>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('hris_attendance_show_filter');
+            return saved !== null ? saved === 'true' : true;
+        }
+        return true;
+    });
+
+    const handleToggleChart = (open: boolean) => {
+        setShowChart(open);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('hris_attendance_show_chart', String(open));
+        }
+    };
+
+    const handleToggleFilter = (open: boolean) => {
+        setShowFilter(open);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('hris_attendance_show_filter', String(open));
+        }
+    };
     const [dialogOpen, setDialogOpen] = useState(false);
     const [detailRecord, setDetailRecord] = useState<AttendanceRecord | null>(
         null,
@@ -380,6 +464,24 @@ export default function AttendancePage() {
                 <div className="flex flex-wrap items-center gap-2">
                     <Button
                         size="sm"
+                        variant={showChart ? 'secondary' : 'outline'}
+                        onClick={() => handleToggleChart(!showChart)}
+                        title={showChart ? 'Sembunyikan chart riwayat' : 'Tampilkan chart riwayat'}
+                    >
+                        {showChart ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                        <span className="hidden sm:inline">Chart</span>
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant={showFilter ? 'secondary' : 'outline'}
+                        onClick={() => handleToggleFilter(!showFilter)}
+                        title={showFilter ? 'Sembunyikan filter data' : 'Tampilkan filter data'}
+                    >
+                        {showFilter ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                        <span className="hidden sm:inline">Filter</span>
+                    </Button>
+                    <Button
+                        size="sm"
                         variant="outline"
                         onClick={() =>
                             router.post(
@@ -437,154 +539,252 @@ export default function AttendancePage() {
                     </Card>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Filter Data Kehadiran</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <form
-                            onSubmit={applyFilter}
-                            className="grid gap-3 md:grid-cols-[240px_200px_220px_auto]"
-                        >
-                            <div className="grid gap-2">
-                                <Label htmlFor="filter_date">Rentang Tanggal</Label>
-                                <DateRangePicker
-                                    value={{
-                                        from: filterState.start_date ?? filterState.date,
-                                        to: filterState.end_date ?? filterState.date,
-                                    }}
-                                    onChange={(range) => {
-                                        setFilterState((prev) => ({
-                                            ...prev,
-                                            start_date: range.from,
-                                            end_date: range.to ?? range.from,
-                                            date: range.from,
-                                        }));
-                                    }}
-                                    placeholder="Pilih rentang tanggal..."
-                                />
+                {/* Chart Riwayat Kehadiran */}
+                {attendanceChart && attendanceChart.length > 0 && (
+                    <AttendanceChartCard
+                        attendanceChart={attendanceChart}
+                        activeRange={chartRange}
+                        routeUrl={attendancesIndex.url()}
+                        queryParams={filterState}
+                        open={showChart}
+                        onOpenChange={handleToggleChart}
+                    />
+                )}
+
+                <Collapsible
+                    open={showFilter}
+                    onOpenChange={handleToggleFilter}
+                    className="rounded-lg border bg-card text-card-foreground shadow-xs"
+                >
+                    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                        <div className="flex items-center gap-2">
+                            <div>
+                                <h3 className="text-sm font-semibold">
+                                    Filter Data Kehadiran
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    Saring data berdasarkan rentang tanggal, status, atau nama karyawan.
+                                </p>
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="filter_status">Status</Label>
-                                <Select
-                                    value={
-                                        filterState.status === ''
-                                            ? '__all'
-                                            : filterState.status
-                                    }
-                                    onValueChange={(value) =>
-                                        setFilterState((prev) => ({
-                                            ...prev,
-                                            status:
-                                                value === '__all' ? '' : value,
-                                        }))
-                                    }
-                                >
-                                    <SelectTrigger
-                                        id="filter_status"
-                                        className="w-full"
+                            {!showFilter && (filterState.status || filterState.employee_id) && (
+                                <span className="rounded bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                                    Filter aktif
+                                </span>
+                            )}
+                        </div>
+                        <CollapsibleTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2.5 text-xs"
+                            >
+                                <ChevronDown
+                                    className={`size-3.5 transition-transform ${
+                                        showFilter ? 'rotate-180' : ''
+                                    }`}
+                                />
+                                <span>{showFilter ? 'Sembunyikan' : 'Tampilkan'}</span>
+                            </Button>
+                        </CollapsibleTrigger>
+                    </div>
+
+                    <CollapsibleContent>
+                        <div className="border-t px-4 pt-3 pb-4">
+                            <form
+                                onSubmit={applyFilter}
+                                className="grid gap-3 md:grid-cols-[240px_200px_220px_auto]"
+                            >
+                                <div className="grid gap-2">
+                                    <Label htmlFor="filter_date">Rentang Tanggal</Label>
+                                    <DateRangePicker
+                                        value={{
+                                            from: filterState.start_date ?? filterState.date,
+                                            to: filterState.end_date ?? filterState.date,
+                                        }}
+                                        onChange={(range) => {
+                                            setFilterState((prev) => ({
+                                                ...prev,
+                                                start_date: range.from,
+                                                end_date: range.to ?? range.from,
+                                                date: range.from,
+                                            }));
+                                        }}
+                                        placeholder="Pilih rentang tanggal..."
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="filter_status">Status</Label>
+                                    <Select
+                                        value={
+                                            filterState.status === ''
+                                                ? '__all'
+                                                : filterState.status
+                                        }
+                                        onValueChange={(value) =>
+                                            setFilterState((prev) => ({
+                                                ...prev,
+                                                status:
+                                                    value === '__all' ? '' : value,
+                                            }))
+                                        }
                                     >
-                                        <SelectValue placeholder="Semua status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="__all">
-                                            Semua status
-                                        </SelectItem>
-                                        {statusOptions.map((status) => (
-                                            <SelectItem
-                                                key={status}
-                                                value={status}
-                                            >
-                                                {statusLabelMap[status] ??
-                                                    status}
+                                        <SelectTrigger
+                                            id="filter_status"
+                                            className="w-full"
+                                        >
+                                            <SelectValue placeholder="Semua status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__all">
+                                                Semua status
                                             </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="filter_employee">
-                                    Karyawan
-                                </Label>
-                                <SearchableSelect
-                                    id="filter_employee"
-                                    value={
-                                        filterState.employee_id === ''
-                                            ? '__all'
-                                            : filterState.employee_id
-                                    }
-                                    onValueChange={(value) =>
-                                        setFilterState((prev) => ({
-                                            ...prev,
-                                            employee_id:
-                                                value === '__all' ? '' : value,
-                                        }))
-                                    }
-                                    placeholder="Semua karyawan"
-                                    searchPlaceholder="Cari karyawan..."
-                                    options={[
-                                        {
-                                            value: '__all',
-                                            label: 'Semua karyawan',
-                                        },
-                                        ...employees.map((employee) => ({
-                                            value: String(employee.id),
-                                            label: employee.label,
-                                        })),
-                                    ]}
-                                    className="w-full"
-                                />
-                            </div>
-                            <div className="flex items-end gap-2">
-                                <Button type="submit">
-                                    <Filter className="size-4" />
-                                    Terapkan
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => {
-                                        const todayStr = new Date()
-                                            .toISOString()
-                                            .slice(0, 10);
-                                        const reset: Filters = {
-                                            ...filterState,
-                                            date: todayStr,
-                                            start_date: todayStr,
-                                            end_date: todayStr,
-                                            status: '',
-                                            employee_id: '',
-                                        };
-                                        setFilterState(reset);
-                                        router.get(
-                                            attendancesIndex.url(),
-                                            reset,
+                                            {statusOptions.map((status) => (
+                                                <SelectItem
+                                                    key={status}
+                                                    value={status}
+                                                >
+                                                    {statusLabelMap[status] ??
+                                                        status}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="filter_employee">
+                                        Karyawan
+                                    </Label>
+                                    <SearchableSelect
+                                        id="filter_employee"
+                                        value={
+                                            filterState.employee_id === ''
+                                                ? '__all'
+                                                : filterState.employee_id
+                                        }
+                                        onValueChange={(value) =>
+                                            setFilterState((prev) => ({
+                                                ...prev,
+                                                employee_id:
+                                                    value === '__all' ? '' : value,
+                                            }))
+                                        }
+                                        placeholder="Semua karyawan"
+                                        searchPlaceholder="Cari karyawan..."
+                                        options={[
                                             {
-                                                preserveState: true,
-                                                preserveScroll: true,
-                                                replace: true,
+                                                value: '__all',
+                                                label: 'Semua karyawan',
                                             },
-                                        );
-                                    }}
-                                >
-                                    <RotateCcw className="size-4" />
-                                    Reset
-                                </Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+                                            ...employees.map((employee) => ({
+                                                value: String(employee.id),
+                                                label: employee.label,
+                                            })),
+                                        ]}
+                                        className="w-full"
+                                    />
+                                </div>
+                                <div className="flex items-end gap-2">
+                                    <Button type="submit">
+                                        <Filter className="size-4" />
+                                        Terapkan
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            const todayStr = new Date()
+                                                .toISOString()
+                                                .slice(0, 10);
+                                            const reset: Filters = {
+                                                ...filterState,
+                                                date: todayStr,
+                                                start_date: todayStr,
+                                                end_date: todayStr,
+                                                status: '',
+                                                employee_id: '',
+                                            };
+                                            setFilterState(reset);
+                                            router.get(
+                                                attendancesIndex.url(),
+                                                reset,
+                                                {
+                                                    preserveState: true,
+                                                    preserveScroll: true,
+                                                    replace: true,
+                                                },
+                                            );
+                                        }}
+                                    >
+                                        <RotateCcw className="size-4" />
+                                        Reset
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
+                    </CollapsibleContent>
+                </Collapsible>
 
                 <Card>
                     <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <CardTitle>Daftar Kehadiran</CardTitle>
                             <CardDescription>
-                                Rentang tanggal aktif: {dateRangeDisplay}
+                                {viewMode === 'horizontal' && horizontalView
+                                    ? `Matriks Kehadiran: ${horizontalView.start_date} s/d ${horizontalView.end_date}`
+                                    : `Rentang tanggal aktif: ${dateRangeDisplay}`}
                             </CardDescription>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                            <SimplePagination data={attendances} />
+                            {/* Toggle View Mode: Tabel Log vs View Horizontal */}
+                            <div className="inline-flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={viewMode === 'table' ? 'default' : 'ghost'}
+                                    className="h-7 gap-1.5 px-2.5 text-xs font-medium"
+                                    onClick={() => handleToggleViewMode('table')}
+                                >
+                                    <List className="size-3.5" />
+                                    Tabel Log
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={viewMode === 'horizontal' ? 'default' : 'ghost'}
+                                    className="h-7 gap-1.5 px-2.5 text-xs font-medium"
+                                    onClick={() => handleToggleViewMode('horizontal')}
+                                >
+                                    <CalendarRange className="size-3.5" />
+                                    View Horizontal
+                                </Button>
+                            </div>
+
+                            {/* Range toggle for horizontal view */}
+                            {viewMode === 'horizontal' && (
+                                <div className="inline-flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs">
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant={horizontalView?.range === 'this_week' ? 'secondary' : 'ghost'}
+                                        className="h-7 px-2 text-xs"
+                                        onClick={() => handleHorizontalRangeChange('this_week')}
+                                    >
+                                        Minggu Ini
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant={horizontalView?.range === 'this_month' ? 'secondary' : 'ghost'}
+                                        className="h-7 px-2 text-xs"
+                                        onClick={() => handleHorizontalRangeChange('this_month')}
+                                    >
+                                        Bulan Ini
+                                    </Button>
+                                </div>
+                            )}
+
+                            {viewMode === 'table' && <SimplePagination data={attendances} />}
                             <div className="flex items-center gap-1.5">
                                 <Button asChild size="sm" variant="outline" className="border-primary/20 text-primary hover:bg-primary/5">
                                     <a
@@ -610,7 +810,16 @@ export default function AttendancePage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="overflow-x-auto">
+                        {viewMode === 'horizontal' ? (
+                            horizontalView ? (
+                                <AttendanceHorizontalMatrix data={horizontalView} />
+                            ) : (
+                                <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+                                    Data matriks tidak tersedia.
+                                </div>
+                            )
+                        ) : (
+                            <div className="overflow-x-auto">
                             <table className="w-full min-w-[920px] text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
@@ -858,6 +1067,7 @@ export default function AttendancePage() {
                                 </tbody>
                             </table>
                         </div>
+                    )}
                     </CardContent>
                 </Card>
             </div>

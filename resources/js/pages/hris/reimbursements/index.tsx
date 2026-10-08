@@ -12,8 +12,10 @@ import {
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
+import { ConfirmationDialog } from '@/components/confirmation-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Card,
     CardContent,
@@ -164,7 +166,87 @@ function SortableHeader({
 export default function ReimbursementsPage() {
     const { requests, period, status, category, categories = categoryOptions, sort, stats } = usePage<PageProps>().props;
     const [rejectRow, setRejectRow] = useState<RejectTarget>(null);
+    const [approveConfirmRow, setApproveConfirmRow] = useState<Row | null>(null);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [bulkApproveOpen, setBulkApproveOpen] = useState(false);
+    const [bulkRejectOpen, setBulkRejectOpen] = useState(false);
+    const [bulkRejectReason, setBulkRejectReason] = useState('');
+    const [isBulkProcessing, setIsBulkProcessing] = useState(false);
     const rejectForm = useForm({ rejection_reason: '' });
+
+    const pendingRequests = requests.data.filter((r) => r.status === 'pending');
+    const allPendingSelected =
+        pendingRequests.length > 0 &&
+        pendingRequests.every((r) => selectedIds.includes(r.id));
+
+    const toggleSelectAll = () => {
+        if (allPendingSelected) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(pendingRequests.map((r) => r.id));
+        }
+    };
+
+    const toggleSelectRow = (id: number) => {
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+        );
+    };
+
+    const confirmApprove = (row: Row) => {
+        setApproveConfirmRow(row);
+    };
+
+    const submitApprove = () => {
+        if (!approveConfirmRow) return;
+        router.post(
+            `${pageUrl}/${approveConfirmRow.id}/approve`,
+            undefined,
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => setApproveConfirmRow(null),
+            },
+        );
+    };
+
+    const submitBulkApprove = () => {
+        if (selectedIds.length === 0) return;
+        setIsBulkProcessing(true);
+        router.post(
+            `${pageUrl}/bulk-approve`,
+            { ids: selectedIds },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => {
+                    setIsBulkProcessing(false);
+                    setBulkApproveOpen(false);
+                    setSelectedIds([]);
+                },
+            },
+        );
+    };
+
+    const submitBulkReject = () => {
+        if (selectedIds.length === 0 || !bulkRejectReason.trim()) return;
+        setIsBulkProcessing(true);
+        router.post(
+            `${pageUrl}/bulk-reject`,
+            { ids: selectedIds, rejection_reason: bulkRejectReason },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => {
+                    setIsBulkProcessing(false);
+                    setBulkRejectOpen(false);
+                    setBulkRejectReason('');
+                    setSelectedIds([]);
+                },
+            },
+        );
+    };
+
     const reject = (event: FormEvent) => {
         event.preventDefault();
         if (!rejectRow) return;
@@ -348,10 +430,63 @@ export default function ReimbursementsPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
+                        {selectedPendingCount > 0 && (
+                            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-teal-200 bg-teal-50/70 p-3">
+                                <div className="flex items-center gap-2 text-sm font-medium text-teal-950">
+                                    <span className="flex size-6 items-center justify-center rounded-full bg-teal-600 text-xs font-semibold text-white">
+                                        {selectedPendingCount}
+                                    </span>
+                                    <span>pengajuan menunggu dipilih</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        size="sm"
+                                        className="bg-emerald-600 hover:bg-emerald-700"
+                                        onClick={() => setBulkApproveOpen(true)}
+                                    >
+                                        <Check className="mr-1.5 size-4" />
+                                        Setujui Terpilih ({selectedPendingCount})
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => {
+                                            setBulkRejectReason('');
+                                            setBulkRejectOpen(true);
+                                        }}
+                                    >
+                                        <X className="mr-1.5 size-4" />
+                                        Tolak Terpilih ({selectedPendingCount})
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setSelectedIds([])}
+                                    >
+                                        Batal
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[1100px] text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
+                                        <th className="w-10 px-3 py-2">
+                                            <Checkbox
+                                                checked={
+                                                    allPendingSelected
+                                                        ? true
+                                                        : somePendingSelected
+                                                          ? 'indeterminate'
+                                                          : false
+                                                }
+                                                onCheckedChange={toggleSelectAll}
+                                                disabled={pendingRows.length === 0}
+                                                aria-label="Pilih semua pengajuan pending"
+                                            />
+                                        </th>
                                         <SortableHeader
                                             label="Karyawan"
                                             sortKey="employee"
@@ -401,7 +536,7 @@ export default function ReimbursementsPage() {
                                     {requests.data.length === 0 ? (
                                         <tr>
                                             <td
-                                                colSpan={7}
+                                                colSpan={8}
                                                 className="px-3 py-8 text-center text-muted-foreground"
                                             >
                                                 Tidak ada pengajuan.
@@ -413,6 +548,17 @@ export default function ReimbursementsPage() {
                                                 key={row.id}
                                                 className="border-b align-top"
                                             >
+                                                <td className="px-3 py-3">
+                                                    {row.status === 'pending' ? (
+                                                        <Checkbox
+                                                            checked={selectedIds.includes(row.id)}
+                                                            onCheckedChange={() => toggleSelectRow(row.id)}
+                                                            aria-label={`Pilih ${row.title}`}
+                                                        />
+                                                    ) : (
+                                                        <span className="text-muted-foreground">-</span>
+                                                    )}
+                                                </td>
                                                 <td className="px-3 py-3 font-medium">
                                                     {row.employee_label}
                                                     <div className="text-xs text-muted-foreground">
@@ -478,13 +624,7 @@ export default function ReimbursementsPage() {
                                                             <Button
                                                                 size="sm"
                                                                 onClick={() =>
-                                                                    router.post(
-                                                                        `${pageUrl}/${row.id}/approve`,
-                                                                        undefined,
-                                                                        {
-                                                                            preserveScroll: true,
-                                                                        },
-                                                                    )
+                                                                    setApproveConfirmRow(row)
                                                                 }
                                                             >
                                                                 <Check className="size-4" />
@@ -541,6 +681,85 @@ export default function ReimbursementsPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Konfirmasi Setujui Satuan */}
+            <ConfirmationDialog
+                open={approveConfirmRow !== null}
+                onOpenChange={(open) => !open && setApproveConfirmRow(null)}
+                title="Konfirmasi Persetujuan Reimbursement"
+                description={
+                    approveConfirmRow ? (
+                        <div className="space-y-1">
+                            <p>
+                                Apakah Anda yakin ingin menyetujui pengajuan reimbursement berikut?
+                            </p>
+                            <div className="rounded-md bg-muted p-2 text-xs">
+                                <p><strong>Karyawan:</strong> {approveConfirmRow.employee_label}</p>
+                                <p><strong>Pengajuan:</strong> {approveConfirmRow.title}</p>
+                                <p><strong>Nominal:</strong> {money(approveConfirmRow.amount)}</p>
+                            </div>
+                        </div>
+                    ) : null
+                }
+                confirmLabel="Ya, Setujui"
+                variant="success"
+                loading={isApproving}
+                onConfirm={submitApproveSingle}
+            />
+
+            {/* Konfirmasi Bulk Approve */}
+            <ConfirmationDialog
+                open={bulkApproveOpen}
+                onOpenChange={setBulkApproveOpen}
+                title="Konfirmasi Persetujuan Massal"
+                description={`Apakah Anda yakin ingin menyetujui ${selectedPendingCount} pengajuan reimbursement yang dipilih?`}
+                confirmLabel="Ya, Setujui Semua"
+                variant="success"
+                loading={bulkProcessing}
+                onConfirm={submitBulkApprove}
+            />
+
+            {/* Dialog Bulk Reject */}
+            <Dialog open={bulkRejectOpen} onOpenChange={setBulkRejectOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Tolak Reimbursement Massal</DialogTitle>
+                        <DialogDescription>
+                            Menolak {selectedPendingCount} pengajuan reimbursement yang dipilih. Mohon berikan alasan penolakan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="bulk-rejection-reason">Alasan penolakan</Label>
+                            <textarea
+                                id="bulk-rejection-reason"
+                                required
+                                className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm"
+                                placeholder="Tuliskan alasan penolakan untuk pengajuan terpilih..."
+                                value={bulkRejectReason}
+                                onChange={(e) => setBulkRejectReason(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setBulkRejectOpen(false)}
+                                disabled={bulkProcessing}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                disabled={bulkProcessing || !bulkRejectReason.trim()}
+                                onClick={submitBulkReject}
+                            >
+                                Tolak ({selectedPendingCount})
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             <Dialog
                 open={rejectRow !== null}
                 onOpenChange={(open) => !open && setRejectRow(null)}

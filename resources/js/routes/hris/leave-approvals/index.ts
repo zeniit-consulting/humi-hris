@@ -81,6 +81,118 @@ indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 index.form = indexForm
 
 /**
+* @see \App\Http\Controllers\Hris\LeaveController::bulkApprove
+* @see app/Http/Controllers/Hris/LeaveController.php:238
+* @route '/hris/leave-approvals/bulk-approve'
+*/
+export const bulkApprove = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+bulkApprove.definition = {
+    methods: ["post"],
+    url: '/hris/leave-approvals/bulk-approve',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\LeaveController::bulkApprove
+* @see app/Http/Controllers/Hris/LeaveController.php:238
+* @route '/hris/leave-approvals/bulk-approve'
+*/
+bulkApprove.url = (options?: RouteQueryOptions) => {
+    return bulkApprove.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\LeaveController::bulkApprove
+* @see app/Http/Controllers/Hris/LeaveController.php:238
+* @route '/hris/leave-approvals/bulk-approve'
+*/
+bulkApprove.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\LeaveController::bulkApprove
+* @see app/Http/Controllers/Hris/LeaveController.php:238
+* @route '/hris/leave-approvals/bulk-approve'
+*/
+const bulkApproveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkApprove.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\LeaveController::bulkApprove
+* @see app/Http/Controllers/Hris/LeaveController.php:238
+* @route '/hris/leave-approvals/bulk-approve'
+*/
+bulkApproveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkApprove.url(options),
+    method: 'post',
+})
+
+bulkApprove.form = bulkApproveForm
+
+/**
+* @see \App\Http\Controllers\Hris\LeaveController::bulkReject
+* @see app/Http/Controllers/Hris/LeaveController.php:267
+* @route '/hris/leave-approvals/bulk-reject'
+*/
+export const bulkReject = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkReject.url(options),
+    method: 'post',
+})
+
+bulkReject.definition = {
+    methods: ["post"],
+    url: '/hris/leave-approvals/bulk-reject',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Hris\LeaveController::bulkReject
+* @see app/Http/Controllers/Hris/LeaveController.php:267
+* @route '/hris/leave-approvals/bulk-reject'
+*/
+bulkReject.url = (options?: RouteQueryOptions) => {
+    return bulkReject.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\LeaveController::bulkReject
+* @see app/Http/Controllers/Hris/LeaveController.php:267
+* @route '/hris/leave-approvals/bulk-reject'
+*/
+bulkReject.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkReject.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\LeaveController::bulkReject
+* @see app/Http/Controllers/Hris/LeaveController.php:267
+* @route '/hris/leave-approvals/bulk-reject'
+*/
+const bulkRejectForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkReject.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\LeaveController::bulkReject
+* @see app/Http/Controllers/Hris/LeaveController.php:267
+* @route '/hris/leave-approvals/bulk-reject'
+*/
+bulkRejectForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: bulkReject.url(options),
+    method: 'post',
+})
+
+bulkReject.form = bulkRejectForm
+
+/**
 * @see \App\Http\Controllers\Hris\LeaveController::approve
 * @see app/Http/Controllers/Hris/LeaveController.php:195
 * @route '/hris/leave-approvals/{leave}/approve'
@@ -242,6 +354,8 @@ reject.form = rejectForm
 
 const leaveApprovals = {
     index: Object.assign(index, index),
+    bulkApprove: Object.assign(bulkApprove, bulkApprove),
+    bulkReject: Object.assign(bulkReject, bulkReject),
     approve: Object.assign(approve, approve),
     reject: Object.assign(reject, reject),
 }

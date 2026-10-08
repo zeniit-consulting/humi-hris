@@ -28,7 +28,7 @@ class StoreEmployeeRequest extends FormRequest
         $normalizedPayload = [];
 
         if ($this->has('full_name')) {
-            $fullName = trim((string) $this->input('full_name'));
+            $fullName = Employee::formatCapitalizedWords(trim((string) $this->input('full_name'))) ?? '';
             $normalizedPayload['full_name'] = $fullName;
             $normalizedPayload['first_name'] = $fullName;
             $normalizedPayload['last_name'] = null;

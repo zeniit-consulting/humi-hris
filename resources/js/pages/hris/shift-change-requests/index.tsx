@@ -11,9 +11,11 @@ import {
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import ActionIconButton from '@/components/action-icon-button';
+import { ConfirmationDialog } from '@/components/confirmation-dialog';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Card,
     CardContent,
@@ -187,6 +189,12 @@ export default function ShiftChangeApprovalPage() {
     });
     const [detailRow, setDetailRow] = useState<ShiftChangeRow | null>(null);
     const [rejectRow, setRejectRow] = useState<ShiftChangeRow | null>(null);
+    const [approveConfirmRow, setApproveConfirmRow] = useState<ShiftChangeRow | null>(null);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [bulkApproveOpen, setBulkApproveOpen] = useState(false);
+    const [bulkRejectOpen, setBulkRejectOpen] = useState(false);
+    const [bulkRejectReason, setBulkRejectReason] = useState('');
+    const [isBulkProcessing, setIsBulkProcessing] = useState(false);
     const rejectForm = useForm<RejectFormData>({
         rejection_reason: '',
     });
@@ -199,7 +207,27 @@ export default function ShiftChangeApprovalPage() {
             start_date: filters.start_date ?? '',
             end_date: filters.end_date ?? '',
         });
+        setSelectedIds([]);
     }, [filters]);
+
+    const pendingRequests = requests.data.filter((r) => r.status === 'pending');
+    const allPendingSelected =
+        pendingRequests.length > 0 &&
+        pendingRequests.every((r) => selectedIds.includes(r.id));
+
+    const toggleSelectAll = () => {
+        if (allPendingSelected) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(pendingRequests.map((r) => r.id));
+        }
+    };
+
+    const toggleSelectRow = (id: number) => {
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+        );
+    };
 
     const applyFilter = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -229,10 +257,53 @@ export default function ShiftChangeApprovalPage() {
     };
 
     const approveRequest = (row: ShiftChangeRow) => {
-        router.post(`${pageUrl}/${row.id}/approve`, undefined, {
+        setApproveConfirmRow(row);
+    };
+
+    const submitApprove = () => {
+        if (!approveConfirmRow) return;
+        router.post(`${pageUrl}/${approveConfirmRow.id}/approve`, undefined, {
             preserveScroll: true,
             preserveState: true,
+            onFinish: () => setApproveConfirmRow(null),
         });
+    };
+
+    const submitBulkApprove = () => {
+        if (selectedIds.length === 0) return;
+        setIsBulkProcessing(true);
+        router.post(
+            `${pageUrl}/bulk-approve`,
+            { ids: selectedIds },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => {
+                    setIsBulkProcessing(false);
+                    setBulkApproveOpen(false);
+                    setSelectedIds([]);
+                },
+            },
+        );
+    };
+
+    const submitBulkReject = () => {
+        if (selectedIds.length === 0 || !bulkRejectReason.trim()) return;
+        setIsBulkProcessing(true);
+        router.post(
+            `${pageUrl}/bulk-reject`,
+            { ids: selectedIds, rejection_reason: bulkRejectReason },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => {
+                    setIsBulkProcessing(false);
+                    setBulkRejectOpen(false);
+                    setBulkRejectReason('');
+                    setSelectedIds([]);
+                },
+            },
+        );
     };
 
     const openRejectDialog = (row: ShiftChangeRow) => {
@@ -442,10 +513,61 @@ export default function ShiftChangeApprovalPage() {
                         <SimplePagination data={requests} />
                     </CardHeader>
                     <CardContent>
+                        {selectedIds.length > 0 && (
+                            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+                                <div className="font-medium text-foreground">
+                                    <span className="font-semibold text-primary">
+                                        {selectedIds.length}
+                                    </span>{' '}
+                                    request dipilih
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        size="sm"
+                                        onClick={() => setBulkApproveOpen(true)}
+                                    >
+                                        <Check className="size-4" />
+                                        Setujui Terpilih ({selectedIds.length})
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => {
+                                            setBulkRejectReason('');
+                                            setBulkRejectOpen(true);
+                                        }}
+                                    >
+                                        <X className="size-4" />
+                                        Tolak Terpilih ({selectedIds.length})
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => setSelectedIds([])}
+                                    >
+                                        Batal
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[1120px] text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
+                                        <th className="w-10 px-3 py-2">
+                                            <Checkbox
+                                                checked={
+                                                    allPendingSelected
+                                                        ? true
+                                                        : selectedIds.length > 0
+                                                          ? 'indeterminate'
+                                                          : false
+                                                }
+                                                onCheckedChange={toggleSelectAll}
+                                                aria-label="Pilih semua yang pending"
+                                                disabled={pendingRequests.length === 0}
+                                            />
+                                        </th>
                                         <th className="px-3 py-2">Karyawan</th>
                                         <th className="px-3 py-2">Tanggal</th>
                                         <th className="px-3 py-2">
@@ -463,7 +585,7 @@ export default function ShiftChangeApprovalPage() {
                                     {requests.data.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={7}
+                                                colSpan={8}
                                                 className="px-3 py-6 text-center text-muted-foreground"
                                             >
                                                 Belum ada request perubahan
@@ -476,6 +598,17 @@ export default function ShiftChangeApprovalPage() {
                                             key={row.id}
                                             className="border-b align-top"
                                         >
+                                            <td className="w-10 px-3 py-3">
+                                                {row.status === 'pending' ? (
+                                                    <Checkbox
+                                                        checked={selectedIds.includes(row.id)}
+                                                        onCheckedChange={() => toggleSelectRow(row.id)}
+                                                        aria-label={`Pilih ${row.employee_label}`}
+                                                    />
+                                                ) : (
+                                                    <span className="inline-block size-4" />
+                                                )}
+                                            </td>
                                             <td className="px-3 py-3">
                                                 <div className="font-medium">
                                                     {row.employee_label}
@@ -560,6 +693,86 @@ export default function ShiftChangeApprovalPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            <ConfirmationDialog
+                open={approveConfirmRow !== null}
+                onOpenChange={(open) => !open && setApproveConfirmRow(null)}
+                title="Konfirmasi Persetujuan Perubahan Jadwal"
+                variant="success"
+                confirmLabel="Ya, Setujui"
+                description={
+                    approveConfirmRow ? (
+                        <span>
+                            Apakah Anda yakin ingin menyetujui pengajuan perubahan jadwal untuk{' '}
+                            <strong>{approveConfirmRow.employee_label}</strong> pada tanggal{' '}
+                            <strong>{formatLongDate(approveConfirmRow.requested_date)}</strong> ke shift{' '}
+                            <strong>{approveConfirmRow.requested_shift?.name}</strong>?
+                        </span>
+                    ) : undefined
+                }
+                onConfirm={submitApprove}
+            />
+
+            <ConfirmationDialog
+                open={bulkApproveOpen}
+                onOpenChange={setBulkApproveOpen}
+                title="Konfirmasi Bulk Approval Jadwal"
+                variant="success"
+                confirmLabel={`Ya, Setujui (${selectedIds.length})`}
+                loading={isBulkProcessing}
+                description={
+                    <span>
+                        Apakah Anda yakin ingin menyetujui secara massal{' '}
+                        <strong>{selectedIds.length} pengajuan perubahan jadwal</strong> yang dipilih?
+                    </span>
+                }
+                onConfirm={submitBulkApprove}
+            />
+
+            <Dialog
+                open={bulkRejectOpen}
+                onOpenChange={(open) => {
+                    if (!isBulkProcessing) setBulkRejectOpen(open);
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Tolak Masal Request Perubahan Jadwal</DialogTitle>
+                        <DialogDescription>
+                            Anda akan menolak <strong>{selectedIds.length}</strong> pengajuan yang dipilih. Silakan masukkan alasan penolakan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="bulk_shift_rejection_reason">Alasan Penolakan</Label>
+                            <Input
+                                id="bulk_shift_rejection_reason"
+                                placeholder="Contoh: Jadwal tidak memenuhi kualifikasi / Shift penuh"
+                                value={bulkRejectReason}
+                                onChange={(e) => setBulkRejectReason(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setBulkRejectOpen(false)}
+                                disabled={isBulkProcessing}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                disabled={!bulkRejectReason.trim() || isBulkProcessing}
+                                onClick={submitBulkReject}
+                            >
+                                {isBulkProcessing ? 'Memproses...' : `Tolak (${selectedIds.length})`}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <Dialog
                 open={detailRow !== null}

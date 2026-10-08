@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToAccount;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -172,6 +173,24 @@ class Employee extends Model
 
             $employee->created_by_user_id = $user->id;
         });
+
+        static::saving(function (Employee $employee): void {
+            if ($employee->first_name !== null) {
+                $employee->first_name = self::formatCapitalizedWords($employee->first_name);
+            }
+            if ($employee->last_name !== null) {
+                $employee->last_name = self::formatCapitalizedWords($employee->last_name);
+            }
+            if ($employee->birth_place !== null) {
+                $employee->birth_place = self::formatCapitalizedWords($employee->birth_place);
+            }
+            if ($employee->biological_mother_name !== null) {
+                $employee->biological_mother_name = self::formatCapitalizedWords($employee->biological_mother_name);
+            }
+            if ($employee->emergency_contact_name !== null) {
+                $employee->emergency_contact_name = self::formatCapitalizedWords($employee->emergency_contact_name);
+            }
+        });
     }
 
     private static function hasCreatedByUserIdColumn(): bool
@@ -319,11 +338,66 @@ class Employee extends Model
     }
 
     /**
+     * Capitalize words cleanly (Title Case), handling hyphens and extra whitespace.
+     */
+    public static function formatCapitalizedWords(?string $name): ?string
+    {
+        if ($name === null) {
+            return null;
+        }
+
+        $trimmed = trim((string) preg_replace('/\s+/', ' ', $name));
+        if ($trimmed === '') {
+            return '';
+        }
+
+        $words = explode(' ', $trimmed);
+        $capitalized = array_map(function (string $word): string {
+            if (str_contains($word, '-')) {
+                $subWords = explode('-', $word);
+
+                return implode('-', array_map(
+                    fn (string $sw) => mb_convert_case($sw, MB_CASE_TITLE, 'UTF-8'),
+                    $subWords
+                ));
+            }
+
+            return mb_convert_case($word, MB_CASE_TITLE, 'UTF-8');
+        }, $words);
+
+        return implode(' ', $capitalized);
+    }
+
+    /**
+     * Interact with the employee's first name.
+     */
+    protected function firstName(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => self::formatCapitalizedWords($value),
+            set: fn (?string $value) => self::formatCapitalizedWords($value),
+        );
+    }
+
+    /**
+     * Interact with the employee's last name.
+     */
+    protected function lastName(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => self::formatCapitalizedWords($value),
+            set: fn (?string $value) => self::formatCapitalizedWords($value),
+        );
+    }
+
+    /**
      * Build a full name from first and last name.
      */
     public function getFullNameAttribute(): string
     {
-        return trim(implode(' ', array_filter([$this->first_name, $this->last_name])));
+        $fullName = trim(implode(' ', array_filter([$this->first_name, $this->last_name])));
+
+        return self::formatCapitalizedWords($fullName) ?? '';
     }
 
     /**

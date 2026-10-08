@@ -1238,7 +1238,7 @@ class EmployeeController extends Controller
                 }
 
                 $employeeCode = $this->nullableString($row['employee_code'] ?? null);
-                $fullName = $this->nullableString($row['full_name'] ?? null) ?? '';
+                $fullName = Employee::formatCapitalizedWords($this->nullableString($row['full_name'] ?? null)) ?? '';
                 $rawSalary = $this->normalizeImportedAmount($row['base_salary'] ?? null);
                 $baseSalary = $rawSalary !== null ? (float) $rawSalary : 0.0;
                 $hireDate = $this->normalizeImportedDate($row['hire_date'] ?? null) ?? now()->toDateString();
@@ -1252,7 +1252,7 @@ class EmployeeController extends Controller
                     'email' => $this->nullableString($row['email'] ?? null),
                     'phone' => $this->cleanPhone($row['phone'] ?? null),
                     'gender' => $this->normalizeImportedGender($row['gender'] ?? null),
-                    'birth_place' => $this->nullableString($row['birth_place'] ?? null),
+                    'birth_place' => Employee::formatCapitalizedWords($this->nullableString($row['birth_place'] ?? null)),
                     'timezone' => $this->normalizeImportedTimezone($row['timezone'] ?? null),
                     'birth_date' => $this->normalizeImportedDate($row['birth_date'] ?? null),
                     'blood_type' => $this->nullableString($row['blood_type'] ?? null),

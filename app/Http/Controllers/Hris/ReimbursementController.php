@@ -213,6 +213,63 @@ class ReimbursementController extends Controller
         return back()->with('success', 'Reimbursement ditolak.');
     }
 
+    public function bulkApprove(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+        ]);
+
+        $requests = ReimbursementRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('id', $validated['ids'])
+            ->where('status', 'pending')
+            ->get();
+
+        $approvedCount = 0;
+        foreach ($requests as $item) {
+            $item->update([
+                'status' => 'approved',
+                'approved_by' => $request->user()->id,
+                'approved_at' => now(),
+                'rejection_reason' => null,
+            ]);
+            $approvedCount++;
+        }
+
+        return back()->with('success', "{$approvedCount} pengajuan reimbursement berhasil disetujui.");
+    }
+
+    public function bulkReject(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+            'rejection_reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        $requests = ReimbursementRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('id', $validated['ids'])
+            ->where('status', 'pending')
+            ->get();
+
+        $rejectedCount = 0;
+        foreach ($requests as $item) {
+            $item->update([
+                'status' => 'rejected',
+                'approved_by' => $request->user()->id,
+                'approved_at' => now(),
+                'rejection_reason' => $validated['rejection_reason'],
+            ]);
+            $rejectedCount++;
+        }
+
+        return back()->with('success', "{$rejectedCount} pengajuan reimbursement berhasil ditolak.");
+    }
+
     public function updateStatus(Request $request, ReimbursementRequest $reimbursement): RedirectResponse
     {
         $this->authorizeOwner($request, $reimbursement);

@@ -229,6 +229,76 @@ class OvertimeController extends Controller
         return back()->with('success', 'Pengajuan lembur ditolak.');
     }
 
+    public function bulkApprove(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+        ]);
+
+        $requests = OvertimeRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('id', $validated['ids'])
+            ->where('status', 'pending')
+            ->get();
+
+        $approvedCount = 0;
+        foreach ($requests as $item) {
+            try {
+                if (app(ApprovalWorkflowService::class)->approve($item, $request->user()) === ApprovalWorkflowService::ADVANCED) {
+                    $approvedCount++;
+                    continue;
+                }
+
+                $item->update([
+                    'status' => 'approved',
+                    'approved_at' => now(),
+                    'approved_by' => $request->user()->id,
+                    'notes' => null,
+                ]);
+
+                $item->loadMissing('employee');
+                app(\App\Services\WhatsAppNotificationService::class)->notifyOvertimeStatus($item);
+                $approvedCount++;
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return back()->with('success', "{$approvedCount} pengajuan lembur berhasil disetujui.");
+    }
+
+    public function bulkReject(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+            'notes' => ['required', 'string', 'max:255'],
+        ]);
+
+        $requests = OvertimeRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('id', $validated['ids'])
+            ->where('status', 'pending')
+            ->get();
+
+        $rejectedCount = 0;
+        foreach ($requests as $item) {
+            try {
+                app(ApprovalWorkflowService::class)->reject($item, $request->user(), $validated['notes']);
+                $item->loadMissing('employee');
+                app(\App\Services\WhatsAppNotificationService::class)->notifyOvertimeStatus($item);
+                $rejectedCount++;
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return back()->with('success', "{$rejectedCount} pengajuan lembur berhasil ditolak.");
+    }
+
     /**
      * Store overtime request.
      */

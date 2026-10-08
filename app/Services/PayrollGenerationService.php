@@ -81,9 +81,12 @@ class PayrollGenerationService
                     'generated_by' => $generatedBy,
                     'service_fee_total' => round(max($serviceFeeTotal, 0), 2),
                     ...($markAsDraft ? [
+                        'status' => 'draft',
                         'is_saved' => false,
                         'saved_at' => null,
                         'saved_by' => null,
+                        'released_at' => null,
+                        'released_by' => null,
                     ] : []),
                 ]
             );
@@ -130,9 +133,12 @@ class PayrollGenerationService
                 'generated_at' => now(),
                 'generated_by' => $generatedBy ?? $run->generated_by,
                 ...($markAsDraft ? [
+                    'status' => 'draft',
                     'is_saved' => false,
                     'saved_at' => null,
                     'saved_by' => null,
+                    'released_at' => null,
+                    'released_by' => null,
                 ] : []),
             ]);
 
@@ -153,9 +159,12 @@ class PayrollGenerationService
                     'period_end' => $ref->copy()->endOfMonth()->toDateString(),
                     'thr_reference_date' => $ref->toDateString(),
                     'generated_at' => now(),
+                    'status' => 'draft',
                     'is_saved' => false,
                     'saved_at' => null,
                     'saved_by' => null,
+                    'released_at' => null,
+                    'released_by' => null,
                 ]
             );
 

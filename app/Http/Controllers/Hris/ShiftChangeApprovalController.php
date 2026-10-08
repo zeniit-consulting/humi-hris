@@ -150,6 +150,93 @@ class ShiftChangeApprovalController extends Controller
         return back()->with('success', 'Request perubahan jadwal kerja ditolak.');
     }
 
+    public function bulkApprove(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+        ]);
+
+        $requests = ShiftChangeRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('id', $validated['ids'])
+            ->where('status', 'pending')
+            ->get();
+
+        $approvedCount = 0;
+        foreach ($requests as $item) {
+            try {
+                if (app(ApprovalWorkflowService::class)->approve($item, $request->user()) === ApprovalWorkflowService::ADVANCED) {
+                    $approvedCount++;
+                    continue;
+                }
+
+                DB::transaction(function () use ($request, $item, $ownerId): void {
+                    /** @var WorkShift $shift */
+                    $shift = WorkShift::query()
+                        ->where('user_id', $ownerId)
+                        ->findOrFail($item->requested_shift_id);
+
+                    EmployeeSchedule::query()->updateOrCreate(
+                        [
+                            'employee_id' => $item->employee_id,
+                            'work_date' => $item->requested_date->toDateString(),
+                        ],
+                        [
+                            'user_id' => $ownerId,
+                            'shift_code' => $shift->code,
+                            'start_time' => $shift->start_time,
+                            'end_time' => $shift->end_time,
+                            'is_day_off' => $shift->is_day_off,
+                            'notes' => 'Disetujui dari request perubahan jadwal #'.$item->id,
+                        ],
+                    );
+
+                    $item->update([
+                        'status' => 'approved',
+                        'approved_by' => $request->user()->id,
+                        'approved_at' => now(),
+                        'rejection_reason' => null,
+                    ]);
+                });
+                $approvedCount++;
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return back()->with('success', "{$approvedCount} pengajuan perubahan jadwal berhasil disetujui.");
+    }
+
+    public function bulkReject(Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+            'rejection_reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        $requests = ShiftChangeRequest::query()
+            ->where('user_id', $ownerId)
+            ->whereIn('id', $validated['ids'])
+            ->where('status', 'pending')
+            ->get();
+
+        $rejectedCount = 0;
+        foreach ($requests as $item) {
+            try {
+                app(ApprovalWorkflowService::class)->reject($item, $request->user(), $validated['rejection_reason']);
+                $rejectedCount++;
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return back()->with('success', "{$rejectedCount} pengajuan perubahan jadwal berhasil ditolak.");
+    }
+
     private function ensureOwnedRequest(ShiftChangeRequest $shiftChangeRequest, int $ownerId): void
     {
         abort_unless((int) $shiftChangeRequest->user_id === $ownerId, 404);
