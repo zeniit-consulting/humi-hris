@@ -167,6 +167,7 @@ export default function ReimbursementsPage() {
     const { requests, period, status, category, categories = categoryOptions, sort, stats } = usePage<PageProps>().props;
     const [rejectRow, setRejectRow] = useState<RejectTarget>(null);
     const [approveConfirmRow, setApproveConfirmRow] = useState<Row | null>(null);
+    const [isApproving, setIsApproving] = useState(false);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [bulkApproveOpen, setBulkApproveOpen] = useState(false);
     const [bulkRejectOpen, setBulkRejectOpen] = useState(false);
@@ -175,9 +176,13 @@ export default function ReimbursementsPage() {
     const rejectForm = useForm({ rejection_reason: '' });
 
     const pendingRequests = requests.data.filter((r) => r.status === 'pending');
+    const pendingRows = pendingRequests;
+    const selectedPendingCount = selectedIds.length;
     const allPendingSelected =
         pendingRequests.length > 0 &&
         pendingRequests.every((r) => selectedIds.includes(r.id));
+    const somePendingSelected =
+        selectedIds.length > 0 && !allPendingSelected;
 
     const toggleSelectAll = () => {
         if (allPendingSelected) {
@@ -199,13 +204,17 @@ export default function ReimbursementsPage() {
 
     const submitApprove = () => {
         if (!approveConfirmRow) return;
+        setIsApproving(true);
         router.post(
             `${pageUrl}/${approveConfirmRow.id}/approve`,
             undefined,
             {
                 preserveScroll: true,
                 preserveState: true,
-                onFinish: () => setApproveConfirmRow(null),
+                onFinish: () => {
+                    setIsApproving(false);
+                    setApproveConfirmRow(null);
+                },
             },
         );
     };
@@ -704,7 +713,7 @@ export default function ReimbursementsPage() {
                 confirmLabel="Ya, Setujui"
                 variant="success"
                 loading={isApproving}
-                onConfirm={submitApproveSingle}
+                onConfirm={submitApprove}
             />
 
             {/* Konfirmasi Bulk Approve */}
@@ -715,7 +724,7 @@ export default function ReimbursementsPage() {
                 description={`Apakah Anda yakin ingin menyetujui ${selectedPendingCount} pengajuan reimbursement yang dipilih?`}
                 confirmLabel="Ya, Setujui Semua"
                 variant="success"
-                loading={bulkProcessing}
+                loading={isBulkProcessing}
                 onConfirm={submitBulkApprove}
             />
 
@@ -744,13 +753,13 @@ export default function ReimbursementsPage() {
                             <Button
                                 variant="outline"
                                 onClick={() => setBulkRejectOpen(false)}
-                                disabled={bulkProcessing}
+                                disabled={isBulkProcessing}
                             >
                                 Batal
                             </Button>
                             <Button
                                 variant="destructive"
-                                disabled={bulkProcessing || !bulkRejectReason.trim()}
+                                disabled={isBulkProcessing || !bulkRejectReason.trim()}
                                 onClick={submitBulkReject}
                             >
                                 Tolak ({selectedPendingCount})

@@ -6,6 +6,7 @@ import reprimands from './reprimands'
 import organizationChart from './organization-chart'
 import performances from './performances'
 import recruitment from './recruitment'
+import careerTransitions from './career-transitions'
 import divisions from './divisions'
 import positions from './positions'
 import attendances from './attendances'
@@ -35,6 +36,7 @@ const hris = {
     organizationChart: Object.assign(organizationChart, organizationChart),
     performances: Object.assign(performances, performances),
     recruitment: Object.assign(recruitment, recruitment),
+    careerTransitions: Object.assign(careerTransitions, careerTransitions),
     divisions: Object.assign(divisions, divisions),
     positions: Object.assign(positions, positions),
     attendances: Object.assign(attendances, attendances),

@@ -6,8 +6,41 @@ import {
     Users,
     WalletCards,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
+
+export function useChartWidth(defaultWidth = 360) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [width, setWidth] = useState<number>(defaultWidth);
+
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+
+        const updateWidth = () => {
+            const clientWidth = el.clientWidth;
+            if (clientWidth > 0) {
+                setWidth(clientWidth);
+            }
+        };
+
+        updateWidth();
+
+        const ro = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const w = Math.round(entry.contentRect.width);
+                if (w > 0) {
+                    setWidth(w);
+                }
+            }
+        });
+
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    return { containerRef, width };
+}
 
 export type PayrollBurnratePoint = {
     period: string;
@@ -185,11 +218,12 @@ export function PayrollBurnrateCard({
 }: {
     data: PayrollBurnrateSummary;
 }) {
+    const { containerRef, width } = useChartWidth(360);
     const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
     const trend = data?.trend ?? [];
 
     const maxVal = Math.max(
-        ...trend.map((p) => Math.max(p.net_salary, p.base_salary + p.allowances)),
+        ...trend.map((p) => p.net_salary),
         100_000,
     );
 
@@ -197,11 +231,11 @@ export function PayrollBurnrateCard({
         hoveredIdx !== null ? trend[hoveredIdx] : trend[trend.length - 1];
 
     const totalPoints = trend.length;
-    const padX = 18;
-    const width = 240;
-    const topY = 10;
-    const baselineY = 64;
+    const padX = 20;
+    const topY = 14;
+    const baselineY = 88;
     const chartHeight = baselineY - topY;
+    const svgHeight = 104;
 
     const getX = (idx: number) => {
         if (totalPoints <= 1) return width / 2;
@@ -214,10 +248,6 @@ export function PayrollBurnrateCard({
     };
 
     const netPoints = trend.map((p, i) => ({ x: getX(i), y: getY(p.net_salary) }));
-    const grossPoints = trend.map((p, i) => ({
-        x: getX(i),
-        y: getY(p.base_salary + p.allowances),
-    }));
 
     const activeIndex = hoveredIdx !== null ? hoveredIdx : trend.length - 1;
     const activeNet = netPoints[activeIndex];
@@ -226,16 +256,16 @@ export function PayrollBurnrateCard({
         <Card className="flex h-full flex-col justify-between overflow-hidden p-0 shadow-xs">
             {/* Header */}
             <div className="flex items-center justify-between gap-1.5 p-3 pb-1">
-                <div className="flex items-center gap-1.5 min-w-0">
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-                        <WalletCards className="size-3.5" />
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+                        <WalletCards className="size-4 shrink-0 aspect-square" />
                     </div>
                     <div className="min-w-0">
                         <div className="truncate text-xs font-semibold text-foreground">
                             Payroll Burnrate
                         </div>
                         <div className="text-[10px] text-muted-foreground">
-                            Trend belanja gaji 6 bln
+                            Trend THP 6 bln
                         </div>
                     </div>
                 </div>
@@ -247,12 +277,12 @@ export function PayrollBurnrateCard({
                     <div className="flex items-center justify-end gap-0.5 text-[10px]">
                         {data.growth_rate >= 0 ? (
                             <span className="flex items-center font-medium text-emerald-600 dark:text-emerald-400">
-                                <ArrowUpRight className="size-3" />
+                                <ArrowUpRight className="size-3.5 shrink-0 aspect-square" />
                                 +{data.growth_rate}%
                             </span>
                         ) : (
                             <span className="flex items-center font-medium text-rose-600 dark:text-rose-400">
-                                <ArrowDownRight className="size-3" />
+                                <ArrowDownRight className="size-3.5 shrink-0 aspect-square" />
                                 {data.growth_rate}%
                             </span>
                         )}
@@ -262,23 +292,22 @@ export function PayrollBurnrateCard({
 
             {/* Wavy Line Chart Container */}
             <div className="px-3 pt-1">
-                <div className="relative overflow-hidden rounded border bg-muted/10 pt-1.5 pb-1 px-0">
+                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-1.5 pb-1 px-0">
                     <svg
-                        viewBox={`0 0 ${width} 80`}
-                        preserveAspectRatio="none"
-                        className="h-[92px] w-full"
+                        viewBox={`0 0 ${width} ${svgHeight}`}
+                        className="h-[104px] w-full"
                         role="img"
                         aria-label="Payroll Burnrate Wavy Line Chart"
                     >
                         <defs>
                             <linearGradient id="payrollWaveGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#10b981" stopOpacity="0.32" />
+                                <stop offset="0%" stopColor="#10b981" stopOpacity="0.30" />
                                 <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
                             </linearGradient>
                         </defs>
 
                         {/* Horizontal Gridlines */}
-                        {[16, 32, 48].map((y) => (
+                        {[26, 50, 74].map((y) => (
                             <line
                                 key={y}
                                 x1="0"
@@ -301,28 +330,13 @@ export function PayrollBurnrateCard({
                             />
                         )}
 
-                        {/* Gross / Base+Allowances Wavy Line (Dashed sky blue) */}
-                        {grossPoints.length > 1 && (
-                            <path
-                                d={getWavyPath(grossPoints)}
-                                fill="none"
-                                stroke="#0ea5e9"
-                                strokeWidth="1.6"
-                                strokeDasharray="3 3"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                opacity="0.85"
-                                vectorEffect="non-scaling-stroke"
-                            />
-                        )}
-
                         {/* Primary Net Salary Wavy Line (Solid emerald) */}
                         {netPoints.length > 1 && (
                             <path
                                 d={getWavyPath(netPoints)}
                                 fill="none"
                                 stroke="#10b981"
-                                strokeWidth="2.4"
+                                strokeWidth="2.5"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 vectorEffect="non-scaling-stroke"
@@ -346,7 +360,7 @@ export function PayrollBurnrateCard({
                             <line
                                 x1={activeNet.x}
                                 x2={activeNet.x}
-                                y1="6"
+                                y1="8"
                                 y2={baselineY}
                                 stroke="currentColor"
                                 className="text-muted-foreground/35"
@@ -390,9 +404,9 @@ export function PayrollBurnrateCard({
                                 <rect
                                     key={`hit-${pt.period}`}
                                     x={i * colWidth}
-                                    y="2"
+                                    y="0"
                                     width={colWidth}
-                                    height="64"
+                                    height={baselineY}
                                     fill="transparent"
                                     className="cursor-pointer"
                                     onMouseEnter={() => setHoveredIdx(i)}
@@ -403,13 +417,13 @@ export function PayrollBurnrateCard({
                     </svg>
 
                     {/* Month labels */}
-                    <div className="flex justify-between px-2 pt-0.5 text-[10px] text-muted-foreground">
+                    <div className="flex justify-between px-2.5 pt-0.5 text-[10px] text-muted-foreground">
                         {trend.map((pt, i) => (
                             <span
                                 key={pt.period}
                                 className={`transition-colors ${
                                     hoveredIdx === i ? 'font-bold text-foreground' : ''
-                                }`}
+                                }}`}
                             >
                                 {pt.label}
                             </span>
@@ -423,13 +437,13 @@ export function PayrollBurnrateCard({
                         {activePoint?.label}
                     </span>
                     <span className="truncate">
-                        Net:{' '}
+                        THP:{' '}
                         <strong className="text-emerald-700 dark:text-emerald-400">
                             {formatRupiahCompact(activePoint?.net_salary ?? 0)}
                         </strong>
                     </span>
                     <span className="truncate">
-                        Pokok: {formatRupiahCompact(activePoint?.base_salary ?? 0)}
+                        {activePoint?.employees_count ?? 0} karyawan
                     </span>
                 </div>
             </div>
@@ -437,13 +451,9 @@ export function PayrollBurnrateCard({
             {/* Footer */}
             <div className="mt-2 flex items-center justify-between border-t px-3 py-1.5 text-[10px] text-muted-foreground">
                 <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1">
-                        <span className="size-2 rounded-full bg-emerald-500" />
-                        Take Home
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                        <span className="size-2 rounded-full border border-sky-500 bg-sky-100" />
-                        Total Gaji
+                    <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
+                        <span className="size-2 shrink-0 aspect-square rounded-full bg-emerald-500" />
+                        Total THP
                     </span>
                 </div>
                 <span>Avg: {formatRupiahCompact(data.avg_per_employee)}</span>
@@ -460,11 +470,12 @@ export function InsuranceBurnrateCard({
 }: {
     data: InsuranceBurnrateSummary;
 }) {
+    const { containerRef, width } = useChartWidth(360);
     const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
     const trend = data?.trend ?? [];
 
     const maxVal = Math.max(
-        ...trend.map((p) => p.total_insurance),
+        ...trend.flatMap((p) => [p.bpjs_kesehatan, p.bpjs_ketenagakerjaan]),
         10_000,
     );
 
@@ -472,11 +483,11 @@ export function InsuranceBurnrateCard({
         hoveredIdx !== null ? trend[hoveredIdx] : trend[trend.length - 1];
 
     const totalPoints = trend.length;
-    const padX = 18;
-    const width = 240;
-    const topY = 10;
-    const baselineY = 64;
+    const padX = 20;
+    const topY = 14;
+    const baselineY = 88;
     const chartHeight = baselineY - topY;
+    const svgHeight = 104;
 
     const getX = (idx: number) => {
         if (totalPoints <= 1) return width / 2;
@@ -488,10 +499,6 @@ export function InsuranceBurnrateCard({
         return baselineY - (clamped / maxVal) * chartHeight;
     };
 
-    const totalPointsList = trend.map((p, i) => ({
-        x: getX(i),
-        y: getY(p.total_insurance),
-    }));
     const tkPoints = trend.map((p, i) => ({
         x: getX(i),
         y: getY(p.bpjs_ketenagakerjaan),
@@ -502,15 +509,15 @@ export function InsuranceBurnrateCard({
     }));
 
     const activeIndex = hoveredIdx !== null ? hoveredIdx : trend.length - 1;
-    const activeTotal = totalPointsList[activeIndex];
+    const activeGuideX = kesPoints[activeIndex]?.x ?? 0;
 
     return (
         <Card className="flex h-full flex-col justify-between overflow-hidden p-0 shadow-xs">
             {/* Header */}
             <div className="flex items-center justify-between gap-1.5 p-3 pb-1">
-                <div className="flex items-center gap-1.5 min-w-0">
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-                        <ShieldCheck className="size-3.5" />
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+                        <ShieldCheck className="size-4 shrink-0 aspect-square" />
                     </div>
                     <div className="min-w-0">
                         <div className="truncate text-xs font-semibold text-foreground">
@@ -534,23 +541,15 @@ export function InsuranceBurnrateCard({
 
             {/* Wavy Line Chart Container */}
             <div className="px-3 pt-1">
-                <div className="relative overflow-hidden rounded border bg-muted/10 pt-1.5 pb-1 px-0">
+                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-1.5 pb-1 px-0">
                     <svg
-                        viewBox={`0 0 ${width} 80`}
-                        preserveAspectRatio="none"
-                        className="h-[92px] w-full"
+                        viewBox={`0 0 ${width} ${svgHeight}`}
+                        className="h-[104px] w-full"
                         role="img"
                         aria-label="Insurance Burnrate Wavy Line Chart"
                     >
-                        <defs>
-                            <linearGradient id="insuranceWaveGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.28" />
-                                <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
-                            </linearGradient>
-                        </defs>
-
                         {/* Gridlines */}
-                        {[16, 32, 48].map((y) => (
+                        {[26, 50, 74].map((y) => (
                             <line
                                 key={y}
                                 x1="0"
@@ -565,45 +564,25 @@ export function InsuranceBurnrateCard({
                             />
                         ))}
 
-                        {/* Total Insurance Wave Area */}
-                        {totalPointsList.length > 1 && (
-                            <path
-                                d={getWavyAreaPath(totalPointsList, baselineY)}
-                                fill="url(#insuranceWaveGrad)"
-                            />
-                        )}
-
-                        {/* BPJS TK Wave Line */}
-                        {tkPoints.length > 1 && (
-                            <path
-                                d={getWavyPath(tkPoints)}
-                                fill="none"
-                                stroke="#818cf8"
-                                strokeWidth="1.5"
-                                strokeDasharray="3 2"
-                                opacity="0.8"
-                                vectorEffect="non-scaling-stroke"
-                            />
-                        )}
-
-                        {/* BPJS Kes Wave Line */}
+                        {/* BPJS Kesehatan: Solid Green Line */}
                         {kesPoints.length > 1 && (
                             <path
                                 d={getWavyPath(kesPoints)}
                                 fill="none"
-                                stroke="#0d9488"
-                                strokeWidth="1.5"
-                                opacity="0.85"
+                                stroke="#16a34a"
+                                strokeWidth="2.4"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                                 vectorEffect="non-scaling-stroke"
                             />
                         )}
 
-                        {/* Main Total Insurance Wave Line */}
-                        {totalPointsList.length > 1 && (
+                        {/* BPJS Tenaga Kerja: Solid Blue Line */}
+                        {tkPoints.length > 1 && (
                             <path
-                                d={getWavyPath(totalPointsList)}
+                                d={getWavyPath(tkPoints)}
                                 fill="none"
-                                stroke="#6366f1"
+                                stroke="#2563eb"
                                 strokeWidth="2.4"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -624,11 +603,11 @@ export function InsuranceBurnrateCard({
                         />
 
                         {/* Active hover guideline */}
-                        {activeTotal && (
+                        {activeGuideX > 0 && (
                             <line
-                                x1={activeTotal.x}
-                                x2={activeTotal.x}
-                                y1="6"
+                                x1={activeGuideX}
+                                x2={activeGuideX}
+                                y1="8"
                                 y2={baselineY}
                                 stroke="currentColor"
                                 className="text-muted-foreground/35"
@@ -638,17 +617,17 @@ export function InsuranceBurnrateCard({
                             />
                         )}
 
-                        {/* Data Points */}
-                        {totalPointsList.map((pt, i) => {
+                        {/* BPJS Kesehatan Data Points (Green) */}
+                        {kesPoints.map((pt, i) => {
                             const isHovered = hoveredIdx === i;
                             return (
-                                <g key={trend[i].period}>
+                                <g key={`kes-${trend[i].period}`}>
                                     <circle
                                         cx={pt.x}
                                         cy={pt.y}
                                         r={isHovered ? 4.5 : 2.5}
                                         fill="#ffffff"
-                                        stroke="#6366f1"
+                                        stroke="#16a34a"
                                         strokeWidth={isHovered ? 2.5 : 1.8}
                                         className="transition-all"
                                     />
@@ -657,7 +636,34 @@ export function InsuranceBurnrateCard({
                                             cx={pt.x}
                                             cy={pt.y}
                                             r={7}
-                                            fill="#6366f1"
+                                            fill="#16a34a"
+                                            opacity="0.2"
+                                        />
+                                    )}
+                                </g>
+                            );
+                        })}
+
+                        {/* BPJS Tenaga Kerja Data Points (Blue) */}
+                        {tkPoints.map((pt, i) => {
+                            const isHovered = hoveredIdx === i;
+                            return (
+                                <g key={`tk-${trend[i].period}`}>
+                                    <circle
+                                        cx={pt.x}
+                                        cy={pt.y}
+                                        r={isHovered ? 4.5 : 2.5}
+                                        fill="#ffffff"
+                                        stroke="#2563eb"
+                                        strokeWidth={isHovered ? 2.5 : 1.8}
+                                        className="transition-all"
+                                    />
+                                    {isHovered && (
+                                        <circle
+                                            cx={pt.x}
+                                            cy={pt.y}
+                                            r={7}
+                                            fill="#2563eb"
                                             opacity="0.2"
                                         />
                                     )}
@@ -672,9 +678,9 @@ export function InsuranceBurnrateCard({
                                 <rect
                                     key={`hit-${pt.period}`}
                                     x={i * colWidth}
-                                    y="2"
+                                    y="0"
                                     width={colWidth}
-                                    height="64"
+                                    height={baselineY}
                                     fill="transparent"
                                     className="cursor-pointer"
                                     onMouseEnter={() => setHoveredIdx(i)}
@@ -684,13 +690,13 @@ export function InsuranceBurnrateCard({
                         })}
                     </svg>
 
-                    <div className="flex justify-between px-2 pt-0.5 text-[10px] text-muted-foreground">
+                    <div className="flex justify-between px-2.5 pt-0.5 text-[10px] text-muted-foreground">
                         {trend.map((pt, i) => (
                             <span
                                 key={pt.period}
                                 className={`transition-colors ${
                                     hoveredIdx === i ? 'font-bold text-foreground' : ''
-                                }`}
+                                }}`}
                             >
                                 {pt.label}
                             </span>
@@ -698,33 +704,29 @@ export function InsuranceBurnrateCard({
                     </div>
                 </div>
 
-                <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
+                <div className="mt-1.5 flex items-center justify-between text-[10px]">
                     <span className="font-semibold text-foreground truncate">
                         {activePoint?.label}
                     </span>
-                    <span className="truncate">
+                    <span className="truncate font-medium text-emerald-600 dark:text-emerald-400">
                         Kes: {formatRupiahCompact(activePoint?.bpjs_kesehatan ?? 0)}
                     </span>
-                    <span className="truncate">
+                    <span className="truncate font-medium text-blue-600 dark:text-blue-400">
                         TK: {formatRupiahCompact(activePoint?.bpjs_ketenagakerjaan ?? 0)}
                     </span>
                 </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer with Green (Kes) and Blue (TK) legends */}
             <div className="mt-2 flex items-center justify-between border-t px-3 py-1.5 text-[10px] text-muted-foreground">
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1">
-                        <span className="size-2 rounded-full bg-indigo-500" />
-                        Total
+                <div className="flex items-center gap-2.5">
+                    <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
+                        <span className="size-2 shrink-0 aspect-square rounded-full bg-emerald-600" />
+                        BPJS Kesehatan
                     </span>
-                    <span className="inline-flex items-center gap-1">
-                        <span className="size-2 rounded-full bg-teal-600" />
-                        Kes
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                        <span className="size-2 rounded-full border border-indigo-400 bg-indigo-100" />
-                        TK
+                    <span className="inline-flex items-center gap-1.5 font-medium text-blue-700 dark:text-blue-400">
+                        <span className="size-2 shrink-0 aspect-square rounded-full bg-blue-600" />
+                        BPJS Tenaga Kerja
                     </span>
                 </div>
                 <span>Total: {formatRupiahCompact(data.current_insurance_burn)}</span>
@@ -741,6 +743,7 @@ export function EmployeeMobilityCard({
 }: {
     data: EmployeeMobilitySummary;
 }) {
+    const { containerRef, width } = useChartWidth(700);
     const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
     const trend = data?.trend ?? [];
 
@@ -753,11 +756,11 @@ export function EmployeeMobilityCard({
         hoveredIdx !== null ? trend[hoveredIdx] : trend[trend.length - 1];
 
     const totalPoints = trend.length;
-    const padX = 22;
-    const width = 360;
-    const topY = 10;
-    const baselineY = 64;
+    const padX = 24;
+    const topY = 14;
+    const baselineY = 88;
     const chartHeight = baselineY - topY;
+    const svgHeight = 104;
 
     const getX = (idx: number) => {
         if (totalPoints <= 1) return width / 2;
@@ -780,9 +783,9 @@ export function EmployeeMobilityCard({
         <Card className="flex h-full flex-col justify-between overflow-hidden p-0 shadow-xs">
             {/* Header */}
             <div className="flex items-center justify-between gap-1.5 p-3 pb-1">
-                <div className="flex items-center gap-1.5 min-w-0">
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400">
-                        <Users className="size-3.5" />
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400">
+                        <Users className="size-4 shrink-0 aspect-square" />
                     </div>
                     <div className="min-w-0">
                         <div className="truncate text-xs font-semibold text-foreground">
@@ -806,11 +809,10 @@ export function EmployeeMobilityCard({
 
             {/* Wavy Line Chart Container */}
             <div className="px-3 pt-1">
-                <div className="relative overflow-hidden rounded border bg-muted/10 pt-1.5 pb-1 px-0">
+                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-1.5 pb-1 px-0">
                     <svg
-                        viewBox={`0 0 ${width} 80`}
-                        preserveAspectRatio="none"
-                        className="h-[92px] w-full"
+                        viewBox={`0 0 ${width} ${svgHeight}`}
+                        className="h-[104px] w-full"
                         role="img"
                         aria-label="Employee Mobility Wavy Line Chart"
                     >
@@ -826,7 +828,7 @@ export function EmployeeMobilityCard({
                         </defs>
 
                         {/* Gridlines */}
-                        {[16, 32, 48].map((y) => (
+                        {[26, 50, 74].map((y) => (
                             <line
                                 key={y}
                                 x1="0"
@@ -863,7 +865,7 @@ export function EmployeeMobilityCard({
                                 d={getWavyPath(mutPoints)}
                                 fill="none"
                                 stroke="#8b5cf6"
-                                strokeWidth="1.5"
+                                strokeWidth="1.6"
                                 strokeDasharray="3 2"
                                 opacity="0.85"
                                 vectorEffect="non-scaling-stroke"
@@ -876,7 +878,7 @@ export function EmployeeMobilityCard({
                                 d={getWavyPath(exitPoints)}
                                 fill="none"
                                 stroke="#f43f5e"
-                                strokeWidth="2.0"
+                                strokeWidth="2.2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 vectorEffect="non-scaling-stroke"
@@ -889,7 +891,7 @@ export function EmployeeMobilityCard({
                                 d={getWavyPath(hirePoints)}
                                 fill="none"
                                 stroke="#10b981"
-                                strokeWidth="2.2"
+                                strokeWidth="2.4"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 vectorEffect="non-scaling-stroke"
@@ -913,7 +915,7 @@ export function EmployeeMobilityCard({
                             <line
                                 x1={activeHire.x}
                                 x2={activeHire.x}
-                                y1="6"
+                                y1="8"
                                 y2={baselineY}
                                 stroke="currentColor"
                                 className="text-muted-foreground/35"
@@ -931,19 +933,30 @@ export function EmployeeMobilityCard({
                                     <circle
                                         cx={pt.x}
                                         cy={pt.y}
-                                        r={isHovered ? 4 : 2.2}
+                                        r={isHovered ? 4.5 : 2.5}
                                         fill="#ffffff"
                                         stroke="#10b981"
-                                        strokeWidth={isHovered ? 2 : 1.5}
+                                        strokeWidth={isHovered ? 2.5 : 1.8}
+                                        className="transition-all"
                                     />
                                     <circle
                                         cx={exitPoints[i].x}
                                         cy={exitPoints[i].y}
-                                        r={isHovered ? 4 : 2.2}
+                                        r={isHovered ? 4.5 : 2.5}
                                         fill="#ffffff"
                                         stroke="#f43f5e"
-                                        strokeWidth={isHovered ? 2 : 1.5}
+                                        strokeWidth={isHovered ? 2.5 : 1.8}
+                                        className="transition-all"
                                     />
+                                    {isHovered && (
+                                        <circle
+                                            cx={pt.x}
+                                            cy={pt.y}
+                                            r={7}
+                                            fill="#10b981"
+                                            opacity="0.2"
+                                        />
+                                    )}
                                 </g>
                             );
                         })}
@@ -955,9 +968,9 @@ export function EmployeeMobilityCard({
                                 <rect
                                     key={`hit-${pt.period}`}
                                     x={i * colWidth}
-                                    y="2"
+                                    y="0"
                                     width={colWidth}
-                                    height="64"
+                                    height={baselineY}
                                     fill="transparent"
                                     className="cursor-pointer"
                                     onMouseEnter={() => setHoveredIdx(i)}
@@ -967,13 +980,13 @@ export function EmployeeMobilityCard({
                         })}
                     </svg>
 
-                    <div className="flex justify-between px-2 pt-0.5 text-[10px] text-muted-foreground">
+                    <div className="flex justify-between px-2.5 pt-0.5 text-[10px] text-muted-foreground">
                         {trend.map((pt, i) => (
                             <span
                                 key={pt.period}
                                 className={`transition-colors ${
                                     hoveredIdx === i ? 'font-bold text-foreground' : ''
-                                }`}
+                                }}`}
                             >
                                 {pt.label}
                             </span>
@@ -985,13 +998,13 @@ export function EmployeeMobilityCard({
                     <span className="font-semibold text-foreground truncate">
                         {activePoint?.label}
                     </span>
-                    <span className="text-emerald-700 dark:text-emerald-400">
+                    <span className="text-emerald-700 dark:text-emerald-400 font-medium">
                         +{activePoint?.hires ?? 0} masuk
                     </span>
-                    <span className="text-rose-700 dark:text-rose-400">
+                    <span className="text-rose-700 dark:text-rose-400 font-medium">
                         -{activePoint?.exits ?? 0} keluar
                     </span>
-                    <span className="text-violet-700 dark:text-violet-400">
+                    <span className="text-violet-700 dark:text-violet-400 font-medium">
                         {activePoint?.mutations ?? 0} mutasi
                     </span>
                 </div>
@@ -999,17 +1012,17 @@ export function EmployeeMobilityCard({
 
             {/* Footer */}
             <div className="mt-2 flex items-center justify-between border-t px-3 py-1.5 text-[10px] text-muted-foreground">
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1">
-                        <span className="size-2 rounded-full bg-emerald-500" />
+                <div className="flex items-center gap-2.5">
+                    <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
+                        <span className="size-2 shrink-0 aspect-square rounded-full bg-emerald-500" />
                         Masuk
                     </span>
-                    <span className="inline-flex items-center gap-1">
-                        <span className="size-2 rounded-full bg-rose-500" />
+                    <span className="inline-flex items-center gap-1.5 font-medium text-rose-700 dark:text-rose-400">
+                        <span className="size-2 shrink-0 aspect-square rounded-full bg-rose-500" />
                         Keluar
                     </span>
-                    <span className="inline-flex items-center gap-1">
-                        <span className="size-2 rounded-full bg-violet-500" />
+                    <span className="inline-flex items-center gap-1.5 font-medium text-purple-700 dark:text-purple-400">
+                        <span className="size-2 shrink-0 aspect-square rounded-full bg-purple-500" />
                         Mutasi
                     </span>
                 </div>
@@ -1021,77 +1034,69 @@ export function EmployeeMobilityCard({
     );
 }
 
+const REIMBURSE_BAR_CATEGORIES = [
+    { key: 'meals', label: 'Meals', color: '#f59e0b' },
+    { key: 'travels', label: 'Travels', color: '#3b82f6' },
+    { key: 'supplies', label: 'Supplies', color: '#10b981' },
+    { key: 'others', label: 'Others', color: '#8b5cf6' },
+] as const;
+
 /**
- * 4. Wavy Line Chart: Reimburse Rate Card
+ * 4. Bar Chart: Reimburse by Kategori Card (Meals, Travels, Supplies, Others)
  */
 export function ReimburseRateCard({
     data,
 }: {
     data: ReimburseRateSummary;
 }) {
+    const { containerRef, width } = useChartWidth(360);
     const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
     const trend = data?.trend ?? [];
 
-    const maxAmount = Math.max(
-        ...trend.map((p) => Math.max(p.approved_amount, p.submitted_amount)),
-        100_000,
+    const maxCategoryAmount = Math.max(
+        ...trend.flatMap((p) => [
+            p.categories?.meals ?? 0,
+            p.categories?.travels ?? 0,
+            p.categories?.supplies ?? 0,
+            p.categories?.others ?? 0,
+        ]),
+        50_000,
     );
 
     const activePoint =
         hoveredIdx !== null ? trend[hoveredIdx] : trend[trend.length - 1];
 
     const totalPoints = trend.length;
-    const padX = 18;
-    const width = 240;
-    const topY = 10;
-    const baselineY = 64;
+    const padX = 12;
+    const topY = 12;
+    const baselineY = 88;
     const chartHeight = baselineY - topY;
+    const svgHeight = 104;
 
-    const getX = (idx: number) => {
-        if (totalPoints <= 1) return width / 2;
-        return padX + (idx / (totalPoints - 1)) * (width - padX * 2);
-    };
-
-    const getYAmount = (val: number) => {
-        const clamped = Math.max(0, val);
-        return baselineY - (clamped / maxAmount) * chartHeight;
-    };
-
-    const getYRate = (rate: number) => {
-        const clamped = Math.min(100, Math.max(0, rate));
-        return baselineY - (clamped / 100) * chartHeight;
-    };
-
-    const approvedPoints = trend.map((p, i) => ({
-        x: getX(i),
-        y: getYAmount(p.approved_amount),
-    }));
-    const submittedPoints = trend.map((p, i) => ({
-        x: getX(i),
-        y: getYAmount(p.submitted_amount),
-    }));
-    const ratePoints = trend.map((p, i) => ({
-        x: getX(i),
-        y: getYRate(p.approval_rate),
-    }));
-
-    const activeIndex = hoveredIdx !== null ? hoveredIdx : trend.length - 1;
-    const activeApproved = approvedPoints[activeIndex];
+    const slotWidth = (width - padX * 2) / Math.max(totalPoints, 1);
+    const barGap = 2;
+    const maxClusterWidth = 44;
+    const clusterWidth = Math.min(
+        Math.max(16, slotWidth - 8),
+        maxClusterWidth
+    );
+    const barWidth = Math.max(2.5, (clusterWidth - barGap * 3) / 4);
+    const actualClusterWidth = barWidth * 4 + barGap * 3;
 
     return (
         <Card className="flex h-full flex-col justify-between overflow-hidden p-0 shadow-xs">
             {/* Header */}
             <div className="flex items-center justify-between gap-1.5 p-3 pb-1">
-                <div className="flex items-center gap-1.5 min-w-0">
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-600 dark:bg-teal-950/40 dark:text-teal-400">
-                        <Receipt className="size-3.5" />
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600 dark:bg-teal-950/40 dark:text-teal-400">
+                        <Receipt className="size-4 shrink-0 aspect-square" />
                     </div>
                     <div className="min-w-0">
                         <div className="truncate text-xs font-semibold text-foreground">
-                            Reimburse Rate
+                            Reimbursement
                         </div>
-                        <div className="text-[10px] text-muted-foreground">
-                            Klaim & tingkat persetujuan
+                        <div className="text-[10px] text-muted-foreground truncate">
+                            Breakdown 4 kategori klaim
                         </div>
                     </div>
                 </div>
@@ -1100,31 +1105,26 @@ export function ReimburseRateCard({
                     <div className="text-sm font-bold text-foreground">
                         {formatRupiahCompact(data.current_approved_amount)}
                     </div>
-                    <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                        {data.current_approval_rate}% ACC
+                    <div className="text-[10px] font-medium text-teal-600 dark:text-teal-400">
+                        {data.current_total_count} klaim
                     </div>
                 </div>
             </div>
 
-            {/* Wavy Line Chart Container */}
+            {/* 4-Bar Chart Container */}
             <div className="px-3 pt-1">
-                <div className="relative overflow-hidden rounded border bg-muted/10 pt-1.5 pb-1 px-0">
+                <div
+                    ref={containerRef}
+                    className="relative overflow-hidden rounded-md border bg-muted/10 pt-1.5 pb-1 px-0"
+                >
                     <svg
-                        viewBox={`0 0 ${width} 80`}
-                        preserveAspectRatio="none"
-                        className="h-[92px] w-full"
+                        viewBox={`0 0 ${width} ${svgHeight}`}
+                        className="h-[104px] w-full"
                         role="img"
-                        aria-label="Reimburse Rate Wavy Line Chart"
+                        aria-label="Reimburse 4 Category Bar Chart"
                     >
-                        <defs>
-                            <linearGradient id="reimburseWaveGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#0f766e" stopOpacity="0.28" />
-                                <stop offset="100%" stopColor="#0f766e" stopOpacity="0.0" />
-                            </linearGradient>
-                        </defs>
-
                         {/* Gridlines */}
-                        {[16, 32, 48].map((y) => (
+                        {[26, 50, 74].map((y) => (
                             <line
                                 key={y}
                                 x1="0"
@@ -1139,52 +1139,6 @@ export function ReimburseRateCard({
                             />
                         ))}
 
-                        {/* Approved Amount Wave Area */}
-                        {approvedPoints.length > 1 && (
-                            <path
-                                d={getWavyAreaPath(approvedPoints, baselineY)}
-                                fill="url(#reimburseWaveGrad)"
-                            />
-                        )}
-
-                        {/* Submitted Amount Wave Line (Sky blue dashed) */}
-                        {submittedPoints.length > 1 && (
-                            <path
-                                d={getWavyPath(submittedPoints)}
-                                fill="none"
-                                stroke="#38bdf8"
-                                strokeWidth="1.5"
-                                strokeDasharray="3 2"
-                                opacity="0.8"
-                                vectorEffect="non-scaling-stroke"
-                            />
-                        )}
-
-                        {/* Approval Rate % Wave Line (Amber) */}
-                        {ratePoints.length > 1 && (
-                            <path
-                                d={getWavyPath(ratePoints)}
-                                fill="none"
-                                stroke="#f59e0b"
-                                strokeWidth="1.8"
-                                strokeDasharray="3 3"
-                                vectorEffect="non-scaling-stroke"
-                            />
-                        )}
-
-                        {/* Main Approved Amount Wave Line (Teal) */}
-                        {approvedPoints.length > 1 && (
-                            <path
-                                d={getWavyPath(approvedPoints)}
-                                fill="none"
-                                stroke="#0f766e"
-                                strokeWidth="2.4"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                vectorEffect="non-scaling-stroke"
-                            />
-                        )}
-
                         {/* Baseline */}
                         <line
                             x1="0"
@@ -1197,56 +1151,83 @@ export function ReimburseRateCard({
                             vectorEffect="non-scaling-stroke"
                         />
 
-                        {/* Active hover guideline */}
-                        {activeApproved && (
-                            <line
-                                x1={activeApproved.x}
-                                x2={activeApproved.x}
-                                y1="6"
-                                y2={baselineY}
-                                stroke="currentColor"
-                                className="text-muted-foreground/35"
-                                strokeDasharray="2 2"
-                                strokeWidth="1"
-                                vectorEffect="non-scaling-stroke"
-                            />
-                        )}
-
-                        {/* Data Points */}
-                        {approvedPoints.map((pt, i) => {
+                        {/* Clusters for each period */}
+                        {trend.map((pt, i) => {
+                            const slotCenterX =
+                                padX + i * slotWidth + slotWidth / 2;
+                            const clusterStartX =
+                                slotCenterX - actualClusterWidth / 2;
                             const isHovered = hoveredIdx === i;
+
                             return (
-                                <g key={trend[i].period}>
-                                    <circle
-                                        cx={pt.x}
-                                        cy={pt.y}
-                                        r={isHovered ? 4.5 : 2.5}
-                                        fill="#ffffff"
-                                        stroke="#0f766e"
-                                        strokeWidth={isHovered ? 2.5 : 1.8}
-                                        className="transition-all"
-                                    />
-                                    {/* Rate point dot */}
-                                    <circle
-                                        cx={ratePoints[i].x}
-                                        cy={ratePoints[i].y}
-                                        r={isHovered ? 3.5 : 2.0}
-                                        fill="#f59e0b"
-                                    />
+                                <g key={pt.period}>
+                                    {/* Subtle pill highlight when cluster is hovered */}
+                                    {isHovered && (
+                                        <rect
+                                            x={padX + i * slotWidth + 2}
+                                            y={topY - 4}
+                                            width={slotWidth - 4}
+                                            height={chartHeight + 6}
+                                            rx={4}
+                                            fill="currentColor"
+                                            className="text-muted/15"
+                                        />
+                                    )}
+
+                                    {/* 4 Distinct Bars representing the 4 categories */}
+                                    {REIMBURSE_BAR_CATEGORIES.map((cat, catIdx) => {
+                                        const amount =
+                                            pt.categories?.[cat.key] ?? 0;
+                                        const barHeight =
+                                            maxCategoryAmount > 0 && amount > 0
+                                                ? Math.max(
+                                                      3,
+                                                      (amount / maxCategoryAmount) *
+                                                          chartHeight
+                                                  )
+                                                : 0;
+                                        const barX =
+                                            clusterStartX +
+                                            catIdx * (barWidth + barGap);
+                                        const barY = baselineY - barHeight;
+
+                                        if (barHeight <= 0) return null;
+
+                                        return (
+                                            <rect
+                                                key={cat.key}
+                                                x={barX}
+                                                y={barY}
+                                                width={barWidth}
+                                                height={barHeight}
+                                                rx={Math.min(2, barWidth / 2)}
+                                                fill={cat.color}
+                                                opacity={
+                                                    hoveredIdx === null || isHovered
+                                                        ? 1
+                                                        : 0.45
+                                                }
+                                                className="transition-all duration-200"
+                                            >
+                                                <title>
+                                                    {`${pt.label} - ${cat.label}: ${formatRupiahCompact(amount)}`}
+                                                </title>
+                                            </rect>
+                                        );
+                                    })}
                                 </g>
                             );
                         })}
 
-                        {/* Hitboxes */}
+                        {/* Interactive Hitboxes */}
                         {trend.map((pt, i) => {
-                            const colWidth = width / Math.max(totalPoints, 1);
                             return (
                                 <rect
                                     key={`hit-${pt.period}`}
-                                    x={i * colWidth}
-                                    y="2"
-                                    width={colWidth}
-                                    height="64"
+                                    x={padX + i * slotWidth}
+                                    y="0"
+                                    width={slotWidth}
+                                    height={baselineY}
                                     fill="transparent"
                                     className="cursor-pointer"
                                     onMouseEnter={() => setHoveredIdx(i)}
@@ -1256,13 +1237,18 @@ export function ReimburseRateCard({
                         })}
                     </svg>
 
-                    <div className="flex justify-between px-2 pt-0.5 text-[10px] text-muted-foreground">
+                    {/* Month Labels */}
+                    <div className="flex justify-between px-2.5 pt-0.5 text-[10px] text-muted-foreground">
                         {trend.map((pt, i) => (
                             <span
                                 key={pt.period}
-                                className={`transition-colors ${
-                                    hoveredIdx === i ? 'font-bold text-foreground' : ''
+                                className={`transition-colors cursor-pointer ${
+                                    hoveredIdx === i
+                                        ? 'font-bold text-foreground'
+                                        : ''
                                 }`}
+                                onMouseEnter={() => setHoveredIdx(i)}
+                                onMouseLeave={() => setHoveredIdx(null)}
                             >
                                 {pt.label}
                             </span>
@@ -1270,32 +1256,68 @@ export function ReimburseRateCard({
                     </div>
                 </div>
 
-                <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span className="font-semibold text-foreground truncate">
-                        {activePoint?.label}
-                    </span>
-                    <span className="text-teal-700 dark:text-teal-400 truncate">
-                        ACC: {formatRupiahCompact(activePoint?.approved_amount ?? 0)}
-                    </span>
-                    <span className="truncate">
-                        Rate: {activePoint?.approval_rate ?? 0}%
-                    </span>
+                {/* Active Month Breakdown per Category */}
+                <div className="mt-1.5 flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                        <span className="font-semibold text-foreground truncate">
+                            {activePoint?.label}
+                        </span>
+                        <span className="truncate">
+                            Total:{' '}
+                            <strong className="text-foreground">
+                                {formatRupiahCompact(
+                                    activePoint?.approved_amount ?? 0
+                                )}
+                            </strong>
+                        </span>
+                        <span className="truncate text-muted-foreground">
+                            {activePoint?.approved_count ?? 0} disetujui
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-1 text-[9px]">
+                        {REIMBURSE_BAR_CATEGORIES.map((cat) => (
+                            <div
+                                key={cat.key}
+                                className="flex items-center gap-1 min-w-0"
+                            >
+                                <span
+                                    className="size-1.5 shrink-0 rounded-full"
+                                    style={{ backgroundColor: cat.color }}
+                                />
+                                <span className="truncate text-muted-foreground">
+                                    {cat.label}:
+                                </span>
+                                <span className="font-semibold text-foreground truncate">
+                                    {formatRupiahCompact(
+                                        activePoint?.categories?.[cat.key] ?? 0
+                                    )}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer / Legend */}
             <div className="mt-2 flex items-center justify-between border-t px-3 py-1.5 text-[10px] text-muted-foreground">
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1">
-                        <span className="size-2 rounded-full bg-teal-700" />
-                        Disetujui
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                        <span className="size-2 rounded-full bg-amber-500" />
-                        Rate %
-                    </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                    {REIMBURSE_BAR_CATEGORIES.map((cat) => (
+                        <span
+                            key={cat.key}
+                            className="inline-flex items-center gap-1 font-medium text-foreground"
+                        >
+                            <span
+                                className="size-2 shrink-0 aspect-square rounded-full"
+                                style={{ backgroundColor: cat.color }}
+                            />
+                            {cat.label}
+                        </span>
+                    ))}
                 </div>
-                <span>Total: {data.current_total_count} klaim</span>
+                <span className="shrink-0 text-muted-foreground">
+                    Avg: {formatRupiahCompact(data.avg_claim_amount)}
+                </span>
             </div>
         </Card>
     );

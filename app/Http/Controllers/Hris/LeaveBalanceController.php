@@ -102,6 +102,7 @@ class LeaveBalanceController extends Controller
                 'yearly_days' => $policy->yearly_days,
                 'waiting_period_months' => $policy->waiting_period_months,
                 'max_days_per_request' => $policy->max_days_per_request,
+                'min_notice_days' => $policy->min_notice_days,
                 'approval_levels' => $policy->approval_levels,
                 'is_active' => $policy->is_active,
             ] : null,

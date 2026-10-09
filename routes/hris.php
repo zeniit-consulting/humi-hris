@@ -4,6 +4,7 @@ use App\Http\Controllers\Hris\AttendanceController;
 use App\Http\Controllers\Hris\ApprovalSettingController;
 use App\Http\Controllers\Hris\AttendanceCorrectionApprovalController;
 use App\Http\Controllers\Hris\AttendanceScheduleController;
+use App\Http\Controllers\Hris\CareerTransitionController;
 use App\Http\Controllers\Hris\ClientBillingController;
 use App\Http\Controllers\Hris\ClientVisitController;
 use App\Http\Controllers\Hris\CompanyAssetController;
@@ -118,6 +119,15 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
             Route::get('recruitment/applications/{jobApplication}/initial-contract', [RecruitmentController::class, 'initialContract'])
                 ->name('recruitment.applications.initial-contract');
         });
+
+        Route::get('career-transitions', [CareerTransitionController::class, 'index'])->name('career-transitions.index');
+        Route::post('career-transitions', [CareerTransitionController::class, 'store'])->name('career-transitions.store');
+        Route::post('career-transitions/{careerTransition}/approve', [CareerTransitionController::class, 'approve'])->name('career-transitions.approve');
+        Route::post('career-transitions/{careerTransition}/reject', [CareerTransitionController::class, 'reject'])->name('career-transitions.reject');
+        Route::post('career-transitions/{careerTransition}/apply', [CareerTransitionController::class, 'apply'])->name('career-transitions.apply');
+        Route::get('career-transitions/{careerTransition}/sk-document', [CareerTransitionController::class, 'downloadSk'])->name('career-transitions.sk-document');
+        Route::get('career-transitions/{careerTransition}/sk-preview', [CareerTransitionController::class, 'previewSk'])->name('career-transitions.sk-preview');
+        Route::delete('career-transitions/{careerTransition}', [CareerTransitionController::class, 'destroy'])->name('career-transitions.destroy');
 
         Route::post('divisions', [DivisionController::class, 'store'])->name('divisions.store');
         Route::put('divisions/{division}', [DivisionController::class, 'update'])->name('divisions.update');

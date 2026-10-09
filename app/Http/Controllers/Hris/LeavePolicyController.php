@@ -26,6 +26,7 @@ class LeavePolicyController extends Controller
             'yearly_days' => ['required', 'integer', 'min:1', 'max:365'],
             'waiting_period_months' => ['required', 'integer', 'min:0', 'max:120'],
             'max_days_per_request' => ['nullable', 'integer', 'min:1', 'max:365'],
+            'min_notice_days' => ['nullable', 'integer', 'min:0', 'max:90'],
             'approval_levels' => ['required', 'integer', Rule::in([1, 2])],
             'is_active' => ['boolean'],
             'apply_to_all' => ['nullable', 'boolean'],
@@ -41,6 +42,7 @@ class LeavePolicyController extends Controller
                 'yearly_days' => $validated['yearly_days'],
                 'waiting_period_months' => $validated['waiting_period_months'],
                 'max_days_per_request' => $validated['max_days_per_request'] ?? null,
+                'min_notice_days' => (int) ($validated['min_notice_days'] ?? 0),
                 'approval_levels' => $validated['approval_levels'],
                 'is_active' => $validated['is_active'] ?? true,
             ]
@@ -76,6 +78,7 @@ class LeavePolicyController extends Controller
             'yearly_days' => ['required', 'integer', 'min:1', 'max:365'],
             'waiting_period_months' => ['required', 'integer', 'min:0', 'max:120'],
             'max_days_per_request' => ['nullable', 'integer', 'min:1', 'max:365'],
+            'min_notice_days' => ['nullable', 'integer', 'min:0', 'max:90'],
             'approval_levels' => ['required', 'integer', Rule::in([1, 2])],
             'is_active' => ['boolean'],
             'apply_to_all' => ['nullable', 'boolean'],
@@ -87,6 +90,7 @@ class LeavePolicyController extends Controller
             'yearly_days' => $validated['yearly_days'],
             'waiting_period_months' => $validated['waiting_period_months'],
             'max_days_per_request' => $validated['max_days_per_request'] ?? null,
+            'min_notice_days' => (int) ($validated['min_notice_days'] ?? 0),
             'approval_levels' => $validated['approval_levels'],
             'is_active' => $validated['is_active'] ?? $policy->is_active,
         ]);

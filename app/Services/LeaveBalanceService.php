@@ -7,6 +7,7 @@ use App\Models\EmployeeLeaveBalance;
 use App\Models\EmployeeLeaveBalanceTransaction;
 use App\Models\LeavePolicy;
 use App\Models\LeaveRequest;
+use App\Models\PublicHoliday;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
@@ -94,13 +95,66 @@ class LeaveBalanceService
         ];
     }
 
-    public function requestEligibilityError(Employee $employee, LeavePolicy $policy, CarbonInterface $startDate, float $totalDays): ?string
+    /**
+     * Hitung tanggal mulai cuti paling cepat berdasarkan batas pengajuan (min_notice_days hari kerja).
+     * Hari kerja tidak menghitung akhir pekan (Sabtu & Minggu) serta hari libur nasional (PublicHoliday).
+     */
+    public function calculateEarliestLeaveStartDate(User $owner, int $minNoticeDays, ?CarbonInterface $asOf = null): CarbonInterface
     {
+        $current = Carbon::parse($asOf ?? now())->startOfDay();
+
+        if ($minNoticeDays <= 0) {
+            return $current;
+        }
+
+        $maxLookupDays = max(60, $minNoticeDays * 4 + 14);
+        $holidayDates = PublicHoliday::withoutGlobalScopes()
+            ->where('user_id', $owner->id)
+            ->whereDate('date', '>=', $current->toDateString())
+            ->whereDate('date', '<=', $current->copy()->addDays($maxLookupDays)->toDateString())
+            ->pluck('date')
+            ->map(fn ($d) => Carbon::parse($d)->toDateString())
+            ->flip()
+            ->all();
+
+        $workingDaysCounted = 0;
+        while ($workingDaysCounted < $minNoticeDays) {
+            $current = $current->copy()->addDay();
+            if ($current->isWeekend()) {
+                continue;
+            }
+            if (isset($holidayDates[$current->toDateString()])) {
+                continue;
+            }
+            $workingDaysCounted++;
+        }
+
+        return $current;
+    }
+
+    public function requestEligibilityError(
+        Employee $employee,
+        LeavePolicy $policy,
+        CarbonInterface $startDate,
+        float $totalDays,
+        ?CarbonInterface $asOf = null
+    ): ?string {
         $hireDate = $employee->hire_date ? $employee->hire_date->copy()->startOfDay() : ($employee->created_at ? $employee->created_at->copy()->startOfDay() : now()->startOfDay());
         $eligibleFrom = $hireDate->copy()->addMonthsNoOverflow((int) $policy->waiting_period_months);
 
-        if ($startDate->isBefore($eligibleFrom)) {
+        if ($startDate->copy()->startOfDay()->isBefore($eligibleFrom)) {
             return 'Cuti tahunan baru dapat diambil mulai '.$eligibleFrom->translatedFormat('d F Y').'.';
+        }
+
+        $minNoticeDays = (int) ($policy->min_notice_days ?? 0);
+        if ($minNoticeDays > 0) {
+            $owner = User::find($employee->user_id);
+            if ($owner) {
+                $earliestDate = $this->calculateEarliestLeaveStartDate($owner, $minNoticeDays, $asOf);
+                if ($startDate->copy()->startOfDay()->isBefore($earliestDate)) {
+                    return "Pengajuan cuti minimal diajukan {$minNoticeDays} hari kerja sebelumnya. Cuti paling cepat dapat dimulai pada tanggal {$earliestDate->translatedFormat('d F Y')}.";
+                }
+            }
         }
 
         if ($policy->max_days_per_request && $totalDays > $policy->max_days_per_request) {

@@ -615,6 +615,10 @@ class DashboardTest extends TestCase
                         ->has('total')
                         ->has('divisions')
                     )
+                    ->has('reimburse_by_category', fn (AssertableInertia $sub) => $sub
+                        ->has('total')
+                        ->has('categories')
+                    )
                     ->has('reimburse_by_division', fn (AssertableInertia $sub) => $sub
                         ->has('total')
                         ->has('divisions')

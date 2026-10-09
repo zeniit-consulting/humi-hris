@@ -7,7 +7,7 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { getWavyPath, getWavyAreaPath } from '@/components/dashboard-analytics-charts';
+import { getWavyPath, getWavyAreaPath, useChartWidth } from '@/components/dashboard-analytics-charts';
 
 export type AttendancePoint = {
     date: string;
@@ -91,9 +91,9 @@ export function AttendanceChartCard({
         { key: 'absent', color: '#94a3b8', label: 'Absen' },
     ];
 
+    const { containerRef, width } = useChartWidth(1000);
     const totalPoints = attendanceChart.length;
     const padX = 24;
-    const width = 1000;
     const topY = 20;
     const baseY = 190;
     const chartHeight = baseY - topY; // 170
@@ -169,19 +169,19 @@ export function AttendanceChartCard({
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap gap-1.5 text-xs">
                             <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px]">
-                                <span className="size-2 rounded-full bg-emerald-500" />
+                                <span className="size-2 shrink-0 aspect-square rounded-full bg-emerald-500" />
                                 Hadir
                             </div>
                             <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px]">
-                                <span className="size-2 rounded-full bg-amber-500" />
+                                <span className="size-2 shrink-0 aspect-square rounded-full bg-amber-500" />
                                 Terlambat
                             </div>
                             <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px]">
-                                <span className="size-2 rounded-full bg-blue-500" />
+                                <span className="size-2 shrink-0 aspect-square rounded-full bg-blue-500" />
                                 Cuti
                             </div>
                             <div className="inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px]">
-                                <span className="size-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+                                <span className="size-2 shrink-0 aspect-square rounded-full bg-slate-300 dark:bg-slate-600" />
                                 Absen
                             </div>
                         </div>
@@ -207,10 +207,9 @@ export function AttendanceChartCard({
                         )}
                     </div>
 
-                    <div className="w-full overflow-hidden">
+                    <div ref={containerRef} className="w-full overflow-hidden">
                         <svg
                             viewBox={`0 0 ${width} 220`}
-                            preserveAspectRatio="none"
                             className="h-56 w-full cursor-crosshair"
                             role="img"
                             aria-label="Line chart riwayat kehadiran"

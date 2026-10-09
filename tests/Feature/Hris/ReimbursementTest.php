@@ -258,4 +258,28 @@ class ReimbursementTest extends TestCase
 
         @unlink($tempFile);
     }
+
+    public function test_reimbursements_shortcut_redirects_to_hris_reimbursements(): void
+    {
+        $response = $this->get('/reimbursements');
+        $response->assertRedirect('/hris/reimbursements');
+    }
+
+    public function test_admin_can_view_reimbursements_page(): void
+    {
+        $this->withoutVite();
+
+        $company = User::factory()->create([
+            'email_verified_at' => now(),
+            'role' => 'superadmin',
+        ]);
+
+        $response = $this->actingAs($company)->get('/hris/reimbursements');
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('hris/reimbursements/index')
+            ->has('requests')
+            ->has('stats')
+        );
+    }
 }

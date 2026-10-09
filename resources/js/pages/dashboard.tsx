@@ -49,6 +49,7 @@ import {
 import {
     GenderByDivisionCard,
     PayrollByDivisionCard,
+    ReimburseByCategoryCard,
     ReimburseByDivisionCard,
     ResignReasonsCard,
     type PieChartsData,
@@ -461,12 +462,12 @@ export default function Dashboard({
                     </Card>
                 </div>
 
-                {/* Baris 1 (3 Charts): Gender per Divisi, Total Payroll per Divisi, Total Reimburse per Divisi */}
+                {/* Baris 1 (3 Charts): Gender per Divisi, Total Payroll per Divisi, Total Reimburse by Kategori */}
                 {pieCharts && (
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <GenderByDivisionCard data={pieCharts.gender_by_division} />
                         <PayrollByDivisionCard data={pieCharts.payroll_by_division} />
-                        <ReimburseByDivisionCard data={pieCharts.reimburse_by_division} />
+                        <ReimburseByCategoryCard data={pieCharts.reimburse_by_category ?? (pieCharts.reimburse_by_division as any)} />
                     </div>
                 )}
 

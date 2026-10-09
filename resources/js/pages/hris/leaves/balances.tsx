@@ -66,6 +66,7 @@ type Policy = {
     yearly_days: number;
     waiting_period_months: number;
     max_days_per_request: number | null;
+    min_notice_days: number;
     approval_levels: 1 | 2;
     is_active: boolean;
 };
@@ -98,6 +99,7 @@ type PolicyFormData = {
     policy_type: PolicyMethod;
     yearly_days: string;
     waiting_period_months: string;
+    min_notice_days: string;
     max_days_per_request: string;
     approval_levels: '1' | '2';
     apply_to_all?: boolean;
@@ -147,6 +149,7 @@ export default function BalancesPage() {
         policy_type: policy?.policy_type ?? 'annual',
         yearly_days: String(policy?.yearly_days ?? 12),
         waiting_period_months: String(policy?.waiting_period_months ?? 0),
+        min_notice_days: String(policy?.min_notice_days ?? 0),
         approval_levels: String(policy?.approval_levels ?? 1) as '1' | '2',
         max_days_per_request:
             policy?.max_days_per_request != null
@@ -327,28 +330,37 @@ export default function BalancesPage() {
                                 />
                             </div>
 
-                            <div className="grid content-start gap-2 xl:col-span-2">
+                            <div className="grid content-start gap-2 md:col-span-1 xl:col-span-4">
                                 <Label htmlFor="yearly_days">
                                     Jatah Hari / Tahun
                                 </Label>
-                                <Input
-                                    id="yearly_days"
-                                    type="number"
-                                    min={1}
-                                    value={policyForm.data.yearly_days}
-                                    onChange={(e) =>
-                                        policyForm.setData(
-                                            'yearly_days',
-                                            e.target.value,
-                                        )
-                                    }
-                                />
+                                <div className="relative">
+                                    <Input
+                                        id="yearly_days"
+                                        type="number"
+                                        min={1}
+                                        className="pr-16"
+                                        value={policyForm.data.yearly_days}
+                                        onChange={(e) =>
+                                            policyForm.setData(
+                                                'yearly_days',
+                                                e.target.value,
+                                            )
+                                        }
+                                    />
+                                    <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                                        hari
+                                    </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Total kuota hak cuti dasar yang diberikan dalam satu tahun.
+                                </p>
                                 <InputError
                                     message={policyForm.errors.yearly_days}
                                 />
                             </div>
 
-                            <div className="grid content-start gap-2 xl:col-span-2">
+                            <div className="grid content-start gap-2 md:col-span-1 xl:col-span-4">
                                 <Label htmlFor="waiting_period_months">
                                     Bisa Diambil Setelah
                                 </Label>
@@ -374,6 +386,9 @@ export default function BalancesPage() {
                                         bulan
                                     </span>
                                 </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Masa tunggu sejak tanggal masuk kerja (probation).
+                                </p>
                                 <InputError
                                     message={
                                         policyForm.errors.waiting_period_months
@@ -381,23 +396,64 @@ export default function BalancesPage() {
                                 />
                             </div>
 
-                            <div className="grid content-start gap-2 xl:col-span-2">
+                            <div className="grid content-start gap-2 md:col-span-1 xl:col-span-4">
+                                <Label htmlFor="min_notice_days">
+                                    Batas Pengajuan Cuti
+                                </Label>
+                                <div className="relative">
+                                    <Input
+                                        id="min_notice_days"
+                                        type="number"
+                                        min={0}
+                                        max={90}
+                                        className="pr-24"
+                                        placeholder="0"
+                                        value={policyForm.data.min_notice_days}
+                                        onChange={(e) =>
+                                            policyForm.setData(
+                                                'min_notice_days',
+                                                e.target.value,
+                                            )
+                                        }
+                                    />
+                                    <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                                        hari kerja
+                                    </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Minimal waktu pengajuan (hari kerja, lewati libur &amp; akhir pekan). Kosongkan/0 jika bebas.
+                                </p>
+                                <InputError
+                                    message={policyForm.errors.min_notice_days}
+                                />
+                            </div>
+
+                            <div className="grid content-start gap-2 md:col-span-1 xl:col-span-4">
                                 <Label htmlFor="max_days">
                                     Batas per Pengajuan
                                 </Label>
-                                <Input
-                                    id="max_days"
-                                    type="number"
-                                    min={1}
-                                    placeholder="Tidak dibatasi"
-                                    value={policyForm.data.max_days_per_request}
-                                    onChange={(e) =>
-                                        policyForm.setData(
-                                            'max_days_per_request',
-                                            e.target.value,
-                                        )
-                                    }
-                                />
+                                <div className="relative">
+                                    <Input
+                                        id="max_days"
+                                        type="number"
+                                        min={1}
+                                        className="pr-16"
+                                        placeholder="Tidak dibatasi"
+                                        value={policyForm.data.max_days_per_request}
+                                        onChange={(e) =>
+                                            policyForm.setData(
+                                                'max_days_per_request',
+                                                e.target.value,
+                                            )
+                                        }
+                                    />
+                                    <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                                        hari
+                                    </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Batas maksimal durasi hari cuti untuk 1 kali submit formulir.
+                                </p>
                                 <InputError
                                     message={
                                         policyForm.errors.max_days_per_request
@@ -405,7 +461,7 @@ export default function BalancesPage() {
                                 />
                             </div>
 
-                            <div className="grid content-start gap-2 xl:col-span-2">
+                            <div className="grid content-start gap-2 md:col-span-2 xl:col-span-4">
                                 <Label htmlFor="approval_levels">
                                     Tahap Approval
                                 </Label>
@@ -433,6 +489,9 @@ export default function BalancesPage() {
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
+                                <p className="text-xs text-muted-foreground">
+                                    Jumlah tingkatan persetujuan berjenjang sebelum disetujui resmi.
+                                </p>
                                 <InputError
                                     message={policyForm.errors.approval_levels}
                                 />

@@ -474,5 +474,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended'])->group
     Route::post('portal/payroll/export', [UserPortalSectionController::class, 'exportPayslip'])->name('portal.payroll.export');
 });
 
+Route::redirect('reimbursements', '/hris/reimbursements');
+
 require __DIR__.'/hris.php';
 require __DIR__.'/settings.php';

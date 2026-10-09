@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    ArrowLeftRight,
     BellRing,
     Briefcase,
     Building2,
@@ -95,6 +96,11 @@ function buildNavGroups(
                   href: '/hris/recruitment',
                   icon: Briefcase,
                   ...locked('recruitment'),
+              },
+              {
+                  title: 'Mutasi Jabatan',
+                  href: '/hris/career-transitions',
+                  icon: ArrowLeftRight,
               },
               ...(companyFeatures.show_manpower_request_menu === false
                   ? []

@@ -215,6 +215,7 @@ class DashboardController extends Controller
             'pieCharts' => [
                 'gender_by_division' => $this->genderByDivisionData($ownerId),
                 'payroll_by_division' => $this->payrollByDivisionData($ownerId, $period),
+                'reimburse_by_category' => $this->reimburseByCategoryData($ownerId, $period),
                 'reimburse_by_division' => $this->reimburseByDivisionData($ownerId, $period),
                 'resign_reasons' => $this->resignReasonsData($ownerId, $periodDate),
             ],
@@ -1131,10 +1132,10 @@ class DashboardController extends Controller
                 ? round(($approvedCount / ($approvedCount + $rejectedCount)) * 100, 1)
                 : ($totalCount > 0 ? 100.0 : 0.0);
 
-            $travels = (float) $requests->where('category', 'Travels')->sum('amount');
-            $meals = (float) $requests->where('category', 'Meals')->sum('amount');
-            $supplies = (float) $requests->where('category', 'Supplies')->sum('amount');
-            $others = (float) $requests->where('category', 'Others')->sum('amount');
+            $travels = (float) $approvedReqs->filter(fn ($r) => strcasecmp($r->category, 'Travels') === 0)->sum('amount');
+            $meals = (float) $approvedReqs->filter(fn ($r) => strcasecmp($r->category, 'Meals') === 0)->sum('amount');
+            $supplies = (float) $approvedReqs->filter(fn ($r) => strcasecmp($r->category, 'Supplies') === 0)->sum('amount');
+            $others = (float) $approvedReqs->filter(fn ($r) => ! in_array(strtolower($r->category), ['travels', 'meals', 'supplies'], true))->sum('amount');
 
             return [
                 'period' => $p,
@@ -1605,6 +1606,83 @@ class DashboardController extends Controller
         return [
             'total' => $total,
             'divisions' => $divisions,
+        ];
+    }
+
+    /**
+     * Compute reimbursement breakdown by category (Meals, Travels, Supplies, Others).
+     *
+     * @return array{
+     *     total: float,
+     *     categories: list<array{name: string, amount: float, percentage: float, count: int}>
+     * }
+     */
+    private function reimburseByCategoryData(int $ownerId, string $period): array
+    {
+        $baseQuery = ReimbursementRequest::query()
+            ->where('reimbursement_requests.user_id', $ownerId)
+            ->whereIn('reimbursement_requests.status', ['approved', 'processing', 'paid'])
+            ->selectRaw("
+                COALESCE(NULLIF(category, ''), 'Others') as category_name,
+                SUM(amount) as total_amount,
+                COUNT(id) as count
+            ")
+            ->groupBy('category_name')
+            ->orderByDesc('total_amount');
+
+        $periodQuery = (clone $baseQuery)->where(function ($q) use ($period) {
+            $q->whereRaw("SUBSTRING(created_at, 1, 7) = ?", [$period])
+                ->orWhereRaw("SUBSTRING(approved_at, 1, 7) = ?", [$period]);
+        });
+
+        $items = $periodQuery->get();
+
+        if ($items->isEmpty()) {
+            $items = $baseQuery->get();
+        }
+
+        $total = (float) $items->sum('total_amount');
+        $categoryMap = $items->keyBy(fn ($item) => strtolower(trim((string) $item->category_name)));
+
+        $defaultCategories = ['Meals', 'Travels', 'Supplies', 'Others'];
+        $resultList = collect();
+        $seen = [];
+
+        foreach ($defaultCategories as $catName) {
+            $key = strtolower($catName);
+            $seen[$key] = true;
+            $row = $categoryMap->get($key);
+            $amount = $row ? (float) $row->total_amount : 0.0;
+            $count = $row ? (int) $row->count : 0;
+            $pct = $total > 0 ? round(($amount / $total) * 100, 1) : 0.0;
+
+            $resultList->push([
+                'name' => $catName,
+                'amount' => $amount,
+                'percentage' => $pct,
+                'count' => $count,
+            ]);
+        }
+
+        foreach ($items as $item) {
+            $key = strtolower(trim((string) $item->category_name));
+            if (! isset($seen[$key])) {
+                $amount = (float) $item->total_amount;
+                $pct = $total > 0 ? round(($amount / $total) * 100, 1) : 0.0;
+                $resultList->push([
+                    'name' => (string) $item->category_name,
+                    'amount' => $amount,
+                    'percentage' => $pct,
+                    'count' => (int) $item->count,
+                ]);
+            }
+        }
+
+        $sortedCategories = $resultList->sortByDesc('amount')->values()->all();
+
+        return [
+            'total' => $total,
+            'categories' => $sortedCategories,
         ];
     }
 

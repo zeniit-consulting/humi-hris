@@ -78,10 +78,26 @@ export type PayrollByDivisionData = {
     }>;
 };
 
+export type ReimburseByCategoryData = {
+    total: number;
+    categories: Array<{
+        name: string;
+        amount: number;
+        percentage: number;
+        count: number;
+    }>;
+};
+
 export type ReimburseByDivisionData = {
     total: number;
-    divisions: Array<{
+    divisions?: Array<{
         id: number;
+        name: string;
+        amount: number;
+        percentage: number;
+        count: number;
+    }>;
+    categories?: Array<{
         name: string;
         amount: number;
         percentage: number;
@@ -102,7 +118,8 @@ export type ResignReasonsData = {
 export type PieChartsData = {
     gender_by_division: GenderByDivisionData;
     payroll_by_division: PayrollByDivisionData;
-    reimburse_by_division: ReimburseByDivisionData;
+    reimburse_by_category?: ReimburseByCategoryData;
+    reimburse_by_division?: ReimburseByDivisionData;
     resign_reasons: ResignReasonsData;
 };
 
@@ -345,7 +362,7 @@ export function GenderByDivisionCard({
                 <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
-                            <Users className="size-3.5" />
+                            <Users className="size-3.5 shrink-0 aspect-square" />
                         </span>
                         <CardTitle className="truncate text-xs font-semibold">
                             Gender per Divisi
@@ -462,7 +479,7 @@ export function PayrollByDivisionCard({
                 <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
-                            <WalletCards className="size-3.5" />
+                            <WalletCards className="size-3.5 shrink-0 aspect-square" />
                         </span>
                         <CardTitle className="truncate text-xs font-semibold">
                             Total Payroll per Divisi
@@ -541,27 +558,43 @@ export function PayrollByDivisionCard({
     );
 }
 
+const CATEGORY_COLORS: Record<string, string> = {
+    meals: '#f59e0b',
+    travels: '#3b82f6',
+    supplies: '#10b981',
+    others: '#8b5cf6',
+};
+
 /**
- * 3. Total Reimburse per Divisi
+ * 3. Total Reimburse by Kategori (Meals, Travels, Supplies, Others)
  */
-export function ReimburseByDivisionCard({
+export function ReimburseByCategoryCard({
     data,
 }: {
-    data: ReimburseByDivisionData;
+    data?: ReimburseByCategoryData;
 }) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-    const nonZeroDivisions = (data.divisions || []).filter(
-        (d) => d.amount > 0
+    const safeData = data || { total: 0, categories: [] };
+    const items = safeData.categories && safeData.categories.length > 0
+        ? safeData.categories
+        : ((safeData as any).divisions || []);
+
+    const nonZeroItems = (items || []).filter(
+        (c: any) => Number(c.amount ?? 0) > 0
     );
 
-    const slices: DonutSlice[] = nonZeroDivisions.map((d, index) => ({
-        label: d.name,
-        value: d.amount,
-        percentage: d.percentage,
-        color: PALETTE[(index + 3) % PALETTE.length],
-        formattedValue: formatRupiahCompact(d.amount),
-    }));
+    const slices: DonutSlice[] = nonZeroItems.map((c: any, index: number) => {
+        const colorKey = String(c.name || '').toLowerCase().trim();
+        const color = CATEGORY_COLORS[colorKey] ?? PALETTE[(index + 3) % PALETTE.length];
+        return {
+            label: c.name,
+            value: Number(c.amount ?? 0),
+            percentage: Number(c.percentage ?? 0),
+            color,
+            formattedValue: formatRupiahCompact(Number(c.amount ?? 0)),
+        };
+    });
 
     const activeSlice = hoveredIndex !== null ? slices[hoveredIndex] : null;
 
@@ -571,14 +604,14 @@ export function ReimburseByDivisionCard({
                 <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
-                            <Receipt className="size-3.5" />
+                            <Receipt className="size-3.5 shrink-0 aspect-square" />
                         </span>
                         <CardTitle className="truncate text-xs font-semibold">
-                            Total Reimburse per Divisi
+                            Total Reimburse by Kategori
                         </CardTitle>
                     </div>
                     <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                        {formatRupiahCompact(data.total)}
+                        {formatRupiahCompact(safeData.total)}
                     </Badge>
                 </div>
             </CardHeader>
@@ -600,7 +633,7 @@ export function ReimburseByDivisionCard({
                                 activeSlice
                                     ? activeSlice.formattedValue ||
                                       `${activeSlice.percentage}%`
-                                    : formatRupiahCompact(data.total)
+                                    : formatRupiahCompact(safeData.total)
                             }
                             centerLabel={
                                 activeSlice ? activeSlice.label : 'Reimburse'
@@ -609,9 +642,9 @@ export function ReimburseByDivisionCard({
                             onHover={setHoveredIndex}
                         />
 
-                        {/* Divisions Legend */}
+                        {/* Category Legend */}
                         <div className="flex flex-1 flex-col gap-1 text-xs max-h-[130px] overflow-y-auto pr-0.5">
-                            {slices.slice(0, 5).map((slice, i) => (
+                            {slices.map((slice, i) => (
                                 <div
                                     key={slice.label}
                                     className={`flex items-center justify-between gap-1 rounded-sm px-1.5 py-0.5 transition-colors cursor-pointer ${
@@ -640,17 +673,18 @@ export function ReimburseByDivisionCard({
                                     </div>
                                 </div>
                             ))}
-                            {slices.length > 5 && (
-                                <span className="text-[9px] text-muted-foreground px-1.5">
-                                    +{slices.length - 5} divisi lainnya
-                                </span>
-                            )}
                         </div>
                     </div>
                 )}
             </CardContent>
         </Card>
     );
+}
+
+export function ReimburseByDivisionCard(props: {
+    data?: ReimburseByCategoryData | ReimburseByDivisionData;
+}) {
+    return <ReimburseByCategoryCard data={props.data as ReimburseByCategoryData} />;
 }
 
 /**
@@ -690,7 +724,7 @@ export function ResignReasonsCard({
                 <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
-                            <UserMinus className="size-3.5" />
+                            <UserMinus className="size-3.5 shrink-0 aspect-square" />
                         </span>
                         <CardTitle className="truncate text-xs font-semibold">
                             Offboarding Reason
@@ -742,7 +776,7 @@ export function ResignReasonsCard({
                                 >
                                     <div className="flex items-center gap-1.5 min-w-0">
                                         <span
-                                            className="size-2 shrink-0 rounded-full"
+                                            className="size-2 shrink-0 aspect-square rounded-full"
                                             style={{
                                                 backgroundColor: slice.color,
                                             }}
@@ -783,7 +817,9 @@ export function DashboardPieChartsSection({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <GenderByDivisionCard data={data.gender_by_division} />
             <PayrollByDivisionCard data={data.payroll_by_division} />
-            <ReimburseByDivisionCard data={data.reimburse_by_division} />
+            <ReimburseByCategoryCard
+                data={data.reimburse_by_category ?? (data.reimburse_by_division as unknown as ReimburseByCategoryData)}
+            />
             <ResignReasonsCard data={data.resign_reasons} />
         </div>
     );

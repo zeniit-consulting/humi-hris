@@ -8,6 +8,7 @@ import EmployeeMasterController from './EmployeeMasterController'
 import OrganizationChartController from './OrganizationChartController'
 import PerformanceController from './PerformanceController'
 import RecruitmentController from './RecruitmentController'
+import CareerTransitionController from './CareerTransitionController'
 import DivisionController from './DivisionController'
 import PositionController from './PositionController'
 import EmployeeBankAccountController from './EmployeeBankAccountController'
@@ -43,6 +44,7 @@ const Hris = {
     OrganizationChartController: Object.assign(OrganizationChartController, OrganizationChartController),
     PerformanceController: Object.assign(PerformanceController, PerformanceController),
     RecruitmentController: Object.assign(RecruitmentController, RecruitmentController),
+    CareerTransitionController: Object.assign(CareerTransitionController, CareerTransitionController),
     DivisionController: Object.assign(DivisionController, DivisionController),
     PositionController: Object.assign(PositionController, PositionController),
     EmployeeBankAccountController: Object.assign(EmployeeBankAccountController, EmployeeBankAccountController),

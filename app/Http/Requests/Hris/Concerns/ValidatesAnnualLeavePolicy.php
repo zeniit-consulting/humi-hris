@@ -18,9 +18,15 @@ trait ValidatesAnnualLeavePolicy
             }
 
             $owner = User::find($this->user()->accountOwnerId());
+            $employeeId = $this->integer('employee_id');
+
+            if (! $employeeId && method_exists($this->user(), 'employee') && $this->user()->employee) {
+                $employeeId = (int) $this->user()->employee->id;
+            }
+
             $employee = Employee::withoutGlobalScopes()
                 ->where('user_id', $owner?->id)
-                ->find($this->integer('employee_id'));
+                ->find($employeeId);
 
             if (! $owner || ! $employee) {
                 return;
@@ -38,6 +44,7 @@ trait ValidatesAnnualLeavePolicy
             $message = $service->requestEligibilityError($employee, $policy, $startDate, $totalDays);
 
             if ($message) {
+                $validator->errors()->add('start_date', $message);
                 $validator->errors()->add('total_days', $message);
             }
         });
