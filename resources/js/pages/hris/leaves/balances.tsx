@@ -100,6 +100,8 @@ type PolicyFormData = {
     waiting_period_months: string;
     max_days_per_request: string;
     approval_levels: '1' | '2';
+    apply_to_all?: boolean;
+    year?: string | number;
 };
 
 type PolicyMethod = 'annual' | 'prorated' | 'monthly_accrual' | 'anniversary';
@@ -134,6 +136,8 @@ export default function BalancesPage() {
     );
 
     const [initDialogOpen, setInitDialogOpen] = useState(false);
+    const [initForceAll, setInitForceAll] = useState(true);
+    const [applyToAll, setApplyToAll] = useState(true);
     const [accrueDialogOpen, setAccrueDialogOpen] = useState(false);
     const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
     const [adjustTarget, setAdjustTarget] = useState<BalanceRow | null>(null);
@@ -148,6 +152,8 @@ export default function BalancesPage() {
             policy?.max_days_per_request != null
                 ? String(policy.max_days_per_request)
                 : '',
+        apply_to_all: true,
+        year: filterYear,
     });
 
     const adjustForm = useForm<AdjustFormData>({
@@ -160,6 +166,8 @@ export default function BalancesPage() {
         policyForm.transform((data) => ({
             ...data,
             leave_type,
+            apply_to_all: applyToAll,
+            year: filterYear,
         }));
 
         if (policy) {
@@ -188,7 +196,7 @@ export default function BalancesPage() {
     const doInitialize = () => {
         router.post(
             '/hris/leaves/balances/initialize',
-            { year: filterYear, leave_type },
+            { year: filterYear, leave_type, force_all: initForceAll },
             {
                 preserveScroll: true,
                 onSuccess: () => setInitDialogOpen(false),
@@ -430,13 +438,24 @@ export default function BalancesPage() {
                                 />
                             </div>
 
-                            <div className="flex justify-end border-t pt-4 md:col-span-2 xl:col-span-12">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t pt-4 md:col-span-2 xl:col-span-12">
+                                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={applyToAll}
+                                        onChange={(e) => setApplyToAll(e.target.checked)}
+                                        className="size-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                    />
+                                    <span>
+                                        Terapkan metode ini ke seluruh karyawan untuk tahun <strong>{filterYear}</strong>
+                                    </span>
+                                </label>
                                 <Button
                                     type="submit"
                                     disabled={policyForm.processing}
                                 >
                                     <CheckCircle className="size-4" />
-                                    Simpan Kebijakan
+                                    Simpan &amp; Terapkan Kebijakan
                                 </Button>
                             </div>
                         </form>
@@ -510,7 +529,7 @@ export default function BalancesPage() {
 
                             <Button onClick={applyFilter}>
                                 <RefreshCw className="size-4" />
-                                Terapkan
+                                Terapkan Filter
                             </Button>
 
                             <div className="ml-auto flex gap-2">
@@ -740,13 +759,48 @@ export default function BalancesPage() {
             <Dialog open={initDialogOpen} onOpenChange={setInitDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Inisialisasi Jatah Cuti</DialogTitle>
+                        <DialogTitle>Inisialisasi &amp; Terapkan Jatah Cuti</DialogTitle>
                         <DialogDescription>
-                            Tindakan ini akan membuat entri saldo cuti untuk
-                            semua karyawan yang belum memiliki saldo di tahun{' '}
-                            <strong>{filterYear}</strong>. Lanjutkan?
+                            Pilih cakupan penerapan kebijakan jatah cuti untuk tahun{' '}
+                            <strong>{filterYear}</strong>:
                         </DialogDescription>
                     </DialogHeader>
+                    <div className="space-y-3 py-2 text-sm">
+                        <label className="flex items-start gap-2.5 cursor-pointer select-none rounded-md border p-3 hover:bg-muted/50">
+                            <input
+                                type="radio"
+                                name="init_scope"
+                                checked={initForceAll}
+                                onChange={() => setInitForceAll(true)}
+                                className="mt-0.5 size-4 text-primary focus:ring-primary"
+                            />
+                            <div>
+                                <div className="font-medium text-foreground">
+                                    Terapkan ke seluruh karyawan
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-0.5">
+                                    Perbarui jenis kebijakan dan sinkronkan kuota semua karyawan aktif. Pemakaian cuti sebelumnya tetap dipertahankan.
+                                </div>
+                            </div>
+                        </label>
+                        <label className="flex items-start gap-2.5 cursor-pointer select-none rounded-md border p-3 hover:bg-muted/50">
+                            <input
+                                type="radio"
+                                name="init_scope"
+                                checked={!initForceAll}
+                                onChange={() => setInitForceAll(false)}
+                                className="mt-0.5 size-4 text-primary focus:ring-primary"
+                            />
+                            <div>
+                                <div className="font-medium text-foreground">
+                                    Hanya karyawan yang belum memiliki saldo
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-0.5">
+                                    Hanya membuat entri baru bagi karyawan yang belum memiliki catatan saldo di tahun {filterYear}.
+                                </div>
+                            </div>
+                        </label>
+                    </div>
                     <DialogFooter>
                         <Button
                             variant="outline"
@@ -756,7 +810,7 @@ export default function BalancesPage() {
                         </Button>
                         <Button onClick={doInitialize}>
                             <CheckCircle className="size-4" />
-                            Ya, Inisialisasi
+                            {initForceAll ? 'Ya, Terapkan ke Seluruh Karyawan' : 'Ya, Inisialisasi'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

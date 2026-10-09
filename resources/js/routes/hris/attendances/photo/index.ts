@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::upload
-* @see app/Http/Controllers/Hris/AttendanceController.php:630
+* @see app/Http/Controllers/Hris/AttendanceController.php:635
 * @route '/hris/attendances/{employeeAttendance}/photo'
 */
 export const upload = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ upload.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::upload
-* @see app/Http/Controllers/Hris/AttendanceController.php:630
+* @see app/Http/Controllers/Hris/AttendanceController.php:635
 * @route '/hris/attendances/{employeeAttendance}/photo'
 */
 upload.url = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -49,7 +49,7 @@ upload.url = (args: { employeeAttendance: number | { id: number } } | [employeeA
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::upload
-* @see app/Http/Controllers/Hris/AttendanceController.php:630
+* @see app/Http/Controllers/Hris/AttendanceController.php:635
 * @route '/hris/attendances/{employeeAttendance}/photo'
 */
 upload.post = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -59,7 +59,7 @@ upload.post = (args: { employeeAttendance: number | { id: number } } | [employee
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::upload
-* @see app/Http/Controllers/Hris/AttendanceController.php:630
+* @see app/Http/Controllers/Hris/AttendanceController.php:635
 * @route '/hris/attendances/{employeeAttendance}/photo'
 */
 const uploadForm = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -69,7 +69,7 @@ const uploadForm = (args: { employeeAttendance: number | { id: number } } | [emp
 
 /**
 * @see \App\Http\Controllers\Hris\AttendanceController::upload
-* @see app/Http/Controllers/Hris/AttendanceController.php:630
+* @see app/Http/Controllers/Hris/AttendanceController.php:635
 * @route '/hris/attendances/{employeeAttendance}/photo'
 */
 uploadForm.post = (args: { employeeAttendance: number | { id: number } } | [employeeAttendance: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

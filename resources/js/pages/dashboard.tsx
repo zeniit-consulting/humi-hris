@@ -34,7 +34,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import {
-    DashboardAnalyticsSection,
+    EmployeeMobilityCard,
+    InsuranceBurnrateCard,
+    PayrollBurnrateCard,
+    ReimburseRateCard,
     type EmployeeMobilitySummary,
     type InsuranceBurnrateSummary,
     type PayrollBurnrateSummary,
@@ -44,7 +47,10 @@ import {
     type ExecutiveInsightsData,
 } from '@/components/dashboard-executive-qa';
 import {
-    DashboardPieChartsSection,
+    GenderByDivisionCard,
+    PayrollByDivisionCard,
+    ReimburseByDivisionCard,
+    ResignReasonsCard,
     type PieChartsData,
 } from '@/components/dashboard-pie-charts';
 import AppLayout from '@/layouts/app-layout';
@@ -455,16 +461,33 @@ export default function Dashboard({
                     </Card>
                 </div>
 
-                {/* 4 Pie Charts: Gender per Divisi, Total Payroll per Divisi, Total Reimburse per Divisi, Resign Reason */}
-                {pieCharts && <DashboardPieChartsSection data={pieCharts} />}
+                {/* Baris 1 (3 Charts): Gender per Divisi, Total Payroll per Divisi, Total Reimburse per Divisi */}
+                {pieCharts && (
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <GenderByDivisionCard data={pieCharts.gender_by_division} />
+                        <PayrollByDivisionCard data={pieCharts.payroll_by_division} />
+                        <ReimburseByDivisionCard data={pieCharts.reimburse_by_division} />
+                    </div>
+                )}
 
-                {/* Grafik Finansial & Mobilitas SDM: Payroll Burnrate, Insurance Burnrate, Employee Mobility, Reimburse Rate */}
-                <DashboardAnalyticsSection
-                    payrollBurnrate={payrollBurnrate}
-                    insuranceBurnrate={insuranceBurnrate}
-                    employeeMobility={employeeMobility}
-                    reimburseRate={reimburseRate}
-                />
+                {/* Baris 2 (3 Charts): Payroll Burnrate, Insurance Burnrate, Reimburse Rate */}
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <PayrollBurnrateCard data={payrollBurnrate} />
+                    <InsuranceBurnrateCard data={insuranceBurnrate} />
+                    <ReimburseRateCard data={reimburseRate} />
+                </div>
+
+                {/* Baris 3 (2 Charts, Rasio 70-30): Employee Mobility & Offboarding Reason */}
+                <div className="grid gap-3 lg:grid-cols-10">
+                    <div className={pieCharts?.resign_reasons ? 'lg:col-span-7' : 'lg:col-span-10'}>
+                        <EmployeeMobilityCard data={employeeMobility} />
+                    </div>
+                    {pieCharts?.resign_reasons && (
+                        <div className="lg:col-span-3">
+                            <ResignReasonsCard data={pieCharts.resign_reasons} />
+                        </div>
+                    )}
+                </div>
 
                 {/* Reminder Terkini */}
                 <Card className="flex flex-col gap-0 py-0 shadow-xs">

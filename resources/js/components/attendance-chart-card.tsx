@@ -7,6 +7,7 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { getWavyPath, getWavyAreaPath } from '@/components/dashboard-analytics-charts';
 
 export type AttendancePoint = {
     date: string;
@@ -215,6 +216,12 @@ export function AttendanceChartCard({
                             aria-label="Line chart riwayat kehadiran"
                             onMouseLeave={() => setHoveredIndex(null)}
                         >
+                            <defs>
+                                <linearGradient id="attendancePresentGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
+                                    <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                                </linearGradient>
+                            </defs>
                             {/* Horizontal Gridlines (Sumbu X) - Full Width dari x1=0 ke x2=1000 */}
                             {[0, 1, 2, 3].map((step) => {
                                 const y = topY + step * (chartHeight / 4);
@@ -261,24 +268,32 @@ export function AttendanceChartCard({
                                 />
                             )}
 
-                            {/* Series Polylines */}
+                            {/* Series Wavy Lines & Area */}
                             {seriesList.map((series) => {
-                                const polylinePoints = attendanceChart
-                                    .map((day, idx) => {
-                                        const val = Number(
+                                const points = attendanceChart.map((day, idx) => ({
+                                    x: getX(idx),
+                                    y: getY(
+                                        Number(
                                             day[
                                                 series.key as keyof AttendancePoint
                                             ] ?? 0,
-                                        );
-                                        return `${getX(idx)},${getY(val)}`;
-                                    })
-                                    .join(' ');
+                                        ),
+                                    ),
+                                }));
 
                                 return (
                                     <g key={series.key}>
+                                        {/* Soft Wave Area for present (Hadir) series */}
+                                        {series.key === 'present' && totalPoints > 1 && (
+                                            <path
+                                                d={getWavyAreaPath(points, baseY)}
+                                                fill="url(#attendancePresentGrad)"
+                                            />
+                                        )}
+
                                         {totalPoints > 1 && (
-                                            <polyline
-                                                points={polylinePoints}
+                                            <path
+                                                d={getWavyPath(points)}
                                                 fill="none"
                                                 stroke={series.color}
                                                 strokeWidth="2.5"

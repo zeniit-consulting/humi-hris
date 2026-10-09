@@ -138,7 +138,7 @@ initialize.form = initializeForm
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::accrue
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:139
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:146
 * @route '/hris/leaves/balances/accrue'
 */
 export const accrue = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -153,7 +153,7 @@ accrue.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::accrue
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:139
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:146
 * @route '/hris/leaves/balances/accrue'
 */
 accrue.url = (options?: RouteQueryOptions) => {
@@ -162,7 +162,7 @@ accrue.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::accrue
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:139
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:146
 * @route '/hris/leaves/balances/accrue'
 */
 accrue.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -172,7 +172,7 @@ accrue.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::accrue
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:139
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:146
 * @route '/hris/leaves/balances/accrue'
 */
 const accrueForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -182,7 +182,7 @@ const accrueForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::accrue
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:139
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:146
 * @route '/hris/leaves/balances/accrue'
 */
 accrueForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -194,7 +194,7 @@ accrue.form = accrueForm
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::adjust
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:159
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:166
 * @route '/hris/leaves/balances/{employee}/adjust'
 */
 export const adjust = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -209,7 +209,7 @@ adjust.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::adjust
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:159
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:166
 * @route '/hris/leaves/balances/{employee}/adjust'
 */
 adjust.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -242,7 +242,7 @@ adjust.url = (args: { employee: number | { id: number } } | [employee: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::adjust
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:159
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:166
 * @route '/hris/leaves/balances/{employee}/adjust'
 */
 adjust.put = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -252,7 +252,7 @@ adjust.put = (args: { employee: number | { id: number } } | [employee: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::adjust
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:159
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:166
 * @route '/hris/leaves/balances/{employee}/adjust'
 */
 const adjustForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -267,7 +267,7 @@ const adjustForm = (args: { employee: number | { id: number } } | [employee: num
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::adjust
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:159
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:166
 * @route '/hris/leaves/balances/{employee}/adjust'
 */
 adjustForm.put = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -284,7 +284,7 @@ adjust.form = adjustForm
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::ledger
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:184
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:191
 * @route '/hris/leaves/balances/{employee}/ledger'
 */
 export const ledger = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -299,7 +299,7 @@ ledger.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::ledger
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:184
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:191
 * @route '/hris/leaves/balances/{employee}/ledger'
 */
 ledger.url = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -332,7 +332,7 @@ ledger.url = (args: { employee: number | { id: number } } | [employee: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::ledger
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:184
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:191
 * @route '/hris/leaves/balances/{employee}/ledger'
 */
 ledger.get = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -342,7 +342,7 @@ ledger.get = (args: { employee: number | { id: number } } | [employee: number | 
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::ledger
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:184
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:191
 * @route '/hris/leaves/balances/{employee}/ledger'
 */
 ledger.head = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -352,7 +352,7 @@ ledger.head = (args: { employee: number | { id: number } } | [employee: number |
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::ledger
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:184
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:191
 * @route '/hris/leaves/balances/{employee}/ledger'
 */
 const ledgerForm = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -362,7 +362,7 @@ const ledgerForm = (args: { employee: number | { id: number } } | [employee: num
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::ledger
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:184
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:191
 * @route '/hris/leaves/balances/{employee}/ledger'
 */
 ledgerForm.get = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -372,7 +372,7 @@ ledgerForm.get = (args: { employee: number | { id: number } } | [employee: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\LeaveBalanceController::ledger
-* @see app/Http/Controllers/Hris/LeaveBalanceController.php:184
+* @see app/Http/Controllers/Hris/LeaveBalanceController.php:191
 * @route '/hris/leaves/balances/{employee}/ledger'
 */
 ledgerForm.head = (args: { employee: number | { id: number } } | [employee: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

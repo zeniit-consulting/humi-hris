@@ -190,7 +190,7 @@ class AttendanceController extends Controller
 
         while ($cursor->lte($chartEndDate)) {
             $dates->push($cursor->copy());
-            $cursor->addDay();
+            $cursor = $cursor->addDay();
         }
 
         $activeEmployees = Employee::query()
@@ -198,7 +198,7 @@ class AttendanceController extends Controller
             ->where('is_active', true)
             ->count();
 
-        $attendanceChart = $dates->map(function (Carbon $date) use ($dailyGrouped, $activeEmployees) {
+        $attendanceChart = $dates->map(function ($date) use ($dailyGrouped, $activeEmployees) {
             $dateKey = $date->toDateString();
             $rows = collect($dailyGrouped->get($dateKey, []));
             $counts = $rows->pluck('total', 'status');
@@ -282,7 +282,7 @@ class AttendanceController extends Controller
                 'is_weekend' => $curr->isWeekend(),
                 'is_past' => $curr->lt(today()),
             ]);
-            $curr->addDay();
+            $curr = $curr->addDay();
         }
 
         $horizontalRows = $allEmployees->map(function (Employee $emp) use ($hDates, $allAttendances, $allSchedules) {
@@ -365,6 +365,11 @@ class AttendanceController extends Controller
             'end_date' => $hEndDate->toDateString(),
         ];
 
+        $todayPresent = (int) ($todaySummaryRows['present'] ?? 0);
+        $todayLate = (int) ($todaySummaryRows['late'] ?? 0);
+        $todayOnLeave = (int) ($todaySummaryRows['on_leave'] ?? 0);
+        $todayFallbackAbsent = max($activeEmployees - ($todayPresent + $todayLate + $todayOnLeave), 0);
+
         return Inertia::render('hris/attendances/index', [
             'attendances' => $attendances,
             'attendanceChart' => $attendanceChart,
@@ -376,10 +381,10 @@ class AttendanceController extends Controller
             ]),
             'filters' => $filters,
             'todaySummary' => [
-                'present' => (int) ($todaySummaryRows['present'] ?? 0),
-                'late' => (int) ($todaySummaryRows['late'] ?? 0),
-                'on_leave' => (int) ($todaySummaryRows['on_leave'] ?? 0),
-                'absent' => (int) ($todaySummaryRows['absent'] ?? $fallbackAbsent ?? 0),
+                'present' => $todayPresent,
+                'late' => $todayLate,
+                'on_leave' => $todayOnLeave,
+                'absent' => (int) ($todaySummaryRows['absent'] ?? $todayFallbackAbsent),
             ],
             'statusOptions' => ['present', 'late', 'on_leave', 'absent'],
         ]);
@@ -416,7 +421,7 @@ class AttendanceController extends Controller
             ->keyBy(fn (EmployeeSchedule $schedule) => $schedule->work_date->toDateString());
 
         $rows = collect();
-        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+        for ($date = $start->copy(); $date->lte($end); $date = $date->addDay()) {
             $dateKey = $date->toDateString();
             $attendance = $attendanceByDate->get($dateKey);
 

@@ -167,7 +167,7 @@ class ScheduleController extends Controller
                 ];
 
                 $index++;
-                $cursor->addDay();
+                $cursor = $cursor->addDay();
             }
         }
 
@@ -530,7 +530,7 @@ class ScheduleController extends Controller
                 'notes' => $saved?->notes ?? null,
             ];
 
-            $cursor->addDay();
+            $cursor = $cursor->addDay();
         }
 
         return $days;
@@ -574,7 +574,7 @@ class ScheduleController extends Controller
                 'holiday_name' => $holiday?->name,
             ];
 
-            $cursor->addDay();
+            $cursor = $cursor->addDay();
         }
 
         $employeeIds = $employees->pluck('id')->all();

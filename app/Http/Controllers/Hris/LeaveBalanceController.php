@@ -119,18 +119,25 @@ class LeaveBalanceController extends Controller
         $validated = $request->validate([
             'year' => ['required', 'integer', 'min:2000', 'max:2100'],
             'leave_type' => ['required', 'string', 'max:30'],
+            'force_all' => ['nullable', 'boolean'],
         ]);
 
         $owner = User::find($request->user()->accountOwnerId());
+        $forceAll = (bool) ($validated['force_all'] ?? false);
 
         $count = $this->balanceService->initializeBalancesForAll(
             $owner,
             $validated['leave_type'],
             (int) $validated['year'],
-            $this->visibleEmployeeIdsFor($request)
+            $this->visibleEmployeeIdsFor($request),
+            $forceAll
         );
 
-        return back()->with('success', "Saldo cuti berhasil diinisialisasi untuk {$count} karyawan.");
+        $message = $forceAll
+            ? "Metode dan saldo cuti berhasil diterapkan untuk {$count} karyawan di tahun {$validated['year']}."
+            : "Saldo cuti berhasil diinisialisasi untuk {$count} karyawan.";
+
+        return back()->with('success', $message);
     }
 
     /**

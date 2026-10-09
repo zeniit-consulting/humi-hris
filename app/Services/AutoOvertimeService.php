@@ -36,7 +36,7 @@ class AutoOvertimeService
         $shiftEnd = Carbon::parse($attendanceDate.' '.$shift->end_time, $timezone);
 
         if (! empty($shift->start_time) && $shift->end_time < $shift->start_time) {
-            $shiftEnd->addDay();
+            $shiftEnd = $shiftEnd->addDay();
         }
 
         $checkOut = Carbon::parse($attendance->check_out_at, config('app.timezone'))->setTimezone($timezone);

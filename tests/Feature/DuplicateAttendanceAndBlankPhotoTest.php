@@ -332,22 +332,23 @@ class DuplicateAttendanceAndBlankPhotoTest extends TestCase
         ]);
 
         // Simulating two records existing for the same date (e.g. regular and backup)
+        $todayStr = today()->toDateString();
         $attendance1 = EmployeeAttendance::query()->create([
             'user_id' => $admin->id,
             'employee_id' => $employee->id,
-            'attendance_date' => '2026-10-04',
+            'attendance_date' => $todayStr,
             'status' => 'present',
             'is_backup' => true,
-            'check_in_at' => '2026-10-04 14:05:00',
+            'check_in_at' => "{$todayStr} 14:05:00",
         ]);
 
         $attendance2 = EmployeeAttendance::query()->create([
             'user_id' => $admin->id,
             'employee_id' => $employee->id,
-            'attendance_date' => '2026-10-04',
+            'attendance_date' => $todayStr,
             'status' => 'present',
             'is_backup' => false,
-            'check_in_at' => '2026-10-04 14:05:00',
+            'check_in_at' => "{$todayStr} 14:05:00",
         ]);
 
         $validPhoto = $this->generatePhotoBase64(false);
@@ -355,10 +356,10 @@ class DuplicateAttendanceAndBlankPhotoTest extends TestCase
         // Updating/clocking out on attendance2 should NOT fail with "Attendance date sudah digunakan."
         $response = $this->actingAs($portalUser)->putJson(route('portal.api.attendances.update', $attendance2), [
             'employee_id' => $employee->id,
-            'attendance_date' => '2026-10-04',
+            'attendance_date' => $todayStr,
             'status' => 'present',
-            'check_in_at' => '2026-10-04T14:05:00',
-            'check_out_at' => '2026-10-04T22:00:00',
+            'check_in_at' => "{$todayStr}T14:05:00",
+            'check_out_at' => "{$todayStr}T22:00:00",
             'check_out_latitude' => -6.2,
             'check_out_longitude' => 106.8,
             'check_out_photo' => $validPhoto,

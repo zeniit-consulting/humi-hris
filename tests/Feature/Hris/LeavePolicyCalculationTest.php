@@ -267,6 +267,137 @@ class LeavePolicyCalculationTest extends TestCase
         $this->assertSame(2.0, EmployeeLeaveBalance::query()->firstOrFail()->used_days);
     }
 
+    public function test_policy_store_with_apply_to_all_applies_method_to_all_employees(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $emp1 = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2024-01-01',
+        ]);
+        $emp2 = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2026-07-01',
+        ]);
+
+        // emp1 has an existing balance from before with annual policy and 3 used days
+        EmployeeLeaveBalance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $emp1->id,
+            'leave_type' => 'annual',
+            'year' => 2026,
+            'period_start' => '2026-01-01',
+            'period_end' => '2026-12-31',
+            'policy_type' => 'annual',
+            'total_quota' => 12,
+            'accrued_days' => 12,
+            'used_days' => 3,
+            'adjusted_days' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.leaves.policy.store'), [
+                'leave_type' => 'annual',
+                'policy_type' => 'prorated',
+                'yearly_days' => 12,
+                'waiting_period_months' => 0,
+                'approval_levels' => 1,
+                'apply_to_all' => true,
+                'year' => 2026,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $emp1Balance = EmployeeLeaveBalance::query()->where('employee_id', $emp1->id)->where('year', 2026)->firstOrFail();
+        $this->assertSame('prorated', $emp1Balance->policy_type);
+        $this->assertSame(12.0, (float) $emp1Balance->total_quota);
+        $this->assertSame(3.0, (float) $emp1Balance->used_days);
+        $this->assertSame(9.0, $emp1Balance->remainingBalance());
+
+        $emp2Balance = EmployeeLeaveBalance::query()->where('employee_id', $emp2->id)->where('year', 2026)->firstOrFail();
+        $this->assertSame('prorated', $emp2Balance->policy_type);
+        $this->assertSame(6.0, (float) $emp2Balance->total_quota);
+        $this->assertSame(6.0, (float) $emp2Balance->accrued_days);
+        $this->assertSame(0.0, (float) $emp2Balance->used_days);
+    }
+
+    public function test_initialize_endpoint_with_force_all_updates_existing_balances(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $emp = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2024-01-01',
+        ]);
+
+        LeavePolicy::query()->create([
+            'user_id' => $user->id,
+            'leave_type' => 'annual',
+            'policy_type' => 'prorated',
+            'yearly_days' => 15,
+            'waiting_period_months' => 0,
+            'approval_levels' => 1,
+            'is_active' => true,
+        ]);
+
+        EmployeeLeaveBalance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $emp->id,
+            'leave_type' => 'annual',
+            'year' => 2026,
+            'policy_type' => 'annual',
+            'total_quota' => 12,
+            'accrued_days' => 12,
+            'used_days' => 2,
+            'adjusted_days' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('hris.leaves.balances.initialize'), [
+                'leave_type' => 'annual',
+                'year' => 2026,
+                'force_all' => true,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $empBalance = EmployeeLeaveBalance::query()->where('employee_id', $emp->id)->where('year', 2026)->firstOrFail();
+        $this->assertSame('prorated', $empBalance->policy_type);
+        $this->assertSame(15.0, (float) $empBalance->total_quota);
+        $this->assertSame(15.0, (float) $empBalance->accrued_days);
+        $this->assertSame(2.0, (float) $empBalance->used_days);
+        $this->assertSame(13.0, $empBalance->remainingBalance());
+    }
+
+    public function test_calculate_entitlement_handles_null_hire_date_without_crashing(): void
+    {
+        $user = User::factory()->create();
+        $emp = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2024-01-01',
+            'created_at' => '2024-01-01',
+        ]);
+        $emp->hire_date = null;
+        $emp->created_at = Carbon::parse('2024-01-01');
+
+        $policy = LeavePolicy::query()->create([
+            'user_id' => $user->id,
+            'leave_type' => 'annual',
+            'policy_type' => 'annual',
+            'yearly_days' => 12,
+            'waiting_period_months' => 0,
+            'approval_levels' => 1,
+            'is_active' => true,
+        ]);
+
+        $calculation = app(LeaveBalanceService::class)->calculateEntitlement(
+            $emp,
+            $policy,
+            Carbon::parse('2026-05-01')
+        );
+
+        $this->assertSame(12.0, $calculation['total_quota']);
+        $this->assertSame(12.0, $calculation['accrued_days']);
+    }
+
     /**
      * @return array{Employee, LeavePolicy}
      */

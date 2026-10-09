@@ -685,7 +685,7 @@ export function ResignReasonsCard({
     const activeSlice = hoveredIndex !== null ? slices[hoveredIndex] : null;
 
     return (
-        <Card className="flex flex-col justify-between border-rose-100/80 bg-card py-3 shadow-xs dark:border-rose-950/40">
+        <Card className="flex h-full flex-col justify-between border-rose-100/80 bg-card py-3 shadow-xs dark:border-rose-950/40">
             <CardHeader className="px-3 pb-1">
                 <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -693,11 +693,11 @@ export function ResignReasonsCard({
                             <UserMinus className="size-3.5" />
                         </span>
                         <CardTitle className="truncate text-xs font-semibold">
-                            Alasan Resign
+                            Offboarding Reason
                         </CardTitle>
                     </div>
                     <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                        {data.total} Resign
+                        {data.total} Offboarding
                     </Badge>
                 </div>
             </CardHeader>
@@ -706,7 +706,7 @@ export function ResignReasonsCard({
                 {slices.length === 0 ? (
                     <div className="flex h-[130px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
                         <CheckCircle2 className="size-6 text-emerald-500 mb-1" />
-                        <span>Belum ada karyawan resign</span>
+                        <span>Belum ada karyawan offboarding</span>
                         <span className="text-[10px] text-muted-foreground">
                             Tingkat retensi 100%
                         </span>
@@ -721,7 +721,7 @@ export function ResignReasonsCard({
                                     : `${data.total}`
                             }
                             centerLabel={
-                                activeSlice ? activeSlice.label : 'Resigned'
+                                activeSlice ? activeSlice.label : 'Offboarding'
                             }
                             hoveredIndex={hoveredIndex}
                             onHover={setHoveredIndex}

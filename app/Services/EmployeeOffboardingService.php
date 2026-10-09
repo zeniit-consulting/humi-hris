@@ -162,6 +162,10 @@ class EmployeeOffboardingService
     {
         $employee->directReports()->update(['manager_id' => null]);
 
+        if (! $employee->phone && ! $employee->email) {
+            return;
+        }
+
         $portalUsers = User::query()
             ->where(function ($query) use ($employee): void {
                 if ($employee->phone) {

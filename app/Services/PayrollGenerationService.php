@@ -648,7 +648,7 @@ class PayrollGenerationService
         $workingDays = 0;
         $payableDays = 0;
 
-        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+        for ($date = $start->copy(); $date->lte($end); $date = $date->addDay()) {
             $schedule = $schedules->get($date->toDateString());
             $isWorkingDay = $schedule ? ! $schedule->is_day_off : $date->isWeekday();
 
@@ -798,7 +798,7 @@ class PayrollGenerationService
         $missingDates = [];
         $evalEnd = $end->copy()->min(now());
 
-        for ($date = $start->copy(); $date->lte($evalEnd); $date->addDay()) {
+        for ($date = $start->copy(); $date->lte($evalEnd); $date = $date->addDay()) {
             if ($date->greaterThan($cutoffDate)) {
                 break;
             }

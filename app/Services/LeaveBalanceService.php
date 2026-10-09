@@ -33,7 +33,7 @@ class LeaveBalanceService
     public function calculateEntitlement(Employee $employee, LeavePolicy $policy, CarbonInterface $asOf): array
     {
         $asOf = $asOf->copy()->startOfDay();
-        $hireDate = $employee->hire_date->copy()->startOfDay();
+        $hireDate = $employee->hire_date ? $employee->hire_date->copy()->startOfDay() : ($employee->created_at ? $employee->created_at->copy()->startOfDay() : now()->startOfDay());
         $yearlyDays = (float) $policy->yearly_days;
 
         if (in_array($policy->policy_type, ['anniversary', 'monthly_accrual'], true)) {
@@ -96,7 +96,8 @@ class LeaveBalanceService
 
     public function requestEligibilityError(Employee $employee, LeavePolicy $policy, CarbonInterface $startDate, float $totalDays): ?string
     {
-        $eligibleFrom = $employee->hire_date->copy()->addMonthsNoOverflow((int) $policy->waiting_period_months);
+        $hireDate = $employee->hire_date ? $employee->hire_date->copy()->startOfDay() : ($employee->created_at ? $employee->created_at->copy()->startOfDay() : now()->startOfDay());
+        $eligibleFrom = $hireDate->copy()->addMonthsNoOverflow((int) $policy->waiting_period_months);
 
         if ($startDate->isBefore($eligibleFrom)) {
             return 'Cuti tahunan baru dapat diambil mulai '.$eligibleFrom->translatedFormat('d F Y').'.';
@@ -120,7 +121,7 @@ class LeaveBalanceService
             'yearly_days' => 12,
             'waiting_period_months' => 0,
         ]);
-        $referenceDate = $asOf ?? ($year === now()->year
+        $referenceDate = $asOf ?? ($year === (int) now()->year
             ? now()
             : Carbon::create($year, 12, 31));
         $calculation = $this->calculateEntitlement($employee, $policy, $referenceDate);
@@ -128,19 +129,24 @@ class LeaveBalanceService
         $existing = EmployeeLeaveBalance::withoutGlobalScopes()
             ->where('employee_id', $employee->id)
             ->where('leave_type', $leaveType)
-            ->where('year', $calculation['balance_year'])
+            ->where(function ($q) use ($calculation, $year) {
+                $q->where('year', $calculation['balance_year'])
+                  ->orWhere('year', $year);
+            })
             ->first();
 
         if ($existing) {
             return $existing;
         }
 
-        return DB::transaction(function () use ($employee, $leaveType, $policy, $calculation) {
+        $balanceYear = $calculation['balance_year'];
+
+        return DB::transaction(function () use ($employee, $leaveType, $policy, $calculation, $balanceYear) {
             $balance = EmployeeLeaveBalance::withoutGlobalScopes()->create([
                 'user_id' => $employee->user_id,
                 'employee_id' => $employee->id,
                 'leave_type' => $leaveType,
-                'year' => $calculation['balance_year'],
+                'year' => $balanceYear,
                 'period_start' => $calculation['period_start'],
                 'period_end' => $calculation['period_end'],
                 'policy_type' => $policy->policy_type,
@@ -155,7 +161,7 @@ class LeaveBalanceService
                     'user_id' => $employee->user_id,
                     'employee_id' => $employee->id,
                     'leave_type' => $leaveType,
-                    'year' => $calculation['balance_year'],
+                    'year' => $balanceYear,
                     'amount' => $calculation['accrued_days'],
                     'type' => $policy->isAccrual() ? 'accrual' : 'grant',
                     'description' => 'Jatah awal cuti periode '.$calculation['period_start'].' s/d '.$calculation['period_end'],
@@ -172,14 +178,16 @@ class LeaveBalanceService
     /**
      * Inisialisasi balance untuk SEMUA karyawan aktif milik $owner di tahun $year.
      */
-    public function initializeBalancesForAll(User $owner, string $leaveType, int $year, ?array $employeeIds = null): int
+    public function initializeBalancesForAll(User $owner, string $leaveType, int $year, ?array $employeeIds = null, bool $forceAll = false): int
     {
         $policy = $this->getPolicy($owner, $leaveType) ?? new LeavePolicy([
             'policy_type' => 'annual',
             'yearly_days' => 12,
             'waiting_period_months' => 0,
         ]);
-        $referenceDate = $year === now()->year ? now() : Carbon::create($year, 12, 31);
+        $referenceDate = Carbon::create($year, 12, 31);
+        $asOfForAccrual = $year === (int) now()->year ? now() : $referenceDate;
+
         $employees = Employee::withoutGlobalScopes()
             ->where('user_id', $owner->id)
             ->where('is_active', true)
@@ -190,19 +198,104 @@ class LeaveBalanceService
         $count = 0;
         foreach ($employees as $employee) {
             $calculation = $this->calculateEntitlement($employee, $policy, $referenceDate);
-            $exists = EmployeeLeaveBalance::withoutGlobalScopes()
+            if ($policy->policy_type === 'monthly_accrual' && $year === (int) now()->year) {
+                $accrualCalc = $this->calculateEntitlement($employee, $policy, $asOfForAccrual);
+                $calculation['accrued_days'] = $accrualCalc['accrued_days'];
+            }
+
+            $targetYear = $year;
+
+            $existing = EmployeeLeaveBalance::withoutGlobalScopes()
                 ->where('employee_id', $employee->id)
                 ->where('leave_type', $leaveType)
-                ->where('year', $calculation['balance_year'])
-                ->exists();
+                ->where(function ($q) use ($targetYear, $calculation) {
+                    $q->where('year', $targetYear)
+                      ->orWhere('year', $calculation['balance_year']);
+                })
+                ->first();
 
-            if (! $exists) {
-                $this->getOrCreateBalance($employee, $leaveType, $year, $referenceDate);
+            if (! $existing) {
+                DB::transaction(function () use ($employee, $leaveType, $policy, $calculation, $targetYear) {
+                    $balance = EmployeeLeaveBalance::withoutGlobalScopes()->create([
+                        'user_id' => $employee->user_id,
+                        'employee_id' => $employee->id,
+                        'leave_type' => $leaveType,
+                        'year' => $targetYear,
+                        'period_start' => $calculation['period_start'],
+                        'period_end' => $calculation['period_end'],
+                        'policy_type' => $policy->policy_type,
+                        'total_quota' => $calculation['total_quota'],
+                        'accrued_days' => $calculation['accrued_days'],
+                        'used_days' => 0,
+                        'adjusted_days' => 0,
+                    ]);
+
+                    if ($calculation['accrued_days'] > 0) {
+                        EmployeeLeaveBalanceTransaction::withoutGlobalScopes()->create([
+                            'user_id' => $employee->user_id,
+                            'employee_id' => $employee->id,
+                            'leave_type' => $leaveType,
+                            'year' => $targetYear,
+                            'amount' => $calculation['accrued_days'],
+                            'type' => $policy->isAccrual() ? 'accrual' : 'grant',
+                            'description' => 'Jatah awal cuti periode '.$calculation['period_start'].' s/d '.$calculation['period_end'],
+                            'leave_request_id' => null,
+                            'balance_after' => $calculation['accrued_days'],
+                            'effective_date' => $calculation['period_start'],
+                        ]);
+                    }
+                });
+                $count++;
+            } elseif ($forceAll) {
+                DB::transaction(function () use ($existing, $policy, $calculation, $targetYear) {
+                    $oldAccrued = (float) $existing->accrued_days;
+                    $newAccrued = (float) $calculation['accrued_days'];
+                    $diff = round($newAccrued - $oldAccrued, 2);
+
+                    $existing->update([
+                        'year' => $targetYear,
+                        'policy_type' => $policy->policy_type,
+                        'total_quota' => $calculation['total_quota'],
+                        'accrued_days' => $newAccrued,
+                        'period_start' => $calculation['period_start'],
+                        'period_end' => $calculation['period_end'],
+                    ]);
+                    $existing->refresh();
+
+                    if ($diff != 0) {
+                        EmployeeLeaveBalanceTransaction::withoutGlobalScopes()->create([
+                            'user_id' => $existing->user_id,
+                            'employee_id' => $existing->employee_id,
+                            'leave_type' => $existing->leave_type,
+                            'year' => $targetYear,
+                            'amount' => $diff,
+                            'type' => 'adjustment',
+                            'description' => "Penyesuaian kebijakan cuti ({$policy->policy_type}): kuota {$calculation['total_quota']} hari",
+                            'leave_request_id' => null,
+                            'balance_after' => $existing->remainingBalance(),
+                            'effective_date' => now()->toDateString(),
+                        ]);
+                    }
+                });
                 $count++;
             }
         }
 
         return $count;
+    }
+
+    /**
+     * Terapkan kebijakan cuti ke semua karyawan aktif milik $owner untuk tahun $year.
+     */
+    public function applyPolicyToAll(User $owner, LeavePolicy $policy, int $year, ?array $employeeIds = null): int
+    {
+        return $this->initializeBalancesForAll(
+            $owner,
+            $policy->leave_type,
+            $year,
+            $employeeIds,
+            true
+        );
     }
 
     /**
@@ -409,9 +502,17 @@ class LeaveBalanceService
         return EmployeeLeaveBalance::withoutGlobalScopes()
             ->with('employee:id,employee_code,first_name,last_name')
             ->where('user_id', $owner->id)
-            ->where('year', $year)
             ->where('leave_type', $leaveType)
-            ->get();
+            ->where(function ($q) use ($year) {
+                $q->where('year', $year)
+                  ->orWhere(function ($sub) use ($year) {
+                      $sub->whereYear('period_start', '<=', $year)
+                          ->whereYear('period_end', '>=', $year);
+                  });
+            })
+            ->orderByRaw('CASE WHEN year = ? THEN 0 ELSE 1 END', [$year])
+            ->get()
+            ->unique('employee_id');
     }
 
     /**

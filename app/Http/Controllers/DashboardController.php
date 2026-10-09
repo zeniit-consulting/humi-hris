@@ -143,10 +143,10 @@ class DashboardController extends Controller
 
         while ($cursor->lte($chartEndDate)) {
             $dates->push($cursor->copy());
-            $cursor->addDay();
+            $cursor = $cursor->addDay();
         }
 
-        $attendanceChart = $dates->map(function (Carbon $date) use ($dailyGrouped, $activeEmployees) {
+        $attendanceChart = $dates->map(function ($date) use ($dailyGrouped, $activeEmployees) {
             $dateKey = $date->toDateString();
             $rows = collect($dailyGrouped->get($dateKey, []));
             $counts = $rows->pluck('total', 'status');
