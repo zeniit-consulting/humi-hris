@@ -444,9 +444,24 @@ class BackupAttendanceController extends Controller
         return $this->success($attendance, 'Clock out backup berhasil dicatat.');
     }
 
+    private function isWfaForDate(Employee $employee, ?string $date = null): bool
+    {
+        if ((bool) $employee->is_wfa) {
+            return true;
+        }
+
+        $date ??= now($employee->timezone ?? config('app.timezone'))->toDateString();
+        $schedule = EmployeeSchedule::query()
+            ->where('employee_id', $employee->id)
+            ->whereDate('work_date', $date)
+            ->first();
+
+        return (bool) ($schedule?->is_wfa ?? false);
+    }
+
     private function ensureWithinAttendanceRadius(User $user, Employee $employee, mixed $latitude, mixed $longitude): void
     {
-        if ($employee->is_wfa) {
+        if ($this->isWfaForDate($employee)) {
             return;
         }
 

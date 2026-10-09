@@ -574,9 +574,24 @@ class AttendanceController extends Controller
         return $referenceTime->copy()->setTimezone($timezone)->lte($end->addDay());
     }
 
+    private function isWfaForDate(Employee $employee, ?string $date = null): bool
+    {
+        if ((bool) $employee->is_wfa) {
+            return true;
+        }
+
+        $date ??= now($employee->timezone ?? config('app.timezone'))->toDateString();
+        $schedule = EmployeeSchedule::query()
+            ->where('employee_id', $employee->id)
+            ->whereDate('work_date', $date)
+            ->first();
+
+        return (bool) ($schedule?->is_wfa ?? false);
+    }
+
     private function ensureWithinAttendanceRadius(User $user, Employee $employee, mixed $latitude, mixed $longitude): void
     {
-        if ($employee->is_wfa) {
+        if ($this->isWfaForDate($employee)) {
             return;
         }
 
@@ -660,10 +675,11 @@ class AttendanceController extends Controller
      */
     private function attendancePolicyPayload(User $user, Employee $employee): array
     {
+        $isWfa = $this->isWfaForDate($employee);
         $locations = $this->attendanceLocationsForEmployee($user, $employee);
 
         return [
-            'mode' => $employee->is_wfa ? 'wfa' : 'onsite',
+            'mode' => $isWfa ? 'wfa' : 'onsite',
             'employee' => [
                 'id' => $employee->id,
                 'employee_code' => $employee->employee_code,
@@ -678,7 +694,7 @@ class AttendanceController extends Controller
      */
     private function attendanceLocationsForEmployee(User $user, Employee $employee): Collection
     {
-        if ($employee->is_wfa) {
+        if ($this->isWfaForDate($employee)) {
             return collect();
         }
 

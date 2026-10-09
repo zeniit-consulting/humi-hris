@@ -25,6 +25,7 @@ class EmployeeSchedule extends Model
         'start_time',
         'end_time',
         'is_day_off',
+        'is_wfa',
         'notes',
     ];
 
@@ -38,6 +39,7 @@ class EmployeeSchedule extends Model
         return [
             'work_date' => 'date',
             'is_day_off' => 'boolean',
+            'is_wfa' => 'boolean',
         ];
     }
 

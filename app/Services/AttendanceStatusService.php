@@ -37,7 +37,7 @@ class AttendanceStatusService
 
         $shift = $this->resolveShift($data, $ownerId);
 
-        if (! $shift || $shift->is_day_off || $shift->start_time === null) {
+        if (! $shift || $shift->is_day_off || (bool) ($shift->is_wfa ?? false) || $shift->start_time === null) {
             return $result;
         }
 
@@ -223,6 +223,10 @@ class AttendanceStatusService
             'attendance_date' => $attendance->attendance_date?->toDateString(),
             'check_in_at' => $attendance->check_in_at,
         ], $ownerId);
+
+        if ($shift && (bool) $shift->is_wfa) {
+            return 0.0;
+        }
 
         // If late_minutes is not set, but attendance has check_in_at and a valid shift with start_time
         if ($lateMinutes <= 0 && ! empty($attendance->check_in_at) && $shift && ! $shift->is_day_off && ! empty($shift->start_time)) {
@@ -527,6 +531,7 @@ class AttendanceStatusService
                     'start_time' => $schedule->start_time,
                     'end_time' => $schedule->end_time,
                     'is_day_off' => false,
+                    'is_wfa' => (bool) $schedule->is_wfa,
                 ]);
             }
 

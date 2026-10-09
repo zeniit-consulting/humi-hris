@@ -258,7 +258,7 @@ class AttendanceController extends Controller
             ->where('user_id', $ownerId)
             ->whereBetween('work_date', [$hStartDate->toDateString(), $hEndDate->toDateString()])
             ->when($filters['employee_id'] !== '', fn ($q) => $q->where('employee_id', $filters['employee_id']))
-            ->get(['id', 'employee_id', 'work_date', 'shift_code', 'is_day_off', 'start_time', 'end_time'])
+            ->get(['id', 'employee_id', 'work_date', 'shift_code', 'is_day_off', 'is_wfa', 'start_time', 'end_time'])
             ->groupBy(fn ($s) => $s->employee_id.'_'.$s->work_date->toDateString());
 
         $hDates = collect();
@@ -293,6 +293,7 @@ class AttendanceController extends Controller
                 'on_leave' => 0,
                 'absent' => 0,
                 'missing' => 0,
+                'wfa' => 0,
             ];
 
             foreach ($hDates as $dateInfo) {
@@ -302,6 +303,7 @@ class AttendanceController extends Controller
 
                 $shiftCode = $sched?->shift_code;
                 $isDayOff = (bool) ($sched?->is_day_off ?? false);
+                $isWfa = (bool) ($sched?->is_wfa ?? false);
 
                 if ($att) {
                     $status = $att->status;
@@ -314,6 +316,9 @@ class AttendanceController extends Controller
                 } else {
                     if ($isDayOff || $shiftCode === 'OFF' || ($dateInfo['is_weekend'] && ! $sched)) {
                         $status = 'off';
+                    } elseif ($isWfa) {
+                        $status = 'wfa';
+                        $summary['wfa']++;
                     } elseif ($dateInfo['is_past'] || $dateInfo['is_today']) {
                         $status = 'missing';
                         $summary['missing']++;
@@ -328,6 +333,7 @@ class AttendanceController extends Controller
                     'on_leave' => 'Cuti',
                     'absent' => 'Absen',
                     'missing' => 'Tidak Absen',
+                    'wfa' => 'WFA',
                     'off' => 'Libur (OFF)',
                     'scheduled' => 'Terjadwal',
                     default => ucfirst($status),
@@ -386,7 +392,7 @@ class AttendanceController extends Controller
                 'on_leave' => $todayOnLeave,
                 'absent' => (int) ($todaySummaryRows['absent'] ?? $todayFallbackAbsent),
             ],
-            'statusOptions' => ['present', 'late', 'on_leave', 'absent'],
+            'statusOptions' => ['present', 'late', 'on_leave', 'wfa', 'absent'],
         ]);
     }
 
@@ -417,13 +423,16 @@ class AttendanceController extends Controller
         $scheduleByDate = EmployeeSchedule::query()
             ->where('employee_id', $employee->id)
             ->whereBetween('work_date', [$start->toDateString(), $end->toDateString()])
-            ->get(['work_date', 'shift_code'])
+            ->get(['work_date', 'shift_code', 'is_wfa', 'is_day_off'])
             ->keyBy(fn (EmployeeSchedule $schedule) => $schedule->work_date->toDateString());
 
         $rows = collect();
         for ($date = $start->copy(); $date->lte($end); $date = $date->addDay()) {
             $dateKey = $date->toDateString();
             $attendance = $attendanceByDate->get($dateKey);
+            $sched = $scheduleByDate->get($dateKey);
+            $isWfa = (bool) ($sched?->is_wfa ?? false);
+            $isOff = (bool) ($sched?->is_day_off ?? false) || $sched?->shift_code === 'OFF';
 
             $rows->push($attendance ? [
                 'id' => $attendance->id,
@@ -431,7 +440,7 @@ class AttendanceController extends Controller
                 'timezone' => $attendance->timezone,
                 'shift_name' => $attendance->shift?->name
                     ?? $attendance->shift?->code
-                    ?? $scheduleByDate->get($dateKey)?->shift_code
+                    ?? $sched?->shift_code
                     ?? 'OFF',
                 'status' => $attendance->status,
                 'is_backup' => (bool) ($attendance->is_backup ?? false),
@@ -457,8 +466,8 @@ class AttendanceController extends Controller
                 'id' => null,
                 'attendance_date' => $dateKey,
                 'timezone' => $employee->timezone,
-                'shift_name' => $scheduleByDate->get($dateKey)?->shift_code ?? 'OFF',
-                'status' => 'absent',
+                'shift_name' => $sched?->shift_code ?? 'OFF',
+                'status' => $isOff ? 'off' : ($isWfa ? 'wfa' : 'absent'),
                 'late_minutes' => null,
                 'late_level' => null,
                 'late_penalty' => 0.0,
@@ -469,8 +478,8 @@ class AttendanceController extends Controller
                 'check_out_photo_url' => null,
                 'face_similarity_score' => null,
                 'has_photo' => false,
-                'notes' => null,
-                'is_missing' => true,
+                'notes' => $isWfa ? 'Shift WFA (Bebas Absensi)' : null,
+                'is_missing' => ! $isWfa && ! $isOff,
             ]);
         }
 

@@ -90,6 +90,8 @@ const statusLabelMap: Record<string, string> = {
     present: 'Hadir',
     late: 'Terlambat',
     on_leave: 'Cuti',
+    wfa: 'WFA',
+    off: 'Libur (OFF)',
     absent: 'Absen',
 };
 
@@ -172,6 +174,7 @@ export default function MonthlyAttendancePage() {
     const summaryCards = [
         { label: 'Total Record', value: summary.total },
         { label: 'Hadir', value: summary.present },
+        { label: 'WFA', value: summary.wfa ?? 0 },
         { label: 'Terlambat', value: summary.late },
         { label: 'Cuti', value: summary.on_leave },
         { label: 'Absen', value: summary.absent },
@@ -247,7 +250,7 @@ export default function MonthlyAttendancePage() {
                     </CardContent>
                 </Card>
 
-                <div className="grid gap-3 md:grid-cols-5">
+                <div className="grid gap-3 md:grid-cols-6">
                     {summaryCards.map((item) => (
                         <Card key={item.label} className="gap-2 py-3">
                             <CardHeader className="px-4 pb-0">
@@ -320,6 +323,11 @@ export default function MonthlyAttendancePage() {
                                                                   'present'
                                                                 ? 'default'
                                                                 : 'secondary'
+                                                    }
+                                                    className={
+                                                        row.status === 'wfa'
+                                                            ? 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800'
+                                                            : ''
                                                     }
                                                 >
                                                     {statusLabelMap[

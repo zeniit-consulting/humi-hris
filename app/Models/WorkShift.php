@@ -23,6 +23,7 @@ class WorkShift extends Model
         'start_time',
         'end_time',
         'is_day_off',
+        'is_wfa',
         'late_tolerance_minutes',
     ];
 
@@ -35,6 +36,7 @@ class WorkShift extends Model
     {
         return [
             'is_day_off' => 'boolean',
+            'is_wfa' => 'boolean',
             'late_tolerance_minutes' => 'integer',
         ];
     }

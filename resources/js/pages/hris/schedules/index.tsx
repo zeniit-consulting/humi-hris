@@ -91,6 +91,7 @@ type ShiftOption = {
     start_time: string | null;
     end_time: string | null;
     is_day_off: boolean;
+    is_wfa?: boolean;
     late_tolerance_minutes: number;
 };
 
@@ -119,6 +120,7 @@ type MonthlyMatrixSchedule = {
     start_time: string | null;
     end_time: string | null;
     is_day_off: boolean;
+    is_wfa?: boolean;
     notes?: string | null;
 };
 
@@ -169,6 +171,7 @@ type ShiftFormData = {
     start_time: string;
     end_time: string;
     late_tolerance_minutes: number;
+    is_wfa: boolean;
 };
 
 type ScheduleRow = {
@@ -179,6 +182,7 @@ type ScheduleRow = {
     start_time: string;
     end_time: string;
     is_day_off: boolean;
+    is_wfa?: boolean;
     notes: string;
 };
 
@@ -193,12 +197,14 @@ const buildShiftCodeFromTimes = (
     startTime: string,
     endTime: string,
     isDayOff: boolean,
+    isWfa: boolean = false,
 ) => {
     if (isDayOff || startTime === '' || endTime === '') {
         return 'OFF';
     }
 
-    return `${startTime.slice(0, 2)}${endTime.slice(0, 2)}`;
+    const base = `${startTime.slice(0, 2)}${endTime.slice(0, 2)}`;
+    return isWfa ? `${base}-WFA` : base;
 };
 
 const formatShiftTime = (shift: {
@@ -433,6 +439,7 @@ export default function SchedulePage() {
         start_time: '08:00',
         end_time: '17:00',
         late_tolerance_minutes: 15,
+        is_wfa: false,
     });
 
     useEffect(() => {
@@ -528,6 +535,7 @@ export default function SchedulePage() {
             start_time: '08:00',
             end_time: '17:00',
             late_tolerance_minutes: 15,
+            is_wfa: false,
         });
         setShiftDialogOpen(true);
     };
@@ -540,6 +548,7 @@ export default function SchedulePage() {
             start_time: shift.start_time ?? '08:00',
             end_time: shift.end_time ?? '17:00',
             late_tolerance_minutes: shift.late_tolerance_minutes,
+            is_wfa: Boolean(shift.is_wfa),
         });
         setShiftDialogOpen(true);
     };
@@ -836,6 +845,7 @@ export default function SchedulePage() {
         shiftForm.data.start_time,
         shiftForm.data.end_time,
         false,
+        shiftForm.data.is_wfa,
     );
 
     return (
@@ -1359,6 +1369,7 @@ export default function SchedulePage() {
                                                                 const sched = row.schedules?.[day.date];
                                                                 const shiftCode = sched?.shift_code || 'OFF';
                                                                 const isOff = sched?.is_day_off || shiftCode === 'OFF';
+                                                                const isWfa = Boolean(sched?.is_wfa) || shiftCode.includes('WFA');
                                                                 const isDayOffCol = day.is_sunday || day.is_holiday;
 
                                                                 return (
@@ -1370,11 +1381,15 @@ export default function SchedulePage() {
                                                                                 ? 'bg-rose-500/5 dark:bg-rose-950/20'
                                                                                 : '',
                                                                         )}
-                                                                        title={`${row.employee_name} (${day.date})\nShift: ${shiftCode}${sched?.start_time ? ` (${sched.start_time} - ${sched.end_time})` : ''}${sched?.notes ? `\nCatatan: ${sched.notes}` : ''}`}
+                                                                        title={`${row.employee_name} (${day.date})\nShift: ${shiftCode}${sched?.start_time ? ` (${sched.start_time} - ${sched.end_time})` : ''}${isWfa ? '\nStatus: WFA (Bebas Absensi)' : ''}${sched?.notes ? `\nCatatan: ${sched.notes}` : ''}`}
                                                                     >
                                                                         {isOff ? (
                                                                             <span className="inline-block rounded px-1 py-0.5 text-[9px] font-medium text-muted-foreground/60 bg-muted/40">
                                                                                 OFF
+                                                                            </span>
+                                                                        ) : isWfa ? (
+                                                                            <span className="inline-block rounded px-1 py-0.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 hover:bg-indigo-100 cursor-default">
+                                                                                {shiftCode}
                                                                             </span>
                                                                         ) : (
                                                                             <span className="inline-block rounded px-1 py-0.5 text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 cursor-default">
@@ -1407,7 +1422,9 @@ export default function SchedulePage() {
                                             :{' '}
                                             {shift.is_day_off
                                                 ? 'Libur'
-                                                : `${shift.start_time} - ${shift.end_time}`}
+                                                : shift.is_wfa
+                                                  ? `${shift.start_time} - ${shift.end_time} (WFA)`
+                                                  : `${shift.start_time} - ${shift.end_time}`}
                                         </span>
                                     ))}
                                 </div>
@@ -1569,9 +1586,17 @@ export default function SchedulePage() {
                                             </div>
                                         </td>
                                         <td className="px-2 py-2">
-                                            {shift.is_day_off
-                                                ? 'Day Off'
-                                                : 'Aktif'}
+                                            {shift.is_day_off ? (
+                                                <span className="text-muted-foreground text-xs">Day Off</span>
+                                            ) : shift.is_wfa ? (
+                                                <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800">
+                                                    WFA
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800">
+                                                    Aktif
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-2 py-2">
                                             {shift.is_day_off ? (
@@ -1706,6 +1731,25 @@ export default function SchedulePage() {
                                     shiftForm.errors.late_tolerance_minutes
                                 }
                             />
+                        </div>
+
+                        <div className="flex items-start space-x-2.5 rounded-lg border p-3 bg-muted/20 md:col-span-2">
+                            <Checkbox
+                                id="shift_is_wfa"
+                                checked={shiftForm.data.is_wfa}
+                                onCheckedChange={(checked) =>
+                                    shiftForm.setData('is_wfa', Boolean(checked))
+                                }
+                                className="mt-0.5"
+                            />
+                            <div className="grid gap-1 leading-none">
+                                <Label htmlFor="shift_is_wfa" className="cursor-pointer font-medium">
+                                    Shift WFA (Kerja Fleksibel / Bebas Absensi)
+                                </Label>
+                                <p className="text-xs text-muted-foreground">
+                                    Karyawan pada shift ini tidak diwajibkan melakukan absensi dan tidak terkena potongan kehadiran atau denda keterlambatan.
+                                </p>
+                            </div>
                         </div>
 
                         <div className="grid gap-2 md:col-span-2">

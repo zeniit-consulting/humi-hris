@@ -13,7 +13,7 @@ export type HorizontalMatrixDate = {
 
 export type HorizontalMatrixCell = {
     shift_code: string;
-    status: 'present' | 'late' | 'on_leave' | 'absent' | 'missing' | 'off' | 'scheduled';
+    status: 'present' | 'late' | 'on_leave' | 'absent' | 'missing' | 'off' | 'scheduled' | 'wfa';
     status_label: string;
     check_in?: string | null;
     check_out?: string | null;
@@ -31,6 +31,7 @@ export type HorizontalMatrixRow = {
         on_leave: number;
         absent: number;
         missing: number;
+        wfa?: number;
     };
 };
 
@@ -50,6 +51,8 @@ const getStatusBadgeStyle = (status: HorizontalMatrixCell['status']) => {
             return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-800 hover:bg-amber-200';
         case 'on_leave':
             return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/70 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-200';
+        case 'wfa':
+            return 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-950/70 dark:text-indigo-300 dark:border-indigo-800 hover:bg-indigo-200';
         case 'absent':
             return 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800 hover:bg-rose-200';
         case 'missing':
@@ -100,6 +103,10 @@ export function AttendanceHorizontalMatrix({
                     <div className="inline-flex items-center gap-1.5 rounded border border-blue-300 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-800 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300">
                         <span className="size-2 rounded-full bg-blue-500" />
                         Cuti
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 rounded border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300">
+                        <span className="size-2 rounded-full bg-indigo-500" />
+                        WFA
                     </div>
                     <div className="inline-flex items-center gap-1.5 rounded border border-rose-300 bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-800 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300">
                         <span className="size-2 rounded-full bg-rose-500" />
@@ -264,6 +271,17 @@ export function AttendanceHorizontalMatrix({
                                         >
                                             {row.summary.absent}A
                                         </span>
+                                        {(row.summary.wfa ?? 0) > 0 && (
+                                            <>
+                                                <span className="text-muted-foreground/40">·</span>
+                                                <span
+                                                    title="WFA (Bebas Absensi)"
+                                                    className="font-semibold text-indigo-600 dark:text-indigo-400"
+                                                >
+                                                    {row.summary.wfa}WFA
+                                                </span>
+                                            </>
+                                        )}
                                         {row.summary.missing > 0 && (
                                             <>
                                                 <span className="text-muted-foreground/40">·</span>

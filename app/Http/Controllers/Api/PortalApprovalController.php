@@ -179,5 +179,5 @@ class PortalApprovalController extends Controller
 
         $item->update(['status' => 'approved', 'approved_by' => $actor->id, 'approved_at' => now()]);
     }
-    private function approveShift(ShiftChangeRequest $item, User $actor): void { $shift = WorkShift::findOrFail($item->requested_shift_id); EmployeeSchedule::query()->updateOrCreate(['employee_id' => $item->employee_id, 'work_date' => $item->requested_date], ['user_id' => $item->user_id, 'shift_code' => $shift->code, 'start_time' => $shift->start_time, 'end_time' => $shift->end_time, 'is_day_off' => $shift->is_day_off]); $item->update(['status' => 'approved', 'approved_by' => $actor->id, 'approved_at' => now()]); }
+    private function approveShift(ShiftChangeRequest $item, User $actor): void { $shift = WorkShift::findOrFail($item->requested_shift_id); EmployeeSchedule::query()->updateOrCreate(['employee_id' => $item->employee_id, 'work_date' => $item->requested_date], ['user_id' => $item->user_id, 'shift_code' => $shift->code, 'start_time' => $shift->start_time, 'end_time' => $shift->end_time, 'is_day_off' => $shift->is_day_off, 'is_wfa' => (bool) $shift->is_wfa]); $item->update(['status' => 'approved', 'approved_by' => $actor->id, 'approved_at' => now()]); }
 }

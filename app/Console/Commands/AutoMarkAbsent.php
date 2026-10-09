@@ -24,7 +24,7 @@ class AutoMarkAbsent extends Command
 
         $schedules = EmployeeSchedule::query()
             ->withoutGlobalScopes()
-            ->where('work_date', $date)
+            ->whereDate('work_date', $date)
             ->where('is_day_off', false)
             ->get();
 
@@ -36,7 +36,7 @@ class AutoMarkAbsent extends Command
 
         $existingAttendances = EmployeeAttendance::query()
             ->withoutGlobalScopes()
-            ->where('attendance_date', $date)
+            ->whereDate('attendance_date', $date)
             ->pluck('employee_id')
             ->all();
 
@@ -68,10 +68,12 @@ class AutoMarkAbsent extends Command
             'employee_id' => $schedule->employee_id,
             'shift_id' => null,
             'attendance_date' => $date,
-            'status' => 'absent',
+            'status' => (bool) $schedule->is_wfa ? 'wfa' : 'absent',
             'check_in_at' => null,
             'check_out_at' => null,
-            'notes' => 'Otomatis ditandai absen (tidak ada record absensi)',
+            'notes' => (bool) $schedule->is_wfa
+                ? 'Otomatis ditandai WFA (jadwal shift WFA, bebas absensi)'
+                : 'Otomatis ditandai absen (tidak ada record absensi)',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -82,9 +84,13 @@ class AutoMarkAbsent extends Command
             }
         });
 
+        $absentCount = $rows->where('status', 'absent')->count();
+        $wfaCount = $rows->where('status', 'wfa')->count();
+
         $this->info(sprintf(
-            'Selesai. %d karyawan ditandai absen untuk tanggal %s.',
-            $rows->count(),
+            'Selesai. %d karyawan ditandai absen, %d karyawan ditandai WFA untuk tanggal %s.',
+            $absentCount,
+            $wfaCount,
             $date,
         ));
 

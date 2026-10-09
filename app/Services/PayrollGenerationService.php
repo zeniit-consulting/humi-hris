@@ -331,7 +331,7 @@ class PayrollGenerationService
         $isDailyWorker = $employee->employment_type === 'DW';
         $dailyWage = (float) ($employee->daily_wage ?? 0);
         $paidAttendanceDays = $isDailyWorker
-            ? $employee->attendances->whereIn('status', ['present', 'late'])->unique('attendance_date')->count()
+            ? $employee->attendances->whereIn('status', ['present', 'late', 'wfa'])->unique('attendance_date')->count()
             : 0;
         $baseSalary = $isDailyWorker
             ? round($dailyWage * $paidAttendanceDays, 2)
@@ -811,8 +811,13 @@ class PayrollGenerationService
                 continue;
             }
 
+            // Shifts with WFA do not require attendance and must not trigger cutoff deductions
+            if ($schedule && (bool) $schedule->is_wfa) {
+                continue;
+            }
+
             $attendance = $attendances->get($dateStr);
-            if ($attendance && ($attendance->check_in_at !== null || in_array($attendance->status, ['present', 'late', 'on_leave'], true))) {
+            if ($attendance && ($attendance->check_in_at !== null || in_array($attendance->status, ['present', 'late', 'on_leave', 'wfa'], true))) {
                 continue;
             }
 

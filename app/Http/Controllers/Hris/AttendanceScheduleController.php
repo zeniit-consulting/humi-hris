@@ -26,6 +26,7 @@ class AttendanceScheduleController extends Controller
                     'start_time' => $shift->start_time,
                     'end_time' => $shift->end_time,
                     'is_day_off' => $shift->is_day_off,
+                    'is_wfa' => (bool) $shift->is_wfa,
                 ],
             ])
             ->all();
@@ -44,6 +45,7 @@ class AttendanceScheduleController extends Controller
                     'start_time' => null,
                     'end_time' => null,
                     'is_day_off' => true,
+                    'is_wfa' => false,
                 ];
 
                 return [
@@ -54,6 +56,7 @@ class AttendanceScheduleController extends Controller
                     'start_time' => $template['start_time'],
                     'end_time' => $template['end_time'],
                     'is_day_off' => $template['is_day_off'],
+                    'is_wfa' => (bool) ($template['is_wfa'] ?? false),
                     'notes' => $entry['notes'] ?? null,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -66,7 +69,7 @@ class AttendanceScheduleController extends Controller
             EmployeeSchedule::query()->upsert(
                 $rows,
                 ['employee_id', 'work_date'],
-                ['shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at']
+                ['shift_code', 'start_time', 'end_time', 'is_day_off', 'is_wfa', 'notes', 'updated_at']
             );
         }
 

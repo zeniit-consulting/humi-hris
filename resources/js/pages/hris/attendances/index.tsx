@@ -169,6 +169,7 @@ const statusLabelMap: Record<string, string> = {
     present: 'Hadir',
     late: 'Terlambat',
     on_leave: 'Cuti',
+    wfa: 'WFA',
     absent: 'Absen',
 };
 

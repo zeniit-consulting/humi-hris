@@ -424,7 +424,7 @@ class PortalController extends Controller
                     'condition_out' => $assignment->condition_out,
                 ])->values(),
                 'attendance_policy' => [
-                    'mode' => $employee?->is_wfa ? 'wfa' : 'onsite',
+                    'mode' => ($employee?->is_wfa || (bool) ($todayShift?->is_wfa)) ? 'wfa' : 'onsite',
                     'employee_timezone' => $employee?->timezone,
                     'active_timezone' => $timezone,
                     'radius_meters' => (int) ($companySetting?->attendance_radius_meters ?? 100),

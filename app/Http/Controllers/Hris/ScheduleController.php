@@ -102,6 +102,7 @@ class ScheduleController extends Controller
                     'start_time' => $template['start_time'],
                     'end_time' => $template['end_time'],
                     'is_day_off' => $template['is_day_off'],
+                    'is_wfa' => (bool) ($template['is_wfa'] ?? false),
                     'notes' => $entry['notes'] ?? null,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -114,7 +115,7 @@ class ScheduleController extends Controller
             EmployeeSchedule::query()->upsert(
                 $rows,
                 ['employee_id', 'work_date'],
-                ['shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at']
+                ['shift_code', 'start_time', 'end_time', 'is_day_off', 'is_wfa', 'notes', 'updated_at']
             );
         }
 
@@ -151,6 +152,7 @@ class ScheduleController extends Controller
                     'start_time' => null,
                     'end_time' => null,
                     'is_day_off' => true,
+                    'is_wfa' => false,
                 ]);
 
                 $rows[] = [
@@ -161,6 +163,7 @@ class ScheduleController extends Controller
                     'start_time' => $template['start_time'],
                     'end_time' => $template['end_time'],
                     'is_day_off' => $template['is_day_off'],
+                    'is_wfa' => (bool) ($template['is_wfa'] ?? false),
                     'notes' => 'Auto roster',
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -176,7 +179,7 @@ class ScheduleController extends Controller
                 EmployeeSchedule::query()->upsert(
                     $chunk,
                     ['employee_id', 'work_date'],
-                    ['user_id', 'shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at']
+                    ['user_id', 'shift_code', 'start_time', 'end_time', 'is_day_off', 'is_wfa', 'notes', 'updated_at']
                 );
             }
         }
@@ -234,7 +237,8 @@ class ScheduleController extends Controller
     {
         $ownerId = $request->user()->accountOwnerId();
         $validated = $request->validated();
-        $code = $this->generateShiftCode($validated['start_time'], $validated['end_time'], false);
+        $isWfa = (bool) ($validated['is_wfa'] ?? false);
+        $code = $this->generateShiftCode($validated['start_time'], $validated['end_time'], false, $isWfa);
 
         $exists = WorkShift::query()
             ->where('user_id', $ownerId)
@@ -254,6 +258,7 @@ class ScheduleController extends Controller
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
             'is_day_off' => false,
+            'is_wfa' => $isWfa,
             'late_tolerance_minutes' => $validated['late_tolerance_minutes'] ?? 15,
         ]);
 
@@ -270,12 +275,14 @@ class ScheduleController extends Controller
         }
 
         $validated = $request->validated();
+        $isWfa = array_key_exists('is_wfa', $validated) ? (bool) $validated['is_wfa'] : (bool) $workShift->is_wfa;
 
         $workShift->update([
             'name' => ($validated['name'] ?? '') !== '' ? $validated['name'] : $workShift->code,
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
             'is_day_off' => false,
+            'is_wfa' => $isWfa,
             'late_tolerance_minutes' => $validated['late_tolerance_minutes'] ?? 15,
         ]);
 
@@ -527,6 +534,7 @@ class ScheduleController extends Controller
                 'start_time' => $this->normalizeTime($saved?->start_time),
                 'end_time' => $this->normalizeTime($saved?->end_time),
                 'is_day_off' => $saved?->is_day_off ?? true,
+                'is_wfa' => (bool) ($saved?->is_wfa ?? false),
                 'notes' => $saved?->notes ?? null,
             ];
 
@@ -583,7 +591,7 @@ class ScheduleController extends Controller
             ->where('user_id', $ownerId)
             ->whereIn('employee_id', $employeeIds)
             ->whereBetween('work_date', [$start->toDateString(), $end->toDateString()])
-            ->get(['id', 'employee_id', 'work_date', 'shift_code', 'start_time', 'end_time', 'is_day_off', 'notes'])
+            ->get(['id', 'employee_id', 'work_date', 'shift_code', 'start_time', 'end_time', 'is_day_off', 'is_wfa', 'notes'])
             ->groupBy('employee_id');
 
         $rows = [];
@@ -608,6 +616,7 @@ class ScheduleController extends Controller
                         'start_time' => $this->normalizeTime($sched->start_time),
                         'end_time' => $this->normalizeTime($sched->end_time),
                         'is_day_off' => $isOff,
+                        'is_wfa' => (bool) $sched->is_wfa,
                         'notes' => $sched->notes,
                     ];
 
@@ -623,6 +632,7 @@ class ScheduleController extends Controller
                         'start_time' => null,
                         'end_time' => null,
                         'is_day_off' => true,
+                        'is_wfa' => false,
                         'notes' => null,
                     ];
                     $totalOff++;
@@ -839,6 +849,7 @@ class ScheduleController extends Controller
                 'start_time' => $this->normalizeTime($shift->start_time),
                 'end_time' => $this->normalizeTime($shift->end_time),
                 'is_day_off' => (bool) $shift->is_day_off,
+                'is_wfa' => (bool) ($shift->is_wfa ?? false),
             ];
             $codeLower = strtolower(trim((string) $shift->code));
             $nameLower = strtolower(trim((string) $shift->name));
@@ -1019,6 +1030,7 @@ class ScheduleController extends Controller
                     'start_time' => $template['start_time'],
                     'end_time' => $template['end_time'],
                     'is_day_off' => $template['is_day_off'],
+                    'is_wfa' => (bool) ($template['is_wfa'] ?? false),
                     'notes' => 'Imported via Excel',
                     'created_at' => $now,
                     'updated_at' => $now,
@@ -1038,7 +1050,7 @@ class ScheduleController extends Controller
             EmployeeSchedule::query()->upsert(
                 $chunk,
                 ['employee_id', 'work_date'],
-                ['shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at']
+                ['shift_code', 'start_time', 'end_time', 'is_day_off', 'is_wfa', 'notes', 'updated_at']
             );
         }
 
@@ -1138,6 +1150,7 @@ class ScheduleController extends Controller
                     'start_time' => $this->normalizeTime($shift->start_time),
                     'end_time' => $this->normalizeTime($shift->end_time),
                     'is_day_off' => $shift->is_day_off,
+                    'is_wfa' => (bool) $shift->is_wfa,
                 ],
             ])
             ->all();
@@ -1162,6 +1175,7 @@ class ScheduleController extends Controller
                 'start_time' => $this->normalizeTime($shift->start_time),
                 'end_time' => $this->normalizeTime($shift->end_time),
                 'is_day_off' => $shift->is_day_off,
+                'is_wfa' => (bool) $shift->is_wfa,
                 'late_tolerance_minutes' => $shift->late_tolerance_minutes,
             ])
             ->all();
@@ -1212,15 +1226,17 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Generate shift code from start and end time using HHHH format.
+     * Generate shift code from start and end time using HHHH format (or HHHH-WFA if WFA).
      */
-    private function generateShiftCode(?string $startTime, ?string $endTime, bool $isDayOff): string
+    private function generateShiftCode(?string $startTime, ?string $endTime, bool $isDayOff, bool $isWfa = false): string
     {
         if ($isDayOff || $startTime === null || $endTime === null || $startTime === '' || $endTime === '') {
             return 'OFF';
         }
 
-        return Carbon::createFromFormat('H:i', $startTime)->format('H')
+        $base = Carbon::createFromFormat('H:i', $startTime)->format('H')
             .Carbon::createFromFormat('H:i', $endTime)->format('H');
+
+        return $isWfa ? $base.'-WFA' : $base;
     }
 }

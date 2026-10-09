@@ -121,6 +121,7 @@ class ShiftChangeApprovalController extends Controller
                     'start_time' => $shift->start_time,
                     'end_time' => $shift->end_time,
                     'is_day_off' => $shift->is_day_off,
+                    'is_wfa' => (bool) $shift->is_wfa,
                     'notes' => 'Disetujui dari request perubahan jadwal #'.$shiftChangeRequest->id,
                 ],
             );
@@ -189,6 +190,7 @@ class ShiftChangeApprovalController extends Controller
                             'start_time' => $shift->start_time,
                             'end_time' => $shift->end_time,
                             'is_day_off' => $shift->is_day_off,
+                            'is_wfa' => (bool) $shift->is_wfa,
                             'notes' => 'Disetujui dari request perubahan jadwal #'.$item->id,
                         ],
                     );
