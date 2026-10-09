@@ -1,3 +1,4 @@
+import ScheduleController from './ScheduleController'
 import ApprovalSettingController from './ApprovalSettingController'
 import EmployeeController from './EmployeeController'
 import SubCompanyController from './SubCompanyController'
@@ -16,7 +17,6 @@ import AttendanceController from './AttendanceController'
 import ClientVisitController from './ClientVisitController'
 import AttendanceScheduleController from './AttendanceScheduleController'
 import AttendanceCorrectionApprovalController from './AttendanceCorrectionApprovalController'
-import ScheduleController from './ScheduleController'
 import ShiftChangeApprovalController from './ShiftChangeApprovalController'
 import ClientBillingController from './ClientBillingController'
 import PayrollController from './PayrollController'
@@ -33,6 +33,7 @@ import NotificationController from './NotificationController'
 import SurveyController from './SurveyController'
 
 const Hris = {
+    ScheduleController: Object.assign(ScheduleController, ScheduleController),
     ApprovalSettingController: Object.assign(ApprovalSettingController, ApprovalSettingController),
     EmployeeController: Object.assign(EmployeeController, EmployeeController),
     SubCompanyController: Object.assign(SubCompanyController, SubCompanyController),
@@ -51,7 +52,6 @@ const Hris = {
     ClientVisitController: Object.assign(ClientVisitController, ClientVisitController),
     AttendanceScheduleController: Object.assign(AttendanceScheduleController, AttendanceScheduleController),
     AttendanceCorrectionApprovalController: Object.assign(AttendanceCorrectionApprovalController, AttendanceCorrectionApprovalController),
-    ScheduleController: Object.assign(ScheduleController, ScheduleController),
     ShiftChangeApprovalController: Object.assign(ShiftChangeApprovalController, ShiftChangeApprovalController),
     ClientBillingController: Object.assign(ClientBillingController, ClientBillingController),
     PayrollController: Object.assign(PayrollController, PayrollController),

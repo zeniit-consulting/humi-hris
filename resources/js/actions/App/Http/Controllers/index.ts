@@ -1,4 +1,5 @@
 import Api from './Api'
+import Hris from './Hris'
 import DocsManualController from './DocsManualController'
 import NewsController from './NewsController'
 import CareerController from './CareerController'
@@ -9,11 +10,11 @@ import Admin from './Admin'
 import Client from './Client'
 import UserPortalController from './UserPortalController'
 import UserPortalSectionController from './UserPortalSectionController'
-import Hris from './Hris'
 import Settings from './Settings'
 
 const Controllers = {
     Api: Object.assign(Api, Api),
+    Hris: Object.assign(Hris, Hris),
     DocsManualController: Object.assign(DocsManualController, DocsManualController),
     NewsController: Object.assign(NewsController, NewsController),
     CareerController: Object.assign(CareerController, CareerController),
@@ -24,7 +25,6 @@ const Controllers = {
     Client: Object.assign(Client, Client),
     UserPortalController: Object.assign(UserPortalController, UserPortalController),
     UserPortalSectionController: Object.assign(UserPortalSectionController, UserPortalSectionController),
-    Hris: Object.assign(Hris, Hris),
     Settings: Object.assign(Settings, Settings),
 }
 

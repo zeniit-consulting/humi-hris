@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\Mobile\V1\ShiftChangeRequestController;
 use App\Http\Controllers\Api\PakasirWebhookController;
 use App\Http\Controllers\Api\ThirdParty\V1\AttendanceController as ThirdPartyAttendanceController;
 use App\Http\Controllers\Api\ThirdParty\V1\AuthController as ThirdPartyAuthController;
+use App\Http\Controllers\Hris\ScheduleController;
 use App\Http\Controllers\Api\ThirdParty\V1\CompanyController as ThirdPartyCompanyController;
 use App\Http\Controllers\Api\ThirdParty\V1\EmployeeController as ThirdPartyEmployeeController;
 use App\Http\Controllers\Api\ThirdParty\V1\LeaveController as ThirdPartyLeaveController;
@@ -71,6 +72,7 @@ Route::prefix('mobile/v1')->name('mobile.v1.')->group(function (): void {
         Route::get('attendances', [AttendanceController::class, 'index'])->name('attendances.index');
         Route::get('portal/attendance-policy', [AttendanceController::class, 'attendancePolicy'])->name('portal.attendance-policy');
         Route::post('portal/attendance-location/check', [AttendanceController::class, 'checkLocation'])->name('portal.attendance-location.check');
+        Route::get('portal/is-holiday', [ScheduleController::class, 'checkHoliday'])->name('portal.is-holiday');
         Route::post('attendances', [AttendanceController::class, 'store'])->name('attendances.store');
         Route::put('attendances/{employeeAttendance}', [AttendanceController::class, 'update'])->name('attendances.update');
         Route::delete('attendances/{employeeAttendance}', [AttendanceController::class, 'destroy'])->name('attendances.destroy');

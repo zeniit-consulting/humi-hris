@@ -672,6 +672,26 @@ class WorkforceModulesTest extends TestCase
     public function test_holiday_sync_stores_holidays_and_sets_selected_employee_schedule_to_off(): void
     {
         Http::fake([
+            'https://api.kemendesa.link/libur-nasional/api/holidays/*' => Http::response([
+                'metadata' => ['year' => 2026],
+                'data' => [
+                    [
+                        'date' => '2026-03-18',
+                        'name' => 'Cuti Bersama Hari Suci Nyepi Tahun Baru Saka 1948',
+                        'is_cuti_bersama' => true,
+                    ],
+                    [
+                        'date' => '2026-03-19',
+                        'name' => 'Hari Suci Nyepi Tahun Baru Saka 1948',
+                        'is_cuti_bersama' => false,
+                    ],
+                    [
+                        'date' => '2026-04-03',
+                        'name' => 'Wafat Yesus Kristus / Jumat Agung',
+                        'is_cuti_bersama' => false,
+                    ],
+                ],
+            ]),
             'https://libur.deno.dev/api' => Http::response([
                 [
                     'date' => '2026-03-18',
@@ -744,7 +764,7 @@ class WorkforceModulesTest extends TestCase
             'work_date' => '2026-04-03',
         ]);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://libur.deno.dev/api');
+        Http::assertSent(fn ($request): bool => str_contains($request->url(), 'api.kemendesa.link/libur-nasional/api/holidays'));
     }
 
     public function test_shift_master_can_be_created_from_schedule_popup()

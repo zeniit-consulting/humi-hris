@@ -165,6 +165,87 @@ attendancePolicyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'
 
 attendancePolicy.form = attendancePolicyForm
 
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::isHoliday
+* @see app/Http/Controllers/Hris/ScheduleController.php:427
+* @route '/api/mobile/v1/portal/is-holiday'
+*/
+export const isHoliday = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: isHoliday.url(options),
+    method: 'get',
+})
+
+isHoliday.definition = {
+    methods: ["get","head"],
+    url: '/api/mobile/v1/portal/is-holiday',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::isHoliday
+* @see app/Http/Controllers/Hris/ScheduleController.php:427
+* @route '/api/mobile/v1/portal/is-holiday'
+*/
+isHoliday.url = (options?: RouteQueryOptions) => {
+    return isHoliday.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::isHoliday
+* @see app/Http/Controllers/Hris/ScheduleController.php:427
+* @route '/api/mobile/v1/portal/is-holiday'
+*/
+isHoliday.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: isHoliday.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::isHoliday
+* @see app/Http/Controllers/Hris/ScheduleController.php:427
+* @route '/api/mobile/v1/portal/is-holiday'
+*/
+isHoliday.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: isHoliday.url(options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::isHoliday
+* @see app/Http/Controllers/Hris/ScheduleController.php:427
+* @route '/api/mobile/v1/portal/is-holiday'
+*/
+const isHolidayForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: isHoliday.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::isHoliday
+* @see app/Http/Controllers/Hris/ScheduleController.php:427
+* @route '/api/mobile/v1/portal/is-holiday'
+*/
+isHolidayForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: isHoliday.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Hris\ScheduleController::isHoliday
+* @see app/Http/Controllers/Hris/ScheduleController.php:427
+* @route '/api/mobile/v1/portal/is-holiday'
+*/
+isHolidayForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: isHoliday.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+isHoliday.form = isHolidayForm
+
 const portal = {
     summary: Object.assign(summary, summary),
     attendanceRequests: Object.assign(attendanceRequests, attendanceRequests),
@@ -172,6 +253,7 @@ const portal = {
     shiftChangeRequests: Object.assign(shiftChangeRequests, shiftChangeRequests),
     attendancePolicy: Object.assign(attendancePolicy, attendancePolicy),
     attendanceLocation: Object.assign(attendanceLocation, attendanceLocation),
+    isHoliday: Object.assign(isHoliday, isHoliday),
 }
 
 export default portal

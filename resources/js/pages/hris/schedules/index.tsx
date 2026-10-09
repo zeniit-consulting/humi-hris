@@ -146,6 +146,8 @@ type PageProps = {
     scheduleDays: ScheduleDay[];
     shiftTemplates: Record<string, ShiftTemplate>;
     holidays: Holiday[];
+    yearHolidays?: Holiday[];
+    activeYear?: number;
     monthlyMatrix?: MonthlyMatrix;
 };
 
@@ -231,6 +233,8 @@ export default function SchedulePage() {
         scheduleDays,
         shiftTemplates,
         holidays,
+        yearHolidays = [],
+        activeYear,
         monthlyMatrix,
     } = usePage<PageProps>().props;
 
@@ -239,6 +243,30 @@ export default function SchedulePage() {
     const [selectedWeekIndex, setSelectedWeekIndex] = useState<number>(0);
     const [matrixSearch, setMatrixSearch] = useState('');
     const [filterState, setFilterState] = useState<Filters>(filters);
+    const [holidayPopupFilter, setHolidayPopupFilter] = useState<'all' | 'month'>('all');
+
+    const currentActiveYear = useMemo(() => {
+        if (activeYear) return activeYear;
+        if (filterState.month && filterState.month.length >= 4) {
+            const parsed = parseInt(filterState.month.substring(0, 4), 10);
+            if (!isNaN(parsed)) return parsed;
+        }
+        return new Date().getFullYear();
+    }, [activeYear, filterState.month]);
+
+    const activeYearHolidays = useMemo(() => {
+        if (yearHolidays && yearHolidays.length > 0) {
+            return yearHolidays;
+        }
+        return holidays;
+    }, [yearHolidays, holidays]);
+
+    const displayYearHolidays = useMemo(() => {
+        if (holidayPopupFilter === 'month' && filterState.month) {
+            return activeYearHolidays.filter((h) => h.date.startsWith(filterState.month));
+        }
+        return activeYearHolidays;
+    }, [activeYearHolidays, holidayPopupFilter, filterState.month]);
 
     const safeMatrixDays = useMemo(() => monthlyMatrix?.days ?? [], [monthlyMatrix?.days]);
     const safeMatrixRows = useMemo(() => monthlyMatrix?.rows ?? [], [monthlyMatrix?.rows]);
@@ -364,6 +392,7 @@ export default function SchedulePage() {
         apply_to_schedule: true,
     });
     const [isSubmittingHoliday, setIsSubmittingHoliday] = useState(false);
+    const [isSyncingHolidays, setIsSyncingHolidays] = useState(false);
     const [deletingHolidayId, setDeletingHolidayId] = useState<number | null>(null);
 
     const shiftOptions = useMemo(
@@ -745,11 +774,13 @@ export default function SchedulePage() {
     };
 
     const syncHolidays = () => {
+        setIsSyncingHolidays(true);
         router.post(
             '/hris/schedules/holidays/sync',
             {
-                month: filterState.month,
-                employee_id: filterState.employee_id,
+                month: filterState.month || null,
+                year: currentActiveYear,
+                employee_id: filterState.employee_id ? Number(filterState.employee_id) : null,
             },
             {
                 preserveScroll: true,
@@ -759,6 +790,9 @@ export default function SchedulePage() {
                         preserveScroll: true,
                         replace: true,
                     });
+                },
+                onFinish: () => {
+                    setIsSyncingHolidays(false);
                 },
             },
         );
@@ -1050,12 +1084,13 @@ export default function SchedulePage() {
                                         variant="outline"
                                         onClick={syncHolidays}
                                         disabled={
+                                            isSyncingHolidays ||
                                             filterState.month === '' ||
                                             filterState.employee_id === ''
                                         }
                                     >
-                                        <RefreshCcw className="size-4" />
-                                        Sync hari libur
+                                        <RefreshCcw className={cn("size-4", isSyncingHolidays && "animate-spin")} />
+                                        {isSyncingHolidays ? 'Menyinkronkan...' : 'Sync hari libur'}
                                     </Button>
                                     <Button
                                         type="button"
@@ -2333,177 +2368,233 @@ export default function SchedulePage() {
             </Dialog>
 
             <Dialog open={calendarDialogOpen} onOpenChange={setCalendarDialogOpen}>
-                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <CalendarDays className="size-5 text-primary" />
-                            Kalender Kerja & Hari Libur
-                        </DialogTitle>
-                        <DialogDescription>
-                            Input tanggal, nama hari libur, dan jenis libur (Libur Nasional, Cuti Bersama, Libur Perusahaan) serta opsi terapkan langsung ke jadwal karyawan.
-                        </DialogDescription>
+                <DialogContent className="flex flex-col max-h-[85vh] sm:max-w-4xl p-0 gap-0 overflow-hidden">
+                    <DialogHeader className="p-5 sm:p-6 pb-4 border-b shrink-0 pr-12 bg-background">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <DialogTitle className="flex items-center gap-2 text-base font-semibold">
+                                    <CalendarDays className="size-5 text-primary" />
+                                    Kalender Kerja & Hari Libur
+                                </DialogTitle>
+                                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                                    Kelola hari libur nasional, cuti bersama, dan libur perusahaan tahun {currentActiveYear}.
+                                </DialogDescription>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={syncHolidays}
+                                    disabled={isSyncingHolidays}
+                                    className="h-8 gap-1.5 text-xs font-medium cursor-pointer"
+                                >
+                                    <RefreshCcw className={cn("size-3.5 text-primary", isSyncingHolidays && "animate-spin")} />
+                                    {isSyncingHolidays ? "Menyinkronkan..." : "Sync API Hari Libur"}
+                                </Button>
+                            </div>
+                        </div>
                     </DialogHeader>
 
-                    <form onSubmit={handleSaveHoliday} className="space-y-4 rounded-lg border bg-muted/20 p-4">
-                        <div className="text-sm font-semibold text-foreground">
-                            Tambah Hari Libur
-                        </div>
-                        <div className="grid gap-3 sm:grid-cols-3">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="holiday-date">Tanggal</Label>
-                                <Input
-                                    id="holiday-date"
-                                    type="date"
-                                    value={holidayFormData.date}
-                                    onChange={(e) =>
-                                        setHolidayFormData((prev) => ({
-                                            ...prev,
-                                            date: e.target.value,
-                                        }))
-                                    }
-                                    required
-                                />
+                    <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+                        <form onSubmit={handleSaveHoliday} className="space-y-4 rounded-lg border bg-muted/20 p-4">
+                            <div className="text-sm font-semibold text-foreground">
+                                Tambah Hari Libur
                             </div>
-                            <div className="space-y-1.5">
-                                <Label htmlFor="holiday-type">Jenis Libur</Label>
-                                <Select
-                                    value={holidayFormData.holiday_type}
-                                    onValueChange={(value) =>
-                                        setHolidayFormData((prev) => ({
-                                            ...prev,
-                                            holiday_type: value,
-                                        }))
+                            <div className="grid gap-3 sm:grid-cols-3">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="holiday-date">Tanggal</Label>
+                                    <Input
+                                        id="holiday-date"
+                                        type="date"
+                                        value={holidayFormData.date}
+                                        onChange={(e) =>
+                                            setHolidayFormData((prev) => ({
+                                                ...prev,
+                                                date: e.target.value,
+                                            }))
+                                        }
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="holiday-type">Jenis Libur</Label>
+                                    <Select
+                                        value={holidayFormData.holiday_type}
+                                        onValueChange={(value) =>
+                                            setHolidayFormData((prev) => ({
+                                                ...prev,
+                                                holiday_type: value,
+                                            }))
+                                        }
+                                    >
+                                        <SelectTrigger id="holiday-type">
+                                            <SelectValue placeholder="Pilih jenis libur" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="national">Libur Nasional</SelectItem>
+                                            <SelectItem value="joint_leave">Cuti Bersama</SelectItem>
+                                            <SelectItem value="company">Libur Perusahaan</SelectItem>
+                                            <SelectItem value="other">Lainnya</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1.5 sm:col-span-1">
+                                    <Label htmlFor="holiday-name">Nama Hari Libur</Label>
+                                    <Input
+                                        id="holiday-name"
+                                        placeholder="cth: Idul Fitri, HUT Perusahaan"
+                                        value={holidayFormData.name}
+                                        onChange={(e) =>
+                                            setHolidayFormData((prev) => ({
+                                                ...prev,
+                                                name: e.target.value,
+                                            }))
+                                        }
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="apply-to-schedule"
+                                        checked={holidayFormData.apply_to_schedule}
+                                        onCheckedChange={(checked) =>
+                                            setHolidayFormData((prev) => ({
+                                                ...prev,
+                                                apply_to_schedule: Boolean(checked),
+                                            }))
+                                        }
+                                    />
+                                    <Label
+                                        htmlFor="apply-to-schedule"
+                                        className="cursor-pointer text-xs font-normal text-muted-foreground"
+                                    >
+                                        Terapkan libur ke seluruh karyawan aktif (jadwal diset OFF)
+                                    </Label>
+                                </div>
+                                <Button
+                                    type="submit"
+                                    size="sm"
+                                    disabled={
+                                        isSubmittingHoliday ||
+                                        !holidayFormData.name.trim() ||
+                                        !holidayFormData.date
                                     }
                                 >
-                                    <SelectTrigger id="holiday-type">
-                                        <SelectValue placeholder="Pilih jenis libur" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="national">Libur Nasional</SelectItem>
-                                        <SelectItem value="joint_leave">Cuti Bersama</SelectItem>
-                                        <SelectItem value="company">Libur Perusahaan</SelectItem>
-                                        <SelectItem value="other">Lainnya</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                    <Plus className="mr-1.5 size-4" />
+                                    Simpan Hari Libur
+                                </Button>
                             </div>
-                            <div className="space-y-1.5 sm:col-span-1">
-                                <Label htmlFor="holiday-name">Nama Hari Libur</Label>
-                                <Input
-                                    id="holiday-name"
-                                    placeholder="cth: Idul Fitri, HUT Perusahaan"
-                                    value={holidayFormData.name}
-                                    onChange={(e) =>
-                                        setHolidayFormData((prev) => ({
-                                            ...prev,
-                                            name: e.target.value,
-                                        }))
-                                    }
-                                    required
-                                />
-                            </div>
-                        </div>
+                        </form>
 
-                        <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="apply-to-schedule"
-                                    checked={holidayFormData.apply_to_schedule}
-                                    onCheckedChange={(checked) =>
-                                        setHolidayFormData((prev) => ({
-                                            ...prev,
-                                            apply_to_schedule: Boolean(checked),
-                                        }))
-                                    }
-                                />
-                                <Label
-                                    htmlFor="apply-to-schedule"
-                                    className="cursor-pointer text-xs font-normal text-muted-foreground"
-                                >
-                                    Terapkan libur ke seluruh karyawan aktif (jadwal diset OFF)
-                                </Label>
+                        <div className="space-y-3">
+                            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-semibold">
+                                            Daftar Hari Libur Tahun {currentActiveYear}
+                                        </span>
+                                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                            {displayYearHolidays.length} hari
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                        Menampilkan seluruh hari libur nasional & cuti bersama selama tahun {currentActiveYear}.
+                                    </p>
+                                </div>
+                                <div className="inline-flex rounded-lg border bg-muted/40 p-0.5 text-xs self-start sm:self-auto">
+                                    <button
+                                        type="button"
+                                        onClick={() => setHolidayPopupFilter('all')}
+                                        className={cn(
+                                            'rounded-md px-2.5 py-1 font-medium transition-colors cursor-pointer',
+                                            holidayPopupFilter === 'all'
+                                                ? 'bg-background text-foreground shadow-xs'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        Semua ({activeYearHolidays.length})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setHolidayPopupFilter('month')}
+                                        className={cn(
+                                            'rounded-md px-2.5 py-1 font-medium transition-colors cursor-pointer',
+                                            holidayPopupFilter === 'month'
+                                                ? 'bg-background text-foreground shadow-xs'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        Bulan {filterState.month || '-'} ({holidays.length})
+                                    </button>
+                                </div>
                             </div>
-                            <Button
-                                type="submit"
-                                size="sm"
-                                disabled={
-                                    isSubmittingHoliday ||
-                                    !holidayFormData.name.trim() ||
-                                    !holidayFormData.date
-                                }
-                            >
-                                <Plus className="mr-1.5 size-4" />
-                                Simpan Hari Libur
-                            </Button>
-                        </div>
-                    </form>
 
-                    <div className="space-y-3 pt-2">
-                        <div className="flex items-center justify-between">
-                            <div className="text-sm font-semibold">
-                                Daftar Hari Libur Bulan {filterState.month || '-'} ({holidays.length})
-                            </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={syncHolidays}
-                                disabled={
-                                    filterState.month === '' ||
-                                    filterState.employee_id === ''
-                                }
-                            >
-                                <RefreshCcw className="mr-1.5 size-3.5" />
-                                Sync API Hari Libur
-                            </Button>
+                            {displayYearHolidays.length === 0 ? (
+                                <div className="rounded-lg border border-dashed p-8 text-center text-xs text-muted-foreground">
+                                    Belum ada data hari libur pada tahun {currentActiveYear}. Silakan tambah hari libur melalui form di atas atau lakukan sinkronisasi API.
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto rounded-md border">
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="sticky top-0 border-b bg-muted/95 text-muted-foreground backdrop-blur-xs z-10">
+                                            <tr>
+                                                <th className="px-3 py-2.5 font-medium">Tanggal</th>
+                                                <th className="px-3 py-2.5 font-medium">Hari Libur</th>
+                                                <th className="px-3 py-2.5 font-medium">Jenis Libur</th>
+                                                <th className="px-3 py-2.5 text-right font-medium">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            {displayYearHolidays.map((h) => {
+                                                const typeInfo = getHolidayTypeInfo(h.holiday_type, h.is_national_holiday);
+                                                const isCurrentMonth = filterState.month && h.date.startsWith(filterState.month);
+                                                return (
+                                                    <tr
+                                                        key={h.id}
+                                                        className={cn(
+                                                            'hover:bg-muted/30 transition-colors',
+                                                            isCurrentMonth && 'bg-primary/5'
+                                                        )}
+                                                    >
+                                                        <td className="px-3 py-2.5 font-medium whitespace-nowrap">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span>{formatDeviceDate(h.date)}</span>
+                                                                {isCurrentMonth && (
+                                                                    <span className="rounded bg-primary/10 px-1 py-0.5 text-[10px] font-medium text-primary">
+                                                                        Bulan ini
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-3 py-2.5 font-medium text-foreground">
+                                                            {h.name}
+                                                        </td>
+                                                        <td className="px-3 py-2.5 whitespace-nowrap">
+                                                            <span className={cn('inline-flex rounded px-2 py-0.5 border text-[10px] font-medium', typeInfo.badgeClass)}>
+                                                                {typeInfo.label}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                                                            <ActionIconButton
+                                                                label="Hapus hari libur"
+                                                                icon={Trash2}
+                                                                variant="destructive"
+                                                                disabled={deletingHolidayId === h.id}
+                                                                onClick={() => handleDeleteHoliday(h)}
+                                                            />
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
-
-                        {holidays.length === 0 ? (
-                            <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
-                                Belum ada data hari libur pada bulan {filterState.month || '-'}. Silakan tambah hari libur melalui form di atas atau lakukan sinkronisasi.
-                            </div>
-                        ) : (
-                            <div className="max-h-[300px] overflow-y-auto rounded-md border">
-                                <table className="w-full text-left text-xs">
-                                    <thead className="sticky top-0 border-b bg-muted/80 text-muted-foreground">
-                                        <tr>
-                                            <th className="px-3 py-2 font-medium">Tanggal</th>
-                                            <th className="px-3 py-2 font-medium">Hari Libur</th>
-                                            <th className="px-3 py-2 font-medium">Jenis Libur</th>
-                                            <th className="px-3 py-2 text-right font-medium">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {holidays.map((h) => {
-                                            const typeInfo = getHolidayTypeInfo(h.holiday_type, h.is_national_holiday);
-                                            return (
-                                                <tr key={h.id} className="hover:bg-muted/30">
-                                                    <td className="px-3 py-2.5 font-medium whitespace-nowrap">
-                                                        {formatDeviceDate(h.date)}
-                                                    </td>
-                                                    <td className="px-3 py-2.5 font-medium text-foreground">
-                                                        {h.name}
-                                                    </td>
-                                                    <td className="px-3 py-2.5 whitespace-nowrap">
-                                                        <span className={cn('inline-flex rounded px-2 py-0.5 border text-[10px] font-medium', typeInfo.badgeClass)}>
-                                                            {typeInfo.label}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-right whitespace-nowrap">
-                                                        <ActionIconButton
-                                                            label="Hapus hari libur"
-                                                            icon={Trash2}
-                                                            variant="destructive"
-                                                            disabled={deletingHolidayId === h.id}
-                                                            onClick={() => handleDeleteHoliday(h)}
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
                     </div>
                 </DialogContent>
             </Dialog>

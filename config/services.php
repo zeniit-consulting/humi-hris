@@ -87,4 +87,13 @@ return [
         'redirect' => env('TELEGRAM_REDIRECT_URI', '/auth/telegram/callback'),
     ],
 
+    'holiday_api' => [
+        'base_url' => env('HOLIDAY_API_BASE_URL', 'https://api.kemendesa.link/libur-nasional/api'),
+        'latest_url' => env('HOLIDAY_API_LATEST_URL', 'https://api.kemendesa.link/libur-nasional/api/holidays/latest'),
+        'year_url_template' => env('HOLIDAY_API_YEAR_URL_TEMPLATE', 'https://api.kemendesa.link/libur-nasional/api/holidays/%d.json'),
+        'is_holiday_url' => env('HOLIDAY_API_IS_HOLIDAY_URL', 'https://api.kemendesa.link/libur-nasional/api/is-holiday'),
+        'legacy_url' => env('HOLIDAY_API_LEGACY_URL', 'https://libur.deno.dev/api'),
+        'timeout' => (int) env('HOLIDAY_API_TIMEOUT', 15),
+    ],
+
 ];

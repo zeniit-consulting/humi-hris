@@ -12,6 +12,8 @@ use App\Models\EmployeeSchedule;
 use App\Models\PublicHoliday;
 use App\Models\ShiftChangeRequest;
 use App\Models\WorkShift;
+use App\Services\HolidayApiService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -59,6 +61,10 @@ class ScheduleController extends Controller
                 : (string) ($employees->first()?->id ?? ''),
         ];
 
+        $activeYear = (int) (isset($filters['month']) && strlen($filters['month']) >= 4
+            ? substr($filters['month'], 0, 4)
+            : now()->year);
+
         return Inertia::render('hris/schedules/index', [
             'employees' => $employees->map(fn (Employee $employee) => [
                 'id' => $employee->id,
@@ -69,6 +75,8 @@ class ScheduleController extends Controller
             'scheduleDays' => $this->buildScheduleDays($filters['month'], $filters['employee_id'], $shiftTemplates),
             'shiftTemplates' => $shiftTemplates,
             'holidays' => $this->holidaysForMonth($ownerId, $filters['month']),
+            'yearHolidays' => $this->holidaysForYear($ownerId, $activeYear),
+            'activeYear' => $activeYear,
             'monthlyMatrix' => $this->buildMonthlyMatrix($filters['month'], $employees, $ownerId),
         ]);
     }
@@ -317,35 +325,29 @@ class ScheduleController extends Controller
         return back()->with('success', 'Data jam kerja berhasil dihapus.');
     }
 
-    public function syncHolidays(Request $request): RedirectResponse
+    public function syncHolidays(Request $request, HolidayApiService $holidayService): RedirectResponse
     {
         $ownerId = $request->user()->accountOwnerId();
         $validated = $request->validate([
-            'month' => ['required', 'date_format:Y-m'],
-            'employee_id' => ['required', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
+            'month' => ['nullable', 'date_format:Y-m'],
+            'year' => ['nullable', 'integer', 'digits:4'],
+            'employee_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
         ]);
 
-        $response = Http::timeout(15)->get('https://libur.deno.dev/api');
+        $year = null;
+        if (! empty($validated['month'])) {
+            $year = (int) Carbon::parse($validated['month'].'-01')->year;
+        } elseif (! empty($validated['year'])) {
+            $year = (int) $validated['year'];
+        }
 
-        if (! $response->successful() || ! is_array($response->json())) {
+        $rawHolidays = $holidayService->getHolidays($year);
+
+        if (empty($rawHolidays)) {
             return back()->with('error', 'Sinkronisasi hari libur gagal. API hari libur tidak bisa diakses.');
         }
 
-        $now = now();
-        $holidayRows = collect($response->json())
-            ->filter(fn (mixed $holiday): bool => is_array($holiday)
-                && isset($holiday['date'], $holiday['name'], $holiday['is_national_holiday'])
-                && Carbon::hasFormat((string) $holiday['date'], 'Y-m-d'))
-            ->map(fn (array $holiday): array => [
-                'user_id' => $ownerId,
-                'date' => $holiday['date'],
-                'name' => (string) $holiday['name'],
-                'holiday_type' => ((bool) $holiday['is_national_holiday']) ? 'national' : 'joint_leave',
-                'is_national_holiday' => (bool) $holiday['is_national_holiday'],
-                'created_at' => $now,
-                'updated_at' => $now,
-            ])
-            ->values();
+        $holidayRows = $holidayService->parseHolidayRows($rawHolidays, $ownerId);
 
         if ($holidayRows->isNotEmpty()) {
             PublicHoliday::query()->upsert(
@@ -355,57 +357,134 @@ class ScheduleController extends Controller
             );
         }
 
-        $monthStart = Carbon::createFromFormat('Y-m-d', $validated['month'].'-01')->startOfMonth();
-        $monthEnd = $monthStart->copy()->endOfMonth();
-        $offShift = WorkShift::query()->firstOrCreate(
-            [
-                'user_id' => $ownerId,
-                'code' => 'OFF',
-            ],
-            [
-                'name' => 'Day Off',
-                'start_time' => null,
-                'end_time' => null,
-                'is_day_off' => true,
-                'late_tolerance_minutes' => 0,
-            ],
-        );
+        $now = now();
+        $scheduleCount = 0;
 
-        $monthlyHolidays = PublicHoliday::query()
-            ->where('user_id', $ownerId)
-            ->whereBetween('date', [$monthStart->toDateString(), $monthEnd->toDateString()])
-            ->orderBy('date')
-            ->get();
-
-        $scheduleRows = $monthlyHolidays
-            ->map(fn (PublicHoliday $holiday): array => [
-                'user_id' => $ownerId,
-                'employee_id' => $validated['employee_id'],
-                'work_date' => $holiday->date->toDateString(),
-                'shift_code' => $offShift->code,
-                'start_time' => null,
-                'end_time' => null,
-                'is_day_off' => true,
-                'notes' => $holiday->name,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ])
-            ->values();
-
-        if ($scheduleRows->isNotEmpty()) {
-            EmployeeSchedule::query()->upsert(
-                $scheduleRows->all(),
-                ['employee_id', 'work_date'],
-                ['shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at'],
+        if (! empty($validated['month']) && ! empty($validated['employee_id'])) {
+            $monthStart = Carbon::createFromFormat('Y-m-d', $validated['month'].'-01')->startOfMonth();
+            $monthEnd = $monthStart->copy()->endOfMonth();
+            $offShift = WorkShift::query()->firstOrCreate(
+                [
+                    'user_id' => $ownerId,
+                    'code' => 'OFF',
+                ],
+                [
+                    'name' => 'Day Off',
+                    'start_time' => null,
+                    'end_time' => null,
+                    'is_day_off' => true,
+                    'late_tolerance_minutes' => 0,
+                ],
             );
+
+            $monthlyHolidays = PublicHoliday::query()
+                ->where('user_id', $ownerId)
+                ->whereBetween('date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+                ->orderBy('date')
+                ->get();
+
+            $scheduleRows = $monthlyHolidays
+                ->map(fn (PublicHoliday $holiday): array => [
+                    'user_id' => $ownerId,
+                    'employee_id' => $validated['employee_id'],
+                    'work_date' => $holiday->date->toDateString(),
+                    'shift_code' => $offShift->code,
+                    'start_time' => null,
+                    'end_time' => null,
+                    'is_day_off' => true,
+                    'notes' => $holiday->name,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])
+                ->values();
+
+            if ($scheduleRows->isNotEmpty()) {
+                EmployeeSchedule::query()->upsert(
+                    $scheduleRows->all(),
+                    ['employee_id', 'work_date'],
+                    ['shift_code', 'start_time', 'end_time', 'is_day_off', 'notes', 'updated_at'],
+                );
+                $scheduleCount = $scheduleRows->count();
+            }
+
+            return back()->with('success', sprintf(
+                '%d hari libur tersimpan, %d jadwal bulan %s diset OFF.',
+                $holidayRows->count(),
+                $scheduleCount,
+                $validated['month'],
+            ));
         }
 
         return back()->with('success', sprintf(
-            '%d hari libur tersimpan, %d jadwal bulan %s diset OFF.',
+            '%d hari libur berhasil disinkronisasi.',
             $holidayRows->count(),
-            $scheduleRows->count(),
-            $validated['month'],
         ));
+    }
+
+    /**
+     * Check whether a specific date is a public holiday (Kemendesa API & database).
+     */
+    public function checkHoliday(Request $request, HolidayApiService $holidayService): JsonResponse
+    {
+        $validated = $request->validate([
+            'date' => ['required', 'date_format:Y-m-d'],
+        ]);
+
+        $ownerId = $request->user()->accountOwnerId();
+        $date = $validated['date'];
+
+        $remoteResult = $holidayService->checkIsHoliday($date);
+
+        $localHoliday = PublicHoliday::query()
+            ->where('user_id', $ownerId)
+            ->whereDate('date', $date)
+            ->first();
+
+        $isHoliday = (bool) ($remoteResult['is_holiday'] || ($localHoliday !== null));
+        $name = $localHoliday?->name ?? $remoteResult['name'];
+        $holidayType = $localHoliday?->holiday_type ?? $remoteResult['holiday_type'];
+
+        return response()->json([
+            'success' => true,
+            'date' => $date,
+            'is_holiday' => $isHoliday,
+            'name' => $name,
+            'holiday_type' => $holidayType,
+            'is_cuti_bersama' => $holidayType === 'joint_leave',
+            'source' => $localHoliday ? 'database' : ($remoteResult['success'] ? 'api' : 'none'),
+            'remote' => $remoteResult,
+        ]);
+    }
+
+    /**
+     * Get latest holidays from Kemendesa API.
+     */
+    public function latestHolidays(HolidayApiService $holidayService): JsonResponse
+    {
+        $holidays = $holidayService->getLatestHolidays();
+
+        return response()->json([
+            'success' => true,
+            'data' => $holidays,
+            'count' => count($holidays),
+        ]);
+    }
+
+    /**
+     * Get holidays for a specific year from Kemendesa API.
+     */
+    public function yearHolidays(int $year, HolidayApiService $holidayService): JsonResponse
+    {
+        abort_unless($year >= 2000 && $year <= 2100, 422, 'Tahun tidak valid.');
+
+        $holidays = $holidayService->getHolidaysByYear($year);
+
+        return response()->json([
+            'success' => true,
+            'year' => $year,
+            'data' => $holidays,
+            'count' => count($holidays),
+        ]);
     }
 
     /**
@@ -1188,6 +1267,30 @@ class ScheduleController extends Controller
     {
         $start = Carbon::createFromFormat('Y-m-d', $month.'-01')->startOfMonth();
         $end = $start->copy()->endOfMonth();
+
+        return PublicHoliday::query()
+            ->where('user_id', $ownerId)
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->orderBy('date')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (PublicHoliday $holiday): array => [
+                'id' => $holiday->id,
+                'date' => $holiday->date->toDateString(),
+                'name' => $holiday->name,
+                'holiday_type' => $holiday->holiday_type ?? ($holiday->is_national_holiday ? 'national' : 'joint_leave'),
+                'is_national_holiday' => (bool) $holiday->is_national_holiday,
+            ])
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function holidaysForYear(int $ownerId, int $year): array
+    {
+        $start = Carbon::create($year, 1, 1)->startOfYear();
+        $end = $start->copy()->endOfYear();
 
         return PublicHoliday::query()
             ->where('user_id', $ownerId)
