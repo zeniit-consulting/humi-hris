@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Hris;
 use App\Http\Controllers\Controller;
 use App\Models\Division;
 use App\Models\Position;
+use App\Models\SubCompany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -27,6 +28,11 @@ class OrganizationChartController extends Controller
                 'employees' => fn ($query) => $query
                     ->where('user_id', $ownerId)
                     ->active()
+                    ->where(function ($sub): void {
+                        $sub->whereNull('sub_company_id')
+                            ->orWhereHas('subCompany', fn ($sc) => $sc->where('is_active', true));
+                    })
+                    ->with('subCompany:id,code,name,is_active')
                     ->orderBy('first_name')
                     ->orderBy('last_name'),
             ])
@@ -92,10 +98,17 @@ class OrganizationChartController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $subCompanies = SubCompany::query()
+            ->where('user_id', $ownerId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'code', 'name']);
+
         return Inertia::render('hris/organization-chart/index', [
             'chart' => $tree,
             'all_positions' => $managePositions,
             'divisions' => $divisions,
+            'sub_companies' => $subCompanies,
             'stats' => [
                 'total_positions' => $allPositions->count(),
                 'total_nodes' => $chartPositions->count(),
@@ -221,7 +234,21 @@ class OrganizationChartController extends Controller
             ->all();
 
         $employees = $position->employees
-            ->filter(fn ($entry) => $entry->is_active && ($entry->offboarded_at === null || $entry->isOffboardScheduled()) && in_array($entry->employment_status, ['active', 'probation', 'on_leave'], true))
+            ->filter(function ($entry) {
+                if (! $entry->is_active || ! in_array($entry->employment_status, ['active', 'probation', 'on_leave'], true)) {
+                    return false;
+                }
+                if ($entry->offboarded_at !== null && ! $entry->isOffboardScheduled()) {
+                    return false;
+                }
+                if ($entry->sub_company_id !== null && $entry->relationLoaded('subCompany')) {
+                    if (! $entry->subCompany || ! $entry->subCompany->is_active) {
+                        return false;
+                    }
+                }
+
+                return true;
+            })
             ->sortBy(fn ($entry) => strtolower($entry->full_name))
             ->values();
 
@@ -234,6 +261,8 @@ class OrganizationChartController extends Controller
             'employment_status' => $emp->employment_status,
             'is_active' => (bool) $emp->is_active,
             'face_photo_url' => $emp->face_photo_url,
+            'sub_company_id' => $emp->sub_company_id,
+            'sub_company_name' => $emp->subCompany?->name,
         ])->all();
 
         return [

@@ -46,6 +46,8 @@ type Employee = {
     employment_status: string;
     is_active: boolean;
     face_photo_url?: string | null;
+    sub_company_id?: number | null;
+    sub_company_name?: string | null;
 };
 
 type OrgNode = {
@@ -88,10 +90,17 @@ type Division = {
     name: string;
 };
 
+type SubCompanyOption = {
+    id: number;
+    code: string;
+    name: string;
+};
+
 type PageProps = {
     chart: OrgNode[];
     all_positions?: ManagePosition[];
     divisions?: Division[];
+    sub_companies?: SubCompanyOption[];
     stats?: {
         total_positions?: number;
         total_nodes?: number;
@@ -252,10 +261,18 @@ function OrgPersonCard({
                                 <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
                                     {mainEmployee.full_name}
                                 </p>
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex flex-wrap items-center gap-1.5">
                                     <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
                                         {mainEmployee.employee_code}
                                     </span>
+                                    {mainEmployee.sub_company_name && (
+                                        <span
+                                            className="max-w-[100px] truncate rounded border border-sky-200 bg-sky-50 px-1 py-0.2 text-[9px] font-medium text-sky-700 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300"
+                                            title={mainEmployee.sub_company_name}
+                                        >
+                                            {mainEmployee.sub_company_name}
+                                        </span>
+                                    )}
                                     {mainEmployee.employment_status && (
                                         <span className="rounded bg-slate-100 px-1 py-0.2 text-[9px] font-medium uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                                             {mainEmployee.employment_status}
@@ -311,9 +328,19 @@ function OrgPersonCard({
                                                     <p className="truncate text-[10px] font-medium">
                                                         {emp.full_name}
                                                     </p>
-                                                    <p className="font-mono text-[8px] text-slate-400">
-                                                        {emp.employee_code}
-                                                    </p>
+                                                    <div className="flex items-center gap-1">
+                                                        <p className="font-mono text-[8px] text-slate-400">
+                                                            {emp.employee_code}
+                                                        </p>
+                                                        {emp.sub_company_name && (
+                                                            <span
+                                                                className="max-w-[80px] truncate text-[8px] text-sky-600 dark:text-sky-400"
+                                                                title={emp.sub_company_name}
+                                                            >
+                                                                • {emp.sub_company_name}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
@@ -478,9 +505,11 @@ export default function OrganizationChartPage({
     chart,
     all_positions = [],
     divisions = [],
+    sub_companies = [],
     stats = {},
 }: PageProps) {
     const [activeTab, setActiveTab] = useState<string>('all');
+    const [subCompanyTab, setSubCompanyTab] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [showVacant, setShowVacant] = useState(true);
     const [showInactive, setShowInactive] = useState(true);
@@ -562,13 +591,40 @@ export default function OrganizationChartPage({
             roots = filterDivision(roots);
         }
 
+        // If specific sub-company selected, filter nodes
+        if (subCompanyTab !== 'all') {
+            const filterSubCompany = (nodes: OrgNode[]): OrgNode[] => {
+                return nodes
+                    .map((node) => {
+                        const matchingChildren = filterSubCompany(node.children);
+                        const isMatch =
+                            subCompanyTab === '__internal'
+                                ? node.employees.some((e) => !e.sub_company_id)
+                                : node.employees.some(
+                                      (e) =>
+                                          String(e.sub_company_id) ===
+                                          subCompanyTab,
+                                  );
+                        if (!isMatch && matchingChildren.length === 0) {
+                            return null;
+                        }
+                        return {
+                            ...node,
+                            children: matchingChildren,
+                        };
+                    })
+                    .filter((n): n is OrgNode => n !== null);
+            };
+            roots = filterSubCompany(roots);
+        }
+
         // Apply Vacant & Inactive filters on root level
         return roots.filter((node) => {
             if (!showVacant && node.is_vacant) return false;
             if (!showInactive && !node.is_position_active) return false;
             return true;
         });
-    }, [chart, activeTab, showVacant, showInactive]);
+    }, [chart, activeTab, subCompanyTab, showVacant, showInactive]);
 
     // Modal positions filtered list
     const filteredModalPositions = useMemo(() => {
@@ -789,35 +845,85 @@ export default function OrganizationChartPage({
                 >
                     {/* Control Toolbar */}
                     <div className="flex flex-col gap-3 border-b border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
-                        {/* Division filter pills */}
-                        <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant={
-                                    activeTab === 'all' ? 'default' : 'outline'
-                                }
-                                onClick={() => setActiveTab('all')}
-                                className="h-7 text-xs"
-                            >
-                                Semua Divisi
-                            </Button>
-                            {divisions.map((div) => (
+                        {/* Division & Sub-Company filter pills */}
+                        <div className="flex flex-col gap-2 overflow-x-auto pb-1 sm:pb-0">
+                            {/* Division pills */}
+                            <div className="flex flex-wrap items-center gap-1.5">
                                 <Button
-                                    key={div.id}
                                     type="button"
                                     size="sm"
                                     variant={
-                                        activeTab === div.name
-                                            ? 'default'
-                                            : 'outline'
+                                        activeTab === 'all' ? 'default' : 'outline'
                                     }
-                                    onClick={() => setActiveTab(div.name)}
+                                    onClick={() => setActiveTab('all')}
                                     className="h-7 text-xs"
                                 >
-                                    {div.name}
+                                    Semua Divisi
                                 </Button>
-                            ))}
+                                {divisions.map((div) => (
+                                    <Button
+                                        key={div.id}
+                                        type="button"
+                                        size="sm"
+                                        variant={
+                                            activeTab === div.name
+                                                ? 'default'
+                                                : 'outline'
+                                        }
+                                        onClick={() => setActiveTab(div.name)}
+                                        className="h-7 text-xs"
+                                    >
+                                        {div.name}
+                                    </Button>
+                                ))}
+                            </div>
+
+                            {/* Sub-Company filter pills (only active sub-companies) */}
+                            {sub_companies.length > 0 && (
+                                <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                                    <span className="text-[10px] font-semibold text-muted-foreground mr-1">
+                                        Sub-Company:
+                                    </span>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant={
+                                            subCompanyTab === 'all' ? 'default' : 'outline'
+                                        }
+                                        onClick={() => setSubCompanyTab('all')}
+                                        className="h-6 text-[11px] px-2"
+                                    >
+                                        Semua
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant={
+                                            subCompanyTab === '__internal' ? 'default' : 'outline'
+                                        }
+                                        onClick={() => setSubCompanyTab('__internal')}
+                                        className="h-6 text-[11px] px-2"
+                                    >
+                                        Internal Saja
+                                    </Button>
+                                    {sub_companies.map((sc) => (
+                                        <Button
+                                            key={sc.id}
+                                            type="button"
+                                            size="sm"
+                                            variant={
+                                                subCompanyTab === String(sc.id)
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
+                                            onClick={() => setSubCompanyTab(String(sc.id))}
+                                            className="h-6 text-[11px] px-2"
+                                        >
+                                            {sc.name}
+                                        </Button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Search & Action Toggles */}
