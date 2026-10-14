@@ -146,6 +146,8 @@ type ContractReminders = {
 
 type DashboardFilters = {
     period?: string;
+    period_type?: 'month' | 'quarter' | 'semester';
+    period_label?: string;
     range: 'today' | 'this_week' | 'this_month';
     outsourcing_period: string;
     outsourcing_sub_company_id: string;
@@ -234,6 +236,7 @@ export default function Dashboard({
     reimburseRate,
     filters,
     availablePeriods = [],
+    availablePeriodOptions,
     actionQueue,
     attendanceFocus,
     recentRequests,
@@ -250,6 +253,11 @@ export default function Dashboard({
     reimburseRate: ReimburseRateSummary;
     filters: DashboardFilters;
     availablePeriods?: Array<{ value: string; label: string }>;
+    availablePeriodOptions?: {
+        month: Array<{ value: string; label: string }>;
+        quarter: Array<{ value: string; label: string }>;
+        semester: Array<{ value: string; label: string }>;
+    };
     actionQueue: ActionQueue;
     attendanceFocus: AttendanceFocus;
     recentRequests: RecentRequests;
@@ -315,14 +323,59 @@ export default function Dashboard({
         })),
     ].slice(0, 20);
 
-    const currentPeriod = filters.period || filters.outsourcing_period || (availablePeriods[0]?.value ?? new Date().toISOString().slice(0, 7));
+    const activePeriodType: 'month' | 'quarter' | 'semester' =
+        filters.period_type ||
+        (filters.period?.includes('-Q')
+            ? 'quarter'
+            : filters.period?.includes('-S')
+              ? 'semester'
+              : 'month');
 
-    const periodOptions = availablePeriods.length > 0
-        ? availablePeriods
-        : [{
-            value: currentPeriod,
-            label: currentPeriod,
-        }];
+    const monthOptions = availablePeriodOptions?.month?.length
+        ? availablePeriodOptions.month
+        : availablePeriods.length > 0
+          ? availablePeriods
+          : [{ value: filters.period || new Date().toISOString().slice(0, 7), label: filters.period || new Date().toISOString().slice(0, 7) }];
+
+    const quarterOptions = availablePeriodOptions?.quarter ?? [];
+    const semesterOptions = availablePeriodOptions?.semester ?? [];
+
+    const currentOptions =
+        activePeriodType === 'quarter'
+            ? quarterOptions
+            : activePeriodType === 'semester'
+              ? semesterOptions
+              : monthOptions;
+
+    const currentPeriod =
+        filters.period ||
+        (activePeriodType === 'month' ? filters.outsourcing_period : '') ||
+        (currentOptions[0]?.value ?? new Date().toISOString().slice(0, 7));
+
+    const handlePeriodTypeChange = (nextType: 'month' | 'quarter' | 'semester') => {
+        if (nextType === activePeriodType) return;
+        const targetOptions =
+            nextType === 'quarter'
+                ? quarterOptions
+                : nextType === 'semester'
+                  ? semesterOptions
+                  : monthOptions;
+        const newPeriod = targetOptions[0]?.value ?? '';
+        router.get(
+            dashboard.url(),
+            {
+                ...filters,
+                period_type: nextType,
+                period: newPeriod,
+                ...(nextType === 'month' && newPeriod ? { outsourcing_period: newPeriod } : {}),
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
 
     const handlePeriodChange = (newPeriod: string) => {
         router.get(
@@ -330,7 +383,8 @@ export default function Dashboard({
             {
                 ...filters,
                 period: newPeriod,
-                outsourcing_period: newPeriod,
+                period_type: activePeriodType,
+                ...(activePeriodType === 'month' ? { outsourcing_period: newPeriod } : {}),
             },
             {
                 preserveState: true,
@@ -354,17 +408,55 @@ export default function Dashboard({
                             Pantau kondisi tim, kehadiran, dan pekerjaan HR hari ini dari satu dashboard.
                         </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        {/* Segmented Period Type Filter: Per Bulan, Per Kuartal, Per Semester */}
+                        <div className="inline-flex items-center rounded-lg border bg-muted/50 p-0.5 text-xs">
+                            <button
+                                type="button"
+                                onClick={() => handlePeriodTypeChange('month')}
+                                className={`rounded-md px-2.5 py-1 font-medium transition-all ${
+                                    activePeriodType === 'month'
+                                        ? 'bg-background text-foreground shadow-xs'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                Per Bulan
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handlePeriodTypeChange('quarter')}
+                                className={`rounded-md px-2.5 py-1 font-medium transition-all ${
+                                    activePeriodType === 'quarter'
+                                        ? 'bg-background text-foreground shadow-xs'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                Per Kuartal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handlePeriodTypeChange('semester')}
+                                className={`rounded-md px-2.5 py-1 font-medium transition-all ${
+                                    activePeriodType === 'semester'
+                                        ? 'bg-background text-foreground shadow-xs'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                Per Semester
+                            </button>
+                        </div>
+
+                        {/* Period Selector Dropdown */}
                         <Select
                             value={currentPeriod}
                             onValueChange={handlePeriodChange}
                         >
-                            <SelectTrigger className="h-9 w-[180px] bg-background">
+                            <SelectTrigger className="h-8 w-[190px] bg-background text-xs">
                                 <SelectValue placeholder="Pilih Periode" />
                             </SelectTrigger>
-                            <SelectContent>
-                                {periodOptions.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value}>
+                            <SelectContent align="end">
+                                {currentOptions.map((opt) => (
+                                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
                                         {opt.label}
                                     </SelectItem>
                                 ))}
@@ -372,7 +464,7 @@ export default function Dashboard({
                         </Select>
 
                         {actionQueue.total > 0 && (
-                            <div className="rounded-md border border-rose-200 bg-rose-50/70 px-3 py-2 text-sm text-rose-700 dark:border-rose-950 dark:bg-rose-950/25 dark:text-rose-300">
+                            <div className="rounded-md border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs text-rose-700 dark:border-rose-950 dark:bg-rose-950/25 dark:text-rose-300">
                                 <span className="font-semibold">
                                     {actionQueue.total}
                                 </span>{' '}
@@ -462,34 +554,60 @@ export default function Dashboard({
                     </Card>
                 </div>
 
-                {/* Bagian Atas (3 Charts - Grouping Tema Payroll & Asuransi): Total Payroll per Divisi, Tren Payroll, Social Insurance */}
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {pieCharts?.payroll_by_division && (
-                        <PayrollByDivisionCard data={pieCharts.payroll_by_division} />
-                    )}
-                    <PayrollBurnrateCard data={payrollBurnrate} />
-                    <InsuranceBurnrateCard data={insuranceBurnrate} />
+                {/* Row 1: Total Payroll per Divisi (20%), Tren Payroll (40%), Social Insurance (40%) */}
+                <div className="grid gap-3 grid-cols-1 lg:grid-cols-10">
+                    <div className="lg:col-span-2">
+                        {pieCharts?.payroll_by_division && (
+                            <PayrollByDivisionCard
+                                data={pieCharts.payroll_by_division}
+                                periodLabel={filters.period_label}
+                            />
+                        )}
+                    </div>
+                    <div className="lg:col-span-4">
+                        <PayrollBurnrateCard data={payrollBurnrate} />
+                    </div>
+                    <div className="lg:col-span-4">
+                        <InsuranceBurnrateCard data={insuranceBurnrate} />
+                    </div>
                 </div>
 
-                {/* Bagian Kedua (2 Charts - Grouping Tema Reimbursement): Total Reimburse sesuai Kategori, Sebaran Reimburse */}
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
-                    {pieCharts?.reimburse_by_category && (
-                        <ReimburseByCategoryCard
-                            data={pieCharts.reimburse_by_category}
-                        />
-                    )}
-                    <ReimburseRateCard data={reimburseRate} />
+                {/* Row 2: Total Reimburse by Kategori (30%), Sebaran Reimbursement (70%) */}
+                <div className="grid gap-3 grid-cols-1 lg:grid-cols-10">
+                    <div className="lg:col-span-3">
+                        {pieCharts?.reimburse_by_category && (
+                            <ReimburseByCategoryCard
+                                data={pieCharts.reimburse_by_category}
+                                periodLabel={filters.period_label}
+                            />
+                        )}
+                    </div>
+                    <div className="lg:col-span-7">
+                        <ReimburseRateCard data={reimburseRate} />
+                    </div>
                 </div>
 
-                {/* Bagian Ketiga (3 Charts - Grouping Tema Karyawan, Demografi & Turnover): Gender per Divisi, Mobilitas Karyawan, Alasan Resign */}
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {pieCharts?.gender_by_division && (
-                        <GenderByDivisionCard data={pieCharts.gender_by_division} />
-                    )}
-                    <EmployeeMobilityCard data={employeeMobility} />
-                    {pieCharts?.resign_reasons && (
-                        <ResignReasonsCard data={pieCharts.resign_reasons} />
-                    )}
+                {/* Row 3: Employee Mobility (60%), Offboarding Reason (20%), Gender per Divisi (20% far right) */}
+                <div className="grid gap-3 grid-cols-1 lg:grid-cols-10">
+                    <div className="lg:col-span-6">
+                        <EmployeeMobilityCard data={employeeMobility} />
+                    </div>
+                    <div className="lg:col-span-2">
+                        {pieCharts?.resign_reasons && (
+                            <ResignReasonsCard
+                                data={pieCharts.resign_reasons}
+                                periodLabel={filters.period_label}
+                            />
+                        )}
+                    </div>
+                    <div className="lg:col-span-2">
+                        {pieCharts?.gender_by_division && (
+                            <GenderByDivisionCard
+                                data={pieCharts.gender_by_division}
+                                periodLabel={filters.period_label}
+                            />
+                        )}
+                    </div>
                 </div>
 
                 {/* Reminder Terkini */}

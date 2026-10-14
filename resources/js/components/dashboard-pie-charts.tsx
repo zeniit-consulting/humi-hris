@@ -51,6 +51,7 @@ export const formatRupiahFull = (value: number | string) => {
 };
 
 export type GenderByDivisionData = {
+    period_label?: string;
     divisions: Array<{
         id: number;
         name: string;
@@ -92,6 +93,7 @@ export type ReimburseByCategoryData = {
 
 export type ReimburseByDivisionData = {
     total: number;
+    period_label?: string;
     divisions?: Array<{
         id: number;
         name: string;
@@ -109,6 +111,7 @@ export type ReimburseByDivisionData = {
 
 export type ResignReasonsData = {
     total: number;
+    period_label?: string;
     reasons: Array<{
         key: string;
         label: string;
@@ -183,17 +186,18 @@ function DonutSvg({
     centerLabel,
     hoveredIndex,
     onHover,
+    size = 114,
 }: {
     slices: DonutSlice[];
     centerValue: string;
     centerLabel: string;
     hoveredIndex: number | null;
     onHover: (index: number | null) => void;
+    size?: number;
 }) {
-    const size = 114;
     const center = size / 2;
-    const innerRadius = 34;
-    const outerRadius = 52;
+    const innerRadius = Math.round(size * 0.3);
+    const outerRadius = Math.round(size * 0.46);
 
     const validSlices = slices.filter((s) => s.value > 0);
     const total = validSlices.reduce((acc, s) => acc + s.value, 0);
@@ -303,8 +307,10 @@ function DonutSvg({
  */
 export function GenderByDivisionCard({
     data,
+    periodLabel,
 }: {
     data: GenderByDivisionData;
+    periodLabel?: string;
 }) {
     const [selectedDivisionId, setSelectedDivisionId] = useState<string>('all');
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -357,25 +363,33 @@ export function GenderByDivisionCard({
     }
 
     const activeSlice = hoveredIndex !== null ? slices[hoveredIndex] : null;
+    const displayPeriod = data.period_label || periodLabel;
 
     return (
-        <Card className="flex flex-col justify-between gap-0 border-sky-100/80 bg-card py-2.5 shadow-xs dark:border-sky-950/40">
+        <Card className="flex h-full flex-col justify-start gap-1 border-sky-100/80 bg-card py-2.5 shadow-xs dark:border-sky-950/40">
             <CardHeader className="px-3 pt-0 pb-0 gap-0">
-                <div className="flex items-center justify-between gap-1">
+                <div className="flex items-start justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
                             <Users className="size-3.5 shrink-0 aspect-square" />
                         </span>
-                        <CardTitle className="truncate text-xs font-semibold leading-tight">
-                            Gender per Divisi
-                        </CardTitle>
+                        <div className="min-w-0">
+                            <CardTitle className="truncate text-xs font-semibold leading-tight">
+                                Gender per Divisi
+                            </CardTitle>
+                            {displayPeriod && (
+                                <p className="text-[10px] text-muted-foreground font-normal truncate">
+                                    {displayPeriod}
+                                </p>
+                            )}
+                        </div>
                     </div>
 
                     <Select
                         value={selectedDivisionId}
                         onValueChange={setSelectedDivisionId}
                     >
-                        <SelectTrigger className="h-6 w-[110px] text-[10px] px-1.5">
+                        <SelectTrigger className="h-6 w-[95px] text-[10px] px-1.5 shrink-0">
                             <SelectValue placeholder="Pilih divisi" />
                         </SelectTrigger>
                         <SelectContent align="end">
@@ -397,7 +411,7 @@ export function GenderByDivisionCard({
             </CardHeader>
 
             <CardContent className="px-3 pt-0 pb-0">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center gap-1.5">
                     <DonutSvg
                         slices={slices}
                         centerValue={
@@ -410,10 +424,11 @@ export function GenderByDivisionCard({
                         }
                         hoveredIndex={hoveredIndex}
                         onHover={setHoveredIndex}
+                        size={106}
                     />
 
                     {/* Compact Legend */}
-                    <div className="flex flex-1 flex-col gap-1.5 text-xs">
+                    <div className="w-full flex flex-col gap-1 text-xs max-h-[110px] overflow-y-auto pr-0.5">
                         {slices.map((slice, i) => (
                             <div
                                 key={slice.label}
@@ -430,15 +445,15 @@ export function GenderByDivisionCard({
                                         className="size-2 shrink-0 rounded-full"
                                         style={{ backgroundColor: slice.color }}
                                     />
-                                    <span className="truncate text-[11px] text-muted-foreground">
+                                    <span className="truncate text-[10px] text-muted-foreground">
                                         {slice.label}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-1 shrink-0 text-[11px]">
+                                <div className="flex items-center gap-1 shrink-0 text-[10px]">
                                     <span className="font-semibold text-foreground">
                                         {slice.value}
                                     </span>
-                                    <span className="text-[10px] text-muted-foreground">
+                                    <span className="text-[9px] text-muted-foreground">
                                         ({slice.percentage}%)
                                     </span>
                                 </div>
@@ -456,8 +471,10 @@ export function GenderByDivisionCard({
  */
 export function PayrollByDivisionCard({
     data,
+    periodLabel,
 }: {
     data: PayrollByDivisionData;
+    periodLabel?: string;
 }) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -474,9 +491,10 @@ export function PayrollByDivisionCard({
     }));
 
     const activeSlice = hoveredIndex !== null ? slices[hoveredIndex] : null;
+    const displayPeriod = data.period_label || periodLabel;
 
     return (
-        <Card className="flex flex-col justify-between gap-0 border-indigo-100/80 bg-card py-2.5 shadow-xs dark:border-indigo-950/40">
+        <Card className="flex h-full flex-col justify-start gap-1 border-indigo-100/80 bg-card py-2.5 shadow-xs dark:border-indigo-950/40">
             <CardHeader className="px-3 pt-0 pb-0 gap-0">
                 <div className="flex items-start justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -487,9 +505,9 @@ export function PayrollByDivisionCard({
                             <CardTitle className="truncate text-xs font-semibold leading-tight">
                                 Total Payroll per Divisi
                             </CardTitle>
-                            {data.period_label && (
+                            {displayPeriod && (
                                 <p className="text-[10px] text-muted-foreground font-normal truncate">
-                                    {data.period_label}
+                                    {displayPeriod}
                                 </p>
                             )}
                         </div>
@@ -510,7 +528,7 @@ export function PayrollByDivisionCard({
                         </span>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center gap-1.5">
                         <DonutSvg
                             slices={slices}
                             centerValue={
@@ -524,14 +542,15 @@ export function PayrollByDivisionCard({
                             }
                             hoveredIndex={hoveredIndex}
                             onHover={setHoveredIndex}
+                            size={106}
                         />
 
                         {/* Flexible Divisions Legend sorted High to Low */}
-                        <div className="flex flex-1 flex-col gap-1 text-xs max-h-[140px] overflow-y-auto pr-1">
+                        <div className="w-full flex flex-col gap-1 text-xs max-h-[110px] overflow-y-auto pr-0.5">
                             {slices.map((slice, i) => (
                                 <div
                                     key={slice.label}
-                                    className={`flex items-center justify-between gap-1.5 rounded-sm px-1.5 py-1 transition-colors cursor-pointer ${
+                                    className={`flex items-center justify-between gap-1.5 rounded-sm px-1.5 py-0.5 transition-colors cursor-pointer ${
                                         hoveredIndex === i
                                             ? 'bg-muted font-medium'
                                             : 'hover:bg-muted/50'
@@ -581,8 +600,10 @@ const CATEGORY_COLORS: Record<string, string> = {
  */
 export function ReimburseByCategoryCard({
     data,
+    periodLabel,
 }: {
     data?: ReimburseByCategoryData;
+    periodLabel?: string;
 }) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -608,9 +629,10 @@ export function ReimburseByCategoryCard({
     });
 
     const activeSlice = hoveredIndex !== null ? slices[hoveredIndex] : null;
+    const displayPeriod = safeData.period_label || periodLabel;
 
     return (
-        <Card className="flex flex-col justify-between gap-0 border-amber-100/80 bg-card py-2.5 shadow-xs dark:border-amber-950/40">
+        <Card className="flex h-full flex-col justify-start gap-1 border-amber-100/80 bg-card py-2.5 shadow-xs dark:border-amber-950/40">
             <CardHeader className="px-3 pt-0 pb-0 gap-0">
                 <div className="flex items-start justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -621,9 +643,9 @@ export function ReimburseByCategoryCard({
                             <CardTitle className="truncate text-xs font-semibold leading-tight">
                                 Total Reimburse by Kategori
                             </CardTitle>
-                            {safeData.period_label && (
+                            {displayPeriod && (
                                 <p className="text-[10px] text-muted-foreground font-normal truncate">
-                                    {safeData.period_label}
+                                    {displayPeriod}
                                 </p>
                             )}
                         </div>
@@ -705,8 +727,9 @@ export function ReimburseByCategoryCard({
 
 export function ReimburseByDivisionCard(props: {
     data?: ReimburseByCategoryData | ReimburseByDivisionData;
+    periodLabel?: string;
 }) {
-    return <ReimburseByCategoryCard data={props.data as ReimburseByCategoryData} />;
+    return <ReimburseByCategoryCard data={props.data as ReimburseByCategoryData} periodLabel={props.periodLabel} />;
 }
 
 /**
@@ -714,8 +737,10 @@ export function ReimburseByDivisionCard(props: {
  */
 export function ResignReasonsCard({
     data,
+    periodLabel,
 }: {
     data: ResignReasonsData;
+    periodLabel?: string;
 }) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -741,18 +766,26 @@ export function ResignReasonsCard({
     }));
 
     const activeSlice = hoveredIndex !== null ? slices[hoveredIndex] : null;
+    const displayPeriod = data.period_label || periodLabel;
 
     return (
-        <Card className="flex h-full flex-col justify-between gap-0 border-rose-100/80 bg-card py-2.5 shadow-xs dark:border-rose-950/40">
+        <Card className="flex h-full flex-col justify-start gap-1 border-rose-100/80 bg-card py-2.5 shadow-xs dark:border-rose-950/40">
             <CardHeader className="px-3 pt-0 pb-0 gap-0">
                 <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
                             <UserMinus className="size-3.5 shrink-0 aspect-square" />
                         </span>
-                        <CardTitle className="truncate text-xs font-semibold leading-tight">
-                            Offboarding Reason
-                        </CardTitle>
+                        <div className="min-w-0">
+                            <CardTitle className="truncate text-xs font-semibold leading-tight">
+                                Offboarding Reason
+                            </CardTitle>
+                            {displayPeriod && (
+                                <p className="text-[10px] text-muted-foreground font-normal truncate">
+                                    {displayPeriod}
+                                </p>
+                            )}
+                        </div>
                     </div>
                     <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
                         {data.total} Offboarding
@@ -770,7 +803,7 @@ export function ResignReasonsCard({
                         </span>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center gap-1.5">
                         <DonutSvg
                             slices={slices}
                             centerValue={
@@ -783,10 +816,11 @@ export function ResignReasonsCard({
                             }
                             hoveredIndex={hoveredIndex}
                             onHover={setHoveredIndex}
+                            size={106}
                         />
 
                         {/* Reasons Legend */}
-                        <div className="flex flex-1 flex-col gap-1 text-xs max-h-[130px] overflow-y-auto pr-0.5">
+                        <div className="w-full flex flex-col gap-1 text-xs max-h-[110px] overflow-y-auto pr-0.5">
                             {slices.map((slice, i) => (
                                 <div
                                     key={slice.label}

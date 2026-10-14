@@ -48,33 +48,42 @@ class DashboardController extends Controller
         $ownerId = $user->accountOwnerId();
 
         $validated = $request->validate([
-            'period' => ['nullable', 'date_format:Y-m'],
+            'period' => ['nullable', 'string', 'max:20'],
+            'period_type' => ['nullable', 'in:month,quarter,semester'],
             'range' => ['nullable', 'in:today,this_week,this_month'],
             'outsourcing_period' => ['nullable', 'date_format:Y-m'],
             'outsourcing_sub_company_id' => ['nullable', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $ownerId)],
         ]);
 
-        $period = $validated['period'] ?? $validated['outsourcing_period'] ?? now()->format('Y-m');
+        $periodInfo = $this->resolvePeriodInfo(
+            $ownerId,
+            $validated['period'] ?? null,
+            $validated['period_type'] ?? null
+        );
+
+        $period = $periodInfo['period'];
+        $periodDate = $periodInfo['period_date'];
+        $isCurrentPeriod = $periodInfo['is_current'];
         $activeRange = $validated['range'] ?? 'this_week';
-        $outsourcingPeriod = $validated['outsourcing_period'] ?? $period;
+        $outsourcingPeriod = $validated['outsourcing_period'] ?? (
+            $periodInfo['type'] === 'month' ? $period : now()->format('Y-m')
+        );
         $outsourcingSubCompanyId = $validated['outsourcing_sub_company_id'] ?? null;
         $today = Carbon::today();
-        $periodDate = Carbon::createFromFormat('Y-m', $period)->startOfMonth();
-        $isCurrentPeriod = $period === now()->format('Y-m');
 
         // Determine reference date for daily attendance and chart
-        $referenceDate = $isCurrentPeriod ? $today->copy() : $periodDate->copy()->endOfMonth();
+        $referenceDate = $isCurrentPeriod ? $today->copy() : $periodInfo['end_date']->copy();
 
         $startDate = match ($activeRange) {
             'today' => $referenceDate->copy(),
-            'this_month' => $periodDate->copy()->startOfMonth(),
-            default => $isCurrentPeriod ? $today->copy()->startOfWeek() : $periodDate->copy()->startOfMonth(),
+            'this_month' => $periodInfo['start_date']->copy(),
+            default => $isCurrentPeriod ? $today->copy()->startOfWeek() : $periodInfo['start_date']->copy(),
         };
 
         $chartEndDate = match ($activeRange) {
             'today' => $referenceDate->copy(),
-            'this_month' => $periodDate->copy()->endOfMonth(),
-            default => $isCurrentPeriod ? $today->copy() : $periodDate->copy()->endOfMonth(),
+            'this_month' => $periodInfo['end_date']->copy(),
+            default => $isCurrentPeriod ? $today->copy() : $periodInfo['end_date']->copy(),
         };
 
         $totalEmployees = Employee::query()->count();
@@ -91,7 +100,7 @@ class DashboardController extends Controller
 
         $monthlyPayrollBurn = (float) (PayrollRun::query()
             ->where('user_id', $ownerId)
-            ->where('period', $period)
+            ->whereIn('period', $periodInfo['months'])
             ->latest('generated_at')
             ->value('total_net_salary') ?? 0);
 
@@ -177,11 +186,14 @@ class DashboardController extends Controller
         return Inertia::render('dashboard', [
             'filters' => [
                 'period' => $period,
+                'period_type' => $periodInfo['type'],
+                'period_label' => $periodInfo['period_label'],
                 'range' => $activeRange,
                 'outsourcing_period' => $outsourcingPeriod,
                 'outsourcing_sub_company_id' => $outsourcingSubCompanyId ? (string) $outsourcingSubCompanyId : '',
             ],
             'availablePeriods' => $this->availablePeriods($ownerId),
+            'availablePeriodOptions' => $this->availablePeriodOptions($ownerId),
             'stats' => [
                 'total_employees' => $totalEmployees,
                 'active_employees' => $activeEmployees,
@@ -199,14 +211,14 @@ class DashboardController extends Controller
                 'gender' => $genderStats,
             ],
             'attendanceChart' => $attendanceChart,
-            'executiveInsights' => $this->executiveInsights($ownerId, $periodDate, $period),
+            'executiveInsights' => $this->executiveInsights($ownerId, $periodDate, $periodInfo),
             'payrollBurnrate' => $this->payrollBurnrateSummary($ownerId, $periodDate),
             'insuranceBurnrate' => $this->insuranceBurnrateSummary($ownerId, $periodDate),
             'employeeMobility' => $this->employeeMobilitySummary($ownerId, $periodDate),
             'reimburseRate' => $this->reimburseRateSummary($ownerId, $periodDate),
             'actionQueue' => $this->actionQueue($ownerId, $today),
-            'attendanceFocus' => $this->attendanceFocus($ownerId, $referenceDate, $period),
-            'recentRequests' => $this->recentRequests($ownerId, $period),
+            'attendanceFocus' => $this->attendanceFocus($ownerId, $referenceDate, $periodInfo),
+            'recentRequests' => $this->recentRequests($ownerId, $periodInfo),
             'contractReminders' => $this->contractReminders($ownerId, $periodDate),
             'outsourcing' => $this->outsourcingSummary(
                 $ownerId,
@@ -215,11 +227,11 @@ class DashboardController extends Controller
                 $today,
             ),
             'pieCharts' => [
-                'gender_by_division' => $this->genderByDivisionData($ownerId),
-                'payroll_by_division' => $this->payrollByDivisionData($ownerId, $period),
-                'reimburse_by_category' => $this->reimburseByCategoryData($ownerId, $period),
-                'reimburse_by_division' => $this->reimburseByDivisionData($ownerId, $period),
-                'resign_reasons' => $this->resignReasonsData($ownerId, $periodDate),
+                'gender_by_division' => $this->genderByDivisionData($ownerId, $periodInfo),
+                'payroll_by_division' => $this->payrollByDivisionData($ownerId, $periodInfo),
+                'reimburse_by_category' => $this->reimburseByCategoryData($ownerId, $periodInfo),
+                'reimburse_by_division' => $this->reimburseByDivisionData($ownerId, $periodInfo),
+                'resign_reasons' => $this->resignReasonsData($ownerId, $periodInfo),
             ],
         ]);
     }
@@ -362,7 +374,7 @@ class DashboardController extends Controller
         ];
     }
 
-    private function attendanceFocus(int $ownerId, Carbon $referenceDate, string $period): array
+    private function attendanceFocus(int $ownerId, Carbon $referenceDate, string|array $period): array
     {
         $targetDate = $referenceDate->toDateString();
 
@@ -390,13 +402,19 @@ class DashboardController extends Controller
             ->where('user_id', $ownerId)
             ->where('status', 'late');
 
-        if ($period === now()->format('Y-m')) {
+        $isCurrent = is_array($period) ? $period['is_current'] : ($period === now()->format('Y-m'));
+
+        if ($isCurrent) {
             $lateAttendanceQuery->whereDate('attendance_date', $targetDate);
         } else {
-            $lateAttendanceQuery->whereBetween('attendance_date', [
-                Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString(),
-                Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString(),
-            ]);
+            $startDateStr = is_array($period)
+                ? $period['start_date']->toDateString()
+                : Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
+            $endDateStr = is_array($period)
+                ? $period['end_date']->toDateString()
+                : Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+
+            $lateAttendanceQuery->whereBetween('attendance_date', [$startDateStr, $endDateStr]);
         }
 
         $lateItems = $lateAttendanceQuery
@@ -462,7 +480,7 @@ class DashboardController extends Controller
         return $attendance->check_in_at->copy()->setTimezone($timezone)->format('H:i').' '.$label;
     }
 
-    private function recentRequests(int $ownerId, string $period): array
+    private function recentRequests(int $ownerId, string|array $period): array
     {
         $items = collect()
             ->merge($this->recentAttendanceRequests($ownerId, $period))
@@ -540,10 +558,15 @@ class DashboardController extends Controller
         ];
     }
 
-    private function recentAttendanceRequests(int $ownerId, string $period): array
+    private function recentAttendanceRequests(int $ownerId, string|array $period): array
     {
-        $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
-        $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+        if (is_array($period)) {
+            $start = $period['start_date']->toDateString();
+            $end = $period['end_date']->toDateString();
+        } else {
+            $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
+            $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+        }
 
         return AttendanceCorrectionRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
@@ -567,10 +590,15 @@ class DashboardController extends Controller
             ->all();
     }
 
-    private function recentLeaveRequests(int $ownerId, string $period): array
+    private function recentLeaveRequests(int $ownerId, string|array $period): array
     {
-        $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
-        $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+        if (is_array($period)) {
+            $start = $period['start_date']->toDateString();
+            $end = $period['end_date']->toDateString();
+        } else {
+            $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
+            $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+        }
 
         return LeaveRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
@@ -595,10 +623,15 @@ class DashboardController extends Controller
             ->all();
     }
 
-    private function recentOvertimeRequests(int $ownerId, string $period): array
+    private function recentOvertimeRequests(int $ownerId, string|array $period): array
     {
-        $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
-        $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+        if (is_array($period)) {
+            $start = $period['start_date']->toDateString();
+            $end = $period['end_date']->toDateString();
+        } else {
+            $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
+            $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+        }
 
         return OvertimeRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
@@ -622,10 +655,15 @@ class DashboardController extends Controller
             ->all();
     }
 
-    private function recentShiftChangeRequests(int $ownerId, string $period): array
+    private function recentShiftChangeRequests(int $ownerId, string|array $period): array
     {
-        $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
-        $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+        if (is_array($period)) {
+            $start = $period['start_date']->toDateString();
+            $end = $period['end_date']->toDateString();
+        } else {
+            $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
+            $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+        }
 
         return ShiftChangeRequest::query()
             ->with('employee:id,employee_code,first_name,last_name')
@@ -807,6 +845,199 @@ class DashboardController extends Controller
             'value' => $periodVal,
             'label' => Carbon::createFromFormat('Y-m', $periodVal)->translatedFormat('F Y'),
         ])->all();
+    }
+
+    /**
+     * @return array{
+     *     month: list<array{value: string, label: string}>,
+     *     quarter: list<array{value: string, label: string}>,
+     *     semester: list<array{value: string, label: string}>
+     * }
+     */
+    private function availablePeriodOptions(int $ownerId): array
+    {
+        $monthPeriods = $this->availablePeriods($ownerId);
+
+        $years = collect($monthPeriods)
+            ->map(fn ($p) => (int) substr($p['value'], 0, 4))
+            ->push((int) now()->year)
+            ->unique()
+            ->sortDesc()
+            ->values();
+
+        $quarterOptions = [];
+        foreach ($years as $yr) {
+            $quarterOptions[] = ['value' => "{$yr}-Q4", 'label' => "Q4 (Okt - Des) {$yr}"];
+            $quarterOptions[] = ['value' => "{$yr}-Q3", 'label' => "Q3 (Jul - Sep) {$yr}"];
+            $quarterOptions[] = ['value' => "{$yr}-Q2", 'label' => "Q2 (Apr - Jun) {$yr}"];
+            $quarterOptions[] = ['value' => "{$yr}-Q1", 'label' => "Q1 (Jan - Mar) {$yr}"];
+        }
+
+        $semesterOptions = [];
+        foreach ($years as $yr) {
+            $semesterOptions[] = ['value' => "{$yr}-S2", 'label' => "Semester 2 (Jul - Des) {$yr}"];
+            $semesterOptions[] = ['value' => "{$yr}-S1", 'label' => "Semester 1 (Jan - Jun) {$yr}"];
+        }
+
+        return [
+            'month' => $monthPeriods,
+            'quarter' => $quarterOptions,
+            'semester' => $semesterOptions,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     type: 'month'|'quarter'|'semester',
+     *     period: string,
+     *     period_date: Carbon,
+     *     start_date: Carbon,
+     *     end_date: Carbon,
+     *     months: list<string>,
+     *     label: string,
+     *     period_label: string,
+     *     is_current: bool
+     * }
+     */
+    private function resolvePeriodInfo(int $ownerId, ?string $rawPeriod, ?string $rawType): array
+    {
+        $period = trim((string) $rawPeriod);
+        $type = $rawType;
+
+        if (preg_match('/^\d{4}-Q[1-4]$/i', $period)) {
+            $type = 'quarter';
+            $period = strtoupper($period);
+        } elseif (preg_match('/^\d{4}-S[1-2]$/i', $period)) {
+            $type = 'semester';
+            $period = strtoupper($period);
+        } elseif (preg_match('/^\d{4}-\d{2}$/', $period)) {
+            $type = 'month';
+        }
+
+        if (! in_array($type, ['month', 'quarter', 'semester'], true)) {
+            $type = 'month';
+        }
+
+        $now = Carbon::now();
+
+        if ($type === 'quarter') {
+            if (! preg_match('/^(\d{4})-Q([1-4])$/i', $period, $m)) {
+                $quarterNum = (int) ceil($now->month / 3);
+                $year = (int) $now->year;
+                $period = "{$year}-Q{$quarterNum}";
+            } else {
+                $year = (int) $m[1];
+                $quarterNum = (int) $m[2];
+            }
+
+            $startMonthNum = ($quarterNum - 1) * 3 + 1;
+            $endMonthNum = $quarterNum * 3;
+
+            $months = [];
+            for ($mNum = $startMonthNum; $mNum <= $endMonthNum; $mNum++) {
+                $months[] = sprintf('%04d-%02d', $year, $mNum);
+            }
+
+            $firstMonth = $months[0];
+            $lastMonth = end($months);
+
+            [$startDate] = $this->resolvePeriodDates($ownerId, $firstMonth);
+            [, $endDate] = $this->resolvePeriodDates($ownerId, $lastMonth);
+
+            $qNames = [
+                1 => 'Q1 (Jan - Mar)',
+                2 => 'Q2 (Apr - Jun)',
+                3 => 'Q3 (Jul - Sep)',
+                4 => 'Q4 (Okt - Des)',
+            ];
+
+            $label = ($qNames[$quarterNum] ?? "Q{$quarterNum}")." {$year}";
+            $periodLabel = $startDate->translatedFormat('d M').' - '.$endDate->translatedFormat('d M Y');
+            $periodDate = Carbon::createFromFormat('Y-m-d', $firstMonth.'-01')->startOfMonth();
+            $isCurrent = $period === ($now->year.'-Q'.ceil($now->month / 3));
+
+            return [
+                'type' => 'quarter',
+                'period' => $period,
+                'period_date' => $periodDate,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'months' => $months,
+                'label' => $label,
+                'period_label' => $periodLabel,
+                'is_current' => $isCurrent,
+            ];
+        }
+
+        if ($type === 'semester') {
+            if (! preg_match('/^(\d{4})-S([1-2])$/i', $period, $m)) {
+                $semNum = $now->month > 6 ? 2 : 1;
+                $year = (int) $now->year;
+                $period = "{$year}-S{$semNum}";
+            } else {
+                $year = (int) $m[1];
+                $semNum = (int) $m[2];
+            }
+
+            $startMonthNum = $semNum === 1 ? 1 : 7;
+            $endMonthNum = $semNum === 1 ? 6 : 12;
+
+            $months = [];
+            for ($mNum = $startMonthNum; $mNum <= $endMonthNum; $mNum++) {
+                $months[] = sprintf('%04d-%02d', $year, $mNum);
+            }
+
+            $firstMonth = $months[0];
+            $lastMonth = end($months);
+
+            [$startDate] = $this->resolvePeriodDates($ownerId, $firstMonth);
+            [, $endDate] = $this->resolvePeriodDates($ownerId, $lastMonth);
+
+            $semNames = [
+                1 => 'Semester 1 (Jan - Jun)',
+                2 => 'Semester 2 (Jul - Des)',
+            ];
+
+            $label = ($semNames[$semNum] ?? "Semester {$semNum}")." {$year}";
+            $periodLabel = $startDate->translatedFormat('d M').' - '.$endDate->translatedFormat('d M Y');
+            $periodDate = Carbon::createFromFormat('Y-m-d', $firstMonth.'-01')->startOfMonth();
+            $isCurrent = $period === ($now->year.'-S'.($now->month > 6 ? 2 : 1));
+
+            return [
+                'type' => 'semester',
+                'period' => $period,
+                'period_date' => $periodDate,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'months' => $months,
+                'label' => $label,
+                'period_label' => $periodLabel,
+                'is_current' => $isCurrent,
+            ];
+        }
+
+        // Default: month
+        if (! preg_match('/^\d{4}-\d{2}$/', $period)) {
+            $period = $now->format('Y-m');
+        }
+
+        $periodDate = Carbon::createFromFormat('Y-m', $period)->startOfMonth();
+        [$startDate, $endDate] = $this->resolvePeriodDates($ownerId, $period);
+        $periodLabel = $startDate->translatedFormat('d M').' - '.$endDate->translatedFormat('d M Y');
+        $label = $periodDate->translatedFormat('F Y');
+        $isCurrent = $period === $now->format('Y-m');
+
+        return [
+            'type' => 'month',
+            'period' => $period,
+            'period_date' => $periodDate,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'months' => [$period],
+            'label' => $label,
+            'period_label' => $periodLabel,
+            'is_current' => $isCurrent,
+        ];
     }
 
     /**
@@ -1176,7 +1407,7 @@ class DashboardController extends Controller
      * 6. Kontrak siapa yang segera berakhir?
      * 7. Berapa tingkat turnover karyawan?
      */
-    private function executiveInsights(int $ownerId, Carbon $periodDate, string $period): array
+    private function executiveInsights(int $ownerId, Carbon $periodDate, string|array $period): array
     {
         // 1. Karyawan Aktif
         $totalEmployees = Employee::query()->where('user_id', $ownerId)->count();
@@ -1187,9 +1418,10 @@ class DashboardController extends Controller
         $probationCount = Employee::query()->where('user_id', $ownerId)->where('is_active', true)->where('employment_status', 'probation')->count();
 
         // 2. Biaya Gaji Bulan Ini (Hanya payroll fix: locked / released)
+        $months = is_array($period) ? $period['months'] : [$period];
         $latestRun = PayrollRun::query()
             ->where('user_id', $ownerId)
-            ->where('period', $period)
+            ->whereIn('period', $months)
             ->where(function ($query) {
                 $query->where('is_locked', true)
                     ->orWhere('status', 'released')
@@ -1229,17 +1461,17 @@ class DashboardController extends Controller
         $avgPerEmp = $empCount > 0 ? round($payrollCost / $empCount, 0) : 0.0;
 
         // 3. Apakah absensi membaik?
-        $isCurrentMonth = $period === now()->format('Y-m');
+        $isCurrentMonth = is_array($period) ? $period['is_current'] : ($period === now()->format('Y-m'));
         if ($isCurrentMonth) {
             $currStart = now()->subDays(30)->toDateString();
             $currEnd = now()->toDateString();
             $prevStart = now()->subDays(60)->toDateString();
             $prevEnd = now()->subDays(31)->toDateString();
         } else {
-            $currStart = $periodDate->copy()->startOfMonth()->toDateString();
-            $currEnd = $periodDate->copy()->endOfMonth()->toDateString();
-            $prevStart = $periodDate->copy()->subMonth()->startOfMonth()->toDateString();
-            $prevEnd = $periodDate->copy()->subMonth()->endOfMonth()->toDateString();
+            $currStart = is_array($period) ? $period['start_date']->toDateString() : $periodDate->copy()->startOfMonth()->toDateString();
+            $currEnd = is_array($period) ? $period['end_date']->toDateString() : $periodDate->copy()->endOfMonth()->toDateString();
+            $prevStart = Carbon::parse($currStart)->subDays(30)->toDateString();
+            $prevEnd = Carbon::parse($currStart)->subDay()->toDateString();
         }
 
         $currAtt = EmployeeAttendance::query()
@@ -1489,8 +1721,14 @@ class DashboardController extends Controller
      *     overall: array{male: int, female: int, other: int, total: int}
      * }
      */
-    private function genderByDivisionData(int $ownerId): array
+    private function genderByDivisionData(int $ownerId, string|array|null $period = null): array
     {
+        $periodInfo = is_array($period)
+            ? $period
+            : ($period ? $this->resolvePeriodInfo($ownerId, (string) $period, null) : null);
+
+        $periodLabel = $periodInfo ? $periodInfo['period_label'] : now()->translatedFormat('F Y');
+
         $rows = Employee::query()
             ->where('employees.user_id', $ownerId)
             ->where('employees.is_active', true)
@@ -1598,28 +1836,28 @@ class DashboardController extends Controller
      *     divisions: list<array{id: int, name: string, amount: float, percentage: float, employees_count: int}>
      * }
      */
-    private function payrollByDivisionData(int $ownerId, string $period): array
+    private function payrollByDivisionData(int $ownerId, string|array $period): array
     {
-        [$defaultStart, $defaultEnd] = $this->resolvePeriodDates($ownerId, $period);
+        $periodInfo = is_array($period) ? $period : $this->resolvePeriodInfo($ownerId, (string) $period, null);
 
-        $run = PayrollRun::query()
+        $runs = PayrollRun::query()
             ->where('user_id', $ownerId)
-            ->where('period', $period)
+            ->whereIn('period', $periodInfo['months'])
             ->where(function ($query) {
                 $query->where('is_locked', true)
                     ->orWhere('status', 'released')
                     ->orWhereNotNull('released_at');
             })
             ->latest('generated_at')
-            ->first();
+            ->get();
 
-        $periodStart = $run && $run->period_start ? Carbon::parse($run->period_start) : $defaultStart;
-        $periodEnd = $run && $run->period_end ? Carbon::parse($run->period_end) : $defaultEnd;
-        $periodLabel = $periodStart->translatedFormat('d M').' - '.$periodEnd->translatedFormat('d M Y');
+        $periodLabel = $periodInfo['period_label'];
 
-        if ($run) {
+        if ($runs->isNotEmpty()) {
+            $runIds = $runs->pluck('id')->all();
+
             $items = PayrollItem::query()
-                ->where('payroll_items.payroll_run_id', $run->id)
+                ->whereIn('payroll_items.payroll_run_id', $runIds)
                 ->join('employees', 'payroll_items.employee_id', '=', 'employees.id')
                 ->leftJoin('divisions', 'employees.division_id', '=', 'divisions.id')
                 ->selectRaw("
@@ -1675,12 +1913,13 @@ class DashboardController extends Controller
      *     categories: list<array{name: string, amount: float, percentage: float, count: int}>
      * }
      */
-    private function reimburseByCategoryData(int $ownerId, string $period): array
+    private function reimburseByCategoryData(int $ownerId, string|array $period): array
     {
-        [$periodStart, $periodEnd] = $this->resolvePeriodDates($ownerId, $period);
-        $periodLabel = $periodStart->translatedFormat('d M').' - '.$periodEnd->translatedFormat('d M Y');
-        $startStr = $periodStart->copy()->startOfDay()->toDateTimeString();
-        $endStr = $periodEnd->copy()->endOfDay()->toDateTimeString();
+        $periodInfo = is_array($period) ? $period : $this->resolvePeriodInfo($ownerId, (string) $period, null);
+
+        $periodLabel = $periodInfo['period_label'];
+        $startStr = $periodInfo['start_date']->copy()->startOfDay()->toDateTimeString();
+        $endStr = $periodInfo['end_date']->copy()->endOfDay()->toDateTimeString();
 
         $items = ReimbursementRequest::query()
             ->where('reimbursement_requests.user_id', $ownerId)
@@ -1750,12 +1989,13 @@ class DashboardController extends Controller
      *     divisions: list<array{id: int, name: string, amount: float, percentage: float, count: int}>
      * }
      */
-    private function reimburseByDivisionData(int $ownerId, string $period): array
+    private function reimburseByDivisionData(int $ownerId, string|array $period): array
     {
-        [$periodStart, $periodEnd] = $this->resolvePeriodDates($ownerId, $period);
-        $periodLabel = $periodStart->translatedFormat('d M').' - '.$periodEnd->translatedFormat('d M Y');
-        $startStr = $periodStart->copy()->startOfDay()->toDateTimeString();
-        $endStr = $periodEnd->copy()->endOfDay()->toDateTimeString();
+        $periodInfo = is_array($period) ? $period : $this->resolvePeriodInfo($ownerId, (string) $period, null);
+
+        $periodLabel = $periodInfo['period_label'];
+        $startStr = $periodInfo['start_date']->copy()->startOfDay()->toDateTimeString();
+        $endStr = $periodInfo['end_date']->copy()->endOfDay()->toDateTimeString();
 
         $items = ReimbursementRequest::query()
             ->where('reimbursement_requests.user_id', $ownerId)
@@ -1800,17 +2040,37 @@ class DashboardController extends Controller
     /**
      * @return array{
      *     total: int,
+     *     period_label: string,
      *     reasons: list<array{key: string, label: string, count: int, percentage: float}>
      * }
      */
-    private function resignReasonsData(int $ownerId, Carbon $periodDate): array
+    private function resignReasonsData(int $ownerId, Carbon|string|array $periodOrDate): array
     {
+        if (is_array($periodOrDate)) {
+            $periodInfo = $periodOrDate;
+        } elseif ($periodOrDate instanceof Carbon) {
+            $periodInfo = $this->resolvePeriodInfo($ownerId, $periodOrDate->format('Y-m'), 'month');
+        } else {
+            $periodInfo = $this->resolvePeriodInfo($ownerId, (string) $periodOrDate, null);
+        }
+
+        $periodLabel = $periodInfo['period_label'];
+        $startStr = $periodInfo['start_date']->toDateString();
+        $endStr = $periodInfo['end_date']->toDateString();
+
         $raw = Employee::query()
             ->where('user_id', $ownerId)
             ->where(function ($q) {
                 $q->where('employment_status', 'resigned')
                     ->orWhereNotNull('offboarded_at')
                     ->orWhereNotNull('offboarding_reason');
+            })
+            ->where(function ($q) use ($startStr, $endStr) {
+                $q->whereBetween('offboarded_at', [$startStr, $endStr])
+                    ->orWhere(function ($sub) use ($startStr, $endStr) {
+                        $sub->whereNull('offboarded_at')
+                            ->whereBetween('updated_at', [$startStr . ' 00:00:00', $endStr . ' 23:59:59']);
+                    });
             })
             ->selectRaw("COALESCE(NULLIF(offboarding_reason, ''), 'resigned') as reason, COUNT(*) as count")
             ->groupBy('reason')

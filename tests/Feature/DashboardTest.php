@@ -884,4 +884,30 @@ class DashboardTest extends TestCase
                 ->where('pieCharts.reimburse_by_category.total', 750000)
             );
     }
+
+    public function test_dashboard_supports_quarter_and_semester_periods(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        // Test quarter filter
+        $this->actingAs($user)
+            ->get(route('dashboard', ['period' => '2026-Q4']))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('filters.period', '2026-Q4')
+                ->where('filters.period_type', 'quarter')
+                ->has('availablePeriodOptions.quarter')
+                ->has('availablePeriodOptions.semester')
+                ->has('availablePeriodOptions.month')
+            );
+
+        // Test semester filter
+        $this->actingAs($user)
+            ->get(route('dashboard', ['period' => '2026-S1']))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('filters.period', '2026-S1')
+                ->where('filters.period_type', 'semester')
+            );
+    }
 }

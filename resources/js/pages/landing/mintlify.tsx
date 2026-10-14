@@ -20,6 +20,8 @@ const accent = '#0c8c5e';
 const ink = '#08090a';
 const trueBlack = '#000000';
 const mist = '#f2f2f2';
+const WHATSAPP_CONTACT_URL =
+    'https://wa.me/6285710999144?text=Halo%20Humi%2C%20saya%20ingin%20konsultasi%20tentang%20HRIS.';
 
 const modules = [
     {
@@ -481,6 +483,22 @@ export default function MintlifyLanding({
                         </div>
                     </div>
                 </footer>
+
+                <a
+                    href={WHATSAPP_CONTACT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Hubungi Humi via WhatsApp"
+                    className="fixed right-4 bottom-4 z-50 inline-flex size-12 items-center justify-center rounded-full border border-black/10 bg-white shadow-lg transition-transform hover:-translate-y-0.5 active:translate-y-0 sm:right-6 sm:bottom-6 sm:size-14"
+                >
+                    <img
+                        src="/icons/whatsapp.webp"
+                        alt=""
+                        width={56}
+                        height={56}
+                        className="size-11 object-contain sm:size-12"
+                    />
+                </a>
 
                 <style>{`
                     .nav-link {
