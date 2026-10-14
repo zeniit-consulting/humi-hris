@@ -1739,7 +1739,7 @@ class DashboardController extends Controller
                 LOWER(COALESCE(employees.gender, 'other')) as gender,
                 COUNT(*) as total
             ")
-            ->groupBy('division_id', 'division_name', 'gender')
+            ->groupBy('divisions.id', 'divisions.name', 'employees.gender')
             ->get();
 
         $divisionsMap = [];
@@ -1866,7 +1866,7 @@ class DashboardController extends Controller
                     SUM(payroll_items.net_salary) as total_amount,
                     COUNT(DISTINCT payroll_items.employee_id) as employees_count
                 ")
-                ->groupBy('division_id', 'division_name')
+                ->groupBy('divisions.id', 'divisions.name')
                 ->orderByDesc('total_amount')
                 ->get();
 
@@ -1932,7 +1932,7 @@ class DashboardController extends Controller
                 SUM(amount) as total_amount,
                 COUNT(id) as count
             ")
-            ->groupBy('category_name')
+            ->groupByRaw("COALESCE(NULLIF(category, ''), 'Others')")
             ->orderByDesc('total_amount')
             ->get();
 
@@ -2011,7 +2011,7 @@ class DashboardController extends Controller
                 SUM(reimbursement_requests.amount) as total_amount,
                 COUNT(reimbursement_requests.id) as count
             ")
-            ->groupBy('division_id', 'division_name')
+            ->groupBy('divisions.id', 'divisions.name')
             ->orderByDesc('total_amount')
             ->get();
 
@@ -2073,7 +2073,7 @@ class DashboardController extends Controller
                     });
             })
             ->selectRaw("COALESCE(NULLIF(offboarding_reason, ''), 'resigned') as reason, COUNT(*) as count")
-            ->groupBy('reason')
+            ->groupByRaw("COALESCE(NULLIF(offboarding_reason, ''), 'resigned')")
             ->get();
 
         $labels = [
