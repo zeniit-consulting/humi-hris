@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AttendanceCorrectionRequest;
 use App\Models\ClientInvoice;
+use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
@@ -89,6 +90,7 @@ class DashboardController extends Controller
             ->sum('openings');
 
         $monthlyPayrollBurn = (float) (PayrollRun::query()
+            ->where('user_id', $ownerId)
             ->where('period', $period)
             ->latest('generated_at')
             ->value('total_net_salary') ?? 0);
@@ -827,21 +829,16 @@ class DashboardController extends Controller
 
         $allRuns = PayrollRun::query()
             ->where('user_id', $ownerId)
+            ->where(function ($query) {
+                $query->where('is_locked', true)
+                    ->orWhere('status', 'released')
+                    ->orWhereNotNull('released_at');
+            })
             ->whereBetween('period', [$months->first()->format('Y-m'), $months->last()->format('Y-m')])
             ->get()
             ->groupBy('period');
 
-        $activeEmployees = Employee::query()
-            ->where('user_id', $ownerId)
-            ->where('is_active', true);
-        $activeCount = (clone $activeEmployees)->count();
-        $activeBaseSum = (float) (clone $activeEmployees)->sum('base_salary');
-        $activeAllowanceSum = (float) EmployeeAllowance::query()
-            ->where('user_id', $ownerId)
-            ->where('is_active', true)
-            ->sum('amount');
-
-        $trend = $months->map(function (Carbon $m) use ($allRuns, $activeCount, $activeBaseSum, $activeAllowanceSum, $periodDate): array {
+        $trend = $months->map(function (Carbon $m) use ($allRuns): array {
             $p = $m->format('Y-m');
             $runs = $allRuns->get($p, collect());
             $hasRun = $runs->isNotEmpty();
@@ -853,21 +850,16 @@ class DashboardController extends Controller
                 $allowances = (float) $runs->sum('total_allowances');
                 $deductions = (float) $runs->sum('total_deductions');
                 $empCount = (int) ($regularRun->employees_count ?? $runs->max('employees_count') ?? 0);
-                $isProjected = false;
-            } elseif ($m->isSameMonth($periodDate) || $m->isCurrentMonth()) {
-                $base = $activeBaseSum;
-                $allowances = $activeAllowanceSum;
-                $deductions = 0.0;
-                $net = $base + $allowances;
-                $empCount = $activeCount;
-                $isProjected = true;
+                $isLocked = (bool) $runs->contains(fn ($r) => (bool) $r->is_locked);
+                $isReleased = (bool) $runs->contains(fn ($r) => $r->status === 'released' || $r->released_at !== null);
             } else {
                 $base = 0.0;
                 $allowances = 0.0;
                 $deductions = 0.0;
                 $net = 0.0;
                 $empCount = 0;
-                $isProjected = false;
+                $isLocked = false;
+                $isReleased = false;
             }
 
             return [
@@ -878,7 +870,10 @@ class DashboardController extends Controller
                 'allowances' => $allowances,
                 'deductions' => $deductions,
                 'employees_count' => $empCount,
-                'is_projected' => $isProjected,
+                'is_projected' => false,
+                'is_fixed' => $hasRun,
+                'is_locked' => $isLocked,
+                'is_released' => $isReleased,
             ];
         })->values();
 
@@ -886,7 +881,7 @@ class DashboardController extends Controller
         $prevPoint = $trend->count() >= 2 ? $trend->get($trend->count() - 2) : null;
         $currentBurn = (float) ($currentPoint['net_salary'] ?? 0);
         $prevBurn = (float) ($prevPoint['net_salary'] ?? 0);
-        $growthRate = $prevBurn > 0 ? round((($currentBurn - $prevBurn) / $prevBurn) * 100, 1) : 0.0;
+        $growthRate = ($prevBurn > 0 && $currentBurn > 0) ? round((($currentBurn - $prevBurn) / $prevBurn) * 100, 1) : 0.0;
         $avgPerEmp = ($currentPoint['employees_count'] ?? 0) > 0 ? round($currentBurn / $currentPoint['employees_count'], 0) : 0.0;
 
         return [
@@ -918,67 +913,53 @@ class DashboardController extends Controller
 
         $allRuns = PayrollRun::query()
             ->where('user_id', $ownerId)
+            ->where(function ($query) {
+                $query->where('is_locked', true)
+                    ->orWhere('status', 'released')
+                    ->orWhereNotNull('released_at');
+            })
             ->whereBetween('period', [$months->first()->format('Y-m'), $months->last()->format('Y-m')])
             ->with('items')
             ->get()
             ->groupBy('period');
 
-        $activeEmployees = Employee::query()
-            ->where('user_id', $ownerId)
-            ->where('is_active', true)
-            ->get(['id', 'base_salary']);
-
-        $trend = $months->map(function (Carbon $m) use ($allRuns, $activeEmployees, $periodDate): array {
+        $trend = $months->map(function (Carbon $m) use ($allRuns): array {
             $p = $m->format('Y-m');
             $runs = $allRuns->get($p, collect());
             $items = $runs->flatMap->items;
 
-            $actualKes = (float) $items->sum('bpjs_kesehatan_company');
-            $actualTk = (float) $items->sum(fn ($it) => (float) $it->bpjs_jkk_company + (float) $it->bpjs_jkm_company + (float) $it->bpjs_jht_company + (float) $it->bpjs_jp_company);
-            $actualPrivate = (float) $items->sum('private_insurance_nominal');
-            $actualTotal = (float) $items->sum('bpjs_total_company') + $actualPrivate;
+            if ($items->isNotEmpty()) {
+                $actualKes = (float) $items->sum('bpjs_kesehatan_company');
+                $actualTk = (float) $items->sum(fn ($it) => (float) $it->bpjs_jkk_company + (float) $it->bpjs_jkm_company + (float) $it->bpjs_jht_company + (float) $it->bpjs_jp_company);
+                $actualPrivate = (float) $items->sum('private_insurance_nominal');
+                $actualTotal = (float) $items->sum('bpjs_total_company') + $actualPrivate;
+                $payrollNet = (float) $runs->sum('total_net_salary');
 
-            $payrollNet = (float) $runs->sum('total_net_salary');
-
-            if ($actualTotal > 0) {
-                $bpjsKes = $actualKes;
-                $bpjsTk = $actualTk > 0 ? $actualTk : ($actualTotal - $actualKes - $actualPrivate);
-                $privateIns = $actualPrivate;
-                $totalIns = $actualTotal;
-                $empCount = $items->count();
-                $isProjected = false;
-            } elseif ($items->isNotEmpty()) {
-                $bpjsKes = 0.0;
-                $bpjsTk = 0.0;
-                foreach ($items as $it) {
-                    $base = (float) $it->base_salary;
-                    $bpjsKes += min($base, 12_000_000) * 0.04;
-                    $bpjsTk += ($base * 0.0424) + (min($base, 10_042_300) * 0.02);
+                if ($actualTotal > 0) {
+                    $bpjsKes = $actualKes;
+                    $bpjsTk = $actualTk > 0 ? $actualTk : ($actualTotal - $actualKes - $actualPrivate);
+                    $privateIns = $actualPrivate;
+                    $totalIns = $actualTotal;
+                    $empCount = $items->count();
+                } else {
+                    $bpjsKes = 0.0;
+                    $bpjsTk = 0.0;
+                    foreach ($items as $it) {
+                        $base = (float) $it->base_salary;
+                        $bpjsKes += min($base, 12_000_000) * 0.04;
+                        $bpjsTk += ($base * 0.0424) + (min($base, 10_042_300) * 0.02);
+                    }
+                    $privateIns = 0.0;
+                    $totalIns = $bpjsKes + $bpjsTk;
+                    $empCount = $items->count();
                 }
-                $privateIns = 0.0;
-                $totalIns = $bpjsKes + $bpjsTk;
-                $empCount = $items->count();
-                $isProjected = false;
-            } elseif ($m->isSameMonth($periodDate) || $m->isCurrentMonth()) {
-                $bpjsKes = 0.0;
-                $bpjsTk = 0.0;
-                foreach ($activeEmployees as $emp) {
-                    $base = (float) $emp->base_salary;
-                    $bpjsKes += min($base, 12_000_000) * 0.04;
-                    $bpjsTk += ($base * 0.0424) + (min($base, 10_042_300) * 0.02);
-                }
-                $privateIns = 0.0;
-                $totalIns = $bpjsKes + $bpjsTk;
-                $empCount = $activeEmployees->count();
-                $payrollNet = (float) $activeEmployees->sum('base_salary');
-                $isProjected = true;
             } else {
                 $bpjsKes = 0.0;
                 $bpjsTk = 0.0;
                 $privateIns = 0.0;
                 $totalIns = 0.0;
                 $empCount = 0;
-                $isProjected = false;
+                $payrollNet = 0.0;
             }
 
             $ratio = $payrollNet > 0 ? round(($totalIns / $payrollNet) * 100, 1) : 0.0;
@@ -992,7 +973,8 @@ class DashboardController extends Controller
                 'total_insurance' => round($totalIns, 2),
                 'insurance_ratio' => $ratio,
                 'employees_count' => $empCount,
-                'is_projected' => $isProjected,
+                'is_projected' => false,
+                'is_fixed' => $runs->isNotEmpty(),
             ];
         })->values();
 
@@ -1109,41 +1091,53 @@ class DashboardController extends Controller
 
         $trend = $months->map(function (Carbon $m) use ($ownerId): array {
             $p = $m->format('Y-m');
+            [$periodStart, $periodEnd] = $this->resolvePeriodDates($ownerId, $p);
+            $startStr = $periodStart->copy()->startOfDay()->toDateTimeString();
+            $endStr = $periodEnd->copy()->endOfDay()->toDateTimeString();
 
-            $requests = ReimbursementRequest::query()
+            // Only fixed reimbursements with status 'paid' ('dibayar') within cutoff
+            $paidRequests = ReimbursementRequest::query()
                 ->where('user_id', $ownerId)
-                ->where(function ($q) use ($p) {
-                    $q->whereRaw("SUBSTRING(created_at, 1, 7) = ?", [$p])
-                        ->orWhereRaw("SUBSTRING(approved_at, 1, 7) = ?", [$p]);
+                ->where('status', 'paid')
+                ->where(function ($q) use ($startStr, $endStr) {
+                    $q->whereRaw("COALESCE(processed_at, approved_at, created_at) BETWEEN ? AND ?", [$startStr, $endStr]);
                 })
                 ->get();
 
-            $totalCount = $requests->count();
-            $approvedReqs = $requests->whereIn('status', ['approved', 'processing', 'paid']);
-            $approvedCount = $approvedReqs->count();
-            $rejectedCount = $requests->where('status', 'rejected')->count();
-            $pendingCount = $requests->where('status', 'pending')->count();
+            $allRequests = ReimbursementRequest::query()
+                ->where('user_id', $ownerId)
+                ->where(function ($q) use ($p) {
+                    $q->whereRaw("SUBSTRING(created_at, 1, 7) = ?", [$p]);
+                })
+                ->get();
 
-            $approvedAmount = (float) $approvedReqs->sum('amount');
-            $submittedAmount = (float) $requests->sum('amount');
-            $paidAmount = (float) $requests->where('status', 'paid')->sum('amount');
+            $totalCount = $allRequests->count();
+            $approvedCount = $allRequests->whereIn('status', ['approved', 'processing', 'paid'])->count();
+            $rejectedCount = $allRequests->where('status', 'rejected')->count();
+            $pendingCount = $allRequests->where('status', 'pending')->count();
+
+            $paidCount = $paidRequests->count();
+            $paidAmount = (float) $paidRequests->sum('amount');
+            $submittedAmount = (float) $allRequests->sum('amount');
 
             $approvalRate = ($approvedCount + $rejectedCount) > 0
                 ? round(($approvedCount / ($approvedCount + $rejectedCount)) * 100, 1)
                 : ($totalCount > 0 ? 100.0 : 0.0);
 
-            $travels = (float) $approvedReqs->filter(fn ($r) => strcasecmp($r->category, 'Travels') === 0)->sum('amount');
-            $meals = (float) $approvedReqs->filter(fn ($r) => strcasecmp($r->category, 'Meals') === 0)->sum('amount');
-            $supplies = (float) $approvedReqs->filter(fn ($r) => strcasecmp($r->category, 'Supplies') === 0)->sum('amount');
-            $others = (float) $approvedReqs->filter(fn ($r) => ! in_array(strtolower($r->category), ['travels', 'meals', 'supplies'], true))->sum('amount');
+            $travels = (float) $paidRequests->filter(fn ($r) => strcasecmp($r->category, 'Travels') === 0)->sum('amount');
+            $meals = (float) $paidRequests->filter(fn ($r) => strcasecmp($r->category, 'Meals') === 0)->sum('amount');
+            $supplies = (float) $paidRequests->filter(fn ($r) => strcasecmp($r->category, 'Supplies') === 0)->sum('amount');
+            $others = (float) $paidRequests->filter(fn ($r) => ! in_array(strtolower($r->category), ['travels', 'meals', 'supplies'], true))->sum('amount');
 
             return [
                 'period' => $p,
                 'label' => $m->translatedFormat('M y'),
-                'approved_amount' => $approvedAmount,
-                'submitted_amount' => $submittedAmount,
+                'approved_amount' => $paidAmount,
                 'paid_amount' => $paidAmount,
-                'total_count' => $totalCount,
+                'submitted_amount' => $submittedAmount,
+                'total_count' => $paidCount,
+                'all_total_count' => $totalCount,
+                'paid_count' => $paidCount,
                 'approved_count' => $approvedCount,
                 'rejected_count' => $rejectedCount,
                 'pending_count' => $pendingCount,
@@ -1158,13 +1152,13 @@ class DashboardController extends Controller
         })->values();
 
         $currentPoint = $trend->last();
-        $currentApproved = (float) ($currentPoint['approved_amount'] ?? 0);
-        $currentCount = (int) ($currentPoint['total_count'] ?? 0);
+        $currentPaid = (float) ($currentPoint['paid_amount'] ?? 0);
+        $currentCount = (int) ($currentPoint['paid_count'] ?? 0);
         $currentRate = (float) ($currentPoint['approval_rate'] ?? 0);
-        $avgClaim = $currentCount > 0 ? round($currentApproved / $currentCount, 0) : 0.0;
+        $avgClaim = $currentCount > 0 ? round($currentPaid / $currentCount, 0) : 0.0;
 
         return [
-            'current_approved_amount' => $currentApproved,
+            'current_approved_amount' => $currentPaid,
             'current_total_count' => $currentCount,
             'current_approval_rate' => $currentRate,
             'avg_claim_amount' => $avgClaim,
@@ -1192,10 +1186,15 @@ class DashboardController extends Controller
         $pkwtCount = Employee::query()->where('user_id', $ownerId)->where('is_active', true)->where('employment_type', 'PKWT')->count();
         $probationCount = Employee::query()->where('user_id', $ownerId)->where('is_active', true)->where('employment_status', 'probation')->count();
 
-        // 2. Biaya Gaji Bulan Ini
+        // 2. Biaya Gaji Bulan Ini (Hanya payroll fix: locked / released)
         $latestRun = PayrollRun::query()
             ->where('user_id', $ownerId)
             ->where('period', $period)
+            ->where(function ($query) {
+                $query->where('is_locked', true)
+                    ->orWhere('status', 'released')
+                    ->orWhereNotNull('released_at');
+            })
             ->latest('generated_at')
             ->first();
 
@@ -1203,11 +1202,13 @@ class DashboardController extends Controller
         $prevRun = PayrollRun::query()
             ->where('user_id', $ownerId)
             ->where('period', $prevPeriod)
+            ->where(function ($query) {
+                $query->where('is_locked', true)
+                    ->orWhere('status', 'released')
+                    ->orWhereNotNull('released_at');
+            })
             ->latest('generated_at')
             ->first();
-
-        $activeBaseSum = (float) Employee::query()->where('user_id', $ownerId)->where('is_active', true)->sum('base_salary');
-        $activeAllowanceSum = (float) EmployeeAllowance::query()->where('user_id', $ownerId)->where('is_active', true)->sum('amount');
 
         if ($latestRun) {
             $payrollCost = (float) $latestRun->total_net_salary;
@@ -1216,15 +1217,15 @@ class DashboardController extends Controller
             $isProjected = false;
             $empCount = (int) $latestRun->employees_count;
         } else {
-            $payrollCost = $activeBaseSum + $activeAllowanceSum;
-            $baseCost = $activeBaseSum;
-            $allowanceCost = $activeAllowanceSum;
-            $isProjected = true;
-            $empCount = $activeEmployees;
+            $payrollCost = 0.0;
+            $baseCost = 0.0;
+            $allowanceCost = 0.0;
+            $isProjected = false;
+            $empCount = 0;
         }
 
         $prevCost = (float) ($prevRun?->total_net_salary ?? 0);
-        $payrollGrowth = $prevCost > 0 ? round((($payrollCost - $prevCost) / $prevCost) * 100, 1) : 0.0;
+        $payrollGrowth = ($prevCost > 0 && $payrollCost > 0) ? round((($payrollCost - $prevCost) / $prevCost) * 100, 1) : 0.0;
         $avgPerEmp = $empCount > 0 ? round($payrollCost / $empCount, 0) : 0.0;
 
         // 3. Apakah absensi membaik?
@@ -1547,16 +1548,74 @@ class DashboardController extends Controller
     /**
      * @return array{
      *     total: float,
+     *     divisions: list<array{id: int, name: string, amount: float, percentage: float, employees_count: int}>,
+     *     is_fixed?: boolean,
+     *     is_locked?: boolean,
+     *     is_released?: boolean
+     * }
+     */
+    /**
+     * Resolve the date range [start, end] for a given period based on the company's cutoff settings.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function resolvePeriodDates(int $ownerId, string $period): array
+    {
+        $setting = CompanySetting::query()->where('user_id', $ownerId)->first();
+        $cutoffDay = $setting?->payroll_cutoff_day ?? 'end_of_month';
+        $periodDate = Carbon::createFromFormat('Y-m-d', $period.'-01');
+
+        if ($cutoffDay === 'end_of_month' || $cutoffDay === '' || ! is_numeric($cutoffDay)) {
+            return [
+                $periodDate->copy()->startOfMonth(),
+                $periodDate->copy()->endOfMonth(),
+            ];
+        }
+
+        $day = (int) $cutoffDay;
+        $end = $periodDate->copy()->day(min($day, $periodDate->daysInMonth))->endOfDay();
+        $prevMonth = $periodDate->copy()->subMonthNoOverflow();
+        $startDaySetting = $setting?->payroll_period_start_day;
+
+        if ($startDaySetting !== null && is_numeric($startDaySetting)) {
+            $startDay = min((int) $startDaySetting, $prevMonth->daysInMonth);
+            $start = $prevMonth->copy()->day($startDay)->startOfDay();
+        } else {
+            $prevCutoff = $prevMonth->copy()->day(min($day, $prevMonth->daysInMonth));
+            $start = $prevCutoff->copy()->addDay()->startOfDay();
+        }
+
+        return [$start, $end];
+    }
+
+    /**
+     * Compute payroll breakdown by division from the selected period's PayrollRun.
+     * Only fixed payroll (locked or released) enters the chart.
+     *
+     * @return array{
+     *     total: float,
+     *     period_label: string,
      *     divisions: list<array{id: int, name: string, amount: float, percentage: float, employees_count: int}>
      * }
      */
     private function payrollByDivisionData(int $ownerId, string $period): array
     {
+        [$defaultStart, $defaultEnd] = $this->resolvePeriodDates($ownerId, $period);
+
         $run = PayrollRun::query()
             ->where('user_id', $ownerId)
             ->where('period', $period)
+            ->where(function ($query) {
+                $query->where('is_locked', true)
+                    ->orWhere('status', 'released')
+                    ->orWhereNotNull('released_at');
+            })
             ->latest('generated_at')
             ->first();
+
+        $periodStart = $run && $run->period_start ? Carbon::parse($run->period_start) : $defaultStart;
+        $periodEnd = $run && $run->period_end ? Carbon::parse($run->period_end) : $defaultEnd;
+        $periodLabel = $periodStart->translatedFormat('d M').' - '.$periodEnd->translatedFormat('d M Y');
 
         if ($run) {
             $items = PayrollItem::query()
@@ -1572,74 +1631,71 @@ class DashboardController extends Controller
                 ->groupBy('division_id', 'division_name')
                 ->orderByDesc('total_amount')
                 ->get();
-        } else {
-            $items = Employee::query()
-                ->where('employees.user_id', $ownerId)
-                ->where('employees.is_active', true)
-                ->leftJoin('divisions', 'employees.division_id', '=', 'divisions.id')
-                ->selectRaw("
-                    COALESCE(divisions.id, 0) as division_id,
-                    COALESCE(divisions.name, 'Tanpa Divisi') as division_name,
-                    SUM(employees.base_salary) as total_amount,
-                    COUNT(employees.id) as employees_count
-                ")
-                ->groupBy('division_id', 'division_name')
-                ->orderByDesc('total_amount')
-                ->get();
-        }
 
-        $total = (float) $items->sum('total_amount');
+            $total = (float) $items->sum('total_amount');
 
-        $divisions = $items->map(function ($row) use ($total) {
-            $amount = (float) $row->total_amount;
-            $pct = $total > 0 ? round(($amount / $total) * 100, 1) : 0.0;
+            $divisions = $items->map(function ($row) use ($total) {
+                $amount = (float) $row->total_amount;
+                $pct = $total > 0 ? round(($amount / $total) * 100, 1) : 0.0;
+
+                return [
+                    'id' => (int) $row->division_id,
+                    'name' => (string) $row->division_name,
+                    'amount' => $amount,
+                    'percentage' => $pct,
+                    'employees_count' => (int) $row->employees_count,
+                ];
+            })->values()->all();
+
+            usort($divisions, fn ($a, $b) => $b['amount'] <=> $a['amount']);
 
             return [
-                'id' => (int) $row->division_id,
-                'name' => (string) $row->division_name,
-                'amount' => $amount,
-                'percentage' => $pct,
-                'employees_count' => (int) $row->employees_count,
+                'total' => $total,
+                'period_label' => $periodLabel,
+                'divisions' => $divisions,
             ];
-        })->values()->all();
+        }
 
+        // When payroll is not yet fixed (locked / released), do not display dynamic numbers
         return [
-            'total' => $total,
-            'divisions' => $divisions,
+            'total' => 0.0,
+            'period_label' => $periodLabel,
+            'divisions' => [],
         ];
     }
 
     /**
      * Compute reimbursement breakdown by category (Meals, Travels, Supplies, Others).
+     * Only fixed reimbursements with status 'paid' ('dibayar') enter the chart.
+     * Reimbursements are filtered according to company cutoff window.
      *
      * @return array{
      *     total: float,
+     *     period_label: string,
      *     categories: list<array{name: string, amount: float, percentage: float, count: int}>
      * }
      */
     private function reimburseByCategoryData(int $ownerId, string $period): array
     {
-        $baseQuery = ReimbursementRequest::query()
+        [$periodStart, $periodEnd] = $this->resolvePeriodDates($ownerId, $period);
+        $periodLabel = $periodStart->translatedFormat('d M').' - '.$periodEnd->translatedFormat('d M Y');
+        $startStr = $periodStart->copy()->startOfDay()->toDateTimeString();
+        $endStr = $periodEnd->copy()->endOfDay()->toDateTimeString();
+
+        $items = ReimbursementRequest::query()
             ->where('reimbursement_requests.user_id', $ownerId)
-            ->whereIn('reimbursement_requests.status', ['approved', 'processing', 'paid'])
+            ->where('reimbursement_requests.status', 'paid')
+            ->where(function ($q) use ($startStr, $endStr) {
+                $q->whereRaw("COALESCE(reimbursement_requests.processed_at, reimbursement_requests.approved_at, reimbursement_requests.created_at) BETWEEN ? AND ?", [$startStr, $endStr]);
+            })
             ->selectRaw("
                 COALESCE(NULLIF(category, ''), 'Others') as category_name,
                 SUM(amount) as total_amount,
                 COUNT(id) as count
             ")
             ->groupBy('category_name')
-            ->orderByDesc('total_amount');
-
-        $periodQuery = (clone $baseQuery)->where(function ($q) use ($period) {
-            $q->whereRaw("SUBSTRING(created_at, 1, 7) = ?", [$period])
-                ->orWhereRaw("SUBSTRING(approved_at, 1, 7) = ?", [$period]);
-        });
-
-        $items = $periodQuery->get();
-
-        if ($items->isEmpty()) {
-            $items = $baseQuery->get();
-        }
+            ->orderByDesc('total_amount')
+            ->get();
 
         $total = (float) $items->sum('total_amount');
         $categoryMap = $items->keyBy(fn ($item) => strtolower(trim((string) $item->category_name)));
@@ -1682,6 +1738,7 @@ class DashboardController extends Controller
 
         return [
             'total' => $total,
+            'period_label' => $periodLabel,
             'categories' => $sortedCategories,
         ];
     }
@@ -1689,16 +1746,25 @@ class DashboardController extends Controller
     /**
      * @return array{
      *     total: float,
+     *     period_label: string,
      *     divisions: list<array{id: int, name: string, amount: float, percentage: float, count: int}>
      * }
      */
     private function reimburseByDivisionData(int $ownerId, string $period): array
     {
-        $baseQuery = ReimbursementRequest::query()
+        [$periodStart, $periodEnd] = $this->resolvePeriodDates($ownerId, $period);
+        $periodLabel = $periodStart->translatedFormat('d M').' - '.$periodEnd->translatedFormat('d M Y');
+        $startStr = $periodStart->copy()->startOfDay()->toDateTimeString();
+        $endStr = $periodEnd->copy()->endOfDay()->toDateTimeString();
+
+        $items = ReimbursementRequest::query()
             ->where('reimbursement_requests.user_id', $ownerId)
-            ->whereIn('reimbursement_requests.status', ['approved', 'processing', 'paid'])
+            ->where('reimbursement_requests.status', 'paid')
             ->join('employees', 'reimbursement_requests.employee_id', '=', 'employees.id')
             ->leftJoin('divisions', 'employees.division_id', '=', 'divisions.id')
+            ->where(function ($q) use ($startStr, $endStr) {
+                $q->whereRaw("COALESCE(reimbursement_requests.processed_at, reimbursement_requests.approved_at, reimbursement_requests.created_at) BETWEEN ? AND ?", [$startStr, $endStr]);
+            })
             ->selectRaw("
                 COALESCE(divisions.id, 0) as division_id,
                 COALESCE(divisions.name, 'Tanpa Divisi') as division_name,
@@ -1706,18 +1772,8 @@ class DashboardController extends Controller
                 COUNT(reimbursement_requests.id) as count
             ")
             ->groupBy('division_id', 'division_name')
-            ->orderByDesc('total_amount');
-
-        $periodQuery = (clone $baseQuery)->where(function ($q) use ($period) {
-            $q->whereRaw("SUBSTRING(reimbursement_requests.created_at, 1, 7) = ?", [$period])
-                ->orWhereRaw("SUBSTRING(reimbursement_requests.approved_at, 1, 7) = ?", [$period]);
-        });
-
-        $items = $periodQuery->get();
-
-        if ($items->isEmpty()) {
-            $items = $baseQuery->get();
-        }
+            ->orderByDesc('total_amount')
+            ->get();
 
         $total = (float) $items->sum('total_amount');
 
@@ -1736,6 +1792,7 @@ class DashboardController extends Controller
 
         return [
             'total' => $total,
+            'period_label' => $periodLabel,
             'divisions' => $divisions,
         ];
     }

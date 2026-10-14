@@ -462,31 +462,33 @@ export default function Dashboard({
                     </Card>
                 </div>
 
-                {/* Baris 1 (3 Charts): Gender per Divisi, Total Payroll per Divisi, Total Reimburse by Kategori */}
-                {pieCharts && (
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        <GenderByDivisionCard data={pieCharts.gender_by_division} />
-                        <PayrollByDivisionCard data={pieCharts.payroll_by_division} />
-                        <ReimburseByCategoryCard data={pieCharts.reimburse_by_category ?? (pieCharts.reimburse_by_division as any)} />
-                    </div>
-                )}
-
-                {/* Baris 2 (3 Charts): Payroll Burnrate, Insurance Burnrate, Reimburse Rate */}
+                {/* Bagian Atas (3 Charts - Grouping Tema Payroll & Asuransi): Total Payroll per Divisi, Tren Payroll, Social Insurance */}
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {pieCharts?.payroll_by_division && (
+                        <PayrollByDivisionCard data={pieCharts.payroll_by_division} />
+                    )}
                     <PayrollBurnrateCard data={payrollBurnrate} />
                     <InsuranceBurnrateCard data={insuranceBurnrate} />
+                </div>
+
+                {/* Bagian Kedua (2 Charts - Grouping Tema Reimbursement): Total Reimburse sesuai Kategori, Sebaran Reimburse */}
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
+                    {pieCharts?.reimburse_by_category && (
+                        <ReimburseByCategoryCard
+                            data={pieCharts.reimburse_by_category}
+                        />
+                    )}
                     <ReimburseRateCard data={reimburseRate} />
                 </div>
 
-                {/* Baris 3 (2 Charts, Rasio 70-30): Employee Mobility & Offboarding Reason */}
-                <div className="grid gap-3 lg:grid-cols-10">
-                    <div className={pieCharts?.resign_reasons ? 'lg:col-span-7' : 'lg:col-span-10'}>
-                        <EmployeeMobilityCard data={employeeMobility} />
-                    </div>
+                {/* Bagian Ketiga (3 Charts - Grouping Tema Karyawan, Demografi & Turnover): Gender per Divisi, Mobilitas Karyawan, Alasan Resign */}
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {pieCharts?.gender_by_division && (
+                        <GenderByDivisionCard data={pieCharts.gender_by_division} />
+                    )}
+                    <EmployeeMobilityCard data={employeeMobility} />
                     {pieCharts?.resign_reasons && (
-                        <div className="lg:col-span-3">
-                            <ResignReasonsCard data={pieCharts.resign_reasons} />
-                        </div>
+                        <ResignReasonsCard data={pieCharts.resign_reasons} />
                     )}
                 </div>
 

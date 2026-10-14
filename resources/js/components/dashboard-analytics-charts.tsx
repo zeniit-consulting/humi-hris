@@ -51,6 +51,9 @@ export type PayrollBurnratePoint = {
     deductions: number;
     employees_count: number;
     is_projected?: boolean;
+    is_fixed?: boolean;
+    is_locked?: boolean;
+    is_released?: boolean;
 };
 
 export type PayrollBurnrateSummary = {
@@ -108,6 +111,8 @@ export type ReimburseRatePoint = {
     submitted_amount: number;
     paid_amount: number;
     total_count: number;
+    all_total_count?: number;
+    paid_count?: number;
     approved_count: number;
     rejected_count: number;
     pending_count: number;
@@ -162,6 +167,24 @@ export const formatRupiahFull = (value: number | string) => {
         currency: 'IDR',
         maximumFractionDigits: 0,
     }).format(Number(value ?? 0));
+};
+
+export const formatAxisNominal = (value: number | string) => {
+    const amount = Number(value ?? 0);
+    if (amount <= 0) return '0';
+    if (amount >= 1_000_000_000) {
+        const val = amount / 1_000_000_000;
+        return `${val % 1 === 0 ? val : val.toFixed(1)}M`;
+    }
+    if (amount >= 1_000_000) {
+        const val = amount / 1_000_000;
+        return `${val % 1 === 0 ? val : val.toFixed(1)}jt`;
+    }
+    if (amount >= 1_000) {
+        const val = amount / 1_000;
+        return `${val % 1 === 0 ? val : val.toFixed(0)}rb`;
+    }
+    return String(Math.round(amount));
 };
 
 type Point = { x: number; y: number };
@@ -231,15 +254,17 @@ export function PayrollBurnrateCard({
         hoveredIdx !== null ? trend[hoveredIdx] : trend[trend.length - 1];
 
     const totalPoints = trend.length;
-    const padX = 20;
-    const topY = 14;
-    const baselineY = 88;
+    const padLeft = 38;
+    const padRight = 14;
+    const topY = 16;
+    const baselineY = 82;
+    const midY = 49;
     const chartHeight = baselineY - topY;
     const svgHeight = 104;
 
     const getX = (idx: number) => {
-        if (totalPoints <= 1) return width / 2;
-        return padX + (idx / (totalPoints - 1)) * (width - padX * 2);
+        if (totalPoints <= 1) return (padLeft + width - padRight) / 2;
+        return padLeft + (idx / (totalPoints - 1)) * (width - padLeft - padRight);
     };
 
     const getY = (val: number) => {
@@ -252,6 +277,13 @@ export function PayrollBurnrateCard({
     const activeIndex = hoveredIdx !== null ? hoveredIdx : trend.length - 1;
     const activeNet = netPoints[activeIndex];
 
+    const tooltipW = 72;
+    const tooltipH = 18;
+    const tooltipX = activeNet
+        ? Math.min(Math.max(activeNet.x - tooltipW / 2, padLeft), width - padRight - tooltipW)
+        : 0;
+    const tooltipY = activeNet ? Math.max(activeNet.y - 23, 2) : 0;
+
     return (
         <Card className="flex h-full flex-col justify-between overflow-hidden p-0 shadow-xs">
             {/* Header */}
@@ -262,10 +294,10 @@ export function PayrollBurnrateCard({
                     </div>
                     <div className="min-w-0">
                         <div className="truncate text-xs font-semibold text-foreground">
-                            Payroll Burnrate
+                            Tren Payroll
                         </div>
                         <div className="text-[10px] text-muted-foreground">
-                            Trend THP 6 bln
+                            Trend THP 6 bln · Data fix
                         </div>
                     </div>
                 </div>
@@ -290,9 +322,18 @@ export function PayrollBurnrateCard({
                 </div>
             </div>
 
+            {/* Top Legend Bar (positioned at top before viewers scan chart) */}
+            <div className="flex items-center justify-between px-3 pt-1 pb-0.5 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
+                    <span className="size-2 shrink-0 rounded-full bg-emerald-500" />
+                    <span>Total THP (Payroll Fix)</span>
+                </div>
+                <span>Avg: {formatRupiahCompact(data.avg_per_employee)}</span>
+            </div>
+
             {/* Wavy Line Chart Container */}
             <div className="px-3 pt-1">
-                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-1.5 pb-1 px-0">
+                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-1 pb-0.5 px-0">
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
                         className="h-[104px] w-full"
@@ -306,20 +347,45 @@ export function PayrollBurnrateCard({
                             </linearGradient>
                         </defs>
 
-                        {/* Horizontal Gridlines */}
-                        {[26, 50, 74].map((y) => (
-                            <line
-                                key={y}
-                                x1="0"
-                                x2={width}
-                                y1={y}
-                                y2={y}
-                                stroke="currentColor"
-                                className="text-border"
-                                strokeDasharray="2 2"
-                                strokeWidth="0.8"
-                                vectorEffect="non-scaling-stroke"
-                            />
+                        {/* Vertical Y-Axis Line */}
+                        <line
+                            x1={padLeft}
+                            x2={padLeft}
+                            y1={topY}
+                            y2={baselineY}
+                            stroke="currentColor"
+                            className="text-border"
+                            strokeWidth="1"
+                            vectorEffect="non-scaling-stroke"
+                        />
+
+                        {/* Y-Axis Gridlines and Scale Nominal Labels */}
+                        {[
+                            { y: topY, val: maxVal },
+                            { y: midY, val: maxVal / 2 },
+                            { y: baselineY, val: 0 },
+                        ].map((tick) => (
+                            <g key={tick.y}>
+                                <line
+                                    x1={padLeft}
+                                    x2={width - padRight}
+                                    y1={tick.y}
+                                    y2={tick.y}
+                                    stroke="currentColor"
+                                    className="text-border"
+                                    strokeDasharray={tick.y === baselineY ? undefined : '2 2'}
+                                    strokeWidth={tick.y === baselineY ? '1' : '0.8'}
+                                    vectorEffect="non-scaling-stroke"
+                                />
+                                <text
+                                    x={padLeft - 4}
+                                    y={tick.y + 3}
+                                    textAnchor="end"
+                                    className="text-[8px] font-mono fill-muted-foreground select-none pointer-events-none"
+                                >
+                                    {formatAxisNominal(tick.val)}
+                                </text>
+                            </g>
                         ))}
 
                         {/* Wave Area Fill */}
@@ -342,18 +408,6 @@ export function PayrollBurnrateCard({
                                 vectorEffect="non-scaling-stroke"
                             />
                         )}
-
-                        {/* Baseline */}
-                        <line
-                            x1="0"
-                            x2={width}
-                            y1={baselineY}
-                            y2={baselineY}
-                            stroke="currentColor"
-                            className="text-border"
-                            strokeWidth="1"
-                            vectorEffect="non-scaling-stroke"
-                        />
 
                         {/* Hover vertical guideline */}
                         {activeNet && (
@@ -397,13 +451,60 @@ export function PayrollBurnrateCard({
                             );
                         })}
 
+                        {/* Pop-up Tooltip on Hovered Curve Point showing exact nominal */}
+                        {hoveredIdx !== null && activeNet && (
+                            <g className="pointer-events-none transition-all duration-150">
+                                <rect
+                                    x={tooltipX}
+                                    y={tooltipY}
+                                    width={tooltipW}
+                                    height={tooltipH}
+                                    rx={4}
+                                    className="fill-slate-900 dark:fill-slate-100"
+                                    style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.25))' }}
+                                />
+                                {activeNet.y >= 26 && (
+                                    <polygon
+                                        points={`${activeNet.x - 3},${tooltipY + tooltipH} ${activeNet.x + 3},${tooltipY + tooltipH} ${activeNet.x},${tooltipY + tooltipH + 3}`}
+                                        className="fill-slate-900 dark:fill-slate-100"
+                                    />
+                                )}
+                                <text
+                                    x={tooltipX + tooltipW / 2}
+                                    y={tooltipY + 12.5}
+                                    textAnchor="middle"
+                                    className="text-[9px] font-bold fill-white dark:fill-slate-900 select-none"
+                                >
+                                    {formatRupiahCompact(activePoint.net_salary)}
+                                </text>
+                            </g>
+                        )}
+
+                        {/* Month labels on X-axis (aligned exactly with point coordinates) */}
+                        {trend.map((pt, i) => (
+                            <text
+                                key={pt.period}
+                                x={getX(i)}
+                                y={97}
+                                textAnchor="middle"
+                                className={`text-[9px] select-none transition-colors ${
+                                    hoveredIdx === i
+                                        ? 'font-bold fill-foreground'
+                                        : 'fill-muted-foreground'
+                                }`}
+                            >
+                                {pt.label}
+                            </text>
+                        ))}
+
                         {/* Invisible full-height hover target zones */}
                         {trend.map((pt, i) => {
-                            const colWidth = width / Math.max(totalPoints, 1);
+                            const colWidth = (width - padLeft - padRight) / Math.max(totalPoints, 1);
+                            const startColX = padLeft + i * colWidth;
                             return (
                                 <rect
                                     key={`hit-${pt.period}`}
-                                    x={i * colWidth}
+                                    x={startColX}
                                     y="0"
                                     width={colWidth}
                                     height={baselineY}
@@ -415,55 +516,39 @@ export function PayrollBurnrateCard({
                             );
                         })}
                     </svg>
-
-                    {/* Month labels */}
-                    <div className="flex justify-between px-2.5 pt-0.5 text-[10px] text-muted-foreground">
-                        {trend.map((pt, i) => (
-                            <span
-                                key={pt.period}
-                                className={`transition-colors ${
-                                    hoveredIdx === i ? 'font-bold text-foreground' : ''
-                                }}`}
-                            >
-                                {pt.label}
-                            </span>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Compact inspector */}
-                <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span className="font-semibold text-foreground truncate">
-                        {activePoint?.label}
-                    </span>
-                    <span className="truncate">
-                        THP:{' '}
-                        <strong className="text-emerald-700 dark:text-emerald-400">
-                            {formatRupiahCompact(activePoint?.net_salary ?? 0)}
-                        </strong>
-                    </span>
-                    <span className="truncate">
-                        {activePoint?.employees_count ?? 0} karyawan
-                    </span>
                 </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer Inspector */}
             <div className="mt-2 flex items-center justify-between border-t px-3 py-1.5 text-[10px] text-muted-foreground">
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
-                        <span className="size-2 shrink-0 aspect-square rounded-full bg-emerald-500" />
-                        Total THP
-                    </span>
-                </div>
-                <span>Avg: {formatRupiahCompact(data.avg_per_employee)}</span>
+                <span className="font-semibold text-foreground truncate flex items-center gap-1">
+                    {activePoint?.label}
+                    {activePoint?.is_fixed ? (
+                        <span className="rounded bg-emerald-100 px-1 py-0.2 text-[9px] font-medium text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
+                            {activePoint.is_released ? 'Released' : 'Locked'}
+                        </span>
+                    ) : (
+                        <span className="rounded bg-muted px-1 py-0.2 text-[9px] font-medium text-muted-foreground">
+                            Belum Fix
+                        </span>
+                    )}
+                </span>
+                <span className="truncate">
+                    THP:{' '}
+                    <strong className="text-emerald-700 dark:text-emerald-400 font-semibold">
+                        {formatRupiahCompact(activePoint?.net_salary ?? 0)}
+                    </strong>
+                </span>
+                <span className="truncate">
+                    {activePoint?.employees_count ?? 0} karyawan
+                </span>
             </div>
         </Card>
     );
 }
 
 /**
- * 2. Wavy Line Chart: Insurance Burnrate Card
+ * 2. Bar Chart: Insurance Burnrate Card (Social Insurance)
  */
 export function InsuranceBurnrateCard({
     data,
@@ -483,33 +568,37 @@ export function InsuranceBurnrateCard({
         hoveredIdx !== null ? trend[hoveredIdx] : trend[trend.length - 1];
 
     const totalPoints = trend.length;
-    const padX = 20;
-    const topY = 14;
-    const baselineY = 88;
+    const padLeft = 38;
+    const padRight = 14;
+    const topY = 16;
+    const baselineY = 82;
+    const midY = 49;
     const chartHeight = baselineY - topY;
     const svgHeight = 104;
 
-    const getX = (idx: number) => {
-        if (totalPoints <= 1) return width / 2;
-        return padX + (idx / (totalPoints - 1)) * (width - padX * 2);
-    };
+    const slotWidth = (width - padLeft - padRight) / Math.max(totalPoints, 1);
+    const barGap = 2;
+    const maxClusterWidth = 32;
+    const clusterWidth = Math.min(
+        Math.max(14, slotWidth - 8),
+        maxClusterWidth
+    );
+    const barWidth = Math.max(3.5, (clusterWidth - barGap) / 2);
+    const actualClusterWidth = barWidth * 2 + barGap;
 
-    const getY = (val: number) => {
-        const clamped = Math.max(0, val);
-        return baselineY - (clamped / maxVal) * chartHeight;
-    };
-
-    const tkPoints = trend.map((p, i) => ({
-        x: getX(i),
-        y: getY(p.bpjs_ketenagakerjaan),
-    }));
-    const kesPoints = trend.map((p, i) => ({
-        x: getX(i),
-        y: getY(p.bpjs_kesehatan),
-    }));
-
-    const activeIndex = hoveredIdx !== null ? hoveredIdx : trend.length - 1;
-    const activeGuideX = kesPoints[activeIndex]?.x ?? 0;
+    const tooltipW = 90;
+    const tooltipH = 18;
+    const hoveredClusterCenterX =
+        hoveredIdx !== null
+            ? padLeft + hoveredIdx * slotWidth + slotWidth / 2
+            : 0;
+    const tooltipX =
+        hoveredClusterCenterX > 0
+            ? Math.min(
+                  Math.max(hoveredClusterCenterX - tooltipW / 2, padLeft),
+                  width - padRight - tooltipW
+              )
+            : 0;
 
     return (
         <Card className="flex h-full flex-col justify-between overflow-hidden p-0 shadow-xs">
@@ -521,10 +610,10 @@ export function InsuranceBurnrateCard({
                     </div>
                     <div className="min-w-0">
                         <div className="truncate text-xs font-semibold text-foreground">
-                            Insurance Burnrate
+                            Social Insurance
                         </div>
                         <div className="text-[10px] text-muted-foreground">
-                            BPJS & asuransi perusahaan
+                            BPJS & asuransi (payroll fix)
                         </div>
                     </div>
                 </div>
@@ -539,62 +628,38 @@ export function InsuranceBurnrateCard({
                 </div>
             </div>
 
-            {/* Wavy Line Chart Container */}
+            {/* Top Legend Bar (positioned at top before viewers scan chart) */}
+            <div className="flex items-center justify-between px-3 pt-1 pb-0.5 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-2.5">
+                    <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
+                        <span className="size-2 shrink-0 rounded-full bg-emerald-600" />
+                        BPJS Kesehatan
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 font-medium text-blue-700 dark:text-blue-400">
+                        <span className="size-2 shrink-0 rounded-full bg-blue-600" />
+                        BPJS TK
+                    </span>
+                </div>
+                <span>Total: {formatRupiahCompact(data.current_insurance_burn)}</span>
+            </div>
+
+            {/* Bar Chart Container */}
             <div className="px-3 pt-1">
-                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-1.5 pb-1 px-0">
+                <div
+                    ref={containerRef}
+                    className="relative overflow-hidden rounded-md border bg-muted/10 pt-1 pb-0.5 px-0"
+                >
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
                         className="h-[104px] w-full"
                         role="img"
-                        aria-label="Insurance Burnrate Wavy Line Chart"
+                        aria-label="Social Insurance Bar Chart"
                     >
-                        {/* Gridlines */}
-                        {[26, 50, 74].map((y) => (
-                            <line
-                                key={y}
-                                x1="0"
-                                x2={width}
-                                y1={y}
-                                y2={y}
-                                stroke="currentColor"
-                                className="text-border"
-                                strokeDasharray="2 2"
-                                strokeWidth="0.8"
-                                vectorEffect="non-scaling-stroke"
-                            />
-                        ))}
-
-                        {/* BPJS Kesehatan: Solid Green Line */}
-                        {kesPoints.length > 1 && (
-                            <path
-                                d={getWavyPath(kesPoints)}
-                                fill="none"
-                                stroke="#16a34a"
-                                strokeWidth="2.4"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                vectorEffect="non-scaling-stroke"
-                            />
-                        )}
-
-                        {/* BPJS Tenaga Kerja: Solid Blue Line */}
-                        {tkPoints.length > 1 && (
-                            <path
-                                d={getWavyPath(tkPoints)}
-                                fill="none"
-                                stroke="#2563eb"
-                                strokeWidth="2.4"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                vectorEffect="non-scaling-stroke"
-                            />
-                        )}
-
-                        {/* Baseline */}
+                        {/* Vertical Y-Axis Line */}
                         <line
-                            x1="0"
-                            x2={width}
-                            y1={baselineY}
+                            x1={padLeft}
+                            x2={padLeft}
+                            y1={topY}
                             y2={baselineY}
                             stroke="currentColor"
                             className="text-border"
@@ -602,134 +667,209 @@ export function InsuranceBurnrateCard({
                             vectorEffect="non-scaling-stroke"
                         />
 
-                        {/* Active hover guideline */}
-                        {activeGuideX > 0 && (
-                            <line
-                                x1={activeGuideX}
-                                x2={activeGuideX}
-                                y1="8"
-                                y2={baselineY}
-                                stroke="currentColor"
-                                className="text-muted-foreground/35"
-                                strokeDasharray="2 2"
-                                strokeWidth="1"
-                                vectorEffect="non-scaling-stroke"
-                            />
+                        {/* Y-Axis Gridlines and Scale Nominal Labels */}
+                        {[
+                            { y: topY, val: maxVal },
+                            { y: midY, val: maxVal / 2 },
+                            { y: baselineY, val: 0 },
+                        ].map((tick) => (
+                            <g key={tick.y}>
+                                <line
+                                    x1={padLeft}
+                                    x2={width - padRight}
+                                    y1={tick.y}
+                                    y2={tick.y}
+                                    stroke="currentColor"
+                                    className="text-border"
+                                    strokeDasharray={
+                                        tick.y === baselineY ? undefined : '2 2'
+                                    }
+                                    strokeWidth={
+                                        tick.y === baselineY ? '1' : '0.8'
+                                    }
+                                    vectorEffect="non-scaling-stroke"
+                                />
+                                <text
+                                    x={padLeft - 4}
+                                    y={tick.y + 3}
+                                    textAnchor="end"
+                                    className="text-[8px] font-mono fill-muted-foreground select-none pointer-events-none"
+                                >
+                                    {formatAxisNominal(tick.val)}
+                                </text>
+                            </g>
+                        ))}
+
+                        {/* Clusters for each period */}
+                        {trend.map((pt, i) => {
+                            const slotCenterX =
+                                padLeft + i * slotWidth + slotWidth / 2;
+                            const clusterStartX =
+                                slotCenterX - actualClusterWidth / 2;
+                            const isHovered = hoveredIdx === i;
+
+                            const kesAmount = pt.bpjs_kesehatan ?? 0;
+                            const tkAmount = pt.bpjs_ketenagakerjaan ?? 0;
+
+                            const kesHeight =
+                                maxVal > 0 && kesAmount > 0
+                                    ? Math.max(
+                                          3,
+                                          (kesAmount / maxVal) * chartHeight
+                                      )
+                                    : 0;
+                            const tkHeight =
+                                maxVal > 0 && tkAmount > 0
+                                    ? Math.max(
+                                          3,
+                                          (tkAmount / maxVal) * chartHeight
+                                      )
+                                    : 0;
+
+                            const kesX = clusterStartX;
+                            const kesY = baselineY - kesHeight;
+
+                            const tkX = clusterStartX + barWidth + barGap;
+                            const tkY = baselineY - tkHeight;
+
+                            return (
+                                <g key={pt.period}>
+                                    {/* Subtle pill highlight when cluster is hovered */}
+                                    {isHovered && (
+                                        <rect
+                                            x={padLeft + i * slotWidth + 2}
+                                            y={topY - 4}
+                                            width={slotWidth - 4}
+                                            height={chartHeight + 6}
+                                            rx={4}
+                                            fill="currentColor"
+                                            className="text-muted/15"
+                                        />
+                                    )}
+
+                                    {/* BPJS Kesehatan Bar (Emerald / Green) */}
+                                    {kesHeight > 0 && (
+                                        <rect
+                                            x={kesX}
+                                            y={kesY}
+                                            width={barWidth}
+                                            height={kesHeight}
+                                            rx={Math.min(2, barWidth / 2)}
+                                            fill="#16a34a"
+                                            opacity={
+                                                hoveredIdx === null || isHovered
+                                                    ? 1
+                                                    : 0.45
+                                            }
+                                            className="transition-all duration-200"
+                                        >
+                                            <title>
+                                                {`${pt.label} - BPJS Kesehatan: ${formatRupiahCompact(kesAmount)}`}
+                                            </title>
+                                        </rect>
+                                    )}
+
+                                    {/* BPJS Tenaga Kerja Bar (Blue) */}
+                                    {tkHeight > 0 && (
+                                        <rect
+                                            x={tkX}
+                                            y={tkY}
+                                            width={barWidth}
+                                            height={tkHeight}
+                                            rx={Math.min(2, barWidth / 2)}
+                                            fill="#2563eb"
+                                            opacity={
+                                                hoveredIdx === null || isHovered
+                                                    ? 1
+                                                    : 0.45
+                                            }
+                                            className="transition-all duration-200"
+                                        >
+                                            <title>
+                                                {`${pt.label} - BPJS TK: ${formatRupiahCompact(tkAmount)}`}
+                                            </title>
+                                        </rect>
+                                    )}
+                                </g>
+                            );
+                        })}
+
+                        {/* Hover Popup Tooltip directly above the hovered cluster */}
+                        {hoveredIdx !== null && activePoint && (
+                            <g className="pointer-events-none transition-all duration-150">
+                                <rect
+                                    x={tooltipX}
+                                    y={2}
+                                    width={tooltipW}
+                                    height={tooltipH}
+                                    rx={4}
+                                    className="fill-slate-900 dark:fill-slate-100"
+                                    style={{
+                                        filter:
+                                            'drop-shadow(0 2px 4px rgba(0,0,0,0.25))',
+                                    }}
+                                />
+                                <text
+                                    x={tooltipX + tooltipW / 2}
+                                    y={14}
+                                    textAnchor="middle"
+                                    className="text-[8px] font-bold fill-white dark:fill-slate-900 select-none"
+                                >
+                                    {`Kes: ${formatAxisNominal(activePoint.bpjs_kesehatan)} · TK: ${formatAxisNominal(activePoint.bpjs_ketenagakerjaan)}`}
+                                </text>
+                            </g>
                         )}
 
-                        {/* BPJS Kesehatan Data Points (Green) */}
-                        {kesPoints.map((pt, i) => {
-                            const isHovered = hoveredIdx === i;
-                            return (
-                                <g key={`kes-${trend[i].period}`}>
-                                    <circle
-                                        cx={pt.x}
-                                        cy={pt.y}
-                                        r={isHovered ? 4.5 : 2.5}
-                                        fill="#ffffff"
-                                        stroke="#16a34a"
-                                        strokeWidth={isHovered ? 2.5 : 1.8}
-                                        className="transition-all"
-                                    />
-                                    {isHovered && (
-                                        <circle
-                                            cx={pt.x}
-                                            cy={pt.y}
-                                            r={7}
-                                            fill="#16a34a"
-                                            opacity="0.2"
-                                        />
-                                    )}
-                                </g>
-                            );
-                        })}
-
-                        {/* BPJS Tenaga Kerja Data Points (Blue) */}
-                        {tkPoints.map((pt, i) => {
-                            const isHovered = hoveredIdx === i;
-                            return (
-                                <g key={`tk-${trend[i].period}`}>
-                                    <circle
-                                        cx={pt.x}
-                                        cy={pt.y}
-                                        r={isHovered ? 4.5 : 2.5}
-                                        fill="#ffffff"
-                                        stroke="#2563eb"
-                                        strokeWidth={isHovered ? 2.5 : 1.8}
-                                        className="transition-all"
-                                    />
-                                    {isHovered && (
-                                        <circle
-                                            cx={pt.x}
-                                            cy={pt.y}
-                                            r={7}
-                                            fill="#2563eb"
-                                            opacity="0.2"
-                                        />
-                                    )}
-                                </g>
-                            );
-                        })}
-
-                        {/* Hitboxes */}
+                        {/* Month Labels on X-axis */}
                         {trend.map((pt, i) => {
-                            const colWidth = width / Math.max(totalPoints, 1);
+                            const slotCenterX =
+                                padLeft + i * slotWidth + slotWidth / 2;
                             return (
-                                <rect
-                                    key={`hit-${pt.period}`}
-                                    x={i * colWidth}
-                                    y="0"
-                                    width={colWidth}
-                                    height={baselineY}
-                                    fill="transparent"
-                                    className="cursor-pointer"
-                                    onMouseEnter={() => setHoveredIdx(i)}
-                                    onMouseLeave={() => setHoveredIdx(null)}
-                                />
+                                <text
+                                    key={pt.period}
+                                    x={slotCenterX}
+                                    y={97}
+                                    textAnchor="middle"
+                                    className={`text-[9px] select-none transition-colors ${
+                                        hoveredIdx === i
+                                            ? 'font-bold fill-foreground'
+                                            : 'fill-muted-foreground'
+                                    }`}
+                                >
+                                    {pt.label}
+                                </text>
                             );
                         })}
-                    </svg>
 
-                    <div className="flex justify-between px-2.5 pt-0.5 text-[10px] text-muted-foreground">
+                        {/* Interactive Hitboxes */}
                         {trend.map((pt, i) => (
-                            <span
-                                key={pt.period}
-                                className={`transition-colors ${
-                                    hoveredIdx === i ? 'font-bold text-foreground' : ''
-                                }}`}
-                            >
-                                {pt.label}
-                            </span>
+                            <rect
+                                key={`hit-${pt.period}`}
+                                x={padLeft + i * slotWidth}
+                                y="0"
+                                width={slotWidth}
+                                height={baselineY}
+                                fill="transparent"
+                                className="cursor-pointer"
+                                onMouseEnter={() => setHoveredIdx(i)}
+                                onMouseLeave={() => setHoveredIdx(null)}
+                            />
                         ))}
-                    </div>
-                </div>
-
-                <div className="mt-1.5 flex items-center justify-between text-[10px]">
-                    <span className="font-semibold text-foreground truncate">
-                        {activePoint?.label}
-                    </span>
-                    <span className="truncate font-medium text-emerald-600 dark:text-emerald-400">
-                        Kes: {formatRupiahCompact(activePoint?.bpjs_kesehatan ?? 0)}
-                    </span>
-                    <span className="truncate font-medium text-blue-600 dark:text-blue-400">
-                        TK: {formatRupiahCompact(activePoint?.bpjs_ketenagakerjaan ?? 0)}
-                    </span>
+                    </svg>
                 </div>
             </div>
 
-            {/* Footer with Green (Kes) and Blue (TK) legends */}
+            {/* Footer Inspector */}
             <div className="mt-2 flex items-center justify-between border-t px-3 py-1.5 text-[10px] text-muted-foreground">
-                <div className="flex items-center gap-2.5">
-                    <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
-                        <span className="size-2 shrink-0 aspect-square rounded-full bg-emerald-600" />
-                        BPJS Kesehatan
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 font-medium text-blue-700 dark:text-blue-400">
-                        <span className="size-2 shrink-0 aspect-square rounded-full bg-blue-600" />
-                        BPJS Tenaga Kerja
-                    </span>
-                </div>
-                <span>Total: {formatRupiahCompact(data.current_insurance_burn)}</span>
+                <span className="font-semibold text-foreground truncate">
+                    {activePoint?.label}
+                </span>
+                <span className="truncate font-medium text-emerald-600 dark:text-emerald-400">
+                    Kes: {formatRupiahCompact(activePoint?.bpjs_kesehatan ?? 0)}
+                </span>
+                <span className="truncate font-medium text-blue-600 dark:text-blue-400">
+                    TK: {formatRupiahCompact(activePoint?.bpjs_ketenagakerjaan ?? 0)}
+                </span>
             </div>
         </Card>
     );
@@ -756,15 +896,17 @@ export function EmployeeMobilityCard({
         hoveredIdx !== null ? trend[hoveredIdx] : trend[trend.length - 1];
 
     const totalPoints = trend.length;
-    const padX = 24;
-    const topY = 14;
-    const baselineY = 88;
+    const padLeft = 38;
+    const padRight = 14;
+    const topY = 16;
+    const baselineY = 82;
+    const midY = 49;
     const chartHeight = baselineY - topY;
     const svgHeight = 104;
 
     const getX = (idx: number) => {
-        if (totalPoints <= 1) return width / 2;
-        return padX + (idx / (totalPoints - 1)) * (width - padX * 2);
+        if (totalPoints <= 1) return (padLeft + width - padRight) / 2;
+        return padLeft + (idx / (totalPoints - 1)) * (width - padLeft - padRight);
     };
 
     const getY = (val: number) => {
@@ -807,9 +949,28 @@ export function EmployeeMobilityCard({
                 </div>
             </div>
 
+            {/* Top Legend Bar (positioned at top before viewers scan chart) */}
+            <div className="flex items-center justify-between px-3 pt-1 pb-0.5 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-2.5">
+                    <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
+                        <span className="size-2 shrink-0 rounded-full bg-emerald-500" />
+                        Masuk
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 font-medium text-rose-700 dark:text-rose-400">
+                        <span className="size-2 shrink-0 rounded-full bg-rose-500" />
+                        Keluar
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 font-medium text-purple-700 dark:text-purple-400">
+                        <span className="size-2 shrink-0 rounded-full bg-purple-500" />
+                        Mutasi
+                    </span>
+                </div>
+                <span>6 bln: +{data.total_hires}/-{data.total_exits}</span>
+            </div>
+
             {/* Wavy Line Chart Container */}
             <div className="px-3 pt-1">
-                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-1.5 pb-1 px-0">
+                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-1 pb-0.5 px-0">
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
                         className="h-[104px] w-full"
@@ -827,20 +988,45 @@ export function EmployeeMobilityCard({
                             </linearGradient>
                         </defs>
 
-                        {/* Gridlines */}
-                        {[26, 50, 74].map((y) => (
-                            <line
-                                key={y}
-                                x1="0"
-                                x2={width}
-                                y1={y}
-                                y2={y}
-                                stroke="currentColor"
-                                className="text-border"
-                                strokeDasharray="2 2"
-                                strokeWidth="0.8"
-                                vectorEffect="non-scaling-stroke"
-                            />
+                        {/* Vertical Y-Axis Line */}
+                        <line
+                            x1={padLeft}
+                            x2={padLeft}
+                            y1={topY}
+                            y2={baselineY}
+                            stroke="currentColor"
+                            className="text-border"
+                            strokeWidth="1"
+                            vectorEffect="non-scaling-stroke"
+                        />
+
+                        {/* Y-Axis Gridlines and Count Scale Labels */}
+                        {[
+                            { y: topY, val: maxCount },
+                            { y: midY, val: Math.round(maxCount / 2) },
+                            { y: baselineY, val: 0 },
+                        ].map((tick) => (
+                            <g key={tick.y}>
+                                <line
+                                    x1={padLeft}
+                                    x2={width - padRight}
+                                    y1={tick.y}
+                                    y2={tick.y}
+                                    stroke="currentColor"
+                                    className="text-border"
+                                    strokeDasharray={tick.y === baselineY ? undefined : '2 2'}
+                                    strokeWidth={tick.y === baselineY ? '1' : '0.8'}
+                                    vectorEffect="non-scaling-stroke"
+                                />
+                                <text
+                                    x={padLeft - 4}
+                                    y={tick.y + 3}
+                                    textAnchor="end"
+                                    className="text-[8px] font-mono fill-muted-foreground select-none pointer-events-none"
+                                >
+                                    {tick.val}
+                                </text>
+                            </g>
                         ))}
 
                         {/* Hires Wave Area Fill */}
@@ -898,18 +1084,6 @@ export function EmployeeMobilityCard({
                             />
                         )}
 
-                        {/* Baseline */}
-                        <line
-                            x1="0"
-                            x2={width}
-                            y1={baselineY}
-                            y2={baselineY}
-                            stroke="currentColor"
-                            className="text-border"
-                            strokeWidth="1"
-                            vectorEffect="non-scaling-stroke"
-                        />
-
                         {/* Active hover guideline */}
                         {activeHire && (
                             <line
@@ -961,13 +1135,31 @@ export function EmployeeMobilityCard({
                             );
                         })}
 
+                        {/* Month labels on X-axis */}
+                        {trend.map((pt, i) => (
+                            <text
+                                key={pt.period}
+                                x={getX(i)}
+                                y={97}
+                                textAnchor="middle"
+                                className={`text-[9px] select-none transition-colors ${
+                                    hoveredIdx === i
+                                        ? 'font-bold fill-foreground'
+                                        : 'fill-muted-foreground'
+                                }`}
+                            >
+                                {pt.label}
+                            </text>
+                        ))}
+
                         {/* Hitboxes */}
                         {trend.map((pt, i) => {
-                            const colWidth = width / Math.max(totalPoints, 1);
+                            const colWidth = (width - padLeft - padRight) / Math.max(totalPoints, 1);
+                            const startColX = padLeft + i * colWidth;
                             return (
                                 <rect
                                     key={`hit-${pt.period}`}
-                                    x={i * colWidth}
+                                    x={startColX}
                                     y="0"
                                     width={colWidth}
                                     height={baselineY}
@@ -979,55 +1171,22 @@ export function EmployeeMobilityCard({
                             );
                         })}
                     </svg>
-
-                    <div className="flex justify-between px-2.5 pt-0.5 text-[10px] text-muted-foreground">
-                        {trend.map((pt, i) => (
-                            <span
-                                key={pt.period}
-                                className={`transition-colors ${
-                                    hoveredIdx === i ? 'font-bold text-foreground' : ''
-                                }}`}
-                            >
-                                {pt.label}
-                            </span>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span className="font-semibold text-foreground truncate">
-                        {activePoint?.label}
-                    </span>
-                    <span className="text-emerald-700 dark:text-emerald-400 font-medium">
-                        +{activePoint?.hires ?? 0} masuk
-                    </span>
-                    <span className="text-rose-700 dark:text-rose-400 font-medium">
-                        -{activePoint?.exits ?? 0} keluar
-                    </span>
-                    <span className="text-violet-700 dark:text-violet-400 font-medium">
-                        {activePoint?.mutations ?? 0} mutasi
-                    </span>
                 </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer Inspector */}
             <div className="mt-2 flex items-center justify-between border-t px-3 py-1.5 text-[10px] text-muted-foreground">
-                <div className="flex items-center gap-2.5">
-                    <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-400">
-                        <span className="size-2 shrink-0 aspect-square rounded-full bg-emerald-500" />
-                        Masuk
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 font-medium text-rose-700 dark:text-rose-400">
-                        <span className="size-2 shrink-0 aspect-square rounded-full bg-rose-500" />
-                        Keluar
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 font-medium text-purple-700 dark:text-purple-400">
-                        <span className="size-2 shrink-0 aspect-square rounded-full bg-purple-500" />
-                        Mutasi
-                    </span>
-                </div>
-                <span>
-                    6 bln: +{data.total_hires}/-{data.total_exits}
+                <span className="font-semibold text-foreground truncate">
+                    {activePoint?.label}
+                </span>
+                <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+                    +{activePoint?.hires ?? 0} masuk
+                </span>
+                <span className="text-rose-700 dark:text-rose-400 font-medium">
+                    -{activePoint?.exits ?? 0} keluar
+                </span>
+                <span className="text-violet-700 dark:text-violet-400 font-medium">
+                    {activePoint?.mutations ?? 0} mutasi
                 </span>
             </div>
         </Card>
@@ -1067,17 +1226,19 @@ export function ReimburseRateCard({
         hoveredIdx !== null ? trend[hoveredIdx] : trend[trend.length - 1];
 
     const totalPoints = trend.length;
-    const padX = 12;
-    const topY = 12;
-    const baselineY = 88;
+    const padLeft = 38;
+    const padRight = 14;
+    const topY = 16;
+    const baselineY = 82;
+    const midY = 49;
     const chartHeight = baselineY - topY;
     const svgHeight = 104;
 
-    const slotWidth = (width - padX * 2) / Math.max(totalPoints, 1);
+    const slotWidth = (width - padLeft - padRight) / Math.max(totalPoints, 1);
     const barGap = 2;
-    const maxClusterWidth = 44;
+    const maxClusterWidth = 40;
     const clusterWidth = Math.min(
-        Math.max(16, slotWidth - 8),
+        Math.max(16, slotWidth - 6),
         maxClusterWidth
     );
     const barWidth = Math.max(2.5, (clusterWidth - barGap * 3) / 4);
@@ -1093,10 +1254,10 @@ export function ReimburseRateCard({
                     </div>
                     <div className="min-w-0">
                         <div className="truncate text-xs font-semibold text-foreground">
-                            Reimbursement
+                            Sebaran Reimbursement
                         </div>
                         <div className="text-[10px] text-muted-foreground truncate">
-                            Breakdown 4 kategori klaim
+                            Breakdown kategori · Status dibayar
                         </div>
                     </div>
                 </div>
@@ -1106,16 +1267,38 @@ export function ReimburseRateCard({
                         {formatRupiahCompact(data.current_approved_amount)}
                     </div>
                     <div className="text-[10px] font-medium text-teal-600 dark:text-teal-400">
-                        {data.current_total_count} klaim
+                        {data.current_total_count} klaim dibayar
                     </div>
                 </div>
+            </div>
+
+            {/* Top Legend Bar (positioned at top before viewers scan chart) */}
+            <div className="flex items-center justify-between px-3 pt-1 pb-0.5 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-2 flex-wrap">
+                    {REIMBURSE_BAR_CATEGORIES.map((cat) => (
+                        <span
+                            key={cat.key}
+                            className="inline-flex items-center gap-1 font-medium"
+                            style={{ color: cat.color }}
+                        >
+                            <span
+                                className="size-2 shrink-0 rounded-full"
+                                style={{ backgroundColor: cat.color }}
+                            />
+                            {cat.label}
+                        </span>
+                    ))}
+                </div>
+                <span className="shrink-0 text-muted-foreground">
+                    Avg: {formatRupiahCompact(data.avg_claim_amount)}
+                </span>
             </div>
 
             {/* 4-Bar Chart Container */}
             <div className="px-3 pt-1">
                 <div
                     ref={containerRef}
-                    className="relative overflow-hidden rounded-md border bg-muted/10 pt-1.5 pb-1 px-0"
+                    className="relative overflow-hidden rounded-md border bg-muted/10 pt-1 pb-0.5 px-0"
                 >
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
@@ -1123,27 +1306,11 @@ export function ReimburseRateCard({
                         role="img"
                         aria-label="Reimburse 4 Category Bar Chart"
                     >
-                        {/* Gridlines */}
-                        {[26, 50, 74].map((y) => (
-                            <line
-                                key={y}
-                                x1="0"
-                                x2={width}
-                                y1={y}
-                                y2={y}
-                                stroke="currentColor"
-                                className="text-border"
-                                strokeDasharray="2 2"
-                                strokeWidth="0.8"
-                                vectorEffect="non-scaling-stroke"
-                            />
-                        ))}
-
-                        {/* Baseline */}
+                        {/* Vertical Y-Axis Line */}
                         <line
-                            x1="0"
-                            x2={width}
-                            y1={baselineY}
+                            x1={padLeft}
+                            x2={padLeft}
+                            y1={topY}
                             y2={baselineY}
                             stroke="currentColor"
                             className="text-border"
@@ -1151,10 +1318,39 @@ export function ReimburseRateCard({
                             vectorEffect="non-scaling-stroke"
                         />
 
+                        {/* Y-Axis Gridlines and Scale Nominal Labels */}
+                        {[
+                            { y: topY, val: maxCategoryAmount },
+                            { y: midY, val: maxCategoryAmount / 2 },
+                            { y: baselineY, val: 0 },
+                        ].map((tick) => (
+                            <g key={tick.y}>
+                                <line
+                                    x1={padLeft}
+                                    x2={width - padRight}
+                                    y1={tick.y}
+                                    y2={tick.y}
+                                    stroke="currentColor"
+                                    className="text-border"
+                                    strokeDasharray={tick.y === baselineY ? undefined : '2 2'}
+                                    strokeWidth={tick.y === baselineY ? '1' : '0.8'}
+                                    vectorEffect="non-scaling-stroke"
+                                />
+                                <text
+                                    x={padLeft - 4}
+                                    y={tick.y + 3}
+                                    textAnchor="end"
+                                    className="text-[8px] font-mono fill-muted-foreground select-none pointer-events-none"
+                                >
+                                    {formatAxisNominal(tick.val)}
+                                </text>
+                            </g>
+                        ))}
+
                         {/* Clusters for each period */}
                         {trend.map((pt, i) => {
                             const slotCenterX =
-                                padX + i * slotWidth + slotWidth / 2;
+                                padLeft + i * slotWidth + slotWidth / 2;
                             const clusterStartX =
                                 slotCenterX - actualClusterWidth / 2;
                             const isHovered = hoveredIdx === i;
@@ -1164,7 +1360,7 @@ export function ReimburseRateCard({
                                     {/* Subtle pill highlight when cluster is hovered */}
                                     {isHovered && (
                                         <rect
-                                            x={padX + i * slotWidth + 2}
+                                            x={padLeft + i * slotWidth + 2}
                                             y={topY - 4}
                                             width={slotWidth - 4}
                                             height={chartHeight + 6}
@@ -1188,7 +1384,7 @@ export function ReimburseRateCard({
                                                 : 0;
                                         const barX =
                                             clusterStartX +
-                                            catIdx * (barWidth + barGap);
+                                             catIdx * (barWidth + barGap);
                                         const barY = baselineY - barHeight;
 
                                         if (barHeight <= 0) return null;
@@ -1219,12 +1415,63 @@ export function ReimburseRateCard({
                             );
                         })}
 
+                        {/* Hover Popup Tooltip directly above the hovered cluster */}
+                        {hoveredIdx !== null && activePoint && (
+                            <g className="pointer-events-none transition-all duration-150">
+                                <rect
+                                    x={Math.min(
+                                        Math.max(padLeft + hoveredIdx * slotWidth + slotWidth / 2 - 36, padLeft),
+                                        width - padRight - 72
+                                    )}
+                                    y={2}
+                                    width={72}
+                                    height={18}
+                                    rx={4}
+                                    className="fill-slate-900 dark:fill-slate-100"
+                                    style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.25))' }}
+                                />
+                                <text
+                                    x={Math.min(
+                                        Math.max(padLeft + hoveredIdx * slotWidth + slotWidth / 2 - 36, padLeft),
+                                        width - padRight - 72
+                                    ) + 36}
+                                    y={14}
+                                    textAnchor="middle"
+                                    className="text-[9px] font-bold fill-white dark:fill-slate-900 select-none"
+                                >
+                                    {formatRupiahCompact(
+                                        activePoint.paid_amount ?? activePoint.approved_amount ?? 0
+                                    )}
+                                </text>
+                            </g>
+                        )}
+
+                        {/* Month Labels on X-axis */}
+                        {trend.map((pt, i) => {
+                            const slotCenterX = padLeft + i * slotWidth + slotWidth / 2;
+                            return (
+                                <text
+                                    key={pt.period}
+                                    x={slotCenterX}
+                                    y={97}
+                                    textAnchor="middle"
+                                    className={`text-[9px] select-none transition-colors ${
+                                        hoveredIdx === i
+                                            ? 'font-bold fill-foreground'
+                                            : 'fill-muted-foreground'
+                                    }`}
+                                >
+                                    {pt.label}
+                                </text>
+                            );
+                        })}
+
                         {/* Interactive Hitboxes */}
                         {trend.map((pt, i) => {
                             return (
                                 <rect
                                     key={`hit-${pt.period}`}
-                                    x={padX + i * slotWidth}
+                                    x={padLeft + i * slotWidth}
                                     y="0"
                                     width={slotWidth}
                                     height={baselineY}
@@ -1236,88 +1483,49 @@ export function ReimburseRateCard({
                             );
                         })}
                     </svg>
-
-                    {/* Month Labels */}
-                    <div className="flex justify-between px-2.5 pt-0.5 text-[10px] text-muted-foreground">
-                        {trend.map((pt, i) => (
-                            <span
-                                key={pt.period}
-                                className={`transition-colors cursor-pointer ${
-                                    hoveredIdx === i
-                                        ? 'font-bold text-foreground'
-                                        : ''
-                                }`}
-                                onMouseEnter={() => setHoveredIdx(i)}
-                                onMouseLeave={() => setHoveredIdx(null)}
-                            >
-                                {pt.label}
-                            </span>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Active Month Breakdown per Category */}
-                <div className="mt-1.5 flex flex-col gap-1">
-                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                        <span className="font-semibold text-foreground truncate">
-                            {activePoint?.label}
-                        </span>
-                        <span className="truncate">
-                            Total:{' '}
-                            <strong className="text-foreground">
-                                {formatRupiahCompact(
-                                    activePoint?.approved_amount ?? 0
-                                )}
-                            </strong>
-                        </span>
-                        <span className="truncate text-muted-foreground">
-                            {activePoint?.approved_count ?? 0} disetujui
-                        </span>
-                    </div>
-
-                    <div className="grid grid-cols-4 gap-1 text-[9px]">
-                        {REIMBURSE_BAR_CATEGORIES.map((cat) => (
-                            <div
-                                key={cat.key}
-                                className="flex items-center gap-1 min-w-0"
-                            >
-                                <span
-                                    className="size-1.5 shrink-0 rounded-full"
-                                    style={{ backgroundColor: cat.color }}
-                                />
-                                <span className="truncate text-muted-foreground">
-                                    {cat.label}:
-                                </span>
-                                <span className="font-semibold text-foreground truncate">
-                                    {formatRupiahCompact(
-                                        activePoint?.categories?.[cat.key] ?? 0
-                                    )}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
                 </div>
             </div>
 
-            {/* Footer / Legend */}
-            <div className="mt-2 flex items-center justify-between border-t px-3 py-1.5 text-[10px] text-muted-foreground">
-                <div className="flex items-center gap-2 flex-wrap">
+            {/* Active Month Breakdown per Category Inspector in Footer */}
+            <div className="mt-2 flex flex-col gap-1 border-t px-3 py-1.5 text-[10px]">
+                <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="font-semibold text-foreground truncate">
+                        {activePoint?.label}
+                    </span>
+                    <span className="truncate">
+                        Dibayar:{' '}
+                        <strong className="text-foreground">
+                            {formatRupiahCompact(
+                                activePoint?.paid_amount ?? activePoint?.approved_amount ?? 0
+                            )}
+                        </strong>
+                    </span>
+                    <span className="truncate text-muted-foreground">
+                        {activePoint?.paid_count ?? activePoint?.total_count ?? 0} klaim
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-1 text-[9px]">
                     {REIMBURSE_BAR_CATEGORIES.map((cat) => (
-                        <span
+                        <div
                             key={cat.key}
-                            className="inline-flex items-center gap-1 font-medium text-foreground"
+                            className="flex items-center gap-1 min-w-0"
                         >
                             <span
-                                className="size-2 shrink-0 aspect-square rounded-full"
+                                className="size-1.5 shrink-0 rounded-full"
                                 style={{ backgroundColor: cat.color }}
                             />
-                            {cat.label}
-                        </span>
+                            <span className="truncate text-muted-foreground">
+                                {cat.label}:
+                            </span>
+                            <span className="font-semibold text-foreground truncate">
+                                {formatRupiahCompact(
+                                    activePoint?.categories?.[cat.key] ?? 0
+                                )}
+                            </span>
+                        </div>
                     ))}
                 </div>
-                <span className="shrink-0 text-muted-foreground">
-                    Avg: {formatRupiahCompact(data.avg_claim_amount)}
-                </span>
             </div>
         </Card>
     );

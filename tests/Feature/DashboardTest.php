@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AttendanceCorrectionRequest;
 use App\Models\ClientInvoice;
+use App\Models\CompanySetting;
 use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
@@ -13,8 +14,10 @@ use App\Models\JobVacancy;
 use App\Models\LeaveRequest;
 use App\Models\ManpowerRequest;
 use App\Models\OvertimeRequest;
+use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\Position;
+use App\Models\ReimbursementRequest;
 use App\Models\ShiftChangeRequest;
 use App\Models\SubCompany;
 use App\Models\User;
@@ -613,14 +616,17 @@ class DashboardTest extends TestCase
                     )
                     ->has('payroll_by_division', fn (AssertableInertia $sub) => $sub
                         ->has('total')
+                        ->has('period_label')
                         ->has('divisions')
                     )
                     ->has('reimburse_by_category', fn (AssertableInertia $sub) => $sub
                         ->has('total')
+                        ->has('period_label')
                         ->has('categories')
                     )
                     ->has('reimburse_by_division', fn (AssertableInertia $sub) => $sub
                         ->has('total')
+                        ->has('period_label')
                         ->has('divisions')
                     )
                     ->has('resign_reasons', fn (AssertableInertia $sub) => $sub
@@ -628,6 +634,254 @@ class DashboardTest extends TestCase
                         ->has('reasons')
                     )
                 )
+            );
+    }
+
+    public function test_payroll_charts_only_include_locked_or_released_runs(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $division = Division::query()->create(['user_id' => $user->id, 'name' => 'Engineering', 'code' => 'ENG']);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'is_active' => true,
+            'base_salary' => 15_000_000,
+        ]);
+
+        $period = now()->format('Y-m');
+
+        // 1. Create a draft (unlocked, not released) payroll run
+        $run = PayrollRun::factory()->create([
+            'user_id' => $user->id,
+            'period' => $period,
+            'status' => 'draft',
+            'is_locked' => false,
+            'released_at' => null,
+            'total_net_salary' => 15_000_000,
+            'total_base_salary' => 15_000_000,
+            'employees_count' => 1,
+            'generated_at' => now(),
+        ]);
+
+        PayrollItem::query()->create([
+            'user_id' => $user->id,
+            'payroll_run_id' => $run->id,
+            'employee_id' => $employee->id,
+            'base_salary' => 15_000_000,
+            'net_salary' => 15_000_000,
+        ]);
+
+        // Draft payroll should NOT enter chart
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('pieCharts.payroll_by_division.total', 0)
+                ->where('pieCharts.payroll_by_division.divisions', [])
+                ->where('payrollBurnrate.current_burnrate', 0)
+            );
+
+        // 2. Lock the payroll run
+        $run->update(['is_locked' => true, 'locked_at' => now()]);
+
+        // Locked payroll MUST enter chart
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('pieCharts.payroll_by_division.total', 15000000)
+                ->where('payrollBurnrate.current_burnrate', 15000000)
+            );
+    }
+
+    public function test_reimburse_charts_only_include_paid_status(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'is_active' => true,
+        ]);
+
+        // Create pending, approved, and processing requests - none are 'paid' yet
+        ReimbursementRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'category' => 'Meals',
+            'title' => 'Makan Siang',
+            'description' => 'Makan siang rapat',
+            'amount' => 100_000,
+            'status' => 'pending',
+            'created_at' => now(),
+        ]);
+
+        ReimbursementRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'category' => 'Travels',
+            'title' => 'Taksi Client',
+            'description' => 'Transport meeting',
+            'amount' => 200_000,
+            'status' => 'approved',
+            'approved_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        ReimbursementRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'category' => 'Supplies',
+            'title' => 'Kertas Printer',
+            'description' => 'ATK kantor',
+            'amount' => 300_000,
+            'status' => 'processing',
+            'approved_at' => now(),
+            'processed_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        // In-flight reimbursements must NOT enter the chart
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('pieCharts.reimburse_by_category.total', 0)
+                ->where('reimburseRate.current_approved_amount', 0)
+                ->where('reimburseRate.current_total_count', 0)
+            );
+
+        // Now create a paid reimbursement
+        ReimbursementRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'category' => 'Meals',
+            'title' => 'Makan Malam Lembur',
+            'description' => 'Makan lembur closing',
+            'amount' => 150_000,
+            'status' => 'paid',
+            'approved_at' => now(),
+            'processed_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        // Paid reimbursement MUST enter the chart
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('pieCharts.reimburse_by_category.total', 150000)
+                ->where('reimburseRate.current_approved_amount', 150000)
+                ->where('reimburseRate.current_total_count', 1)
+            );
+    }
+
+    public function test_payroll_by_division_is_sorted_high_to_low(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $divSmall = Division::query()->create(['user_id' => $user->id, 'name' => 'Divisi Kecil', 'code' => 'SML']);
+        $divLarge = Division::query()->create(['user_id' => $user->id, 'name' => 'Divisi Terbesar', 'code' => 'LRG']);
+        $divMedium = Division::query()->create(['user_id' => $user->id, 'name' => 'Divisi Sedang', 'code' => 'MED']);
+
+        $empSmall = Employee::factory()->create(['user_id' => $user->id, 'division_id' => $divSmall->id, 'is_active' => true]);
+        $empLarge = Employee::factory()->create(['user_id' => $user->id, 'division_id' => $divLarge->id, 'is_active' => true]);
+        $empMedium = Employee::factory()->create(['user_id' => $user->id, 'division_id' => $divMedium->id, 'is_active' => true]);
+
+        $period = now()->format('Y-m');
+
+        $run = PayrollRun::factory()->create([
+            'user_id' => $user->id,
+            'period' => $period,
+            'status' => 'draft',
+            'is_locked' => true,
+            'locked_at' => now(),
+            'total_net_salary' => 60_000_000,
+            'employees_count' => 3,
+            'generated_at' => now(),
+        ]);
+
+        PayrollItem::query()->create([
+            'user_id' => $user->id,
+            'payroll_run_id' => $run->id,
+            'employee_id' => $empSmall->id,
+            'base_salary' => 5_000_000,
+            'net_salary' => 5_000_000,
+        ]);
+
+        PayrollItem::query()->create([
+            'user_id' => $user->id,
+            'payroll_run_id' => $run->id,
+            'employee_id' => $empLarge->id,
+            'base_salary' => 40_000_000,
+            'net_salary' => 40_000_000,
+        ]);
+
+        PayrollItem::query()->create([
+            'user_id' => $user->id,
+            'payroll_run_id' => $run->id,
+            'employee_id' => $empMedium->id,
+            'base_salary' => 15_000_000,
+            'net_salary' => 15_000_000,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('pieCharts.payroll_by_division.total', 60000000)
+                ->where('pieCharts.payroll_by_division.divisions.0.name', 'Divisi Terbesar')
+                ->where('pieCharts.payroll_by_division.divisions.0.amount', 40000000)
+                ->where('pieCharts.payroll_by_division.divisions.1.name', 'Divisi Sedang')
+                ->where('pieCharts.payroll_by_division.divisions.1.amount', 15000000)
+                ->where('pieCharts.payroll_by_division.divisions.2.name', 'Divisi Kecil')
+                ->where('pieCharts.payroll_by_division.divisions.2.amount', 5000000)
+            );
+    }
+
+    public function test_pie_charts_include_cutoff_period_label_and_respect_cutoff(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        CompanySetting::query()->create([
+            'user_id' => $user->id,
+            'payroll_cutoff_day' => '25',
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'is_active' => true,
+        ]);
+
+        // Reimbursement within cutoff (26 Sep - 25 Okt 2026) -> processed on 2026-10-10
+        ReimbursementRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'category' => 'Travels',
+            'title' => 'Tiket Dinas Cutoff',
+            'description' => 'Tiket dinas ke cabang',
+            'amount' => 750_000,
+            'status' => 'paid',
+            'processed_at' => '2026-10-10 10:00:00',
+            'created_at' => '2026-10-09 10:00:00',
+        ]);
+
+        // Reimbursement outside cutoff for 2026-10 (e.g. 2026-10-28, belongs to next period)
+        ReimbursementRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'category' => 'Meals',
+            'title' => 'Makan Lewat Cutoff',
+            'description' => 'Makan malam luar cutoff',
+            'amount' => 300_000,
+            'status' => 'paid',
+            'processed_at' => '2026-10-28 10:00:00',
+            'created_at' => '2026-10-28 10:00:00',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['period' => '2026-10']))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('pieCharts.payroll_by_division.period_label', '26 Sep - 25 Okt 2026')
+                ->where('pieCharts.reimburse_by_category.period_label', '26 Sep - 25 Okt 2026')
+                ->where('pieCharts.reimburse_by_category.total', 750000)
             );
     }
 }

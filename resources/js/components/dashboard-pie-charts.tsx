@@ -69,6 +69,7 @@ export type GenderByDivisionData = {
 
 export type PayrollByDivisionData = {
     total: number;
+    period_label?: string;
     divisions: Array<{
         id: number;
         name: string;
@@ -80,6 +81,7 @@ export type PayrollByDivisionData = {
 
 export type ReimburseByCategoryData = {
     total: number;
+    period_label?: string;
     categories: Array<{
         name: string;
         amount: number;
@@ -188,7 +190,7 @@ function DonutSvg({
     hoveredIndex: number | null;
     onHover: (index: number | null) => void;
 }) {
-    const size = 130;
+    const size = 114;
     const center = size / 2;
     const innerRadius = 34;
     const outerRadius = 52;
@@ -357,14 +359,14 @@ export function GenderByDivisionCard({
     const activeSlice = hoveredIndex !== null ? slices[hoveredIndex] : null;
 
     return (
-        <Card className="flex flex-col justify-between border-sky-100/80 bg-card py-3 shadow-xs dark:border-sky-950/40">
-            <CardHeader className="px-3 pb-1">
+        <Card className="flex flex-col justify-between gap-0 border-sky-100/80 bg-card py-2.5 shadow-xs dark:border-sky-950/40">
+            <CardHeader className="px-3 pt-0 pb-0 gap-0">
                 <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
                             <Users className="size-3.5 shrink-0 aspect-square" />
                         </span>
-                        <CardTitle className="truncate text-xs font-semibold">
+                        <CardTitle className="truncate text-xs font-semibold leading-tight">
                             Gender per Divisi
                         </CardTitle>
                     </div>
@@ -394,7 +396,7 @@ export function GenderByDivisionCard({
                 </div>
             </CardHeader>
 
-            <CardContent className="px-3 pt-2">
+            <CardContent className="px-3 pt-0 pb-0">
                 <div className="flex items-center gap-3">
                     <DonutSvg
                         slices={slices}
@@ -459,11 +461,11 @@ export function PayrollByDivisionCard({
 }) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-    const nonZeroDivisions = (data.divisions || []).filter(
-        (d) => d.amount > 0
-    );
+    const sortedDivisions = [...(data.divisions || [])]
+        .filter((d) => d.amount > 0)
+        .sort((a, b) => b.amount - a.amount || b.percentage - a.percentage);
 
-    const slices: DonutSlice[] = nonZeroDivisions.map((d, index) => ({
+    const slices: DonutSlice[] = sortedDivisions.map((d, index) => ({
         label: d.name,
         value: d.amount,
         percentage: d.percentage,
@@ -474,28 +476,38 @@ export function PayrollByDivisionCard({
     const activeSlice = hoveredIndex !== null ? slices[hoveredIndex] : null;
 
     return (
-        <Card className="flex flex-col justify-between border-indigo-100/80 bg-card py-3 shadow-xs dark:border-indigo-950/40">
-            <CardHeader className="px-3 pb-1">
-                <div className="flex items-center justify-between gap-1">
+        <Card className="flex flex-col justify-between gap-0 border-indigo-100/80 bg-card py-2.5 shadow-xs dark:border-indigo-950/40">
+            <CardHeader className="px-3 pt-0 pb-0 gap-0">
+                <div className="flex items-start justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
                             <WalletCards className="size-3.5 shrink-0 aspect-square" />
                         </span>
-                        <CardTitle className="truncate text-xs font-semibold">
-                            Total Payroll per Divisi
-                        </CardTitle>
+                        <div className="min-w-0">
+                            <CardTitle className="truncate text-xs font-semibold leading-tight">
+                                Total Payroll per Divisi
+                            </CardTitle>
+                            {data.period_label && (
+                                <p className="text-[10px] text-muted-foreground font-normal truncate">
+                                    {data.period_label}
+                                </p>
+                            )}
+                        </div>
                     </div>
-                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] shrink-0">
                         {formatRupiahCompact(data.total)}
                     </Badge>
                 </div>
             </CardHeader>
 
-            <CardContent className="px-3 pt-2">
+            <CardContent className="px-3 pt-0 pb-0">
                 {slices.length === 0 ? (
-                    <div className="flex h-[130px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
+                    <div className="flex h-[114px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
                         <WalletCards className="size-6 text-muted mb-1" />
-                        <span>Belum ada data payroll</span>
+                        <span>Belum ada data payroll fix</span>
+                        <span className="text-[10px] text-muted-foreground">
+                            Kunci (lock) atau rilis payroll
+                        </span>
                     </div>
                 ) : (
                     <div className="flex items-center gap-3">
@@ -514,18 +526,19 @@ export function PayrollByDivisionCard({
                             onHover={setHoveredIndex}
                         />
 
-                        {/* Top 4 Divisions Legend */}
-                        <div className="flex flex-1 flex-col gap-1 text-xs max-h-[130px] overflow-y-auto pr-0.5">
-                            {slices.slice(0, 5).map((slice, i) => (
+                        {/* Flexible Divisions Legend sorted High to Low */}
+                        <div className="flex flex-1 flex-col gap-1 text-xs max-h-[140px] overflow-y-auto pr-1">
+                            {slices.map((slice, i) => (
                                 <div
                                     key={slice.label}
-                                    className={`flex items-center justify-between gap-1 rounded-sm px-1.5 py-0.5 transition-colors cursor-pointer ${
+                                    className={`flex items-center justify-between gap-1.5 rounded-sm px-1.5 py-1 transition-colors cursor-pointer ${
                                         hoveredIndex === i
                                             ? 'bg-muted font-medium'
                                             : 'hover:bg-muted/50'
                                     }`}
                                     onMouseEnter={() => setHoveredIndex(i)}
                                     onMouseLeave={() => setHoveredIndex(null)}
+                                    title={`${slice.label}: ${slice.formattedValue} (${slice.percentage}%)`}
                                 >
                                     <div className="flex items-center gap-1.5 min-w-0">
                                         <span
@@ -534,22 +547,20 @@ export function PayrollByDivisionCard({
                                                 backgroundColor: slice.color,
                                             }}
                                         />
-                                        <span className="truncate text-[10px] text-muted-foreground">
+                                        <span className="truncate text-[10px] text-muted-foreground font-medium">
                                             {slice.label}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-1 shrink-0 text-[10px]">
+                                    <div className="flex items-center gap-1.5 shrink-0 text-[10px]">
+                                        <span className="text-muted-foreground text-[9px] font-normal">
+                                            {slice.formattedValue}
+                                        </span>
                                         <span className="font-semibold text-foreground">
                                             {slice.percentage}%
                                         </span>
                                     </div>
                                 </div>
                             ))}
-                            {slices.length > 5 && (
-                                <span className="text-[9px] text-muted-foreground px-1.5">
-                                    +{slices.length - 5} divisi lainnya
-                                </span>
-                            )}
                         </div>
                     </div>
                 )}
@@ -580,11 +591,11 @@ export function ReimburseByCategoryCard({
         ? safeData.categories
         : ((safeData as any).divisions || []);
 
-    const nonZeroItems = (items || []).filter(
-        (c: any) => Number(c.amount ?? 0) > 0
-    );
+    const sortedItems = [...(items || [])]
+        .filter((c: any) => Number(c.amount ?? 0) > 0)
+        .sort((a: any, b: any) => Number(b.amount ?? 0) - Number(a.amount ?? 0));
 
-    const slices: DonutSlice[] = nonZeroItems.map((c: any, index: number) => {
+    const slices: DonutSlice[] = sortedItems.map((c: any, index: number) => {
         const colorKey = String(c.name || '').toLowerCase().trim();
         const color = CATEGORY_COLORS[colorKey] ?? PALETTE[(index + 3) % PALETTE.length];
         return {
@@ -599,30 +610,37 @@ export function ReimburseByCategoryCard({
     const activeSlice = hoveredIndex !== null ? slices[hoveredIndex] : null;
 
     return (
-        <Card className="flex flex-col justify-between border-amber-100/80 bg-card py-3 shadow-xs dark:border-amber-950/40">
-            <CardHeader className="px-3 pb-1">
-                <div className="flex items-center justify-between gap-1">
+        <Card className="flex flex-col justify-between gap-0 border-amber-100/80 bg-card py-2.5 shadow-xs dark:border-amber-950/40">
+            <CardHeader className="px-3 pt-0 pb-0 gap-0">
+                <div className="flex items-start justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
                             <Receipt className="size-3.5 shrink-0 aspect-square" />
                         </span>
-                        <CardTitle className="truncate text-xs font-semibold">
-                            Total Reimburse by Kategori
-                        </CardTitle>
+                        <div className="min-w-0">
+                            <CardTitle className="truncate text-xs font-semibold leading-tight">
+                                Total Reimburse by Kategori
+                            </CardTitle>
+                            {safeData.period_label && (
+                                <p className="text-[10px] text-muted-foreground font-normal truncate">
+                                    {safeData.period_label}
+                                </p>
+                            )}
+                        </div>
                     </div>
-                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] shrink-0">
                         {formatRupiahCompact(safeData.total)}
                     </Badge>
                 </div>
             </CardHeader>
 
-            <CardContent className="px-3 pt-2">
+            <CardContent className="px-3 pt-0 pb-0">
                 {slices.length === 0 ? (
-                    <div className="flex h-[130px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
+                    <div className="flex h-[114px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
                         <Receipt className="size-6 text-muted mb-1" />
-                        <span>Belum ada klaim reimburse</span>
+                        <span>Belum ada klaim reimburse dibayar</span>
                         <span className="text-[10px] text-muted-foreground">
-                            Disetujui / dibayar
+                            Hanya status 'dibayar' yang masuk ke chart
                         </span>
                     </div>
                 ) : (
@@ -642,18 +660,19 @@ export function ReimburseByCategoryCard({
                             onHover={setHoveredIndex}
                         />
 
-                        {/* Category Legend */}
-                        <div className="flex flex-1 flex-col gap-1 text-xs max-h-[130px] overflow-y-auto pr-0.5">
+                        {/* Flexible Category Legend sorted High to Low */}
+                        <div className="flex flex-1 flex-col gap-1 text-xs max-h-[140px] overflow-y-auto pr-1">
                             {slices.map((slice, i) => (
                                 <div
                                     key={slice.label}
-                                    className={`flex items-center justify-between gap-1 rounded-sm px-1.5 py-0.5 transition-colors cursor-pointer ${
+                                    className={`flex items-center justify-between gap-1.5 rounded-sm px-1.5 py-1 transition-colors cursor-pointer ${
                                         hoveredIndex === i
                                             ? 'bg-muted font-medium'
                                             : 'hover:bg-muted/50'
                                     }`}
                                     onMouseEnter={() => setHoveredIndex(i)}
                                     onMouseLeave={() => setHoveredIndex(null)}
+                                    title={`${slice.label}: ${slice.formattedValue} (${slice.percentage}%)`}
                                 >
                                     <div className="flex items-center gap-1.5 min-w-0">
                                         <span
@@ -662,11 +681,14 @@ export function ReimburseByCategoryCard({
                                                 backgroundColor: slice.color,
                                             }}
                                         />
-                                        <span className="truncate text-[10px] text-muted-foreground">
+                                        <span className="truncate text-[10px] text-muted-foreground font-medium">
                                             {slice.label}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-1 shrink-0 text-[10px]">
+                                    <div className="flex items-center gap-1.5 shrink-0 text-[10px]">
+                                        <span className="text-muted-foreground text-[9px] font-normal">
+                                            {slice.formattedValue}
+                                        </span>
                                         <span className="font-semibold text-foreground">
                                             {slice.percentage}%
                                         </span>
@@ -697,7 +719,9 @@ export function ResignReasonsCard({
 }) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-    const nonZeroReasons = (data.reasons || []).filter((r) => r.count > 0);
+    const nonZeroReasons = [...(data.reasons || [])]
+        .filter((r) => r.count > 0)
+        .sort((a, b) => b.count - a.count || b.percentage - a.percentage);
 
     const reasonColors: Record<string, string> = {
         resigned: '#f59e0b', // Amber
@@ -719,14 +743,14 @@ export function ResignReasonsCard({
     const activeSlice = hoveredIndex !== null ? slices[hoveredIndex] : null;
 
     return (
-        <Card className="flex h-full flex-col justify-between border-rose-100/80 bg-card py-3 shadow-xs dark:border-rose-950/40">
-            <CardHeader className="px-3 pb-1">
+        <Card className="flex h-full flex-col justify-between gap-0 border-rose-100/80 bg-card py-2.5 shadow-xs dark:border-rose-950/40">
+            <CardHeader className="px-3 pt-0 pb-0 gap-0">
                 <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
                             <UserMinus className="size-3.5 shrink-0 aspect-square" />
                         </span>
-                        <CardTitle className="truncate text-xs font-semibold">
+                        <CardTitle className="truncate text-xs font-semibold leading-tight">
                             Offboarding Reason
                         </CardTitle>
                     </div>
@@ -736,9 +760,9 @@ export function ResignReasonsCard({
                 </div>
             </CardHeader>
 
-            <CardContent className="px-3 pt-2">
+            <CardContent className="px-3 pt-0 pb-0">
                 {slices.length === 0 ? (
-                    <div className="flex h-[130px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
+                    <div className="flex h-[114px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
                         <CheckCircle2 className="size-6 text-emerald-500 mb-1" />
                         <span>Belum ada karyawan offboarding</span>
                         <span className="text-[10px] text-muted-foreground">
