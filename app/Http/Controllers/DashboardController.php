@@ -130,13 +130,17 @@ class DashboardController extends Controller
             ? round((($presentToday + $lateToday) / $activeEmployees) * 100, 1)
             : 0;
 
-        $genderStats = Employee::query()
+        $genderStatsRaw = Employee::query()
             ->where('is_active', true)
-            ->selectRaw("COALESCE(NULLIF(gender, ''), 'unknown') as gender, COUNT(*) as total")
+            ->selectRaw('gender, COUNT(*) as total')
             ->groupBy('gender')
-            ->pluck('total', 'gender')
-            ->map(fn ($total): int => (int) $total)
-            ->all();
+            ->pluck('total', 'gender');
+
+        $genderStats = [];
+        foreach ($genderStatsRaw as $rawKey => $cnt) {
+            $normalizedKey = trim((string) $rawKey) !== '' ? (string) $rawKey : 'unknown';
+            $genderStats[$normalizedKey] = ($genderStats[$normalizedKey] ?? 0) + (int) $cnt;
+        }
 
         $dailyRaw = EmployeeAttendance::query()
             ->selectRaw('attendance_date, status, COUNT(*) as total')
@@ -1734,9 +1738,9 @@ class DashboardController extends Controller
             ->where('employees.is_active', true)
             ->leftJoin('divisions', 'employees.division_id', '=', 'divisions.id')
             ->selectRaw("
-                COALESCE(divisions.id, 0) as division_id,
-                COALESCE(divisions.name, 'Tanpa Divisi') as division_name,
-                LOWER(COALESCE(employees.gender, 'other')) as gender,
+                divisions.id as division_id,
+                divisions.name as division_name,
+                employees.gender as gender,
                 COUNT(*) as total
             ")
             ->groupBy('divisions.id', 'divisions.name', 'employees.gender')
@@ -1746,8 +1750,8 @@ class DashboardController extends Controller
         $overall = ['male' => 0, 'female' => 0, 'other' => 0, 'total' => 0];
 
         foreach ($rows as $row) {
-            $divId = (int) $row->division_id;
-            $divName = (string) $row->division_name;
+            $divId = (int) ($row->division_id ?? 0);
+            $divName = $row->division_name ? (string) $row->division_name : 'Tanpa Divisi';
             $rawGender = strtolower(trim((string) $row->gender));
             $gender = match ($rawGender) {
                 'male', 'm', 'pria', 'laki-laki' => 'male',
@@ -1861,8 +1865,8 @@ class DashboardController extends Controller
                 ->join('employees', 'payroll_items.employee_id', '=', 'employees.id')
                 ->leftJoin('divisions', 'employees.division_id', '=', 'divisions.id')
                 ->selectRaw("
-                    COALESCE(divisions.id, 0) as division_id,
-                    COALESCE(divisions.name, 'Tanpa Divisi') as division_name,
+                    divisions.id as division_id,
+                    divisions.name as division_name,
                     SUM(payroll_items.net_salary) as total_amount,
                     COUNT(DISTINCT payroll_items.employee_id) as employees_count
                 ")
@@ -1877,8 +1881,8 @@ class DashboardController extends Controller
                 $pct = $total > 0 ? round(($amount / $total) * 100, 1) : 0.0;
 
                 return [
-                    'id' => (int) $row->division_id,
-                    'name' => (string) $row->division_name,
+                    'id' => (int) ($row->division_id ?? 0),
+                    'name' => $row->division_name ? (string) $row->division_name : 'Tanpa Divisi',
                     'amount' => $amount,
                     'percentage' => $pct,
                     'employees_count' => (int) $row->employees_count,
@@ -1928,16 +1932,35 @@ class DashboardController extends Controller
                 $q->whereRaw("COALESCE(reimbursement_requests.processed_at, reimbursement_requests.approved_at, reimbursement_requests.created_at) BETWEEN ? AND ?", [$startStr, $endStr]);
             })
             ->selectRaw("
-                COALESCE(NULLIF(category, ''), 'Others') as category_name,
+                category,
                 SUM(amount) as total_amount,
                 COUNT(id) as count
             ")
-            ->groupByRaw("COALESCE(NULLIF(category, ''), 'Others')")
-            ->orderByDesc('total_amount')
+            ->groupBy('category')
             ->get();
 
-        $total = (float) $items->sum('total_amount');
-        $categoryMap = $items->keyBy(fn ($item) => strtolower(trim((string) $item->category_name)));
+        $categoryMap = [];
+        $total = 0.0;
+
+        foreach ($items as $item) {
+            $cat = trim((string) $item->category);
+            $catName = $cat !== '' ? $cat : 'Others';
+            $key = strtolower($catName);
+            $amount = (float) $item->total_amount;
+            $count = (int) $item->count;
+
+            $total += $amount;
+
+            if (! isset($categoryMap[$key])) {
+                $categoryMap[$key] = [
+                    'name' => $catName,
+                    'total_amount' => 0.0,
+                    'count' => 0,
+                ];
+            }
+            $categoryMap[$key]['total_amount'] += $amount;
+            $categoryMap[$key]['count'] += $count;
+        }
 
         $defaultCategories = ['Meals', 'Travels', 'Supplies', 'Others'];
         $resultList = collect();
@@ -1946,9 +1969,9 @@ class DashboardController extends Controller
         foreach ($defaultCategories as $catName) {
             $key = strtolower($catName);
             $seen[$key] = true;
-            $row = $categoryMap->get($key);
-            $amount = $row ? (float) $row->total_amount : 0.0;
-            $count = $row ? (int) $row->count : 0;
+            $row = $categoryMap[$key] ?? null;
+            $amount = $row ? (float) $row['total_amount'] : 0.0;
+            $count = $row ? (int) $row['count'] : 0;
             $pct = $total > 0 ? round(($amount / $total) * 100, 1) : 0.0;
 
             $resultList->push([
@@ -1959,16 +1982,15 @@ class DashboardController extends Controller
             ]);
         }
 
-        foreach ($items as $item) {
-            $key = strtolower(trim((string) $item->category_name));
+        foreach ($categoryMap as $key => $row) {
             if (! isset($seen[$key])) {
-                $amount = (float) $item->total_amount;
+                $amount = (float) $row['total_amount'];
                 $pct = $total > 0 ? round(($amount / $total) * 100, 1) : 0.0;
                 $resultList->push([
-                    'name' => (string) $item->category_name,
+                    'name' => (string) $row['name'],
                     'amount' => $amount,
                     'percentage' => $pct,
-                    'count' => (int) $item->count,
+                    'count' => (int) $row['count'],
                 ]);
             }
         }
@@ -2006,8 +2028,8 @@ class DashboardController extends Controller
                 $q->whereRaw("COALESCE(reimbursement_requests.processed_at, reimbursement_requests.approved_at, reimbursement_requests.created_at) BETWEEN ? AND ?", [$startStr, $endStr]);
             })
             ->selectRaw("
-                COALESCE(divisions.id, 0) as division_id,
-                COALESCE(divisions.name, 'Tanpa Divisi') as division_name,
+                divisions.id as division_id,
+                divisions.name as division_name,
                 SUM(reimbursement_requests.amount) as total_amount,
                 COUNT(reimbursement_requests.id) as count
             ")
@@ -2022,8 +2044,8 @@ class DashboardController extends Controller
             $pct = $total > 0 ? round(($amount / $total) * 100, 1) : 0.0;
 
             return [
-                'id' => (int) $row->division_id,
-                'name' => (string) $row->division_name,
+                'id' => (int) ($row->division_id ?? 0),
+                'name' => $row->division_name ? (string) $row->division_name : 'Tanpa Divisi',
                 'amount' => $amount,
                 'percentage' => $pct,
                 'count' => (int) $row->count,
@@ -2072,8 +2094,8 @@ class DashboardController extends Controller
                             ->whereBetween('updated_at', [$startStr . ' 00:00:00', $endStr . ' 23:59:59']);
                     });
             })
-            ->selectRaw("COALESCE(NULLIF(offboarding_reason, ''), 'resigned') as reason, COUNT(*) as count")
-            ->groupByRaw("COALESCE(NULLIF(offboarding_reason, ''), 'resigned')")
+            ->selectRaw("offboarding_reason, COUNT(*) as count")
+            ->groupBy('offboarding_reason')
             ->get();
 
         $labels = [
@@ -2088,7 +2110,8 @@ class DashboardController extends Controller
         $total = 0;
 
         foreach ($raw as $row) {
-            $reasonKey = (string) $row->reason;
+            $reasonRaw = trim((string) $row->offboarding_reason);
+            $reasonKey = $reasonRaw !== '' ? $reasonRaw : 'resigned';
             $count = (int) $row->count;
             $countsByReason[$reasonKey] = ($countsByReason[$reasonKey] ?? 0) + $count;
             $total += $count;
