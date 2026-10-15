@@ -366,7 +366,7 @@ export function GenderByDivisionCard({
     const displayPeriod = data.period_label || periodLabel;
 
     return (
-        <Card className="flex h-full flex-col justify-start gap-1 border-sky-100/80 bg-card py-2.5 shadow-xs dark:border-sky-950/40">
+        <Card className="flex h-full min-h-[280px] flex-col justify-start gap-1 border-sky-100/80 bg-card py-2.5 shadow-xs dark:border-sky-950/40">
             <CardHeader className="px-3 pt-0 pb-0 gap-0">
                 <div className="flex items-start justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -494,7 +494,7 @@ export function PayrollByDivisionCard({
     const displayPeriod = data.period_label || periodLabel;
 
     return (
-        <Card className="flex h-full flex-col justify-start gap-1 border-indigo-100/80 bg-card py-2.5 shadow-xs dark:border-indigo-950/40">
+        <Card className="flex h-full min-h-[280px] flex-col justify-start gap-1 border-indigo-100/80 bg-card py-2.5 shadow-xs dark:border-indigo-950/40">
             <CardHeader className="px-3 pt-0 pb-0 gap-0">
                 <div className="flex items-start justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -632,7 +632,7 @@ export function ReimburseByCategoryCard({
     const displayPeriod = safeData.period_label || periodLabel;
 
     return (
-        <Card className="flex h-full flex-col justify-start gap-1 border-amber-100/80 bg-card py-2.5 shadow-xs dark:border-amber-950/40">
+        <Card className="flex h-full min-h-[280px] flex-col justify-start gap-1 border-amber-100/80 bg-card py-2.5 shadow-xs dark:border-amber-950/40">
             <CardHeader className="px-3 pt-0 pb-0 gap-0">
                 <div className="flex items-start justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -658,7 +658,7 @@ export function ReimburseByCategoryCard({
 
             <CardContent className="px-3 pt-0 pb-0">
                 {slices.length === 0 ? (
-                    <div className="flex h-[138px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
+                    <div className="flex min-h-[150px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
                         <Receipt className="size-6 text-muted mb-1" />
                         <span>Belum ada klaim reimburse dibayar</span>
                         <span className="text-[10px] text-muted-foreground">
@@ -769,7 +769,7 @@ export function ResignReasonsCard({
     const displayPeriod = data.period_label || periodLabel;
 
     return (
-        <Card className="flex h-full flex-col justify-start gap-1 border-rose-100/80 bg-card py-2.5 shadow-xs dark:border-rose-950/40">
+        <Card className="flex h-full min-h-[280px] flex-col justify-start gap-1 border-rose-100/80 bg-card py-2.5 shadow-xs dark:border-rose-950/40">
             <CardHeader className="px-3 pt-0 pb-0 gap-0">
                 <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -795,7 +795,7 @@ export function ResignReasonsCard({
 
             <CardContent className="px-3 pt-0 pb-0">
                 {slices.length === 0 ? (
-                    <div className="flex h-[114px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
+                    <div className="flex min-h-[140px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
                         <CheckCircle2 className="size-6 text-emerald-500 mb-1" />
                         <span>Belum ada karyawan offboarding</span>
                         <span className="text-[10px] text-muted-foreground">

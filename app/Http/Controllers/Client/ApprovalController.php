@@ -106,14 +106,28 @@ class ApprovalController extends Controller
                 ->orderByDesc('work_date')
                 ->limit(50)
                 ->get()
-                ->map(fn (OvertimeRequest $row): array => [
-                    'id' => $row->id,
-                    'employee_label' => $row->employee?->employee_code.' - '.$row->employee?->full_name,
-                    'date' => $row->work_date?->format('Y-m-d'),
-                    'description' => $row->start_time.' - '.$row->end_time.' ('.$row->total_hours.' jam)',
-                    'reason' => $row->reason,
-                    'status' => $row->status,
-                ]),
+                ->map(function (OvertimeRequest $row): array {
+                    $tz = is_string($row->employee?->timezone) && in_array($row->employee?->timezone, timezone_identifiers_list(), true)
+                        ? $row->employee->timezone
+                        : config('app.timezone');
+                    $tzLabel = match ($tz) {
+                        'Asia/Jakarta', 'Asia/Pontianak' => 'WIB',
+                        'Asia/Makassar', 'Asia/Ujung_Pandang' => 'WITA',
+                        'Asia/Jayapura' => 'WIT',
+                        default => 'WIB',
+                    };
+                    $start = $row->start_time ? substr((string) $row->start_time, 0, 5) : '-';
+                    $end = $row->end_time ? substr((string) $row->end_time, 0, 5) : '-';
+
+                    return [
+                        'id' => $row->id,
+                        'employee_label' => $row->employee?->employee_code.' - '.$row->employee?->full_name,
+                        'date' => $row->work_date?->format('Y-m-d'),
+                        'description' => "{$start} - {$end} {$tzLabel} ({$row->total_hours} jam)",
+                        'reason' => $row->reason,
+                        'status' => $row->status,
+                    ];
+                }),
             'reimbursementRequests' => ReimbursementRequest::query()
                 ->with('employee:id,employee_code,first_name,last_name,sub_company_id')
                 ->where('user_id', $ownerId)

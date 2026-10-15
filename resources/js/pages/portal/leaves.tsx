@@ -31,6 +31,13 @@ type PortalSummary = {
     links: PortalLinkMap;
 };
 
+type LeavePolicyInfo = {
+    min_notice_days: number;
+    earliest_annual_leave_date: string;
+    earliest_annual_leave_formatted: string;
+    max_days_per_request: number | null;
+};
+
 type LeavePayload = {
     items: Array<{
         id: number;
@@ -44,10 +51,12 @@ type LeavePayload = {
         status: string;
         rejection_reason: string | null;
     }>;
+    policy?: LeavePolicyInfo;
 };
 
 export default function PortalLeavesPage({ pageTitle }: Props) {
     const [portal, setPortal] = useState<PortalSummary | null>(null);
+    const [policy, setPolicy] = useState<LeavePolicyInfo | null>(null);
     const [items, setItems] = useState<LeavePayload['items']>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [attachment, setAttachment] = useState<File | null>(null);
@@ -80,6 +89,7 @@ export default function PortalLeavesPage({ pageTitle }: Props) {
 
             setPortal(portalResponse.data);
             setItems(leavesResponse.data.items);
+            setPolicy(leavesResponse.data.policy ?? null);
         } catch (loadError) {
             notifyPortal(
                 'error',
@@ -257,6 +267,13 @@ export default function PortalLeavesPage({ pageTitle }: Props) {
                             <input
                                 type="date"
                                 value={form.start_date}
+                                min={
+                                    form.leave_type === 'annual' &&
+                                    policy &&
+                                    policy.min_notice_days > 0
+                                        ? policy.earliest_annual_leave_date
+                                        : undefined
+                                }
                                 onChange={(event) =>
                                     setForm((current) => ({
                                         ...current,
@@ -274,6 +291,7 @@ export default function PortalLeavesPage({ pageTitle }: Props) {
                             <input
                                 type="date"
                                 value={form.end_date}
+                                min={form.start_date || (form.leave_type === 'annual' && policy && policy.min_notice_days > 0 ? policy.earliest_annual_leave_date : undefined)}
                                 onChange={(event) =>
                                     setForm((current) => ({
                                         ...current,
@@ -285,6 +303,17 @@ export default function PortalLeavesPage({ pageTitle }: Props) {
                             />
                         </div>
                     </div>
+
+                    {form.leave_type === 'annual' &&
+                    policy &&
+                    policy.min_notice_days > 0 ? (
+                        <div className="rounded-[9px] bg-amber-50/80 p-3 text-xs text-amber-800 border border-amber-200/60 flex items-start gap-2">
+                            <span className="font-bold text-amber-600 mt-0.5">ℹ️</span>
+                            <div>
+                                <span className="font-semibold">Ketentuan Pengajuan:</span> Pengajuan cuti tahunan minimal diajukan <span className="font-bold">{policy.min_notice_days} hari kerja</span> sebelumnya. Cuti paling cepat dapat dimulai pada tanggal <span className="font-bold">{policy.earliest_annual_leave_formatted}</span>.
+                            </div>
+                        </div>
+                    ) : null}
 
                     <div>
                         <label className="mb-1 block text-xs font-semibold text-slate-700">

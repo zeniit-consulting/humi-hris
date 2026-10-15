@@ -56,8 +56,21 @@ class LeaveController extends Controller
             ->paginate((int) ($validated['per_page'] ?? 20))
             ->withQueryString();
 
+        $owner = User::find($ownerId);
+        $annualPolicy = $owner ? app(\App\Services\LeaveBalanceService::class)->getPolicy($owner, 'annual') : null;
+        $minNoticeDays = (int) ($annualPolicy?->min_notice_days ?? 0);
+        $earliestDate = $minNoticeDays > 0 && $owner
+            ? app(\App\Services\LeaveBalanceService::class)->calculateEarliestLeaveStartDate($owner, $minNoticeDays)
+            : today();
+
         return $this->success([
             'items' => collect($paginator->items())->map(fn (LeaveRequest $leave) => $this->payload($leave))->values(),
+            'policy' => [
+                'min_notice_days' => $minNoticeDays,
+                'earliest_annual_leave_date' => $earliestDate->toDateString(),
+                'earliest_annual_leave_formatted' => $earliestDate->locale('id')->isoFormat('D MMMM Y'),
+                'max_days_per_request' => $annualPolicy?->max_days_per_request,
+            ],
             'pagination' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),

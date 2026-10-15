@@ -160,6 +160,52 @@ class LeavePolicyNoticePeriodTest extends TestCase
         ]);
     }
 
+    public function test_portal_leave_request_rejected_if_submitted_before_minimum_notice_period(): void
+    {
+        Carbon::setTestNow('2026-10-09 10:00:00');
+
+        $owner = User::factory()->create(['role' => 'admin', 'email_verified_at' => now()]);
+        $employee = Employee::factory()->create([
+            'user_id' => $owner->id,
+            'email' => 'portal-emp@example.com',
+            'hire_date' => '2025-01-01',
+        ]);
+        $portalUser = User::factory()->create([
+            'role' => 'user',
+            'parent_user_id' => $owner->id,
+            'email' => $employee->email,
+            'email_verified_at' => now(),
+        ]);
+
+        LeavePolicy::create([
+            'user_id' => $owner->id,
+            'leave_type' => 'annual',
+            'policy_type' => 'annual',
+            'yearly_days' => 12,
+            'waiting_period_months' => 0,
+            'min_notice_days' => 5,
+            'approval_levels' => 1,
+            'is_active' => true,
+        ]);
+
+        $payload = [
+            'employee_id' => $employee->id,
+            'leave_type' => 'annual',
+            'start_date' => '2026-10-15', // Kurang dari 5 hari kerja (paling cepat tgl 16)
+            'end_date' => '2026-10-15',
+            'reason' => 'Liburan',
+            'status' => 'pending',
+        ];
+
+        $response = $this->actingAs($portalUser)
+            ->postJson(route('portal.api.leaves.store'), $payload);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['start_date', 'total_days']);
+
+        $this->assertDatabaseCount('leave_requests', 0);
+    }
+
     public function test_policy_stores_and_updates_min_notice_days(): void
     {
         $user = User::factory()->create(['email_verified_at' => now()]);

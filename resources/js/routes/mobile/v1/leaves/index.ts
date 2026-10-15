@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::store
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:87
 * @route '/api/mobile/v1/leaves'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::store
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:87
 * @route '/api/mobile/v1/leaves'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::store
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:87
 * @route '/api/mobile/v1/leaves'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::store
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:87
 * @route '/api/mobile/v1/leaves'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::store
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:74
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:87
 * @route '/api/mobile/v1/leaves'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:121
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 export const update = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -153,7 +153,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:121
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 update.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +186,7 @@ update.url = (args: { leave: number | { id: number } } | [leave: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:121
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 update.put = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -196,7 +196,7 @@ update.put = (args: { leave: number | { id: number } } | [leave: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:121
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 const updateForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -211,7 +211,7 @@ const updateForm = (args: { leave: number | { id: number } } | [leave: number | 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::update
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:108
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:121
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 updateForm.put = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -228,7 +228,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:162
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 export const destroy = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -243,7 +243,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:162
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 destroy.url = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -276,7 +276,7 @@ destroy.url = (args: { leave: number | { id: number } } | [leave: number | { id:
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:162
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 destroy.delete = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -286,7 +286,7 @@ destroy.delete = (args: { leave: number | { id: number } } | [leave: number | { 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:162
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 const destroyForm = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -301,7 +301,7 @@ const destroyForm = (args: { leave: number | { id: number } } | [leave: number |
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\LeaveController::destroy
-* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:149
+* @see app/Http/Controllers/Api/Mobile/V1/LeaveController.php:162
 * @route '/api/mobile/v1/leaves/{leave}'
 */
 destroyForm.delete = (args: { leave: number | { id: number } } | [leave: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

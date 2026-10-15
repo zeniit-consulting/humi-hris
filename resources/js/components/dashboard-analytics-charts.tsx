@@ -257,10 +257,10 @@ export function PayrollBurnrateCard({
     const padLeft = 38;
     const padRight = 14;
     const topY = 12;
-    const baselineY = 98;
-    const midY = 55;
+    const baselineY = 118;
+    const midY = 65;
     const chartHeight = baselineY - topY;
-    const svgHeight = 125;
+    const svgHeight = 150;
 
     const getX = (idx: number) => {
         if (totalPoints <= 1) return (padLeft + width - padRight) / 2;
@@ -285,7 +285,7 @@ export function PayrollBurnrateCard({
     const tooltipY = activeNet ? Math.max(activeNet.y - 23, 2) : 0;
 
     return (
-        <Card className="flex h-full flex-col justify-start gap-0 overflow-hidden p-0 shadow-xs">
+        <Card className="flex h-full min-h-[280px] flex-col justify-start gap-0 overflow-hidden p-0 shadow-xs">
             {/* Header */}
             <div className="flex items-center justify-between gap-1.5 px-3 pt-2.5 pb-0.5">
                 <div className="flex items-center gap-2 min-w-0">
@@ -335,10 +335,10 @@ export function PayrollBurnrateCard({
 
             {/* Wavy Line Chart Container */}
             <div className="px-3 pt-0.5">
-                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0">
+                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0 min-h-[150px]">
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
-                        className="h-[125px] w-full"
+                        className="h-[150px] min-h-[150px] w-full"
                         role="img"
                         aria-label="Payroll Burnrate Wavy Line Chart"
                     >
@@ -487,7 +487,7 @@ export function PayrollBurnrateCard({
                             <text
                                 key={pt.period}
                                 x={getX(i)}
-                                y={115}
+                                y={135}
                                 textAnchor="middle"
                                 className={`text-[9px] select-none transition-colors ${
                                     hoveredIdx === i
@@ -573,10 +573,10 @@ export function InsuranceBurnrateCard({
     const padLeft = 38;
     const padRight = 14;
     const topY = 12;
-    const baselineY = 98;
-    const midY = 55;
+    const baselineY = 118;
+    const midY = 65;
     const chartHeight = baselineY - topY;
-    const svgHeight = 125;
+    const svgHeight = 150;
 
     const getX = (idx: number) => {
         if (totalPoints <= 1) return (padLeft + width - padRight) / 2;
@@ -607,7 +607,7 @@ export function InsuranceBurnrateCard({
         : 0;
 
     return (
-        <Card className="flex h-full flex-col justify-start gap-0 overflow-hidden p-0 shadow-xs">
+        <Card className="flex h-full min-h-[280px] flex-col justify-start gap-0 overflow-hidden p-0 shadow-xs">
             {/* Header */}
             <div className="flex items-center justify-between gap-1.5 px-3 pt-2.5 pb-0.5">
                 <div className="flex items-center gap-2 min-w-0">
@@ -653,10 +653,10 @@ export function InsuranceBurnrateCard({
 
             {/* Wavy Line Chart Container */}
             <div className="px-3 pt-0.5">
-                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0">
+                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0 min-h-[150px]">
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
-                        className="h-[125px] w-full"
+                        className="h-[150px] min-h-[150px] w-full"
                         role="img"
                         aria-label="Insurance Burnrate Wavy Line Chart"
                     >
@@ -824,7 +824,7 @@ export function InsuranceBurnrateCard({
                             <text
                                 key={pt.period}
                                 x={getX(i)}
-                                y={115}
+                                y={135}
                                 textAnchor="middle"
                                 className={`text-[9px] select-none transition-colors ${
                                     hoveredIdx === i
@@ -898,10 +898,10 @@ export function EmployeeMobilityCard({
     const padLeft = 38;
     const padRight = 14;
     const topY = 12;
-    const baselineY = 98;
-    const midY = 55;
+    const baselineY = 118;
+    const midY = 65;
     const chartHeight = baselineY - topY;
-    const svgHeight = 125;
+    const svgHeight = 150;
 
     const getX = (idx: number) => {
         if (totalPoints <= 1) return (padLeft + width - padRight) / 2;
@@ -921,7 +921,7 @@ export function EmployeeMobilityCard({
     const activeHire = hirePoints[activeIndex];
 
     return (
-        <Card className="flex h-full flex-col justify-start gap-0 overflow-hidden p-0 shadow-xs">
+        <Card className="flex h-full min-h-[280px] flex-col justify-start gap-0 overflow-hidden p-0 shadow-xs">
             {/* Header */}
             <div className="flex items-center justify-between gap-1.5 px-3 pt-2.5 pb-0.5">
                 <div className="flex items-center gap-2 min-w-0">
@@ -971,10 +971,10 @@ export function EmployeeMobilityCard({
 
             {/* Wavy Line Chart Container */}
             <div className="px-3 pt-0.5">
-                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0">
+                <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0 min-h-[150px]">
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
-                        className="h-[125px] w-full"
+                        className="h-[150px] min-h-[150px] w-full"
                         role="img"
                         aria-label="Employee Mobility Wavy Line Chart"
                     >
@@ -1141,7 +1141,7 @@ export function EmployeeMobilityCard({
                             <text
                                 key={pt.period}
                                 x={getX(i)}
-                                y={115}
+                                y={135}
                                 textAnchor="middle"
                                 className={`text-[9px] select-none transition-colors ${
                                     hoveredIdx === i
@@ -1230,10 +1230,10 @@ export function ReimburseRateCard({
     const padLeft = 38;
     const padRight = 14;
     const topY = 12;
-    const baselineY = 98;
-    const midY = 55;
+    const baselineY = 118;
+    const midY = 65;
     const chartHeight = baselineY - topY;
-    const svgHeight = 125;
+    const svgHeight = 150;
 
     const slotWidth = (width - padLeft - padRight) / Math.max(totalPoints, 1);
     const barGap = 2.5;
@@ -1246,7 +1246,7 @@ export function ReimburseRateCard({
     const actualClusterWidth = barWidth * 4 + barGap * 3;
 
     return (
-        <Card className="flex h-full flex-col justify-start gap-0 overflow-hidden p-0 shadow-xs">
+        <Card className="flex h-full min-h-[280px] flex-col justify-start gap-0 overflow-hidden p-0 shadow-xs">
             {/* Header */}
             <div className="flex items-center justify-between gap-1.5 px-3 pt-2.5 pb-0.5">
                 <div className="flex items-center gap-2 min-w-0">
@@ -1299,11 +1299,11 @@ export function ReimburseRateCard({
             <div className="px-3 pt-0.5">
                 <div
                     ref={containerRef}
-                    className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0"
+                    className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0 min-h-[150px]"
                 >
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
-                        className="h-[125px] w-full"
+                        className="h-[150px] min-h-[150px] w-full"
                         role="img"
                         aria-label="Reimburse 4 Category Bar Chart"
                     >
@@ -1454,7 +1454,7 @@ export function ReimburseRateCard({
                                 <text
                                     key={pt.period}
                                     x={slotCenterX}
-                                    y={115}
+                                    y={135}
                                     textAnchor="middle"
                                     className={`text-[9px] select-none transition-colors ${
                                         hoveredIdx === i

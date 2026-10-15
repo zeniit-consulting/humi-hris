@@ -226,8 +226,8 @@ class PortalController extends Controller
                         default => 'Absensi tercatat',
                     },
                     'subtitle' => trim(implode(' • ', array_filter([
-                        $todayAttendance->check_in_at ? 'Masuk '.$this->localTime($todayAttendance->check_in_at, $timezone) : null,
-                        $todayAttendance->check_out_at ? 'Pulang '.$this->localTime($todayAttendance->check_out_at, $timezone) : 'Masih aktif',
+                        $todayAttendance->check_in_at ? 'Masuk '.$this->localTime($todayAttendance->check_in_at, $timezone, true) : null,
+                        $todayAttendance->check_out_at ? 'Pulang '.$this->localTime($todayAttendance->check_out_at, $timezone, true) : 'Masih aktif',
                     ]))),
                     'chip' => $todayAttendance->status,
                 ]);
@@ -557,9 +557,20 @@ class PortalController extends Controller
         return Carbon::parse($value, config('app.timezone'))->setTimezone($timezone)->toIso8601String();
     }
 
-    private function localTime(mixed $value, string $timezone): string
+    private function localTime(mixed $value, string $timezone, bool $withZone = false): string
     {
-        return Carbon::parse($value, config('app.timezone'))->setTimezone($timezone)->format('H:i');
+        $time = Carbon::parse($value, config('app.timezone'))->setTimezone($timezone)->format('H:i');
+        if ($withZone) {
+            $tzLabel = match ($timezone) {
+                'Asia/Jakarta', 'Asia/Pontianak' => 'WIB',
+                'Asia/Makassar', 'Asia/Ujung_Pandang' => 'WITA',
+                'Asia/Jayapura' => 'WIT',
+                default => 'WIB',
+            };
+            return "{$time} {$tzLabel}";
+        }
+
+        return $time;
     }
 
     private function attendanceLocationsForEmployee(?Employee $employee, ?CompanySetting $companySetting): \Illuminate\Support\Collection

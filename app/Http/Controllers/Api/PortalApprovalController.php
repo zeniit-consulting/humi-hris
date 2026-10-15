@@ -115,12 +115,25 @@ class PortalApprovalController extends Controller
         $overtimeRows = OvertimeRequest::query()
             ->where('status', 'pending')
             ->where(fn ($q) => $q->where('approval_stage', 0)->where('first_approver_employee_id', $employee->id)->orWhere('approval_stage', 1)->where('second_approver_employee_id', $employee->id))
-            ->with('employee:id,employee_code,first_name,last_name')
+            ->with('employee:id,employee_code,first_name,last_name,timezone')
             ->latest()
             ->get()
-            ->map(function ($row) {
+            ->map(function ($row) use ($approverTz) {
+                $targetTz = is_string($row->employee?->timezone) && in_array($row->employee?->timezone, timezone_identifiers_list(), true)
+                    ? $row->employee->timezone
+                    : $approverTz;
+
+                $tzLabel = match ($targetTz) {
+                    'Asia/Jakarta', 'Asia/Pontianak' => 'WIB',
+                    'Asia/Makassar', 'Asia/Ujung_Pandang' => 'WITA',
+                    'Asia/Jayapura' => 'WIT',
+                    default => 'WIB',
+                };
+
                 $dateFormatted = $row->work_date ? \Carbon\Carbon::parse($row->work_date)->locale('id')->isoFormat('D MMM Y') : '-';
                 $hours = (float) $row->total_hours;
+                $start = $row->start_time ? substr((string) $row->start_time, 0, 5) : '-';
+                $end = $row->end_time ? substr((string) $row->end_time, 0, 5) : '-';
 
                 return [
                     'id' => $row->id,
@@ -129,7 +142,7 @@ class PortalApprovalController extends Controller
                     'stage' => $row->approval_stage + 1,
                     'created_at' => $row->created_at?->toDateString(),
                     'title' => $row->is_event ? 'Lembur Event: ' . ($row->event_name ?? 'Kegiatan Khusus') : 'Lembur Reguler',
-                    'subtitle' => $dateFormatted . ' • ' . ($row->start_time ?? '-') . ' - ' . ($row->end_time ?? '-') . ' (' . $hours . ' jam)',
+                    'subtitle' => $dateFormatted . ' • ' . $start . ' - ' . $end . ' ' . $tzLabel . ' (' . $hours . ' jam)',
                     'reason' => $row->reason,
                     'badge' => $row->is_event ? 'Event' : 'Lembur',
                 ];
@@ -138,13 +151,26 @@ class PortalApprovalController extends Controller
         $shiftRows = ShiftChangeRequest::query()
             ->where('status', 'pending')
             ->where(fn ($q) => $q->where('approval_stage', 0)->where('first_approver_employee_id', $employee->id)->orWhere('approval_stage', 1)->where('second_approver_employee_id', $employee->id))
-            ->with(['employee:id,employee_code,first_name,last_name', 'currentShift:id,name,code', 'requestedShift:id,name,code'])
+            ->with(['employee:id,employee_code,first_name,last_name,timezone', 'currentShift:id,name,code,start_time,end_time', 'requestedShift:id,name,code,start_time,end_time'])
             ->latest()
             ->get()
-            ->map(function ($row) {
+            ->map(function ($row) use ($approverTz) {
+                $targetTz = is_string($row->employee?->timezone) && in_array($row->employee?->timezone, timezone_identifiers_list(), true)
+                    ? $row->employee->timezone
+                    : $approverTz;
+
+                $tzLabel = match ($targetTz) {
+                    'Asia/Jakarta', 'Asia/Pontianak' => 'WIB',
+                    'Asia/Makassar', 'Asia/Ujung_Pandang' => 'WITA',
+                    'Asia/Jayapura' => 'WIT',
+                    default => 'WIB',
+                };
+
                 $dateFormatted = $row->requested_date ? \Carbon\Carbon::parse($row->requested_date)->locale('id')->isoFormat('D MMM Y') : '-';
-                $fromShift = $row->currentShift?->name ?? 'Shift Awal';
-                $toShift = $row->requestedShift?->name ?? 'Shift Baru';
+                $fromTime = $row->currentShift?->start_time ? ' (' . substr((string) $row->currentShift->start_time, 0, 5) . '-' . substr((string) $row->currentShift->end_time, 0, 5) . ' ' . $tzLabel . ')' : '';
+                $toTime = $row->requestedShift?->start_time ? ' (' . substr((string) $row->requestedShift->start_time, 0, 5) . '-' . substr((string) $row->requestedShift->end_time, 0, 5) . ' ' . $tzLabel . ')' : '';
+                $fromShift = ($row->currentShift?->name ?? 'Shift Awal') . $fromTime;
+                $toShift = ($row->requestedShift?->name ?? 'Shift Baru') . $toTime;
 
                 return [
                     'id' => $row->id,

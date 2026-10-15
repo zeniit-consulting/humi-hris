@@ -6,6 +6,8 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
     build: {
+        target: 'es2022',
+        reportCompressedSize: false,
         chunkSizeWarningLimit: 1800,
         rollupOptions: {
             output: {
@@ -18,16 +20,17 @@ export default defineConfig({
                         return 'vendor-mapbox';
                     }
 
+                    if (id.includes('@radix-ui') || id.includes('lucide-react')) {
+                        return 'vendor-ui';
+                    }
+
                     if (
-                        id.includes('react') ||
+                        id.includes('/react/') ||
+                        id.includes('/react-dom/') ||
                         id.includes('@inertiajs') ||
                         id.includes('@vitejs')
                     ) {
                         return 'vendor-react';
-                    }
-
-                    if (id.includes('@radix-ui') || id.includes('lucide-react')) {
-                        return 'vendor-ui';
                     }
                 },
             },
@@ -40,9 +43,11 @@ export default defineConfig({
             refresh: true,
         }),
         react({
-            babel: {
-                plugins: ['babel-plugin-react-compiler'],
-            },
+            babel: process.env.VITE_REACT_COMPILER === 'true'
+                ? {
+                      plugins: ['babel-plugin-react-compiler'],
+                  }
+                : undefined,
         }),
         tailwindcss(),
         wayfinder({

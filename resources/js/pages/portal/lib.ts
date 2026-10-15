@@ -234,9 +234,13 @@ export const translatePortalError = (
     return normalized;
 };
 
-export const formatTime = (value: string | null) => {
+export const formatTime = (value: string | null, targetTimezone?: string | null) => {
     if (!value) {
         return '--:--';
+    }
+
+    if (/^\d{2}:\d{2}(?::\d{2})?$/.test(value)) {
+        return value.slice(0, 5);
     }
 
     const date = new Date(value);
@@ -245,12 +249,18 @@ export const formatTime = (value: string | null) => {
         return value;
     }
 
+    const tz = targetTimezone && Intl.supportedValuesOf('timeZone').includes(targetTimezone)
+        ? targetTimezone
+        : Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     return new Intl.DateTimeFormat('id-ID', {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    }).format(date);
+        timeZone: tz,
+    })
+        .format(date)
+        .replace('.', ':');
 };
 
 export const formatDate = (value: string | null) => {
