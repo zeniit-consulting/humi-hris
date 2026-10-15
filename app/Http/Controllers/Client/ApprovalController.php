@@ -54,14 +54,28 @@ class ApprovalController extends Controller
                 ->orderByDesc('attendance_date')
                 ->limit(50)
                 ->get()
-                ->map(fn (AttendanceCorrectionRequest $row): array => [
-                    'id' => $row->id,
-                    'employee_label' => $row->employee?->employee_code.' - '.$row->employee?->full_name,
-                    'date' => $row->attendance_date?->format('Y-m-d'),
-                    'description' => trim(($row->check_in_at?->format('H:i') ?? '-').' / '.($row->check_out_at?->format('H:i') ?? '-')),
-                    'reason' => $row->reason,
-                    'status' => $row->status,
-                ]),
+                ->map(function (AttendanceCorrectionRequest $row): array {
+                    $tz = is_string($row->timezone) && in_array($row->timezone, timezone_identifiers_list(), true)
+                        ? $row->timezone
+                        : config('app.timezone');
+                    $tzLabel = match ($tz) {
+                        'Asia/Jakarta', 'Asia/Pontianak' => 'WIB',
+                        'Asia/Makassar', 'Asia/Ujung_Pandang' => 'WITA',
+                        'Asia/Jayapura' => 'WIT',
+                        default => 'WIB',
+                    };
+                    $in = $row->check_in_at ? \Carbon\Carbon::parse($row->check_in_at, 'UTC')->setTimezone($tz)->format('H:i') : '-';
+                    $out = $row->check_out_at ? \Carbon\Carbon::parse($row->check_out_at, 'UTC')->setTimezone($tz)->format('H:i') : '-';
+
+                    return [
+                        'id' => $row->id,
+                        'employee_label' => $row->employee?->employee_code.' - '.$row->employee?->full_name,
+                        'date' => $row->attendance_date?->format('Y-m-d'),
+                        'description' => trim("{$in} / {$out} {$tzLabel}"),
+                        'reason' => $row->reason,
+                        'status' => $row->status,
+                    ];
+                }),
             'leaveRequests' => LeaveRequest::query()
                 ->with('employee:id,employee_code,first_name,last_name,sub_company_id')
                 ->where('user_id', $ownerId)

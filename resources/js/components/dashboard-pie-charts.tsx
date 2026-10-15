@@ -186,7 +186,7 @@ function DonutSvg({
     centerLabel,
     hoveredIndex,
     onHover,
-    size = 114,
+    size = 138,
 }: {
     slices: DonutSlice[];
     centerValue: string;
@@ -424,11 +424,11 @@ export function GenderByDivisionCard({
                         }
                         hoveredIndex={hoveredIndex}
                         onHover={setHoveredIndex}
-                        size={106}
+                        size={128}
                     />
 
                     {/* Compact Legend */}
-                    <div className="w-full flex flex-col gap-1 text-xs max-h-[110px] overflow-y-auto pr-0.5">
+                    <div className="w-full flex flex-col gap-1 text-xs max-h-[135px] overflow-y-auto pr-0.5">
                         {slices.map((slice, i) => (
                             <div
                                 key={slice.label}
@@ -542,11 +542,11 @@ export function PayrollByDivisionCard({
                             }
                             hoveredIndex={hoveredIndex}
                             onHover={setHoveredIndex}
-                            size={106}
+                            size={128}
                         />
 
                         {/* Flexible Divisions Legend sorted High to Low */}
-                        <div className="w-full flex flex-col gap-1 text-xs max-h-[110px] overflow-y-auto pr-0.5">
+                        <div className="w-full flex flex-col gap-1 text-xs max-h-[135px] overflow-y-auto pr-0.5">
                             {slices.map((slice, i) => (
                                 <div
                                     key={slice.label}
@@ -658,7 +658,7 @@ export function ReimburseByCategoryCard({
 
             <CardContent className="px-3 pt-0 pb-0">
                 {slices.length === 0 ? (
-                    <div className="flex h-[114px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
+                    <div className="flex h-[138px] flex-col items-center justify-center text-center text-xs text-muted-foreground">
                         <Receipt className="size-6 text-muted mb-1" />
                         <span>Belum ada klaim reimburse dibayar</span>
                         <span className="text-[10px] text-muted-foreground">
@@ -683,7 +683,7 @@ export function ReimburseByCategoryCard({
                         />
 
                         {/* Flexible Category Legend sorted High to Low */}
-                        <div className="flex flex-1 flex-col gap-1 text-xs max-h-[140px] overflow-y-auto pr-1">
+                        <div className="flex flex-1 flex-col gap-1 text-xs max-h-[170px] overflow-y-auto pr-1">
                             {slices.map((slice, i) => (
                                 <div
                                     key={slice.label}
@@ -816,11 +816,11 @@ export function ResignReasonsCard({
                             }
                             hoveredIndex={hoveredIndex}
                             onHover={setHoveredIndex}
-                            size={106}
+                            size={128}
                         />
 
                         {/* Reasons Legend */}
-                        <div className="w-full flex flex-col gap-1 text-xs max-h-[110px] overflow-y-auto pr-0.5">
+                        <div className="w-full flex flex-col gap-1 text-xs max-h-[135px] overflow-y-auto pr-0.5">
                             {slices.map((slice, i) => (
                                 <div
                                     key={slice.label}

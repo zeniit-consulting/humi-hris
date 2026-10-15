@@ -256,11 +256,11 @@ export function PayrollBurnrateCard({
     const totalPoints = trend.length;
     const padLeft = 38;
     const padRight = 14;
-    const topY = 10;
-    const baselineY = 82;
-    const midY = 46;
+    const topY = 12;
+    const baselineY = 98;
+    const midY = 55;
     const chartHeight = baselineY - topY;
-    const svgHeight = 104;
+    const svgHeight = 125;
 
     const getX = (idx: number) => {
         if (totalPoints <= 1) return (padLeft + width - padRight) / 2;
@@ -296,8 +296,10 @@ export function PayrollBurnrateCard({
                         <div className="truncate text-xs font-semibold text-foreground">
                             Tren Payroll
                         </div>
-                        <div className="text-[10px] text-muted-foreground">
-                            Trend THP 6 bln · Data fix
+                        <div className="text-[10px] text-muted-foreground truncate">
+                            {trend.length > 0
+                                ? `Trend ${trend[0].label} - ${trend[trend.length - 1].label} · Data fix`
+                                : 'Trend THP · Data fix'}
                         </div>
                     </div>
                 </div>
@@ -336,7 +338,7 @@ export function PayrollBurnrateCard({
                 <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0">
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
-                        className="h-[104px] w-full"
+                        className="h-[125px] w-full"
                         role="img"
                         aria-label="Payroll Burnrate Wavy Line Chart"
                     >
@@ -485,7 +487,7 @@ export function PayrollBurnrateCard({
                             <text
                                 key={pt.period}
                                 x={getX(i)}
-                                y={97}
+                                y={115}
                                 textAnchor="middle"
                                 className={`text-[9px] select-none transition-colors ${
                                     hoveredIdx === i
@@ -570,11 +572,11 @@ export function InsuranceBurnrateCard({
     const totalPoints = trend.length;
     const padLeft = 38;
     const padRight = 14;
-    const topY = 10;
-    const baselineY = 82;
-    const midY = 46;
+    const topY = 12;
+    const baselineY = 98;
+    const midY = 55;
     const chartHeight = baselineY - topY;
-    const svgHeight = 104;
+    const svgHeight = 125;
 
     const getX = (idx: number) => {
         if (totalPoints <= 1) return (padLeft + width - padRight) / 2;
@@ -616,8 +618,10 @@ export function InsuranceBurnrateCard({
                         <div className="truncate text-xs font-semibold text-foreground">
                             Social Insurance
                         </div>
-                        <div className="text-[10px] text-muted-foreground">
-                            BPJS & asuransi (payroll fix)
+                        <div className="text-[10px] text-muted-foreground truncate">
+                            {trend.length > 0
+                                ? `BPJS ${trend[0].label} - ${trend[trend.length - 1].label} · Payroll fix`
+                                : 'BPJS & asuransi (payroll fix)'}
                         </div>
                     </div>
                 </div>
@@ -652,7 +656,7 @@ export function InsuranceBurnrateCard({
                 <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0">
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
-                        className="h-[104px] w-full"
+                        className="h-[125px] w-full"
                         role="img"
                         aria-label="Insurance Burnrate Wavy Line Chart"
                     >
@@ -820,7 +824,7 @@ export function InsuranceBurnrateCard({
                             <text
                                 key={pt.period}
                                 x={getX(i)}
-                                y={97}
+                                y={115}
                                 textAnchor="middle"
                                 className={`text-[9px] select-none transition-colors ${
                                     hoveredIdx === i
@@ -893,11 +897,11 @@ export function EmployeeMobilityCard({
     const totalPoints = trend.length;
     const padLeft = 38;
     const padRight = 14;
-    const topY = 10;
-    const baselineY = 82;
-    const midY = 46;
+    const topY = 12;
+    const baselineY = 98;
+    const midY = 55;
     const chartHeight = baselineY - topY;
-    const svgHeight = 104;
+    const svgHeight = 125;
 
     const getX = (idx: number) => {
         if (totalPoints <= 1) return (padLeft + width - padRight) / 2;
@@ -928,8 +932,10 @@ export function EmployeeMobilityCard({
                         <div className="truncate text-xs font-semibold text-foreground">
                             Mobilitas Karyawan
                         </div>
-                        <div className="text-[10px] text-muted-foreground">
-                            Masuk, keluar & mutasi
+                        <div className="text-[10px] text-muted-foreground truncate">
+                            {trend.length > 0
+                                ? `Mobilitas ${trend[0].label} - ${trend[trend.length - 1].label}`
+                                : 'Masuk, keluar & mutasi'}
                         </div>
                     </div>
                 </div>
@@ -960,7 +966,7 @@ export function EmployeeMobilityCard({
                         Mutasi
                     </span>
                 </div>
-                <span>6 bln: +{data.total_hires}/-{data.total_exits}</span>
+                <span>{trend.length > 0 ? `${trend.length} bln: ` : ''}+{data.total_hires}/-{data.total_exits}</span>
             </div>
 
             {/* Wavy Line Chart Container */}
@@ -968,7 +974,7 @@ export function EmployeeMobilityCard({
                 <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0">
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
-                        className="h-[104px] w-full"
+                        className="h-[125px] w-full"
                         role="img"
                         aria-label="Employee Mobility Wavy Line Chart"
                     >
@@ -1135,7 +1141,7 @@ export function EmployeeMobilityCard({
                             <text
                                 key={pt.period}
                                 x={getX(i)}
-                                y={97}
+                                y={115}
                                 textAnchor="middle"
                                 className={`text-[9px] select-none transition-colors ${
                                     hoveredIdx === i
@@ -1223,11 +1229,11 @@ export function ReimburseRateCard({
     const totalPoints = trend.length;
     const padLeft = 38;
     const padRight = 14;
-    const topY = 10;
-    const baselineY = 82;
-    const midY = 46;
+    const topY = 12;
+    const baselineY = 98;
+    const midY = 55;
     const chartHeight = baselineY - topY;
-    const svgHeight = 104;
+    const svgHeight = 125;
 
     const slotWidth = (width - padLeft - padRight) / Math.max(totalPoints, 1);
     const barGap = 2.5;
@@ -1297,7 +1303,7 @@ export function ReimburseRateCard({
                 >
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
-                        className="h-[104px] w-full"
+                        className="h-[125px] w-full"
                         role="img"
                         aria-label="Reimburse 4 Category Bar Chart"
                     >
@@ -1448,7 +1454,7 @@ export function ReimburseRateCard({
                                 <text
                                     key={pt.period}
                                     x={slotCenterX}
-                                    y={97}
+                                    y={115}
                                     textAnchor="middle"
                                     className={`text-[9px] select-none transition-colors ${
                                         hoveredIdx === i

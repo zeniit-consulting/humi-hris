@@ -24,15 +24,47 @@ class PortalApprovalController extends Controller
         $employee = $this->employee($request->user());
         abort_unless($employee && app(ApprovalWorkflowService::class)->hasApprovalLine($employee), 404);
 
+        $approverTz = is_string($request->header('X-Timezone')) && in_array($request->header('X-Timezone'), timezone_identifiers_list(), true)
+            ? $request->header('X-Timezone')
+            : ($employee?->timezone ?: config('app.timezone'));
+
         $attendanceRows = AttendanceCorrectionRequest::query()
             ->where('status', 'pending')
             ->where(fn ($q) => $q->where('approval_stage', 0)->where('first_approver_employee_id', $employee->id)->orWhere('approval_stage', 1)->where('second_approver_employee_id', $employee->id))
-            ->with(['employee:id,employee_code,first_name,last_name', 'shift:id,name,code,start_time,end_time'])
+            ->with(['employee:id,employee_code,first_name,last_name,timezone', 'shift:id,name,code,start_time,end_time'])
             ->latest()
             ->get()
-            ->map(function ($row) {
-                $checkIn = $row->check_in_at ? \Carbon\Carbon::parse($row->check_in_at)->format('H:i') : '-';
-                $checkOut = $row->check_out_at ? \Carbon\Carbon::parse($row->check_out_at)->format('H:i') : '-';
+            ->map(function ($row) use ($approverTz) {
+                $targetTz = is_string($row->timezone) && in_array($row->timezone, timezone_identifiers_list(), true)
+                    ? $row->timezone
+                    : (is_string($row->employee?->timezone) && in_array($row->employee?->timezone, timezone_identifiers_list(), true)
+                        ? $row->employee->timezone
+                        : $approverTz);
+
+                $tzLabel = match ($targetTz) {
+                    'Asia/Jakarta', 'Asia/Pontianak' => 'WIB',
+                    'Asia/Makassar', 'Asia/Ujung_Pandang' => 'WITA',
+                    'Asia/Jayapura' => 'WIT',
+                    default => 'WIB',
+                };
+
+                $checkIn = $row->check_in_at
+                    ? \Carbon\Carbon::parse($row->check_in_at, 'UTC')->setTimezone($targetTz)->format('H:i')
+                    : null;
+                $checkOut = $row->check_out_at
+                    ? \Carbon\Carbon::parse($row->check_out_at, 'UTC')->setTimezone($targetTz)->format('H:i')
+                    : null;
+
+                if ($checkIn && $checkOut) {
+                    $timeText = "{$checkIn} - {$checkOut} {$tzLabel}";
+                } elseif ($checkIn) {
+                    $timeText = "Clock In: {$checkIn} {$tzLabel}";
+                } elseif ($checkOut) {
+                    $timeText = "Clock Out: {$checkOut} {$tzLabel}";
+                } else {
+                    $timeText = '-';
+                }
+
                 $dateFormatted = $row->attendance_date ? \Carbon\Carbon::parse($row->attendance_date)->locale('id')->isoFormat('D MMM Y') : '-';
 
                 return [
@@ -42,7 +74,7 @@ class PortalApprovalController extends Controller
                     'stage' => $row->approval_stage + 1,
                     'created_at' => $row->created_at?->toDateString(),
                     'title' => 'Koreksi Absensi (' . ($row->shift?->name ?? 'Shift') . ')',
-                    'subtitle' => $dateFormatted . ' • ' . $checkIn . ' - ' . $checkOut,
+                    'subtitle' => $dateFormatted . ' • ' . $timeText,
                     'reason' => $row->reason,
                     'badge' => $row->request_type === 'clock_out' ? 'Lupa Clock Out' : ($row->request_type === 'clock_in' ? 'Lupa Clock In' : 'Koreksi Absen'),
                 ];

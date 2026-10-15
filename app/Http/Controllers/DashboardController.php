@@ -26,6 +26,7 @@ use App\Support\RoleRedirect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -216,14 +217,14 @@ class DashboardController extends Controller
             ],
             'attendanceChart' => $attendanceChart,
             'executiveInsights' => $this->executiveInsights($ownerId, $periodDate, $periodInfo),
-            'payrollBurnrate' => $this->payrollBurnrateSummary($ownerId, $periodDate),
-            'insuranceBurnrate' => $this->insuranceBurnrateSummary($ownerId, $periodDate),
-            'employeeMobility' => $this->employeeMobilitySummary($ownerId, $periodDate),
-            'reimburseRate' => $this->reimburseRateSummary($ownerId, $periodDate),
+            'payrollBurnrate' => $this->payrollBurnrateSummary($ownerId, $periodInfo),
+            'insuranceBurnrate' => $this->insuranceBurnrateSummary($ownerId, $periodInfo),
+            'employeeMobility' => $this->employeeMobilitySummary($ownerId, $periodInfo),
+            'reimburseRate' => $this->reimburseRateSummary($ownerId, $periodInfo),
             'actionQueue' => $this->actionQueue($ownerId, $today),
             'attendanceFocus' => $this->attendanceFocus($ownerId, $referenceDate, $periodInfo),
             'recentRequests' => $this->recentRequests($ownerId, $periodInfo),
-            'contractReminders' => $this->contractReminders($ownerId, $periodDate),
+            'contractReminders' => $this->contractReminders($ownerId, $periodInfo),
             'outsourcing' => $this->outsourcingSummary(
                 $ownerId,
                 $outsourcingPeriod,
@@ -503,13 +504,21 @@ class DashboardController extends Controller
         ];
     }
 
-    private function contractReminders(int $ownerId, Carbon $periodDate): array
+    private function contractReminders(int $ownerId, Carbon|array $periodInfoOrDate): array
     {
-        $periodStart = $periodDate->copy()->startOfMonth()->toDateString();
-        $periodEnd = $periodDate->copy()->endOfMonth()->toDateString();
-        $isCurrentMonth = $periodDate->format('Y-m') === now()->format('Y-m');
+        $isCurrent = is_array($periodInfoOrDate)
+            ? (bool) ($periodInfoOrDate['is_current'] ?? false)
+            : ($periodInfoOrDate->format('Y-m') === now()->format('Y-m'));
 
-        $dateRange = $isCurrentMonth
+        if (is_array($periodInfoOrDate)) {
+            $periodStart = $periodInfoOrDate['start_date']->toDateString();
+            $periodEnd = $periodInfoOrDate['end_date']->toDateString();
+        } else {
+            $periodStart = $periodInfoOrDate->copy()->startOfMonth()->toDateString();
+            $periodEnd = $periodInfoOrDate->copy()->endOfMonth()->toDateString();
+        }
+
+        $dateRange = $isCurrent
             ? [now()->toDateString(), now()->addDays(30)->toDateString()]
             : [$periodStart, $periodEnd];
 
@@ -546,6 +555,8 @@ class DashboardController extends Controller
                 'end_date' => $employee->probation_end_date?->toDateString(),
             ]);
 
+        $referenceDate = is_array($periodInfoOrDate) ? ($periodInfoOrDate['period_date'] ?? Carbon::now()) : $periodInfoOrDate;
+
         return [
             'total' => (clone $contractQuery)->count() + (clone $probationQuery)->count(),
             'items' => $contracts
@@ -556,7 +567,7 @@ class DashboardController extends Controller
                 ->map(fn (array $item): array => [
                     ...$item,
                     'date_label' => Carbon::parse($item['end_date'])->translatedFormat('d M Y'),
-                    'days_remaining' => (int) $periodDate->diffInDays(Carbon::parse($item['end_date'])),
+                    'days_remaining' => (int) $referenceDate->diffInDays(Carbon::parse($item['end_date'])),
                     'href' => route('hris.employees.index', ['search' => str($item['employee_label'])->before(' - ')->toString()]),
                 ]),
         ];
@@ -1045,6 +1056,33 @@ class DashboardController extends Controller
     }
 
     /**
+     * Resolve chronological list of Carbon months for trend charts based on active period filter.
+     *
+     * @return Collection<int, Carbon>
+     */
+    private function resolveTrendMonths(Carbon|array $periodInfoOrDate): Collection
+    {
+        if (is_array($periodInfoOrDate)) {
+            $type = $periodInfoOrDate['type'] ?? 'month';
+            if (in_array($type, ['semester', 'quarter'], true) && ! empty($periodInfoOrDate['months'])) {
+                return collect($periodInfoOrDate['months'])->map(
+                    fn (string $m) => Carbon::createFromFormat('Y-m', $m)->startOfMonth()
+                );
+            }
+            $date = $periodInfoOrDate['period_date'] ?? Carbon::now()->startOfMonth();
+        } else {
+            $date = $periodInfoOrDate;
+        }
+
+        $months = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $months->push($date->copy()->subMonths($i));
+        }
+
+        return $months;
+    }
+
+    /**
      * Compute 6-month payroll burnrate trend and summary metrics.
      *
      * @return array{
@@ -1055,12 +1093,9 @@ class DashboardController extends Controller
      *     trend: list<array<string, mixed>>
      * }
      */
-    private function payrollBurnrateSummary(int $ownerId, Carbon $periodDate): array
+    private function payrollBurnrateSummary(int $ownerId, Carbon|array $periodDate): array
     {
-        $months = collect();
-        for ($i = 5; $i >= 0; $i--) {
-            $months->push($periodDate->copy()->subMonths($i));
-        }
+        $months = $this->resolveTrendMonths($periodDate);
 
         $allRuns = PayrollRun::query()
             ->where('user_id', $ownerId)
@@ -1139,12 +1174,9 @@ class DashboardController extends Controller
      *     trend: list<array<string, mixed>>
      * }
      */
-    private function insuranceBurnrateSummary(int $ownerId, Carbon $periodDate): array
+    private function insuranceBurnrateSummary(int $ownerId, Carbon|array $periodDate): array
     {
-        $months = collect();
-        for ($i = 5; $i >= 0; $i--) {
-            $months->push($periodDate->copy()->subMonths($i));
-        }
+        $months = $this->resolveTrendMonths($periodDate);
 
         $allRuns = PayrollRun::query()
             ->where('user_id', $ownerId)
@@ -1240,12 +1272,9 @@ class DashboardController extends Controller
      *     trend: list<array<string, mixed>>
      * }
      */
-    private function employeeMobilitySummary(int $ownerId, Carbon $periodDate): array
+    private function employeeMobilitySummary(int $ownerId, Carbon|array $periodDate): array
     {
-        $months = collect();
-        for ($i = 5; $i >= 0; $i--) {
-            $months->push($periodDate->copy()->subMonths($i));
-        }
+        $months = $this->resolveTrendMonths($periodDate);
 
         $activeHeadcount = Employee::query()
             ->where('user_id', $ownerId)
@@ -1307,7 +1336,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Compute 6-month reimbursement claim rate, volume, and categories.
+     * Compute reimbursement claim rate, volume, and categories.
      *
      * @return array{
      *     current_approved_amount: float,
@@ -1317,12 +1346,9 @@ class DashboardController extends Controller
      *     trend: list<array<string, mixed>>
      * }
      */
-    private function reimburseRateSummary(int $ownerId, Carbon $periodDate): array
+    private function reimburseRateSummary(int $ownerId, Carbon|array $periodDate): array
     {
-        $months = collect();
-        for ($i = 5; $i >= 0; $i--) {
-            $months->push($periodDate->copy()->subMonths($i));
-        }
+        $months = $this->resolveTrendMonths($periodDate);
 
         $trend = $months->map(function (Carbon $m) use ($ownerId): array {
             $p = $m->format('Y-m');
@@ -1386,10 +1412,18 @@ class DashboardController extends Controller
             ];
         })->values();
 
-        $currentPoint = $trend->last();
-        $currentPaid = (float) ($currentPoint['paid_amount'] ?? 0);
-        $currentCount = (int) ($currentPoint['paid_count'] ?? 0);
-        $currentRate = (float) ($currentPoint['approval_rate'] ?? 0);
+        $isMultiMonth = is_array($periodDate) && in_array($periodDate['type'] ?? '', ['semester', 'quarter'], true);
+
+        if ($isMultiMonth) {
+            $currentPaid = (float) $trend->sum('paid_amount');
+            $currentCount = (int) $trend->sum('paid_count');
+            $currentRate = round($trend->avg('approval_rate') ?? 0.0, 1);
+        } else {
+            $currentPoint = $trend->last();
+            $currentPaid = (float) ($currentPoint['paid_amount'] ?? 0);
+            $currentCount = (int) ($currentPoint['paid_count'] ?? 0);
+            $currentRate = (float) ($currentPoint['approval_rate'] ?? 0);
+        }
         $avgClaim = $currentCount > 0 ? round($currentPaid / $currentCount, 0) : 0.0;
 
         return [

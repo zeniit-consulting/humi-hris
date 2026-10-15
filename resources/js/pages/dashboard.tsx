@@ -2,7 +2,6 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Building2,
-    CalendarClock,
     CalendarDays,
     ChevronDown,
     Filter,
@@ -290,39 +289,6 @@ export default function Dashboard({
         );
     };
 
-    const reminders = [
-        ...attendanceFocus.items
-            .filter((item) => item.description.startsWith('Telat'))
-            .map((item) => {
-                const parts = item.description.split('·');
-                const datePart = parts.length >= 3 ? parts[2].trim() : (parts.length === 2 ? parts[1].trim() : 'Hari Ini');
-                return {
-                    id: item.id,
-                    name: item.label,
-                    type: 'Absensi (Terlambat)',
-                    badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300',
-                    date: datePart,
-                    href: item.href,
-                };
-            }),
-        ...recentRequests.items.map((item) => ({
-            id: item.id,
-            name: item.employee_label,
-            type: `Request: ${item.type}`,
-            badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300',
-            date: item.date_label || item.created_at || '-',
-            href: item.href,
-        })),
-        ...contractReminders.items.map((item) => ({
-            id: `contract-${item.id}`,
-            name: item.employee_label,
-            type: `Reminder: ${item.type}`,
-            badgeColor: 'bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300',
-            date: `${item.date_label} (${item.days_remaining} hari)`,
-            href: item.href,
-        })),
-    ].slice(0, 20);
-
     const activePeriodType: 'month' | 'quarter' | 'semester' =
         filters.period_type ||
         (filters.period?.includes('-Q')
@@ -609,59 +575,6 @@ export default function Dashboard({
                         )}
                     </div>
                 </div>
-
-                {/* Reminder Terkini */}
-                <Card className="flex flex-col gap-0 py-0 shadow-xs">
-                    <CardHeader className="px-4 py-3">
-                        <div className="flex items-center justify-between gap-3">
-                            <div>
-                                <CardTitle className="text-base font-semibold">
-                                    Reminder Terkini
-                                </CardTitle>
-                                <CardDescription className="text-xs">
-                                    Aktivitas penting, keterlambatan absensi, pengajuan cuti/klaim, dan jatuh tempo kontrak.
-                                </CardDescription>
-                            </div>
-                            <CalendarClock className="size-5 text-muted-foreground" />
-                        </div>
-                    </CardHeader>
-                    <CardContent className="flex-1 px-4 pb-4">
-                        {reminders.length === 0 ? (
-                            <div className="flex h-32 items-center justify-center rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
-                                Tidak ada reminder atau aktivitas terkini.
-                            </div>
-                        ) : (
-                            <div className="max-h-[360px] overflow-y-auto pr-1">
-                                <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                                    {reminders.map((item) => (
-                                        <Link
-                                            key={item.id}
-                                            href={item.href}
-                                            className="block rounded-lg border p-2.5 transition-colors hover:bg-muted/50"
-                                        >
-                                            <div className="flex items-start justify-between gap-2">
-                                                <p className="truncate text-sm font-semibold">
-                                                    {item.name}
-                                                </p>
-                                                <span
-                                                    className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${item.badgeColor}`}
-                                                >
-                                                    {item.type}
-                                                </span>
-                                            </div>
-                                            <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                                                <span>Tanggal:</span>
-                                                <span className="font-medium text-foreground">
-                                                    {item.date}
-                                                </span>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
 
                 {companyFeatures?.show_outsourcing_dashboard !== false ? (
                     <Collapsible
