@@ -1,5 +1,6 @@
 import PakasirWebhookController from './PakasirWebhookController'
 import TelegramWebhookController from './TelegramWebhookController'
+import PublicCareerController from './PublicCareerController'
 import ThirdParty from './ThirdParty'
 import Mobile from './Mobile'
 import PortalPushDeviceController from './PortalPushDeviceController'
@@ -12,6 +13,7 @@ import PortalClientVisitController from './PortalClientVisitController'
 const Api = {
     PakasirWebhookController: Object.assign(PakasirWebhookController, PakasirWebhookController),
     TelegramWebhookController: Object.assign(TelegramWebhookController, TelegramWebhookController),
+    PublicCareerController: Object.assign(PublicCareerController, PublicCareerController),
     ThirdParty: Object.assign(ThirdParty, ThirdParty),
     Mobile: Object.assign(Mobile, Mobile),
     PortalPushDeviceController: Object.assign(PortalPushDeviceController, PortalPushDeviceController),

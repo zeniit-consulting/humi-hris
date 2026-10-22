@@ -4,6 +4,7 @@ import EmployeeController from './EmployeeController'
 import AttendanceController from './AttendanceController'
 import LeaveController from './LeaveController'
 import OvertimeController from './OvertimeController'
+import RecruitmentController from './RecruitmentController'
 
 const V1 = {
     AuthController: Object.assign(AuthController, AuthController),
@@ -12,6 +13,7 @@ const V1 = {
     AttendanceController: Object.assign(AttendanceController, AttendanceController),
     LeaveController: Object.assign(LeaveController, LeaveController),
     OvertimeController: Object.assign(OvertimeController, OvertimeController),
+    RecruitmentController: Object.assign(RecruitmentController, RecruitmentController),
 }
 
 export default V1

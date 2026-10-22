@@ -27,13 +27,13 @@ class JobVacancyFactory extends Factory
 
         return [
             'user_id' => User::factory(),
-            'division_id' => Division::factory()->state(fn (array $attributes) => [
-                'user_id' => $attributes['user_id'],
-            ]),
-            'position_id' => Position::factory()->state(fn (array $attributes) => [
-                'user_id' => $attributes['user_id'],
-                'division_id' => $attributes['division_id'],
-            ]),
+            'division_id' => fn (array $attributes) => Division::factory()->create([
+                'user_id' => $attributes['user_id'] ?? User::factory(),
+            ])->id,
+            'position_id' => fn (array $attributes) => Position::factory()->create([
+                'user_id' => $attributes['user_id'] ?? User::factory(),
+                'division_id' => $attributes['division_id'] ?? null,
+            ])->id,
             'title' => $title,
             'slug' => Str::slug($title).'-'.fake()->unique()->numberBetween(100, 999),
             'employment_type' => fake()->randomElement(['permanent', 'contract', 'internship', 'freelance']),

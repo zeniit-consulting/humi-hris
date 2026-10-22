@@ -139,6 +139,11 @@ class User extends Authenticatable
         return $this->belongsTo(Employee::class);
     }
 
+    public function companySetting(): HasOne
+    {
+        return $this->hasOne(CompanySetting::class);
+    }
+
     /**
      * @return list<int>
      */

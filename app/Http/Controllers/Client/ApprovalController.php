@@ -55,9 +55,11 @@ class ApprovalController extends Controller
                 ->limit(50)
                 ->get()
                 ->map(function (AttendanceCorrectionRequest $row): array {
-                    $tz = is_string($row->timezone) && in_array($row->timezone, timezone_identifiers_list(), true)
+                    $tz = is_string($row->timezone) && in_array($row->timezone, timezone_identifiers_list(), true) && $row->timezone !== 'UTC'
                         ? $row->timezone
-                        : config('app.timezone');
+                        : (is_string($row->employee?->timezone) && in_array($row->employee?->timezone, timezone_identifiers_list(), true) && $row->employee->timezone !== 'UTC'
+                            ? $row->employee->timezone
+                            : 'Asia/Jakarta');
                     $tzLabel = match ($tz) {
                         'Asia/Jakarta', 'Asia/Pontianak' => 'WIB',
                         'Asia/Makassar', 'Asia/Ujung_Pandang' => 'WITA',

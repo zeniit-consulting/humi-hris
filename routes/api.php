@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\Mobile\V1\PortalController;
 use App\Http\Controllers\Api\Mobile\V1\ProfileController;
 use App\Http\Controllers\Api\Mobile\V1\ShiftChangeRequestController;
 use App\Http\Controllers\Api\PakasirWebhookController;
+use App\Http\Controllers\Api\PublicCareerController;
 use App\Http\Controllers\Api\ThirdParty\V1\AttendanceController as ThirdPartyAttendanceController;
 use App\Http\Controllers\Api\ThirdParty\V1\AuthController as ThirdPartyAuthController;
 use App\Http\Controllers\Hris\ScheduleController;
@@ -22,11 +23,25 @@ use App\Http\Controllers\Api\ThirdParty\V1\CompanyController as ThirdPartyCompan
 use App\Http\Controllers\Api\ThirdParty\V1\EmployeeController as ThirdPartyEmployeeController;
 use App\Http\Controllers\Api\ThirdParty\V1\LeaveController as ThirdPartyLeaveController;
 use App\Http\Controllers\Api\ThirdParty\V1\OvertimeController as ThirdPartyOvertimeController;
+use App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController as ThirdPartyRecruitmentController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
 Route::post('webhooks/pakasir', PakasirWebhookController::class)->name('webhooks.pakasir');
 Route::post('webhooks/telegram', [\App\Http\Controllers\Api\TelegramWebhookController::class, 'handle'])->name('webhooks.telegram');
+
+// Public Career Recruitment API per Company Account
+Route::prefix('v1/companies/{company}/careers')->name('api.v1.careers.')->group(function (): void {
+    Route::get('/', [PublicCareerController::class, 'index'])->name('index');
+    Route::get('{slug}', [PublicCareerController::class, 'show'])->name('show');
+    Route::post('{slug}/apply', [PublicCareerController::class, 'apply'])->name('apply');
+});
+
+Route::prefix('careers/companies/{company}')->name('api.careers.')->group(function (): void {
+    Route::get('/', [PublicCareerController::class, 'index'])->name('index');
+    Route::get('{slug}', [PublicCareerController::class, 'show'])->name('show');
+    Route::post('{slug}/apply', [PublicCareerController::class, 'apply'])->name('apply');
+});
 
 Route::prefix('third-party/v1')->name('third-party.v1.')->group(function (): void {
     Route::post('auth/token', [ThirdPartyAuthController::class, 'issueToken'])
@@ -41,6 +56,13 @@ Route::prefix('third-party/v1')->name('third-party.v1.')->group(function (): voi
         Route::get('attendances', [ThirdPartyAttendanceController::class, 'index'])->name('attendances.index');
         Route::get('leaves', [ThirdPartyLeaveController::class, 'index'])->name('leaves.index');
         Route::get('overtimes', [ThirdPartyOvertimeController::class, 'index'])->name('overtimes.index');
+        Route::get('recruitment/vacancies', [ThirdPartyRecruitmentController::class, 'vacancies'])->name('recruitment.vacancies.index');
+        Route::get('recruitment/vacancies/{id}', [ThirdPartyRecruitmentController::class, 'showVacancy'])->name('recruitment.vacancies.show');
+        Route::post('recruitment/vacancies', [ThirdPartyRecruitmentController::class, 'storeVacancy'])->name('recruitment.vacancies.store');
+        Route::put('recruitment/vacancies/{id}', [ThirdPartyRecruitmentController::class, 'updateVacancy'])->name('recruitment.vacancies.update');
+        Route::get('recruitment/applications', [ThirdPartyRecruitmentController::class, 'applications'])->name('recruitment.applications.index');
+        Route::get('recruitment/applications/{id}', [ThirdPartyRecruitmentController::class, 'showApplication'])->name('recruitment.applications.show');
+        Route::put('recruitment/applications/{id}/stage', [ThirdPartyRecruitmentController::class, 'updateStage'])->name('recruitment.applications.update-stage');
     });
 });
 
