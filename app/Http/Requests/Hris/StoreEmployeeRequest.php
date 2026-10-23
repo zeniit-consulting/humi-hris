@@ -75,6 +75,12 @@ class StoreEmployeeRequest extends FormRequest
             $normalizedPayload['daily_wage'] = $this->normalizeCurrencyInput($this->input('daily_wage'));
         }
 
+        if ($this->has('bpjs_kesehatan_reported_wage')) {
+            $normalizedPayload['bpjs_kesehatan_reported_wage'] = $this->normalizeCurrencyInput(
+                $this->input('bpjs_kesehatan_reported_wage')
+            );
+        }
+
         if ($this->has('fixed_allowances')) {
             $normalizedPayload['fixed_allowances'] = collect($this->input('fixed_allowances', []))
                 ->map(function (mixed $allowance): mixed {
@@ -223,6 +229,7 @@ class StoreEmployeeRequest extends FormRequest
             ],
             'manager_id' => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'base_salary' => ['nullable', 'numeric', 'min:0'],
+            'salary_type' => ['nullable', Rule::in(['gross', 'net'])],
             'bank_name' => ['nullable', 'string', 'max:100'],
             'account_number' => ['nullable', 'string', 'max:50'],
             'account_holder_name' => ['nullable', 'string', 'max:150'],
@@ -245,6 +252,7 @@ class StoreEmployeeRequest extends FormRequest
             'bpjs_jht_enabled' => ['sometimes', 'boolean'],
             'bpjs_jp_enabled' => ['sometimes', 'boolean'],
             'bpjs_kesehatan_class' => ['nullable', 'in:I,II,III'],
+            'bpjs_kesehatan_reported_wage' => ['nullable', 'numeric', 'min:0'],
             'private_insurance_enabled' => ['sometimes', 'boolean'],
             'private_insurance_name' => ['nullable', 'string', 'max:100'],
             'private_insurance_nominal' => ['nullable', 'numeric', 'min:0'],

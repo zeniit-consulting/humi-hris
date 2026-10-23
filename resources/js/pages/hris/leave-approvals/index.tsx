@@ -261,11 +261,11 @@ export default function LeaveApprovalPage() {
             <Head title="Approval Cuti" />
             <div className="space-y-4 p-4">
                 <div className="grid gap-4 md:grid-cols-3">
-                    {[
+                    {([
                         ['Menunggu', stats.pending, 'pending'],
                         ['Disetujui', stats.approved, 'approved'],
                         ['Ditolak', stats.rejected, 'rejected'],
-                    ].map(([label, value, statusKey]) => (
+                    ] as [string, number, string][]).map(([label, value, statusKey]) => (
                         <Card
                             key={label}
                             role="button"
@@ -825,7 +825,7 @@ export default function LeaveApprovalPage() {
                 onOpenChange={(open) => {
                     if (!open) setPreviewAttachment(null);
                 }}
-                url={previewAttachment?.url}
+                url={previewAttachment?.url ?? null}
                 name={previewAttachment?.name}
                 title={previewAttachment?.title}
             />

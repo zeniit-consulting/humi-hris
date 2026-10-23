@@ -71,6 +71,7 @@ class Employee extends Model
         'position_id',
         'manager_id',
         'base_salary',
+        'salary_type',
         'daily_wage',
         'service_fee_points',
         'address',
@@ -89,6 +90,7 @@ class Employee extends Model
         'bpjs_jht_enabled',
         'bpjs_jp_enabled',
         'bpjs_kesehatan_class',
+        'bpjs_kesehatan_reported_wage',
         'private_insurance_enabled',
         'private_insurance_name',
         'private_insurance_nominal',
@@ -139,6 +141,7 @@ class Employee extends Model
             'bpjs_jkm_enabled' => 'boolean',
             'bpjs_jht_enabled' => 'boolean',
             'bpjs_jp_enabled' => 'boolean',
+            'bpjs_kesehatan_reported_wage' => 'decimal:2',
             'private_insurance_enabled' => 'boolean',
             'private_insurance_nominal' => 'decimal:2',
         ];

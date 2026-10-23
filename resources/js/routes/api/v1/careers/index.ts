@@ -100,7 +100,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 export const show = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -115,7 +115,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 show.url = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions) => {
@@ -141,7 +141,7 @@ show.url = (args: { company: string | number, slug: string | number } | [company
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 show.get = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -151,7 +151,7 @@ show.get = (args: { company: string | number, slug: string | number } | [company
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 show.head = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -161,7 +161,7 @@ show.head = (args: { company: string | number, slug: string | number } | [compan
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 const showForm = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -171,7 +171,7 @@ const showForm = (args: { company: string | number, slug: string | number } | [c
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 showForm.get = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -181,7 +181,7 @@ showForm.get = (args: { company: string | number, slug: string | number } | [com
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 showForm.head = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -198,7 +198,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/v1/companies/{company}/careers/{slug}/apply'
 */
 export const apply = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -213,7 +213,7 @@ apply.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/v1/companies/{company}/careers/{slug}/apply'
 */
 apply.url = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions) => {
@@ -239,7 +239,7 @@ apply.url = (args: { company: string | number, slug: string | number } | [compan
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/v1/companies/{company}/careers/{slug}/apply'
 */
 apply.post = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -249,7 +249,7 @@ apply.post = (args: { company: string | number, slug: string | number } | [compa
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/v1/companies/{company}/careers/{slug}/apply'
 */
 const applyForm = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -259,7 +259,7 @@ const applyForm = (args: { company: string | number, slug: string | number } | [
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/v1/companies/{company}/careers/{slug}/apply'
 */
 applyForm.post = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

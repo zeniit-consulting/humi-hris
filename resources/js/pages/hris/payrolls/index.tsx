@@ -2199,7 +2199,7 @@ export default function PayrollPage() {
                                                         {Number(item.manual_deduction_total ?? 0) > 0 ? (
                                                             <div>
                                                                 <p className="font-medium">
-                                                                    {formatCurrency(item.manual_deduction_total)}
+                                                                    {formatCurrency(item.manual_deduction_total ?? null)}
                                                                 </p>
                                                                 {item.manual_deduction_breakdown && Object.keys(item.manual_deduction_breakdown).length > 0 && (
                                                                     <div className="text-[11px] text-muted-foreground space-y-0.5">

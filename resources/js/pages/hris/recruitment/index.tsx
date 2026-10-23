@@ -341,8 +341,20 @@ const formatCurrencyRange = (
 
 const normalizeDigitInput = (value: string) => value.replace(/[^\d]/g, '');
 
-const formatThousandDigits = (value: string | null) => {
-    const digits = normalizeDigitInput(value ?? '');
+const normalizeStoredCurrencyValue = (
+    value: string | number | null | undefined,
+): string => {
+    const raw = String(value ?? '').trim();
+
+    if (/^\d+\.\d{2}$/.test(raw)) {
+        return raw.split('.')[0] ?? '';
+    }
+
+    return normalizeDigitInput(raw);
+};
+
+const formatThousandDigits = (value: string | number | null | undefined) => {
+    const digits = normalizeStoredCurrencyValue(value);
 
     if (digits === '') {
         return '';
@@ -455,8 +467,8 @@ export default function RecruitmentPage() {
             workplace_type: vacancy.workplace_type ?? '',
             location: vacancy.location ?? '',
             openings: String(vacancy.openings),
-            min_salary: normalizeDigitInput(vacancy.min_salary ?? ''),
-            max_salary: normalizeDigitInput(vacancy.max_salary ?? ''),
+            min_salary: normalizeStoredCurrencyValue(vacancy.min_salary),
+            max_salary: normalizeStoredCurrencyValue(vacancy.max_salary),
             description: vacancy.description ?? '',
             requirements: vacancy.requirements ?? '',
             benefits: vacancy.benefits ?? '',
@@ -477,18 +489,18 @@ export default function RecruitmentPage() {
             interviewed_at: toDateTimeLocal(application.interviewed_at),
             interview_notes: application.interview_notes ?? '',
             recruiter_notes: application.recruiter_notes ?? '',
-            take_home_pay_min: normalizeDigitInput(
-                application.take_home_pay_min ?? '',
+            take_home_pay_min: normalizeStoredCurrencyValue(
+                application.take_home_pay_min,
             ),
-            take_home_pay_max: normalizeDigitInput(
-                application.take_home_pay_max ?? '',
+            take_home_pay_max: normalizeStoredCurrencyValue(
+                application.take_home_pay_max,
             ),
-            expected_salary: normalizeDigitInput(
-                application.expected_salary ?? '',
+            expected_salary: normalizeStoredCurrencyValue(
+                application.expected_salary,
             ),
             expected_join_date: application.expected_join_date ?? '',
-            offered_salary: normalizeDigitInput(
-                application.offered_salary ?? '',
+            offered_salary: normalizeStoredCurrencyValue(
+                application.offered_salary,
             ),
             proposed_start_date: application.proposed_start_date ?? '',
             employment_type: application.employment_type ?? '',

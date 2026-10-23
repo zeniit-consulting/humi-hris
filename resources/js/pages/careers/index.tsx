@@ -45,8 +45,8 @@ type Vacancy = {
     workplace_type: string | null;
     location: string | null;
     openings: number;
-    min_salary: string | null;
-    max_salary: string | null;
+    min_salary: string | number | null;
+    max_salary: string | number | null;
     description: string | null;
     requirements: string | null;
     benefits: string | null;
@@ -85,8 +85,13 @@ const workplaceTypeLabels: Record<string, string> = {
     remote: 'Remote',
 };
 
-const formatCurrency = (value: string | null) => {
+const formatCurrency = (value: string | number | null) => {
     if (!value) {
+        return '-';
+    }
+
+    const numeric = typeof value === 'number' ? value : Number(value);
+    if (Number.isNaN(numeric) || numeric === 0) {
         return '-';
     }
 
@@ -94,7 +99,7 @@ const formatCurrency = (value: string | null) => {
         style: 'currency',
         currency: 'IDR',
         maximumFractionDigits: 0,
-    }).format(Number(value));
+    }).format(numeric);
 };
 
 const shortText = (value: string | null, maxLength = 180) => {
@@ -316,13 +321,13 @@ export default function CareersIndexPage() {
                                                     Rentang kompensasi
                                                 </p>
                                                 <p className="font-medium text-slate-900">
-                                                    {formatCurrency(
-                                                        vacancy.min_salary,
-                                                    )}{' '}
-                                                    -{' '}
-                                                    {formatCurrency(
-                                                        vacancy.max_salary,
-                                                    )}
+                                                    {vacancy.min_salary && vacancy.max_salary
+                                                        ? `${formatCurrency(vacancy.min_salary)} - ${formatCurrency(vacancy.max_salary)}`
+                                                        : vacancy.min_salary
+                                                          ? `Mulai dari ${formatCurrency(vacancy.min_salary)}`
+                                                          : vacancy.max_salary
+                                                            ? `Hingga ${formatCurrency(vacancy.max_salary)}`
+                                                            : 'Kompetitif'}
                                                 </p>
                                             </div>
                                         </div>

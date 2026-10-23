@@ -28,6 +28,7 @@ class JobApplication extends Model
         'last_education',
         'years_experience',
         'current_company',
+        'current_salary',
         'take_home_pay_min',
         'take_home_pay_max',
         'expected_salary',
@@ -57,6 +58,7 @@ class JobApplication extends Model
         return [
             'birth_date' => 'date',
             'years_experience' => 'decimal:1',
+            'current_salary' => 'decimal:2',
             'take_home_pay_min' => 'decimal:2',
             'take_home_pay_max' => 'decimal:2',
             'expected_salary' => 'decimal:2',

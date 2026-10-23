@@ -349,6 +349,7 @@ type EmployeeFormData = {
     position_id: string;
     manager_id: string;
     base_salary: string;
+    salary_type: string;
     bank_name: string;
     account_number: string;
     account_holder_name: string;
@@ -371,6 +372,7 @@ type EmployeeFormData = {
     bpjs_jht_enabled: boolean;
     bpjs_jp_enabled: boolean;
     bpjs_kesehatan_class: string;
+    bpjs_kesehatan_reported_wage: string;
     private_insurance_enabled: boolean;
     private_insurance_name: string;
     private_insurance_nominal: string;
@@ -601,6 +603,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     position_id: '',
     manager_id: '',
     base_salary: '',
+    salary_type: 'gross',
     bank_name: '',
     account_number: '',
     account_holder_name: '',
@@ -623,6 +626,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     bpjs_jht_enabled: true,
     bpjs_jp_enabled: true,
     bpjs_kesehatan_class: 'I',
+    bpjs_kesehatan_reported_wage: '',
     private_insurance_enabled: false,
     private_insurance_name: '',
     private_insurance_nominal: '0',
@@ -1292,6 +1296,7 @@ export default function EmployeesIndex() {
                 : '',
             manager_id: employee.manager_id ? String(employee.manager_id) : '',
             base_salary: normalizeStoredCurrencyValue(employee.base_salary),
+            salary_type: (employee as unknown as { salary_type?: string }).salary_type ?? 'gross',
             bank_name: primaryBank?.bank_name ?? '',
             account_number: primaryBank?.account_number ?? '',
             account_holder_name: primaryBank?.account_holder_name ?? '',
@@ -1320,6 +1325,9 @@ export default function EmployeesIndex() {
             bpjs_jht_enabled: employee.bpjs_jht_enabled ?? true,
             bpjs_jp_enabled: employee.bpjs_jp_enabled ?? true,
             bpjs_kesehatan_class: employee.bpjs_kesehatan_class ?? 'I',
+            bpjs_kesehatan_reported_wage: (employee as unknown as { bpjs_kesehatan_reported_wage?: string | number | null }).bpjs_kesehatan_reported_wage
+                ? String((employee as unknown as { bpjs_kesehatan_reported_wage?: string | number | null }).bpjs_kesehatan_reported_wage)
+                : '',
             private_insurance_enabled: employee.private_insurance_enabled ?? false,
             private_insurance_name: employee.private_insurance_name ?? '',
             private_insurance_nominal: normalizeStoredCurrencyValue(employee.private_insurance_nominal),
@@ -5574,6 +5582,38 @@ export default function EmployeesIndex() {
                                     </div>
                                 </div>
 
+                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
+                                    <Label htmlFor="salary_type">
+                                        Tipe Gaji
+                                    </Label>
+                                    <div className="space-y-1">
+                                        <select
+                                            id="salary_type"
+                                            value={employeeForm.data.salary_type || 'gross'}
+                                            onChange={(e) =>
+                                                employeeForm.setData(
+                                                    'salary_type',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus:ring-2 focus:ring-ring"
+                                        >
+                                            <option value="gross">Gross – BPJS karyawan dipotong dari gaji</option>
+                                            <option value="net">Nett – BPJS karyawan ditanggung perusahaan</option>
+                                        </select>
+                                        {employeeForm.data.salary_type === 'net' && (
+                                            <p className="text-xs text-amber-600 dark:text-amber-400">
+                                                Gaji nett: porsi BPJS TK karyawan (JHT 2%, JP 1%) dan BPJS Kes karyawan (1%) seluruhnya menjadi beban perusahaan.
+                                            </p>
+                                        )}
+                                        <InputError
+                                            message={
+                                                employeeForm.errors.salary_type
+                                            }
+                                        />
+                                    </div>
+                                </div>
+
                                 {employeeForm.data.employment_type === 'DW' && (
                                     <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                         <Label htmlFor="daily_wage">
@@ -6231,6 +6271,38 @@ export default function EmployeesIndex() {
                                                         .bpjs_kesehatan_number
                                                 }
                                             />
+                                            {employeeForm.data.bpjs_kesehatan_enabled && (
+                                                <div className="grid gap-1 pt-1">
+                                                    <Label htmlFor="bpjs_kesehatan_reported_wage" className="text-xs text-muted-foreground">
+                                                        Gaji yang dilaporkan ke BPJS Kes (opsional)
+                                                    </Label>
+                                                    <Input
+                                                        id="bpjs_kesehatan_reported_wage"
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        value={formatThousandDigits(
+                                                            employeeForm.data.bpjs_kesehatan_reported_wage,
+                                                        )}
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'bpjs_kesehatan_reported_wage',
+                                                                normalizeDigitInput(event.target.value),
+                                                            )
+                                                        }
+                                                        placeholder="Kosong = gunakan upah aktual"
+                                                        className="h-8 text-xs"
+                                                    />
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Jika diisi, nilai ini digunakan sebagai dasar hitung iuran BPJS Kesehatan (bisa berbeda dari upah aktual karyawan).
+                                                    </p>
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .bpjs_kesehatan_reported_wage
+                                                        }
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

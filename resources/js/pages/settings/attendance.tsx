@@ -772,8 +772,8 @@ export default function AttendanceSettings({
                                         to: syncEndDate,
                                     }}
                                     onChange={(range) => {
-                                        setSyncStartDate(range.from);
-                                        setSyncEndDate(range.to ?? range.from);
+                                        setSyncStartDate(range.from ?? syncStartDate);
+                                        setSyncEndDate(range.to ?? range.from ?? syncEndDate);
                                     }}
                                     placeholder="Pilih rentang tanggal sinkronisasi..."
                                 />

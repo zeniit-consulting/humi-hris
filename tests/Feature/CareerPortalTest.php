@@ -137,4 +137,40 @@ class CareerPortalTest extends TestCase
             (string) $vacancy->applications()->first()?->resume_path
         );
     }
+
+    public function test_candidate_can_submit_application_with_current_salary(): void
+    {
+        $this->withoutVite();
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $division = Division::factory()->create(['user_id' => $user->id]);
+        $position = Position::factory()->create(['user_id' => $user->id, 'division_id' => $division->id]);
+        $vacancy = JobVacancy::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'status' => 'published',
+            'closing_date' => now()->addWeeks(2)->toDateString(),
+        ]);
+
+        $response = $this->post(route('careers.apply', $vacancy->slug), [
+            'full_name' => 'Budi Pratama',
+            'email' => 'budi@example.com',
+            'phone' => '081234567890',
+            'current_company' => 'PT Sumber Makmur',
+            'current_salary' => '7.500.000',
+            'expected_salary' => '9.000.000',
+        ]);
+
+        $response->assertRedirect(route('careers.show', $vacancy->slug));
+
+        $this->assertDatabaseHas('job_applications', [
+            'user_id' => $user->id,
+            'job_vacancy_id' => $vacancy->id,
+            'full_name' => 'Budi Pratama',
+            'current_salary' => '7500000.00',
+            'expected_salary' => '9000000.00',
+        ]);
+    }
 }

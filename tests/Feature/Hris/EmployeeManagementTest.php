@@ -2885,5 +2885,68 @@ class EmployeeManagementTest extends TestCase
         $this->assertNull($fresh->face_photo_url);
         $this->assertNull($fresh->face_enrolled_at);
     }
+
+    public function test_admin_can_store_and_update_employee_with_salary_type_and_bpjs_reported_wage(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $division = Division::factory()->create(['user_id' => $user->id, 'code' => 'IT']);
+        $position = Position::factory()->create(['user_id' => $user->id, 'division_id' => $division->id, 'level' => 3]);
+
+        $response = $this->actingAs($user)->post(route('hris.employees.store'), [
+            'full_name' => 'Budi Santoso',
+            'first_name' => 'Budi',
+            'last_name' => 'Santoso',
+            'email' => 'budi.santoso@example.com',
+            'gender' => 'male',
+            'hire_date' => '2026-03-01',
+            'employment_status' => 'active',
+            'employment_type' => 'permanent',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 5,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'base_salary' => '10.000.000',
+            'salary_type' => 'net',
+            'bpjs_kesehatan_enabled' => true,
+            'bpjs_kesehatan_reported_wage' => '5.000.000',
+            'is_active' => true,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $employee = Employee::query()->where('email', 'budi.santoso@example.com')->firstOrFail();
+        $this->assertEquals('net', $employee->salary_type);
+        $this->assertEquals(5000000.00, (float) $employee->bpjs_kesehatan_reported_wage);
+
+        // Update to gross and different reported wage
+        $updateResponse = $this->actingAs($user)->put(route('hris.employees.update', $employee->id), [
+            'full_name' => 'Budi Santoso',
+            'employee_code' => $employee->employee_code,
+            'first_name' => 'Budi',
+            'last_name' => 'Santoso',
+            'email' => 'budi.santoso@example.com',
+            'gender' => 'male',
+            'hire_date' => '2026-03-01',
+            'employment_status' => 'active',
+            'employment_type' => 'permanent',
+            'pph21_method' => 'gross',
+            'pph21_rate' => 5,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'base_salary' => '10.000.000',
+            'salary_type' => 'gross',
+            'bpjs_kesehatan_enabled' => true,
+            'bpjs_kesehatan_reported_wage' => '7.500.000',
+            'is_active' => true,
+        ]);
+
+        $updateResponse->assertRedirect();
+        $updateResponse->assertSessionHasNoErrors();
+
+        $employee->refresh();
+        $this->assertEquals('gross', $employee->salary_type);
+        $this->assertEquals(7500000.00, (float) $employee->bpjs_kesehatan_reported_wage);
+    }
 }
 

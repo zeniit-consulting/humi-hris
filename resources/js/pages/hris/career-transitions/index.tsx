@@ -795,7 +795,7 @@ export default function CareerTransitionsIndex({
 
                     {transitions.links && transitions.links.length > 3 && (
                         <div className="border-t p-3">
-                            <SimplePagination links={transitions.links} />
+                            <SimplePagination data={transitions} />
                         </div>
                     )}
                 </Card>

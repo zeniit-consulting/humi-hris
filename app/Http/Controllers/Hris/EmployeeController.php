@@ -219,6 +219,7 @@ class EmployeeController extends Controller
                 'position_id' => $employee->position_id,
                 'manager_id' => $employee->manager_id,
                 'base_salary' => $employee->base_salary ? (int) $employee->base_salary : null,
+                'salary_type' => (string) ($employee->salary_type ?? 'gross'),
                 'address' => $employee->address,
                 'domicile_address' => $employee->domicile_address,
                 'family_card_number' => $employee->family_card_number,
@@ -235,6 +236,9 @@ class EmployeeController extends Controller
                 'bpjs_jht_enabled' => (bool) ($employee->bpjs_jht_enabled ?? true),
                 'bpjs_jp_enabled' => (bool) ($employee->bpjs_jp_enabled ?? true),
                 'bpjs_kesehatan_class' => (string) ($employee->bpjs_kesehatan_class ?? 'I'),
+                'bpjs_kesehatan_reported_wage' => $employee->bpjs_kesehatan_reported_wage
+                    ? (int) $employee->bpjs_kesehatan_reported_wage
+                    : null,
                 'private_insurance_enabled' => (bool) ($employee->private_insurance_enabled ?? false),
                 'private_insurance_name' => (string) ($employee->private_insurance_name ?? ''),
                 'private_insurance_nominal' => (float) ($employee->private_insurance_nominal ?? 0),

@@ -12,15 +12,17 @@ class BpjsCalculator
      * @param bool $bpjsTkEnabled Company setting for BPJS Ketenagakerjaan
      * @param bool $empBpjsKesEnabled Employee enrollment for BPJS Kesehatan
      * @param bool $empBpjsTkEnabled Employee enrollment for BPJS Ketenagakerjaan
-     * @param bool $empBpjsJkkEnabled Employee enrollment for JKK
-     * @param bool $empBpjsJkmEnabled Employee enrollment for JKM
-     * @param bool $empBpjsJhtEnabled Employee enrollment for JHT
      * @param bool $empBpjsJpEnabled Employee enrollment for JP (Jaminan Pensiun)
      * @param float $jkkRate JKK rate percentage (e.g. 0.24 for 0.24%)
      * @param float $kesWageCap Max wage for BPJS Kesehatan (default 12,000,000)
      * @param float $jpWageCap Max wage for BPJS Ketenagakerjaan JP (default 10,042,300)
+     * @param bool $empBpjsJkkEnabled Employee enrollment for JKK
+     * @param bool $empBpjsJkmEnabled Employee enrollment for JKM
+     * @param bool $empBpjsJhtEnabled Employee enrollment for JHT
      * @param bool $privateInsuranceEnabled Whether private insurance is enabled
      * @param float $privateInsuranceNominal Employee deduction / premium for private insurance
+     * @param bool $isNetSalary Whether employee salary is net (company bears employee BPJS contributions)
+     * @param float|null $kesCalculationBase Reported wage specifically for BPJS Kesehatan (if set, overrides $calculationBase)
      * @return array<string, float>
      */
     public static function calculate(
@@ -38,17 +40,30 @@ class BpjsCalculator
         bool $empBpjsJhtEnabled = true,
         bool $privateInsuranceEnabled = false,
         float $privateInsuranceNominal = 0.0,
+        bool $isNetSalary = false,
+        ?float $kesCalculationBase = null,
     ): array {
         $calculationBase = max($calculationBase, 0);
 
         // 1. BPJS Kesehatan (4% Perusahaan, 1% Karyawan, Cap Rp 12.000.000)
-        $kesBase = min($calculationBase, $kesWageCap);
+        // Jika gaji yang dilaporkan diisi (> 0), gunakan nilai tersebut sebagai dasar BPJS Kes.
+        $actualKesBase = ($kesCalculationBase !== null && $kesCalculationBase > 0)
+            ? max($kesCalculationBase, 0)
+            : $calculationBase;
+        $kesBase = min($actualKesBase, $kesWageCap);
+
         $bpjsKesCompany = 0.0;
         $bpjsKesEmployee = 0.0;
 
         if ($bpjsKesEnabled && $empBpjsKesEnabled) {
-            $bpjsKesCompany = round($kesBase * 0.04, 2);
-            $bpjsKesEmployee = round($kesBase * 0.01, 2);
+            if ($isNetSalary) {
+                // Jika salary nett, 1% ditanggung perusahaan (total 5% menjadi beban perusahaan)
+                $bpjsKesCompany = round($kesBase * 0.05, 2);
+                $bpjsKesEmployee = 0.0;
+            } else {
+                $bpjsKesCompany = round($kesBase * 0.04, 2);
+                $bpjsKesEmployee = round($kesBase * 0.01, 2);
+            }
         }
 
         // 2. BPJS Ketenagakerjaan
@@ -70,17 +85,27 @@ class BpjsCalculator
                 $bpjsJkmCompany = round($calculationBase * 0.003, 2);
             }
 
-            // JHT (3.7% Pemberi Kerja, 2% Karyawan)
+            // JHT (Normal: 3.7% Perusahaan, 2% Karyawan. Nett: 5.7% Perusahaan, 0% Karyawan)
             if ($empBpjsJhtEnabled) {
-                $bpjsJhtCompany = round($calculationBase * 0.037, 2);
-                $bpjsJhtEmployee = round($calculationBase * 0.020, 2);
+                if ($isNetSalary) {
+                    $bpjsJhtCompany = round($calculationBase * 0.057, 2);
+                    $bpjsJhtEmployee = 0.0;
+                } else {
+                    $bpjsJhtCompany = round($calculationBase * 0.037, 2);
+                    $bpjsJhtEmployee = round($calculationBase * 0.020, 2);
+                }
             }
 
-            // JP (2% Pemberi Kerja, 1% Karyawan, Cap JP)
+            // JP (Normal: 2% Perusahaan, 1% Karyawan. Nett: 3% Perusahaan, 0% Karyawan, Cap JP)
             if ($empBpjsJpEnabled) {
                 $jpBase = min($calculationBase, $jpWageCap);
-                $bpjsJpCompany = round($jpBase * 0.020, 2);
-                $bpjsJpEmployee = round($jpBase * 0.010, 2);
+                if ($isNetSalary) {
+                    $bpjsJpCompany = round($jpBase * 0.030, 2);
+                    $bpjsJpEmployee = 0.0;
+                } else {
+                    $bpjsJpCompany = round($jpBase * 0.020, 2);
+                    $bpjsJpEmployee = round($jpBase * 0.010, 2);
+                }
             }
         }
 

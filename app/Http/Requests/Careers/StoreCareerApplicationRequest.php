@@ -23,12 +23,17 @@ class StoreCareerApplicationRequest extends FormRequest
     {
         $normalized = [];
 
-        foreach (['take_home_pay_min', 'take_home_pay_max', 'expected_salary'] as $field) {
+        foreach (['current_salary', 'take_home_pay_min', 'take_home_pay_max', 'expected_salary'] as $field) {
             if (! $this->has($field)) {
                 continue;
             }
 
-            $digits = preg_replace('/[^\d]/', '', (string) $this->input($field));
+            $raw = trim((string) $this->input($field));
+            if (preg_match('/^\d+\.\d{2}$/', $raw)) {
+                $raw = explode('.', $raw)[0];
+            }
+
+            $digits = preg_replace('/[^\d]/', '', $raw);
             $normalized[$field] = $digits === '' ? null : $digits;
         }
 
@@ -57,8 +62,9 @@ class StoreCareerApplicationRequest extends FormRequest
             'last_education' => ['nullable', 'string', 'max:100'],
             'years_experience' => ['nullable', 'numeric', 'min:0', 'max:80'],
             'current_company' => ['nullable', 'string', 'max:160'],
-            'take_home_pay_min' => ['nullable', 'required_with:take_home_pay_max', 'numeric', 'min:0', 'lte:take_home_pay_max'],
-            'take_home_pay_max' => ['nullable', 'required_with:take_home_pay_min', 'numeric', 'min:0', 'gte:take_home_pay_min'],
+            'current_salary' => ['nullable', 'numeric', 'min:0'],
+            'take_home_pay_min' => ['nullable', 'numeric', 'min:0'],
+            'take_home_pay_max' => ['nullable', 'numeric', 'min:0'],
             'expected_salary' => ['nullable', 'numeric', 'min:0'],
             'expected_join_date' => ['nullable', 'date'],
             'portfolio_url' => ['nullable', 'url', 'max:255'],

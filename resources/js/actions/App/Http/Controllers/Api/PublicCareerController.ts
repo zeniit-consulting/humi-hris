@@ -203,7 +203,7 @@ export const index = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 const show6615d4c5b54c71cddd9a563fffa1cc80 = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -218,7 +218,7 @@ show6615d4c5b54c71cddd9a563fffa1cc80.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 show6615d4c5b54c71cddd9a563fffa1cc80.url = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions) => {
@@ -244,7 +244,7 @@ show6615d4c5b54c71cddd9a563fffa1cc80.url = (args: { company: string | number, sl
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 show6615d4c5b54c71cddd9a563fffa1cc80.get = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -254,7 +254,7 @@ show6615d4c5b54c71cddd9a563fffa1cc80.get = (args: { company: string | number, sl
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 show6615d4c5b54c71cddd9a563fffa1cc80.head = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -264,7 +264,7 @@ show6615d4c5b54c71cddd9a563fffa1cc80.head = (args: { company: string | number, s
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 const show6615d4c5b54c71cddd9a563fffa1cc80Form = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -274,7 +274,7 @@ const show6615d4c5b54c71cddd9a563fffa1cc80Form = (args: { company: string | numb
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 show6615d4c5b54c71cddd9a563fffa1cc80Form.get = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -284,7 +284,7 @@ show6615d4c5b54c71cddd9a563fffa1cc80Form.get = (args: { company: string | number
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/v1/companies/{company}/careers/{slug}'
 */
 show6615d4c5b54c71cddd9a563fffa1cc80Form.head = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -300,7 +300,7 @@ show6615d4c5b54c71cddd9a563fffa1cc80Form.head = (args: { company: string | numbe
 show6615d4c5b54c71cddd9a563fffa1cc80.form = show6615d4c5b54c71cddd9a563fffa1cc80Form
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/careers/companies/{company}/{slug}'
 */
 const show1baf64c6a421a873bb2c92f45481bd29 = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -315,7 +315,7 @@ show1baf64c6a421a873bb2c92f45481bd29.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/careers/companies/{company}/{slug}'
 */
 show1baf64c6a421a873bb2c92f45481bd29.url = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions) => {
@@ -341,7 +341,7 @@ show1baf64c6a421a873bb2c92f45481bd29.url = (args: { company: string | number, sl
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/careers/companies/{company}/{slug}'
 */
 show1baf64c6a421a873bb2c92f45481bd29.get = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -351,7 +351,7 @@ show1baf64c6a421a873bb2c92f45481bd29.get = (args: { company: string | number, sl
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/careers/companies/{company}/{slug}'
 */
 show1baf64c6a421a873bb2c92f45481bd29.head = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -361,7 +361,7 @@ show1baf64c6a421a873bb2c92f45481bd29.head = (args: { company: string | number, s
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/careers/companies/{company}/{slug}'
 */
 const show1baf64c6a421a873bb2c92f45481bd29Form = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -371,7 +371,7 @@ const show1baf64c6a421a873bb2c92f45481bd29Form = (args: { company: string | numb
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/careers/companies/{company}/{slug}'
 */
 show1baf64c6a421a873bb2c92f45481bd29Form.get = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -381,7 +381,7 @@ show1baf64c6a421a873bb2c92f45481bd29Form.get = (args: { company: string | number
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::show
-* @see app/Http/Controllers/Api/PublicCareerController.php:106
+* @see app/Http/Controllers/Api/PublicCareerController.php:109
 * @route '/api/careers/companies/{company}/{slug}'
 */
 show1baf64c6a421a873bb2c92f45481bd29Form.head = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -403,7 +403,7 @@ export const show = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/v1/companies/{company}/careers/{slug}/apply'
 */
 const apply9d12fc3229c133c2358c68dfd8b5682d = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -418,7 +418,7 @@ apply9d12fc3229c133c2358c68dfd8b5682d.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/v1/companies/{company}/careers/{slug}/apply'
 */
 apply9d12fc3229c133c2358c68dfd8b5682d.url = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions) => {
@@ -444,7 +444,7 @@ apply9d12fc3229c133c2358c68dfd8b5682d.url = (args: { company: string | number, s
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/v1/companies/{company}/careers/{slug}/apply'
 */
 apply9d12fc3229c133c2358c68dfd8b5682d.post = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -454,7 +454,7 @@ apply9d12fc3229c133c2358c68dfd8b5682d.post = (args: { company: string | number, 
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/v1/companies/{company}/careers/{slug}/apply'
 */
 const apply9d12fc3229c133c2358c68dfd8b5682dForm = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -464,7 +464,7 @@ const apply9d12fc3229c133c2358c68dfd8b5682dForm = (args: { company: string | num
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/v1/companies/{company}/careers/{slug}/apply'
 */
 apply9d12fc3229c133c2358c68dfd8b5682dForm.post = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -475,7 +475,7 @@ apply9d12fc3229c133c2358c68dfd8b5682dForm.post = (args: { company: string | numb
 apply9d12fc3229c133c2358c68dfd8b5682d.form = apply9d12fc3229c133c2358c68dfd8b5682dForm
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/careers/companies/{company}/{slug}/apply'
 */
 const applydc43a4c45f34b03dc7eb746623ba9bfa = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -490,7 +490,7 @@ applydc43a4c45f34b03dc7eb746623ba9bfa.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/careers/companies/{company}/{slug}/apply'
 */
 applydc43a4c45f34b03dc7eb746623ba9bfa.url = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions) => {
@@ -516,7 +516,7 @@ applydc43a4c45f34b03dc7eb746623ba9bfa.url = (args: { company: string | number, s
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/careers/companies/{company}/{slug}/apply'
 */
 applydc43a4c45f34b03dc7eb746623ba9bfa.post = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -526,7 +526,7 @@ applydc43a4c45f34b03dc7eb746623ba9bfa.post = (args: { company: string | number, 
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/careers/companies/{company}/{slug}/apply'
 */
 const applydc43a4c45f34b03dc7eb746623ba9bfaForm = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -536,7 +536,7 @@ const applydc43a4c45f34b03dc7eb746623ba9bfaForm = (args: { company: string | num
 
 /**
 * @see \App\Http\Controllers\Api\PublicCareerController::apply
-* @see app/Http/Controllers/Api/PublicCareerController.php:163
+* @see app/Http/Controllers/Api/PublicCareerController.php:169
 * @route '/api/careers/companies/{company}/{slug}/apply'
 */
 applydc43a4c45f34b03dc7eb746623ba9bfaForm.post = (args: { company: string | number, slug: string | number } | [company: string | number, slug: string | number ], options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -196,6 +196,8 @@ class PublicCareerController extends Controller
             $resumeOriginalName = $request->file('resume')->getClientOriginalName();
         }
 
+        $currentSalary = $validated['current_salary'] ?? ($validated['take_home_pay_min'] ?? null);
+
         $application = JobApplication::query()->create([
             ...$validated,
             'user_id' => $companyUser->id,
@@ -204,6 +206,9 @@ class PublicCareerController extends Controller
             'resume_original_name' => $resumeOriginalName,
             'employment_type' => $vacancy->employment_type,
             'stage' => 'applied',
+            'current_salary' => $currentSalary,
+            'take_home_pay_min' => $validated['take_home_pay_min'] ?? $currentSalary,
+            'take_home_pay_max' => $validated['take_home_pay_max'] ?? $currentSalary,
         ]);
 
         return response()->json([

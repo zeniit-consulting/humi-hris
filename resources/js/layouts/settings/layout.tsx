@@ -70,22 +70,22 @@ const settingsNavGroups: SettingsNavGroup[] = [
         items: [
             {
                 title: 'Profil Perusahaan & Akun',
-                href: edit(),
+                href: toUrl(edit()),
                 icon: Building2,
             },
             {
                 title: 'Kata Sandi',
-                href: editPassword(),
+                href: toUrl(editPassword()),
                 icon: KeyRound,
             },
             {
                 title: 'Autentikasi Dua Faktor',
-                href: show(),
+                href: toUrl(show()),
                 icon: ShieldCheck,
             },
             {
                 title: 'Tema & Tampilan',
-                href: editAppearance(),
+                href: toUrl(editAppearance()),
                 icon: Palette,
             },
         ],

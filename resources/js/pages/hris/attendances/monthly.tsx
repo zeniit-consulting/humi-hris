@@ -79,6 +79,7 @@ type PageProps = {
     summary: {
         total: number;
         present: number;
+        wfa: number;
         late: number;
         on_leave: number;
         absent: number;

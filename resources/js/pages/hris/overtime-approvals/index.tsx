@@ -233,11 +233,11 @@ export default function OvertimeApprovalPage() {
             <Head title="Approval Lembur" />
             <div className="space-y-4 p-4">
                 <div className="grid gap-4 md:grid-cols-3">
-                    {[
+                    {([
                         ['Menunggu', stats.pending, 'pending'],
                         ['Disetujui', stats.approved, 'approved'],
                         ['Ditolak', stats.rejected, 'rejected'],
-                    ].map(([label, value, statusKey]) => (
+                    ] as [string, number, string][]).map(([label, value, statusKey]) => (
                         <Card
                             key={label}
                             role="button"

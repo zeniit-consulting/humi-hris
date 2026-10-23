@@ -50,8 +50,8 @@ class CareerController extends Controller
                 'workplace_type' => $vacancy->workplace_type,
                 'location' => $vacancy->location,
                 'openings' => $vacancy->openings,
-                'min_salary' => $vacancy->min_salary,
-                'max_salary' => $vacancy->max_salary,
+                'min_salary' => $vacancy->min_salary !== null ? (float) $vacancy->min_salary : null,
+                'max_salary' => $vacancy->max_salary !== null ? (float) $vacancy->max_salary : null,
                 'description' => $vacancy->description,
                 'requirements' => $vacancy->requirements,
                 'benefits' => $vacancy->benefits,
@@ -89,8 +89,8 @@ class CareerController extends Controller
                 'workplace_type' => $vacancy->workplace_type,
                 'location' => $vacancy->location,
                 'openings' => $vacancy->openings,
-                'min_salary' => $vacancy->min_salary,
-                'max_salary' => $vacancy->max_salary,
+                'min_salary' => $vacancy->min_salary !== null ? (float) $vacancy->min_salary : null,
+                'max_salary' => $vacancy->max_salary !== null ? (float) $vacancy->max_salary : null,
                 'description' => $vacancy->description,
                 'requirements' => $vacancy->requirements,
                 'benefits' => $vacancy->benefits,
@@ -121,6 +121,8 @@ class CareerController extends Controller
             $resumeOriginalName = $request->file('resume')->getClientOriginalName();
         }
 
+        $currentSalary = $validated['current_salary'] ?? ($validated['take_home_pay_min'] ?? null);
+
         JobApplication::query()->create([
             ...$validated,
             'user_id' => $vacancy->user_id,
@@ -128,6 +130,9 @@ class CareerController extends Controller
             'resume_path' => $resumePath,
             'resume_original_name' => $resumeOriginalName,
             'employment_type' => $vacancy->employment_type,
+            'current_salary' => $currentSalary,
+            'take_home_pay_min' => $validated['take_home_pay_min'] ?? $currentSalary,
+            'take_home_pay_max' => $validated['take_home_pay_max'] ?? $currentSalary,
         ]);
 
         return redirect()

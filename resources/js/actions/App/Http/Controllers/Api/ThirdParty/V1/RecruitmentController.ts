@@ -82,7 +82,7 @@ vacancies.form = vacanciesForm
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:80
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:82
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 export const showVacancy = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ showVacancy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:80
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:82
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 showVacancy.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -124,7 +124,7 @@ showVacancy.url = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:80
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:82
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 showVacancy.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -134,7 +134,7 @@ showVacancy.get = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:80
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:82
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 showVacancy.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -144,7 +144,7 @@ showVacancy.head = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:80
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:82
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 const showVacancyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -154,7 +154,7 @@ const showVacancyForm = (args: { id: string | number } | [id: string | number ] 
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:80
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:82
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 showVacancyForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -164,7 +164,7 @@ showVacancyForm.get = (args: { id: string | number } | [id: string | number ] | 
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:80
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:82
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 showVacancyForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -181,7 +181,7 @@ showVacancy.form = showVacancyForm
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::storeVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:126
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:130
 * @route '/api/third-party/v1/recruitment/vacancies'
 */
 export const storeVacancy = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -196,7 +196,7 @@ storeVacancy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::storeVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:126
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:130
 * @route '/api/third-party/v1/recruitment/vacancies'
 */
 storeVacancy.url = (options?: RouteQueryOptions) => {
@@ -205,7 +205,7 @@ storeVacancy.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::storeVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:126
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:130
 * @route '/api/third-party/v1/recruitment/vacancies'
 */
 storeVacancy.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -215,7 +215,7 @@ storeVacancy.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::storeVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:126
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:130
 * @route '/api/third-party/v1/recruitment/vacancies'
 */
 const storeVacancyForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -225,7 +225,7 @@ const storeVacancyForm = (options?: RouteQueryOptions): RouteFormDefinition<'pos
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::storeVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:126
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:130
 * @route '/api/third-party/v1/recruitment/vacancies'
 */
 storeVacancyForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -237,7 +237,7 @@ storeVacancy.form = storeVacancyForm
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::updateVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:175
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:179
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 export const updateVacancy = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -252,7 +252,7 @@ updateVacancy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::updateVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:175
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:179
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 updateVacancy.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -279,7 +279,7 @@ updateVacancy.url = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::updateVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:175
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:179
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 updateVacancy.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -289,7 +289,7 @@ updateVacancy.put = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::updateVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:175
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:179
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 const updateVacancyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -304,7 +304,7 @@ const updateVacancyForm = (args: { id: string | number } | [id: string | number 
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::updateVacancy
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:175
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:179
 * @route '/api/third-party/v1/recruitment/vacancies/{id}'
 */
 updateVacancyForm.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -321,7 +321,7 @@ updateVacancy.form = updateVacancyForm
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::applications
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:219
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:223
 * @route '/api/third-party/v1/recruitment/applications'
 */
 export const applications = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -336,7 +336,7 @@ applications.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::applications
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:219
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:223
 * @route '/api/third-party/v1/recruitment/applications'
 */
 applications.url = (options?: RouteQueryOptions) => {
@@ -345,7 +345,7 @@ applications.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::applications
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:219
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:223
 * @route '/api/third-party/v1/recruitment/applications'
 */
 applications.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -355,7 +355,7 @@ applications.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::applications
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:219
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:223
 * @route '/api/third-party/v1/recruitment/applications'
 */
 applications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -365,7 +365,7 @@ applications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::applications
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:219
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:223
 * @route '/api/third-party/v1/recruitment/applications'
 */
 const applicationsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -375,7 +375,7 @@ const applicationsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::applications
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:219
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:223
 * @route '/api/third-party/v1/recruitment/applications'
 */
 applicationsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -385,7 +385,7 @@ applicationsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::applications
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:219
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:223
 * @route '/api/third-party/v1/recruitment/applications'
 */
 applicationsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -402,7 +402,7 @@ applications.form = applicationsForm
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showApplication
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:274
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:278
 * @route '/api/third-party/v1/recruitment/applications/{id}'
 */
 export const showApplication = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -417,7 +417,7 @@ showApplication.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showApplication
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:274
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:278
 * @route '/api/third-party/v1/recruitment/applications/{id}'
 */
 showApplication.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -444,7 +444,7 @@ showApplication.url = (args: { id: string | number } | [id: string | number ] | 
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showApplication
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:274
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:278
 * @route '/api/third-party/v1/recruitment/applications/{id}'
 */
 showApplication.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -454,7 +454,7 @@ showApplication.get = (args: { id: string | number } | [id: string | number ] | 
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showApplication
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:274
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:278
 * @route '/api/third-party/v1/recruitment/applications/{id}'
 */
 showApplication.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -464,7 +464,7 @@ showApplication.head = (args: { id: string | number } | [id: string | number ] |
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showApplication
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:274
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:278
 * @route '/api/third-party/v1/recruitment/applications/{id}'
 */
 const showApplicationForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -474,7 +474,7 @@ const showApplicationForm = (args: { id: string | number } | [id: string | numbe
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showApplication
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:274
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:278
 * @route '/api/third-party/v1/recruitment/applications/{id}'
 */
 showApplicationForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -484,7 +484,7 @@ showApplicationForm.get = (args: { id: string | number } | [id: string | number 
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::showApplication
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:274
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:278
 * @route '/api/third-party/v1/recruitment/applications/{id}'
 */
 showApplicationForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -501,7 +501,7 @@ showApplication.form = showApplicationForm
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::updateStage
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:327
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:331
 * @route '/api/third-party/v1/recruitment/applications/{id}/stage'
 */
 export const updateStage = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -516,7 +516,7 @@ updateStage.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::updateStage
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:327
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:331
 * @route '/api/third-party/v1/recruitment/applications/{id}/stage'
 */
 updateStage.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -543,7 +543,7 @@ updateStage.url = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::updateStage
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:327
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:331
 * @route '/api/third-party/v1/recruitment/applications/{id}/stage'
 */
 updateStage.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -553,7 +553,7 @@ updateStage.put = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::updateStage
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:327
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:331
 * @route '/api/third-party/v1/recruitment/applications/{id}/stage'
 */
 const updateStageForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -568,7 +568,7 @@ const updateStageForm = (args: { id: string | number } | [id: string | number ] 
 
 /**
 * @see \App\Http\Controllers\Api\ThirdParty\V1\RecruitmentController::updateStage
-* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:327
+* @see app/Http/Controllers/Api/ThirdParty/V1/RecruitmentController.php:331
 * @route '/api/third-party/v1/recruitment/applications/{id}/stage'
 */
 updateStageForm.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

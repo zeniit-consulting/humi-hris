@@ -73,7 +73,12 @@ class UpdateJobApplicationRequest extends FormRequest
             return null;
         }
 
-        $normalized = preg_replace('/[^\d]/', '', (string) $value);
+        $raw = trim((string) $value);
+        if (preg_match('/^\d+\.\d{2}$/', $raw)) {
+            $raw = explode('.', $raw)[0];
+        }
+
+        $normalized = preg_replace('/[^\d]/', '', $raw);
 
         return $normalized === '' ? null : $normalized;
     }

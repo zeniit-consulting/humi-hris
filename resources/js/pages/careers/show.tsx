@@ -1,4 +1,5 @@
 import { Link, useForm, usePage } from '@inertiajs/react';
+import Dropzone from 'dropzone';
 import {
     ArrowLeft,
     Briefcase,
@@ -6,8 +7,11 @@ import {
     Link as LinkIcon,
     MapPin,
     Send,
+    UploadCloud,
+    X,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { frontHeroTitleClass } from '@/components/front-hero-typography';
 import InputError from '@/components/input-error';
 import SeoHead from '@/components/seo-head';
@@ -34,8 +38,8 @@ type Vacancy = {
     workplace_type: string | null;
     location: string | null;
     openings: number;
-    min_salary: string | null;
-    max_salary: string | null;
+    min_salary: string | number | null;
+    max_salary: string | number | null;
     description: string | null;
     requirements: string | null;
     benefits: string | null;
@@ -66,8 +70,7 @@ type ApplicationFormData = {
     last_education: string;
     years_experience: string;
     current_company: string;
-    take_home_pay_min: string;
-    take_home_pay_max: string;
+    current_salary: string;
     expected_salary: string;
     expected_join_date: string;
     portfolio_url: string;
@@ -85,8 +88,7 @@ const defaultForm: ApplicationFormData = {
     last_education: '',
     years_experience: '',
     current_company: '',
-    take_home_pay_min: '',
-    take_home_pay_max: '',
+    current_salary: '',
     expected_salary: '',
     expected_join_date: '',
     portfolio_url: '',
@@ -108,8 +110,13 @@ const workplaceTypeLabels: Record<string, string> = {
     remote: 'Remote',
 };
 
-const formatCurrency = (value: string | null) => {
+const formatCurrency = (value: string | number | null) => {
     if (!value) {
+        return '-';
+    }
+
+    const numeric = typeof value === 'number' ? value : Number(value);
+    if (Number.isNaN(numeric) || numeric === 0) {
         return '-';
     }
 
@@ -117,7 +124,7 @@ const formatCurrency = (value: string | null) => {
         style: 'currency',
         currency: 'IDR',
         maximumFractionDigits: 0,
-    }).format(Number(value));
+    }).format(numeric);
 };
 
 const stripText = (value: string | null, maxLength = 155) => {
@@ -239,8 +246,13 @@ export default function CareerShowPage() {
                                 <div className="mt-6 rounded-[var(--landing-radius-card)] border border-[var(--landing-color-paper)]/15 bg-[var(--landing-color-paper)]/5 px-4 py-3 text-sm text-[var(--landing-color-paper)]/75">
                                     Rentang kompensasi:{' '}
                                     <strong>
-                                        {formatCurrency(vacancy.min_salary)} -{' '}
-                                        {formatCurrency(vacancy.max_salary)}
+                                        {vacancy.min_salary && vacancy.max_salary
+                                            ? `${formatCurrency(vacancy.min_salary)} - ${formatCurrency(vacancy.max_salary)}`
+                                            : vacancy.min_salary
+                                              ? `Mulai dari ${formatCurrency(vacancy.min_salary)}`
+                                              : vacancy.max_salary
+                                                ? `Hingga ${formatCurrency(vacancy.max_salary)}`
+                                                : 'Kompetitif'}
                                     </strong>
                                 </div>
                             </section>
@@ -451,76 +463,32 @@ export default function CareerShowPage() {
                                             />
                                         </div>
 
-                                        <div className="grid gap-2 md:col-span-2">
-                                            <Label>Take Home Pay Range</Label>
-                                            <div className="grid gap-3 sm:grid-cols-2">
-                                                <div className="grid gap-2">
-                                                    <Label
-                                                        htmlFor="take_home_pay_min"
-                                                        className="text-xs text-slate-500"
-                                                    >
-                                                        Minimum
-                                                    </Label>
-                                                    <Input
-                                                        id="take_home_pay_min"
-                                                        type="text"
-                                                        inputMode="numeric"
-                                                        value={formatThousandDigits(
-                                                            form.data
-                                                                .take_home_pay_min,
-                                                        )}
-                                                        onChange={(event) =>
-                                                            form.setData(
-                                                                'take_home_pay_min',
-                                                                normalizeDigitInput(
-                                                                    event.target
-                                                                        .value,
-                                                                ),
-                                                            )
-                                                        }
-                                                        placeholder="Rp 0"
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            form.errors
-                                                                .take_home_pay_min
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label
-                                                        htmlFor="take_home_pay_max"
-                                                        className="text-xs text-slate-500"
-                                                    >
-                                                        Maksimum
-                                                    </Label>
-                                                    <Input
-                                                        id="take_home_pay_max"
-                                                        type="text"
-                                                        inputMode="numeric"
-                                                        value={formatThousandDigits(
-                                                            form.data
-                                                                .take_home_pay_max,
-                                                        )}
-                                                        onChange={(event) =>
-                                                            form.setData(
-                                                                'take_home_pay_max',
-                                                                normalizeDigitInput(
-                                                                    event.target
-                                                                        .value,
-                                                                ),
-                                                            )
-                                                        }
-                                                        placeholder="Rp 0"
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            form.errors
-                                                                .take_home_pay_max
-                                                        }
-                                                    />
-                                                </div>
-                                            </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="current_salary">
+                                                Current Salary
+                                            </Label>
+                                            <Input
+                                                id="current_salary"
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={formatThousandDigits(
+                                                    form.data.current_salary,
+                                                )}
+                                                onChange={(event) =>
+                                                    form.setData(
+                                                        'current_salary',
+                                                        normalizeDigitInput(
+                                                            event.target.value,
+                                                        ),
+                                                    )
+                                                }
+                                                placeholder="Rp 0"
+                                            />
+                                            <InputError
+                                                message={
+                                                    form.errors.current_salary
+                                                }
+                                            />
                                         </div>
 
                                         <div className="grid gap-2">
@@ -664,22 +632,14 @@ export default function CareerShowPage() {
 
                                         <div className="grid gap-2 md:col-span-2">
                                             <Label htmlFor="resume">
-                                                Upload CV (PDF/DOC/DOCX)
+                                                Upload CV / Resume (PDF, DOC, DOCX)
                                             </Label>
-                                            <Input
-                                                id="resume"
-                                                type="file"
-                                                accept=".pdf,.doc,.docx"
-                                                onChange={(event) =>
-                                                    form.setData(
-                                                        'resume',
-                                                        event.target
-                                                            .files?.[0] ?? null,
-                                                    )
+                                            <ResumeDropzone
+                                                file={form.data.resume}
+                                                onChange={(file) =>
+                                                    form.setData('resume', file)
                                                 }
-                                            />
-                                            <InputError
-                                                message={form.errors.resume}
+                                                error={form.errors.resume}
                                             />
                                         </div>
                                     </div>
@@ -701,5 +661,148 @@ export default function CareerShowPage() {
                 </main>
             </div>
         </>
+    );
+}
+
+function ResumeDropzone({
+    file,
+    onChange,
+    error,
+}: {
+    file: File | null;
+    onChange: (file: File | null) => void;
+    error?: string;
+}) {
+    const dropzoneRef = useRef<HTMLDivElement>(null);
+    const dropzoneInstance = useRef<Dropzone | null>(null);
+    const onChangeRef = useRef(onChange);
+    const [clientError, setClientError] = useState<string | null>(null);
+
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
+
+    useEffect(() => {
+        if (!dropzoneRef.current) {
+            return;
+        }
+
+        const dropzone = new Dropzone(dropzoneRef.current, {
+            url: '/',
+            autoProcessQueue: false,
+            clickable: true,
+            previewsContainer: false,
+            acceptedFiles: '.pdf,.doc,.docx',
+            maxFiles: 1,
+            maxFilesize: 4,
+            dictFileTooBig:
+                'Ukuran file terlalu besar ({{filesize}}MB). Maksimal {{maxFilesize}}MB.',
+            dictInvalidFileType:
+                'Format file tidak didukung. Harap upload dokumen PDF, DOC, atau DOCX.',
+        });
+
+        dropzone.on('addedfile', (addedFile) => {
+            setClientError(null);
+            if (dropzone.files.length > 1) {
+                dropzone.removeFile(dropzone.files[0]);
+            }
+            onChangeRef.current(addedFile);
+        });
+
+        dropzone.on('error', (_file, message) => {
+            const errorText =
+                typeof message === 'string' ? message : 'File tidak valid.';
+            setClientError(errorText);
+        });
+
+        dropzoneInstance.current = dropzone;
+
+        return () => {
+            dropzone.destroy();
+            dropzoneInstance.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (
+            !file &&
+            dropzoneInstance.current &&
+            dropzoneInstance.current.files.length > 0
+        ) {
+            dropzoneInstance.current.removeAllFiles(true);
+            setClientError(null);
+        }
+    }, [file]);
+
+    const clearFile = (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.stopPropagation();
+        dropzoneInstance.current?.removeAllFiles(true);
+        setClientError(null);
+        onChange(null);
+    };
+
+    const formatFileSize = (bytes: number) => {
+        if (bytes < 1024 * 1024) {
+            return `${(bytes / 1024).toFixed(1)} KB`;
+        }
+        return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    };
+
+    const activeError = clientError || error;
+
+    return (
+        <div className="grid gap-2">
+            <div
+                ref={dropzoneRef}
+                className="group relative cursor-pointer rounded-[var(--landing-radius-card)] border-2 border-dashed border-[var(--landing-color-rule)] bg-[var(--landing-color-surface)] p-6 text-center transition-all duration-200 hover:border-[var(--landing-color-brand,#0284c7)] hover:bg-[color-mix(in_oklch,var(--landing-color-surface)_90%,var(--landing-color-rule))]"
+            >
+                {file ? (
+                    <div className="flex items-center justify-between gap-3 text-left">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--landing-color-paper)] text-[var(--landing-color-brand,#0284c7)] shadow-sm">
+                                <FileText className="size-5" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-[var(--landing-color-ink)]">
+                                    {file.name}
+                                </p>
+                                <p className="text-xs text-[var(--landing-color-muted)]">
+                                    {formatFileSize(file.size)} · Klik atau
+                                    seret file baru untuk mengganti
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            onClick={clearFile}
+                            aria-label="Hapus file CV"
+                            className="shrink-0 text-[var(--landing-color-muted)] hover:text-[var(--landing-color-ink)]"
+                        >
+                            <X className="size-4" />
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[var(--landing-color-paper)] text-[var(--landing-color-muted)] transition-colors group-hover:text-[var(--landing-color-brand,#0284c7)]">
+                            <UploadCloud className="size-6" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-[var(--landing-color-ink)]">
+                                Tarik & lepas file CV ke sini, atau{' '}
+                                <span className="font-semibold text-[var(--landing-color-brand,#0284c7)] underline underline-offset-2">
+                                    pilih dokumen
+                                </span>
+                            </p>
+                            <p className="mt-1 text-xs text-[var(--landing-color-muted)]">
+                                Format: PDF, DOC, atau DOCX (Maksimal 4 MB)
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
+            <InputError message={activeError} />
+        </div>
     );
 }

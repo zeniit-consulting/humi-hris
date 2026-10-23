@@ -316,7 +316,7 @@ export default function PayrollSettings({
                                             form.setData(
                                                 'overtime_fixed_rate_per_hour',
                                                 event.target.value === ''
-                                                    ? null
+                                                    ? ''
                                                     : Number(
                                                           event.target.value,
                                                       ),
@@ -607,7 +607,7 @@ export default function PayrollSettings({
                                                             value={event.unit ?? 'kegiatan'}
                                                             onChange={(e) => {
                                                                 const newEvents = [...form.data.overtime_events];
-                                                                newEvents[index].unit = e.target.value as OvertimeEventItem['unit'];
+                                                                newEvents[index].unit = e.target.value as 'kegiatan' | 'hari' | 'jam' | 'kehadiran';
                                                                 form.setData('overtime_events', newEvents);
                                                             }}
                                                         >

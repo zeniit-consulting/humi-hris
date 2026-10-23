@@ -401,6 +401,16 @@ class PayrollGenerationService
         $bpjsKesClass = $employee->bpjs_kesehatan_class
             ?: ($setting?->bpjs_kesehatan_default_class ?: 'I');
 
+        // salary_type: 'gross' (default) atau 'net'
+        $salaryType = (string) ($employee->salary_type ?? 'gross');
+        $isNetSalary = $salaryType === 'net';
+
+        // Gaji yang dilaporkan ke BPJS Kesehatan (bisa berbeda dari upah aktual)
+        $kesReportedWage = ($employee->bpjs_kesehatan_reported_wage !== null
+            && (float) $employee->bpjs_kesehatan_reported_wage > 0)
+            ? (float) $employee->bpjs_kesehatan_reported_wage
+            : null;
+
         $bpjs = \App\Support\BpjsCalculator::calculate(
             calculationBase: $bpjsWageBase,
             bpjsKesEnabled: (bool) ($setting?->bpjs_kesehatan_enabled ?? false),
@@ -416,6 +426,8 @@ class PayrollGenerationService
             empBpjsJhtEnabled: $empBpjsJht,
             privateInsuranceEnabled: $hasPrivateInsurance,
             privateInsuranceNominal: $privateInsuranceNominal,
+            isNetSalary: $isNetSalary,
+            kesCalculationBase: $kesReportedWage,
         );
 
         // PPh 21 Calculation
@@ -593,6 +605,7 @@ class PayrollGenerationService
             'overtime_hours' => $overtimeHours,
             'overtime_pay' => $overtimePay,
             'pph21_method' => $pph21Method,
+            'salary_type' => $salaryType,
             'pph21_rate' => $pph21Rate,
             'pph21_allowance' => $pph21Allowance,
             'pph21_deduction' => $pph21Deduction,
@@ -600,6 +613,7 @@ class PayrollGenerationService
             'bpjs_kesehatan_company' => $bpjs['bpjs_kesehatan_company'],
             'bpjs_kesehatan_employee' => $bpjs['bpjs_kesehatan_employee'],
             'bpjs_kesehatan_class' => $bpjsKesClass,
+            'bpjs_kesehatan_reported_wage' => $kesReportedWage,
             'bpjs_jkk_company' => $bpjs['bpjs_jkk_company'],
             'bpjs_jkm_company' => $bpjs['bpjs_jkm_company'],
             'bpjs_jht_company' => $bpjs['bpjs_jht_company'],

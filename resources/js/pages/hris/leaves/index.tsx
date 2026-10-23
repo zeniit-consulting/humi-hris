@@ -775,7 +775,7 @@ export default function LeavePage() {
                 onOpenChange={(open) => {
                     if (!open) setPreviewAttachment(null);
                 }}
-                url={previewAttachment?.url}
+                url={previewAttachment?.url ?? null}
                 name={previewAttachment?.name}
                 title={previewAttachment?.title}
             />
