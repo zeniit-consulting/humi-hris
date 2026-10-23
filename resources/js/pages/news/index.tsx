@@ -260,7 +260,7 @@ export default function NewsIndex() {
                                 </p>
                             </div>
                             <Link
-                                href={register()}
+                                href={register().url}
                                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0d4d52] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0a3e42]"
                             >
                                 Coba Gratis

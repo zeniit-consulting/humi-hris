@@ -270,7 +270,7 @@ export default function PortalLogin() {
 
                         <p className="portal-auth__admin-link">
                             Admin atau staf internal?{' '}
-                            <Link href={login()} className="portal-focus-ring">
+                            <Link href={login().url} className="portal-focus-ring">
                                 Gunakan login utama
                             </Link>
                         </p>

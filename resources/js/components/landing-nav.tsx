@@ -62,7 +62,7 @@ export function LandingNav({
                 <div className="landing-nav-actions flex shrink-0 items-center gap-2">
                     {!hasUser ? (
                         <Link
-                            href={login()}
+                            href={login().url}
                             className="hidden min-h-11 items-center rounded-[var(--landing-radius-control)] px-3 text-sm font-medium whitespace-nowrap text-[var(--landing-color-ink-soft)] transition-colors hover:text-[var(--landing-color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-color-focus)] sm:inline-flex"
                         >
                             Masuk
@@ -125,7 +125,7 @@ export function LandingNav({
                     <div className="mt-6 flex flex-col gap-3 border-t border-[var(--landing-color-rule)] pt-6">
                         {!hasUser ? (
                             <Link
-                                href={login()}
+                                href={login().url}
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className={landingSecondaryActionClass}
                             >

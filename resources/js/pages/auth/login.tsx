@@ -101,7 +101,7 @@ export default function Login({
                         {canRegister && (
                             <div className="text-center text-sm text-muted-foreground">
                                 Belum punya akun?{' '}
-                                <TextLink href={register()} tabIndex={5}>
+                                <TextLink href={register().url} tabIndex={5}>
                                     Daftar
                                 </TextLink>
                             </div>

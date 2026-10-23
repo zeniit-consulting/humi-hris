@@ -575,11 +575,11 @@ function FaqItem({ faq }: { faq: Faq }) {
 
 export default function Welcome({ canRegister = true }: WelcomeProps) {
     const { auth, appUrl } = usePage().props as {
-        auth: { user?: unknown };
-        appUrl: string;
+        auth?: { user?: unknown };
+        appUrl?: string;
     };
-    const siteUrl = appUrl.replace(/\/$/, '');
-    const hasUser = Boolean(auth.user);
+    const siteUrl = (appUrl ?? '').replace(/\/$/, '');
+    const hasUser = Boolean(auth?.user);
     const trialHref = hasUser
         ? dashboard().url
         : canRegister

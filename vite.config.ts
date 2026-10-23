@@ -20,17 +20,8 @@ export default defineConfig({
                         return 'vendor-mapbox';
                     }
 
-                    if (id.includes('@radix-ui') || id.includes('lucide-react')) {
-                        return 'vendor-ui';
-                    }
-
-                    if (
-                        id.includes('/react/') ||
-                        id.includes('/react-dom/') ||
-                        id.includes('@inertiajs') ||
-                        id.includes('@vitejs')
-                    ) {
-                        return 'vendor-react';
+                    if (id.includes('@vladmandic/face-api')) {
+                        return 'vendor-faceapi';
                     }
                 },
             },

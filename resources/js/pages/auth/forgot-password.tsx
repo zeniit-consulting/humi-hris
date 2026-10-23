@@ -60,7 +60,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                 <div className="space-x-1 text-center text-sm text-muted-foreground">
                     <span>Atau, kembali ke</span>
-                    <TextLink href={login()}>halaman masuk</TextLink>
+                    <TextLink href={login().url}>halaman masuk</TextLink>
                 </div>
             </div>
         </AuthLayout>

@@ -323,13 +323,13 @@ export default function IndustryLanding({
 }: PageProps) {
     const { auth, appUrl } = usePage().props as SharedProps;
     const industry = industries[industrySlug] ?? industries.outsourcing;
-    const siteUrl = appUrl.replace(/\/$/, '');
+    const siteUrl = (appUrl ?? '').replace(/\/$/, '');
     const waUrl = whatsappUrl(industry.whatsappText);
-    const primaryHref = auth.user
-        ? dashboard()
+    const primaryHref = auth?.user
+        ? dashboard().url
         : canRegister
-          ? register()
-          : login();
+          ? register().url
+          : login().url;
 
     const structuredData = {
         '@context': 'https://schema.org',
@@ -363,8 +363,8 @@ export default function IndustryLanding({
 
             <div className="min-h-screen overflow-x-clip bg-[var(--landing-color-paper)] font-[family-name:var(--landing-font-body)] text-[var(--landing-color-ink)]">
                 <LandingNav
-                    hasUser={Boolean(auth.user)}
-                    trialHref={primaryHref.url}
+                    hasUser={Boolean(auth?.user)}
+                    trialHref={primaryHref}
                 />
 
                 {/* Sub-navigation bar for industry solutions */}
@@ -775,8 +775,8 @@ export default function IndustryLanding({
                 </main>
 
                 <LandingFooter
-                    hasUser={Boolean(auth.user)}
-                    trialHref={primaryHref.url}
+                    hasUser={Boolean(auth?.user)}
+                    trialHref={primaryHref}
                 />
             </div>
         </>

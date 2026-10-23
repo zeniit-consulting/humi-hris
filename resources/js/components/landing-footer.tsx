@@ -114,7 +114,7 @@ export function LandingFooter({
                                 </Link>
                                 {!hasUser ? (
                                     <Link
-                                        href={login()}
+                                        href={login().url}
                                         className="whitespace-nowrap transition-colors hover:text-[var(--landing-color-accent)]"
                                     >
                                         Masuk

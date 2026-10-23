@@ -145,15 +145,15 @@ export default function MintlifyLanding({
     canRegister?: boolean;
 }) {
     const { auth, appUrl } = usePage().props as {
-        auth: { user?: unknown };
-        appUrl: string;
+        auth?: { user?: unknown };
+        appUrl?: string;
     };
-    const siteUrl = appUrl.replace(/\/$/, '');
-    const primaryHref = auth.user
-        ? dashboard()
+    const siteUrl = (appUrl ?? '').replace(/\/$/, '');
+    const primaryHref = auth?.user
+        ? dashboard().url
         : canRegister
-          ? register()
-          : login();
+          ? register().url
+          : login().url;
 
     return (
         <>
@@ -224,16 +224,16 @@ export default function MintlifyLanding({
                             </Link>
                         </nav>
                         <div className="flex items-center gap-2">
-                            {!auth.user ? (
+                            {!auth?.user ? (
                                 <Link
                                     className="ghost-button hidden sm:inline-flex"
-                                    href={login()}
+                                    href={login().url}
                                 >
                                     Masuk
                                 </Link>
                             ) : null}
                             <Link className="filled-button" href={primaryHref}>
-                                {auth.user ? 'Dashboard' : 'Mulai Trial'}
+                                {auth?.user ? 'Dashboard' : 'Mulai Trial'}
                             </Link>
                         </div>
                     </div>
@@ -454,7 +454,7 @@ export default function MintlifyLanding({
                                         className="filled-button h-12 items-center px-6"
                                         href={primaryHref}
                                     >
-                                        {auth.user
+                                        {auth?.user
                                             ? 'Lanjut ke Dashboard'
                                             : 'Coba Gratis Sekarang'}
                                         <ArrowRight className="size-4" />
