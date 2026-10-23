@@ -107,11 +107,13 @@ const shortText = (value: string | null, maxLength = 180) => {
         return 'Detail lowongan akan dijelaskan lengkap di halaman posisi.';
     }
 
-    if (value.length <= maxLength) {
-        return value;
+    const clean = value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+    if (clean.length <= maxLength) {
+        return clean;
     }
 
-    return `${value.slice(0, maxLength).trim()}...`;
+    return `${clean.slice(0, maxLength).trim()}...`;
 };
 
 export default function CareersIndexPage() {

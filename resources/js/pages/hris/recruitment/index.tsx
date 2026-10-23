@@ -45,6 +45,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { WysiwygEditor } from '@/components/ui/wysiwyg-editor';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -1684,18 +1685,17 @@ export default function RecruitmentPage() {
                                     <Label htmlFor="description">
                                         Deskripsi
                                     </Label>
-                                    <textarea
+                                    <WysiwygEditor
                                         id="description"
                                         value={vacancyForm.data.description}
-                                        onChange={(event) =>
+                                        onChange={(val) =>
                                             vacancyForm.setData(
                                                 'description',
-                                                event.target.value,
+                                                val,
                                             )
                                         }
-                                        rows={5}
-                                        className="min-h-28 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none"
-                                        placeholder="Ringkasan pekerjaan"
+                                        placeholder="Ringkasan pekerjaan dan tanggung jawab posisi..."
+                                        minHeight="min-h-[140px]"
                                     />
                                     <InputError
                                         message={vacancyForm.errors.description}
@@ -1706,18 +1706,17 @@ export default function RecruitmentPage() {
                                     <Label htmlFor="requirements">
                                         Kualifikasi
                                     </Label>
-                                    <textarea
+                                    <WysiwygEditor
                                         id="requirements"
                                         value={vacancyForm.data.requirements}
-                                        onChange={(event) =>
+                                        onChange={(val) =>
                                             vacancyForm.setData(
                                                 'requirements',
-                                                event.target.value,
+                                                val,
                                             )
                                         }
-                                        rows={6}
-                                        className="min-h-32 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none"
-                                        placeholder="Tuliskan requirement kandidat"
+                                        placeholder="Tuliskan kualifikasi dan kriteria kandidat yang dicari..."
+                                        minHeight="min-h-[160px]"
                                     />
                                     <InputError
                                         message={
@@ -1728,18 +1727,17 @@ export default function RecruitmentPage() {
 
                                 <div className="grid gap-2 md:col-span-2">
                                     <Label htmlFor="benefits">Benefit</Label>
-                                    <textarea
+                                    <WysiwygEditor
                                         id="benefits"
                                         value={vacancyForm.data.benefits}
-                                        onChange={(event) =>
+                                        onChange={(val) =>
                                             vacancyForm.setData(
                                                 'benefits',
-                                                event.target.value,
+                                                val,
                                             )
                                         }
-                                        rows={6}
-                                        className="min-h-32 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none"
-                                        placeholder="Benefit dan fasilitas"
+                                        placeholder="Benefit, fasilitas, dan tunjangan..."
+                                        minHeight="min-h-[140px]"
                                     />
                                     <InputError
                                         message={vacancyForm.errors.benefits}

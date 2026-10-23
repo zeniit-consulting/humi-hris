@@ -55,9 +55,9 @@ class StoreJobVacancyRequest extends FormRequest
             'openings' => ['required', 'integer', 'min:1', 'max:999'],
             'min_salary' => ['nullable', 'numeric', 'min:0'],
             'max_salary' => ['nullable', 'numeric', 'gte:min_salary'],
-            'description' => ['nullable', 'string', 'max:5000'],
-            'requirements' => ['nullable', 'string', 'max:5000'],
-            'benefits' => ['nullable', 'string', 'max:5000'],
+            'description' => ['nullable', 'string', 'max:20000'],
+            'requirements' => ['nullable', 'string', 'max:20000'],
+            'benefits' => ['nullable', 'string', 'max:20000'],
             'status' => ['required', Rule::in(['draft', 'published', 'closed'])],
             'closing_date' => ['nullable', 'date'],
         ];

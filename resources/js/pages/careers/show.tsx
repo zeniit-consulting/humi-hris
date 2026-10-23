@@ -130,12 +130,43 @@ const formatCurrency = (value: string | number | null) => {
 const stripText = (value: string | null, maxLength = 155) => {
     const fallback =
         'Lowongan aktif Humi HRIS. Lihat detail posisi, kualifikasi, benefit, dan kirim lamaran secara online.';
-    const text = (value ?? fallback).replace(/\s+/g, ' ').trim();
+    const clean = (value ?? fallback).replace(/<[^>]*>/g, ' ');
+    const text = clean.replace(/\s+/g, ' ').trim();
 
     return text.length > maxLength
         ? `${text.slice(0, maxLength).trim()}...`
         : text;
 };
+
+function RichTextContent({
+    content,
+    fallback,
+}: {
+    content: string | null;
+    fallback: string;
+}) {
+    if (!content || !content.trim()) {
+        return (
+            <p className="text-[var(--landing-color-ink-soft)]">{fallback}</p>
+        );
+    }
+
+    const hasHtml = /<[a-z][\s\S]*>/i.test(content);
+    if (!hasHtml) {
+        return (
+            <p className="whitespace-pre-line text-[var(--landing-color-ink-soft)]">
+                {content}
+            </p>
+        );
+    }
+
+    return (
+        <div
+            className="space-y-2 text-sm leading-7 text-[var(--landing-color-ink-soft)] [&_h2]:mb-1 [&_h2]:mt-3 [&_h2]:text-base [&_h2]:font-bold [&_h3]:mb-1 [&_h3]:mt-2.5 [&_h3]:text-sm [&_h3]:font-semibold [&_li]:my-1 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1.5 [&_s]:line-through [&_strong]:font-semibold [&_u]:underline [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
+            dangerouslySetInnerHTML={{ __html: content }}
+        />
+    );
+}
 
 export default function CareerShowPage() {
     const { vacancy, flash } = usePage<PageProps>().props;
@@ -261,9 +292,11 @@ export default function CareerShowPage() {
                                 <CardHeader>
                                     <CardTitle>Deskripsi Posisi</CardTitle>
                                 </CardHeader>
-                                <CardContent className="text-sm leading-7 whitespace-pre-line text-[var(--landing-color-ink-soft)]">
-                                    {vacancy.description ??
-                                        'Belum ada deskripsi.'}
+                                <CardContent className="text-sm leading-7">
+                                    <RichTextContent
+                                        content={vacancy.description}
+                                        fallback="Belum ada deskripsi."
+                                    />
                                 </CardContent>
                             </Card>
 
@@ -271,9 +304,11 @@ export default function CareerShowPage() {
                                 <CardHeader>
                                     <CardTitle>Kualifikasi</CardTitle>
                                 </CardHeader>
-                                <CardContent className="text-sm leading-7 whitespace-pre-line text-[var(--landing-color-ink-soft)]">
-                                    {vacancy.requirements ??
-                                        'Belum ada detail kualifikasi.'}
+                                <CardContent className="text-sm leading-7">
+                                    <RichTextContent
+                                        content={vacancy.requirements}
+                                        fallback="Belum ada detail kualifikasi."
+                                    />
                                 </CardContent>
                             </Card>
 
@@ -281,9 +316,11 @@ export default function CareerShowPage() {
                                 <CardHeader>
                                     <CardTitle>Benefit</CardTitle>
                                 </CardHeader>
-                                <CardContent className="text-sm leading-7 whitespace-pre-line text-[var(--landing-color-ink-soft)]">
-                                    {vacancy.benefits ??
-                                        'Benefit akan dijelaskan pada tahap selanjutnya.'}
+                                <CardContent className="text-sm leading-7">
+                                    <RichTextContent
+                                        content={vacancy.benefits}
+                                        fallback="Benefit akan dijelaskan pada tahap selanjutnya."
+                                    />
                                 </CardContent>
                             </Card>
                         </div>
