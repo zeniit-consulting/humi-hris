@@ -1,4 +1,4 @@
-import { Activity, CalendarCheck, ListChecks, Target } from 'lucide-react';
+import { Activity, Award, CalendarCheck, ListChecks, Sparkles, Target, TrendingUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -111,7 +111,41 @@ const fallbackLinks: PortalLinkMap = {
 const scoreLabel = (value: number | null) =>
     value === null
         ? '-'
-        : value.toLocaleString('id-ID', { maximumFractionDigits: 2 });
+        : value.toLocaleString('id-ID', { maximumFractionDigits: 1 });
+
+function getPortalGrade(score: number | null): {
+    grade: string;
+    label: string;
+    badgeClass: string;
+} {
+    const num = Number(score) || 0;
+    if (num >= 85) {
+        return {
+            grade: 'A',
+            label: 'Sangat Baik',
+            badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+        };
+    }
+    if (num >= 70) {
+        return {
+            grade: 'B',
+            label: 'Baik',
+            badgeClass: 'bg-blue-50 text-blue-700 border border-blue-200',
+        };
+    }
+    if (num >= 60) {
+        return {
+            grade: 'C',
+            label: 'Cukup',
+            badgeClass: 'bg-amber-50 text-amber-700 border border-amber-200',
+        };
+    }
+    return {
+        grade: 'D',
+        label: 'Perlu Perhatian',
+        badgeClass: 'bg-rose-50 text-rose-700 border border-rose-200',
+    };
+}
 
 export default function PortalPerformanceActivityPage({ pageTitle }: Props) {
     const [portal, setPortal] = useState<PortalSummary | null>(null);
@@ -340,29 +374,112 @@ export default function PortalPerformanceActivityPage({ pageTitle }: Props) {
                                 </span>
                             </div>
 
-                            <div className="mt-5 grid grid-cols-2 gap-3">
-                                <ScoreBox
-                                    label="OKR 50%"
-                                    value={selectedReview.okr_score}
-                                />
-                                <ScoreBox
-                                    label="KPI 40%"
-                                    value={selectedReview.kpi_score}
-                                />
-                                <ScoreBox
-                                    label="Review 10%"
-                                    value={selectedReview.manager_score}
-                                />
-                                <ScoreBox
-                                    label="Final"
-                                    value={selectedReview.final_score}
-                                    strong
-                                />
+                            <div className="mt-5 rounded-xl border border-slate-100 bg-stone-50/60 p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-500">
+                                            Skor Akhir Kinerja
+                                        </p>
+                                        <div className="mt-1 flex items-baseline gap-2">
+                                            <span className="text-3xl font-black tracking-tight text-slate-950">
+                                                {scoreLabel(selectedReview.final_score)}
+                                            </span>
+                                            {(() => {
+                                                const grade = getPortalGrade(selectedReview.final_score);
+                                                return (
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${grade.badgeClass}`}>
+                                                        Grade {grade.grade} ({grade.label})
+                                                    </span>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 pt-3 border-t border-slate-200/60">
+                                    <div className="flex justify-between text-xs text-slate-600 mb-1.5 font-medium">
+                                        <span>OKR (50%): <strong className="text-slate-900">{scoreLabel(selectedReview.okr_score)}</strong></span>
+                                        <span>KPI (40%): <strong className="text-slate-900">{scoreLabel(selectedReview.kpi_score)}</strong></span>
+                                        <span>Atasan (10%): <strong className="text-slate-900">{scoreLabel(selectedReview.manager_score)}</strong></span>
+                                    </div>
+                                    <div className="h-2 w-full rounded-full bg-stone-200 overflow-hidden flex">
+                                        <div
+                                            className="portal-primary-bg h-full"
+                                            style={{ width: `${Math.min(((selectedReview.okr_score || 0) * 0.5), 50)}%` }}
+                                            title="Kontribusi OKR (50%)"
+                                        />
+                                        <div
+                                            className="bg-blue-500 h-full"
+                                            style={{ width: `${Math.min(((selectedReview.kpi_score || 0) * 0.4), 40)}%` }}
+                                            title="Kontribusi KPI (40%)"
+                                        />
+                                        <div
+                                            className="bg-amber-500 h-full"
+                                            style={{ width: `${Math.min(((selectedReview.manager_score || 0) * 0.1), 10)}%` }}
+                                            title="Kontribusi Atasan (10%)"
+                                        />
+                                    </div>
+                                    <p className="mt-2 text-[11px] text-slate-400">
+                                        Formula: (50% Sasaran OKR) + (40% Indikator KPI) + (10% Evaluasi Atasan) = 100% Skor Akhir
+                                    </p>
+                                </div>
                             </div>
                         </section>
 
                         <section className="rounded-[16px] border border-slate-200 bg-white p-5">
-                            <SectionTitle icon={Target} title="OKR" />
+                            <SectionTitle icon={ListChecks} title="Indikator Utama (KPI) - 40%" />
+                            <div className="mt-4 space-y-3">
+                                {selectedReview.kpi_results.length ? (
+                                    selectedReview.kpi_results.map((kpi) => (
+                                        <div
+                                            key={kpi.id}
+                                            className="rounded-[12px] border border-slate-200 p-4"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm font-bold text-slate-950">
+                                                            {kpi.name}
+                                                        </p>
+                                                        {kpi.input_type === 'attendance' ? (
+                                                            <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
+                                                                ⚡ Absensi Otomatis
+                                                            </span>
+                                                        ) : null}
+                                                    </div>
+                                                    <p className="mt-1 text-xs text-slate-500">
+                                                        Target: {kpi.target_value} {kpi.unit ?? ''} • Aktual: <strong className="text-slate-900">{kpi.actual_value} {kpi.unit ?? ''}</strong> • Bobot: {kpi.weight}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-sm font-black text-slate-950">
+                                                        {scoreLabel(kpi.score)}
+                                                    </span>
+                                                    <span className="block text-[10px] font-semibold text-slate-400">
+                                                        poin
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100">
+                                                <div
+                                                    className="portal-primary-bg h-full rounded-full transition-all"
+                                                    style={{
+                                                        width: `${Math.min(kpi.score, 100)}%`,
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="rounded-[12px] bg-stone-50 px-4 py-5 text-sm text-slate-500">
+                                        Indikator KPI belum tersedia.
+                                    </p>
+                                )}
+                            </div>
+                        </section>
+
+                        <section className="rounded-[16px] border border-slate-200 bg-white p-5">
+                            <SectionTitle icon={Target} title="Sasaran Kerja (OKR) - 50%" />
                             <div className="mt-4 space-y-3">
                                 {selectedReview.objectives.length ? (
                                     selectedReview.objectives.map(
@@ -375,11 +492,7 @@ export default function PortalPerformanceActivityPage({ pageTitle }: Props) {
                                                     {objective.title}
                                                 </p>
                                                 <p className="mt-1 text-xs text-slate-500">
-                                                    Score{' '}
-                                                    {scoreLabel(
-                                                        objective.score,
-                                                    )}{' '}
-                                                    / Bobot {objective.weight}
+                                                    Skor {scoreLabel(objective.score)} / Bobot {objective.weight}
                                                 </p>
                                                 <div className="mt-3 space-y-2">
                                                     {objective.key_results.map(
@@ -405,7 +518,7 @@ export default function PortalPerformanceActivityPage({ pageTitle }: Props) {
                                                                     }{' '}
                                                                     {keyResult.unit ??
                                                                         ''}{' '}
-                                                                    - Score{' '}
+                                                                    - Skor{' '}
                                                                     {scoreLabel(
                                                                         keyResult.score,
                                                                     )}
@@ -419,51 +532,7 @@ export default function PortalPerformanceActivityPage({ pageTitle }: Props) {
                                     )
                                 ) : (
                                     <p className="rounded-[12px] bg-stone-50 px-4 py-5 text-sm text-slate-500">
-                                        Objective belum tersedia.
-                                    </p>
-                                )}
-                            </div>
-                        </section>
-
-                        <section className="rounded-[16px] border border-slate-200 bg-white p-5">
-                            <SectionTitle icon={ListChecks} title="KPI" />
-                            <div className="mt-4 space-y-3">
-                                {selectedReview.kpi_results.length ? (
-                                    selectedReview.kpi_results.map((kpi) => (
-                                        <div
-                                            key={kpi.id}
-                                            className="rounded-[12px] border border-slate-200 p-4"
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div>
-                                                    <p className="text-sm font-bold text-slate-950">
-                                                        {kpi.name}
-                                                    </p>
-                                                    <p className="mt-1 text-xs text-slate-500">
-                                                        Actual{' '}
-                                                        {kpi.actual_value} /
-                                                        Target{' '}
-                                                        {kpi.target_value}{' '}
-                                                        {kpi.unit ?? ''}
-                                                    </p>
-                                                </div>
-                                                <span className="text-sm font-black text-slate-950">
-                                                    {scoreLabel(kpi.score)}
-                                                </span>
-                                            </div>
-                                            <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100">
-                                                <div
-                                                    className="portal-primary-bg h-full rounded-full"
-                                                    style={{
-                                                        width: `${Math.min(kpi.score, 100)}%`,
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="rounded-[12px] bg-stone-50 px-4 py-5 text-sm text-slate-500">
-                                        KPI belum tersedia.
+                                        Sasaran OKR belum tersedia.
                                     </p>
                                 )}
                             </div>

@@ -36,6 +36,7 @@ class JobVacancy extends Model
         'status',
         'published_at',
         'closing_date',
+        'show_closing_date',
     ];
 
     /**
@@ -51,6 +52,7 @@ class JobVacancy extends Model
             'max_salary' => 'decimal:2',
             'published_at' => 'datetime',
             'closing_date' => 'date',
+            'show_closing_date' => 'boolean',
         ];
     }
 

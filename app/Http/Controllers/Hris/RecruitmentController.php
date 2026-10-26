@@ -81,6 +81,7 @@ class RecruitmentController extends Controller
                 'status' => $vacancy->status,
                 'published_at' => $vacancy->published_at?->toIso8601String(),
                 'closing_date' => $vacancy->closing_date?->format('Y-m-d'),
+                'show_closing_date' => (bool) ($vacancy->show_closing_date ?? true),
                 'applications_count' => $vacancy->applications_count,
                 'public_url' => route('careers.show', $vacancy->slug),
                 'division' => $vacancy->division ? [

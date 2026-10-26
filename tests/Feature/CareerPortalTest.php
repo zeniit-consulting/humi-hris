@@ -173,4 +173,51 @@ class CareerPortalTest extends TestCase
             'expected_salary' => '9000000.00',
         ]);
     }
+
+    public function test_public_career_page_respects_show_closing_date(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create();
+        $division = Division::factory()->create(['user_id' => $user->id]);
+        $position = Position::factory()->create(['user_id' => $user->id, 'division_id' => $division->id]);
+
+        $hiddenClosingVacancy = JobVacancy::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'title' => 'Backend Architect',
+            'slug' => 'backend-architect',
+            'status' => 'published',
+            'closing_date' => now()->addMonth()->toDateString(),
+            'show_closing_date' => false,
+        ]);
+
+        $visibleClosingVacancy = JobVacancy::factory()->create([
+            'user_id' => $user->id,
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'title' => 'UI/UX Designer',
+            'slug' => 'ui-ux-designer',
+            'status' => 'published',
+            'closing_date' => now()->addMonth()->toDateString(),
+            'show_closing_date' => true,
+        ]);
+
+        $responseHidden = $this->get(route('careers.show', $hiddenClosingVacancy->slug));
+        $responseHidden->assertOk();
+        $responseHidden->assertInertia(fn ($page) => $page
+            ->component('careers/show')
+            ->where('vacancy.show_closing_date', false)
+            ->where('vacancy.closing_date', null)
+        );
+
+        $responseVisible = $this->get(route('careers.show', $visibleClosingVacancy->slug));
+        $responseVisible->assertOk();
+        $responseVisible->assertInertia(fn ($page) => $page
+            ->component('careers/show')
+            ->where('vacancy.show_closing_date', true)
+            ->where('vacancy.closing_date', now()->addMonth()->toDateString())
+        );
+    }
 }

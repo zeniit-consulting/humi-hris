@@ -97,6 +97,7 @@ type Vacancy = {
     status: string;
     published_at: string | null;
     closing_date: string | null;
+    show_closing_date?: boolean;
     applications_count: number;
     public_url: string;
     division: {
@@ -181,6 +182,7 @@ type VacancyFormData = {
     benefits: string;
     status: string;
     closing_date: string;
+    show_closing_date: boolean;
 };
 
 type ApplicationFormData = {
@@ -246,6 +248,7 @@ const defaultVacancyForm: VacancyFormData = {
     benefits: '',
     status: 'draft',
     closing_date: '',
+    show_closing_date: true,
 };
 
 const defaultApplicationForm: ApplicationFormData = {
@@ -475,6 +478,7 @@ export default function RecruitmentPage() {
             benefits: vacancy.benefits ?? '',
             status: vacancy.status,
             closing_date: vacancy.closing_date ?? '',
+            show_closing_date: vacancy.show_closing_date ?? true,
         });
         setVacancyDialogOpen(true);
     };
@@ -981,6 +985,11 @@ export default function RecruitmentPage() {
                                                             Closing:{' '}
                                                             {formatDate(
                                                                 vacancy.closing_date,
+                                                            )}
+                                                            {!vacancy.show_closing_date && (
+                                                                <span className="ml-1 text-[11px] font-medium text-amber-600">
+                                                                    (Disembunyikan di publik)
+                                                                </span>
                                                             )}
                                                         </p>
                                                     </div>
@@ -1674,6 +1683,26 @@ export default function RecruitmentPage() {
                                             )
                                         }
                                     />
+                                    <div className="flex items-center space-x-2 pt-0.5">
+                                        <input
+                                            type="checkbox"
+                                            id="show_closing_date"
+                                            checked={vacancyForm.data.show_closing_date}
+                                            onChange={(event) =>
+                                                vacancyForm.setData(
+                                                    'show_closing_date',
+                                                    event.target.checked,
+                                                )
+                                            }
+                                            className="size-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                                        />
+                                        <Label
+                                            htmlFor="show_closing_date"
+                                            className="text-xs font-normal text-slate-600 cursor-pointer select-none"
+                                        >
+                                            Tampilkan tanggal penutupan (expired date) di halaman publik
+                                        </Label>
+                                    </div>
                                     <InputError
                                         message={
                                             vacancyForm.errors.closing_date

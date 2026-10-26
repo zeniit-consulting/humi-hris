@@ -1,22 +1,37 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
+    Award,
+    Calendar,
     CalendarDays,
+    CheckCircle2,
+    ChevronRight,
     ClipboardCheck,
+    Clock,
     FilePenLine,
     Filter,
+    HelpCircle,
+    Info,
+    Layers,
+    LayoutDashboard,
     LineChart,
     ListChecks,
     Pencil,
     Plus,
     RefreshCw,
     Save,
+    Sparkles,
+    Target,
     Trash2,
     TrendingDown,
+    TrendingUp,
     Trophy,
+    User,
+    Users,
     UsersRound,
+    X,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -263,27 +278,33 @@ type ManagerReviewForm = {
     next_action: string;
 };
 
+const navigationTabs = [
+    { id: 'Dashboard', label: 'Ringkasan', icon: LayoutDashboard },
+    { id: 'Reviews', label: 'Evaluasi Karyawan', icon: Users },
+    { id: 'KPI Templates', label: 'Template KPI', icon: Layers },
+    { id: 'Periods', label: 'Periode Penilaian', icon: CalendarDays },
+] as const;
+
+type NavTabId = (typeof navigationTabs)[number]['id'];
+
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Performance', href: '/hris/performances' },
+    { title: 'HRIS', href: '/hris/attendances' },
+    { title: 'Kinerja & KPI', href: '/hris/performances' },
 ];
 
-const tabs = ['Dashboard', 'Reviews', 'KPI Templates', 'Periods'] as const;
-
-const periodDefaults = (): PeriodForm => {
+function periodDefaults(): PeriodForm {
     const now = new Date();
-    const first = new Date(now.getFullYear(), now.getMonth(), 1);
-    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
 
     return {
-        name: first.toLocaleDateString('id-ID', {
-            month: 'long',
-            year: 'numeric',
-        }),
-        starts_at: first.toISOString().slice(0, 10),
-        ends_at: last.toISOString().slice(0, 10),
+        name: `${now.toLocaleString('id-ID', { month: 'long' })} ${year}`,
+        starts_at: `${year}-${month}-01`,
+        ends_at: `${year}-${month}-${String(lastDay).padStart(2, '0')}`,
         status: 'draft',
     };
-};
+}
 
 const templateDefaults: TemplateForm = {
     name: '',
@@ -296,7 +317,7 @@ const templateDefaults: TemplateForm = {
 const metricDefaults: MetricForm = {
     name: '',
     description: '',
-    unit: '',
+    unit: '%',
     target_value: '100',
     weight: '1',
     input_type: 'manual',
@@ -325,6 +346,103 @@ const keyResultDefaults: KeyResultForm = {
     status: 'not_started',
 };
 
+export function getScoreGrade(score: number): {
+    grade: 'A' | 'B' | 'C' | 'D';
+    label: string;
+    badgeClass: string;
+    textClass: string;
+    bgClass: string;
+} {
+    const val = Number(score) || 0;
+    if (val >= 85) {
+        return {
+            grade: 'A',
+            label: 'Sangat Baik',
+            badgeClass:
+                'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+            textClass: 'text-emerald-600 dark:text-emerald-400',
+            bgClass: 'bg-emerald-500',
+        };
+    }
+    if (val >= 70) {
+        return {
+            grade: 'B',
+            label: 'Baik',
+            badgeClass:
+                'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
+            textClass: 'text-blue-600 dark:text-blue-400',
+            bgClass: 'bg-blue-500',
+        };
+    }
+    if (val >= 60) {
+        return {
+            grade: 'C',
+            label: 'Cukup',
+            badgeClass:
+                'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+            textClass: 'text-amber-600 dark:text-amber-400',
+            bgClass: 'bg-amber-500',
+        };
+    }
+    return {
+        grade: 'D',
+        label: 'Perlu Perhatian',
+        badgeClass:
+            'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800',
+        textClass: 'text-rose-600 dark:text-rose-400',
+        bgClass: 'bg-rose-500',
+    };
+}
+
+export function statusLabel(status: string) {
+    switch (status) {
+        case 'not_started':
+            return 'Belum Dimulai';
+        case 'in_progress':
+            return 'Sedang Berjalan';
+        case 'submitted':
+            return 'Menunggu Review';
+        case 'completed':
+            return 'Selesai';
+        case 'locked':
+            return 'Terkunci';
+        case 'draft':
+            return 'Draf';
+        case 'active':
+            return 'Aktif';
+        case 'closed':
+            return 'Ditutup';
+        case 'open':
+            return 'Terbuka';
+        case 'reviewed':
+            return 'Ditinjau';
+        default:
+            return status.replaceAll('_', ' ');
+    }
+}
+
+export function attendanceMetricLabel(metric: string) {
+    switch (metric) {
+        case 'attendance_rate':
+            return 'Tingkat Kehadiran (%)';
+        case 'on_time_rate':
+            return 'Ketepatan Waktu (%)';
+        case 'late_count':
+            return 'Keterlambatan (kali)';
+        case 'absent_count':
+            return 'Mangkir (kali)';
+        default:
+            return metric
+                .split('_')
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ');
+    }
+}
+
+export function formatScore(value: number) {
+    return Number(value || 0).toFixed(1);
+}
+
 export default function PerformanceIndex() {
     const {
         reviews,
@@ -343,8 +461,7 @@ export default function PerformanceIndex() {
         permissions,
     } = usePage<PageProps>().props;
 
-    const [activeTab, setActiveTab] =
-        useState<(typeof tabs)[number]>('Dashboard');
+    const [activeTab, setActiveTab] = useState<NavTabId>('Dashboard');
     const [selectedReviewId, setSelectedReviewId] = useState<number | null>(
         reviews.data[0]?.id ?? null,
     );
@@ -399,6 +516,28 @@ export default function PerformanceIndex() {
         next_action: '',
     });
 
+    // Auto-populate manager review form whenever selected review changes
+    useEffect(() => {
+        if (!selectedReview) {
+            return;
+        }
+        managerReviewForm.setData({
+            manager_id: selectedReview.manager
+                ? String(selectedReview.manager.id)
+                : '',
+            status: selectedReview.status,
+            manager_score:
+                selectedReview.manager_score !== null
+                    ? String(selectedReview.manager_score)
+                    : '',
+            manager_notes: selectedReview.manager_notes ?? '',
+            strengths: selectedReview.strengths ?? '',
+            improvement_areas: selectedReview.improvement_areas ?? '',
+            next_action: selectedReview.next_action ?? '',
+        });
+        managerReviewForm.clearErrors();
+    }, [selectedReview?.id]);
+
     const employeeOptions = useMemo(
         () =>
             employees.map((employee) => ({
@@ -439,7 +578,7 @@ export default function PerformanceIndex() {
         () =>
             periods.map((period) => ({
                 value: String(period.id),
-                label: `${period.name} (${period.status})`,
+                label: `${period.name} (${statusLabel(period.status)})`,
             })),
         [periods],
     );
@@ -454,6 +593,30 @@ export default function PerformanceIndex() {
             preserveScroll: true,
         });
     };
+
+    const resetFilters = () => {
+        const cleared = {
+            period_id: '',
+            status: '',
+            division_id: '',
+            position_id: '',
+            manager_id: '',
+            search: '',
+        };
+        setFilterState(cleared);
+        router.get('/hris/performances', cleared, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const hasActiveFilters = Boolean(
+        filterState.period_id ||
+            filterState.status ||
+            filterState.division_id ||
+            filterState.position_id ||
+            filterState.search,
+    );
 
     const openCreatePeriod = () => {
         setEditingPeriod(null);
@@ -734,28 +897,6 @@ export default function PerformanceIndex() {
         );
     };
 
-    const loadManagerReview = () => {
-        if (!selectedReview) {
-            return;
-        }
-
-        managerReviewForm.setData({
-            manager_id: selectedReview.manager
-                ? String(selectedReview.manager.id)
-                : '',
-            status: selectedReview.status,
-            manager_score:
-                selectedReview.manager_score !== null
-                    ? String(selectedReview.manager_score)
-                    : '',
-            manager_notes: selectedReview.manager_notes ?? '',
-            strengths: selectedReview.strengths ?? '',
-            improvement_areas: selectedReview.improvement_areas ?? '',
-            next_action: selectedReview.next_action ?? '',
-        });
-        managerReviewForm.clearErrors();
-    };
-
     const submitManagerReview = (event: FormEvent) => {
         event.preventDefault();
 
@@ -773,62 +914,97 @@ export default function PerformanceIndex() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Performance" />
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <Head title="Kinerja & KPI Karyawan" />
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">
+                {/* Header Section */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">
-                            HRIS
+                        <div className="flex items-center gap-2">
+                            <span className="inline-flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <Trophy className="size-4" />
+                            </span>
+                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+                                Kinerja & KPI Karyawan
+                            </h1>
+                        </div>
+                        <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+                            Kelola sasaran kerja, indikator KPI operasional, dan
+                            evaluasi performa karyawan secara terukur.
                         </p>
-                        <h1 className="text-2xl font-semibold tracking-tight">
-                            Employee Performance
-                        </h1>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+
+                    <div className="flex flex-wrap items-center gap-2">
                         {permissions.can_manage_all ? (
                             <>
                                 <Button
                                     type="button"
                                     variant="outline"
+                                    size="sm"
                                     onClick={openCreatePeriod}
+                                    className="gap-1.5"
                                 >
-                                    <CalendarDays className="size-4" />
+                                    <CalendarDays className="size-3.5 text-muted-foreground" />
                                     Periode
                                 </Button>
                                 <Button
                                     type="button"
                                     variant="outline"
+                                    size="sm"
                                     onClick={openCreateTemplate}
+                                    className="gap-1.5"
                                 >
-                                    <ListChecks className="size-4" />
+                                    <Layers className="size-3.5 text-muted-foreground" />
                                     Template KPI
                                 </Button>
                                 <Button
                                     type="button"
+                                    size="sm"
                                     onClick={openCreateReview}
+                                    className="gap-1.5"
                                 >
-                                    <Plus className="size-4" />
-                                    Review
+                                    <Plus className="size-3.5" />
+                                    Buat Evaluasi
                                 </Button>
                             </>
                         ) : null}
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 rounded-lg border bg-card p-1">
-                    {tabs.map((tab) => (
-                        <Button
-                            key={tab}
-                            type="button"
-                            variant={activeTab === tab ? 'default' : 'ghost'}
-                            size="sm"
-                            onClick={() => setActiveTab(tab)}
-                        >
-                            {tab}
-                        </Button>
-                    ))}
+                {/* Modern Navigation Tabs */}
+                <div className="flex flex-wrap items-center gap-1.5 rounded-xl border bg-muted/30 p-1.5">
+                    {navigationTabs.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs sm:text-sm font-medium transition-all ${
+                                    isActive
+                                        ? 'bg-background text-foreground shadow-xs'
+                                        : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+                                }`}
+                            >
+                                <Icon className="size-4" />
+                                <span>{tab.label}</span>
+                                {tab.id === 'Reviews' && reviews.total > 0 ? (
+                                    <span
+                                        className={`ml-0.5 rounded-full px-1.5 py-0.2 text-[10px] font-semibold ${
+                                            isActive
+                                                ? 'bg-primary/10 text-primary'
+                                                : 'bg-muted text-muted-foreground'
+                                        }`}
+                                    >
+                                        {reviews.total}
+                                    </span>
+                                ) : null}
+                            </button>
+                        );
+                    })}
                 </div>
 
+                {/* Tab: Ringkasan / Dashboard */}
                 {activeTab === 'Dashboard' ? (
                     <DashboardPanel
                         stats={stats}
@@ -840,276 +1016,341 @@ export default function PerformanceIndex() {
                     />
                 ) : null}
 
+                {/* Tab: Evaluasi Karyawan / Reviews */}
                 {activeTab === 'Reviews' ? (
-                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
-                        <Card>
-                            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <UsersRound className="size-4" />
-                                        Review Karyawan
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Kelola review penilaian kinerja karyawan.
-                                    </CardDescription>
-                                </div>
-                                <SimplePagination data={reviews} />
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-4">
-                                <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
-                                    <FieldSelect
-                                        label="Periode"
-                                        value={filterState.period_id}
-                                        options={[
-                                            { value: '', label: 'Semua' },
-                                            ...periodOptions,
-                                        ]}
-                                        onChange={(value) =>
-                                            setFilterState({
-                                                ...filterState,
-                                                period_id: value,
-                                            })
-                                        }
-                                    />
-                                    <FieldSelect
-                                        label="Status"
-                                        value={filterState.status}
-                                        options={[
-                                            { value: '', label: 'Semua' },
-                                            ...statusOptions.map((status) => ({
-                                                value: status,
-                                                label: statusLabel(status),
-                                            })),
-                                        ]}
-                                        onChange={(value) =>
-                                            setFilterState({
-                                                ...filterState,
-                                                status: value,
-                                            })
-                                        }
-                                    />
-                                    <SearchField
-                                        label="Cari"
-                                        value={filterState.search}
-                                        onChange={(value) =>
-                                            setFilterState({
-                                                ...filterState,
-                                                search: value,
-                                            })
-                                        }
-                                    />
-                                    <FieldSelect
-                                        label="Divisi"
-                                        value={filterState.division_id}
-                                        options={[
-                                            { value: '', label: 'Semua' },
-                                            ...divisionOptions,
-                                        ]}
-                                        onChange={(value) =>
-                                            setFilterState({
-                                                ...filterState,
-                                                division_id: value,
-                                            })
-                                        }
-                                    />
-                                    <FieldSelect
-                                        label="Posisi"
-                                        value={filterState.position_id}
-                                        options={[
-                                            { value: '', label: 'Semua' },
-                                            ...positionOptions,
-                                        ]}
-                                        onChange={(value) =>
-                                            setFilterState({
-                                                ...filterState,
-                                                position_id: value,
-                                            })
-                                        }
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="md:self-end"
-                                        onClick={submitFilters}
-                                    >
-                                        <Filter className="size-4" />
-                                        Filter
-                                    </Button>
-                                </div>
+                    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_480px]">
+                        {/* Left: Daftar Evaluasi & Filter */}
+                        <div className="flex flex-col gap-4">
+                            <Card className="shadow-xs border-muted/80">
+                                <CardHeader className="p-4 sm:p-5 pb-3">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                        <div>
+                                            <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                                <UsersRound className="size-4 text-primary" />
+                                                Daftar Penilaian Karyawan
+                                            </CardTitle>
+                                            <CardDescription className="text-xs">
+                                                Menampilkan {reviews.data.length}{' '}
+                                                dari {reviews.total} data
+                                                penilaian.
+                                            </CardDescription>
+                                        </div>
+                                        <SimplePagination data={reviews} />
+                                    </div>
 
-                                <div className="overflow-hidden rounded-lg border">
-                                    <table className="w-full text-left text-sm">
-                                        <thead className="bg-muted/50 text-xs text-muted-foreground uppercase">
-                                            <tr>
-                                                <th className="px-3 py-2">
-                                                    Karyawan
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    Periode
-                                                </th>
-                                                <th className="px-3 py-2">
-                                                    Status
-                                                </th>
-                                                <th className="px-3 py-2 text-right">
-                                                    OKR
-                                                </th>
-                                                <th className="px-3 py-2 text-right">
-                                                    KPI
-                                                </th>
-                                                <th className="px-3 py-2 text-right">
-                                                    Final
-                                                </th>
-                                                <th className="px-3 py-2 text-right">
-                                                    Aksi
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {reviews.data.length ? (
-                                                reviews.data.map((review) => (
-                                                    <tr
-                                                        key={review.id}
-                                                        className="border-t"
-                                                    >
-                                                        <td className="px-3 py-3">
-                                                            <p className="font-medium">
-                                                                {
-                                                                    review
-                                                                        .employee
-                                                                        ?.full_name
-                                                                }
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                {review.employee
-                                                                    ?.division
-                                                                    ?.name ??
-                                                                    '-'}{' '}
-                                                                /{' '}
-                                                                {review.employee
-                                                                    ?.position
-                                                                    ?.name ??
-                                                                    '-'}
-                                                            </p>
-                                                        </td>
-                                                        <td className="px-3 py-3">
-                                                            {review.period
-                                                                ?.name ?? '-'}
-                                                        </td>
-                                                        <td className="px-3 py-3">
-                                                            <StatusBadge
-                                                                status={
-                                                                    review.status
-                                                                }
-                                                            />
-                                                        </td>
-                                                        <td className="px-3 py-3 text-right tabular-nums">
-                                                            {formatScore(
-                                                                review.okr_score,
-                                                            )}
-                                                        </td>
-                                                        <td className="px-3 py-3 text-right tabular-nums">
-                                                            {formatScore(
-                                                                review.kpi_score,
-                                                            )}
-                                                        </td>
-                                                        <td className="px-3 py-3 text-right tabular-nums">
-                                                            <span className="font-semibold">
-                                                                {formatScore(
-                                                                    review.final_score,
-                                                                )}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-3 py-3 text-right">
-                                                            <Button
-                                                                type="button"
-                                                                size="sm"
-                                                                variant={
-                                                                    selectedReview?.id ===
-                                                                    review.id
-                                                                        ? 'default'
-                                                                        : 'outline'
-                                                                }
+                                    {/* Compact, Clean Filter Bar */}
+                                    <div className="mt-3.5 grid gap-2.5 sm:grid-cols-2 md:grid-cols-4 pt-3 border-t">
+                                        <div className="relative">
+                                            <Input
+                                                placeholder="Cari nama / NIK..."
+                                                value={filterState.search}
+                                                onChange={(e) =>
+                                                    setFilterState({
+                                                        ...filterState,
+                                                        search: e.target.value,
+                                                    })
+                                                }
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        submitFilters();
+                                                    }
+                                                }}
+                                                className="h-8 text-xs pr-7"
+                                            />
+                                            {filterState.search ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setFilterState({
+                                                            ...filterState,
+                                                            search: '',
+                                                        })
+                                                    }
+                                                    className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+                                                >
+                                                    <X className="size-3.5" />
+                                                </button>
+                                            ) : null}
+                                        </div>
+
+                                        <select
+                                            value={filterState.period_id}
+                                            onChange={(e) =>
+                                                setFilterState({
+                                                    ...filterState,
+                                                    period_id: e.target.value,
+                                                })
+                                            }
+                                            className="h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs outline-none"
+                                        >
+                                            <option value="">Semua Periode</option>
+                                            {periodOptions.map((opt) => (
+                                                <option
+                                                    key={opt.value}
+                                                    value={opt.value}
+                                                >
+                                                    {opt.label}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                        <select
+                                            value={filterState.status}
+                                            onChange={(e) =>
+                                                setFilterState({
+                                                    ...filterState,
+                                                    status: e.target.value,
+                                                })
+                                            }
+                                            className="h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs outline-none"
+                                        >
+                                            <option value="">Semua Status</option>
+                                            {statusOptions.map((status) => (
+                                                <option
+                                                    key={status}
+                                                    value={status}
+                                                >
+                                                    {statusLabel(status)}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                        <div className="flex items-center gap-1.5">
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="secondary"
+                                                className="h-8 flex-1 text-xs gap-1.5"
+                                                onClick={submitFilters}
+                                            >
+                                                <Filter className="size-3.5" />
+                                                Terapkan
+                                            </Button>
+                                            {hasActiveFilters ? (
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-8 text-xs text-muted-foreground hover:text-foreground px-2"
+                                                    onClick={resetFilters}
+                                                    title="Reset Filter"
+                                                >
+                                                    <X className="size-3.5" />
+                                                </Button>
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                </CardHeader>
+
+                                <CardContent className="p-0">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left text-xs">
+                                            <thead className="bg-muted/40 text-[11px] font-medium text-muted-foreground uppercase border-y">
+                                                <tr>
+                                                    <th className="px-4 py-2.5">
+                                                        Karyawan
+                                                    </th>
+                                                    <th className="px-3 py-2.5">
+                                                        Periode
+                                                    </th>
+                                                    <th className="px-3 py-2.5">
+                                                        Status
+                                                    </th>
+                                                    <th className="px-3 py-2.5 text-center">
+                                                        Skor Akhir
+                                                    </th>
+                                                    <th className="px-4 py-2.5 text-right">
+                                                        Aksi
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-muted/60">
+                                                {reviews.data.length ? (
+                                                    reviews.data.map((review) => {
+                                                        const isSelected =
+                                                            selectedReview?.id ===
+                                                            review.id;
+                                                        const grade = getScoreGrade(
+                                                            review.final_score,
+                                                        );
+                                                        const employeeName =
+                                                            review.employee
+                                                                ?.full_name ??
+                                                            'Tanpa Nama';
+                                                        const initials =
+                                                            employeeName
+                                                                .split(' ')
+                                                                .slice(0, 2)
+                                                                .map((n) => n[0])
+                                                                .join('')
+                                                                .toUpperCase();
+
+                                                        return (
+                                                            <tr
+                                                                key={review.id}
+                                                                className={`transition-colors cursor-pointer hover:bg-muted/30 ${
+                                                                    isSelected
+                                                                        ? 'bg-primary/5 font-medium border-l-2 border-l-primary'
+                                                                        : ''
+                                                                }`}
                                                                 onClick={() =>
                                                                     setSelectedReviewId(
                                                                         review.id,
                                                                     )
                                                                 }
                                                             >
-                                                                Kelola
-                                                            </Button>
+                                                                <td className="px-4 py-3">
+                                                                    <div className="flex items-center gap-2.5">
+                                                                        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                                                                            {initials}
+                                                                        </span>
+                                                                        <div className="min-w-0">
+                                                                            <p className="truncate font-semibold text-foreground text-xs">
+                                                                                {employeeName}
+                                                                            </p>
+                                                                            <p className="truncate text-[11px] text-muted-foreground">
+                                                                                {review.employee
+                                                                                    ?.employee_code ??
+                                                                                    '-'}{' '}
+                                                                                •{' '}
+                                                                                {review.employee
+                                                                                    ?.position
+                                                                                    ?.name ??
+                                                                                    review.employee
+                                                                                        ?.division
+                                                                                        ?.name ??
+                                                                                    '-'}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-3 py-3 text-muted-foreground whitespace-nowrap">
+                                                                    {review.period
+                                                                        ?.name ??
+                                                                        '-'}
+                                                                </td>
+                                                                <td className="px-3 py-3 whitespace-nowrap">
+                                                                    <StatusBadge
+                                                                        status={
+                                                                            review.status
+                                                                        }
+                                                                    />
+                                                                </td>
+                                                                <td className="px-3 py-3 text-center whitespace-nowrap">
+                                                                    <div className="inline-flex items-center gap-1.5">
+                                                                        <span className="font-bold tabular-nums text-sm">
+                                                                            {formatScore(
+                                                                                review.final_score,
+                                                                            )}
+                                                                        </span>
+                                                                        <span
+                                                                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border ${grade.badgeClass}`}
+                                                                        >
+                                                                            {grade.grade}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-4 py-3 text-right">
+                                                                    <Button
+                                                                        type="button"
+                                                                        size="sm"
+                                                                        variant={
+                                                                            isSelected
+                                                                                ? 'default'
+                                                                                : 'ghost'
+                                                                        }
+                                                                        className="h-7 text-xs px-2.5"
+                                                                        onClick={(
+                                                                            e,
+                                                                        ) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedReviewId(
+                                                                                review.id,
+                                                                            );
+                                                                        }}
+                                                                    >
+                                                                        {isSelected
+                                                                            ? 'Dipilih'
+                                                                            : 'Kelola'}
+                                                                    </Button>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })
+                                                ) : (
+                                                    <tr>
+                                                        <td
+                                                            colSpan={5}
+                                                            className="px-4 py-12 text-center text-muted-foreground"
+                                                        >
+                                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                                <UsersRound className="size-8 text-muted-foreground/40" />
+                                                                <p className="text-sm font-medium">
+                                                                    Tidak ada data
+                                                                    penilaian
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground max-w-sm">
+                                                                    {hasActiveFilters
+                                                                        ? 'Coba sesuaikan filter pencarian atau periode Anda.'
+                                                                        : 'Klik tombol "Buat Evaluasi" di atas untuk memulai penilaian karyawan.'}
+                                                                </p>
+                                                            </div>
                                                         </td>
                                                     </tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td
-                                                        colSpan={7}
-                                                        className="px-3 py-8 text-center text-muted-foreground"
-                                                    >
-                                                        Belum ada review
-                                                        performance.
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <FilePenLine className="size-4" />
-                                    Detail Review
-                                </CardTitle>
-                                <CardDescription>
-                                    {selectedReview?.employee?.label ??
-                                        'Pilih review'}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {selectedReview ? (
-                                    <ReviewDetail
-                                        review={selectedReview}
-                                        locked={locked}
-                                        permissions={permissions}
-                                        managerOptions={managerSelectOptions}
-                                        statusOptions={statusOptions}
-                                        managerReviewForm={managerReviewForm}
-                                        onLoadManagerReview={loadManagerReview}
-                                        onSubmitManagerReview={
-                                            submitManagerReview
-                                        }
-                                        onCreateObjective={openCreateObjective}
-                                        onEditObjective={openEditObjective}
-                                        onDeleteObjective={(objective) =>
-                                            router.delete(
-                                                `/hris/performances/objectives/${objective.id}`,
-                                                { preserveScroll: true },
-                                            )
-                                        }
-                                        onCreateKeyResult={openCreateKeyResult}
-                                        onEditKeyResult={openEditKeyResult}
-                                        onDeleteKeyResult={(keyResult) =>
-                                            router.delete(
-                                                `/hris/performances/key-results/${keyResult.id}`,
-                                                { preserveScroll: true },
-                                            )
-                                        }
-                                        onEditKpi={openEditKpi}
-                                        onSyncAttendance={syncAttendance}
-                                    />
-                                ) : (
-                                    <p className="text-sm text-muted-foreground">
-                                        Tidak ada review pada filter saat ini.
+                        {/* Right: Detail Evaluasi Karyawan Terpilih */}
+                        <div>
+                            {selectedReview ? (
+                                <ReviewDetailPanel
+                                    review={selectedReview}
+                                    locked={locked}
+                                    permissions={permissions}
+                                    managerOptions={managerSelectOptions}
+                                    statusOptions={statusOptions}
+                                    managerReviewForm={managerReviewForm}
+                                    onSubmitManagerReview={
+                                        submitManagerReview
+                                    }
+                                    onCreateObjective={openCreateObjective}
+                                    onEditObjective={openEditObjective}
+                                    onDeleteObjective={(objective) =>
+                                        router.delete(
+                                            `/hris/performances/objectives/${objective.id}`,
+                                            { preserveScroll: true },
+                                        )
+                                    }
+                                    onCreateKeyResult={openCreateKeyResult}
+                                    onEditKeyResult={openEditKeyResult}
+                                    onDeleteKeyResult={(keyResult) =>
+                                        router.delete(
+                                            `/hris/performances/key-results/${keyResult.id}`,
+                                            { preserveScroll: true },
+                                        )
+                                    }
+                                    onEditKpi={openEditKpi}
+                                    onSyncAttendance={syncAttendance}
+                                />
+                            ) : (
+                                <Card className="p-8 text-center text-muted-foreground border-dashed">
+                                    <p className="text-sm">
+                                        Pilih salah satu karyawan di sebelah kiri
+                                        untuk melihat dan mengelola rincian
+                                        penilaian KPI.
                                     </p>
-                                )}
-                            </CardContent>
-                        </Card>
+                                </Card>
+                            )}
+                        </div>
                     </div>
                 ) : null}
 
+                {/* Tab: Template KPI */}
                 {activeTab === 'KPI Templates' ? (
                     <TemplatePanel
                         templates={templates}
@@ -1144,6 +1385,7 @@ export default function PerformanceIndex() {
                     />
                 ) : null}
 
+                {/* Tab: Periode Penilaian */}
                 {activeTab === 'Periods' ? (
                     <PeriodPanel
                         periods={periods}
@@ -1154,14 +1396,18 @@ export default function PerformanceIndex() {
                 ) : null}
             </div>
 
+            {/* Modal Periode */}
             <Dialog open={periodDialogOpen} onOpenChange={setPeriodDialogOpen}>
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>
-                            {editingPeriod ? 'Edit Periode' : 'Buat Periode'}
+                            {editingPeriod
+                                ? 'Edit Periode Penilaian'
+                                : 'Buat Periode Penilaian'}
                         </DialogTitle>
                         <DialogDescription>
-                            Periode bulanan untuk siklus performance review.
+                            Tentukan rentang tanggal siklus penilaian kinerja
+                            karyawan.
                         </DialogDescription>
                     </DialogHeader>
                     <form
@@ -1169,16 +1415,17 @@ export default function PerformanceIndex() {
                         className="flex flex-col gap-4"
                     >
                         <TextField
-                            label="Nama"
+                            label="Nama Periode"
                             value={periodForm.data.name}
                             onChange={(value) =>
                                 periodForm.setData('name', value)
                             }
                             error={periodForm.errors.name}
+                            placeholder="Contoh: Juni 2026 atau Q2 2026"
                         />
                         <div className="grid gap-3 md:grid-cols-2">
                             <TextField
-                                label="Mulai"
+                                label="Tanggal Mulai"
                                 type="date"
                                 value={periodForm.data.starts_at}
                                 onChange={(value) =>
@@ -1187,7 +1434,7 @@ export default function PerformanceIndex() {
                                 error={periodForm.errors.starts_at}
                             />
                             <TextField
-                                label="Selesai"
+                                label="Tanggal Selesai"
                                 type="date"
                                 value={periodForm.data.ends_at}
                                 onChange={(value) =>
@@ -1197,7 +1444,7 @@ export default function PerformanceIndex() {
                             />
                         </div>
                         <FieldSelect
-                            label="Status"
+                            label="Status Periode"
                             value={periodForm.data.status}
                             options={periodStatusOptions.map((status) => ({
                                 value: status,
@@ -1208,7 +1455,7 @@ export default function PerformanceIndex() {
                             }
                             error={periodForm.errors.status}
                         />
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 pt-2">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -1220,14 +1467,15 @@ export default function PerformanceIndex() {
                                 type="submit"
                                 disabled={periodForm.processing}
                             >
-                                <Save className="size-4" />
-                                Simpan
+                                <Save className="size-4 mr-1.5" />
+                                Simpan Periode
                             </Button>
                         </div>
                     </form>
                 </DialogContent>
             </Dialog>
 
+            {/* Modal Template KPI */}
             <Dialog
                 open={templateDialogOpen}
                 onOpenChange={setTemplateDialogOpen}
@@ -1237,11 +1485,12 @@ export default function PerformanceIndex() {
                         <DialogTitle>
                             {editingTemplate
                                 ? 'Edit Template KPI'
-                                : 'Buat Template KPI'}
+                                : 'Buat Template KPI Baru'}
                         </DialogTitle>
                         <DialogDescription>
-                            Template dapat dikaitkan ke divisi atau posisi
-                            tertentu.
+                            Template KPI akan otomatis disematkan saat membuat
+                            penilaian untuk karyawan di divisi atau posisi
+                            terkait.
                         </DialogDescription>
                     </DialogHeader>
                     <form
@@ -1249,24 +1498,26 @@ export default function PerformanceIndex() {
                         className="flex flex-col gap-4"
                     >
                         <TextField
-                            label="Nama"
+                            label="Nama Template"
                             value={templateForm.data.name}
                             onChange={(value) =>
                                 templateForm.setData('name', value)
                             }
                             error={templateForm.errors.name}
+                            placeholder="Contoh: KPI Staff Marketing atau KPI Umum"
                         />
                         <TextAreaField
-                            label="Deskripsi"
+                            label="Deskripsi / Keterangan"
                             value={templateForm.data.description}
                             onChange={(value) =>
                                 templateForm.setData('description', value)
                             }
                             error={templateForm.errors.description}
+                            placeholder="Jelaskan standar indikator kerja yang digunakan pada template ini..."
                         />
                         <div className="grid gap-3 md:grid-cols-2">
                             <SearchSelectField
-                                label="Divisi"
+                                label="Kaitkan ke Divisi (Opsional)"
                                 value={templateForm.data.division_id}
                                 options={divisionOptions}
                                 onChange={(value) =>
@@ -1275,7 +1526,7 @@ export default function PerformanceIndex() {
                                 error={templateForm.errors.division_id}
                             />
                             <SearchSelectField
-                                label="Posisi"
+                                label="Kaitkan ke Posisi (Opsional)"
                                 value={templateForm.data.position_id}
                                 options={positionOptions}
                                 onChange={(value) =>
@@ -1284,7 +1535,7 @@ export default function PerformanceIndex() {
                                 error={templateForm.errors.position_id}
                             />
                         </div>
-                        <label className="flex items-center gap-2 text-sm">
+                        <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={templateForm.data.is_active}
@@ -1294,10 +1545,11 @@ export default function PerformanceIndex() {
                                         event.target.checked,
                                     )
                                 }
+                                className="rounded border-input text-primary focus:ring-primary size-4"
                             />
-                            Aktif
+                            <span>Aktifkan template ini untuk penilaian baru</span>
                         </label>
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 pt-2">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -1309,21 +1561,22 @@ export default function PerformanceIndex() {
                                 type="submit"
                                 disabled={templateForm.processing}
                             >
-                                <Save className="size-4" />
-                                Simpan
+                                <Save className="size-4 mr-1.5" />
+                                Simpan Template
                             </Button>
                         </div>
                     </form>
                 </DialogContent>
             </Dialog>
 
+            {/* Modal Metrik KPI */}
             <Dialog open={metricDialogOpen} onOpenChange={setMetricDialogOpen}>
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>
                             {editingMetric
-                                ? 'Edit Metric KPI'
-                                : 'Tambah Metric KPI'}
+                                ? 'Edit Indikator KPI'
+                                : 'Tambah Indikator KPI'}
                         </DialogTitle>
                         <DialogDescription>
                             {metricTemplate?.name ?? 'Template KPI'}
@@ -1334,16 +1587,17 @@ export default function PerformanceIndex() {
                         className="flex flex-col gap-4"
                     >
                         <TextField
-                            label="Nama"
+                            label="Nama Indikator / Metrik"
                             value={metricForm.data.name}
                             onChange={(value) =>
                                 metricForm.setData('name', value)
                             }
                             error={metricForm.errors.name}
+                            placeholder="Contoh: Tingkat Kehadiran Karyawan atau Target Penjualan"
                         />
                         <div className="grid gap-3 md:grid-cols-3">
                             <TextField
-                                label="Target"
+                                label="Target Nilai"
                                 type="number"
                                 value={metricForm.data.target_value}
                                 onChange={(value) =>
@@ -1352,15 +1606,16 @@ export default function PerformanceIndex() {
                                 error={metricForm.errors.target_value}
                             />
                             <TextField
-                                label="Unit"
+                                label="Satuan (Unit)"
                                 value={metricForm.data.unit}
                                 onChange={(value) =>
                                     metricForm.setData('unit', value)
                                 }
                                 error={metricForm.errors.unit}
+                                placeholder="Contoh: %, transaksi, dokumen"
                             />
                             <TextField
-                                label="Bobot"
+                                label="Bobot (Weight)"
                                 type="number"
                                 value={metricForm.data.weight}
                                 onChange={(value) =>
@@ -1371,13 +1626,16 @@ export default function PerformanceIndex() {
                         </div>
                         <div className="grid gap-3 md:grid-cols-3">
                             <FieldSelect
-                                label="Input"
+                                label="Sumber Data"
                                 value={metricForm.data.input_type}
                                 options={[
-                                    { value: 'manual', label: 'Manual' },
+                                    {
+                                        value: 'manual',
+                                        label: 'Input Manual',
+                                    },
                                     {
                                         value: 'attendance',
-                                        label: 'Attendance',
+                                        label: 'Otomatis dari Absensi',
                                     },
                                 ]}
                                 onChange={(value) =>
@@ -1389,10 +1647,10 @@ export default function PerformanceIndex() {
                                 error={metricForm.errors.input_type}
                             />
                             <FieldSelect
-                                label="Attendance Metric"
+                                label="Metrik Absensi"
                                 value={metricForm.data.attendance_metric}
                                 options={[
-                                    { value: '', label: '-' },
+                                    { value: '', label: '- Pilih Sumber -' },
                                     ...attendanceMetricOptions.map(
                                         (metric) => ({
                                             value: metric,
@@ -1414,16 +1672,16 @@ export default function PerformanceIndex() {
                                 error={metricForm.errors.attendance_metric}
                             />
                             <FieldSelect
-                                label="Arah Skor"
+                                label="Arah Pencapaian"
                                 value={metricForm.data.direction}
                                 options={[
                                     {
                                         value: 'higher_is_better',
-                                        label: 'Lebih tinggi lebih baik',
+                                        label: 'Makin tinggi makin baik (Max)',
                                     },
                                     {
                                         value: 'lower_is_better',
-                                        label: 'Lebih rendah lebih baik',
+                                        label: 'Makin rendah makin baik (Min)',
                                     },
                                 ]}
                                 onChange={(value) =>
@@ -1438,14 +1696,14 @@ export default function PerformanceIndex() {
                             />
                         </div>
                         <TextAreaField
-                            label="Deskripsi"
+                            label="Deskripsi / Catatan Indikator"
                             value={metricForm.data.description}
                             onChange={(value) =>
                                 metricForm.setData('description', value)
                             }
                             error={metricForm.errors.description}
                         />
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 pt-2">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -1457,21 +1715,22 @@ export default function PerformanceIndex() {
                                 type="submit"
                                 disabled={metricForm.processing}
                             >
-                                <Save className="size-4" />
-                                Simpan
+                                <Save className="size-4 mr-1.5" />
+                                Simpan Indikator
                             </Button>
                         </div>
                     </form>
                 </DialogContent>
             </Dialog>
 
+            {/* Modal Buat Evaluasi */}
             <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Buat Review</DialogTitle>
+                        <DialogTitle>Buat Penilaian Kinerja Karyawan</DialogTitle>
                         <DialogDescription>
-                            KPI akan otomatis diisi dari template divisi/posisi
-                            karyawan.
+                            Indikator KPI akan otomatis ditarik dari template
+                            divisi atau jabatan karyawan yang dipilih.
                         </DialogDescription>
                     </DialogHeader>
                     <form
@@ -1479,7 +1738,7 @@ export default function PerformanceIndex() {
                         className="flex flex-col gap-4"
                     >
                         <SearchSelectField
-                            label="Periode"
+                            label="Periode Penilaian"
                             value={reviewForm.data.performance_period_id}
                             options={periodOptions}
                             onChange={(value) =>
@@ -1491,7 +1750,7 @@ export default function PerformanceIndex() {
                             error={reviewForm.errors.performance_period_id}
                         />
                         <SearchSelectField
-                            label="Karyawan"
+                            label="Karyawan yang Dinilai"
                             value={reviewForm.data.employee_id}
                             options={employeeOptions}
                             onChange={(value) =>
@@ -1500,7 +1759,7 @@ export default function PerformanceIndex() {
                             error={reviewForm.errors.employee_id}
                         />
                         <SearchSelectField
-                            label="Manager"
+                            label="Atasan / Manager Penilai"
                             value={reviewForm.data.manager_id}
                             options={managerSelectOptions}
                             onChange={(value) =>
@@ -1508,7 +1767,7 @@ export default function PerformanceIndex() {
                             }
                             error={reviewForm.errors.manager_id}
                         />
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 pt-2">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -1520,14 +1779,15 @@ export default function PerformanceIndex() {
                                 type="submit"
                                 disabled={reviewForm.processing}
                             >
-                                <Plus className="size-4" />
-                                Buat
+                                <Plus className="size-4 mr-1.5" />
+                                Buat Penilaian
                             </Button>
                         </div>
                     </form>
                 </DialogContent>
             </Dialog>
 
+            {/* Modal Objective */}
             <Dialog
                 open={objectiveDialogOpen}
                 onOpenChange={setObjectiveDialogOpen}
@@ -1536,11 +1796,12 @@ export default function PerformanceIndex() {
                     <DialogHeader>
                         <DialogTitle>
                             {editingObjective
-                                ? 'Edit Objective'
-                                : 'Tambah Objective'}
+                                ? 'Edit Sasaran (Objective)'
+                                : 'Tambah Sasaran (Objective)'}
                         </DialogTitle>
                         <DialogDescription>
-                            Objective OKR untuk review terpilih.
+                            Sasaran strategis utama yang ingin dicapai karyawan
+                            pada periode ini.
                         </DialogDescription>
                     </DialogHeader>
                     <form
@@ -1548,16 +1809,17 @@ export default function PerformanceIndex() {
                         className="flex flex-col gap-4"
                     >
                         <TextField
-                            label="Objective"
+                            label="Judul Sasaran (Objective)"
                             value={objectiveForm.data.title}
                             onChange={(value) =>
                                 objectiveForm.setData('title', value)
                             }
                             error={objectiveForm.errors.title}
+                            placeholder="Contoh: Meningkatkan retensi pelanggan kuartal ini"
                         />
                         <div className="grid gap-3 md:grid-cols-2">
                             <TextField
-                                label="Bobot"
+                                label="Bobot Sasaran"
                                 type="number"
                                 value={objectiveForm.data.weight}
                                 onChange={(value) =>
@@ -1581,14 +1843,14 @@ export default function PerformanceIndex() {
                             />
                         </div>
                         <TextAreaField
-                            label="Deskripsi"
+                            label="Deskripsi / Catatan"
                             value={objectiveForm.data.description}
                             onChange={(value) =>
                                 objectiveForm.setData('description', value)
                             }
                             error={objectiveForm.errors.description}
                         />
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 pt-2">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -1600,14 +1862,15 @@ export default function PerformanceIndex() {
                                 type="submit"
                                 disabled={objectiveForm.processing}
                             >
-                                <Save className="size-4" />
-                                Simpan
+                                <Save className="size-4 mr-1.5" />
+                                Simpan Sasaran
                             </Button>
                         </div>
                     </form>
                 </DialogContent>
             </Dialog>
 
+            {/* Modal Key Result */}
             <Dialog
                 open={keyResultDialogOpen}
                 onOpenChange={setKeyResultDialogOpen}
@@ -1620,7 +1883,10 @@ export default function PerformanceIndex() {
                                 : 'Tambah Key Result'}
                         </DialogTitle>
                         <DialogDescription>
-                            {keyResultObjective?.title ?? 'Objective'}
+                            Target terukur untuk sasaran:{' '}
+                            <span className="font-semibold text-foreground">
+                                {keyResultObjective?.title}
+                            </span>
                         </DialogDescription>
                     </DialogHeader>
                     <form
@@ -1628,12 +1894,13 @@ export default function PerformanceIndex() {
                         className="flex flex-col gap-4"
                     >
                         <TextField
-                            label="Key Result"
+                            label="Target Capaian (Key Result)"
                             value={keyResultForm.data.title}
                             onChange={(value) =>
                                 keyResultForm.setData('title', value)
                             }
                             error={keyResultForm.errors.title}
+                            placeholder="Contoh: Merilis 3 fitur baru"
                         />
                         <div className="grid gap-3 md:grid-cols-3">
                             <TextField
@@ -1646,7 +1913,7 @@ export default function PerformanceIndex() {
                                 error={keyResultForm.errors.target_value}
                             />
                             <TextField
-                                label="Actual"
+                                label="Aktual / Capaian"
                                 type="number"
                                 value={keyResultForm.data.actual_value}
                                 onChange={(value) =>
@@ -1655,31 +1922,28 @@ export default function PerformanceIndex() {
                                 error={keyResultForm.errors.actual_value}
                             />
                             <TextField
-                                label="Unit"
+                                label="Satuan"
                                 value={keyResultForm.data.unit}
                                 onChange={(value) =>
                                     keyResultForm.setData('unit', value)
                                 }
                                 error={keyResultForm.errors.unit}
+                                placeholder="fitur / % / kali"
                             />
                         </div>
-                        <div className="grid gap-3">
-                            <FieldSelect
-                                label="Status"
-                                value={keyResultForm.data.status}
-                                options={objectiveStatusOptions.map(
-                                    (status) => ({
-                                        value: status,
-                                        label: statusLabel(status),
-                                    }),
-                                )}
-                                onChange={(value) =>
-                                    keyResultForm.setData('status', value)
-                                }
-                                error={keyResultForm.errors.status}
-                            />
-                        </div>
-                        <div className="flex justify-end gap-2">
+                        <FieldSelect
+                            label="Status"
+                            value={keyResultForm.data.status}
+                            options={objectiveStatusOptions.map((status) => ({
+                                value: status,
+                                label: statusLabel(status),
+                            }))}
+                            onChange={(value) =>
+                                keyResultForm.setData('status', value)
+                            }
+                            error={keyResultForm.errors.status}
+                        />
+                        <div className="flex justify-end gap-2 pt-2">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -1691,28 +1955,44 @@ export default function PerformanceIndex() {
                                 type="submit"
                                 disabled={keyResultForm.processing}
                             >
-                                <Save className="size-4" />
-                                Simpan
+                                <Save className="size-4 mr-1.5" />
+                                Simpan Key Result
                             </Button>
                         </div>
                     </form>
                 </DialogContent>
             </Dialog>
 
+            {/* Modal Update KPI Manual */}
             <Dialog
                 open={editingKpi !== null}
                 onOpenChange={(open) => !open && setEditingKpi(null)}
             >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Update KPI</DialogTitle>
-                        <DialogDescription>
+                        <DialogTitle>Update Capaian KPI</DialogTitle>
+                        <DialogDescription className="font-semibold text-foreground">
                             {editingKpi?.name}
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submitKpi} className="flex flex-col gap-4">
+                        <div className="rounded-lg bg-muted/40 p-3 text-xs flex justify-between">
+                            <div>
+                                <span className="text-muted-foreground">Target: </span>
+                                <span className="font-bold">
+                                    {editingKpi?.target_value}{' '}
+                                    {editingKpi?.unit ?? ''}
+                                </span>
+                            </div>
+                            <div>
+                                <span className="text-muted-foreground">Bobot: </span>
+                                <span className="font-bold">
+                                    {editingKpi?.weight}
+                                </span>
+                            </div>
+                        </div>
                         <TextField
-                            label="Actual"
+                            label="Nilai Capaian Aktual"
                             type="number"
                             value={kpiForm.data.actual_value}
                             onChange={(value) =>
@@ -1721,14 +2001,15 @@ export default function PerformanceIndex() {
                             error={kpiForm.errors.actual_value}
                         />
                         <TextAreaField
-                            label="Catatan"
+                            label="Catatan Capaian (Opsional)"
                             value={kpiForm.data.notes}
                             onChange={(value) =>
                                 kpiForm.setData('notes', value)
                             }
                             error={kpiForm.errors.notes}
+                            placeholder="Tuliskan kendala, bukti pencapaian, atau keterangan pendukung..."
                         />
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 pt-2">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -1737,8 +2018,8 @@ export default function PerformanceIndex() {
                                 Batal
                             </Button>
                             <Button type="submit" disabled={kpiForm.processing}>
-                                <Save className="size-4" />
-                                Simpan
+                                <Save className="size-4 mr-1.5" />
+                                Simpan Capaian
                             </Button>
                         </div>
                     </form>
@@ -1748,6 +2029,9 @@ export default function PerformanceIndex() {
     );
 }
 
+// ==========================================
+// Subcomponent: Ringkasan / Dashboard Panel
+// ==========================================
 function DashboardPanel({
     stats,
     reviews,
@@ -1768,64 +2052,211 @@ function DashboardPanel({
         .sort((first, second) => second.final_score - first.final_score)
         .slice(0, 5);
 
+    const avgGrade = getScoreGrade(stats.average_final_score);
+
     return (
-        <div className="flex flex-col gap-4">
-            <div className="grid gap-4 md:grid-cols-4">
-                <StatCard
-                    title="Average Score"
-                    value={formatScore(stats.average_final_score)}
-                    icon={LineChart}
-                />
-                <StatCard
-                    title="At Risk"
-                    value={stats.at_risk}
-                    icon={TrendingDown}
-                />
-                <StatCard
-                    title="Pending Review"
-                    value={stats.pending_reviews}
-                    icon={ClipboardCheck}
-                />
-                <StatCard
-                    title="Completed"
-                    value={stats.completed_reviews}
-                    icon={Trophy}
-                />
+        <div className="flex flex-col gap-6">
+            {/* Minimalist Stat Cards */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Card className="shadow-xs border-muted/80">
+                    <CardContent className="p-4 sm:p-5 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground">
+                                Rata-rata Skor Kinerja
+                            </p>
+                            <div className="mt-1 flex items-baseline gap-2">
+                                <span className="text-2xl font-bold tracking-tight">
+                                    {formatScore(stats.average_final_score)}
+                                </span>
+                                <span
+                                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border ${avgGrade.badgeClass}`}
+                                >
+                                    Grade {avgGrade.grade}
+                                </span>
+                            </div>
+                        </div>
+                        <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <LineChart className="size-5" />
+                        </span>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-xs border-muted/80">
+                    <CardContent className="p-4 sm:p-5 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground">
+                                Perlu Perhatian (At Risk)
+                            </p>
+                            <div className="mt-1 flex items-baseline gap-2">
+                                <span className="text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
+                                    {stats.at_risk}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    skor &lt; 60
+                                </span>
+                            </div>
+                        </div>
+                        <span className="flex size-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                            <TrendingDown className="size-5" />
+                        </span>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-xs border-muted/80">
+                    <CardContent className="p-4 sm:p-5 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground">
+                                Menunggu Evaluasi
+                            </p>
+                            <div className="mt-1 flex items-baseline gap-2">
+                                <span className="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
+                                    {stats.pending_reviews}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    karyawan
+                                </span>
+                            </div>
+                        </div>
+                        <span className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                            <Clock className="size-5" />
+                        </span>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-xs border-muted/80">
+                    <CardContent className="p-4 sm:p-5 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground">
+                                Penilaian Selesai
+                            </p>
+                            <div className="mt-1 flex items-baseline gap-2">
+                                <span className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+                                    {stats.completed_reviews}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    selesai / terkunci
+                                </span>
+                            </div>
+                        </div>
+                        <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            <CheckCircle2 className="size-5" />
+                        </span>
+                    </CardContent>
+                </Card>
             </div>
-            <div className="grid gap-4 xl:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Needs Action</CardTitle>
-                        <CardDescription>
-                            Review yang perlu ditangani manager.
+
+            {/* Panduan Penilaian KPI (Minimalist & Easy to Understand) */}
+            <Card className="bg-primary/[0.03] border-primary/20 shadow-xs">
+                <CardHeader className="p-4 sm:p-5 pb-3">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                        <Sparkles className="size-4 text-primary" />
+                        Cara Kerja & Komposisi Penilaian KPI
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                        Sistem penilaian kinerja Humi menggabungkan 3 pilar
+                        evaluasi untuk menghasilkan nilai akhir yang objektif dan
+                        adil:
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-5 pt-0">
+                    <div className="grid gap-3 sm:grid-cols-3 pt-2">
+                        <div className="rounded-lg border bg-background/80 p-3 shadow-2xs">
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="font-bold text-xs text-primary flex items-center gap-1.5">
+                                    <Target className="size-3.5" />
+                                    1. Sasaran OKR
+                                </span>
+                                <Badge variant="secondary" className="text-[10px]">
+                                    Bobot 50%
+                                </Badge>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                Pencapaian target strategis dan proyek kerja
+                                yang disepakati bersama pada awal periode.
+                            </p>
+                        </div>
+
+                        <div className="rounded-lg border bg-background/80 p-3 shadow-2xs">
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="font-bold text-xs text-primary flex items-center gap-1.5">
+                                    <LineChart className="size-3.5" />
+                                    2. Indikator KPI
+                                </span>
+                                <Badge variant="secondary" className="text-[10px]">
+                                    Bobot 40%
+                                </Badge>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                Metrik operasional harian. Dapat tersinkron
+                                otomatis dari data absensi (kehadiran & ketepatan
+                                waktu).
+                            </p>
+                        </div>
+
+                        <div className="rounded-lg border bg-background/80 p-3 shadow-2xs">
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="font-bold text-xs text-primary flex items-center gap-1.5">
+                                    <FilePenLine className="size-3.5" />
+                                    3. Evaluasi Atasan
+                                </span>
+                                <Badge variant="secondary" className="text-[10px]">
+                                    Bobot 10%
+                                </Badge>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                Penilaian kualitatif langsung dari manager,
+                                apresiasi kelebihan, dan arahan pengembangan
+                                masa depan.
+                            </p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Bottom: Needs Action & Top Performers */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                <Card className="shadow-xs border-muted/80">
+                    <CardHeader className="p-4 sm:p-5 pb-3">
+                        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                            <TrendingDown className="size-4 text-rose-500" />
+                            Perlu Tindakan (Skor di Bawah 60)
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                            Karyawan dengan capaian rendah yang memerlukan sesi
+                            coaching atau bantuan dari atasan.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="flex flex-col gap-3">
+                    <CardContent className="p-4 sm:p-5 pt-0 flex flex-col gap-2">
                         {atRisk.length ? (
-                            atRisk
-                                .slice(0, 6)
-                                .map((review) => (
-                                    <ActionRow
-                                        key={review.id}
-                                        review={review}
-                                        onClick={() => onSelectReview(review)}
-                                    />
-                                ))
+                            atRisk.slice(0, 5).map((review) => (
+                                <ActionRow
+                                    key={review.id}
+                                    review={review}
+                                    onClick={() => onSelectReview(review)}
+                                />
+                            ))
                         ) : (
-                            <p className="text-sm text-muted-foreground">
-                                Tidak ada review berisiko pada filter saat ini.
-                            </p>
+                            <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+                                <CheckCircle2 className="size-6 text-emerald-500 mx-auto mb-2 opacity-80" />
+                                Luar biasa! Tidak ada karyawan dengan capaian di
+                                bawah 60 pada filter ini.
+                            </div>
                         )}
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Top Performers</CardTitle>
-                        <CardDescription>
-                            Final score tertinggi pada filter saat ini.
+
+                <Card className="shadow-xs border-muted/80">
+                    <CardHeader className="p-4 sm:p-5 pb-3">
+                        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                            <Trophy className="size-4 text-amber-500" />
+                            Kinerja Tertinggi (Top Performers)
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                            Karyawan dengan akumulasi skor akhir terbaik pada
+                            periode saat ini.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="flex flex-col gap-3">
+                    <CardContent className="p-4 sm:p-5 pt-0 flex flex-col gap-2">
                         {topPerformers.length ? (
                             topPerformers.map((review) => (
                                 <ActionRow
@@ -1835,9 +2266,9 @@ function DashboardPanel({
                                 />
                             ))
                         ) : (
-                            <p className="text-sm text-muted-foreground">
-                                Belum ada data score.
-                            </p>
+                            <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+                                Belum ada data skor yang tersedia.
+                            </div>
                         )}
                     </CardContent>
                 </Card>
@@ -1846,14 +2277,16 @@ function DashboardPanel({
     );
 }
 
-function ReviewDetail({
+// ==========================================
+// Subcomponent: Detail Review Panel
+// ==========================================
+function ReviewDetailPanel({
     review,
     locked,
     permissions,
     managerOptions,
     statusOptions,
     managerReviewForm,
-    onLoadManagerReview,
     onSubmitManagerReview,
     onCreateObjective,
     onEditObjective,
@@ -1870,7 +2303,6 @@ function ReviewDetail({
     managerOptions: Array<{ value: string; label: string }>;
     statusOptions: string[];
     managerReviewForm: ReturnType<typeof useForm<ManagerReviewForm>>;
-    onLoadManagerReview: () => void;
     onSubmitManagerReview: (event: FormEvent) => void;
     onCreateObjective: () => void;
     onEditObjective: (objective: Objective) => void;
@@ -1881,360 +2313,698 @@ function ReviewDetail({
     onEditKpi: (kpi: KpiResult) => void;
     onSyncAttendance: () => void;
 }) {
+    const [subTab, setSubTab] = useState<'kpi' | 'okr' | 'manager' | 'checkins'>(
+        'kpi',
+    );
+
+    const grade = getScoreGrade(review.final_score);
+    const employeeName = review.employee?.full_name ?? 'Tanpa Nama';
+    const initials = employeeName
+        .split(' ')
+        .slice(0, 2)
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase();
+
     return (
-        <div className="flex flex-col gap-5">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-                <ScoreBox label="OKR 50%" value={review.okr_score} />
-                <ScoreBox label="KPI 40%" value={review.kpi_score} />
-                <ScoreBox
-                    label="Review 10%"
-                    value={review.manager_score ?? 0}
-                />
-                <ScoreBox label="Final" value={review.final_score} strong />
+        <div className="flex flex-col gap-4">
+            {/* Top Employee & Score Summary Card */}
+            <Card className="shadow-xs border-muted/80 overflow-hidden">
+                <CardContent className="p-4 sm:p-5">
+                    {/* Employee Profile Header */}
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary text-sm font-bold">
+                                {initials}
+                            </span>
+                            <div>
+                                <h3 className="font-bold text-foreground text-sm sm:text-base leading-tight">
+                                    {employeeName}
+                                </h3>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    {review.employee?.employee_code ?? '-'} •{' '}
+                                    {review.employee?.position?.name ??
+                                        review.employee?.division?.name ??
+                                        '-'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-1">
+                            <StatusBadge status={review.status} />
+                            <span className="text-[10px] text-muted-foreground">
+                                Periode: {review.period?.name ?? '-'}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Minimalist Final Score Hero */}
+                    <div className="mt-4 rounded-xl border bg-muted/20 p-3.5">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground">
+                                    Skor Akhir Kinerja
+                                </p>
+                                <div className="flex items-baseline gap-2 mt-0.5">
+                                    <span className="text-2xl font-black tabular-nums tracking-tight">
+                                        {formatScore(review.final_score)}
+                                    </span>
+                                    <span
+                                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border ${grade.badgeClass}`}
+                                    >
+                                        Grade {grade.grade} ({grade.label})
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="text-right text-xs text-muted-foreground">
+                                <p>
+                                    Atasan:{' '}
+                                    <span className="font-medium text-foreground">
+                                        {review.manager?.label?.split(' - ')[1] ??
+                                            review.manager?.label ??
+                                            '-'}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* 3-Pillar Progress Contribution Bar */}
+                        <div className="mt-3">
+                            <div className="flex justify-between text-[11px] text-muted-foreground mb-1">
+                                <span>
+                                    OKR 50%:{' '}
+                                    <strong className="text-foreground">
+                                        {formatScore(review.okr_score)}
+                                    </strong>
+                                </span>
+                                <span>
+                                    KPI 40%:{' '}
+                                    <strong className="text-foreground">
+                                        {formatScore(review.kpi_score)}
+                                    </strong>
+                                </span>
+                                <span>
+                                    Atasan 10%:{' '}
+                                    <strong className="text-foreground">
+                                        {formatScore(review.manager_score ?? 0)}
+                                    </strong>
+                                </span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-muted overflow-hidden flex">
+                                <div
+                                    className="bg-primary h-full transition-all"
+                                    style={{
+                                        width: `${Math.min((review.okr_score * 0.5), 50)}%`,
+                                    }}
+                                    title={`Kontribusi OKR: ${(review.okr_score * 0.5).toFixed(1)} poin`}
+                                />
+                                <div
+                                    className="bg-blue-500 h-full transition-all"
+                                    style={{
+                                        width: `${Math.min((review.kpi_score * 0.4), 40)}%`,
+                                    }}
+                                    title={`Kontribusi KPI: ${(review.kpi_score * 0.4).toFixed(1)} poin`}
+                                />
+                                <div
+                                    className="bg-amber-500 h-full transition-all"
+                                    style={{
+                                        width: `${Math.min(((review.manager_score ?? 0) * 0.1), 10)}%`,
+                                    }}
+                                    title={`Kontribusi Atasan: ${((review.manager_score ?? 0) * 0.1).toFixed(1)} poin`}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Sub-Tabs for Review Detail */}
+            <div className="flex rounded-lg border bg-muted/40 p-1 text-xs font-medium">
+                <button
+                    type="button"
+                    onClick={() => setSubTab('kpi')}
+                    className={`flex-1 py-1.5 rounded-md text-center transition-all ${
+                        subTab === 'kpi'
+                            ? 'bg-background text-foreground shadow-2xs font-semibold'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Indikator KPI ({review.kpi_results.length})
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setSubTab('okr')}
+                    className={`flex-1 py-1.5 rounded-md text-center transition-all ${
+                        subTab === 'okr'
+                            ? 'bg-background text-foreground shadow-2xs font-semibold'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Sasaran OKR ({review.objectives.length})
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setSubTab('manager')}
+                    className={`flex-1 py-1.5 rounded-md text-center transition-all ${
+                        subTab === 'manager'
+                            ? 'bg-background text-foreground shadow-2xs font-semibold'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Evaluasi Atasan
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setSubTab('checkins')}
+                    className={`flex-1 py-1.5 rounded-md text-center transition-all ${
+                        subTab === 'checkins'
+                            ? 'bg-background text-foreground shadow-2xs font-semibold'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Aktivitas ({review.check_ins.length})
+                </button>
             </div>
 
-            <section className="flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-semibold">OKR</h3>
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={onCreateObjective}
-                        disabled={locked}
-                    >
-                        <Plus className="size-4" />
-                        Objective
-                    </Button>
-                </div>
-                {review.objectives.length ? (
-                    review.objectives.map((objective) => (
-                        <div
-                            key={objective.id}
-                            className="rounded-lg border p-3"
+            {/* Sub-Tab 1: Indikator KPI */}
+            {subTab === 'kpi' ? (
+                <Card className="shadow-xs border-muted/80">
+                    <CardHeader className="p-4 sm:p-5 pb-3 flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                                <LineChart className="size-4 text-primary" />
+                                Indikator KPI (Bobot 40%)
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                                Skor KPI saat ini:{' '}
+                                <strong className="text-foreground">
+                                    {formatScore(review.kpi_score)}
+                                </strong>
+                            </CardDescription>
+                        </div>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-xs gap-1.5"
+                            onClick={onSyncAttendance}
+                            disabled={locked}
+                            title="Tarik otomatis data kehadiran dan ketepatan waktu dari mesin/aplikasi absensi"
                         >
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <p className="font-medium">
-                                        {objective.title}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        Bobot {objective.weight} / Score{' '}
-                                        {formatScore(objective.score)}
-                                    </p>
-                                </div>
-                                <div className="flex shrink-0 gap-1">
-                                    <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="ghost"
-                                        onClick={() =>
-                                            onCreateKeyResult(objective)
-                                        }
-                                        disabled={locked}
-                                    >
-                                        <Plus className="size-4" />
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="ghost"
-                                        onClick={() =>
-                                            onEditObjective(objective)
-                                        }
-                                        disabled={locked}
-                                    >
-                                        <Pencil className="size-4" />
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="ghost"
-                                        onClick={() =>
-                                            onDeleteObjective(objective)
-                                        }
-                                        disabled={locked}
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="mt-3 flex flex-col gap-2">
-                                {objective.key_results.map((keyResult) => (
+                            <RefreshCw className="size-3.5" />
+                            Sync Absensi
+                        </Button>
+                    </CardHeader>
+                    <CardContent className="p-4 sm:p-5 pt-0 flex flex-col gap-3">
+                        {review.kpi_results.length ? (
+                            review.kpi_results.map((kpi) => {
+                                const kpiGrade = getScoreGrade(kpi.score);
+                                return (
                                     <div
-                                        key={keyResult.id}
-                                        className="flex items-center justify-between gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
+                                        key={kpi.id}
+                                        className="rounded-lg border p-3 bg-card hover:bg-muted/10 transition-colors"
                                     >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-semibold text-xs text-foreground truncate">
+                                                        {kpi.name}
+                                                    </p>
+                                                    <span
+                                                        className={`text-[10px] px-1.5 py-0.2 rounded font-medium ${
+                                                            kpi.input_type ===
+                                                            'attendance'
+                                                                ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                                                                : 'bg-muted text-muted-foreground'
+                                                        }`}
+                                                    >
+                                                        {kpi.input_type ===
+                                                        'attendance'
+                                                            ? '⚡ Absensi'
+                                                            : 'Manual'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-muted-foreground mt-1">
+                                                    Target: {kpi.target_value}{' '}
+                                                    {kpi.unit ?? ''} • Aktual:{' '}
+                                                    <strong className="text-foreground">
+                                                        {kpi.actual_value}{' '}
+                                                        {kpi.unit ?? ''}
+                                                    </strong>{' '}
+                                                    • Bobot: {kpi.weight}
+                                                </p>
+                                                {kpi.notes ? (
+                                                    <p className="text-[11px] text-muted-foreground/80 mt-1 italic">
+                                                        Catatan: {kpi.notes}
+                                                    </p>
+                                                ) : null}
+                                            </div>
+
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <div className="text-right">
+                                                    <span className="text-xs font-bold tabular-nums">
+                                                        {formatScore(kpi.score)}
+                                                    </span>
+                                                    <span
+                                                        className={`block text-[9px] font-bold ${kpiGrade.textClass}`}
+                                                    >
+                                                        {kpiGrade.label}
+                                                    </span>
+                                                </div>
+
+                                                {kpi.input_type === 'manual' ? (
+                                                    <Button
+                                                        type="button"
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="size-7"
+                                                        onClick={() =>
+                                                            onEditKpi(kpi)
+                                                        }
+                                                        disabled={locked}
+                                                        title="Update Capaian"
+                                                    >
+                                                        <Pencil className="size-3.5" />
+                                                    </Button>
+                                                ) : null}
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-2.5">
+                                            <Progress
+                                                value={Math.min(kpi.score, 100)}
+                                                className="h-1.5"
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+                                <LineChart className="size-6 text-muted-foreground/40 mx-auto mb-2" />
+                                <p className="font-medium text-foreground">
+                                    Belum ada indikator KPI
+                                </p>
+                                <p className="mt-1 max-w-xs mx-auto">
+                                    Klik tombol "Sync Absensi" untuk menarik
+                                    data kehadiran atau atur template KPI
+                                    divisi.
+                                </p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            ) : null}
+
+            {/* Sub-Tab 2: Sasaran OKR */}
+            {subTab === 'okr' ? (
+                <Card className="shadow-xs border-muted/80">
+                    <CardHeader className="p-4 sm:p-5 pb-3 flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                                <Target className="size-4 text-primary" />
+                                Sasaran Strategis (Bobot 50%)
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                                Skor OKR saat ini:{' '}
+                                <strong className="text-foreground">
+                                    {formatScore(review.okr_score)}
+                                </strong>
+                            </CardDescription>
+                        </div>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-xs gap-1.5"
+                            onClick={onCreateObjective}
+                            disabled={locked}
+                        >
+                            <Plus className="size-3.5" />
+                            Tambah Sasaran
+                        </Button>
+                    </CardHeader>
+                    <CardContent className="p-4 sm:p-5 pt-0 flex flex-col gap-3">
+                        {review.objectives.length ? (
+                            review.objectives.map((objective) => (
+                                <div
+                                    key={objective.id}
+                                    className="rounded-lg border p-3 bg-card"
+                                >
+                                    <div className="flex items-start justify-between gap-2">
                                         <div>
-                                            <p>{keyResult.title}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {keyResult.actual_value}/
-                                                {keyResult.target_value}{' '}
-                                                {keyResult.unit ?? ''} / Score{' '}
-                                                {formatScore(keyResult.score)}
+                                            <p className="font-semibold text-xs text-foreground">
+                                                {objective.title}
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                                                Bobot: {objective.weight} • Skor:{' '}
+                                                <strong className="text-foreground">
+                                                    {formatScore(
+                                                        objective.score,
+                                                    )}
+                                                </strong>
                                             </p>
                                         </div>
-                                        <div className="flex gap-1">
+                                        <div className="flex items-center gap-1 shrink-0">
                                             <Button
                                                 type="button"
                                                 size="icon"
                                                 variant="ghost"
+                                                className="size-7"
                                                 onClick={() =>
-                                                    onEditKeyResult(
-                                                        objective,
-                                                        keyResult,
-                                                    )
+                                                    onCreateKeyResult(objective)
                                                 }
                                                 disabled={locked}
+                                                title="Tambah Target Key Result"
                                             >
-                                                <Pencil className="size-4" />
+                                                <Plus className="size-3.5" />
                                             </Button>
                                             <Button
                                                 type="button"
                                                 size="icon"
                                                 variant="ghost"
+                                                className="size-7"
                                                 onClick={() =>
-                                                    onDeleteKeyResult(keyResult)
+                                                    onEditObjective(objective)
                                                 }
                                                 disabled={locked}
+                                                title="Edit Sasaran"
                                             >
-                                                <Trash2 className="size-4" />
+                                                <Pencil className="size-3.5" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="ghost"
+                                                className="size-7 text-rose-500 hover:text-rose-600"
+                                                onClick={() =>
+                                                    onDeleteObjective(objective)
+                                                }
+                                                disabled={locked}
+                                                title="Hapus Sasaran"
+                                            >
+                                                <Trash2 className="size-3.5" />
                                             </Button>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <p className="text-sm text-muted-foreground">
-                        Belum ada objective.
-                    </p>
-                )}
-            </section>
 
-            <section className="flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-semibold">KPI</h3>
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={onSyncAttendance}
-                        disabled={locked}
-                    >
-                        <RefreshCw className="size-4" />
-                        Sync Attendance
-                    </Button>
-                </div>
-                {review.kpi_results.length ? (
-                    review.kpi_results.map((kpi) => (
-                        <div key={kpi.id} className="rounded-lg border p-3">
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <p className="font-medium">
-                                            {kpi.name}
-                                        </p>
-                                        <Badge
-                                            variant={
-                                                kpi.input_type === 'attendance'
-                                                    ? 'secondary'
-                                                    : 'outline'
-                                            }
-                                        >
-                                            {kpi.input_type}
-                                        </Badge>
+                                    {/* Key Results list */}
+                                    <div className="mt-2.5 flex flex-col gap-1.5 pl-2 border-l-2 border-primary/20">
+                                        {objective.key_results.length ? (
+                                            objective.key_results.map(
+                                                (keyResult) => (
+                                                    <div
+                                                        key={keyResult.id}
+                                                        className="flex items-center justify-between gap-2 rounded bg-muted/40 px-2.5 py-1.5 text-xs"
+                                                    >
+                                                        <div className="min-w-0">
+                                                            <p className="truncate text-[11px] font-medium">
+                                                                {keyResult.title}
+                                                            </p>
+                                                            <p className="text-[10px] text-muted-foreground">
+                                                                Capaian:{' '}
+                                                                {
+                                                                    keyResult.actual_value
+                                                                }
+                                                                /
+                                                                {
+                                                                    keyResult.target_value
+                                                                }{' '}
+                                                                {keyResult.unit ??
+                                                                    ''}{' '}
+                                                                • Skor:{' '}
+                                                                {formatScore(
+                                                                    keyResult.score,
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 shrink-0">
+                                                            <Button
+                                                                type="button"
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="size-6"
+                                                                onClick={() =>
+                                                                    onEditKeyResult(
+                                                                        objective,
+                                                                        keyResult,
+                                                                    )
+                                                                }
+                                                                disabled={locked}
+                                                            >
+                                                                <Pencil className="size-3" />
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="size-6 text-rose-500 hover:text-rose-600"
+                                                                onClick={() =>
+                                                                    onDeleteKeyResult(
+                                                                        keyResult,
+                                                                    )
+                                                                }
+                                                                disabled={locked}
+                                                            >
+                                                                <Trash2 className="size-3" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ),
+                                            )
+                                        ) : (
+                                            <p className="text-[11px] text-muted-foreground italic py-1">
+                                                Belum ada target Key Result.
+                                                Klik tombol '+' di atas untuk
+                                                menambahkan.
+                                            </p>
+                                        )}
                                     </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Actual {kpi.actual_value} / Target{' '}
-                                        {kpi.target_value} {kpi.unit ?? ''} /
-                                        Bobot {kpi.weight}
-                                    </p>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold tabular-nums">
-                                        {formatScore(kpi.score)}
-                                    </span>
-                                    {kpi.input_type === 'manual' ? (
-                                        <Button
-                                            type="button"
-                                            size="icon"
-                                            variant="ghost"
-                                            onClick={() => onEditKpi(kpi)}
-                                            disabled={locked}
-                                        >
-                                            <Pencil className="size-4" />
-                                        </Button>
+                            ))
+                        ) : (
+                            <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+                                <Target className="size-6 text-muted-foreground/40 mx-auto mb-2" />
+                                <p className="font-medium text-foreground">
+                                    Belum ada Sasaran OKR
+                                </p>
+                                <p className="mt-1">
+                                    Tambahkan sasaran kerja strategis untuk
+                                    karyawan pada periode ini.
+                                </p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            ) : null}
+
+            {/* Sub-Tab 3: Evaluasi Atasan */}
+            {subTab === 'manager' ? (
+                <Card className="shadow-xs border-muted/80">
+                    <CardHeader className="p-4 sm:p-5 pb-3">
+                        <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                            <FilePenLine className="size-4 text-primary" />
+                            Evaluasi & Catatan Atasan (Bobot 10%)
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                            Masukkan skor evaluasi atasan (skala 0 - 100) dan
+                            umpan balik pengembangan.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 sm:p-5 pt-0">
+                        <form
+                            onSubmit={onSubmitManagerReview}
+                            className="flex flex-col gap-3.5"
+                        >
+                            {permissions.can_manage_all ? (
+                                <SearchSelectField
+                                    label="Atasan / Manager Penilai"
+                                    value={managerReviewForm.data.manager_id}
+                                    options={managerOptions}
+                                    onChange={(value) =>
+                                        managerReviewForm.setData(
+                                            'manager_id',
+                                            value,
+                                        )
+                                    }
+                                    error={managerReviewForm.errors.manager_id}
+                                    disabled={locked}
+                                />
+                            ) : null}
+
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <FieldSelect
+                                    label="Status Evaluasi"
+                                    value={managerReviewForm.data.status}
+                                    options={statusOptions.map((status) => ({
+                                        value: status,
+                                        label: statusLabel(status),
+                                    }))}
+                                    onChange={(value) =>
+                                        managerReviewForm.setData(
+                                            'status',
+                                            value,
+                                        )
+                                    }
+                                    error={managerReviewForm.errors.status}
+                                    disabled={locked}
+                                />
+                                <TextField
+                                    label="Nilai dari Atasan (0 - 100)"
+                                    type="number"
+                                    value={managerReviewForm.data.manager_score}
+                                    onChange={(value) =>
+                                        managerReviewForm.setData(
+                                            'manager_score',
+                                            value,
+                                        )
+                                    }
+                                    error={
+                                        managerReviewForm.errors.manager_score
+                                    }
+                                    disabled={locked}
+                                    placeholder="Contoh: 85"
+                                />
+                            </div>
+
+                            <TextAreaField
+                                label="Catatan Evaluasi Umum"
+                                value={managerReviewForm.data.manager_notes}
+                                onChange={(value) =>
+                                    managerReviewForm.setData(
+                                        'manager_notes',
+                                        value,
+                                    )
+                                }
+                                error={managerReviewForm.errors.manager_notes}
+                                disabled={locked}
+                                placeholder="Ulasan umum mengenai kinerja karyawan pada periode ini..."
+                            />
+
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <TextAreaField
+                                    label="Kelebihan / Kekuatan Karyawan"
+                                    value={managerReviewForm.data.strengths}
+                                    onChange={(value) =>
+                                        managerReviewForm.setData(
+                                            'strengths',
+                                            value,
+                                        )
+                                    }
+                                    error={managerReviewForm.errors.strengths}
+                                    disabled={locked}
+                                    placeholder="Hal-hal positif yang patut dipertahankan..."
+                                />
+                                <TextAreaField
+                                    label="Area Peningkatan / Perbaikan"
+                                    value={
+                                        managerReviewForm.data.improvement_areas
+                                    }
+                                    onChange={(value) =>
+                                        managerReviewForm.setData(
+                                            'improvement_areas',
+                                            value,
+                                        )
+                                    }
+                                    error={
+                                        managerReviewForm.errors
+                                            .improvement_areas
+                                    }
+                                    disabled={locked}
+                                    placeholder="Hal-hal yang perlu ditingkatkan..."
+                                />
+                            </div>
+
+                            <TextAreaField
+                                label="Rencana Tindak Lanjut (Next Action)"
+                                value={managerReviewForm.data.next_action}
+                                onChange={(value) =>
+                                    managerReviewForm.setData(
+                                        'next_action',
+                                        value,
+                                    )
+                                }
+                                error={managerReviewForm.errors.next_action}
+                                disabled={locked}
+                                placeholder="Target atau pelatihan yang disepakati untuk periode berikutnya..."
+                            />
+
+                            <div className="flex justify-end pt-2">
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        locked || managerReviewForm.processing
+                                    }
+                                    className="gap-1.5"
+                                >
+                                    <Save className="size-4" />
+                                    Simpan Evaluasi
+                                </Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
+            ) : null}
+
+            {/* Sub-Tab 4: Aktivitas Progres (Check-ins) */}
+            {subTab === 'checkins' ? (
+                <Card className="shadow-xs border-muted/80">
+                    <CardHeader className="p-4 sm:p-5 pb-3">
+                        <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                            <Clock className="size-4 text-primary" />
+                            Aktivitas Kerja dari Portal Karyawan
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                            Riwayat progres mandiri yang dilaporkan oleh karyawan
+                            melalui portal self-service.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 sm:p-5 pt-0 flex flex-col gap-2.5">
+                        {review.check_ins.length ? (
+                            review.check_ins.map((checkIn) => (
+                                <div
+                                    key={checkIn.id}
+                                    className="rounded-lg border p-3 text-xs bg-muted/20"
+                                >
+                                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                                        <span className="font-semibold text-foreground flex items-center gap-1.5">
+                                            <Calendar className="size-3 text-muted-foreground" />
+                                            {checkIn.check_in_date}
+                                        </span>
+                                        <StatusBadge status={checkIn.status} />
+                                    </div>
+                                    {checkIn.kpi_result ? (
+                                        <p className="text-[11px] font-medium text-primary mb-1">
+                                            Acuan KPI: {checkIn.kpi_result.name}
+                                        </p>
+                                    ) : null}
+                                    <p className="text-foreground leading-relaxed">
+                                        {checkIn.summary}
+                                    </p>
+                                    {checkIn.action_items ? (
+                                        <p className="text-muted-foreground mt-1 text-[11px] bg-background/80 p-2 rounded border">
+                                            Rencana Aksi: {checkIn.action_items}
+                                        </p>
                                     ) : null}
                                 </div>
+                            ))
+                        ) : (
+                            <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+                                Belum ada catatan aktivitas yang dilaporkan
+                                karyawan melalui portal.
                             </div>
-                            <Progress
-                                value={Math.min(kpi.score, 100)}
-                                className="mt-3"
-                            />
-                        </div>
-                    ))
-                ) : (
-                    <p className="text-sm text-muted-foreground">
-                        Belum ada KPI result.
-                    </p>
-                )}
-            </section>
-
-            <section className="flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-semibold">Manager Review</h3>
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={onLoadManagerReview}
-                        disabled={locked}
-                    >
-                        <FilePenLine className="size-4" />
-                        Muat Data
-                    </Button>
-                </div>
-                <form
-                    onSubmit={onSubmitManagerReview}
-                    className="flex flex-col gap-3"
-                >
-                    {permissions.can_manage_all ? (
-                        <SearchSelectField
-                            label="Manager"
-                            value={managerReviewForm.data.manager_id}
-                            options={managerOptions}
-                            onChange={(value) =>
-                                managerReviewForm.setData('manager_id', value)
-                            }
-                            error={managerReviewForm.errors.manager_id}
-                            disabled={locked}
-                        />
-                    ) : null}
-                    <div className="grid gap-3 md:grid-cols-2">
-                        <FieldSelect
-                            label="Status"
-                            value={managerReviewForm.data.status}
-                            options={statusOptions.map((status) => ({
-                                value: status,
-                                label: statusLabel(status),
-                            }))}
-                            onChange={(value) =>
-                                managerReviewForm.setData('status', value)
-                            }
-                            error={managerReviewForm.errors.status}
-                            disabled={locked}
-                        />
-                        <TextField
-                            label="Manager Score"
-                            type="number"
-                            value={managerReviewForm.data.manager_score}
-                            onChange={(value) =>
-                                managerReviewForm.setData(
-                                    'manager_score',
-                                    value,
-                                )
-                            }
-                            error={managerReviewForm.errors.manager_score}
-                            disabled={locked}
-                        />
-                    </div>
-                    <TextAreaField
-                        label="Catatan"
-                        value={managerReviewForm.data.manager_notes}
-                        onChange={(value) =>
-                            managerReviewForm.setData('manager_notes', value)
-                        }
-                        error={managerReviewForm.errors.manager_notes}
-                        disabled={locked}
-                    />
-                    <TextAreaField
-                        label="Strengths"
-                        value={managerReviewForm.data.strengths}
-                        onChange={(value) =>
-                            managerReviewForm.setData('strengths', value)
-                        }
-                        error={managerReviewForm.errors.strengths}
-                        disabled={locked}
-                    />
-                    <TextAreaField
-                        label="Improvement Areas"
-                        value={managerReviewForm.data.improvement_areas}
-                        onChange={(value) =>
-                            managerReviewForm.setData(
-                                'improvement_areas',
-                                value,
-                            )
-                        }
-                        error={managerReviewForm.errors.improvement_areas}
-                        disabled={locked}
-                    />
-                    <TextAreaField
-                        label="Next Action"
-                        value={managerReviewForm.data.next_action}
-                        onChange={(value) =>
-                            managerReviewForm.setData('next_action', value)
-                        }
-                        error={managerReviewForm.errors.next_action}
-                        disabled={locked}
-                    />
-                    <Button
-                        type="submit"
-                        disabled={locked || managerReviewForm.processing}
-                        className="self-end"
-                    >
-                        <Save className="size-4" />
-                        Simpan Review
-                    </Button>
-                </form>
-            </section>
-
-            <section className="flex flex-col gap-3">
-                <div>
-                    <h3 className="text-sm font-semibold">Aktivitas User</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        Admin hanya melihat aktivitas yang ditambahkan user dari
-                        portal.
-                    </p>
-                </div>
-                {review.check_ins.length ? (
-                    review.check_ins.map((checkIn) => (
-                        <div
-                            key={checkIn.id}
-                            className="rounded-lg border px-3 py-2 text-sm"
-                        >
-                            <div className="flex items-center justify-between gap-2">
-                                <p className="font-medium">
-                                    {checkIn.check_in_date}
-                                </p>
-                                <StatusBadge status={checkIn.status} />
-                            </div>
-                            {checkIn.kpi_result ? (
-                                <p className="mt-1 text-xs font-medium text-muted-foreground">
-                                    KPI acuan: {checkIn.kpi_result.name}
-                                </p>
-                            ) : null}
-                            <p className="mt-1 text-muted-foreground">
-                                {checkIn.summary}
-                            </p>
-                            {checkIn.action_items ? (
-                                <p className="mt-1 text-muted-foreground">
-                                    {checkIn.action_items}
-                                </p>
-                            ) : null}
-                        </div>
-                    ))
-                ) : (
-                    <p className="rounded-lg border border-dashed px-3 py-4 text-sm text-muted-foreground">
-                        Belum ada aktivitas dari user.
-                    </p>
-                )}
-            </section>
+                        )}
+                    </CardContent>
+                </Card>
+            ) : null}
         </div>
     );
 }
 
+// ==========================================
+// Subcomponent: Template Panel
+// ==========================================
 function TemplatePanel({
     templates,
     canManage,
@@ -2257,32 +3027,41 @@ function TemplatePanel({
     onAddAttendanceDefaults: (template: KpiTemplate) => void;
 }) {
     return (
-        <Card>
-            <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <Card className="shadow-xs border-muted/80">
+            <CardHeader className="p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b">
                 <div>
-                    <CardTitle>KPI Templates</CardTitle>
-                    <CardDescription>
-                        Template KPI per divisi atau posisi.
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                        <Layers className="size-4 text-primary" />
+                        Template Indikator KPI
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                        Standar indikator kinerja yang otomatis disematkan
+                        berdasarkan divisi atau jabatan karyawan.
                     </CardDescription>
                 </div>
                 {canManage ? (
-                    <Button type="button" onClick={onCreate}>
-                        <Plus className="size-4" />
-                        Template
+                    <Button
+                        type="button"
+                        size="sm"
+                        onClick={onCreate}
+                        className="gap-1.5"
+                    >
+                        <Plus className="size-3.5" />
+                        Buat Template
                     </Button>
                 ) : null}
             </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent className="p-4 sm:p-5 flex flex-col gap-4">
                 {templates.length ? (
                     templates.map((template) => (
                         <div
                             key={template.id}
-                            className="rounded-lg border p-4"
+                            className="rounded-xl border bg-card p-4 shadow-2xs hover:border-primary/30 transition-colors"
                         >
-                            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between border-b pb-3">
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="font-semibold">
+                                        <h3 className="font-bold text-sm text-foreground">
                                             {template.name}
                                         </h3>
                                         <Badge
@@ -2291,73 +3070,92 @@ function TemplatePanel({
                                                     ? 'default'
                                                     : 'secondary'
                                             }
+                                            className="text-[10px]"
                                         >
                                             {template.is_active
-                                                ? 'active'
-                                                : 'inactive'}
+                                                ? 'Aktif'
+                                                : 'Nonaktif'}
                                         </Badge>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        {template.division?.name ??
-                                            'Semua divisi'}{' '}
-                                        /{' '}
-                                        {template.position?.name ??
-                                            'Semua posisi'}
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Divisi:{' '}
+                                        <span className="font-medium text-foreground">
+                                            {template.division?.name ??
+                                                'Semua Divisi'}
+                                        </span>{' '}
+                                        • Jabatan:{' '}
+                                        <span className="font-medium text-foreground">
+                                            {template.position?.name ??
+                                                'Semua Jabatan'}
+                                        </span>
                                     </p>
+                                    {template.description ? (
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            {template.description}
+                                        </p>
+                                    ) : null}
                                 </div>
+
                                 {canManage ? (
-                                    <div className="flex flex-wrap gap-1">
+                                    <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                                         <Button
                                             type="button"
                                             size="sm"
                                             variant="outline"
+                                            className="h-7 text-xs gap-1.5"
                                             onClick={() =>
-                                                onAddAttendanceDefaults(
-                                                    template,
-                                                )
+                                                onAddAttendanceDefaults(template)
                                             }
+                                            title="Tambahkan otomatis indikator Kehadiran & Ketepatan Waktu dari mesin absensi"
                                         >
-                                            <RefreshCw className="size-4" />
-                                            KPI Attendance
+                                            <RefreshCw className="size-3 text-muted-foreground" />
+                                            + Indikator Absensi
                                         </Button>
                                         <Button
                                             type="button"
                                             size="sm"
                                             variant="outline"
+                                            className="h-7 text-xs gap-1.5"
                                             onClick={() =>
                                                 onCreateMetric(template)
                                             }
                                         >
-                                            <Plus className="size-4" />
-                                            Metric
+                                            <Plus className="size-3" />
+                                            Metrik
                                         </Button>
                                         <Button
                                             type="button"
                                             size="icon"
                                             variant="ghost"
+                                            className="size-7"
                                             onClick={() => onEdit(template)}
+                                            title="Edit Template"
                                         >
-                                            <Pencil className="size-4" />
+                                            <Pencil className="size-3.5" />
                                         </Button>
                                         <Button
                                             type="button"
                                             size="icon"
                                             variant="ghost"
+                                            className="size-7 text-rose-500 hover:text-rose-600"
                                             onClick={() => onDelete(template)}
+                                            title="Hapus Template"
                                         >
-                                            <Trash2 className="size-4" />
+                                            <Trash2 className="size-3.5" />
                                         </Button>
                                     </div>
                                 ) : null}
                             </div>
-                            <div className="mt-4 overflow-hidden rounded-lg border">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="bg-muted/50 text-xs text-muted-foreground uppercase">
+
+                            {/* Metrics Table */}
+                            <div className="mt-3 overflow-hidden rounded-lg border">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-muted/40 text-[11px] font-medium text-muted-foreground uppercase">
                                         <tr>
                                             <th className="px-3 py-2">
-                                                Metric
+                                                Indikator KPI
                                             </th>
-                                            <th className="px-3 py-2">Input</th>
+                                            <th className="px-3 py-2">Sumber</th>
                                             <th className="px-3 py-2 text-right">
                                                 Target
                                             </th>
@@ -2371,83 +3169,123 @@ function TemplatePanel({
                                             ) : null}
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        {template.metrics.map((metric) => (
-                                            <tr
-                                                key={metric.id}
-                                                className="border-t"
-                                            >
-                                                <td className="px-3 py-3">
-                                                    <p className="font-medium">
-                                                        {metric.name}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {metric.attendance_metric
-                                                            ? attendanceMetricLabel(
-                                                                  metric.attendance_metric,
-                                                              )
-                                                            : metric.direction ===
-                                                                'lower_is_better'
-                                                              ? 'Lebih rendah lebih baik'
-                                                              : 'Lebih tinggi lebih baik'}
-                                                    </p>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {metric.input_type}
-                                                </td>
-                                                <td className="px-3 py-3 text-right tabular-nums">
-                                                    {metric.target_value}{' '}
-                                                    {metric.unit ?? ''}
-                                                </td>
-                                                <td className="px-3 py-3 text-right tabular-nums">
-                                                    {metric.weight}
-                                                </td>
-                                                {canManage ? (
-                                                    <td className="px-3 py-3 text-right">
-                                                        <Button
-                                                            type="button"
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            onClick={() =>
-                                                                onEditMetric(
-                                                                    template,
-                                                                    metric,
-                                                                )
-                                                            }
-                                                        >
-                                                            <Pencil className="size-4" />
-                                                        </Button>
-                                                        <Button
-                                                            type="button"
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            onClick={() =>
-                                                                onDeleteMetric(
-                                                                    metric,
-                                                                )
-                                                            }
-                                                        >
-                                                            <Trash2 className="size-4" />
-                                                        </Button>
+                                    <tbody className="divide-y divide-muted/60">
+                                        {template.metrics.length ? (
+                                            template.metrics.map((metric) => (
+                                                <tr
+                                                    key={metric.id}
+                                                    className="hover:bg-muted/20"
+                                                >
+                                                    <td className="px-3 py-2.5">
+                                                        <p className="font-semibold text-foreground text-xs">
+                                                            {metric.name}
+                                                        </p>
+                                                        <p className="text-[10px] text-muted-foreground">
+                                                            {metric.attendance_metric
+                                                                ? attendanceMetricLabel(
+                                                                      metric.attendance_metric,
+                                                                  )
+                                                                : metric.direction ===
+                                                                    'lower_is_better'
+                                                                  ? 'Makin rendah makin baik'
+                                                                  : 'Makin tinggi makin baik'}
+                                                        </p>
                                                     </td>
-                                                ) : null}
+                                                    <td className="px-3 py-2.5">
+                                                        <span
+                                                            className={`text-[10px] px-1.5 py-0.2 rounded font-medium ${
+                                                                metric.input_type ===
+                                                                'attendance'
+                                                                    ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                                                                    : 'bg-muted text-muted-foreground'
+                                                            }`}
+                                                        >
+                                                            {metric.input_type ===
+                                                            'attendance'
+                                                                ? '⚡ Otomatis Absensi'
+                                                                : 'Manual'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-right tabular-nums font-medium">
+                                                        {metric.target_value}{' '}
+                                                        {metric.unit ?? ''}
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-right tabular-nums">
+                                                        {metric.weight}
+                                                    </td>
+                                                    {canManage ? (
+                                                        <td className="px-3 py-2.5 text-right">
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                <Button
+                                                                    type="button"
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="size-6"
+                                                                    onClick={() =>
+                                                                        onEditMetric(
+                                                                            template,
+                                                                            metric,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Pencil className="size-3" />
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="size-6 text-rose-500 hover:text-rose-600"
+                                                                    onClick={() =>
+                                                                        onDeleteMetric(
+                                                                            metric,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="size-3" />
+                                                                </Button>
+                                                            </div>
+                                                        </td>
+                                                    ) : null}
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td
+                                                    colSpan={canManage ? 5 : 4}
+                                                    className="px-3 py-4 text-center text-xs text-muted-foreground"
+                                                >
+                                                    Belum ada indikator KPI pada
+                                                    template ini. Klik '+ Indikator
+                                                    Absensi' atau '+ Metrik'.
+                                                </td>
                                             </tr>
-                                        ))}
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     ))
                 ) : (
-                    <p className="text-sm text-muted-foreground">
-                        Belum ada template KPI.
-                    </p>
+                    <div className="rounded-lg border border-dashed p-8 text-center text-xs text-muted-foreground">
+                        <Layers className="size-8 text-muted-foreground/40 mx-auto mb-2" />
+                        <p className="font-medium text-foreground text-sm">
+                            Belum ada Template KPI
+                        </p>
+                        <p className="mt-1 max-w-sm mx-auto">
+                            Buat template untuk menetapkan standar indikator KPI
+                            yang berlaku otomatis bagi divisi atau jabatan
+                            tertentu.
+                        </p>
+                    </div>
                 )}
             </CardContent>
         </Card>
     );
 }
 
+// ==========================================
+// Subcomponent: Period Panel
+// ==========================================
 function PeriodPanel({
     periods,
     canManage,
@@ -2460,61 +3298,74 @@ function PeriodPanel({
     onEdit: (period: PerformancePeriod) => void;
 }) {
     return (
-        <Card>
-            <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <Card className="shadow-xs border-muted/80">
+            <CardHeader className="p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b">
                 <div>
-                    <CardTitle>Periods</CardTitle>
-                    <CardDescription>
-                        Siklus bulanan performance review.
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                        <CalendarDays className="size-4 text-primary" />
+                        Periode Penilaian Kinerja
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                        Siklus bulanan atau kuartalan untuk evaluasi kinerja
+                        karyawan.
                     </CardDescription>
                 </div>
                 {canManage ? (
-                    <Button type="button" onClick={onCreate}>
-                        <Plus className="size-4" />
-                        Periode
+                    <Button
+                        type="button"
+                        size="sm"
+                        onClick={onCreate}
+                        className="gap-1.5"
+                    >
+                        <Plus className="size-3.5" />
+                        Buat Periode
                     </Button>
                 ) : null}
             </CardHeader>
-            <CardContent>
-                <div className="overflow-hidden rounded-lg border">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-muted/50 text-xs text-muted-foreground uppercase">
+            <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                        <thead className="bg-muted/40 text-[11px] font-medium text-muted-foreground uppercase border-b">
                             <tr>
-                                <th className="px-3 py-2">Periode</th>
-                                <th className="px-3 py-2">Tanggal</th>
-                                <th className="px-3 py-2">Status</th>
-                                <th className="px-3 py-2 text-right">Review</th>
+                                <th className="px-4 py-3">Nama Periode</th>
+                                <th className="px-3 py-3">Rentang Tanggal</th>
+                                <th className="px-3 py-3">Status</th>
+                                <th className="px-3 py-3 text-center">
+                                    Jumlah Review
+                                </th>
                                 {canManage ? (
-                                    <th className="px-3 py-2 text-right">
+                                    <th className="px-4 py-3 text-right">
                                         Aksi
                                     </th>
                                 ) : null}
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-muted/60">
                             {periods.map((period) => (
-                                <tr key={period.id} className="border-t">
-                                    <td className="px-3 py-3 font-medium">
+                                <tr key={period.id} className="hover:bg-muted/20">
+                                    <td className="px-4 py-3 font-semibold text-foreground">
                                         {period.name}
                                     </td>
                                     <td className="px-3 py-3 text-muted-foreground">
-                                        {period.starts_at} - {period.ends_at}
+                                        {period.starts_at} s/d {period.ends_at}
                                     </td>
                                     <td className="px-3 py-3">
                                         <StatusBadge status={period.status} />
                                     </td>
-                                    <td className="px-3 py-3 text-right tabular-nums">
+                                    <td className="px-3 py-3 text-center tabular-nums font-medium">
                                         {period.reviews_count ?? 0}
                                     </td>
                                     {canManage ? (
-                                        <td className="px-3 py-3 text-right">
+                                        <td className="px-4 py-3 text-right">
                                             <Button
                                                 type="button"
-                                                size="icon"
+                                                size="sm"
                                                 variant="ghost"
+                                                className="h-7 text-xs gap-1"
                                                 onClick={() => onEdit(period)}
                                             >
-                                                <Pencil className="size-4" />
+                                                <Pencil className="size-3.5" />
+                                                Edit
                                             </Button>
                                         </td>
                                     ) : null}
@@ -2528,28 +3379,9 @@ function PeriodPanel({
     );
 }
 
-function StatCard({
-    title,
-    value,
-    icon: Icon,
-}: {
-    title: string;
-    value: string | number;
-    icon: typeof LineChart;
-}) {
-    return (
-        <Card className="gap-1 py-3">
-            <CardHeader className="flex flex-row items-center justify-between gap-3 px-4 pb-0">
-                <CardTitle className="text-xs font-medium">{title}</CardTitle>
-                <Icon className="size-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="px-4 pt-0">
-                <p className="text-xl font-semibold">{value}</p>
-            </CardContent>
-        </Card>
-    );
-}
-
+// ==========================================
+// Helper UI Components & Inputs
+// ==========================================
 function ActionRow({
     review,
     onClick,
@@ -2557,59 +3389,61 @@ function ActionRow({
     review: Review;
     onClick: () => void;
 }) {
+    const grade = getScoreGrade(review.final_score);
     return (
         <button
             type="button"
             onClick={onClick}
-            className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left hover:bg-muted/50"
+            className="flex items-center justify-between gap-3 rounded-lg border p-2.5 text-left hover:bg-muted/40 transition-colors w-full bg-card"
         >
-            <span className="min-w-0">
-                <span className="block truncate text-sm font-medium">
+            <div className="min-w-0">
+                <span className="block truncate text-xs font-semibold text-foreground">
                     {review.employee?.full_name ?? '-'}
                 </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                    {review.period?.name ?? '-'} / {statusLabel(review.status)}
+                <span className="block truncate text-[11px] text-muted-foreground">
+                    {review.period?.name ?? '-'} • {statusLabel(review.status)}
                 </span>
-            </span>
-            <span className="text-sm font-semibold tabular-nums">
-                {formatScore(review.final_score)}
-            </span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-xs font-bold tabular-nums">
+                    {formatScore(review.final_score)}
+                </span>
+                <span
+                    className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold border ${grade.badgeClass}`}
+                >
+                    {grade.grade}
+                </span>
+                <ChevronRight className="size-3.5 text-muted-foreground" />
+            </div>
         </button>
     );
 }
 
-function ScoreBox({
-    label,
-    value,
-    strong = false,
-}: {
-    label: string;
-    value: number;
-    strong?: boolean;
-}) {
-    return (
-        <div className="rounded-lg border px-3 py-2">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p
-                className={
-                    strong ? 'text-xl font-semibold' : 'text-lg font-semibold'
-                }
-            >
-                {formatScore(value)}
-            </p>
-        </div>
-    );
-}
-
 function StatusBadge({ status }: { status: string }) {
-    const variant =
-        status === 'completed' || status === 'active'
-            ? 'default'
-            : status === 'locked' || status === 'closed'
-              ? 'secondary'
-              : 'outline';
+    let variantClass =
+        'bg-muted text-muted-foreground border-transparent';
 
-    return <Badge variant={variant}>{statusLabel(status)}</Badge>;
+    if (status === 'completed' || status === 'active') {
+        variantClass =
+            'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
+    } else if (status === 'in_progress') {
+        variantClass =
+            'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800';
+    } else if (status === 'submitted') {
+        variantClass =
+            'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+    } else if (status === 'locked' || status === 'closed') {
+        variantClass =
+            'bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800';
+    }
+
+    return (
+        <span
+            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${variantClass}`}
+        >
+            {statusLabel(status)}
+        </span>
+    );
 }
 
 function TextField({
@@ -2619,6 +3453,7 @@ function TextField({
     error,
     type = 'text',
     disabled = false,
+    placeholder,
 }: {
     label: string;
     value: string;
@@ -2626,37 +3461,20 @@ function TextField({
     error?: string;
     type?: string;
     disabled?: boolean;
+    placeholder?: string;
 }) {
     return (
-        <div className="flex flex-col gap-2">
-            <Label>{label}</Label>
+        <div className="flex flex-col gap-1.5">
+            <Label className="text-xs">{label}</Label>
             <Input
                 type={type}
                 value={value}
                 disabled={disabled}
+                placeholder={placeholder}
                 onChange={(event) => onChange(event.target.value)}
+                className="h-9 text-xs"
             />
             <InputError message={error} />
-        </div>
-    );
-}
-
-function SearchField({
-    label,
-    value,
-    onChange,
-}: {
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-}) {
-    return (
-        <div className="flex flex-col gap-2">
-            <Label>{label}</Label>
-            <Input
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-            />
         </div>
     );
 }
@@ -2667,21 +3485,24 @@ function TextAreaField({
     onChange,
     error,
     disabled = false,
+    placeholder,
 }: {
     label: string;
     value: string;
     onChange: (value: string) => void;
     error?: string;
     disabled?: boolean;
+    placeholder?: string;
 }) {
     return (
-        <div className="flex flex-col gap-2">
-            <Label>{label}</Label>
+        <div className="flex flex-col gap-1.5">
+            <Label className="text-xs">{label}</Label>
             <textarea
                 value={value}
                 disabled={disabled}
+                placeholder={placeholder}
                 onChange={(event) => onChange(event.target.value)}
-                className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[2px] focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
             />
             <InputError message={error} />
         </div>
@@ -2704,8 +3525,8 @@ function SearchSelectField({
     disabled?: boolean;
 }) {
     return (
-        <div className="flex flex-col gap-2">
-            <Label>{label}</Label>
+        <div className="flex flex-col gap-1.5">
+            <Label className="text-xs">{label}</Label>
             <SearchableSelect
                 value={value}
                 options={options}
@@ -2733,13 +3554,13 @@ function FieldSelect({
     disabled?: boolean;
 }) {
     return (
-        <div className="flex flex-col gap-2">
-            <Label>{label}</Label>
+        <div className="flex flex-col gap-1.5">
+            <Label className="text-xs">{label}</Label>
             <select
                 value={value}
                 disabled={disabled}
                 onChange={(event) => onChange(event.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[2px] focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
             >
                 {options.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -2750,60 +3571,4 @@ function FieldSelect({
             <InputError message={error} />
         </div>
     );
-}
-
-function Pagination({
-    links,
-}: {
-    links: Array<{ url: string | null; label: string; active: boolean }>;
-}) {
-    if (links.length <= 3) {
-        return null;
-    }
-
-    return (
-        <div className="flex flex-wrap gap-2">
-            {links.map((link, index) =>
-                link.url ? (
-                    <Button
-                        key={`${link.label}-${index}`}
-                        asChild
-                        variant={link.active ? 'default' : 'outline'}
-                        size="sm"
-                    >
-                        <Link
-                            href={link.url}
-                            preserveState
-                            preserveScroll
-                            dangerouslySetInnerHTML={{ __html: link.label }}
-                        />
-                    </Button>
-                ) : (
-                    <Button
-                        key={`${link.label}-${index}`}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled
-                        dangerouslySetInnerHTML={{ __html: link.label }}
-                    />
-                ),
-            )}
-        </div>
-    );
-}
-
-function formatScore(value: number) {
-    return Number(value || 0).toFixed(1);
-}
-
-function statusLabel(status: string) {
-    return status.replaceAll('_', ' ');
-}
-
-function attendanceMetricLabel(metric: string) {
-    return metric
-        .split('_')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ');
 }

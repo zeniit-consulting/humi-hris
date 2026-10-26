@@ -77,7 +77,8 @@ class PublicCareerController extends Controller
                     'description' => $vacancy->description,
                     'requirements' => $vacancy->requirements,
                     'benefits' => $vacancy->benefits,
-                    'closing_date' => $vacancy->closing_date?->format('Y-m-d'),
+                    'closing_date' => $vacancy->show_closing_date ? $vacancy->closing_date?->format('Y-m-d') : null,
+                    'show_closing_date' => (bool) ($vacancy->show_closing_date ?? true),
                     'published_at' => $vacancy->published_at?->toIso8601String(),
                     'division' => $vacancy->division ? [
                         'id' => $vacancy->division->id,
@@ -146,7 +147,8 @@ class PublicCareerController extends Controller
                 'description' => $vacancy->description,
                 'requirements' => $vacancy->requirements,
                 'benefits' => $vacancy->benefits,
-                'closing_date' => $vacancy->closing_date?->format('Y-m-d'),
+                'closing_date' => $vacancy->show_closing_date ? $vacancy->closing_date?->format('Y-m-d') : null,
+                'show_closing_date' => (bool) ($vacancy->show_closing_date ?? true),
                 'published_at' => $vacancy->published_at?->toIso8601String(),
                 'division' => $vacancy->division ? [
                     'id' => $vacancy->division->id,

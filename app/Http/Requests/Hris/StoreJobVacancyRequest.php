@@ -31,6 +31,10 @@ class StoreJobVacancyRequest extends FormRequest
             $normalized['max_salary'] = $this->normalizeCurrencyInput($this->input('max_salary'));
         }
 
+        if ($this->has('show_closing_date')) {
+            $normalized['show_closing_date'] = $this->boolean('show_closing_date');
+        }
+
         if ($normalized !== []) {
             $this->merge($normalized);
         }
@@ -60,6 +64,7 @@ class StoreJobVacancyRequest extends FormRequest
             'benefits' => ['nullable', 'string', 'max:20000'],
             'status' => ['required', Rule::in(['draft', 'published', 'closed'])],
             'closing_date' => ['nullable', 'date'],
+            'show_closing_date' => ['nullable', 'boolean'],
         ];
     }
 

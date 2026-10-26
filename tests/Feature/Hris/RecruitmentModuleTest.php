@@ -204,4 +204,44 @@ class RecruitmentModuleTest extends TestCase
             (string) $contractResponse->headers->get('content-type')
         );
     }
+
+    public function test_admin_can_toggle_show_closing_date_on_vacancy(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $division = Division::factory()->create(['user_id' => $user->id]);
+        $position = Position::factory()->create(['user_id' => $user->id, 'division_id' => $division->id]);
+
+        $this->actingAs($user)->post(route('hris.recruitment.vacancies.store'), [
+            'title' => 'Product Designer',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'employment_type' => 'permanent',
+            'workplace_type' => 'hybrid',
+            'location' => 'Jakarta',
+            'openings' => 1,
+            'status' => 'published',
+            'closing_date' => now()->addMonth()->toDateString(),
+            'show_closing_date' => false,
+        ])->assertRedirect();
+
+        $vacancy = JobVacancy::query()->where('title', 'Product Designer')->firstOrFail();
+        $this->assertFalse($vacancy->show_closing_date);
+
+        $this->actingAs($user)->put(route('hris.recruitment.vacancies.update', $vacancy), [
+            'title' => 'Lead Product Designer',
+            'division_id' => $division->id,
+            'position_id' => $position->id,
+            'employment_type' => 'permanent',
+            'workplace_type' => 'hybrid',
+            'location' => 'Jakarta',
+            'openings' => 1,
+            'status' => 'published',
+            'closing_date' => now()->addMonth()->toDateString(),
+            'show_closing_date' => true,
+        ])->assertRedirect();
+
+        $vacancy->refresh();
+        $this->assertTrue($vacancy->show_closing_date);
+        $this->assertSame('Lead Product Designer', $vacancy->title);
+    }
 }

@@ -51,6 +51,7 @@ type Vacancy = {
     requirements: string | null;
     benefits: string | null;
     closing_date: string | null;
+    show_closing_date?: boolean;
     division: string | null;
     position: string | null;
     public_url: string;

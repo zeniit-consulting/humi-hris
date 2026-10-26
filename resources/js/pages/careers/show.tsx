@@ -44,6 +44,7 @@ type Vacancy = {
     requirements: string | null;
     benefits: string | null;
     closing_date: string | null;
+    show_closing_date?: boolean;
     division: string | null;
     position: string | null;
     apply_url: string;
@@ -269,10 +270,12 @@ export default function CareerShowPage() {
                                         <FileText className="size-4" />
                                         Kebutuhan {vacancy.openings} orang
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <LinkIcon className="size-4" />
-                                        Closing {vacancy.closing_date ?? '-'}
-                                    </div>
+                                    {vacancy.show_closing_date !== false && vacancy.closing_date ? (
+                                        <div className="flex items-center gap-2">
+                                            <LinkIcon className="size-4" />
+                                            Closing {vacancy.closing_date}
+                                        </div>
+                                    ) : null}
                                 </div>
                                 <div className="mt-6 rounded-[var(--landing-radius-card)] border border-[var(--landing-color-paper)]/15 bg-[var(--landing-color-paper)]/5 px-4 py-3 text-sm text-[var(--landing-color-paper)]/75">
                                     Rentang kompensasi:{' '}

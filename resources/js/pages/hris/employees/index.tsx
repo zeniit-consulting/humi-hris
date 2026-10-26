@@ -5584,7 +5584,7 @@ export default function EmployeesIndex() {
 
                                 <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                     <Label htmlFor="salary_type">
-                                        Tipe Gaji
+                                        Iuran BPJS (Nett atau Gross)
                                     </Label>
                                     <div className="space-y-1">
                                         <select
