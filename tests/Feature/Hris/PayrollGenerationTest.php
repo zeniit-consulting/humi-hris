@@ -15,6 +15,7 @@ use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\SubCompany;
 use App\Models\User;
+use App\Services\PayrollGenerationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -192,21 +193,66 @@ class PayrollGenerationTest extends TestCase
             'user_id' => $user->id,
             'period' => '2026-02',
             'employees_count' => 1,
-            'total_base_salary' => 3_000_000,
-            'total_allowances' => 300_000,
-            'total_net_salary' => 3_300_000,
+            'total_base_salary' => 2_727_272.73,
+            'total_allowances' => 272_727.27,
+            'total_net_salary' => 3_000_000,
         ]);
 
         $this->assertDatabaseHas('payroll_items', [
             'employee_id' => $employee->id,
-            'base_salary' => 3_000_000,
-            'allowances_total' => 300_000,
-            'net_salary' => 3_300_000,
+            'base_salary' => 2_727_272.73,
+            'allowances_total' => 272_727.27,
+            'net_salary' => 3_000_000,
             'is_prorated' => true,
-            'proration_working_days' => 20,
+            'proration_working_days' => 22,
             'proration_payable_days' => 10,
-            'proration_factor' => 0.5,
+            'proration_factor' => 0.454545,
         ]);
+    }
+
+    public function test_proration_uses_configured_working_days_without_reducing_full_period_salary(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        CompanySetting::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Test Company',
+            'active_working_days' => 26,
+            'working_days_type' => 'fixed',
+        ]);
+
+        $resigned = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2025-01-01',
+            'offboarded_at' => '2026-02-17',
+            'base_salary' => 2_600_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'is_active' => false,
+            'employment_status' => 'resigned',
+        ]);
+        $fullPeriod = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2025-01-01',
+            'base_salary' => 2_600_000,
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $run = app(PayrollGenerationService::class)->generateForPeriod($user->id, '2026-02', $user->id);
+        $resignedItem = $run->items()->where('employee_id', $resigned->id)->firstOrFail();
+        $fullPeriodItem = $run->items()->where('employee_id', $fullPeriod->id)->firstOrFail();
+
+        $this->assertSame(26, $resignedItem->proration_working_days);
+        $this->assertSame(12, $resignedItem->proration_payable_days);
+        $this->assertEqualsWithDelta(12 / 26, (float) $resignedItem->proration_factor, 0.000001);
+        $this->assertEquals(1_200_000, (float) $resignedItem->base_salary);
+
+        $this->assertSame(26, $fullPeriodItem->proration_working_days);
+        $this->assertSame(26, $fullPeriodItem->proration_payable_days);
+        $this->assertEquals(1, (float) $fullPeriodItem->proration_factor);
+        $this->assertEquals(2_600_000, (float) $fullPeriodItem->base_salary);
     }
 
     public function test_pph21_gross_up_adds_tax_allowance_and_equal_tax_deduction(): void

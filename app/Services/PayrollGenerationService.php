@@ -327,7 +327,7 @@ class PayrollGenerationService
         ?CompanySetting $setting,
     ): array {
         $monthlyBaseSalary = (float) ($employee->base_salary ?? 0);
-        [$prorationFactor, $workingDays, $payableDays] = $this->prorationDetails($employee, $start, $end);
+        [$prorationFactor, $workingDays, $payableDays] = $this->prorationDetails($employee, $start, $end, $setting);
         $isDailyWorker = $employee->employment_type === 'DW';
         $dailyWage = (float) ($employee->daily_wage ?? 0);
         $paidAttendanceDays = $isDailyWorker
@@ -344,7 +344,7 @@ class PayrollGenerationService
 
         $allowancesTotal = round((float) $allowanceGrouped->sum(), 2);
         $unpaidLeaveDays = $isDailyWorker ? 0 : $this->unpaidLeaveDays($employee, $start, $end);
-        $activeWorkingDays = max((int) ($setting?->active_working_days ?? 22), 1);
+        $activeWorkingDays = $setting ? $setting->resolveActiveWorkingDays($start, $end, $employee) : 22;
         $unpaidLeaveDeduction = round(
             (($monthlyBaseSalary + (float) $employee->allowances->sum('amount')) / $activeWorkingDays) * $unpaidLeaveDays,
             2,
@@ -517,6 +517,7 @@ class PayrollGenerationService
                 $setting,
                 $employee,
                 syncAttendanceRecord: true,
+                activeWorkingDays: $activeWorkingDays,
             );
             if ($penalty > 0) {
                 $attendanceLateDeduction += $penalty;
@@ -643,8 +644,9 @@ class PayrollGenerationService
     /**
      * @return array{0: float, 1: int, 2: int}
      */
-    private function prorationDetails(Employee $employee, Carbon $start, Carbon $end): array
+    private function prorationDetails(Employee $employee, Carbon $start, Carbon $end, ?CompanySetting $setting = null): array
     {
+        $workingDays = $setting?->resolveActiveWorkingDays($start, $end, $employee) ?? 22;
         $employmentStart = $employee->hire_date && $employee->hire_date->greaterThan($start)
             ? Carbon::parse($employee->hire_date)
             : $start->copy();
@@ -653,33 +655,39 @@ class PayrollGenerationService
             : $end->copy();
 
         if ($employmentStart->greaterThan($employmentEnd)) {
-            return [0.0, 0, 0];
+            return [0.0, $workingDays, 0];
         }
 
         $schedules = $employee->schedules->keyBy(
             fn ($schedule): string => $schedule->work_date->toDateString()
         );
-        $workingDays = 0;
         $payableDays = 0;
+        $workingDaysType = $setting?->working_days_type ?? 'fixed';
 
         for ($date = $start->copy(); $date->lte($end); $date = $date->addDay()) {
             $schedule = $schedules->get($date->toDateString());
-            $isWorkingDay = $schedule ? ! $schedule->is_day_off : $date->isWeekday();
+            if ($workingDaysType === '6_days') {
+                $isWorkingDay = $schedule ? ! $schedule->is_day_off : ($date->dayOfWeekIso <= 6);
+            } else {
+                $isWorkingDay = $schedule ? ! $schedule->is_day_off : $date->isWeekday();
+            }
 
             if (! $isWorkingDay) {
                 continue;
             }
-
-            $workingDays++;
 
             if ($date->betweenIncluded($employmentStart, $employmentEnd)) {
                 $payableDays++;
             }
         }
 
-        $factor = $workingDays > 0
-            ? min($payableDays / $workingDays, 1.0)
-            : 1.0;
+        if ($employmentStart->lte($start) && $employmentEnd->gte($end)) {
+            $payableDays = $workingDays;
+        } else {
+            $payableDays = min($payableDays, $workingDays);
+        }
+
+        $factor = $payableDays / $workingDays;
 
         return [$factor, $workingDays, $payableDays];
     }
@@ -811,6 +819,7 @@ class PayrollGenerationService
 
         $missingDates = [];
         $evalEnd = $end->copy()->min(now());
+        $workingDaysType = $setting?->working_days_type ?? 'fixed';
 
         for ($date = $start->copy(); $date->lte($evalEnd); $date = $date->addDay()) {
             if ($date->greaterThan($cutoffDate)) {
@@ -819,7 +828,11 @@ class PayrollGenerationService
 
             $dateStr = $date->toDateString();
             $schedule = $schedules->get($dateStr);
-            $isWorkingDay = $schedule ? ! $schedule->is_day_off : $date->isWeekday();
+            if ($workingDaysType === '6_days') {
+                $isWorkingDay = $schedule ? ! $schedule->is_day_off : ($date->dayOfWeekIso <= 6);
+            } else {
+                $isWorkingDay = $schedule ? ! $schedule->is_day_off : $date->isWeekday();
+            }
 
             if (! $isWorkingDay) {
                 continue;

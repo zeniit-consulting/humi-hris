@@ -71,6 +71,7 @@ class CompanySettingUpdateRequest extends FormRequest
             'overtime_calculation_mode' => ['nullable', 'in:hourly,threshold_daily'],
             'overtime_threshold_hours' => ['nullable', 'integer', 'min:1', 'max:24'],
             'active_working_days' => ['nullable', 'integer', 'min:1', 'max:31'],
+            'working_days_type' => ['nullable', 'string', 'in:fixed,5_days,6_days,shift_count'],
             'overtime_multiplier_hour1' => ['nullable', 'numeric', 'min:1', 'max:10'],
             'overtime_multiplier_subsequent' => ['nullable', 'numeric', 'min:1', 'max:10'],
         ];

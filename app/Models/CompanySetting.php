@@ -3,7 +3,11 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToAccount;
+use App\Models\Employee;
+use App\Models\EmployeeSchedule;
 use App\Models\User;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -58,6 +62,7 @@ class CompanySetting extends Model
         'overtime_fixed_rate_per_hour',
         'overtime_threshold_hours',
         'active_working_days',
+        'working_days_type',
         'auto_deduct_leave_for_missing_checkout',
         'missing_clock_out_request_days',
         'attendance_revision_cutoff_day',
@@ -165,5 +170,74 @@ class CompanySetting extends Model
             ->value('employee_activation_otp_enabled');
 
         return $value === null ? true : (bool) $value;
+    }
+
+    public function resolveActiveWorkingDays(
+        ?CarbonInterface $start = null,
+        ?CarbonInterface $end = null,
+        ?Employee $employee = null
+    ): int {
+        $type = $this->working_days_type ?? 'fixed';
+
+        if ($type === '5_days') {
+            $startDate = $start ? Carbon::parse($start)->startOfDay() : now()->startOfMonth();
+            $endDate = $end ? Carbon::parse($end)->endOfDay() : now()->endOfMonth();
+
+            $days = 0;
+            for ($date = $startDate->copy(); $date->lte($endDate); $date = $date->addDay()) {
+                if ($date->isWeekday()) {
+                    $days++;
+                }
+            }
+
+            return max($days, 1);
+        }
+
+        if ($type === '6_days') {
+            $startDate = $start ? Carbon::parse($start)->startOfDay() : now()->startOfMonth();
+            $endDate = $end ? Carbon::parse($end)->endOfDay() : now()->endOfMonth();
+
+            $days = 0;
+            for ($date = $startDate->copy(); $date->lte($endDate); $date = $date->addDay()) {
+                if ($date->dayOfWeekIso <= 6) {
+                    $days++;
+                }
+            }
+
+            return max($days, 1);
+        }
+
+        if ($type === 'shift_count') {
+            if ($employee) {
+                $startDate = $start ? Carbon::parse($start)->startOfDay() : now()->startOfMonth();
+                $endDate = $end ? Carbon::parse($end)->endOfDay() : now()->endOfMonth();
+                $startStr = $startDate->toDateString();
+                $endStr = $endDate->toDateString();
+
+                if ($employee->relationLoaded('schedules') && $employee->schedules->isNotEmpty()) {
+                    $count = $employee->schedules
+                        ->filter(function ($s) use ($startStr, $endStr): bool {
+                            $wDate = $s->work_date ? Carbon::parse($s->work_date)->toDateString() : null;
+
+                            return $wDate !== null && $wDate >= $startStr && $wDate <= $endStr && ! (bool) $s->is_day_off;
+                        })
+                        ->count();
+                } else {
+                    $count = EmployeeSchedule::query()
+                        ->where('employee_id', $employee->id)
+                        ->whereBetween('work_date', [$startStr, $endStr])
+                        ->where('is_day_off', false)
+                        ->count();
+                }
+
+                if ($count > 0) {
+                    return $count;
+                }
+            }
+
+            return max((int) ($this->active_working_days ?? 22), 1);
+        }
+
+        return max((int) ($this->active_working_days ?? 22), 1);
     }
 }

@@ -31,6 +31,7 @@ class PayrollSettingUpdateRequest extends FormRequest
     {
         return [
             'active_working_days' => ['required', 'integer', 'min:1', 'max:31'],
+            'working_days_type' => ['nullable', 'string', 'in:fixed,5_days,6_days,shift_count'],
             'payroll_cutoff_day' => [
                 'nullable',
                 Rule::in([

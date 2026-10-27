@@ -31,6 +31,7 @@ type PositionOption = {
 
 type Settings = {
     active_working_days: number;
+    working_days_type?: 'fixed' | '5_days' | '6_days' | 'shift_count';
     payroll_cutoff_day?: string;
     payroll_period_start_day?: string | null;
     auto_deduct_leave_for_missing_checkout: boolean;
@@ -73,6 +74,7 @@ export default function PayrollSettings({
 }) {
     const form = useForm({
         ...settings,
+        working_days_type: settings.working_days_type ?? 'fixed',
         payroll_cutoff_day: settings.payroll_cutoff_day ?? 'end_of_month',
         payroll_period_start_day: settings.payroll_period_start_day ?? '',
         overtime_events: (settings.overtime_events ?? []).map((e) => ({
@@ -164,8 +166,52 @@ export default function PayrollSettings({
                                 </div>
 
                                 <div className="space-y-2 min-w-0 w-full">
+                                    <Label htmlFor="working_days_type">
+                                        Metode Hari Kerja Aktif
+                                    </Label>
+                                    <select
+                                        id="working_days_type"
+                                        className="h-9 w-full min-w-0 max-w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-primary truncate"
+                                        value={form.data.working_days_type}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'working_days_type',
+                                                event.target.value as 'fixed' | '5_days' | '6_days' | 'shift_count',
+                                            )
+                                        }
+                                    >
+                                        <option value="fixed">
+                                            Tetap / Manual (Sesuai Angka Hari Kerja)
+                                        </option>
+                                        <option value="5_days">
+                                            5 Hari Kerja (Senin - Jumat Dinamis)
+                                        </option>
+                                        <option value="6_days">
+                                            6 Hari Kerja (Senin - Sabtu Dinamis)
+                                        </option>
+                                        <option value="shift_count">
+                                            Jumlah Shift (Sesuai Jadwal Shift Karyawan)
+                                        </option>
+                                    </select>
+                                    <p className="text-xs text-muted-foreground">
+                                        {form.data.working_days_type === '5_days'
+                                            ? 'Dihitung otomatis mengikuti jumlah hari Senin s/d Jumat pada periode payroll berjalan.'
+                                            : form.data.working_days_type === '6_days'
+                                              ? 'Dihitung otomatis mengikuti jumlah hari Senin s/d Sabtu pada periode payroll berjalan.'
+                                              : form.data.working_days_type === 'shift_count'
+                                                ? 'Dihitung dinamis dari total shift aktif terjadwal masing-masing karyawan pada periode payroll.'
+                                                : 'Menggunakan nilai angka hari kerja aktif tetap di bawah sebagai pembagi.'}
+                                    </p>
+                                    <InputError
+                                        message={form.errors.working_days_type}
+                                    />
+                                </div>
+
+                                <div className="space-y-2 min-w-0 w-full">
                                     <Label htmlFor="active_working_days">
-                                        Hari Kerja Aktif Standar
+                                        {form.data.working_days_type === 'fixed'
+                                            ? 'Hari Kerja Aktif Standar'
+                                            : 'Hari Kerja Cadangan (Fallback)'}
                                     </Label>
                                     <div className="relative">
                                         <Input
@@ -187,7 +233,9 @@ export default function PayrollSettings({
                                         </span>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        Default 22 hari. Digunakan sebagai pembagi perhitungan denda prorata dan potongan cuti tanpa gaji.
+                                        {form.data.working_days_type === 'fixed'
+                                            ? 'Default 22 hari. Digunakan sebagai pembagi perhitungan denda prorata dan potongan cuti tanpa gaji.'
+                                            : 'Digunakan sebagai nilai cadangan apabila jadwal shift belum dibuat atau bernilai 0.'}
                                     </p>
                                     <InputError
                                         message={form.errors.active_working_days}

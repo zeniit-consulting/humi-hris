@@ -41,7 +41,9 @@ trait ValidatesAnnualLeavePolicy
 
             $startDate = Carbon::parse($this->input('start_date'));
             $totalDays = (float) $startDate->diffInDays(Carbon::parse($this->input('end_date'))) + 1;
-            $message = $service->requestEligibilityError($employee, $policy, $startDate, $totalDays);
+            $isAdminRequest = $this->routeIs('hris.*') || ! $this->routeIs('portal.*');
+            $enforceNoticePeriod = ! $isAdminRequest;
+            $message = $service->requestEligibilityError($employee, $policy, $startDate, $totalDays, null, $enforceNoticePeriod);
 
             if ($message) {
                 $validator->errors()->add('start_date', $message);

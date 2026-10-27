@@ -137,7 +137,8 @@ class LeaveBalanceService
         LeavePolicy $policy,
         CarbonInterface $startDate,
         float $totalDays,
-        ?CarbonInterface $asOf = null
+        ?CarbonInterface $asOf = null,
+        bool $enforceNoticePeriod = true
     ): ?string {
         $hireDate = $employee->hire_date ? $employee->hire_date->copy()->startOfDay() : ($employee->created_at ? $employee->created_at->copy()->startOfDay() : now()->startOfDay());
         $eligibleFrom = $hireDate->copy()->addMonthsNoOverflow((int) $policy->waiting_period_months);
@@ -147,7 +148,7 @@ class LeaveBalanceService
         }
 
         $minNoticeDays = (int) ($policy->min_notice_days ?? 0);
-        if ($minNoticeDays > 0) {
+        if ($enforceNoticePeriod && $minNoticeDays > 0) {
             $owner = User::find($employee->user_id);
             if ($owner) {
                 $earliestDate = $this->calculateEarliestLeaveStartDate($owner, $minNoticeDays, $asOf);

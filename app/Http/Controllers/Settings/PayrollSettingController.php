@@ -33,6 +33,7 @@ class PayrollSettingController extends Controller
             'positions' => $positions,
             'settings' => [
                 'active_working_days' => $setting->active_working_days ?? 22,
+                'working_days_type' => (string) ($setting->working_days_type ?? 'fixed'),
                 'payroll_cutoff_day' => (string) ($setting->payroll_cutoff_day ?? 'end_of_month'),
                 'payroll_period_start_day' => $setting->payroll_period_start_day ? (string) $setting->payroll_period_start_day : null,
                 'auto_deduct_leave_for_missing_checkout' => (bool) ($setting->auto_deduct_leave_for_missing_checkout ?? false),

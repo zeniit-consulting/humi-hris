@@ -81,7 +81,7 @@ class LeavePolicyNoticePeriodTest extends TestCase
         $this->assertSame('2026-10-09', $earliest->toDateString());
     }
 
-    public function test_leave_request_rejected_if_submitted_before_minimum_notice_period(): void
+    public function test_admin_leave_request_allowed_even_if_submitted_before_minimum_notice_period(): void
     {
         Carbon::setTestNow('2026-10-09 10:00:00');
 
@@ -105,17 +105,22 @@ class LeavePolicyNoticePeriodTest extends TestCase
         $payload = [
             'employee_id' => $employee->id,
             'leave_type' => 'annual',
-            'start_date' => '2026-10-15', // Kurang dari 5 hari kerja (paling cepat tgl 16)
+            'start_date' => '2026-10-15', // Kurang dari 5 hari kerja (paling cepat tgl 16 jika ada notice period)
             'end_date' => '2026-10-15',
-            'reason' => 'Liburan',
+            'reason' => 'Liburan admin submit',
             'status' => 'pending',
         ];
 
         $this->actingAs($user)
             ->post(route('hris.leaves.store'), $payload)
-            ->assertSessionHasErrors(['start_date', 'total_days']);
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
 
-        $this->assertDatabaseCount('leave_requests', 0);
+        $this->assertDatabaseCount('leave_requests', 1);
+        $this->assertDatabaseHas('leave_requests', [
+            'employee_id' => $employee->id,
+            'start_date' => '2026-10-15 00:00:00',
+        ]);
     }
 
     public function test_leave_request_accepted_if_submitted_on_or_after_earliest_allowed_date(): void

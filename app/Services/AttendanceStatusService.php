@@ -87,8 +87,13 @@ class AttendanceStatusService
         ];
     }
 
-    public function calculateLatePenalty(int $lateMinutes, bool $isHalfDay, ?CompanySetting $setting, ?\App\Models\Employee $employee = null): float
-    {
+    public function calculateLatePenalty(
+        int $lateMinutes,
+        bool $isHalfDay,
+        ?CompanySetting $setting,
+        ?\App\Models\Employee $employee = null,
+        ?int $activeWorkingDays = null
+    ): float {
         if (! $setting) {
             return 0.0;
         }
@@ -107,7 +112,7 @@ class AttendanceStatusService
             if ($employee) {
                 $baseSalary = (float) ($employee->base_salary ?? 0);
                 $allowances = (float) $employee->allowances->where('is_active', true)->sum('amount');
-                $activeDays = max((int) ($setting->active_working_days ?? 22), 1);
+                $activeDays = $activeWorkingDays ?? $setting->resolveActiveWorkingDays(null, null, $employee);
                 $dailyRate = $employee->employment_type === 'DW'
                     ? (float) ($employee->daily_wage ?? 0)
                     : (($baseSalary + $allowances) / $activeDays);
@@ -205,7 +210,8 @@ class AttendanceStatusService
         ?CompanySetting $setting,
         ?\App\Models\Employee $employee = null,
         ?WorkShift $shift = null,
-        bool $syncAttendanceRecord = false
+        bool $syncAttendanceRecord = false,
+        ?int $activeWorkingDays = null
     ): float {
         $ownerId = (int) ($attendance->user_id ?: ($employee?->user_id ?? 0));
         $setting ??= CompanySetting::query()->where('user_id', $ownerId)->first();
@@ -273,7 +279,13 @@ class AttendanceStatusService
             return $existingPenalty;
         }
 
-        $calculatedPenalty = $this->calculateLatePenalty($lateMinutes, $isHalfDay, $setting, $employee);
+        $activeDays = $activeWorkingDays;
+        if ($activeDays === null && $setting && $attendance->attendance_date) {
+            $attDate = Carbon::parse($attendance->attendance_date);
+            $activeDays = $setting->resolveActiveWorkingDays($attDate->copy()->startOfMonth(), $attDate->copy()->endOfMonth(), $employee);
+        }
+
+        $calculatedPenalty = $this->calculateLatePenalty($lateMinutes, $isHalfDay, $setting, $employee, $activeDays);
         $finalPenalty = $hasConfiguredRules ? $calculatedPenalty : $existingPenalty;
 
         if ($syncAttendanceRecord && $attendance->exists) {
