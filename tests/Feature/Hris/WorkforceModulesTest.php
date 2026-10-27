@@ -262,6 +262,41 @@ class WorkforceModulesTest extends TestCase
             );
     }
 
+    public function test_admin_leave_approvals_page_exposes_attachment_data()
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        \App\Models\LeaveRequest::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'sick',
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->toDateString(),
+            'total_days' => 1,
+            'reason' => 'Sakit demam',
+            'attachment' => 'leave-attachments/surat-dokter.pdf',
+            'attachment_name' => 'surat-dokter.pdf',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('hris.leave-approvals.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hris/leave-approvals/index')
+                ->has('leaves.data', 1)
+                ->where('leaves.data.0.attachment_name', 'surat-dokter.pdf')
+                ->where('leaves.data.0.attachment', asset('storage/leave-attachments/surat-dokter.pdf'))
+            );
+    }
+
     public function test_sub_user_leave_balances_are_limited_to_linked_sub_companies()
     {
         $this->withoutVite();

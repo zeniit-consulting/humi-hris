@@ -1,7 +1,8 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Check, X } from 'lucide-react';
+import { Check, Paperclip, X } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { AttachmentPreviewDialog } from '@/components/attachment-preview-dialog';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,8 @@ type RequestRow = {
     date: string;
     description: string;
     reason: string | null;
+    attachment?: string | null;
+    attachment_name?: string | null;
     status: string;
     approval_label?: string | null;
     can_approve?: boolean;
@@ -87,6 +90,11 @@ export default function ClientApprovalPage() {
         reimbursementRequests,
     } = usePage<PageProps>().props;
     const [rejectTarget, setRejectTarget] = useState<RejectTarget>(null);
+    const [previewAttachment, setPreviewAttachment] = useState<{
+        url: string;
+        name?: string | null;
+        title?: string;
+    } | null>(null);
     const rejectForm = useForm({ rejection_reason: '' });
 
     const submitReject = (event: FormEvent<HTMLFormElement>) => {
@@ -162,6 +170,7 @@ export default function ClientApprovalPage() {
                     rows={leaveRequests}
                     status={status}
                     onReject={setRejectTarget}
+                    onPreviewAttachment={setPreviewAttachment}
                 />
                 <ApprovalTable
                     title="Request Lembur"
@@ -216,6 +225,16 @@ export default function ClientApprovalPage() {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <AttachmentPreviewDialog
+                open={previewAttachment !== null}
+                onOpenChange={(open) => {
+                    if (!open) setPreviewAttachment(null);
+                }}
+                url={previewAttachment?.url ?? null}
+                name={previewAttachment?.name}
+                title={previewAttachment?.title}
+            />
         </AppLayout>
     );
 }
@@ -226,12 +245,14 @@ function ApprovalTable({
     rows,
     status,
     onReject,
+    onPreviewAttachment,
 }: {
     title: string;
     type: 'attendance' | 'leaves' | 'overtimes' | 'reimbursements';
     rows: RequestRow[];
     status: string;
     onReject: (target: RejectTarget) => void;
+    onPreviewAttachment?: (att: { url: string; name?: string | null; title?: string }) => void;
 }) {
     return (
         <Card>
@@ -279,6 +300,28 @@ function ApprovalTable({
                                         <p className="line-clamp-2 whitespace-normal">
                                             {row.reason ?? '-'}
                                         </p>
+                                        {row.attachment && (
+                                            <div className="mt-1.5">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-6 gap-1 border-teal-200 bg-teal-50 px-2 text-[11px] font-medium text-teal-700 hover:bg-teal-100 hover:text-teal-800"
+                                                    onClick={() =>
+                                                        onPreviewAttachment?.({
+                                                            url: row.attachment!,
+                                                            name: row.attachment_name,
+                                                            title: `Lampiran - ${row.employee_label}`,
+                                                        })
+                                                    }
+                                                >
+                                                    <Paperclip className="size-3 text-teal-600" />
+                                                    <span className="max-w-[140px] truncate">
+                                                        {row.attachment_name || 'Lihat Lampiran'}
+                                                    </span>
+                                                </Button>
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="px-3 py-3">
                                         <Badge>

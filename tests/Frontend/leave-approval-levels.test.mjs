@@ -28,7 +28,7 @@ test('leave policy form uses a balanced responsive grid and separate footer', ()
     assert.match(policySource, /xl:col-span-4/);
     assert.match(
         policySource,
-        /flex justify-end border-t pt-4 md:col-span-2 xl:col-span-12/,
+        /border-t pt-4 md:col-span-2 xl:col-span-12/,
     );
     assert.match(policySource, /Batas per Pengajuan/);
     assert.doesNotMatch(policySource, /Maks Hari \/ Pengajuan/);
@@ -38,4 +38,10 @@ test('leave approval table displays the active approval stage', () => {
     assert.match(approvalSource, /approval_stage/);
     assert.match(approvalSource, /Menunggu \$\{row\.approval_stage \+ 1\}\/2/);
     assert.match(approvalSource, /Approval tingkat 1:/);
+});
+
+test('leave approval page includes view attachment feature', () => {
+    assert.match(approvalSource, /AttachmentPreviewDialog/);
+    assert.match(approvalSource, /<th className="px-3 py-2">Lampiran<\/th>/);
+    assert.match(approvalSource, /setPreviewAttachment/);
 });

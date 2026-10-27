@@ -75,7 +75,7 @@ class LeaveController extends Controller
                 'end_date' => $leave->end_date->format('Y-m-d'),
                 'total_days' => $leave->total_days,
                 'reason' => $leave->reason,
-                'attachment' => $leave->attachment ? asset('storage/' . $leave->attachment) : null,
+                'attachment' => $this->resolveAttachmentUrl($leave->attachment),
                 'attachment_name' => $leave->attachment_name,
                 'status' => $leave->status,
                 'rejection_reason' => $leave->rejection_reason,
@@ -157,7 +157,7 @@ class LeaveController extends Controller
                 'end_date' => $leave->end_date->format('Y-m-d'),
                 'total_days' => $leave->total_days,
                 'reason' => $leave->reason,
-                'attachment' => $leave->attachment ? asset('storage/' . $leave->attachment) : null,
+                'attachment' => $this->resolveAttachmentUrl($leave->attachment),
                 'attachment_name' => $leave->attachment_name,
                 'status' => $leave->status,
                 'rejection_reason' => $leave->rejection_reason,
@@ -522,5 +522,22 @@ class LeaveController extends Controller
         }
 
         return [null, null];
+    }
+
+    private function resolveAttachmentUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        if (str_starts_with($path, 'storage/')) {
+            return asset($path);
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
     }
 }

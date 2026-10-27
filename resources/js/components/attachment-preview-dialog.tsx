@@ -49,7 +49,7 @@ export function AttachmentPreviewDialog({
                 onOpenChange(isOpen);
             }}
         >
-            <DialogContent className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl p-5 sm:p-6">
+            <DialogContent className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl p-5 sm:p-6 z-[60]">
                 <DialogHeader className="text-left">
                     <div className="flex items-center gap-2">
                         <span className="flex size-7 items-center justify-center rounded-lg bg-teal-50 text-teal-700">

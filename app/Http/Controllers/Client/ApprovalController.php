@@ -92,6 +92,12 @@ class ApprovalController extends Controller
                     'date' => $row->start_date?->format('Y-m-d').' s/d '.$row->end_date?->format('Y-m-d'),
                     'description' => $row->leave_type.' - '.$row->total_days.' hari',
                     'reason' => $row->reason,
+                    'attachment' => $row->attachment ? (
+                        str_starts_with($row->attachment, 'http://') || str_starts_with($row->attachment, 'https://')
+                            ? $row->attachment
+                            : (str_starts_with($row->attachment, 'storage/') ? asset($row->attachment) : asset('storage/' . ltrim($row->attachment, '/')))
+                    ) : null,
+                    'attachment_name' => $row->attachment_name,
                     'status' => $row->status,
                     'approval_label' => $row->status === 'pending' && $leaveApprovalLevels === 2
                         ? 'Menunggu '.($row->approval_stage + 1).'/2'

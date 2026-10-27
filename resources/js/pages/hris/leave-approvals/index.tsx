@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { CalendarDays, Check, Eye, Filter, Paperclip, RotateCcw, X } from 'lucide-react';
+import { CalendarDays, Check, Download, Eye, Filter, Paperclip, RotateCcw, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import ActionIconButton from '@/components/action-icon-button';
@@ -482,6 +482,7 @@ export default function LeaveApprovalPage() {
                                         <th className="px-3 py-2">Periode</th>
                                         <th className="px-3 py-2">Jenis</th>
                                         <th className="px-3 py-2">Alasan</th>
+                                        <th className="px-3 py-2">Lampiran</th>
                                         <th className="px-3 py-2">Status</th>
                                         <th className="px-3 py-2">Aksi</th>
                                     </tr>
@@ -490,7 +491,7 @@ export default function LeaveApprovalPage() {
                                     {leaves.data.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={7}
+                                                colSpan={8}
                                                 className="px-3 py-6 text-center text-muted-foreground"
                                             >
                                                 Belum ada pengajuan cuti.
@@ -544,6 +545,30 @@ export default function LeaveApprovalPage() {
                                                 <p className="line-clamp-2 whitespace-normal">
                                                     {row.reason ?? '-'}
                                                 </p>
+                                            </td>
+                                            <td className="px-3 py-3 whitespace-nowrap">
+                                                {row.attachment ? (
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-7 gap-1.5 border-teal-200 bg-teal-50 px-2 text-xs font-medium text-teal-700 hover:bg-teal-100 hover:text-teal-800"
+                                                        onClick={() =>
+                                                            setPreviewAttachment({
+                                                                url: row.attachment!,
+                                                                name: row.attachment_name,
+                                                                title: `Lampiran Cuti - ${row.employee_label}`,
+                                                            })
+                                                        }
+                                                    >
+                                                        <Paperclip className="size-3.5 text-teal-600" />
+                                                        <span className="max-w-[120px] truncate">
+                                                            {row.attachment_name || 'Lihat'}
+                                                        </span>
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">-</span>
+                                                )}
                                             </td>
                                             <td className="px-3 py-3">
                                                 <Badge
@@ -625,16 +650,49 @@ export default function LeaveApprovalPage() {
                 confirmLabel="Ya, Setujui"
                 description={
                     approveConfirmRow ? (
-                        <span>
-                            Apakah Anda yakin ingin menyetujui pengajuan cuti (<strong>{typeLabels[approveConfirmRow.leave_type] ?? approveConfirmRow.leave_type}</strong>) untuk{' '}
-                            <strong>{approveConfirmRow.employee_label}</strong> pada periode{' '}
-                            <strong>
-                                {approveConfirmRow.start_date === approveConfirmRow.end_date
-                                    ? formatLongDate(approveConfirmRow.start_date)
-                                    : `${formatLongDate(approveConfirmRow.start_date)} s/d ${formatLongDate(approveConfirmRow.end_date)}`}
-                            </strong>{' '}
-                            ({approveConfirmRow.total_days} hari)?
-                        </span>
+                        <div className="space-y-3 text-left">
+                            <p>
+                                Apakah Anda yakin ingin menyetujui pengajuan cuti (<strong>{typeLabels[approveConfirmRow.leave_type] ?? approveConfirmRow.leave_type}</strong>) untuk{' '}
+                                <strong>{approveConfirmRow.employee_label}</strong> pada periode{' '}
+                                <strong>
+                                    {approveConfirmRow.start_date === approveConfirmRow.end_date
+                                        ? formatLongDate(approveConfirmRow.start_date)
+                                        : `${formatLongDate(approveConfirmRow.start_date)} s/d ${formatLongDate(approveConfirmRow.end_date)}`}
+                                </strong>{' '}
+                                ({approveConfirmRow.total_days} hari)?
+                            </p>
+                            {approveConfirmRow.reason && (
+                                <p className="text-xs text-muted-foreground">
+                                    <strong>Alasan:</strong> {approveConfirmRow.reason}
+                                </p>
+                            )}
+                            {approveConfirmRow.attachment && (
+                                <div className="flex items-center justify-between gap-2 rounded-lg border border-teal-200 bg-teal-50/70 p-2.5 text-xs">
+                                    <div className="flex items-center gap-1.5 truncate">
+                                        <Paperclip className="size-3.5 shrink-0 text-teal-600" />
+                                        <span className="truncate font-medium text-teal-900">
+                                            {approveConfirmRow.attachment_name || 'Dokumen Lampiran'}
+                                        </span>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-6 shrink-0 border-teal-300 bg-white px-2 text-[11px] font-semibold text-teal-800 hover:bg-teal-100"
+                                        onClick={() =>
+                                            setPreviewAttachment({
+                                                url: approveConfirmRow.attachment!,
+                                                name: approveConfirmRow.attachment_name,
+                                                title: `Lampiran Cuti - ${approveConfirmRow.employee_label}`,
+                                            })
+                                        }
+                                    >
+                                        <Eye className="mr-1 size-3" />
+                                        Lihat
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     ) : undefined
                 }
                 onConfirm={submitApprove}
@@ -743,16 +801,15 @@ export default function LeaveApprovalPage() {
                                 </p>
                             )}
                             {detailRow.attachment && (
-                                <div className="pt-1">
-                                    <p className="font-semibold text-foreground">
+                                <div className="rounded-lg border border-teal-200 bg-teal-50/60 p-3">
+                                    <p className="text-xs font-semibold text-teal-900">
                                         Lampiran / Dokumen Pendukung:
                                     </p>
-                                    <div className="mt-1.5">
+                                    <div className="mt-2 flex flex-wrap items-center gap-2">
                                         <Button
                                             type="button"
-                                            variant="outline"
                                             size="sm"
-                                            className="gap-2 text-xs"
+                                            className="h-8 gap-1.5 bg-teal-600 text-xs text-white hover:bg-teal-700"
                                             onClick={() =>
                                                 setPreviewAttachment({
                                                     url: detailRow.attachment!,
@@ -761,10 +818,30 @@ export default function LeaveApprovalPage() {
                                                 })
                                             }
                                         >
-                                            <Paperclip className="size-3.5" />
-                                            {detailRow.attachment_name || 'Lihat Lampiran'}
+                                            <Eye className="size-3.5" />
+                                            <span>Lihat / Pratinjau</span>
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
+                                            className="h-8 gap-1.5 text-xs"
+                                        >
+                                            <a
+                                                href={detailRow.attachment}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                download={detailRow.attachment_name || undefined}
+                                            >
+                                                <Download className="size-3.5" />
+                                                <span>Buka / Unduh</span>
+                                            </a>
                                         </Button>
                                     </div>
+                                    <p className="mt-1.5 truncate text-[11px] text-muted-foreground">
+                                        File: {detailRow.attachment_name || 'Dokumen lampiran'}
+                                    </p>
                                 </div>
                             )}
                         </div>
