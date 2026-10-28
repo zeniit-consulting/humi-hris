@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\PayrollGenerationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AutoGeneratePayroll extends Command
 {
@@ -46,22 +47,21 @@ class AutoGeneratePayroll extends Command
         $skipped = 0;
 
         foreach ($owners as $owner) {
-            $exists = PayrollRun::query()
-                ->withoutGlobalScopes()
-                ->where('user_id', $owner->id)
-                ->where('period', $period)
-                ->where('type', 'regular')
-                ->exists();
-
-            if ($exists) {
-                $skipped++;
-                $this->line("Owner #{$owner->id}: payroll periode {$period} sudah ada, dilewati.");
-
-                continue;
-            }
-
             try {
-                $run = $payrolls->generateForPeriod($owner->id, $period, null, true);
+                $run = DB::transaction(function () use ($owner, $period, $payrolls) {
+                    User::query()->whereKey($owner->id)->lockForUpdate()->firstOrFail();
+                    $exists = PayrollRun::query()->withoutGlobalScopes()
+                        ->where('user_id', $owner->id)->where('period', $period)
+                        ->where('type', 'regular')->where('batch_purpose', 'regular')->exists();
+
+                    return $exists ? null : $payrolls->generateForPeriod($owner->id, $period, null, true);
+                });
+                if (! $run) {
+                    $skipped++;
+                    $this->line("Owner #{$owner->id}: payroll reguler periode {$period} sudah ada, dilewati.");
+
+                    continue;
+                }
 
                 $generated++;
                 $this->line(sprintf(

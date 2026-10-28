@@ -9,7 +9,6 @@ use App\Models\Division;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeDocument;
-use App\Models\EmployeeAllowance;
 use App\Models\EmployeeEmploymentHistory;
 use App\Models\JobVacancy;
 use App\Models\LeaveRequest;
@@ -102,8 +101,7 @@ class DashboardController extends Controller
         $monthlyPayrollBurn = (float) (PayrollRun::query()
             ->where('user_id', $ownerId)
             ->whereIn('period', $periodInfo['months'])
-            ->latest('generated_at')
-            ->value('total_net_salary') ?? 0);
+            ->released()->sum('total_net_salary') ?? 0);
 
         $resignedYtd = Employee::query()
             ->where('employment_status', 'resigned')
@@ -789,13 +787,13 @@ class DashboardController extends Controller
 
     private function outsourcingPayrollCost(int $ownerId, string $period, array $subCompanyIds): float
     {
-        $run = PayrollRun::query()
+        $runs = PayrollRun::query()
             ->where('user_id', $ownerId)
             ->where('period', $period)
             ->where('type', 'regular')
-            ->first();
+            ->released()->get();
 
-        if (! $run) {
+        if ($runs->isEmpty()) {
             return (float) Employee::query()
                 ->where('user_id', $ownerId)
                 ->whereIn('sub_company_id', $subCompanyIds)
@@ -803,7 +801,7 @@ class DashboardController extends Controller
                 ->sum('base_salary');
         }
 
-        return (float) $run->items()
+        return (float) PayrollItem::query()->where('user_id', $ownerId)->whereIn('payroll_run_id', $runs->pluck('id'))
             ->whereHas('employee', fn ($query) => $query->whereIn('sub_company_id', $subCompanyIds))
             ->sum('net_salary');
     }
@@ -818,31 +816,31 @@ class DashboardController extends Controller
         $attendancePeriods = EmployeeAttendance::query()
             ->where('user_id', $ownerId)
             ->whereNotNull('attendance_date')
-            ->selectRaw("DISTINCT SUBSTRING(attendance_date, 1, 7) as period")
+            ->selectRaw('DISTINCT SUBSTRING(attendance_date, 1, 7) as period')
             ->pluck('period');
 
         $payrollPeriods = PayrollRun::query()
             ->where('user_id', $ownerId)
             ->whereNotNull('period')
-            ->selectRaw("DISTINCT period")
+            ->selectRaw('DISTINCT period')
             ->pluck('period');
 
         $leavePeriods = LeaveRequest::query()
             ->where('user_id', $ownerId)
             ->whereNotNull('start_date')
-            ->selectRaw("DISTINCT SUBSTRING(start_date, 1, 7) as period")
+            ->selectRaw('DISTINCT SUBSTRING(start_date, 1, 7) as period')
             ->pluck('period');
 
         $overtimePeriods = OvertimeRequest::query()
             ->where('user_id', $ownerId)
             ->whereNotNull('work_date')
-            ->selectRaw("DISTINCT SUBSTRING(work_date, 1, 7) as period")
+            ->selectRaw('DISTINCT SUBSTRING(work_date, 1, 7) as period')
             ->pluck('period');
 
         $reimbursePeriods = ReimbursementRequest::query()
             ->where('user_id', $ownerId)
             ->whereNotNull('created_at')
-            ->selectRaw("DISTINCT SUBSTRING(created_at, 1, 7) as period")
+            ->selectRaw('DISTINCT SUBSTRING(created_at, 1, 7) as period')
             ->pluck('period');
 
         $allPeriods = collect([now()->format('Y-m')])
@@ -1207,7 +1205,7 @@ class DashboardController extends Controller
                     $bpjsTk = $actualTk > 0 ? $actualTk : ($actualTotal - $actualKes - $actualPrivate);
                     $privateIns = $actualPrivate;
                     $totalIns = $actualTotal;
-                    $empCount = $items->count();
+                    $empCount = $items->pluck('employee_id')->unique()->count();
                 } else {
                     $bpjsKes = 0.0;
                     $bpjsTk = 0.0;
@@ -1218,7 +1216,7 @@ class DashboardController extends Controller
                     }
                     $privateIns = 0.0;
                     $totalIns = $bpjsKes + $bpjsTk;
-                    $empCount = $items->count();
+                    $empCount = $items->pluck('employee_id')->unique()->count();
                 }
             } else {
                 $bpjsKes = 0.0;
@@ -1286,14 +1284,14 @@ class DashboardController extends Controller
 
             $hires = Employee::query()
                 ->where('user_id', $ownerId)
-                ->whereRaw("SUBSTRING(hire_date, 1, 7) = ?", [$p])
+                ->whereRaw('SUBSTRING(hire_date, 1, 7) = ?', [$p])
                 ->count();
 
             $exits = Employee::query()
                 ->where('user_id', $ownerId)
                 ->where(function ($q) use ($p) {
-                    $q->whereRaw("SUBSTRING(offboarded_at, 1, 7) = ?", [$p])
-                        ->orWhere(fn ($sq) => $sq->where('employment_status', 'resigned')->whereRaw("SUBSTRING(updated_at, 1, 7) = ?", [$p]));
+                    $q->whereRaw('SUBSTRING(offboarded_at, 1, 7) = ?', [$p])
+                        ->orWhere(fn ($sq) => $sq->where('employment_status', 'resigned')->whereRaw('SUBSTRING(updated_at, 1, 7) = ?', [$p]));
                 })
                 ->count();
 
@@ -1301,8 +1299,8 @@ class DashboardController extends Controller
                 ->where('user_id', $ownerId)
                 ->whereIn('event_type', ['promotion', 'transfer', 'demotion', 'status_change', 'salary_change', 'position_change'])
                 ->where(function ($q) use ($p) {
-                    $q->whereRaw("SUBSTRING(effective_date, 1, 7) = ?", [$p])
-                        ->orWhereRaw("SUBSTRING(created_at, 1, 7) = ?", [$p]);
+                    $q->whereRaw('SUBSTRING(effective_date, 1, 7) = ?', [$p])
+                        ->orWhereRaw('SUBSTRING(created_at, 1, 7) = ?', [$p]);
                 })
                 ->count();
 
@@ -1361,14 +1359,14 @@ class DashboardController extends Controller
                 ->where('user_id', $ownerId)
                 ->where('status', 'paid')
                 ->where(function ($q) use ($startStr, $endStr) {
-                    $q->whereRaw("COALESCE(processed_at, approved_at, created_at) BETWEEN ? AND ?", [$startStr, $endStr]);
+                    $q->whereRaw('COALESCE(processed_at, approved_at, created_at) BETWEEN ? AND ?', [$startStr, $endStr]);
                 })
                 ->get();
 
             $allRequests = ReimbursementRequest::query()
                 ->where('user_id', $ownerId)
                 ->where(function ($q) use ($p) {
-                    $q->whereRaw("SUBSTRING(created_at, 1, 7) = ?", [$p]);
+                    $q->whereRaw('SUBSTRING(created_at, 1, 7) = ?', [$p]);
                 })
                 ->get();
 
@@ -1465,8 +1463,7 @@ class DashboardController extends Controller
                     ->orWhere('status', 'released')
                     ->orWhereNotNull('released_at');
             })
-            ->latest('generated_at')
-            ->first();
+            ->selectRaw('COUNT(*) as batch_count, SUM(total_net_salary) as total_net_salary, SUM(total_base_salary) as total_base_salary, SUM(total_allowances) as total_allowances, SUM(employees_count) as employees_count')->first();
 
         $prevPeriod = $periodDate->copy()->subMonth()->format('Y-m');
         $prevRun = PayrollRun::query()
@@ -1477,15 +1474,14 @@ class DashboardController extends Controller
                     ->orWhere('status', 'released')
                     ->orWhereNotNull('released_at');
             })
-            ->latest('generated_at')
-            ->first();
+            ->selectRaw('COUNT(*) as batch_count, SUM(total_net_salary) as total_net_salary, SUM(total_base_salary) as total_base_salary, SUM(total_allowances) as total_allowances, SUM(employees_count) as employees_count')->first();
 
-        if ($latestRun) {
+        if ($latestRun && $latestRun->batch_count > 0) {
             $payrollCost = (float) $latestRun->total_net_salary;
             $baseCost = (float) $latestRun->total_base_salary;
             $allowanceCost = (float) $latestRun->total_allowances;
             $isProjected = false;
-            $empCount = (int) $latestRun->employees_count;
+            $empCount = PayrollItem::query()->where('user_id', $ownerId)->whereHas('payrollRun', fn ($q) => $q->whereIn('period', $months)->where(fn ($state) => $state->where('is_locked', true)->orWhere('status', 'released')->orWhereNotNull('released_at')))->distinct()->count('employee_id');
         } else {
             $payrollCost = 0.0;
             $baseCost = 0.0;
@@ -1771,12 +1767,12 @@ class DashboardController extends Controller
             ->where('employees.user_id', $ownerId)
             ->where('employees.is_active', true)
             ->leftJoin('divisions', 'employees.division_id', '=', 'divisions.id')
-            ->selectRaw("
+            ->selectRaw('
                 divisions.id as division_id,
                 divisions.name as division_name,
                 employees.gender as gender,
                 COUNT(*) as total
-            ")
+            ')
             ->groupBy('divisions.id', 'divisions.name', 'employees.gender')
             ->get();
 
@@ -1794,7 +1790,7 @@ class DashboardController extends Controller
             };
             $count = (int) $row->total;
 
-            if (!isset($divisionsMap[$divId])) {
+            if (! isset($divisionsMap[$divId])) {
                 $divisionsMap[$divId] = [
                     'id' => $divId,
                     'name' => $divName,
@@ -1825,9 +1821,9 @@ class DashboardController extends Controller
      * @return array{
      *     total: float,
      *     divisions: list<array{id: int, name: string, amount: float, percentage: float, employees_count: int}>,
-     *     is_fixed?: boolean,
-     *     is_locked?: boolean,
-     *     is_released?: boolean
+     *     is_fixed?: bool,
+     *     is_locked?: bool,
+     *     is_released?: bool
      * }
      */
     /**
@@ -1898,12 +1894,12 @@ class DashboardController extends Controller
                 ->whereIn('payroll_items.payroll_run_id', $runIds)
                 ->join('employees', 'payroll_items.employee_id', '=', 'employees.id')
                 ->leftJoin('divisions', 'employees.division_id', '=', 'divisions.id')
-                ->selectRaw("
+                ->selectRaw('
                     divisions.id as division_id,
                     divisions.name as division_name,
                     SUM(payroll_items.net_salary) as total_amount,
                     COUNT(DISTINCT payroll_items.employee_id) as employees_count
-                ")
+                ')
                 ->groupBy('divisions.id', 'divisions.name')
                 ->orderByDesc('total_amount')
                 ->get();
@@ -1963,13 +1959,13 @@ class DashboardController extends Controller
             ->where('reimbursement_requests.user_id', $ownerId)
             ->where('reimbursement_requests.status', 'paid')
             ->where(function ($q) use ($startStr, $endStr) {
-                $q->whereRaw("COALESCE(reimbursement_requests.processed_at, reimbursement_requests.approved_at, reimbursement_requests.created_at) BETWEEN ? AND ?", [$startStr, $endStr]);
+                $q->whereRaw('COALESCE(reimbursement_requests.processed_at, reimbursement_requests.approved_at, reimbursement_requests.created_at) BETWEEN ? AND ?', [$startStr, $endStr]);
             })
-            ->selectRaw("
+            ->selectRaw('
                 category,
                 SUM(amount) as total_amount,
                 COUNT(id) as count
-            ")
+            ')
             ->groupBy('category')
             ->get();
 
@@ -2059,14 +2055,14 @@ class DashboardController extends Controller
             ->join('employees', 'reimbursement_requests.employee_id', '=', 'employees.id')
             ->leftJoin('divisions', 'employees.division_id', '=', 'divisions.id')
             ->where(function ($q) use ($startStr, $endStr) {
-                $q->whereRaw("COALESCE(reimbursement_requests.processed_at, reimbursement_requests.approved_at, reimbursement_requests.created_at) BETWEEN ? AND ?", [$startStr, $endStr]);
+                $q->whereRaw('COALESCE(reimbursement_requests.processed_at, reimbursement_requests.approved_at, reimbursement_requests.created_at) BETWEEN ? AND ?', [$startStr, $endStr]);
             })
-            ->selectRaw("
+            ->selectRaw('
                 divisions.id as division_id,
                 divisions.name as division_name,
                 SUM(reimbursement_requests.amount) as total_amount,
                 COUNT(reimbursement_requests.id) as count
-            ")
+            ')
             ->groupBy('divisions.id', 'divisions.name')
             ->orderByDesc('total_amount')
             ->get();
@@ -2125,10 +2121,10 @@ class DashboardController extends Controller
                 $q->whereBetween('offboarded_at', [$startStr, $endStr])
                     ->orWhere(function ($sub) use ($startStr, $endStr) {
                         $sub->whereNull('offboarded_at')
-                            ->whereBetween('updated_at', [$startStr . ' 00:00:00', $endStr . ' 23:59:59']);
+                            ->whereBetween('updated_at', [$startStr.' 00:00:00', $endStr.' 23:59:59']);
                     });
             })
-            ->selectRaw("offboarding_reason, COUNT(*) as count")
+            ->selectRaw('offboarding_reason, COUNT(*) as count')
             ->groupBy('offboarding_reason')
             ->get();
 

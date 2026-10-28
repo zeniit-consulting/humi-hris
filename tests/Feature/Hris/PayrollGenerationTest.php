@@ -3,12 +3,12 @@
 namespace Tests\Feature\Hris;
 
 use App\Jobs\SendPayslipToWhatsApp;
+use App\Models\CompanySetting;
 use App\Models\Employee;
 use App\Models\EmployeeAllowance;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeBankAccount;
 use App\Models\EmployeeDeduction;
-use App\Models\CompanySetting;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
 use App\Models\PayrollItem;
@@ -92,7 +92,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseHas('payroll_runs', [
             'period' => '2026-02',
@@ -187,7 +187,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseHas('payroll_runs', [
             'user_id' => $user->id,
@@ -274,7 +274,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseHas('payroll_items', [
             'employee_id' => $employee->id,
@@ -323,7 +323,7 @@ class PayrollGenerationTest extends TestCase
                 'period' => '2026-02',
                 'employee_scope' => 'parent_only',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseHas('payroll_runs', [
             'period' => '2026-02',
@@ -372,7 +372,7 @@ class PayrollGenerationTest extends TestCase
                 'period' => '2026-02',
                 'excluded_employee_ids' => [$excludedEmployee->id],
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseHas('payroll_runs', [
             'period' => '2026-02',
@@ -435,7 +435,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-04',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-04', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-04', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseHas('payroll_items', [
             'employee_id' => $employee->id,
@@ -489,7 +489,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-04',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-04', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-04', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseHas('payroll_items', [
             'employee_id' => $employee->id,
@@ -521,7 +521,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseHas('payroll_items', [
             'employee_id' => $employee->id,
@@ -565,7 +565,7 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseHas('payroll_items', [
             'employee_id' => $employee->id,
@@ -694,7 +694,7 @@ class PayrollGenerationTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('hris.payrolls.save', $run))
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseHas('payroll_runs', [
             'id' => $run->id,
@@ -735,7 +735,7 @@ class PayrollGenerationTest extends TestCase
                 'kasbon_deduction' => '200.000',
                 'denda_deduction' => '50.000',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseHas('payroll_items', [
             'id' => $item->id,
@@ -789,7 +789,7 @@ class PayrollGenerationTest extends TestCase
                     ['name' => 'Bonus Target', 'amount' => '1.000.000'],
                 ],
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']))
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]))
             ->assertSessionHasNoErrors();
 
         $item->refresh();
@@ -830,7 +830,7 @@ class PayrollGenerationTest extends TestCase
                     ['name' => 'Potongan Inventaris', 'amount' => '50.000'],
                 ],
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']))
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]))
             ->assertSessionHasNoErrors();
 
         $item->refresh();
@@ -883,7 +883,7 @@ class PayrollGenerationTest extends TestCase
         ]);
     }
 
-    public function test_saved_payroll_can_be_recalculated_from_artisan_command(): void
+    public function test_saved_payroll_cannot_be_recalculated_from_artisan_command(): void
     {
         $user = User::factory()->create([
             'email_verified_at' => now(),
@@ -931,24 +931,24 @@ class PayrollGenerationTest extends TestCase
         ]);
 
         $this->artisan('payroll:recalculate', ['runId' => $run->id])
-            ->assertSuccessful();
+            ->assertFailed();
 
         $this->assertDatabaseHas('payroll_runs', [
             'id' => $run->id,
             'is_saved' => true,
             'employees_count' => 1,
-            'total_base_salary' => 5000000.00,
-            'total_deductions' => 12500.00,
-            'total_net_salary' => 4987500.00,
+            'total_base_salary' => 1,
+            'total_deductions' => 1,
+            'total_net_salary' => 1,
         ]);
 
         $this->assertDatabaseHas('payroll_items', [
             'payroll_run_id' => $run->id,
             'employee_id' => $employee->id,
-            'base_salary' => 5000000.00,
-            'pph21_deduction' => 12500.00,
-            'deductions_total' => 12500.00,
-            'net_salary' => 4987500.00,
+            'base_salary' => 1,
+            'pph21_deduction' => 0,
+            'deductions_total' => 0,
+            'net_salary' => 1,
         ]);
     }
 
@@ -1107,13 +1107,13 @@ class PayrollGenerationTest extends TestCase
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->actingAs($secondUser)
             ->post(route('hris.payrolls.generate'), [
                 'period' => '2026-02',
             ])
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']));
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]));
 
         $this->assertDatabaseCount('payroll_runs', 2);
         $this->assertDatabaseHas('payroll_runs', [
@@ -1230,7 +1230,7 @@ class PayrollGenerationTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('hris.payrolls.save', $run))
-            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular']))
+            ->assertRedirect(route('hris.payrolls.index', ['period' => '2026-02', 'type' => 'regular', 'run_id' => PayrollRun::query()->latest('id')->value('id')]))
             ->assertSessionHas('warning', fn (mixed $message) => is_string($message) && str_contains($message, 'Payroll disimpan dengan'));
 
         $this->assertTrue($run->refresh()->is_saved);
@@ -1651,7 +1651,7 @@ class PayrollGenerationTest extends TestCase
             ->assertOk();
 
         $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
-        $this->assertStringContainsString('payroll_2026-07_draft.csv', (string) $response->headers->get('content-disposition'));
+        $this->assertStringContainsString('payroll_2026-07_'.$run->code.'_draft.csv', (string) $response->headers->get('content-disposition'));
         $content = $response->streamedContent();
         $this->assertStringContainsString('DRAFT-CSV-01', $content);
         $this->assertStringContainsString('Ahmad Dahlan', $content);
@@ -1949,7 +1949,7 @@ class PayrollGenerationTest extends TestCase
         $temp = tempnam(sys_get_temp_dir(), 'test_payroll_excel_');
         file_put_contents($temp, $stream);
 
-        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
         $spreadsheet = $reader->load($temp);
         $sheet = $spreadsheet->getActiveSheet();
 
@@ -2294,15 +2294,15 @@ class PayrollGenerationTest extends TestCase
         $temp = tempnam(sys_get_temp_dir(), 'test_payroll_excel_');
         file_put_contents($temp, $stream);
 
-        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
         $spreadsheet = $reader->load($temp);
         $sheet = $spreadsheet->getActiveSheet();
 
         // Check Row 2 header
         $excelHeaders = [];
         $col = 1;
-        while ($sheet->getCell(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . '2')->getValue() !== null) {
-            $excelHeaders[] = $sheet->getCell(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . '2')->getValue();
+        while ($sheet->getCell(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col).'2')->getValue() !== null) {
+            $excelHeaders[] = $sheet->getCell(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col).'2')->getValue();
             $col++;
         }
 
@@ -2318,7 +2318,7 @@ class PayrollGenerationTest extends TestCase
         // Check data row value for Total Tunjangan
         $excelTotalTunjanganIdx = array_search('Total Tunjangan', $excelHeaders, true);
         $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($excelTotalTunjanganIdx + 1);
-        $this->assertEquals(1_400_000, (int) $sheet->getCell($colLetter . '3')->getValue());
+        $this->assertEquals(1_400_000, (int) $sheet->getCell($colLetter.'3')->getValue());
 
         unlink($temp);
     }

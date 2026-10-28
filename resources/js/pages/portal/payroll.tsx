@@ -22,8 +22,17 @@ type PortalSummary = {
 
 type PayrollPayload = {
     period: string;
+    batches?: Array<{
+        id: number;
+        code: string;
+        batch_purpose: string;
+        type: string;
+    }>;
     run: {
         id: number;
+        code: string;
+        type: string;
+        batch_purpose: string;
         period_start: string | null;
         period_end: string | null;
         is_saved: boolean;
@@ -78,6 +87,7 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
     const [portal, setPortal] = useState<PortalSummary | null>(null);
     const [payroll, setPayroll] = useState<PayrollPayload | null>(null);
     const [period, setPeriod] = useState(localMonthString());
+    const [runId, setRunId] = useState<number | null>(null);
     const [currentPassword, setCurrentPassword] = useState('');
     const [isLoadingSlip, setIsLoadingSlip] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
@@ -116,6 +126,7 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                 'POST',
                 {
                     period,
+                    run_id: runId,
                     current_password: currentPassword,
                 },
             );
@@ -135,7 +146,7 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
         } finally {
             setIsLoadingSlip(false);
         }
-    }, [currentPassword, period]);
+    }, [currentPassword, period, runId]);
 
     const handleExport = useCallback(async () => {
         try {
@@ -159,6 +170,7 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                 },
                 body: JSON.stringify({
                     period,
+                    run_id: payroll?.run?.id ?? runId,
                     current_password: currentPassword,
                 }),
             });
@@ -211,7 +223,7 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
         } finally {
             setIsExporting(false);
         }
-    }, [currentPassword, period]);
+    }, [currentPassword, period, runId, payroll?.run?.id]);
 
     const slip = payroll?.items[0] ?? null;
 
@@ -251,11 +263,42 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                         value={period}
                         onChange={(event) => {
                             setPeriod(event.target.value);
+                            setRunId(null);
                             setPayroll(null);
                             setHasAttemptedPreview(false);
                         }}
                         className="h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm outline-none"
                     />
+                    {payroll?.batches && payroll.batches.length > 0 && (
+                        <label className="grid gap-2 text-sm">
+                            Batch payroll
+                            <select
+                                aria-label="Batch payroll"
+                                value={runId ?? payroll.run?.id ?? ''}
+                                onChange={(event) => {
+                                    setRunId(Number(event.target.value));
+                                    setPayroll((current) =>
+                                        current
+                                            ? { ...current, items: [] }
+                                            : current,
+                                    );
+                                }}
+                                className="h-12 w-full rounded-[9px] border border-stone-200 bg-stone-50 px-4 text-sm"
+                            >
+                                {payroll.batches.map((batch) => (
+                                    <option key={batch.id} value={batch.id}>
+                                        {batch.code} ·{' '}
+                                        {batch.type === 'thr'
+                                            ? 'THR'
+                                            : batch.batch_purpose ===
+                                                'additional'
+                                              ? 'Tambahan'
+                                              : 'Reguler'}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    )}
                     <input
                         type="password"
                         value={currentPassword}
@@ -283,6 +326,15 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                     <section className="mt-5 rounded-[16px] border border-slate-200 bg-white px-5 py-5 text-slate-900">
                         <div className="flex items-start justify-between gap-4">
                             <div>
+                                <p className="mb-2 text-xs text-slate-600">
+                                    {payroll?.run?.code} ·{' '}
+                                    {payroll?.run?.type === 'thr'
+                                        ? 'THR'
+                                        : payroll?.run?.batch_purpose ===
+                                            'additional'
+                                          ? 'Pembayaran tambahan'
+                                          : 'Payroll reguler'}
+                                </p>
                                 <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
                                     Gaji bersih
                                 </p>
@@ -416,33 +468,66 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                                 <div className="flex items-center justify-between">
                                                     <span>
                                                         Upah Lembur
-                                                        {Number(slip.overtime_hours ?? 0) > 0 && (
-                                                            <span className="text-xs text-slate-500 ml-1">
-                                                                ({Number(slip.overtime_hours).toFixed(1)} jam)
+                                                        {Number(
+                                                            slip.overtime_hours ??
+                                                                0,
+                                                        ) > 0 && (
+                                                            <span className="ml-1 text-xs text-slate-500">
+                                                                (
+                                                                {Number(
+                                                                    slip.overtime_hours,
+                                                                ).toFixed(
+                                                                    1,
+                                                                )}{' '}
+                                                                jam)
                                                             </span>
                                                         )}
                                                     </span>
                                                     <span className="font-semibold">
-                                                        {formatCurrency(slip.overtime_pay ?? 0)}
+                                                        {formatCurrency(
+                                                            slip.overtime_pay ??
+                                                                0,
+                                                        )}
                                                     </span>
                                                 </div>
-                                                {slip.event_overtimes && slip.event_overtimes.length > 0 && (
-                                                    <div className="pt-1.5 border-t border-stone-200/80 space-y-1">
-                                                        {slip.event_overtimes.map((ev) => (
-                                                            <div key={ev.id} className="flex items-center justify-between text-xs text-slate-600 pl-2">
-                                                                <span>
-                                                                    • {ev.event_name}
-                                                                    {ev.total_hours > 0 && (
-                                                                        <span className="text-slate-400 ml-1">({ev.total_hours} jam)</span>
-                                                                    )}
-                                                                </span>
-                                                                <span className="font-medium text-slate-700">
-                                                                    {formatCurrency(ev.event_nominal)}
-                                                                </span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                {slip.event_overtimes &&
+                                                    slip.event_overtimes
+                                                        .length > 0 && (
+                                                        <div className="space-y-1 border-t border-stone-200/80 pt-1.5">
+                                                            {slip.event_overtimes.map(
+                                                                (ev) => (
+                                                                    <div
+                                                                        key={
+                                                                            ev.id
+                                                                        }
+                                                                        className="flex items-center justify-between pl-2 text-xs text-slate-600"
+                                                                    >
+                                                                        <span>
+                                                                            •{' '}
+                                                                            {
+                                                                                ev.event_name
+                                                                            }
+                                                                            {ev.total_hours >
+                                                                                0 && (
+                                                                                <span className="ml-1 text-slate-400">
+                                                                                    (
+                                                                                    {
+                                                                                        ev.total_hours
+                                                                                    }{' '}
+                                                                                    jam)
+                                                                                </span>
+                                                                            )}
+                                                                        </span>
+                                                                        <span className="font-medium text-slate-700">
+                                                                            {formatCurrency(
+                                                                                ev.event_nominal,
+                                                                            )}
+                                                                        </span>
+                                                                    </div>
+                                                                ),
+                                                            )}
+                                                        </div>
+                                                    )}
                                             </div>
                                         )}
                                         <div className="flex items-center justify-between rounded-[10px] bg-emerald-50 px-4 py-3">
@@ -456,12 +541,13 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                     </div>
                                 </div>
 
-                                {(Number(slip.bpjs_kesehatan_company ?? 0) > 0 ||
-                                  Number(slip.bpjs_jkk_company ?? 0) > 0 ||
-                                  Number(slip.bpjs_jkm_company ?? 0) > 0 ||
-                                  Number(slip.bpjs_jht_company ?? 0) > 0 ||
-                                  Number(slip.bpjs_jp_company ?? 0) > 0 ||
-                                  Number(slip.pph21_allowance ?? 0) > 0) && (
+                                {(Number(slip.bpjs_kesehatan_company ?? 0) >
+                                    0 ||
+                                    Number(slip.bpjs_jkk_company ?? 0) > 0 ||
+                                    Number(slip.bpjs_jkm_company ?? 0) > 0 ||
+                                    Number(slip.bpjs_jht_company ?? 0) > 0 ||
+                                    Number(slip.bpjs_jp_company ?? 0) > 0 ||
+                                    Number(slip.pph21_allowance ?? 0) > 0) && (
                                     <div>
                                         <div className="flex items-center justify-between">
                                             <p className="text-xs tracking-[0.22em] text-slate-500 uppercase">
@@ -472,51 +558,96 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                             </span>
                                         </div>
                                         <div className="mt-3 space-y-3 text-sm">
-                                            {Number(slip.bpjs_kesehatan_company ?? 0) > 0 && (
+                                            {Number(
+                                                slip.bpjs_kesehatan_company ??
+                                                    0,
+                                            ) > 0 && (
                                                 <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                    <span>BPJS Kesehatan (Perusahaan 4%)</span>
+                                                    <span>
+                                                        BPJS Kesehatan
+                                                        (Perusahaan 4%)
+                                                    </span>
                                                     <span className="font-semibold text-sky-700">
-                                                        {formatCurrency(slip.bpjs_kesehatan_company ?? 0)}
+                                                        {formatCurrency(
+                                                            slip.bpjs_kesehatan_company ??
+                                                                0,
+                                                        )}
                                                     </span>
                                                 </div>
                                             )}
-                                            {Number(slip.bpjs_jkk_company ?? 0) > 0 && (
+                                            {Number(
+                                                slip.bpjs_jkk_company ?? 0,
+                                            ) > 0 && (
                                                 <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                    <span>BPJS TK JKK (Perusahaan)</span>
+                                                    <span>
+                                                        BPJS TK JKK (Perusahaan)
+                                                    </span>
                                                     <span className="font-semibold text-sky-700">
-                                                        {formatCurrency(slip.bpjs_jkk_company ?? 0)}
+                                                        {formatCurrency(
+                                                            slip.bpjs_jkk_company ??
+                                                                0,
+                                                        )}
                                                     </span>
                                                 </div>
                                             )}
-                                            {Number(slip.bpjs_jkm_company ?? 0) > 0 && (
+                                            {Number(
+                                                slip.bpjs_jkm_company ?? 0,
+                                            ) > 0 && (
                                                 <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                    <span>BPJS TK JKM (Perusahaan)</span>
+                                                    <span>
+                                                        BPJS TK JKM (Perusahaan)
+                                                    </span>
                                                     <span className="font-semibold text-sky-700">
-                                                        {formatCurrency(slip.bpjs_jkm_company ?? 0)}
+                                                        {formatCurrency(
+                                                            slip.bpjs_jkm_company ??
+                                                                0,
+                                                        )}
                                                     </span>
                                                 </div>
                                             )}
-                                            {Number(slip.bpjs_jht_company ?? 0) > 0 && (
+                                            {Number(
+                                                slip.bpjs_jht_company ?? 0,
+                                            ) > 0 && (
                                                 <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                    <span>BPJS TK JHT (Perusahaan 3.7%)</span>
+                                                    <span>
+                                                        BPJS TK JHT (Perusahaan
+                                                        3.7%)
+                                                    </span>
                                                     <span className="font-semibold text-sky-700">
-                                                        {formatCurrency(slip.bpjs_jht_company ?? 0)}
+                                                        {formatCurrency(
+                                                            slip.bpjs_jht_company ??
+                                                                0,
+                                                        )}
                                                     </span>
                                                 </div>
                                             )}
-                                            {Number(slip.bpjs_jp_company ?? 0) > 0 && (
+                                            {Number(slip.bpjs_jp_company ?? 0) >
+                                                0 && (
                                                 <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                    <span>BPJS TK JP (Perusahaan 2%)</span>
+                                                    <span>
+                                                        BPJS TK JP (Perusahaan
+                                                        2%)
+                                                    </span>
                                                     <span className="font-semibold text-sky-700">
-                                                        {formatCurrency(slip.bpjs_jp_company ?? 0)}
+                                                        {formatCurrency(
+                                                            slip.bpjs_jp_company ??
+                                                                0,
+                                                        )}
                                                     </span>
                                                 </div>
                                             )}
-                                            {Number(slip.pph21_allowance ?? 0) > 0 && (
+                                            {Number(slip.pph21_allowance ?? 0) >
+                                                0 && (
                                                 <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                    <span>Tunjangan PPh21 (Perusahaan)</span>
+                                                    <span>
+                                                        Tunjangan PPh21
+                                                        (Perusahaan)
+                                                    </span>
                                                     <span className="font-semibold text-sky-700">
-                                                        {formatCurrency(slip.pph21_allowance ?? 0)}
+                                                        {formatCurrency(
+                                                            slip.pph21_allowance ??
+                                                                0,
+                                                        )}
                                                     </span>
                                                 </div>
                                             )}
@@ -529,53 +660,88 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                         Potongan
                                     </p>
                                     <div className="mt-3 space-y-3 text-sm">
-                                        {slip.pph21_method !== 'gross_up' && Number(slip.pph21_deduction ?? 0) > 0 && (
-                                            <>
-                                                <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                    <span>PPh21</span>
-                                                    <span className="font-semibold">
-                                                        {Number(slip.pph21_rate ?? 0)}%
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                    <span>Potongan PPh21</span>
-                                                    <span className="font-semibold text-rose-700">
-                                                        {formatCurrency(
-                                                            slip.pph21_deduction,
-                                                        )}
-                                                    </span>
-                                                </div>
-                                            </>
-                                        )}
-                                        {Number(slip.bpjs_kesehatan_employee ?? 0) > 0 && (
+                                        {slip.pph21_method !== 'gross_up' &&
+                                            Number(slip.pph21_deduction ?? 0) >
+                                                0 && (
+                                                <>
+                                                    <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                        <span>PPh21</span>
+                                                        <span className="font-semibold">
+                                                            {Number(
+                                                                slip.pph21_rate ??
+                                                                    0,
+                                                            )}
+                                                            %
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
+                                                        <span>
+                                                            Potongan PPh21
+                                                        </span>
+                                                        <span className="font-semibold text-rose-700">
+                                                            {formatCurrency(
+                                                                slip.pph21_deduction,
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </>
+                                            )}
+                                        {Number(
+                                            slip.bpjs_kesehatan_employee ?? 0,
+                                        ) > 0 && (
                                             <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                <span>BPJS Kesehatan (Karyawan 1%)</span>
+                                                <span>
+                                                    BPJS Kesehatan (Karyawan 1%)
+                                                </span>
                                                 <span className="font-semibold text-rose-700">
-                                                    {formatCurrency(slip.bpjs_kesehatan_employee ?? 0)}
+                                                    {formatCurrency(
+                                                        slip.bpjs_kesehatan_employee ??
+                                                            0,
+                                                    )}
                                                 </span>
                                             </div>
                                         )}
-                                        {Number(slip.bpjs_jht_employee ?? 0) > 0 && (
+                                        {Number(slip.bpjs_jht_employee ?? 0) >
+                                            0 && (
                                             <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                <span>BPJS TK JHT (Karyawan 2%)</span>
+                                                <span>
+                                                    BPJS TK JHT (Karyawan 2%)
+                                                </span>
                                                 <span className="font-semibold text-rose-700">
-                                                    {formatCurrency(slip.bpjs_jht_employee ?? 0)}
+                                                    {formatCurrency(
+                                                        slip.bpjs_jht_employee ??
+                                                            0,
+                                                    )}
                                                 </span>
                                             </div>
                                         )}
-                                        {Number(slip.bpjs_jp_employee ?? 0) > 0 && (
+                                        {Number(slip.bpjs_jp_employee ?? 0) >
+                                            0 && (
                                             <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                <span>BPJS TK JP (Karyawan 1%)</span>
+                                                <span>
+                                                    BPJS TK JP (Karyawan 1%)
+                                                </span>
                                                 <span className="font-semibold text-rose-700">
-                                                    {formatCurrency(slip.bpjs_jp_employee ?? 0)}
+                                                    {formatCurrency(
+                                                        slip.bpjs_jp_employee ??
+                                                            0,
+                                                    )}
                                                 </span>
                                             </div>
                                         )}
-                                        {Number(slip.private_insurance_nominal ?? 0) > 0 && (
+                                        {Number(
+                                            slip.private_insurance_nominal ?? 0,
+                                        ) > 0 && (
                                             <div className="flex items-center justify-between rounded-[10px] bg-stone-50 px-4 py-3">
-                                                <span>{slip.private_insurance_name || 'Asuransi Swasta'}</span>
+                                                <span>
+                                                    {slip.private_insurance_name ||
+                                                        'Asuransi Swasta'}
+                                                </span>
                                                 <span className="font-semibold text-rose-700">
-                                                    {formatCurrency(slip.private_insurance_nominal ?? 0)}
+                                                    {formatCurrency(
+                                                        slip.private_insurance_nominal ??
+                                                            0,
+                                                    )}
                                                 </span>
                                             </div>
                                         )}
@@ -606,7 +772,8 @@ export default function PortalPayrollPage({ pageTitle }: Props) {
                                             </span>
                                         </div>
                                         {Object.entries(
-                                            slip.manual_deduction_breakdown ?? {},
+                                            slip.manual_deduction_breakdown ??
+                                                {},
                                         ).map(([name, amount]) => (
                                             <div
                                                 key={`manual-deduction-${name}`}

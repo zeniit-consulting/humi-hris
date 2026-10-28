@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Hris\GeneratePayrollRequest;
 use App\Models\PayrollRun;
 use App\Models\User;
+use App\Services\PayrollAdjustmentService;
 use App\Services\PayrollGenerationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,14 +23,21 @@ class PayrollController extends Controller
         $user = $request->user();
         $validated = $request->validate([
             'period' => ['nullable', 'date_format:Y-m'],
+            'run_id' => ['nullable', 'integer'],
         ]);
 
         $period = $validated['period'] ?? now()->format('Y-m');
 
+        $employee = $user && $this->isSelfServiceUser($user) ? $this->resolveRequiredSelfServiceEmployee($user) : null;
         $run = PayrollRun::query()
             ->with('items.employee:id,employee_code,first_name,last_name')
+            ->where('user_id', $user->accountOwnerId())
             ->where('period', $period)
-            ->first();
+            ->when($request->integer('run_id'), fn ($q) => $q->whereKey($request->integer('run_id')))
+            ->when($employee, fn ($q) => $q->released()->whereHas('items', fn ($items) => $items->where('employee_id', $employee->id)))
+            ->latest('id')->first();
+
+        abort_if($request->filled('run_id') && ! $run, 404);
 
         if ($user && $this->isSelfServiceUser($user)) {
             if ($run && ! $run->isReleased() && ! $run->is_saved) {
@@ -44,7 +52,12 @@ class PayrollController extends Controller
     {
         $ownerId = $request->user()->accountOwnerId();
         $period = $request->validated('period');
-        $run = $payrolls->generateForPeriod($ownerId, $period, $request->user()?->id);
+        $run = $payrolls->generateForPeriod($ownerId, $period, $request->user()?->id,
+            includeSubCompanyEmployees: ($request->validated('employee_scope') ?? 'all') === 'all',
+            excludedEmployeeIds: $request->validated('excluded_employee_ids') ?? [],
+            serviceFeeTotal: (float) ($request->validated('service_fee_total') ?? 0),
+            customPeriodStart: $request->validated('period_start'), customPeriodEnd: $request->validated('period_end'),
+            selectedEmployeeIds: $request->validated('selected_employee_ids'), batchPurpose: $request->validated('batch_purpose') ?? 'regular', runId: $request->validated('run_id'));
 
         $run->load('items.employee:id,employee_code,first_name,last_name');
 
@@ -53,14 +66,8 @@ class PayrollController extends Controller
 
     public function save(PayrollRun $payrollRun, Request $request): JsonResponse
     {
-        $payrollRun->update([
-            'status' => 'released',
-            'is_saved' => true,
-            'saved_at' => now(),
-            'saved_by' => $request->user()?->id,
-            'released_at' => now(),
-            'released_by' => $request->user()?->id,
-        ]);
+        abort_unless((int) $payrollRun->user_id === $request->user()->accountOwnerId(), 403);
+        app(PayrollAdjustmentService::class)->release($payrollRun, $request->user()?->id, false);
 
         $payrollRun->load('items.employee:id,employee_code,first_name,last_name');
 
@@ -85,19 +92,24 @@ class PayrollController extends Controller
                     ->select(['id', 'payroll_run_id', 'employee_id', 'base_salary', 'allowances_total', 'deductions_total', 'net_salary']),
             ])
             ->where('user_id', $user->accountOwnerId())
-            ->where('type', 'regular') // Hanya regular payroll, bukan THR
+            ->where('type', 'regular')
+            ->whereHas('items', fn ($q) => $q->where('employee_id', $employee->id))
             ->whereYear('period_start', $year)
             ->where(function ($q) {
                 $q->where('status', 'released')
                     ->orWhere('is_saved', true);
             })
-            ->orderByDesc('period')
+            ->orderByDesc('period')->orderByDesc('id')
             ->get();
 
         $items = $payrolls->map(function ($payroll) {
             $item = $payroll->items->first();
 
             return [
+                'id' => $payroll->id,
+                'run_id' => $payroll->id,
+                'code' => $payroll->code,
+                'batch_purpose' => $payroll->batch_purpose,
                 'period' => $payroll->period,
                 'period_label' => Carbon::createFromFormat('Y-m', $payroll->period)->locale('id')->translatedFormat('F Y'),
                 'period_start' => $payroll->period_start?->toDateString(),
@@ -131,8 +143,11 @@ class PayrollController extends Controller
 
         return [
             'period' => $period,
+            'batches' => $user ? PayrollRun::query()->where('user_id', $user->accountOwnerId())->where('period', $period)->when($this->isSelfServiceUser($user), fn ($q) => $q->released()->whereHas('items', fn ($i) => $i->where('employee_id', $this->resolveRequiredSelfServiceEmployee($user)->id)))->latest('id')->get(['id', 'code', 'batch_purpose', 'status']) : [],
             'run' => $run ? [
                 'id' => $run->id,
+                'code' => $run->code,
+                'batch_purpose' => $run->batch_purpose,
                 'period' => $run->period,
                 'period_start' => $run->period_start?->format('Y-m-d'),
                 'period_end' => $run->period_end?->format('Y-m-d'),

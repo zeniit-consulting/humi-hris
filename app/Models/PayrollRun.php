@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PayrollRun extends Model
 {
     /** @use HasFactory<\Database\Factories\PayrollRunFactory> */
-    use HasFactory, BelongsToAccount;
+    use BelongsToAccount, HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +21,9 @@ class PayrollRun extends Model
     protected $fillable = [
         'user_id',
         'period',
+        'code',
+        'batch_purpose',
+        'selected_employee_ids',
         'type',
         'thr_reference_date',
         'period_start',
@@ -52,6 +55,7 @@ class PayrollRun extends Model
     protected function casts(): array
     {
         return [
+            'selected_employee_ids' => 'array',
             'period_start' => 'date',
             'period_end' => 'date',
             'thr_reference_date' => 'date',
@@ -67,6 +71,20 @@ class PayrollRun extends Model
             'total_net_salary' => 'decimal:2',
             'service_fee_total' => 'decimal:2',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (self $run): void {
+            if (! $run->code) {
+                $run->forceFill(['code' => ($run->type === 'thr' ? 'THR' : 'PAY').'-'.str_replace('-', '', $run->period).'-'.str_pad($run->id, 6, '0', STR_PAD_LEFT)])->saveQuietly();
+            }
+        });
+    }
+
+    public function scopeReleased($query)
+    {
+        return $query->where(fn ($q) => $q->where('status', 'released')->orWhere('is_saved', true));
     }
 
     /**

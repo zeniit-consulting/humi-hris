@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ClientInvoice;
 use App\Models\ClientInvoiceItem;
 use App\Models\Employee;
+use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\SubCompany;
 use Illuminate\Http\RedirectResponse;
@@ -170,13 +171,13 @@ class ClientBillingController extends Controller
 
     private function payrollSummary(int $ownerId, int $subCompanyId, string $period): array
     {
-        $run = PayrollRun::query()
+        $runs = PayrollRun::query()
             ->where('user_id', $ownerId)
             ->where('period', $period)
             ->where('type', 'regular')
-            ->first();
+            ->released()->get();
 
-        if (! $run) {
+        if ($runs->isEmpty()) {
             $employees = Employee::query()
                 ->where('user_id', $ownerId)
                 ->where('sub_company_id', $subCompanyId)
@@ -194,13 +195,13 @@ class ClientBillingController extends Controller
             ];
         }
 
-        $items = $run->items()
+        $items = PayrollItem::query()->where('user_id', $ownerId)->whereIn('payroll_run_id', $runs->pluck('id'))
             ->with('employee:id,employee_code,first_name,last_name,sub_company_id')
             ->whereHas('employee', fn ($query) => $query->where('sub_company_id', $subCompanyId))
             ->get();
 
         return [
-            'employee_count' => $items->count(),
+            'employee_count' => $items->pluck('employee_id')->unique()->count(),
             'payroll_cost' => round((float) $items->sum('net_salary'), 2),
             'items' => $items->map(fn ($item): array => [
                 'employee_id' => $item->employee_id,

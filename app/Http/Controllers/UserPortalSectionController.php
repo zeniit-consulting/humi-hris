@@ -140,12 +140,15 @@ class UserPortalSectionController extends Controller
         $validated = $request->validate([
             'period' => ['required', 'date_format:Y-m'],
             'current_password' => ['required', 'string', 'current_password'],
+            'run_id' => ['nullable', 'integer'],
         ]);
 
         $employee = $this->resolveSelfServiceEmployee($user);
         abort_unless($employee !== null, 404);
 
-        $run = $this->findPayrollRunForEmployee($employee, $validated['period']);
+        $run = $this->findPayrollRunForEmployee($employee, $validated['period'], $validated['run_id'] ?? null);
+
+        abort_if(isset($validated['run_id']) && ! $run, 404);
 
         if ($run && ! $run->isReleased() && ! $run->is_saved) {
             return response()->json([
@@ -174,6 +177,7 @@ class UserPortalSectionController extends Controller
         $validated = $request->validate([
             'period' => ['required', 'date_format:Y-m'],
             'current_password' => ['required', 'string', 'current_password'],
+            'run_id' => ['nullable', 'integer'],
         ]);
 
         $period = $validated['period'];
@@ -181,7 +185,7 @@ class UserPortalSectionController extends Controller
 
         abort_unless($employee !== null, 404);
 
-        $run = $this->findPayrollRunForEmployee($employee, $period);
+        $run = $this->findPayrollRunForEmployee($employee, $period, $validated['run_id'] ?? null);
 
         abort_unless($run !== null && ($run->isReleased() || $run->is_saved) && $run->items->isNotEmpty(), 404);
 
@@ -190,7 +194,7 @@ class UserPortalSectionController extends Controller
         return $payslipPdfService->download($run, $slip, $user->accountOwnerId());
     }
 
-    private function findPayrollRunForEmployee(Employee $employee, string $period): ?PayrollRun
+    private function findPayrollRunForEmployee(Employee $employee, string $period, ?int $runId = null): ?PayrollRun
     {
         return PayrollRun::query()
             ->with([
@@ -202,7 +206,9 @@ class UserPortalSectionController extends Controller
             ])
             ->where('user_id', $employee->user_id)
             ->where('period', $period)
-            ->first();
+            ->whereHas('items', fn ($q) => $q->where('employee_id', $employee->id))
+            ->when($runId, fn ($q) => $q->whereKey($runId))
+            ->orderByRaw("CASE WHEN status = 'released' OR is_saved = 1 THEN 1 ELSE 0 END DESC")->latest('id')->first();
     }
 
     /**
@@ -215,7 +221,7 @@ class UserPortalSectionController extends Controller
             : collect();
 
         $eventOvertimes = collect();
-        if ($run && $run->period_start && $run->period_end) {
+        if ($run && $run->batch_purpose !== 'additional' && $run->period_start && $run->period_end) {
             $eventOvertimes = \App\Models\OvertimeRequest::query()
                 ->where('employee_id', $employee->id)
                 ->where('is_event', true)
@@ -234,8 +240,12 @@ class UserPortalSectionController extends Controller
 
         return [
             'period' => $period,
+            'batches' => PayrollRun::query()->where('user_id', $employee->user_id)->where('period', $period)->released()->whereHas('items', fn ($q) => $q->where('employee_id', $employee->id))->latest('id')->get(['id', 'code', 'batch_purpose', 'period', 'type']),
             'run' => $run ? [
                 'id' => $run->id,
+                'code' => $run->code,
+                'type' => $run->type,
+                'batch_purpose' => $run->batch_purpose,
                 'period' => $run->period,
                 'period_start' => $run->period_start?->format('Y-m-d'),
                 'period_end' => $run->period_end?->format('Y-m-d'),

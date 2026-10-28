@@ -14,7 +14,7 @@ class PayslipPdfService
 {
     public function download(PayrollRun $run, PayrollItem $slip, int $ownerId): Response
     {
-        $documentTitle = $this->documentTitle($slip->employee, $run->period);
+        $documentTitle = $this->documentTitle($slip->employee, $run->period, $run->code);
 
         return Pdf::loadView('hris.payrolls.payslip', $this->viewData($run, $slip, $ownerId, $documentTitle))
             ->setPaper('a5')
@@ -23,19 +23,20 @@ class PayslipPdfService
 
     public function output(PayrollRun $run, PayrollItem $slip, int $ownerId): string
     {
-        $documentTitle = $this->documentTitle($slip->employee, $run->period);
+        $documentTitle = $this->documentTitle($slip->employee, $run->period, $run->code);
 
         return Pdf::loadView('hris.payrolls.payslip', $this->viewData($run, $slip, $ownerId, $documentTitle))
             ->setPaper('a5')
             ->output();
     }
 
-    public function documentTitle(?Employee $employee, string $period): string
+    public function documentTitle(?Employee $employee, string $period, ?string $code = null): string
     {
         return sprintf(
-            'Payslip_%s_%s.pdf',
+            'Payslip_%s_%s%s.pdf',
             $employee?->employee_code ?: 'employee',
             Str::replace('-', '', $period),
+            $code ? '_'.$code : '',
         );
     }
 
@@ -52,10 +53,13 @@ class PayslipPdfService
             ],
         );
 
-        $employee = $slip->employee?->loadMissing(['division:id,name', 'position:id,name']);
+        $employee = $slip->employee()->with(['division:id,name', 'position:id,name', 'subCompany:id,name,address'])->first();
 
+        $subCompany = $employee?->subCompany;
+        $companyName = $slip->company_name ?: ($subCompany?->name ?: $companySetting->name);
+        $companyDetails = $slip->company_name ? $slip->company_details : ($subCompany ? $subCompany->address : $companySetting->details);
         $eventOvertimes = collect();
-        if ($employee && $run->period_start && $run->period_end) {
+        if ($run->batch_purpose !== 'additional' && $employee && $run->period_start && $run->period_end) {
             $eventOvertimes = \App\Models\OvertimeRequest::query()
                 ->where('employee_id', $employee->id)
                 ->where('is_event', true)
@@ -67,8 +71,8 @@ class PayslipPdfService
 
         return [
             'documentTitle' => $documentTitle,
-            'companyName' => $companySetting->name,
-            'companyDetails' => $companySetting->details ?: '-',
+            'companyName' => $companyName,
+            'companyDetails' => $companyDetails,
             'companyLogoPath' => public_path('logo-color.png'),
             'employee' => $employee,
             'run' => $run,

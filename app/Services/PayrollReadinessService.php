@@ -28,6 +28,9 @@ class PayrollReadinessService
             ? $run->items->pluck('employee_id')->filter()->unique()->values()
             : collect();
 
+        if ($run && $run->selected_employee_ids !== null) {
+            $activeEmployeeIds = collect($run->selected_employee_ids);
+        }
         $missingPayrollCount = $activeEmployeeIds->diff($payrollEmployeeIds)->count();
 
         $missingBankCount = Employee::query()
@@ -46,13 +49,13 @@ class PayrollReadinessService
         $checks = [
             [
                 'key' => 'active_employees_included',
-                'label' => 'Semua karyawan aktif masuk payroll',
+                'label' => 'Karyawan pilihan masuk batch payroll',
                 'complete' => $run !== null && $missingPayrollCount === 0,
                 'severity' => 'warning',
                 'description' => $run === null
                     ? 'Payroll belum digenerate'
                     : ($missingPayrollCount === 0
-                        ? 'Semua karyawan aktif sudah masuk payroll'
+                        ? 'Semua karyawan pilihan sudah masuk batch payroll'
                         : $missingPayrollCount.' karyawan aktif belum masuk payroll'),
                 'action_url' => '/hris/employees',
             ],

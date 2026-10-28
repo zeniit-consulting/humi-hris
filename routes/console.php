@@ -27,6 +27,11 @@ Artisan::command('payroll:recalculate {runId? : Payroll run ID} {--period= : Pay
             return self::FAILURE;
         }
 
+        if ($run->isReleased() || $run->is_saved || $run->is_locked) {
+            $this->error('Payroll terkunci atau sudah dirilis tidak dapat dihitung ulang.');
+
+            return self::FAILURE;
+        }
         $updated = $payrolls->recalculateRun($run, null, $markAsDraft);
 
         $this->info(sprintf(
@@ -74,6 +79,11 @@ Artisan::command('payroll:recalculate {runId? : Payroll run ID} {--period= : Pay
     }
 
     foreach ($runs as $run) {
+        if ($run->isReleased() || $run->is_saved || $run->is_locked) {
+            $this->line("#{$run->id}: dilewati karena terkunci atau sudah dirilis.");
+
+            continue;
+        }
         $updated = $payrolls->recalculateRun($run, null, $markAsDraft);
 
         $this->line(sprintf(

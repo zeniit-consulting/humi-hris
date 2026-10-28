@@ -9,6 +9,7 @@ use App\Models\PayrollRun;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PayrollGenerationService
 {
@@ -63,33 +64,29 @@ class PayrollGenerationService
         float $serviceFeeTotal = 0,
         ?string $customPeriodStart = null,
         ?string $customPeriodEnd = null,
+        ?array $selectedEmployeeIds = null,
+        string $batchPurpose = 'regular',
+        ?int $runId = null,
     ): PayrollRun {
         $setting = CompanySetting::query()->where('user_id', $ownerId)->first();
         [$start, $end] = $this->calculatePeriodDates($period, $setting, $customPeriodStart, $customPeriodEnd);
 
-        return DB::transaction(function () use ($ownerId, $period, $start, $end, $generatedBy, $markAsDraft, $includeSubCompanyEmployees, $excludedEmployeeIds, $serviceFeeTotal): PayrollRun {
-            $run = PayrollRun::query()->updateOrCreate(
-                [
-                    'user_id' => $ownerId,
-                    'period' => $period,
-                    'type' => 'regular',
-                ],
-                [
-                    'period_start' => $start->toDateString(),
-                    'period_end' => $end->toDateString(),
-                    'generated_at' => now(),
-                    'generated_by' => $generatedBy,
-                    'service_fee_total' => round(max($serviceFeeTotal, 0), 2),
-                    ...($markAsDraft ? [
-                        'status' => 'draft',
-                        'is_saved' => false,
-                        'saved_at' => null,
-                        'saved_by' => null,
-                        'released_at' => null,
-                        'released_by' => null,
-                    ] : []),
-                ]
-            );
+        return DB::transaction(function () use ($ownerId, $period, $start, $end, $generatedBy, $markAsDraft, $includeSubCompanyEmployees, $excludedEmployeeIds, $serviceFeeTotal, $selectedEmployeeIds, $batchPurpose, $runId): PayrollRun {
+            $run = $runId ? PayrollRun::query()->where('user_id', $ownerId)->where('period', $period)->where('type', 'regular')->findOrFail($runId) : new PayrollRun;
+            if ($run->exists && ($run->isReleased() || $run->is_saved || $run->is_locked)) {
+                throw ValidationException::withMessages(['payroll' => 'Payroll terkunci atau sudah dirilis tidak dapat digenerate ulang.']);
+            }
+            if ($selectedEmployeeIds !== null && Employee::query()->where('user_id', $ownerId)->whereIn('id', $selectedEmployeeIds)->count() !== count(array_unique($selectedEmployeeIds))) {
+                throw ValidationException::withMessages(['selected_employee_ids' => 'Pilihan karyawan tidak valid.']);
+            }
+            $run->fill([
+                'user_id' => $ownerId, 'period' => $period, 'type' => 'regular',
+                'batch_purpose' => $run->exists ? $run->batch_purpose : $batchPurpose,
+                'selected_employee_ids' => $run->exists ? $run->selected_employee_ids : $selectedEmployeeIds,
+                'period_start' => $start->toDateString(), 'period_end' => $end->toDateString(),
+                'service_fee_total' => $batchPurpose === 'additional' ? 0 : round(max($serviceFeeTotal, 0), 2),
+                'generated_at' => now(), 'generated_by' => $generatedBy,
+            ])->save();
 
             return $this->recalculateRun($run, $generatedBy, $markAsDraft, $includeSubCompanyEmployees, $excludedEmployeeIds);
         });
@@ -102,6 +99,9 @@ class PayrollGenerationService
         bool $includeSubCompanyEmployees = true,
         array $excludedEmployeeIds = [],
     ): PayrollRun {
+        if ($run->isReleased() || $run->is_saved || $run->is_locked) {
+            throw ValidationException::withMessages(['payroll' => 'Payroll terkunci atau sudah dirilis tidak dapat dihitung ulang.']);
+        }
         $period = $run->period;
         $ownerId = (int) $run->user_id;
         $setting = CompanySetting::query()->where('user_id', $ownerId)->first();
@@ -114,13 +114,36 @@ class PayrollGenerationService
         }
 
         return DB::transaction(function () use ($run, $ownerId, $start, $end, $generatedBy, $markAsDraft, $includeSubCompanyEmployees, $excludedEmployeeIds): PayrollRun {
+            $run = PayrollRun::query()->lockForUpdate()->findOrFail($run->id);
+            if ($run->isReleased() || $run->is_saved || $run->is_locked) {
+                throw ValidationException::withMessages(['payroll' => 'Payroll terkunci atau sudah dirilis tidak dapat dihitung ulang.']);
+            }
             $items = $this->payrollItems($ownerId, $run, $start, $end, $includeSubCompanyEmployees, $excludedEmployeeIds);
 
-            $run->items()->delete();
-
-            if ($items->isNotEmpty()) {
-                $run->items()->createMany($items->toArray());
+            if ($run->selected_employee_ids !== null && $items->isEmpty()) {
+                throw ValidationException::withMessages(['selected_employee_ids' => 'Tidak ada karyawan yang memenuhi pilihan batch. Karyawan yang sudah dibayar reguler dapat dipilih di batch tambahan.']);
             }
+            $previous = $run->items()->get()->keyBy('employee_id');
+            $adjustments = app(PayrollAdjustmentService::class);
+            foreach ($items as $data) {
+                $old = $previous->get($data['employee_id']);
+                $item = $run->items()->updateOrCreate(['employee_id' => $data['employee_id']], $data);
+                if ($old) {
+                    $item->forceFill([
+                        'manual_overrides' => $old->manual_overrides,
+                        'company_name' => $old->company_name ?: $item->company_name,
+                        'company_details' => $old->company_name ? $old->company_details : $item->company_details,
+                    ]);
+                }
+                if ($run->batch_purpose === 'additional') {
+                    $adjustments->initializeAdditional($item);
+                }
+                $adjustments->apply($item, $old?->manual_overrides ?? []);
+                $item->save();
+            }
+            $run->items()->whereNotIn('employee_id', $items->pluck('employee_id'))->delete();
+            $run->update(['selected_employee_ids' => $items->pluck('employee_id')->all()]);
+            $items = $run->items()->get();
 
             $run->update([
                 'period_start' => $start->toDateString(),
@@ -152,6 +175,10 @@ class PayrollGenerationService
         $period = $ref->format('Y-m');
 
         return DB::transaction(function () use ($ownerId, $ref, $period): PayrollRun {
+            $existing = PayrollRun::query()->where('user_id', $ownerId)->where('period', $period)->where('type', 'thr')->first();
+            if ($existing && ($existing->isReleased() || $existing->is_saved || $existing->is_locked)) {
+                throw ValidationException::withMessages(['payroll' => 'THR sudah dirilis atau terkunci.']);
+            }
             $run = PayrollRun::query()->updateOrCreate(
                 ['user_id' => $ownerId, 'period' => $period, 'type' => 'thr'],
                 [
@@ -197,6 +224,15 @@ class PayrollGenerationService
             ->first();
 
         $employees = $this->employees($ownerId, $start, $end, $includeSubCompanyEmployees, $excludedEmployeeIds);
+        if ($run->selected_employee_ids !== null) {
+            $employees = $employees->whereIn('id', $run->selected_employee_ids);
+        }
+        if ($run->batch_purpose !== 'additional') {
+            $alreadyPaid = \App\Models\PayrollItem::query()->where('user_id', $ownerId)
+                ->whereHas('payrollRun', fn ($q) => $q->where('user_id', $ownerId)->where('period', $run->period)->where('type', 'regular')->where('batch_purpose', 'regular')->released())
+                ->pluck('employee_id');
+            $employees = $employees->whereNotIn('id', $alreadyPaid);
+        }
         $items = $employees
             ->map(fn (Employee $employee): array => $this->payrollItem($ownerId, $run, $employee, $start, $end, $setting))
             ->values();
@@ -272,8 +308,8 @@ class PayrollGenerationService
     }
 
     /**
-     * @param Collection<int, array<string, mixed>> $items
-     * @param Collection<int, Employee> $employees
+     * @param  Collection<int, array<string, mixed>>  $items
+     * @param  Collection<int, Employee>  $employees
      * @return Collection<int, array<string, mixed>>
      */
     private function applyServiceFee(Collection $items, Collection $employees, float $serviceFeeTotal): Collection
@@ -597,6 +633,9 @@ class PayrollGenerationService
             'user_id' => $ownerId,
             'payroll_run_id' => $run->id,
             'employee_id' => $employee->id,
+            'company_name' => $employee->subCompany?->name ?: ($setting?->name ?: 'Perusahaan'),
+            'company_details' => $employee->subCompany ? $employee->subCompany->address : $setting?->details,
+            'calculation_basis' => ['base_salary' => $monthlyBaseSalary, 'fixed_allowances' => $employee->allowances->groupBy('name')->map(fn ($rows) => round((float) $rows->sum('amount'), 2))->all(), 'monthly' => ! $isDailyWorker, 'ptkp_category' => $employee->ptkp_category ?: 'TK/0', 'unpaid_days' => $unpaidLeaveDays],
             'base_salary' => $baseSalary,
             'allowances_total' => $allowancesTotal,
             'is_prorated' => $prorationFactor < 1,

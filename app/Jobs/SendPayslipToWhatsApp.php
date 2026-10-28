@@ -61,7 +61,7 @@ class SendPayslipToWhatsApp implements ShouldQueue
             ->where('user_id', $this->ownerId)
             ->first();
 
-        $filename = $payslipPdfService->documentTitle($employee, $run->period);
+        $filename = $payslipPdfService->documentTitle($employee, $run->period, $run->code);
         $wahaClient->sendFileToPhone(
             $employee->phone,
             $filename,
@@ -69,7 +69,7 @@ class SendPayslipToWhatsApp implements ShouldQueue
             $this->caption(
                 $employee->full_name,
                 $run->period_start?->locale('id')->translatedFormat('F Y') ?? $run->period,
-                $company?->name ?: config('app.name', 'Perusahaan'),
+                $item->company_name ?: ($company?->name ?: config('app.name', 'Perusahaan')),
             ),
         );
 

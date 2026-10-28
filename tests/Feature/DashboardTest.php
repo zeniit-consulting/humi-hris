@@ -113,7 +113,7 @@ class DashboardTest extends TestCase
             'closing_date' => now()->addWeek()->toDateString(),
         ]);
 
-        PayrollRun::factory()->create([
+        PayrollRun::factory()->released()->create([
             'user_id' => $user->id,
             'period' => now()->format('Y-m'),
             'total_net_salary' => 612_000_000,

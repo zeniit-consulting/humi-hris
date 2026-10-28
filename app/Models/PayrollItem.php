@@ -21,6 +21,12 @@ class PayrollItem extends Model
         'user_id',
         'payroll_run_id',
         'employee_id',
+        'company_name',
+        'company_details',
+        'calculation_basis',
+        'manual_overrides',
+        'tax_reviewed',
+        'tax_basis_hash',
         'base_salary',
         'allowances_total',
         'is_prorated',
@@ -72,6 +78,9 @@ class PayrollItem extends Model
     protected function casts(): array
     {
         return [
+            'calculation_basis' => 'array',
+            'manual_overrides' => 'array',
+            'tax_reviewed' => 'boolean',
             'base_salary' => 'decimal:2',
             'allowances_total' => 'decimal:2',
             'is_prorated' => 'boolean',

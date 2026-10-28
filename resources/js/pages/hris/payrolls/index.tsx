@@ -8,7 +8,6 @@ import {
     ArrowDown,
     ArrowUpRight,
     CheckCircle2,
-    Coins,
     Download,
     Filter,
     FileText,
@@ -59,13 +58,14 @@ import { formatDeviceDateTime } from '@/lib/utils';
 import {
     generate as generatePayroll,
     index as payrollsIndex,
-    save as savePayroll,
     sendPayslips,
 } from '@/routes/hris/payrolls';
 import type { BreadcrumbItem } from '@/types';
 
 type PayrollRun = {
     id: number;
+    code: string;
+    batch_purpose: 'regular' | 'additional';
     period: string;
     period_start: string;
     period_end: string;
@@ -132,6 +132,12 @@ type PayrollItem = {
     bonus_total?: string | number;
     total_allowances?: string | number;
     is_prorated: boolean;
+    calculation_basis?: {
+        base_salary: number;
+        fixed_allowances: Record<string, number>;
+        monthly: boolean;
+    };
+    tax_reviewed?: boolean;
     proration_working_days: number | null;
     proration_payable_days: number | null;
     proration_factor: string | number;
@@ -176,6 +182,7 @@ type CompensationRow = { name: string; amount: string };
 type PageProps = {
     period: string;
     run: PayrollRun | null;
+    batches: PayrollRun[];
     items: PayrollItem[];
     type: string;
     sub_company_id: string;
@@ -184,6 +191,8 @@ type PageProps = {
         label: string;
         sub_company_label: string;
         service_fee_points: string | number;
+        regular_paid?: boolean;
+        sub_company_id?: number | null;
     }>;
     subCompanies: Array<{ id: number; label: string }>;
     payrollSettings?: {
@@ -266,7 +275,10 @@ const parseEmployeeLabel = (label: string) => {
     };
 };
 
-const getEmploymentBadgeLabel = (status?: string | null, type?: string | null) => {
+const getEmploymentBadgeLabel = (
+    status?: string | null,
+    type?: string | null,
+) => {
     if (status === 'probation') {
         return 'Probation';
     }
@@ -318,9 +330,11 @@ const pph21Label = (method: string | null) => {
 };
 
 const isHalfDayEntry = (e: DendaBreakdownItem): boolean => {
-    return Boolean(e.is_half_day) ||
+    return (
+        Boolean(e.is_half_day) ||
         (e.description?.toLowerCase().includes('setengah hari') ?? false) ||
-        (e.title?.toLowerCase().includes('setengah hari') ?? false);
+        (e.title?.toLowerCase().includes('setengah hari') ?? false)
+    );
 };
 
 const getLateDeduction = (item: PayrollItem): number => {
@@ -330,45 +344,78 @@ const getLateDeduction = (item: PayrollItem): number => {
     const breakdown = item.denda_breakdown ?? [];
     if (breakdown.length > 0) {
         return breakdown
-            .filter((e) => !e.is_reverted && e.type !== 'unrecorded_cutoff' && !(e.type === 'late_attendance' && isHalfDayEntry(e)))
+            .filter(
+                (e) =>
+                    !e.is_reverted &&
+                    e.type !== 'unrecorded_cutoff' &&
+                    !(e.type === 'late_attendance' && isHalfDayEntry(e)),
+            )
             .reduce((sum, e) => sum + Number(e.amount ?? 0), 0);
     }
     return Number(item.denda_deduction ?? 0);
 };
 
 const getAttendanceDeduction = (item: PayrollItem): number => {
-    if (item.attendance_deduction !== undefined && item.attendance_deduction !== null) {
+    if (
+        item.attendance_deduction !== undefined &&
+        item.attendance_deduction !== null
+    ) {
         return Number(item.attendance_deduction);
     }
     const breakdown = item.denda_breakdown ?? [];
     if (breakdown.length > 0) {
         return breakdown
-            .filter((e) => !e.is_reverted && (e.type === 'unrecorded_cutoff' || (e.type === 'late_attendance' && isHalfDayEntry(e))))
+            .filter(
+                (e) =>
+                    !e.is_reverted &&
+                    (e.type === 'unrecorded_cutoff' ||
+                        (e.type === 'late_attendance' && isHalfDayEntry(e))),
+            )
             .reduce((sum, e) => sum + Number(e.amount ?? 0), 0);
     }
     return 0;
 };
 
 const getFixedAllowancesTotal = (item: PayrollItem): number => {
-    if (item.fixed_allowances_total !== undefined && item.fixed_allowances_total !== null) {
+    if (
+        item.fixed_allowances_total !== undefined &&
+        item.fixed_allowances_total !== null
+    ) {
         return Number(item.fixed_allowances_total);
     }
     const breakdown = item.allowance_breakdown ?? {};
-    const sum = Object.values(breakdown).reduce((acc, val) => acc + Number(val || 0), 0);
+    const sum = Object.values(breakdown).reduce(
+        (acc, val) => acc + Number(val || 0),
+        0,
+    );
     if (sum === 0 && Number(item.allowances_total || 0) > 0) {
-        const varSum = Object.values(item.variable_allowance_breakdown ?? {}).reduce((acc, val) => acc + Number(val || 0), 0);
-        const bonSum = Object.values(item.bonus_breakdown ?? {}).reduce((acc, val) => acc + Number(val || 0), 0);
-        return Math.max(0, Number(item.allowances_total || 0) - varSum - bonSum);
+        const varSum = Object.values(
+            item.variable_allowance_breakdown ?? {},
+        ).reduce((acc, val) => acc + Number(val || 0), 0);
+        const bonSum = Object.values(item.bonus_breakdown ?? {}).reduce(
+            (acc, val) => acc + Number(val || 0),
+            0,
+        );
+        return Math.max(
+            0,
+            Number(item.allowances_total || 0) - varSum - bonSum,
+        );
     }
     return sum;
 };
 
 const getVariableAllowancesTotal = (item: PayrollItem): number => {
-    if (item.variable_allowances_total !== undefined && item.variable_allowances_total !== null) {
+    if (
+        item.variable_allowances_total !== undefined &&
+        item.variable_allowances_total !== null
+    ) {
         return Number(item.variable_allowances_total);
     }
     const breakdown = item.variable_allowance_breakdown ?? {};
-    return Object.values(breakdown).reduce((acc, val) => acc + Number(val || 0), 0);
+    return Object.values(breakdown).reduce(
+        (acc, val) => acc + Number(val || 0),
+        0,
+    );
 };
 
 const getBonusTotal = (item: PayrollItem): number => {
@@ -376,20 +423,29 @@ const getBonusTotal = (item: PayrollItem): number => {
         return Number(item.bonus_total);
     }
     const breakdown = item.bonus_breakdown ?? {};
-    return Object.values(breakdown).reduce((acc, val) => acc + Number(val || 0), 0);
+    return Object.values(breakdown).reduce(
+        (acc, val) => acc + Number(val || 0),
+        0,
+    );
 };
 
 const getTotalTunjangan = (item: PayrollItem): number => {
     if (item.total_allowances !== undefined && item.total_allowances !== null) {
         return Number(item.total_allowances);
     }
-    return getFixedAllowancesTotal(item) + getVariableAllowancesTotal(item) + Number(item.overtime_pay || 0) + getBonusTotal(item);
+    return (
+        getFixedAllowancesTotal(item) +
+        getVariableAllowancesTotal(item) +
+        Number(item.overtime_pay || 0) +
+        getBonusTotal(item)
+    );
 };
 
 export default function PayrollPage() {
     const {
         period,
         run,
+        batches,
         items,
         type,
         sub_company_id,
@@ -414,12 +470,20 @@ export default function PayrollPage() {
     const generateForm = useForm({
         period,
         employee_scope: 'all',
+        batch_purpose: 'regular',
+        selected_employee_ids: [] as number[],
+        run_id: null as number | null,
         excluded_employee_ids: [] as number[],
         service_fee_total: '',
     });
     const [editingItem, setEditingItem] = useState<PayrollItem | null>(null);
-    const [dendaModalItem, setDendaModalItem] = useState<PayrollItem | null>(null);
-    const [revertingDendaId, setRevertingDendaId] = useState<string | null>(null);
+    const [salaryEdited, setSalaryEdited] = useState(false);
+    const [dendaModalItem, setDendaModalItem] = useState<PayrollItem | null>(
+        null,
+    );
+    const [revertingDendaId, setRevertingDendaId] = useState<string | null>(
+        null,
+    );
     const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
     const [unlockPin, setUnlockPin] = useState('');
     const [isLockSubmitting, setIsLockSubmitting] = useState(false);
@@ -428,7 +492,9 @@ export default function PayrollPage() {
     const [sortKey, setSortKey] = useState<string>('employee');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-    const isPayrollReleased = Boolean(run && (run.status === 'released' || run.is_saved));
+    const isPayrollReleased = Boolean(
+        run && (run.status === 'released' || run.is_saved),
+    );
     const isPayrollDraft = Boolean(run && !isPayrollReleased);
 
     const selectedDendaItem = useMemo(() => {
@@ -473,12 +539,24 @@ export default function PayrollPage() {
 
             switch (sortKey) {
                 case 'employee_code':
-                    valA = a.employee_code || parseEmployeeLabel(a.employee_label).code || '';
-                    valB = b.employee_code || parseEmployeeLabel(b.employee_label).code || '';
+                    valA =
+                        a.employee_code ||
+                        parseEmployeeLabel(a.employee_label).code ||
+                        '';
+                    valB =
+                        b.employee_code ||
+                        parseEmployeeLabel(b.employee_label).code ||
+                        '';
                     break;
                 case 'employee':
-                    valA = a.employee_name || parseEmployeeLabel(a.employee_label).name || '';
-                    valB = b.employee_name || parseEmployeeLabel(b.employee_label).name || '';
+                    valA =
+                        a.employee_name ||
+                        parseEmployeeLabel(a.employee_label).name ||
+                        '';
+                    valB =
+                        b.employee_name ||
+                        parseEmployeeLabel(b.employee_label).name ||
+                        '';
                     break;
                 case 'division':
                     valA = a.division_name || '';
@@ -522,8 +600,12 @@ export default function PayrollPage() {
                     valB = Number(b.pph21_rate ?? 0);
                     break;
                 case 'bpjs':
-                    valA = Number(a.bpjs_total_employee ?? 0) + Number(a.bpjs_total_company ?? 0);
-                    valB = Number(b.bpjs_total_employee ?? 0) + Number(b.bpjs_total_company ?? 0);
+                    valA =
+                        Number(a.bpjs_total_employee ?? 0) +
+                        Number(a.bpjs_total_company ?? 0);
+                    valB =
+                        Number(b.bpjs_total_employee ?? 0) +
+                        Number(b.bpjs_total_company ?? 0);
                     break;
                 case 'kasbon_deduction':
                     valA = Number(a.kasbon_deduction ?? 0);
@@ -582,6 +664,9 @@ export default function PayrollPage() {
     const editItemForm = useForm({
         base_salary: '',
         allowances_total: '',
+        fixed_allowances: [] as CompensationRow[],
+        proration_payable_days: '' as string,
+        tax_reviewed: false,
         variable_allowances: [] as CompensationRow[],
         bonuses: [] as CompensationRow[],
         overtime_hours: '',
@@ -651,6 +736,7 @@ export default function PayrollPage() {
             {
                 period: periodState,
                 type,
+                run_id: periodState === period ? run?.id : undefined,
                 sub_company_id:
                     subCompanyState === '__all' ? undefined : subCompanyState,
             },
@@ -662,21 +748,39 @@ export default function PayrollPage() {
     };
 
     const handleGenerate = () => {
-        generateForm.setData('period', periodState);
+        generateForm.transform((data) => ({
+            ...data,
+            period: periodState,
+            selected_employee_ids: data.selected_employee_ids.filter((id) => {
+                const employee = employeeOptions.find(
+                    (candidate) => candidate.id === id,
+                );
+                return (
+                    employee &&
+                    (subCompanyState === '__all' ||
+                        String(employee.sub_company_id) === subCompanyState) &&
+                    (data.employee_scope !== 'parent_only' ||
+                        !employee.sub_company_id) &&
+                    (data.batch_purpose === 'additional' ||
+                        periodState !== period ||
+                        !employee.regular_paid)
+                );
+            }),
+        }));
         generateForm.post(generatePayroll.url(), {
             preserveScroll: true,
             onSuccess: () => setGenerateDialogOpen(false),
         });
     };
 
-    const toggleExcludedEmployee = (employeeId: number, checked: boolean) => {
+    const toggleSelectedEmployee = (employeeId: number, checked: boolean) => {
         const nextIds = checked
-            ? [...generateForm.data.excluded_employee_ids, employeeId]
-            : generateForm.data.excluded_employee_ids.filter(
+            ? [...generateForm.data.selected_employee_ids, employeeId]
+            : generateForm.data.selected_employee_ids.filter(
                   (id) => id !== employeeId,
               );
 
-        generateForm.setData('excluded_employee_ids', [...new Set(nextIds)]);
+        generateForm.setData('selected_employee_ids', [...new Set(nextIds)]);
     };
 
     const handleGenerateTHR = () => {
@@ -688,8 +792,20 @@ export default function PayrollPage() {
 
     const startEditItem = (item: PayrollItem) => {
         setEditingItem(item);
+        setSalaryEdited(false);
         editItemForm.setData({
             base_salary: formNumber(item.base_salary),
+            fixed_allowances: Object.entries(
+                item.calculation_basis?.fixed_allowances ??
+                    item.allowance_breakdown ??
+                    {},
+            ).map(([name, amount]) => ({ name, amount: formNumber(amount) })),
+            proration_payable_days:
+                item.calculation_basis?.monthly &&
+                run?.batch_purpose !== 'additional'
+                    ? String(item.proration_payable_days ?? '')
+                    : '',
+            tax_reviewed: Boolean(item.tax_reviewed),
             allowances_total: formNumber(item.allowances_total),
             variable_allowances: Object.entries(
                 item.variable_allowance_breakdown ?? {},
@@ -705,7 +821,9 @@ export default function PayrollPage() {
             ),
             overtime_hours: String(Number(item.overtime_hours ?? 0)),
             overtime_pay: formNumber(item.overtime_pay),
-            pph21_rate: formNumber(item.pph21_rate),
+            pph21_rate: item.pph21_method?.startsWith('ter_bulanan')
+                ? String(item.pph21_rate ?? 0)
+                : formNumber(item.pph21_rate),
             pph21_allowance: formNumber(item.pph21_allowance),
             pph21_deduction: formNumber(item.pph21_deduction),
             pph21_company_borne: formNumber(item.pph21_company_borne),
@@ -731,24 +849,13 @@ export default function PayrollPage() {
             return;
         }
 
+        editItemForm.transform(({ base_salary, ...data }) =>
+            salaryEdited ? { ...data, base_salary } : data,
+        );
         editItemForm.put(`/hris/payrolls/${run.id}/items/${editingItem.id}`, {
             preserveScroll: true,
             onSuccess: closeEditItem,
         });
-    };
-
-    const handleSave = () => {
-        if (!run) {
-            return;
-        }
-
-        router.post(
-            savePayroll.url(run.id),
-            {},
-            {
-                preserveScroll: true,
-            },
-        );
     };
 
     const handleRelease = () => {
@@ -793,7 +900,7 @@ export default function PayrollPage() {
             {
                 preserveScroll: true,
                 onFinish: () => setIsLockSubmitting(false),
-            }
+            },
         );
     };
 
@@ -811,7 +918,7 @@ export default function PayrollPage() {
                     setUnlockPin('');
                 },
                 onFinish: () => setIsLockSubmitting(false),
-            }
+            },
         );
     };
 
@@ -897,6 +1004,63 @@ export default function PayrollPage() {
                     </Button>
                 </div>
 
+                {batches.length > 0 && (
+                    <div className="grid gap-2">
+                        <Label htmlFor="payroll-batch">Batch payroll</Label>
+                        <Select
+                            value={String(run?.id ?? '')}
+                            onValueChange={(value) =>
+                                router.get(
+                                    payrollsIndex.url(),
+                                    {
+                                        period,
+                                        type,
+                                        run_id: value,
+                                        sub_company_id:
+                                            subCompanyState === '__all'
+                                                ? undefined
+                                                : subCompanyState,
+                                    },
+                                    { preserveScroll: true },
+                                )
+                            }
+                        >
+                            <SelectTrigger
+                                id="payroll-batch"
+                                className="w-full sm:max-w-xl"
+                            >
+                                <SelectValue placeholder="Pilih batch" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {batches.map((batch) => (
+                                    <SelectItem
+                                        key={batch.id}
+                                        value={String(batch.id)}
+                                    >
+                                        {batch.code} ·{' '}
+                                        {batch.batch_purpose === 'additional'
+                                            ? 'Tambahan'
+                                            : 'Reguler'}{' '}
+                                        ·{' '}
+                                        {batch.status === 'released'
+                                            ? 'Dirilis'
+                                            : 'Draft'}{' '}
+                                        · {batch.employees_count} karyawan
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {run && (
+                            <p className="text-xs text-muted-foreground">
+                                {run.code} ·{' '}
+                                {run.batch_purpose === 'additional'
+                                    ? 'Pembayaran tambahan'
+                                    : 'Payroll reguler'}
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 <Card>
                     <CardHeader>
                         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -919,18 +1083,46 @@ export default function PayrollPage() {
                             </div>
                             <Button
                                 type="button"
-                                onClick={() => setGenerateDialogOpen(true)}
+                                onClick={() => {
+                                    generateForm.setData('run_id', null);
+                                    setGenerateDialogOpen(true);
+                                }}
                                 disabled={isLocked}
                             >
                                 <Calculator className="size-4" />
                                 {type === 'thr'
                                     ? 'Buka Generate THR'
-                                    : 'Buka Generate Payroll'}
+                                    : 'Buat Batch Payroll'}
                             </Button>
                         </div>
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-wrap items-center gap-2">
+                            {run &&
+                                type === 'regular' &&
+                                !isPayrollReleased &&
+                                !run.is_locked && (
+                                    <Button
+                                        variant="outline"
+                                        disabled={generateForm.processing}
+                                        onClick={() =>
+                                            router.post(
+                                                generatePayroll.url(),
+                                                {
+                                                    period: run.period,
+                                                    run_id: run.id,
+                                                    batch_purpose:
+                                                        run.batch_purpose,
+                                                    service_fee_total:
+                                                        run.service_fee_total,
+                                                },
+                                                { preserveScroll: true },
+                                            )
+                                        }
+                                    >
+                                        Hitung Ulang Batch
+                                    </Button>
+                                )}
                             {type === 'regular' ? (
                                 <>
                                     {isPayrollReleased ? (
@@ -938,50 +1130,69 @@ export default function PayrollPage() {
                                             type="button"
                                             variant="outline"
                                             disabled
-                                            className="border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 whitespace-nowrap"
+                                            className="border-emerald-300 bg-emerald-50 whitespace-nowrap text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
                                         >
                                             <CheckCircle2 className="size-4" />
                                             Payroll Telah Dirilis
                                         </Button>
                                     ) : (
-                                        run && (
-                                            run.is_locked ? (
-                                                <>
-                                                    <Button
-                                                        type="button"
-                                                        variant="default"
-                                                        onClick={() => setReleaseDialogOpen(true)}
-                                                        disabled={isReleaseSubmitting || Boolean(run.is_locked && !run.is_locked_by_me)}
-                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white whitespace-nowrap shadow-sm"
-                                                        title="Rilis payroll agar karyawan dapat mengakses payslip di portal"
-                                                    >
-                                                        <Send className="size-4" />
-                                                        Release Payroll
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        variant={run.is_locked_by_me ? 'outline' : 'destructive'}
-                                                        onClick={() => setUnlockDialogOpen(true)}
-                                                        disabled={isLockSubmitting}
-                                                        className="whitespace-nowrap"
-                                                    >
-                                                        <Unlock className="size-4" />
-                                                        {run.is_locked_by_me ? 'Unlock Payroll (Saya)' : `Unlock Payroll (${run.locked_by_name ?? 'Admin'})`}
-                                                    </Button>
-                                                </>
-                                            ) : (
+                                        run &&
+                                        (run.is_locked ? (
+                                            <>
                                                 <Button
                                                     type="button"
-                                                    variant="outline"
-                                                    onClick={handleLock}
+                                                    variant="default"
+                                                    onClick={() =>
+                                                        setReleaseDialogOpen(
+                                                            true,
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        isReleaseSubmitting ||
+                                                        Boolean(
+                                                            run.is_locked &&
+                                                            !run.is_locked_by_me,
+                                                        )
+                                                    }
+                                                    className="bg-emerald-600 whitespace-nowrap text-white shadow-sm hover:bg-emerald-700"
+                                                    title="Rilis payroll agar karyawan dapat mengakses payslip di portal"
+                                                >
+                                                    <Send className="size-4" />
+                                                    Release Payroll
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant={
+                                                        run.is_locked_by_me
+                                                            ? 'outline'
+                                                            : 'destructive'
+                                                    }
+                                                    onClick={() =>
+                                                        setUnlockDialogOpen(
+                                                            true,
+                                                        )
+                                                    }
                                                     disabled={isLockSubmitting}
                                                     className="whitespace-nowrap"
                                                 >
-                                                    <Lock className="size-4" />
-                                                    Lock Payroll
+                                                    <Unlock className="size-4" />
+                                                    {run.is_locked_by_me
+                                                        ? 'Unlock Payroll (Saya)'
+                                                        : `Unlock Payroll (${run.locked_by_name ?? 'Admin'})`}
                                                 </Button>
-                                            )
-                                        )
+                                            </>
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={handleLock}
+                                                disabled={isLockSubmitting}
+                                                className="whitespace-nowrap"
+                                            >
+                                                <Lock className="size-4" />
+                                                Lock Payroll
+                                            </Button>
+                                        ))
                                     )}
 
                                     <Button
@@ -1012,7 +1223,9 @@ export default function PayrollPage() {
                                                     href={`/hris/payrolls/${run.id}/export/csv${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                 >
                                                     <Download className="mr-1.5 size-3.5" />
-                                                    {isPayrollReleased ? 'Download CSV' : 'Download Draft CSV'}
+                                                    {isPayrollReleased
+                                                        ? 'Download CSV'
+                                                        : 'Download Draft CSV'}
                                                 </a>
                                             </Button>
                                             <Button
@@ -1024,7 +1237,9 @@ export default function PayrollPage() {
                                                     href={`/hris/payrolls/${run.id}/export/excel${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                 >
                                                     <Download className="mr-1.5 size-3.5" />
-                                                    {isPayrollReleased ? 'Download Excel' : 'Download Draft Excel'}
+                                                    {isPayrollReleased
+                                                        ? 'Download Excel'
+                                                        : 'Download Draft Excel'}
                                                 </a>
                                             </Button>
                                         </>
@@ -1065,50 +1280,69 @@ export default function PayrollPage() {
                                             type="button"
                                             variant="outline"
                                             disabled
-                                            className="border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 whitespace-nowrap"
+                                            className="border-emerald-300 bg-emerald-50 whitespace-nowrap text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
                                         >
                                             <CheckCircle2 className="size-4" />
                                             THR Telah Dirilis
                                         </Button>
                                     ) : (
-                                        run && (
-                                            run.is_locked ? (
-                                                <>
-                                                    <Button
-                                                        type="button"
-                                                        variant="default"
-                                                        onClick={() => setReleaseDialogOpen(true)}
-                                                        disabled={isReleaseSubmitting || Boolean(run.is_locked && !run.is_locked_by_me)}
-                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white whitespace-nowrap shadow-sm"
-                                                        title="Rilis THR agar karyawan dapat mengakses payslip di portal"
-                                                    >
-                                                        <Send className="size-4" />
-                                                        Release THR
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        variant={run.is_locked_by_me ? 'outline' : 'destructive'}
-                                                        onClick={() => setUnlockDialogOpen(true)}
-                                                        disabled={isLockSubmitting}
-                                                        className="whitespace-nowrap"
-                                                    >
-                                                        <Unlock className="size-4" />
-                                                        {run.is_locked_by_me ? 'Unlock THR (Saya)' : `Unlock THR (${run.locked_by_name ?? 'Admin'})`}
-                                                    </Button>
-                                                </>
-                                            ) : (
+                                        run &&
+                                        (run.is_locked ? (
+                                            <>
                                                 <Button
                                                     type="button"
-                                                    variant="outline"
-                                                    onClick={handleLock}
+                                                    variant="default"
+                                                    onClick={() =>
+                                                        setReleaseDialogOpen(
+                                                            true,
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        isReleaseSubmitting ||
+                                                        Boolean(
+                                                            run.is_locked &&
+                                                            !run.is_locked_by_me,
+                                                        )
+                                                    }
+                                                    className="bg-emerald-600 whitespace-nowrap text-white shadow-sm hover:bg-emerald-700"
+                                                    title="Rilis THR agar karyawan dapat mengakses payslip di portal"
+                                                >
+                                                    <Send className="size-4" />
+                                                    Release THR
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant={
+                                                        run.is_locked_by_me
+                                                            ? 'outline'
+                                                            : 'destructive'
+                                                    }
+                                                    onClick={() =>
+                                                        setUnlockDialogOpen(
+                                                            true,
+                                                        )
+                                                    }
                                                     disabled={isLockSubmitting}
                                                     className="whitespace-nowrap"
                                                 >
-                                                    <Lock className="size-4" />
-                                                    Lock THR
+                                                    <Unlock className="size-4" />
+                                                    {run.is_locked_by_me
+                                                        ? 'Unlock THR (Saya)'
+                                                        : `Unlock THR (${run.locked_by_name ?? 'Admin'})`}
                                                 </Button>
-                                            )
-                                        )
+                                            </>
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={handleLock}
+                                                disabled={isLockSubmitting}
+                                                className="whitespace-nowrap"
+                                            >
+                                                <Lock className="size-4" />
+                                                Lock THR
+                                            </Button>
+                                        ))
                                     )}
 
                                     {run && (
@@ -1122,7 +1356,9 @@ export default function PayrollPage() {
                                                     href={`/hris/payrolls/${run.id}/export/csv${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                 >
                                                     <Download className="mr-1.5 size-3.5" />
-                                                    {isPayrollReleased ? 'Download CSV' : 'Download Draft CSV'}
+                                                    {isPayrollReleased
+                                                        ? 'Download CSV'
+                                                        : 'Download Draft CSV'}
                                                 </a>
                                             </Button>
                                             <Button
@@ -1134,7 +1370,9 @@ export default function PayrollPage() {
                                                     href={`/hris/payrolls/${run.id}/export/excel${subCompanyState !== '__all' ? `?sub_company_id=${subCompanyState}` : ''}`}
                                                 >
                                                     <Download className="mr-1.5 size-3.5" />
-                                                    {isPayrollReleased ? 'Download Excel' : 'Download Draft Excel'}
+                                                    {isPayrollReleased
+                                                        ? 'Download Excel'
+                                                        : 'Download Draft Excel'}
                                                 </a>
                                             </Button>
                                         </>
@@ -1174,7 +1412,9 @@ export default function PayrollPage() {
                         <CardContent>
                             <div className="grid gap-3 md:grid-cols-3">
                                 {payrollReadiness.checks.map((check) => {
-                                    const CardWrapper = check.action_url ? Link : 'div';
+                                    const CardWrapper = check.action_url
+                                        ? Link
+                                        : 'div';
                                     const wrapperProps = check.action_url
                                         ? {
                                               href: check.action_url,
@@ -1187,14 +1427,18 @@ export default function PayrollPage() {
                                           };
 
                                     return (
-                                        <CardWrapper key={check.key} {...(wrapperProps as any)}>
+                                        <CardWrapper
+                                            key={check.key}
+                                            {...(wrapperProps as any)}
+                                        >
                                             <div className="flex items-start gap-2.5">
                                                 {check.complete ? (
                                                     <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" />
                                                 ) : (
                                                     <AlertTriangle
                                                         className={`mt-0.5 size-4 shrink-0 ${
-                                                            check.severity === 'error'
+                                                            check.severity ===
+                                                            'error'
                                                                 ? 'text-red-700'
                                                                 : 'text-amber-700'
                                                         }`}
@@ -1224,7 +1468,10 @@ export default function PayrollPage() {
 
                 {type === 'thr' ? (
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                        <Card
+                            className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm"
+                            asChild
+                        >
                             <a href="#payroll-table" className="cursor-pointer">
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center justify-between text-muted-foreground">
@@ -1239,11 +1486,16 @@ export default function PayrollPage() {
                                 </CardHeader>
                             </a>
                         </Card>
-                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                        <Card
+                            className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm"
+                            asChild
+                        >
                             <a href="#payroll-table" className="cursor-pointer">
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center justify-between text-muted-foreground">
-                                        <CardDescription>Total THR</CardDescription>
+                                        <CardDescription>
+                                            Total THR
+                                        </CardDescription>
                                         <ArrowUpRight className="size-4 opacity-0 transition group-hover:opacity-100" />
                                     </div>
                                     <CardTitle className="text-2xl">
@@ -1255,8 +1507,14 @@ export default function PayrollPage() {
                     </div>
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
-                            <Link href="/hris/employees" className="cursor-pointer">
+                        <Card
+                            className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm"
+                            asChild
+                        >
+                            <Link
+                                href="/hris/employees"
+                                className="cursor-pointer"
+                            >
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center justify-between text-muted-foreground">
                                         <CardDescription>
@@ -1270,11 +1528,16 @@ export default function PayrollPage() {
                                 </CardHeader>
                             </Link>
                         </Card>
-                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                        <Card
+                            className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm"
+                            asChild
+                        >
                             <a href="#payroll-table" className="cursor-pointer">
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center justify-between text-muted-foreground">
-                                        <CardDescription>Total Bruto</CardDescription>
+                                        <CardDescription>
+                                            Total Bruto
+                                        </CardDescription>
                                         <ArrowUpRight className="size-4 opacity-0 transition group-hover:opacity-100" />
                                     </div>
                                     <CardTitle className="text-2xl">
@@ -1283,11 +1546,19 @@ export default function PayrollPage() {
                                 </CardHeader>
                             </a>
                         </Card>
-                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
-                            <Link href="/hris/overtimes" className="cursor-pointer">
+                        <Card
+                            className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm"
+                            asChild
+                        >
+                            <Link
+                                href="/hris/overtimes"
+                                className="cursor-pointer"
+                            >
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center justify-between text-muted-foreground">
-                                        <CardDescription>Total Lembur</CardDescription>
+                                        <CardDescription>
+                                            Total Lembur
+                                        </CardDescription>
                                         <ArrowUpRight className="size-4 opacity-0 transition group-hover:opacity-100" />
                                     </div>
                                     <CardTitle className="text-2xl">
@@ -1296,7 +1567,10 @@ export default function PayrollPage() {
                                 </CardHeader>
                             </Link>
                         </Card>
-                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                        <Card
+                            className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm"
+                            asChild
+                        >
                             <a href="#payroll-table" className="cursor-pointer">
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center justify-between text-muted-foreground">
@@ -1311,7 +1585,10 @@ export default function PayrollPage() {
                                 </CardHeader>
                             </a>
                         </Card>
-                        <Card className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm" asChild>
+                        <Card
+                            className="group gap-2 py-3 transition hover:border-slate-300 hover:shadow-sm"
+                            asChild
+                        >
                             <a href="#payroll-table" className="cursor-pointer">
                                 <CardHeader className="px-4 pb-0">
                                     <div className="flex items-center justify-between text-muted-foreground">
@@ -1339,17 +1616,25 @@ export default function PayrollPage() {
                                         : `Preview Payroll ${periodState}`}
                                 </span>
                                 {run?.period_start && run?.period_end && (
-                                    <Badge variant="outline" className="text-xs font-normal">
-                                        Periode: {run.period_start} s/d {run.period_end}
+                                    <Badge
+                                        variant="outline"
+                                        className="text-xs font-normal"
+                                    >
+                                        Periode: {run.period_start} s/d{' '}
+                                        {run.period_end}
                                     </Badge>
                                 )}
                                 {run && (
                                     <Badge
-                                        variant={isPayrollReleased ? 'default' : 'outline'}
+                                        variant={
+                                            isPayrollReleased
+                                                ? 'default'
+                                                : 'outline'
+                                        }
                                         className={
                                             isPayrollReleased
-                                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white gap-1 px-2.5 py-0.5 text-xs font-semibold'
-                                                : 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300 gap-1 px-2.5 py-0.5 text-xs font-semibold'
+                                                ? 'gap-1 bg-emerald-600 px-2.5 py-0.5 text-xs font-semibold text-white hover:bg-emerald-700'
+                                                : 'gap-1 border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
                                         }
                                     >
                                         {isPayrollReleased ? (
@@ -1367,13 +1652,21 @@ export default function PayrollPage() {
                                 )}
                                 {run && isPayrollDraft && (
                                     <Badge
-                                        variant={run.is_locked ? (run.is_locked_by_me ? 'secondary' : 'destructive') : 'outline'}
+                                        variant={
+                                            run.is_locked
+                                                ? run.is_locked_by_me
+                                                    ? 'secondary'
+                                                    : 'destructive'
+                                                : 'outline'
+                                        }
                                         className="gap-1 px-2.5 py-0.5 text-xs"
                                     >
                                         {run.is_locked ? (
                                             <>
                                                 <Lock className="size-3.5" />
-                                                {run.is_locked_by_me ? 'Terkunci (Lock)' : `Di-lock oleh ${run.locked_by_name ?? 'Admin'}`}
+                                                {run.is_locked_by_me
+                                                    ? 'Terkunci (Lock)'
+                                                    : `Di-lock oleh ${run.locked_by_name ?? 'Admin'}`}
                                             </>
                                         ) : (
                                             <>
@@ -1416,12 +1709,21 @@ export default function PayrollPage() {
                                             <th className="w-32 min-w-[120px] px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('employee_code')}
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'employee_code',
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     ID
-                                                    {sortKey === 'employee_code' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'employee_code' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1430,12 +1732,18 @@ export default function PayrollPage() {
                                             <th className="sticky left-0 z-20 w-64 min-w-[220px] bg-background px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('employee')}
+                                                    onClick={() =>
+                                                        handleSort('employee')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Karyawan
                                                     {sortKey === 'employee' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1444,12 +1752,18 @@ export default function PayrollPage() {
                                             <th className="w-40 min-w-[140px] px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('division')}
+                                                    onClick={() =>
+                                                        handleSort('division')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Divisi
                                                     {sortKey === 'division' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1458,12 +1772,18 @@ export default function PayrollPage() {
                                             <th className="w-56 min-w-[190px] px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('dates')}
+                                                    onClick={() =>
+                                                        handleSort('dates')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Tanggal
                                                     {sortKey === 'dates' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1472,12 +1792,18 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('bank')}
+                                                    onClick={() =>
+                                                        handleSort('bank')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Rekening Bank
                                                     {sortKey === 'bank' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1486,12 +1812,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('base_salary')}
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'base_salary',
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Gaji Pokok
-                                                    {sortKey === 'base_salary' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'base_salary' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1500,12 +1835,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('thr_months_of_service')}
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'thr_months_of_service',
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Masa Kerja
-                                                    {sortKey === 'thr_months_of_service' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'thr_months_of_service' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1514,12 +1858,19 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('thr_amount')}
+                                                    onClick={() =>
+                                                        handleSort('thr_amount')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     THR
-                                                    {sortKey === 'thr_amount' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'thr_amount' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1543,9 +1894,21 @@ export default function PayrollPage() {
                                             </tr>
                                         )}
                                         {sortedItems.map((item) => {
-                                            const empCode = item.employee_code || parseEmployeeLabel(item.employee_label).code;
-                                            const empName = item.employee_name || parseEmployeeLabel(item.employee_label).name;
-                                            const statusBadge = getEmploymentBadgeLabel(item.employment_status, item.employment_type);
+                                            const empCode =
+                                                item.employee_code ||
+                                                parseEmployeeLabel(
+                                                    item.employee_label,
+                                                ).code;
+                                            const empName =
+                                                item.employee_name ||
+                                                parseEmployeeLabel(
+                                                    item.employee_label,
+                                                ).name;
+                                            const statusBadge =
+                                                getEmploymentBadgeLabel(
+                                                    item.employment_status,
+                                                    item.employment_type,
+                                                );
 
                                             return (
                                                 <tr
@@ -1561,12 +1924,18 @@ export default function PayrollPage() {
                                                         </p>
                                                     </td>
                                                     <td className="w-40 min-w-[140px] px-3 py-3 text-xs">
-                                                        {item.division_name || '-'}
+                                                        {item.division_name ||
+                                                            '-'}
                                                     </td>
                                                     <td className="w-56 min-w-[190px] px-3 py-3 text-xs">
                                                         <div>
-                                                            <span className="text-muted-foreground">Join: </span>
-                                                            <span>{item.hire_date || '-'}</span>
+                                                            <span className="text-muted-foreground">
+                                                                Join:{' '}
+                                                            </span>
+                                                            <span>
+                                                                {item.hire_date ||
+                                                                    '-'}
+                                                            </span>
                                                         </div>
                                                         {statusBadge && (
                                                             <div className="text-[11px] text-muted-foreground">
@@ -1575,21 +1944,39 @@ export default function PayrollPage() {
                                                         )}
                                                         {item.offboarded_at && (
                                                             <div className="text-[11px] font-medium text-red-600">
-                                                                Resign: {item.offboarded_at}
+                                                                Resign:{' '}
+                                                                {
+                                                                    item.offboarded_at
+                                                                }
                                                             </div>
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-3 text-xs">
                                                         {item.bank_name ? (
                                                             <div>
-                                                                <p className="font-medium text-foreground">{item.bank_name}</p>
-                                                                <p className="font-mono text-muted-foreground">{item.account_number}</p>
+                                                                <p className="font-medium text-foreground">
+                                                                    {
+                                                                        item.bank_name
+                                                                    }
+                                                                </p>
+                                                                <p className="font-mono text-muted-foreground">
+                                                                    {
+                                                                        item.account_number
+                                                                    }
+                                                                </p>
                                                                 {item.account_holder_name && (
-                                                                    <p className="text-[11px] text-muted-foreground">a.n {item.account_holder_name}</p>
+                                                                    <p className="text-[11px] text-muted-foreground">
+                                                                        a.n{' '}
+                                                                        {
+                                                                            item.account_holder_name
+                                                                        }
+                                                                    </p>
                                                                 )}
                                                             </div>
                                                         ) : (
-                                                            <span className="text-muted-foreground">-</span>
+                                                            <span className="text-muted-foreground">
+                                                                -
+                                                            </span>
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-3">
@@ -1629,12 +2016,21 @@ export default function PayrollPage() {
                                             <th className="w-32 min-w-[120px] px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('employee_code')}
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'employee_code',
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     ID
-                                                    {sortKey === 'employee_code' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'employee_code' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1643,12 +2039,18 @@ export default function PayrollPage() {
                                             <th className="sticky left-0 z-20 w-64 min-w-[220px] bg-background px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('employee')}
+                                                    onClick={() =>
+                                                        handleSort('employee')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Karyawan
                                                     {sortKey === 'employee' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1657,12 +2059,18 @@ export default function PayrollPage() {
                                             <th className="w-40 min-w-[140px] px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('division')}
+                                                    onClick={() =>
+                                                        handleSort('division')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Divisi
                                                     {sortKey === 'division' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1671,12 +2079,18 @@ export default function PayrollPage() {
                                             <th className="w-56 min-w-[190px] px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('dates')}
+                                                    onClick={() =>
+                                                        handleSort('dates')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Tanggal
                                                     {sortKey === 'dates' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1685,12 +2099,18 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('bank')}
+                                                    onClick={() =>
+                                                        handleSort('bank')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Rekening Bank
                                                     {sortKey === 'bank' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1699,12 +2119,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('base_salary')}
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'base_salary',
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Gaji Pokok
-                                                    {sortKey === 'base_salary' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'base_salary' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1713,12 +2142,23 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('fixed_allowances_total')}
-                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground whitespace-nowrap"
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'fixed_allowances_total',
+                                                        )
+                                                    }
+                                                    className="inline-flex items-center gap-1 font-semibold whitespace-nowrap hover:text-foreground"
                                                 >
                                                     Tunjangan Tetap
-                                                    {sortKey === 'fixed_allowances_total' || sortKey === 'allowances_total' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                        'fixed_allowances_total' ||
+                                                    sortKey ===
+                                                        'allowances_total' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1727,12 +2167,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('variable_allowances_total')}
-                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground whitespace-nowrap"
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'variable_allowances_total',
+                                                        )
+                                                    }
+                                                    className="inline-flex items-center gap-1 font-semibold whitespace-nowrap hover:text-foreground"
                                                 >
                                                     Tunjangan Tidak Tetap
-                                                    {sortKey === 'variable_allowances_total' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'variable_allowances_total' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1741,12 +2190,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('overtime_pay')}
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'overtime_pay',
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Lembur
-                                                    {sortKey === 'overtime_pay' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'overtime_pay' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1755,12 +2213,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('bonus_total')}
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'bonus_total',
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Bonus
-                                                    {sortKey === 'bonus_total' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'bonus_total' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1769,12 +2236,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('total_allowances')}
-                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground whitespace-nowrap"
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'total_allowances',
+                                                        )
+                                                    }
+                                                    className="inline-flex items-center gap-1 font-semibold whitespace-nowrap hover:text-foreground"
                                                 >
                                                     Total Tunjangan
-                                                    {sortKey === 'total_allowances' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'total_allowances' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1783,12 +2259,19 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('pph21_rate')}
+                                                    onClick={() =>
+                                                        handleSort('pph21_rate')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     PPh21
-                                                    {sortKey === 'pph21_rate' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'pph21_rate' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1797,12 +2280,18 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('bpjs')}
+                                                    onClick={() =>
+                                                        handleSort('bpjs')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     BPJS (Info)
                                                     {sortKey === 'bpjs' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1811,12 +2300,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('kasbon_deduction')}
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'kasbon_deduction',
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Kasbon
-                                                    {sortKey === 'kasbon_deduction' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'kasbon_deduction' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1825,12 +2323,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('late_deduction')}
-                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground whitespace-nowrap"
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'late_deduction',
+                                                        )
+                                                    }
+                                                    className="inline-flex items-center gap-1 font-semibold whitespace-nowrap hover:text-foreground"
                                                 >
                                                     Denda Keterlambatan
-                                                    {sortKey === 'late_deduction' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'late_deduction' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1839,12 +2346,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('attendance_deduction')}
-                                                    className="inline-flex items-center gap-1 font-semibold hover:text-foreground whitespace-nowrap"
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'attendance_deduction',
+                                                        )
+                                                    }
+                                                    className="inline-flex items-center gap-1 font-semibold whitespace-nowrap hover:text-foreground"
                                                 >
                                                     Potongan Kehadiran
-                                                    {sortKey === 'attendance_deduction' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'attendance_deduction' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1853,12 +2369,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('unpaid_leave_deduction')}
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'unpaid_leave_deduction',
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Cuti Tanpa Gaji
-                                                    {sortKey === 'unpaid_leave_deduction' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'unpaid_leave_deduction' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1867,12 +2392,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('manual_deduction_total')}
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'manual_deduction_total',
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Potongan Lainnya
-                                                    {sortKey === 'manual_deduction_total' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'manual_deduction_total' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1881,12 +2415,21 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('deductions_total')}
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'deductions_total',
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Total Potongan
-                                                    {sortKey === 'deductions_total' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'deductions_total' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1895,12 +2438,19 @@ export default function PayrollPage() {
                                             <th className="px-3 py-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('net_salary')}
+                                                    onClick={() =>
+                                                        handleSort('net_salary')
+                                                    }
                                                     className="inline-flex items-center gap-1 font-semibold hover:text-foreground"
                                                 >
                                                     Take Home Pay
-                                                    {sortKey === 'net_salary' ? (
-                                                        sortOrder === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                                                    {sortKey ===
+                                                    'net_salary' ? (
+                                                        sortOrder === 'asc' ? (
+                                                            <ArrowUp className="size-3.5" />
+                                                        ) : (
+                                                            <ArrowDown className="size-3.5" />
+                                                        )
                                                     ) : (
                                                         <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
                                                     )}
@@ -1924,17 +2474,41 @@ export default function PayrollPage() {
                                             </tr>
                                         )}
                                         {sortedItems.map((item) => {
-                                            const empCode = item.employee_code || parseEmployeeLabel(item.employee_label).code;
-                                            const empName = item.employee_name || parseEmployeeLabel(item.employee_label).name;
-                                            const totalBpjsEmp = Number(item.bpjs_total_employee ?? 0);
-                                            const totalBpjsComp = Number(item.bpjs_total_company ?? 0);
-                                            const statusBadge = getEmploymentBadgeLabel(item.employment_status, item.employment_type);
-                                            const lateDeduction = getLateDeduction(item);
-                                            const attendanceDeduction = getAttendanceDeduction(item);
-                                            const fixedAllowancesTotal = getFixedAllowancesTotal(item);
-                                            const variableAllowancesTotal = getVariableAllowancesTotal(item);
-                                            const bonusTotal = getBonusTotal(item);
-                                            const totalTunjangan = getTotalTunjangan(item);
+                                            const empCode =
+                                                item.employee_code ||
+                                                parseEmployeeLabel(
+                                                    item.employee_label,
+                                                ).code;
+                                            const empName =
+                                                item.employee_name ||
+                                                parseEmployeeLabel(
+                                                    item.employee_label,
+                                                ).name;
+                                            const totalBpjsEmp = Number(
+                                                item.bpjs_total_employee ?? 0,
+                                            );
+                                            const totalBpjsComp = Number(
+                                                item.bpjs_total_company ?? 0,
+                                            );
+                                            const statusBadge =
+                                                getEmploymentBadgeLabel(
+                                                    item.employment_status,
+                                                    item.employment_type,
+                                                );
+                                            const lateDeduction =
+                                                getLateDeduction(item);
+                                            const attendanceDeduction =
+                                                getAttendanceDeduction(item);
+                                            const fixedAllowancesTotal =
+                                                getFixedAllowancesTotal(item);
+                                            const variableAllowancesTotal =
+                                                getVariableAllowancesTotal(
+                                                    item,
+                                                );
+                                            const bonusTotal =
+                                                getBonusTotal(item);
+                                            const totalTunjangan =
+                                                getTotalTunjangan(item);
 
                                             return (
                                                 <tr
@@ -1950,12 +2524,18 @@ export default function PayrollPage() {
                                                         </p>
                                                     </td>
                                                     <td className="w-40 min-w-[140px] px-3 py-3 text-xs">
-                                                        {item.division_name || '-'}
+                                                        {item.division_name ||
+                                                            '-'}
                                                     </td>
                                                     <td className="w-56 min-w-[190px] px-3 py-3 text-xs">
                                                         <div>
-                                                            <span className="text-muted-foreground">Join: </span>
-                                                            <span>{item.hire_date || '-'}</span>
+                                                            <span className="text-muted-foreground">
+                                                                Join:{' '}
+                                                            </span>
+                                                            <span>
+                                                                {item.hire_date ||
+                                                                    '-'}
+                                                            </span>
                                                         </div>
                                                         {statusBadge && (
                                                             <div className="text-[11px] text-muted-foreground">
@@ -1964,21 +2544,39 @@ export default function PayrollPage() {
                                                         )}
                                                         {item.offboarded_at && (
                                                             <div className="text-[11px] font-medium text-red-600">
-                                                                Resign: {item.offboarded_at}
+                                                                Resign:{' '}
+                                                                {
+                                                                    item.offboarded_at
+                                                                }
                                                             </div>
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-3 text-xs">
                                                         {item.bank_name ? (
                                                             <div>
-                                                                <p className="font-medium text-foreground">{item.bank_name}</p>
-                                                                <p className="font-mono text-muted-foreground">{item.account_number}</p>
+                                                                <p className="font-medium text-foreground">
+                                                                    {
+                                                                        item.bank_name
+                                                                    }
+                                                                </p>
+                                                                <p className="font-mono text-muted-foreground">
+                                                                    {
+                                                                        item.account_number
+                                                                    }
+                                                                </p>
                                                                 {item.account_holder_name && (
-                                                                    <p className="text-[11px] text-muted-foreground">a.n {item.account_holder_name}</p>
+                                                                    <p className="text-[11px] text-muted-foreground">
+                                                                        a.n{' '}
+                                                                        {
+                                                                            item.account_holder_name
+                                                                        }
+                                                                    </p>
                                                                 )}
                                                             </div>
                                                         ) : (
-                                                            <span className="text-muted-foreground">-</span>
+                                                            <span className="text-muted-foreground">
+                                                                -
+                                                            </span>
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-3">
@@ -1989,9 +2587,13 @@ export default function PayrollPage() {
                                                         </p>
                                                         {item.is_prorated && (
                                                             <div className="mt-1 space-y-0.5">
-                                                                {item.unprorated_base_salary != null && (
+                                                                {item.unprorated_base_salary !=
+                                                                    null && (
                                                                     <p className="text-xs text-muted-foreground">
-                                                                        Pokok: {formatCurrency(item.unprorated_base_salary)}
+                                                                        Pokok:{' '}
+                                                                        {formatCurrency(
+                                                                            item.unprorated_base_salary,
+                                                                        )}
                                                                     </p>
                                                                 )}
                                                                 <Badge
@@ -1999,9 +2601,13 @@ export default function PayrollPage() {
                                                                     className="text-[10px]"
                                                                 >
                                                                     Prorata{' '}
-                                                                    {item.proration_payable_days}
+                                                                    {
+                                                                        item.proration_payable_days
+                                                                    }
                                                                     /
-                                                                    {item.proration_working_days}{' '}
+                                                                    {
+                                                                        item.proration_working_days
+                                                                    }{' '}
                                                                     hari
                                                                 </Badge>
                                                             </div>
@@ -2009,36 +2615,124 @@ export default function PayrollPage() {
                                                     </td>
                                                     <td className="px-3 py-3">
                                                         <p className="font-medium">
-                                                            {formatCurrency(fixedAllowancesTotal)}
+                                                            {formatCurrency(
+                                                                fixedAllowancesTotal,
+                                                            )}
                                                         </p>
-                                                        {Object.keys(item.allowance_breakdown ?? {}).length > 0 && (
-                                                            <div className="text-[11px] text-muted-foreground space-y-0.5 mt-0.5">
-                                                                {Object.entries(item.allowance_breakdown ?? {}).slice(0, 2).map(([name, amt]) => (
-                                                                    <div key={name} className="truncate max-w-[140px]" title={`${name}: ${formatCurrency(amt)}`}>
-                                                                        {name}: {formatCurrency(amt)}
+                                                        {Object.keys(
+                                                            item.allowance_breakdown ??
+                                                                {},
+                                                        ).length > 0 && (
+                                                            <div className="mt-0.5 space-y-0.5 text-[11px] text-muted-foreground">
+                                                                {Object.entries(
+                                                                    item.allowance_breakdown ??
+                                                                        {},
+                                                                )
+                                                                    .slice(0, 2)
+                                                                    .map(
+                                                                        ([
+                                                                            name,
+                                                                            amt,
+                                                                        ]) => (
+                                                                            <div
+                                                                                key={
+                                                                                    name
+                                                                                }
+                                                                                className="max-w-[140px] truncate"
+                                                                                title={`${name}: ${formatCurrency(amt)}`}
+                                                                            >
+                                                                                {
+                                                                                    name
+                                                                                }
+
+                                                                                :{' '}
+                                                                                {formatCurrency(
+                                                                                    amt,
+                                                                                )}
+                                                                            </div>
+                                                                        ),
+                                                                    )}
+                                                                {Object.keys(
+                                                                    item.allowance_breakdown ??
+                                                                        {},
+                                                                ).length >
+                                                                    2 && (
+                                                                    <div>
+                                                                        +
+                                                                        {Object.keys(
+                                                                            item.allowance_breakdown ??
+                                                                                {},
+                                                                        )
+                                                                            .length -
+                                                                            2}{' '}
+                                                                        lainnya
                                                                     </div>
-                                                                ))}
-                                                                {Object.keys(item.allowance_breakdown ?? {}).length > 2 && (
-                                                                    <div>+{Object.keys(item.allowance_breakdown ?? {}).length - 2} lainnya</div>
                                                                 )}
                                                             </div>
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-3">
-                                                        {variableAllowancesTotal > 0 ? (
+                                                        {variableAllowancesTotal >
+                                                        0 ? (
                                                             <div>
                                                                 <p className="font-medium">
-                                                                    {formatCurrency(variableAllowancesTotal)}
+                                                                    {formatCurrency(
+                                                                        variableAllowancesTotal,
+                                                                    )}
                                                                 </p>
-                                                                {Object.keys(item.variable_allowance_breakdown ?? {}).length > 0 && (
-                                                                    <div className="text-[11px] text-muted-foreground space-y-0.5 mt-0.5">
-                                                                        {Object.entries(item.variable_allowance_breakdown ?? {}).slice(0, 2).map(([name, amt]) => (
-                                                                            <div key={name} className="truncate max-w-[140px]" title={`${name}: ${formatCurrency(amt)}`}>
-                                                                                {name}: {formatCurrency(amt)}
+                                                                {Object.keys(
+                                                                    item.variable_allowance_breakdown ??
+                                                                        {},
+                                                                ).length >
+                                                                    0 && (
+                                                                    <div className="mt-0.5 space-y-0.5 text-[11px] text-muted-foreground">
+                                                                        {Object.entries(
+                                                                            item.variable_allowance_breakdown ??
+                                                                                {},
+                                                                        )
+                                                                            .slice(
+                                                                                0,
+                                                                                2,
+                                                                            )
+                                                                            .map(
+                                                                                ([
+                                                                                    name,
+                                                                                    amt,
+                                                                                ]) => (
+                                                                                    <div
+                                                                                        key={
+                                                                                            name
+                                                                                        }
+                                                                                        className="max-w-[140px] truncate"
+                                                                                        title={`${name}: ${formatCurrency(amt)}`}
+                                                                                    >
+                                                                                        {
+                                                                                            name
+                                                                                        }
+
+                                                                                        :{' '}
+                                                                                        {formatCurrency(
+                                                                                            amt,
+                                                                                        )}
+                                                                                    </div>
+                                                                                ),
+                                                                            )}
+                                                                        {Object.keys(
+                                                                            item.variable_allowance_breakdown ??
+                                                                                {},
+                                                                        )
+                                                                            .length >
+                                                                            2 && (
+                                                                            <div>
+                                                                                +
+                                                                                {Object.keys(
+                                                                                    item.variable_allowance_breakdown ??
+                                                                                        {},
+                                                                                )
+                                                                                    .length -
+                                                                                    2}{' '}
+                                                                                lainnya
                                                                             </div>
-                                                                        ))}
-                                                                        {Object.keys(item.variable_allowance_breakdown ?? {}).length > 2 && (
-                                                                            <div>+{Object.keys(item.variable_allowance_breakdown ?? {}).length - 2} lainnya</div>
                                                                         )}
                                                                     </div>
                                                                 )}
@@ -2051,7 +2745,8 @@ export default function PayrollPage() {
                                                     </td>
                                                     <td className="px-3 py-3">
                                                         {Number(
-                                                            item.overtime_pay ?? 0,
+                                                            item.overtime_pay ??
+                                                                0,
                                                         ) > 0 ? (
                                                             <div>
                                                                 <p className="font-medium">
@@ -2059,9 +2754,15 @@ export default function PayrollPage() {
                                                                         item.overtime_pay,
                                                                     )}
                                                                 </p>
-                                                                {Number(item.overtime_hours ?? 0) > 0 && (
+                                                                {Number(
+                                                                    item.overtime_hours ??
+                                                                        0,
+                                                                ) > 0 && (
                                                                     <p className="text-[11px] text-muted-foreground">
-                                                                        {Number(item.overtime_hours)} jam
+                                                                        {Number(
+                                                                            item.overtime_hours,
+                                                                        )}{' '}
+                                                                        jam
                                                                     </p>
                                                                 )}
                                                             </div>
@@ -2075,17 +2776,63 @@ export default function PayrollPage() {
                                                         {bonusTotal > 0 ? (
                                                             <div>
                                                                 <p className="font-medium">
-                                                                    {formatCurrency(bonusTotal)}
+                                                                    {formatCurrency(
+                                                                        bonusTotal,
+                                                                    )}
                                                                 </p>
-                                                                {Object.keys(item.bonus_breakdown ?? {}).length > 0 && (
-                                                                    <div className="text-[11px] text-muted-foreground space-y-0.5 mt-0.5">
-                                                                        {Object.entries(item.bonus_breakdown ?? {}).slice(0, 2).map(([name, amt]) => (
-                                                                            <div key={name} className="truncate max-w-[140px]" title={`${name}: ${formatCurrency(amt)}`}>
-                                                                                {name}: {formatCurrency(amt)}
+                                                                {Object.keys(
+                                                                    item.bonus_breakdown ??
+                                                                        {},
+                                                                ).length >
+                                                                    0 && (
+                                                                    <div className="mt-0.5 space-y-0.5 text-[11px] text-muted-foreground">
+                                                                        {Object.entries(
+                                                                            item.bonus_breakdown ??
+                                                                                {},
+                                                                        )
+                                                                            .slice(
+                                                                                0,
+                                                                                2,
+                                                                            )
+                                                                            .map(
+                                                                                ([
+                                                                                    name,
+                                                                                    amt,
+                                                                                ]) => (
+                                                                                    <div
+                                                                                        key={
+                                                                                            name
+                                                                                        }
+                                                                                        className="max-w-[140px] truncate"
+                                                                                        title={`${name}: ${formatCurrency(amt)}`}
+                                                                                    >
+                                                                                        {
+                                                                                            name
+                                                                                        }
+
+                                                                                        :{' '}
+                                                                                        {formatCurrency(
+                                                                                            amt,
+                                                                                        )}
+                                                                                    </div>
+                                                                                ),
+                                                                            )}
+                                                                        {Object.keys(
+                                                                            item.bonus_breakdown ??
+                                                                                {},
+                                                                        )
+                                                                            .length >
+                                                                            2 && (
+                                                                            <div>
+                                                                                +
+                                                                                {Object.keys(
+                                                                                    item.bonus_breakdown ??
+                                                                                        {},
+                                                                                )
+                                                                                    .length -
+                                                                                    2}{' '}
+                                                                                lainnya
                                                                             </div>
-                                                                        ))}
-                                                                        {Object.keys(item.bonus_breakdown ?? {}).length > 2 && (
-                                                                            <div>+{Object.keys(item.bonus_breakdown ?? {}).length - 2} lainnya</div>
                                                                         )}
                                                                     </div>
                                                                 )}
@@ -2098,43 +2845,88 @@ export default function PayrollPage() {
                                                     </td>
                                                     <td className="px-3 py-3">
                                                         <p className="font-semibold text-foreground">
-                                                            {formatCurrency(totalTunjangan)}
+                                                            {formatCurrency(
+                                                                totalTunjangan,
+                                                            )}
                                                         </p>
                                                     </td>
                                                     <td className="px-3 py-3">
                                                         <p className="font-medium">
                                                             {formatCurrency(
-                                                                Number(item.pph21_deduction ?? 0) > 0
-                                                                    ? Number(item.pph21_deduction)
-                                                                    : (Number(item.pph21_company_borne ?? 0) > 0
-                                                                        ? Number(item.pph21_company_borne)
-                                                                        : (Number(item.pph21_allowance ?? 0) > 0
-                                                                            ? Number(item.pph21_allowance)
-                                                                            : Number(item.pph21_rate ?? 0)))
+                                                                Number(
+                                                                    item.pph21_deduction ??
+                                                                        0,
+                                                                ) > 0
+                                                                    ? Number(
+                                                                          item.pph21_deduction,
+                                                                      )
+                                                                    : Number(
+                                                                            item.pph21_company_borne ??
+                                                                                0,
+                                                                        ) > 0
+                                                                      ? Number(
+                                                                            item.pph21_company_borne,
+                                                                        )
+                                                                      : Number(
+                                                                              item.pph21_allowance ??
+                                                                                  0,
+                                                                          ) > 0
+                                                                        ? Number(
+                                                                              item.pph21_allowance,
+                                                                          )
+                                                                        : Number(
+                                                                              item.pph21_rate ??
+                                                                                  0,
+                                                                          ),
                                                             )}
                                                         </p>
                                                         <span className="text-xs text-muted-foreground">
-                                                            {pph21Label(item.pph21_method)}
-                                                            {['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'].includes(item.pph21_method ?? '') && Number(item.pph21_rate ?? 0) > 0
+                                                            {pph21Label(
+                                                                item.pph21_method,
+                                                            )}
+                                                            {[
+                                                                'ter_bulanan',
+                                                                'ter_bulanan_net',
+                                                                'ter_bulanan_gross_up',
+                                                            ].includes(
+                                                                item.pph21_method ??
+                                                                    '',
+                                                            ) &&
+                                                            Number(
+                                                                item.pph21_rate ??
+                                                                    0,
+                                                            ) > 0
                                                                 ? ` (${Number(item.pph21_rate)}%)`
                                                                 : ''}
                                                         </span>
                                                     </td>
                                                     <td className="px-3 py-3">
-                                                        {totalBpjsEmp > 0 || totalBpjsComp > 0 ? (
+                                                        {totalBpjsEmp > 0 ||
+                                                        totalBpjsComp > 0 ? (
                                                             <div className="space-y-0.5 text-xs">
                                                                 <p className="font-medium text-foreground">
-                                                                    {formatCurrency(totalBpjsEmp + totalBpjsComp)}
+                                                                    {formatCurrency(
+                                                                        totalBpjsEmp +
+                                                                            totalBpjsComp,
+                                                                    )}
                                                                 </p>
                                                                 <p className="text-[11px] text-muted-foreground">
-                                                                    Karyawan: {formatCurrency(totalBpjsEmp)}
+                                                                    Karyawan:{' '}
+                                                                    {formatCurrency(
+                                                                        totalBpjsEmp,
+                                                                    )}
                                                                 </p>
                                                                 <p className="text-[11px] text-muted-foreground">
-                                                                    Perusahaan: {formatCurrency(totalBpjsComp)}
+                                                                    Perusahaan:{' '}
+                                                                    {formatCurrency(
+                                                                        totalBpjsComp,
+                                                                    )}
                                                                 </p>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-muted-foreground">-</span>
+                                                            <span className="text-muted-foreground">
+                                                                -
+                                                            </span>
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-3">
@@ -2146,18 +2938,26 @@ export default function PayrollPage() {
                                                         <div className="flex items-center gap-1.5">
                                                             <span
                                                                 className={
-                                                                    lateDeduction > 0
+                                                                    lateDeduction >
+                                                                    0
                                                                         ? 'font-medium text-destructive'
                                                                         : 'text-muted-foreground'
                                                                 }
                                                             >
-                                                                {formatCurrency(lateDeduction)}
+                                                                {formatCurrency(
+                                                                    lateDeduction,
+                                                                )}
                                                             </span>
-                                                            {lateDeduction > 0 && (
+                                                            {lateDeduction >
+                                                                0 && (
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => setDendaModalItem(item)}
-                                                                    className="inline-flex size-6 items-center justify-center rounded text-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 transition-colors"
+                                                                    onClick={() =>
+                                                                        setDendaModalItem(
+                                                                            item,
+                                                                        )
+                                                                    }
+                                                                    className="inline-flex size-6 items-center justify-center rounded text-blue-500 transition-colors hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50"
                                                                     title="Lihat rincian & kelola denda keterlambatan"
                                                                     aria-label="Lihat rincian denda keterlambatan"
                                                                 >
@@ -2170,18 +2970,26 @@ export default function PayrollPage() {
                                                         <div className="flex items-center gap-1.5">
                                                             <span
                                                                 className={
-                                                                    attendanceDeduction > 0
+                                                                    attendanceDeduction >
+                                                                    0
                                                                         ? 'font-medium text-destructive'
                                                                         : 'text-muted-foreground'
                                                                 }
                                                             >
-                                                                {formatCurrency(attendanceDeduction)}
+                                                                {formatCurrency(
+                                                                    attendanceDeduction,
+                                                                )}
                                                             </span>
-                                                            {attendanceDeduction > 0 && (
+                                                            {attendanceDeduction >
+                                                                0 && (
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => setDendaModalItem(item)}
-                                                                    className="inline-flex size-6 items-center justify-center rounded text-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 transition-colors"
+                                                                    onClick={() =>
+                                                                        setDendaModalItem(
+                                                                            item,
+                                                                        )
+                                                                    }
+                                                                    className="inline-flex size-6 items-center justify-center rounded text-blue-500 transition-colors hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50"
                                                                     title="Lihat rincian & kelola potongan kehadiran"
                                                                     aria-label="Lihat rincian potongan kehadiran"
                                                                 >
@@ -2196,21 +3004,54 @@ export default function PayrollPage() {
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-3">
-                                                        {Number(item.manual_deduction_total ?? 0) > 0 ? (
+                                                        {Number(
+                                                            item.manual_deduction_total ??
+                                                                0,
+                                                        ) > 0 ? (
                                                             <div>
                                                                 <p className="font-medium">
-                                                                    {formatCurrency(item.manual_deduction_total ?? null)}
+                                                                    {formatCurrency(
+                                                                        item.manual_deduction_total ??
+                                                                            null,
+                                                                    )}
                                                                 </p>
-                                                                {item.manual_deduction_breakdown && Object.keys(item.manual_deduction_breakdown).length > 0 && (
-                                                                    <div className="text-[11px] text-muted-foreground space-y-0.5">
-                                                                        {Object.entries(item.manual_deduction_breakdown).map(([name, amount]) => (
-                                                                            <div key={name}>• {name}: {formatCurrency(amount)}</div>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
+                                                                {item.manual_deduction_breakdown &&
+                                                                    Object.keys(
+                                                                        item.manual_deduction_breakdown,
+                                                                    ).length >
+                                                                        0 && (
+                                                                        <div className="space-y-0.5 text-[11px] text-muted-foreground">
+                                                                            {Object.entries(
+                                                                                item.manual_deduction_breakdown,
+                                                                            ).map(
+                                                                                ([
+                                                                                    name,
+                                                                                    amount,
+                                                                                ]) => (
+                                                                                    <div
+                                                                                        key={
+                                                                                            name
+                                                                                        }
+                                                                                    >
+                                                                                        •{' '}
+                                                                                        {
+                                                                                            name
+                                                                                        }
+
+                                                                                        :{' '}
+                                                                                        {formatCurrency(
+                                                                                            amount,
+                                                                                        )}
+                                                                                    </div>
+                                                                                ),
+                                                                            )}
+                                                                        </div>
+                                                                    )}
                                                             </div>
                                                         ) : (
-                                                            <span className="text-muted-foreground">-</span>
+                                                            <span className="text-muted-foreground">
+                                                                -
+                                                            </span>
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-3">
@@ -2239,7 +3080,10 @@ export default function PayrollPage() {
                                                                 }
                                                                 disabled={
                                                                     isPayrollReleased ||
-                                                                    Boolean(run?.is_locked && !run?.is_locked_by_me)
+                                                                    Boolean(
+                                                                        run?.is_locked &&
+                                                                        !run?.is_locked_by_me,
+                                                                    )
                                                                 }
                                                                 className="whitespace-nowrap"
                                                             >
@@ -2318,12 +3162,24 @@ export default function PayrollPage() {
                                 />
                             </div>
                             {(() => {
-                                const range = getPeriodDateRange(periodState, payrollSettings?.payroll_cutoff_day);
+                                const range = getPeriodDateRange(
+                                    periodState,
+                                    payrollSettings?.payroll_cutoff_day,
+                                );
                                 if (!range) return null;
                                 return (
                                     <p className="text-xs text-muted-foreground">
-                                        Rentang cut-off absensi & denda: <span className="font-semibold text-foreground">{range.start}</span> s/d <span className="font-semibold text-foreground">{range.end}</span>
-                                        {payrollSettings?.payroll_cutoff_day && payrollSettings.payroll_cutoff_day !== 'end_of_month'
+                                        Rentang cut-off absensi & denda:{' '}
+                                        <span className="font-semibold text-foreground">
+                                            {range.start}
+                                        </span>{' '}
+                                        s/d{' '}
+                                        <span className="font-semibold text-foreground">
+                                            {range.end}
+                                        </span>
+                                        {payrollSettings?.payroll_cutoff_day &&
+                                        payrollSettings.payroll_cutoff_day !==
+                                            'end_of_month'
                                             ? ` (Cut-off tanggal ${payrollSettings.payroll_cutoff_day})`
                                             : ' (Cut-off akhir bulan)'}
                                     </p>
@@ -2381,6 +3237,38 @@ export default function PayrollPage() {
 
                         {type === 'regular' ? (
                             <div className="grid gap-2">
+                                <Label>Jenis pembayaran</Label>
+                                <Select
+                                    value={generateForm.data.batch_purpose}
+                                    onValueChange={(value) => {
+                                        generateForm.setData(
+                                            'batch_purpose',
+                                            value,
+                                        );
+                                        generateForm.setData(
+                                            'selected_employee_ids',
+                                            [],
+                                        );
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="regular">
+                                            Reguler
+                                        </SelectItem>
+                                        <SelectItem value="additional">
+                                            Tambahan
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground">
+                                    {generateForm.data.batch_purpose ===
+                                    'additional'
+                                        ? 'Komponen dimulai dari nol. Isi hanya pembayaran tambahan pada draft yang dibuat.'
+                                        : 'Gaji dan potongan dihitung untuk karyawan pilihan yang belum menerima gaji reguler.'}
+                                </p>
                                 <Label>Cakupan Generate</Label>
                                 <Select
                                     value={generateForm.data.employee_scope}
@@ -2411,7 +3299,8 @@ export default function PayrollPage() {
                             </div>
                         ) : null}
 
-                        {type === 'regular' ? (
+                        {type === 'regular' &&
+                        generateForm.data.batch_purpose !== 'additional' ? (
                             <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="service_fee_total">
@@ -2463,8 +3352,44 @@ export default function PayrollPage() {
                         {type === 'regular' ? (
                             <div className="grid gap-2">
                                 <div className="flex items-center justify-between gap-3">
-                                    <Label>Karyawan Dikecualikan</Label>
-                                    {generateForm.data.excluded_employee_ids
+                                    <Label>Karyawan dalam batch</Label>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                            generateForm.setData(
+                                                'selected_employee_ids',
+                                                employeeOptions
+                                                    .filter(
+                                                        (employee) =>
+                                                            (subCompanyState ===
+                                                                '__all' ||
+                                                                String(
+                                                                    employee.sub_company_id,
+                                                                ) ===
+                                                                    subCompanyState) &&
+                                                            (generateForm.data
+                                                                .employee_scope !==
+                                                                'parent_only' ||
+                                                                !employee.sub_company_id) &&
+                                                            (generateForm.data
+                                                                .batch_purpose ===
+                                                                'additional' ||
+                                                                periodState !==
+                                                                    period ||
+                                                                !employee.regular_paid),
+                                                    )
+                                                    .map(
+                                                        (employee) =>
+                                                            employee.id,
+                                                    ),
+                                            )
+                                        }
+                                    >
+                                        Pilih Semua
+                                    </Button>
+                                    {generateForm.data.selected_employee_ids
                                         .length > 0 ? (
                                         <Button
                                             type="button"
@@ -2472,7 +3397,7 @@ export default function PayrollPage() {
                                             size="sm"
                                             onClick={() =>
                                                 generateForm.setData(
-                                                    'excluded_employee_ids',
+                                                    'selected_employee_ids',
                                                     [],
                                                 )
                                             }
@@ -2487,50 +3412,88 @@ export default function PayrollPage() {
                                             Belum ada karyawan aktif.
                                         </p>
                                     ) : (
-                                        employeeOptions.map((employee) => {
-                                            const checked =
-                                                generateForm.data.excluded_employee_ids.includes(
-                                                    employee.id,
-                                                );
+                                        employeeOptions
+                                            .filter(
+                                                (employee) =>
+                                                    subCompanyState ===
+                                                        '__all' ||
+                                                    String(
+                                                        employee.sub_company_id,
+                                                    ) === subCompanyState,
+                                            )
+                                            .map((employee) => {
+                                                const checked =
+                                                    generateForm.data.selected_employee_ids.includes(
+                                                        employee.id,
+                                                    );
 
-                                            return (
-                                                <label
-                                                    key={employee.id}
-                                                    className="flex cursor-pointer items-start gap-3 border-b px-3 py-2 text-sm last:border-b-0 hover:bg-muted/50"
-                                                >
-                                                    <Checkbox
-                                                        checked={checked}
-                                                        onCheckedChange={(
-                                                            value,
-                                                        ) =>
-                                                            toggleExcludedEmployee(
-                                                                employee.id,
-                                                                value === true,
-                                                            )
-                                                        }
-                                                    />
-                                                    <span>
-                                                        <span className="block font-medium">
-                                                            {employee.label}
-                                                        </span>
-                                                        <span className="block text-xs text-muted-foreground">
-                                                            {
-                                                                employee.sub_company_label
+                                                return (
+                                                    <label
+                                                        key={employee.id}
+                                                        className="flex cursor-pointer items-start gap-3 border-b px-3 py-2 text-sm last:border-b-0 hover:bg-muted/50"
+                                                    >
+                                                        <Checkbox
+                                                            checked={checked}
+                                                            disabled={
+                                                                generateForm
+                                                                    .data
+                                                                    .batch_purpose ===
+                                                                    'regular' &&
+                                                                periodState ===
+                                                                    period &&
+                                                                employee.regular_paid
                                                             }
+                                                            onCheckedChange={(
+                                                                value,
+                                                            ) =>
+                                                                toggleSelectedEmployee(
+                                                                    employee.id,
+                                                                    value ===
+                                                                        true,
+                                                                )
+                                                            }
+                                                        />
+                                                        <span>
+                                                            <span className="block font-medium">
+                                                                {employee.label}
+                                                                {periodState ===
+                                                                    period &&
+                                                                employee.regular_paid
+                                                                    ? ' · Reguler sudah dirilis'
+                                                                    : ''}
+                                                            </span>
+                                                            <span className="block text-xs text-muted-foreground">
+                                                                {
+                                                                    employee.sub_company_label
+                                                                }
+                                                            </span>
                                                         </span>
-                                                    </span>
-                                                </label>
-                                            );
-                                        })
+                                                    </label>
+                                                );
+                                            })
                                     )}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Centang karyawan yang tidak ingin diikutkan
-                                    pada payroll periode ini.
+                                    Centang karyawan yang akan menerima batch
+                                    ini. Karyawan yang sudah menerima gaji
+                                    reguler hanya dapat dipilih untuk pembayaran
+                                    tambahan.
                                 </p>
                             </div>
                         ) : null}
 
+                        {Object.keys(generateForm.errors).length > 0 && (
+                            <div
+                                role="alert"
+                                className="text-sm text-destructive"
+                            >
+                                {Object.values(generateForm.errors).map(
+                                    (error, index) => (
+                                        <p key={index}>{error}</p>
+                                    ),
+                                )}
+                            </div>
+                        )}
                         <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
                             <Button
                                 type="button"
@@ -2598,33 +3561,129 @@ export default function PayrollPage() {
                                 </p>
                             </div>
 
+                            {editingItem.calculation_basis?.monthly &&
+                            run?.batch_purpose !== 'additional' &&
+                            editingItem.proration_working_days ? (
+                                <div className="grid gap-2 rounded-md border p-3">
+                                    <Label htmlFor="edit-payable-days">
+                                        Hari dibayar (pembilang prorate)
+                                    </Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            id="edit-payable-days"
+                                            type="number"
+                                            min={0}
+                                            max={
+                                                editingItem.proration_working_days
+                                            }
+                                            value={
+                                                editItemForm.data
+                                                    .proration_payable_days
+                                            }
+                                            onChange={(event) => {
+                                                const days = event.target.value;
+                                                editItemForm.setData(
+                                                    'proration_payable_days',
+                                                    days,
+                                                );
+                                                if (
+                                                    !salaryEdited &&
+                                                    editingItem.calculation_basis &&
+                                                    editingItem.proration_working_days
+                                                )
+                                                    editItemForm.setData(
+                                                        'base_salary',
+                                                        formNumber(
+                                                            (editingItem
+                                                                .calculation_basis
+                                                                .base_salary *
+                                                                Number(
+                                                                    days || 0,
+                                                                )) /
+                                                                editingItem.proration_working_days,
+                                                        ),
+                                                    );
+                                            }}
+                                            className="w-28"
+                                        />
+                                        <span>
+                                            /{' '}
+                                            {editingItem.proration_working_days}{' '}
+                                            hari kerja
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Gaji prorate:{' '}
+                                        {formatCurrency(
+                                            (editingItem.calculation_basis
+                                                .base_salary *
+                                                Number(
+                                                    editItemForm.data
+                                                        .proration_payable_days ||
+                                                        0,
+                                                )) /
+                                                editingItem.proration_working_days,
+                                        )}
+                                        . Tunjangan tetap di bawah diisi dengan
+                                        nominal satu periode penuh.
+                                    </p>
+                                    {editItemForm.errors
+                                        .proration_payable_days && (
+                                        <p className="text-xs text-destructive">
+                                            {
+                                                editItemForm.errors
+                                                    .proration_payable_days
+                                            }
+                                        </p>
+                                    )}
+                                </div>
+                            ) : null}
+                            <CompensationRowsEditor
+                                title="Tunjangan Tetap"
+                                addLabel="Tambah Tunjangan Tetap"
+                                rows={editItemForm.data.fixed_allowances}
+                                onChange={(rows) =>
+                                    editItemForm.setData(
+                                        'fixed_allowances',
+                                        rows,
+                                    )
+                                }
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Tunjangan tetap dibayar:{' '}
+                                {formatCurrency(
+                                    editItemForm.data.fixed_allowances.reduce(
+                                        (sum, row) =>
+                                            sum + Number(row.amount || 0),
+                                        0,
+                                    ) *
+                                        (editingItem.calculation_basis
+                                            ?.monthly &&
+                                        editingItem.proration_working_days
+                                            ? Number(
+                                                  editItemForm.data
+                                                      .proration_payable_days ||
+                                                      0,
+                                              ) /
+                                              editingItem.proration_working_days
+                                            : 1),
+                                )}
+                                . Perubahan hanya berlaku untuk batch ini.
+                            </p>
                             <div className="grid gap-3 md:grid-cols-2">
                                 <PayrollEditField
                                     id="edit_base_salary"
                                     label="Gaji Pokok"
                                     value={editItemForm.data.base_salary}
                                     error={editItemForm.errors.base_salary}
-                                    onChange={(value) =>
+                                    onChange={(value) => {
+                                        setSalaryEdited(true);
                                         editItemForm.setData(
                                             'base_salary',
                                             value,
-                                        )
-                                    }
+                                        );
+                                    }}
                                 />
-                                <div className="grid gap-1">
-                                    <Label>Tunjangan Tetap</Label>
-                                    <div className="flex h-9 items-center rounded-md border bg-muted/40 px-3 text-sm">
-                                        {formatCurrency(
-                                            Object.values(
-                                                editingItem.allowance_breakdown ??
-                                                    {},
-                                            ).reduce(
-                                                (sum, amount) => sum + amount,
-                                                0,
-                                            ),
-                                        )}
-                                    </div>
-                                </div>
                                 <PayrollEditField
                                     id="edit_overtime_hours"
                                     label="Jam Lembur"
@@ -2652,7 +3711,21 @@ export default function PayrollPage() {
                                 />
                                 <PayrollEditField
                                     id="edit_pph21_rate"
-                                    label="Nominal PPh21"
+                                    label={
+                                        editingItem.pph21_method?.startsWith(
+                                            'ter_bulanan',
+                                        )
+                                            ? 'Tarif TER (%)'
+                                            : 'Nominal PPh21'
+                                    }
+                                    currency={
+                                        !editingItem.pph21_method?.startsWith(
+                                            'ter_bulanan',
+                                        )
+                                    }
+                                    disabled={editingItem.pph21_method?.startsWith(
+                                        'ter_bulanan',
+                                    )}
                                     value={editItemForm.data.pph21_rate}
                                     error={editItemForm.errors.pph21_rate}
                                     onChange={(value) =>
@@ -2704,6 +3777,9 @@ export default function PayrollPage() {
                                 />
                                 <PayrollEditField
                                     id="edit_kasbon_deduction"
+                                    disabled={
+                                        run?.batch_purpose === 'additional'
+                                    }
                                     label="Kasbon"
                                     value={editItemForm.data.kasbon_deduction}
                                     error={editItemForm.errors.kasbon_deduction}
@@ -2716,6 +3792,9 @@ export default function PayrollPage() {
                                 />
                                 <PayrollEditField
                                     id="edit_denda_deduction"
+                                    disabled={
+                                        run?.batch_purpose === 'additional'
+                                    }
                                     label="Denda"
                                     value={editItemForm.data.denda_deduction}
                                     error={editItemForm.errors.denda_deduction}
@@ -2728,6 +3807,39 @@ export default function PayrollPage() {
                                 />
                             </div>
 
+                            {run?.batch_purpose === 'additional' && (
+                                <label className="flex items-start gap-3 rounded-md border p-3 text-sm">
+                                    <Checkbox
+                                        checked={editItemForm.data.tax_reviewed}
+                                        onCheckedChange={(checked) =>
+                                            editItemForm.setData(
+                                                'tax_reviewed',
+                                                checked === true,
+                                            )
+                                        }
+                                    />
+                                    <span>
+                                        Untuk potongan tambahan, gunakan rincian
+                                        Potongan Manual / Lainnya. Saya sudah
+                                        meninjau nominal pajak tambahan,
+                                        termasuk jika nihil. TER bulanan
+                                        dihitung otomatis berdasarkan payroll
+                                        yang sudah dirilis.
+                                    </span>
+                                </label>
+                            )}
+                            {Object.keys(editItemForm.errors).length > 0 && (
+                                <div
+                                    role="alert"
+                                    className="text-sm text-destructive"
+                                >
+                                    {Object.values(editItemForm.errors).map(
+                                        (error, index) => (
+                                            <p key={index}>{error}</p>
+                                        ),
+                                    )}
+                                </div>
+                            )}
                             <CompensationRowsEditor
                                 title="Tunjangan Tidak Tetap"
                                 addLabel="Tambah Tunjangan Tidak Tetap"
@@ -2761,7 +3873,26 @@ export default function PayrollPage() {
                                 }
                             />
 
-                            <div className="flex justify-end gap-2 border-t pt-4">
+                            <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
+                                {run && !run.is_locked && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        disabled={editItemForm.processing}
+                                        onClick={() =>
+                                            router.put(
+                                                `/hris/payrolls/${run.id}/items/${editingItem.id}`,
+                                                { reset_overrides: true },
+                                                {
+                                                    preserveScroll: true,
+                                                    onSuccess: closeEditItem,
+                                                },
+                                            )
+                                        }
+                                    >
+                                        Kembalikan Nilai Otomatis
+                                    </Button>
+                                )}
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -2784,25 +3915,44 @@ export default function PayrollPage() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={releaseDialogOpen} onOpenChange={setReleaseDialogOpen}>
+            <Dialog
+                open={releaseDialogOpen}
+                onOpenChange={setReleaseDialogOpen}
+            >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
                             <Send className="size-5" />
-                            Release {type === 'thr' ? 'THR' : 'Payroll'} ({periodState})
+                            Release{' '}
+                            {run?.code ?? (type === 'thr' ? 'THR' : 'Payroll')}
                         </DialogTitle>
                         <DialogDescription className="space-y-2 pt-2 text-sm">
                             <span>
-                                Apakah Anda yakin ingin merilis {type === 'thr' ? 'THR' : 'payroll'} periode <strong>{periodState}</strong>?
+                                Rilis batch <strong>{run?.code}</strong> untuk{' '}
+                                <strong>
+                                    {run?.unfiltered_employees_count ??
+                                        run?.employees_count}{' '}
+                                    karyawan
+                                </strong>{' '}
+                                pada periode <strong>{run?.period}</strong>?
                             </span>
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-3">
                         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
-                            <p className="font-semibold mb-1">Perhatian Akses Karyawan:</p>
+                            <p className="mb-1 font-semibold">
+                                Perhatian Akses Karyawan:
+                            </p>
                             <p>
-                                Setelah dirilis, status payroll akan berubah menjadi <strong>Release</strong> dan seluruh slip gaji (payslip) periode ini <strong>dapat langsung diakses dan diunduh oleh karyawan</strong> melalui portal mandiri dan aplikasi mobile.
+                                Setelah dirilis, status payroll akan berubah
+                                menjadi <strong>Release</strong> dan payslip
+                                pada batch ini{' '}
+                                <strong>
+                                    dapat langsung diakses dan diunduh oleh
+                                    karyawan dalam batch ini
+                                </strong>{' '}
+                                melalui portal mandiri dan aplikasi mobile.
                             </p>
                         </div>
 
@@ -2817,11 +3967,13 @@ export default function PayrollPage() {
                             </Button>
                             <Button
                                 type="button"
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                className="bg-emerald-600 text-white hover:bg-emerald-700"
                                 onClick={handleRelease}
                                 disabled={isReleaseSubmitting}
                             >
-                                {isReleaseSubmitting ? 'Merilis...' : 'Ya, Release Sekarang'}
+                                {isReleaseSubmitting
+                                    ? 'Merilis...'
+                                    : 'Ya, Release Sekarang'}
                             </Button>
                         </div>
                     </div>
@@ -2838,7 +3990,10 @@ export default function PayrollPage() {
                         <DialogDescription>
                             {run?.locked_by_name ? (
                                 <>
-                                    Payroll ini di-lock oleh <b>{run.locked_by_name}</b>. Masukkan PIN berupa nomor telepon terdaftar user tersebut untuk membuka kunci (unlock).
+                                    Payroll ini di-lock oleh{' '}
+                                    <b>{run.locked_by_name}</b>. Masukkan PIN
+                                    berupa nomor telepon terdaftar user tersebut
+                                    untuk membuka kunci (unlock).
                                 </>
                             ) : (
                                 'Masukkan PIN berupa nomor telepon user yang melakukan lock payroll untuk membuka kunci.'
@@ -2848,7 +4003,9 @@ export default function PayrollPage() {
 
                     <form onSubmit={handleUnlock} className="space-y-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="unlock_pin">PIN (Nomor Telepon Pengunci)</Label>
+                            <Label htmlFor="unlock_pin">
+                                PIN (Nomor Telepon Pengunci)
+                            </Label>
                             <Input
                                 id="unlock_pin"
                                 type="password"
@@ -2875,8 +4032,13 @@ export default function PayrollPage() {
                             >
                                 Batal
                             </Button>
-                            <Button type="submit" disabled={isLockSubmitting || !unlockPin}>
-                                {isLockSubmitting ? 'Memproses...' : 'Buka Kunci (Unlock)'}
+                            <Button
+                                type="submit"
+                                disabled={isLockSubmitting || !unlockPin}
+                            >
+                                {isLockSubmitting
+                                    ? 'Memproses...'
+                                    : 'Buka Kunci (Unlock)'}
                             </Button>
                         </div>
                     </form>
@@ -2887,7 +4049,7 @@ export default function PayrollPage() {
                 open={!!selectedDendaItem}
                 onOpenChange={(open) => !open && setDendaModalItem(null)}
             >
-                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl w-full">
+                <DialogContent className="max-h-[90vh] w-full overflow-y-auto sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Info className="size-5 text-blue-500" />
@@ -2902,227 +4064,287 @@ export default function PayrollPage() {
                         </DialogDescription>
                     </DialogHeader>
 
-                    {selectedDendaItem ? (() => {
-                        const breakdown = selectedDendaItem.denda_breakdown ?? [];
-                        const hasLegacyWithoutBreakdown =
-                            breakdown.length === 0 &&
-                            Number(selectedDendaItem.denda_deduction ?? 0) > 0;
-                        const isPayrollLocked = !!run?.is_locked && !run?.is_locked_by_me;
-                        const isEditable = !isPayrollLocked && !isPayrollReleased;
+                    {selectedDendaItem
+                        ? (() => {
+                              const breakdown =
+                                  selectedDendaItem.denda_breakdown ?? [];
+                              const hasLegacyWithoutBreakdown =
+                                  breakdown.length === 0 &&
+                                  Number(
+                                      selectedDendaItem.denda_deduction ?? 0,
+                                  ) > 0;
+                              const isPayrollLocked =
+                                  !!run?.is_locked && !run?.is_locked_by_me;
+                              const isEditable =
+                                  !isPayrollLocked && !isPayrollReleased;
 
-                        const activeTotal = Number(selectedDendaItem.denda_deduction ?? 0);
-                        const lateActive = getLateDeduction(selectedDendaItem);
-                        const attActive = getAttendanceDeduction(selectedDendaItem);
-                        const revertedTotal = breakdown
-                            .filter((b) => b.is_reverted)
-                            .reduce((sum, b) => sum + Number(b.amount || 0), 0);
+                              const activeTotal = Number(
+                                  selectedDendaItem.denda_deduction ?? 0,
+                              );
+                              const lateActive =
+                                  getLateDeduction(selectedDendaItem);
+                              const attActive =
+                                  getAttendanceDeduction(selectedDendaItem);
+                              const revertedTotal = breakdown
+                                  .filter((b) => b.is_reverted)
+                                  .reduce(
+                                      (sum, b) => sum + Number(b.amount || 0),
+                                      0,
+                                  );
 
-                        return (
-                            <div className="space-y-4 min-w-0">
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-muted/40 rounded-lg border min-w-0">
-                                    <div className="min-w-0">
-                                        <p className="text-[11px] text-muted-foreground truncate">
-                                            Denda Keterlambatan
-                                        </p>
-                                        <p className="text-base font-bold text-destructive truncate">
-                                            {formatCurrency(lateActive)}
-                                        </p>
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="text-[11px] text-muted-foreground truncate">
-                                            Potongan Kehadiran
-                                        </p>
-                                        <p className="text-base font-bold text-destructive truncate">
-                                            {formatCurrency(attActive)}
-                                        </p>
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="text-[11px] text-muted-foreground truncate">
-                                            Total Denda Aktif
-                                        </p>
-                                        <p className="text-base font-bold text-foreground truncate">
-                                            {formatCurrency(activeTotal)}
-                                        </p>
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="text-[11px] text-muted-foreground truncate">
-                                            Total Dibatalkan
-                                        </p>
-                                        <p className="text-base font-semibold text-muted-foreground line-through truncate">
-                                            {formatCurrency(revertedTotal)}
-                                        </p>
-                                    </div>
-                                </div>
+                              return (
+                                  <div className="min-w-0 space-y-4">
+                                      <div className="grid min-w-0 grid-cols-2 gap-2.5 rounded-lg border bg-muted/40 p-3 sm:grid-cols-4">
+                                          <div className="min-w-0">
+                                              <p className="truncate text-[11px] text-muted-foreground">
+                                                  Denda Keterlambatan
+                                              </p>
+                                              <p className="truncate text-base font-bold text-destructive">
+                                                  {formatCurrency(lateActive)}
+                                              </p>
+                                          </div>
+                                          <div className="min-w-0">
+                                              <p className="truncate text-[11px] text-muted-foreground">
+                                                  Potongan Kehadiran
+                                              </p>
+                                              <p className="truncate text-base font-bold text-destructive">
+                                                  {formatCurrency(attActive)}
+                                              </p>
+                                          </div>
+                                          <div className="min-w-0">
+                                              <p className="truncate text-[11px] text-muted-foreground">
+                                                  Total Denda Aktif
+                                              </p>
+                                              <p className="truncate text-base font-bold text-foreground">
+                                                  {formatCurrency(activeTotal)}
+                                              </p>
+                                          </div>
+                                          <div className="min-w-0">
+                                              <p className="truncate text-[11px] text-muted-foreground">
+                                                  Total Dibatalkan
+                                              </p>
+                                              <p className="truncate text-base font-semibold text-muted-foreground line-through">
+                                                  {formatCurrency(
+                                                      revertedTotal,
+                                                  )}
+                                              </p>
+                                          </div>
+                                      </div>
 
-                                <div className="max-h-[360px] overflow-y-auto overflow-x-hidden space-y-2.5 pr-1 min-w-0">
-                                    {breakdown.length === 0 && !hasLegacyWithoutBreakdown ? (
-                                        <div className="py-8 text-center text-muted-foreground text-sm">
-                                            Tidak ada catatan denda/potongan untuk karyawan ini pada periode ini.
-                                        </div>
-                                    ) : null}
+                                      <div className="max-h-[360px] min-w-0 space-y-2.5 overflow-x-hidden overflow-y-auto pr-1">
+                                          {breakdown.length === 0 &&
+                                          !hasLegacyWithoutBreakdown ? (
+                                              <div className="py-8 text-center text-sm text-muted-foreground">
+                                                  Tidak ada catatan
+                                                  denda/potongan untuk karyawan
+                                                  ini pada periode ini.
+                                              </div>
+                                          ) : null}
 
-                                    {hasLegacyWithoutBreakdown ? (
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border bg-card text-card-foreground min-w-0">
-                                            <div className="space-y-0.5 min-w-0 flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="outline" className="text-xs">
-                                                        Denda Payroll
-                                                    </Badge>
-                                                    <span className="text-sm font-medium">
-                                                        Potongan Denda
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs text-muted-foreground break-words">
-                                                    Denda manual/eksternal yang tercatat pada item payroll.
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
-                                                <span className="font-semibold text-sm whitespace-nowrap">
-                                                    {formatCurrency(selectedDendaItem.denda_deduction)}
-                                                </span>
-                                                {isEditable && (
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="destructive"
-                                                        disabled={revertingDendaId === 'legacy_denda'}
-                                                        onClick={() =>
-                                                            handleToggleRevertDenda(
-                                                                selectedDendaItem,
-                                                                'legacy_denda',
-                                                                false,
-                                                            )
-                                                        }
-                                                        className="h-8 gap-1.5 whitespace-nowrap"
-                                                    >
-                                                        <RotateCcw className="size-3.5" />
-                                                        {revertingDendaId === 'legacy_denda'
-                                                            ? 'Memproses...'
-                                                            : 'Batalkan Denda'}
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ) : null}
+                                          {hasLegacyWithoutBreakdown ? (
+                                              <div className="flex min-w-0 flex-col justify-between gap-3 rounded-lg border bg-card p-3 text-card-foreground sm:flex-row sm:items-center">
+                                                  <div className="min-w-0 flex-1 space-y-0.5">
+                                                      <div className="flex items-center gap-2">
+                                                          <Badge
+                                                              variant="outline"
+                                                              className="text-xs"
+                                                          >
+                                                              Denda Payroll
+                                                          </Badge>
+                                                          <span className="text-sm font-medium">
+                                                              Potongan Denda
+                                                          </span>
+                                                      </div>
+                                                      <p className="text-xs break-words text-muted-foreground">
+                                                          Denda manual/eksternal
+                                                          yang tercatat pada
+                                                          item payroll.
+                                                      </p>
+                                                  </div>
+                                                  <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/50 pt-2 sm:justify-end sm:border-t-0 sm:pt-0">
+                                                      <span className="text-sm font-semibold whitespace-nowrap">
+                                                          {formatCurrency(
+                                                              selectedDendaItem.denda_deduction,
+                                                          )}
+                                                      </span>
+                                                      {isEditable && (
+                                                          <Button
+                                                              type="button"
+                                                              size="sm"
+                                                              variant="destructive"
+                                                              disabled={
+                                                                  revertingDendaId ===
+                                                                  'legacy_denda'
+                                                              }
+                                                              onClick={() =>
+                                                                  handleToggleRevertDenda(
+                                                                      selectedDendaItem,
+                                                                      'legacy_denda',
+                                                                      false,
+                                                                  )
+                                                              }
+                                                              className="h-8 gap-1.5 whitespace-nowrap"
+                                                          >
+                                                              <RotateCcw className="size-3.5" />
+                                                              {revertingDendaId ===
+                                                              'legacy_denda'
+                                                                  ? 'Memproses...'
+                                                                  : 'Batalkan Denda'}
+                                                          </Button>
+                                                      )}
+                                                  </div>
+                                              </div>
+                                          ) : null}
 
-                                    {breakdown.map((entry) => {
-                                        const isRevertingThis = revertingDendaId === entry.id;
-                                        const isReverted = !!entry.is_reverted;
+                                          {breakdown.map((entry) => {
+                                              const isRevertingThis =
+                                                  revertingDendaId === entry.id;
+                                              const isReverted =
+                                                  !!entry.is_reverted;
 
-                                        return (
-                                            <div
-                                                key={entry.id}
-                                                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border transition-colors min-w-0 ${
-                                                    isReverted
-                                                        ? 'bg-muted/30 border-dashed opacity-75'
-                                                        : 'bg-card border-border hover:border-border/80'
-                                                }`}
-                                            >
-                                                <div className="space-y-1 min-w-0 flex-1 pr-0 sm:pr-2">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <Badge
-                                                            variant={
-                                                                entry.type === 'late_attendance'
-                                                                    ? (isHalfDayEntry(entry) ? 'destructive' : 'secondary')
-                                                                    : entry.type === 'unrecorded_cutoff'
-                                                                    ? 'destructive'
-                                                                    : 'outline'
-                                                            }
-                                                            className="text-xs"
-                                                        >
-                                                            {entry.type_label ||
-                                                                (entry.type === 'late_attendance'
-                                                                    ? 'Presensi Terlambat'
-                                                                    : entry.type === 'unrecorded_cutoff'
-                                                                    ? 'Tidak Absen Cutoff'
-                                                                    : 'Denda Manual')}
-                                                        </Badge>
-                                                        {entry.date ? (
-                                                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                                <CalendarDays className="size-3" />
-                                                                {entry.date}
-                                                            </span>
-                                                        ) : null}
-                                                        {isReverted ? (
-                                                            <Badge
-                                                                variant="secondary"
-                                                                className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px]"
-                                                            >
-                                                                Dibatalkan (Tidak Di-apply)
-                                                            </Badge>
-                                                        ) : null}
-                                                    </div>
-                                                    <p className="text-sm font-medium break-words">
-                                                        {entry.title || 'Denda'}
-                                                        {entry.description
-                                                            ? ` — ${entry.description}`
-                                                            : ''}
-                                                    </p>
-                                                    {isReverted && entry.reverted_by ? (
-                                                        <p className="text-[11px] text-muted-foreground italic break-words">
-                                                            Dibatalkan oleh {entry.reverted_by}
-                                                        </p>
-                                                    ) : null}
-                                                </div>
+                                              return (
+                                                  <div
+                                                      key={entry.id}
+                                                      className={`flex min-w-0 flex-col justify-between gap-3 rounded-lg border p-3 transition-colors sm:flex-row sm:items-center ${
+                                                          isReverted
+                                                              ? 'border-dashed bg-muted/30 opacity-75'
+                                                              : 'border-border bg-card hover:border-border/80'
+                                                      }`}
+                                                  >
+                                                      <div className="min-w-0 flex-1 space-y-1 pr-0 sm:pr-2">
+                                                          <div className="flex flex-wrap items-center gap-2">
+                                                              <Badge
+                                                                  variant={
+                                                                      entry.type ===
+                                                                      'late_attendance'
+                                                                          ? isHalfDayEntry(
+                                                                                entry,
+                                                                            )
+                                                                              ? 'destructive'
+                                                                              : 'secondary'
+                                                                          : entry.type ===
+                                                                              'unrecorded_cutoff'
+                                                                            ? 'destructive'
+                                                                            : 'outline'
+                                                                  }
+                                                                  className="text-xs"
+                                                              >
+                                                                  {entry.type_label ||
+                                                                      (entry.type ===
+                                                                      'late_attendance'
+                                                                          ? 'Presensi Terlambat'
+                                                                          : entry.type ===
+                                                                              'unrecorded_cutoff'
+                                                                            ? 'Tidak Absen Cutoff'
+                                                                            : 'Denda Manual')}
+                                                              </Badge>
+                                                              {entry.date ? (
+                                                                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                                      <CalendarDays className="size-3" />
+                                                                      {
+                                                                          entry.date
+                                                                      }
+                                                                  </span>
+                                                              ) : null}
+                                                              {isReverted ? (
+                                                                  <Badge
+                                                                      variant="secondary"
+                                                                      className="bg-amber-100 text-[10px] text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                                                                  >
+                                                                      Dibatalkan
+                                                                      (Tidak
+                                                                      Di-apply)
+                                                                  </Badge>
+                                                              ) : null}
+                                                          </div>
+                                                          <p className="text-sm font-medium break-words">
+                                                              {entry.title ||
+                                                                  'Denda'}
+                                                              {entry.description
+                                                                  ? ` — ${entry.description}`
+                                                                  : ''}
+                                                          </p>
+                                                          {isReverted &&
+                                                          entry.reverted_by ? (
+                                                              <p className="text-[11px] break-words text-muted-foreground italic">
+                                                                  Dibatalkan
+                                                                  oleh{' '}
+                                                                  {
+                                                                      entry.reverted_by
+                                                                  }
+                                                              </p>
+                                                          ) : null}
+                                                      </div>
 
-                                                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
-                                                    <span
-                                                        className={`font-semibold text-sm whitespace-nowrap ${
-                                                            isReverted
-                                                                ? 'line-through text-muted-foreground'
-                                                                : 'text-foreground'
-                                                        }`}
-                                                    >
-                                                        {formatCurrency(entry.amount)}
-                                                    </span>
+                                                      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/50 pt-2 sm:justify-end sm:border-t-0 sm:pt-0">
+                                                          <span
+                                                              className={`text-sm font-semibold whitespace-nowrap ${
+                                                                  isReverted
+                                                                      ? 'text-muted-foreground line-through'
+                                                                      : 'text-foreground'
+                                                              }`}
+                                                          >
+                                                              {formatCurrency(
+                                                                  entry.amount,
+                                                              )}
+                                                          </span>
 
-                                                    {isEditable && (
-                                                        <Button
-                                                            type="button"
-                                                            size="sm"
-                                                            variant={isReverted ? 'outline' : 'destructive'}
-                                                            disabled={isRevertingThis}
-                                                            onClick={() =>
-                                                                handleToggleRevertDenda(
-                                                                    selectedDendaItem,
-                                                                    entry.id,
-                                                                    isReverted,
-                                                                )
-                                                            }
-                                                            className="h-8 gap-1.5 whitespace-nowrap"
-                                                        >
-                                                            <RotateCcw className="size-3.5" />
-                                                            {isRevertingThis
-                                                                ? 'Memproses...'
-                                                                : isReverted
-                                                                ? 'Terapkan Lagi'
-                                                                : 'Batalkan Denda'}
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                                          {isEditable && (
+                                                              <Button
+                                                                  type="button"
+                                                                  size="sm"
+                                                                  variant={
+                                                                      isReverted
+                                                                          ? 'outline'
+                                                                          : 'destructive'
+                                                                  }
+                                                                  disabled={
+                                                                      isRevertingThis
+                                                                  }
+                                                                  onClick={() =>
+                                                                      handleToggleRevertDenda(
+                                                                          selectedDendaItem,
+                                                                          entry.id,
+                                                                          isReverted,
+                                                                      )
+                                                                  }
+                                                                  className="h-8 gap-1.5 whitespace-nowrap"
+                                                              >
+                                                                  <RotateCcw className="size-3.5" />
+                                                                  {isRevertingThis
+                                                                      ? 'Memproses...'
+                                                                      : isReverted
+                                                                        ? 'Terapkan Lagi'
+                                                                        : 'Batalkan Denda'}
+                                                              </Button>
+                                                          )}
+                                                      </div>
+                                                  </div>
+                                              );
+                                          })}
+                                      </div>
 
-                                <div className="flex flex-col-reverse sm:flex-row justify-between items-start sm:items-center gap-3 border-t pt-3 min-w-0">
-                                    <p className="text-xs text-muted-foreground min-w-0 flex-1 break-words">
-                                        {isEditable
-                                            ? '* Membatalkan denda akan otomatis mengurangi total potongan dan memperbarui gaji bersih karyawan.'
-                                            : '* Payroll sudah disimpan/dikunci. Pembatalan denda hanya bisa dilakukan saat payroll berstatus draft & terbuka.'}
-                                    </p>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setDendaModalItem(null)}
-                                        className="shrink-0 w-full sm:w-auto"
-                                    >
-                                        Tutup
-                                    </Button>
-                                </div>
-                            </div>
-                        );
-                    })() : null}
+                                      <div className="flex min-w-0 flex-col-reverse items-start justify-between gap-3 border-t pt-3 sm:flex-row sm:items-center">
+                                          <p className="min-w-0 flex-1 text-xs break-words text-muted-foreground">
+                                              {isEditable
+                                                  ? '* Membatalkan denda akan otomatis mengurangi total potongan dan memperbarui gaji bersih karyawan.'
+                                                  : '* Payroll sudah disimpan/dikunci. Pembatalan denda hanya bisa dilakukan saat payroll berstatus draft & terbuka.'}
+                                          </p>
+                                          <Button
+                                              type="button"
+                                              variant="outline"
+                                              onClick={() =>
+                                                  setDendaModalItem(null)
+                                              }
+                                              className="w-full shrink-0 sm:w-auto"
+                                          >
+                                              Tutup
+                                          </Button>
+                                      </div>
+                                  </div>
+                              );
+                          })()
+                        : null}
                 </DialogContent>
             </Dialog>
         </AppLayout>
@@ -3210,6 +4432,7 @@ function PayrollEditField({
     label,
     value,
     error,
+    disabled = false,
     onChange,
     currency = true,
 }: {
@@ -3217,6 +4440,7 @@ function PayrollEditField({
     label: string;
     value: string;
     error?: string;
+    disabled?: boolean;
     onChange: (value: string) => void;
     currency?: boolean;
 }) {
@@ -3224,6 +4448,7 @@ function PayrollEditField({
         <div className="grid gap-2">
             <Label htmlFor={id}>{label}</Label>
             <Input
+                disabled={disabled}
                 id={id}
                 inputMode={currency ? 'numeric' : 'decimal'}
                 value={currency ? formatThousandDigits(value) : value}

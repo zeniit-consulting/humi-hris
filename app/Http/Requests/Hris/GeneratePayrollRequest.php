@@ -16,6 +16,7 @@ class GeneratePayrollRequest extends FormRequest
             ]);
         }
     }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -37,6 +38,10 @@ class GeneratePayrollRequest extends FormRequest
             'period' => ['required', 'date_format:Y-m'],
             'period_start' => ['nullable', 'date'],
             'period_end' => ['nullable', 'date', 'after_or_equal:period_start'],
+            'batch_purpose' => ['nullable', 'in:regular,additional'],
+            'run_id' => ['nullable', 'integer', Rule::exists('payroll_runs', 'id')->where('user_id', $ownerId)->where('type', 'regular')],
+            'selected_employee_ids' => ['nullable', 'array', 'min:1'],
+            'selected_employee_ids.*' => ['integer', 'distinct', Rule::exists('employees', 'id')->where('user_id', $ownerId)],
             'employee_scope' => ['nullable', 'in:all,parent_only'],
             'excluded_employee_ids' => ['nullable', 'array'],
             'excluded_employee_ids.*' => [

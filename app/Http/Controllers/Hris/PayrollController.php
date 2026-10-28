@@ -10,6 +10,7 @@ use App\Models\Employee;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\SubCompany;
+use App\Services\PayrollAdjustmentService;
 use App\Services\PayrollGenerationService;
 use App\Services\PayrollReadinessService;
 use App\Support\WhatsAppPhone;
@@ -38,6 +39,7 @@ class PayrollController extends Controller
         $validated = $request->validate([
             'period' => ['nullable', 'date_format:Y-m'],
             'type' => ['nullable', 'in:regular,thr'],
+            'run_id' => ['nullable', 'integer', Rule::exists('payroll_runs', 'id')->where('user_id', $ownerId)],
             'sub_company_id' => ['nullable', 'integer', Rule::exists('sub_companies', 'id')->where('user_id', $ownerId)],
         ]);
 
@@ -57,7 +59,8 @@ class PayrollController extends Controller
             ->where('user_id', $ownerId)
             ->where('period', $period)
             ->where('type', $type)
-            ->first();
+            ->when($request->integer('run_id'), fn ($q) => $q->whereKey($request->integer('run_id')))
+            ->latest('id')->first();
 
         $items = $run
             ? $run->items
@@ -77,9 +80,12 @@ class PayrollController extends Controller
 
         $companySetting = CompanySetting::query()->where('user_id', $ownerId)->first();
 
+        $paidEmployeeIds = PayrollItem::query()->where('user_id', $ownerId)->whereHas('payrollRun', fn ($q) => $q->where('user_id', $ownerId)->where('period', $period)->where('type', 'regular')->where('batch_purpose', 'regular')->released())->pluck('employee_id')->all();
+
         return Inertia::render('hris/payrolls/index', [
             'period' => $period,
             'type' => $type,
+            'batches' => PayrollRun::query()->where('user_id', $ownerId)->where('period', $period)->where('type', $type)->latest('id')->get(['id', 'code', 'batch_purpose', 'status', 'employees_count', 'total_net_salary']),
             'sub_company_id' => $subCompanyId ? (string) $subCompanyId : '',
             'payrollSettings' => [
                 'payroll_cutoff_day' => (string) ($companySetting?->payroll_cutoff_day ?? 'end_of_month'),
@@ -88,18 +94,19 @@ class PayrollController extends Controller
             'employeeOptions' => Employee::query()
                 ->with('subCompany:id,code,name')
                 ->where('user_id', $ownerId)
-                ->where('is_active', true)
-                ->whereIn('employment_status', ['active', 'probation', 'on_leave'])
+                ->where(fn ($q) => $q->where(fn ($active) => $active->where('is_active', true)->whereIn('employment_status', ['active', 'probation', 'on_leave']))->orWhere('employment_status', 'resigned'))
                 ->orderBy('first_name')
                 ->orderBy('last_name')
-                ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id', 'service_fee_points'])
+                ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id', 'service_fee_points', 'employment_status'])
                 ->map(fn (Employee $employee): array => [
                     'id' => $employee->id,
-                    'label' => $employee->employee_code.' - '.$employee->full_name,
+                    'label' => $employee->employee_code.' - '.$employee->full_name.($employee->employment_status === 'resigned' ? ' (Resign)' : ''),
                     'sub_company_label' => $employee->subCompany
                         ? $employee->subCompany->code.' - '.$employee->subCompany->name
                         : 'Internal',
                     'service_fee_points' => $employee->service_fee_points,
+                    'sub_company_id' => $employee->sub_company_id,
+                    'regular_paid' => in_array($employee->id, $paidEmployeeIds, true),
                 ]),
             'subCompanies' => SubCompany::query()
                 ->where('user_id', $ownerId)
@@ -111,6 +118,8 @@ class PayrollController extends Controller
                 ]),
             'run' => $run ? [
                 'id' => $run->id,
+                'code' => $run->code,
+                'batch_purpose' => $run->batch_purpose,
                 'period' => $run->period,
                 'type' => $run->type,
                 'status' => $run->status ?? ($run->is_saved ? 'released' : 'draft'),
@@ -183,6 +192,8 @@ class PayrollController extends Controller
                         'bonus_total' => round($bonusTotal, 2),
                         'total_allowances' => round($totalTunjangan, 2),
                         'is_prorated' => $item->is_prorated,
+                        'calculation_basis' => $item->calculation_basis,
+                        'tax_reviewed' => $item->tax_reviewed,
                         'proration_working_days' => $item->proration_working_days,
                         'proration_payable_days' => $item->proration_payable_days,
                         'proration_factor' => $item->proration_factor,
@@ -240,7 +251,7 @@ class PayrollController extends Controller
         $periodStart = $request->validated('period_start');
         $periodEnd = $request->validated('period_end');
 
-        $payrolls->generateForPeriod(
+        $run = $payrolls->generateForPeriod(
             $ownerId,
             $period,
             $request->user()?->id,
@@ -250,9 +261,12 @@ class PayrollController extends Controller
             serviceFeeTotal: $serviceFeeTotal,
             customPeriodStart: $periodStart,
             customPeriodEnd: $periodEnd,
+            selectedEmployeeIds: $request->validated('selected_employee_ids'),
+            batchPurpose: $request->validated('batch_purpose') ?? 'regular',
+            runId: $request->validated('run_id'),
         );
 
-        return to_route('hris.payrolls.index', ['period' => $period, 'type' => 'regular']);
+        return to_route('hris.payrolls.index', ['period' => $period, 'type' => 'regular', 'run_id' => $run->id]);
     }
 
     /**
@@ -281,16 +295,9 @@ class PayrollController extends Controller
 
         $summary = $readiness->summarize($ownerId, $payrollRun->period, $payrollRun);
 
-        $payrollRun->update([
-            'status' => 'released',
-            'is_saved' => true,
-            'saved_at' => now(),
-            'saved_by' => $request->user()?->id,
-            'released_at' => now(),
-            'released_by' => $request->user()?->id,
-        ]);
+        app(PayrollAdjustmentService::class)->release($payrollRun, $request->user()?->id, false);
 
-        $redirect = to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular']);
+        $redirect = to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular', 'run_id' => $payrollRun->id]);
 
         if (($summary['warning_count'] ?? 0) > 0 || ($summary['error_count'] ?? 0) > 0) {
             return $redirect->with(
@@ -320,16 +327,9 @@ class PayrollController extends Controller
 
         $summary = $readiness->summarize($ownerId, $payrollRun->period, $payrollRun);
 
-        $payrollRun->update([
-            'status' => 'released',
-            'is_saved' => true,
-            'saved_at' => $payrollRun->saved_at ?? now(),
-            'saved_by' => $payrollRun->saved_by ?? $request->user()?->id,
-            'released_at' => now(),
-            'released_by' => $request->user()?->id,
-        ]);
+        app(PayrollAdjustmentService::class)->release($payrollRun, $request->user()?->id, true);
 
-        $redirect = to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular']);
+        $redirect = to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular', 'run_id' => $payrollRun->id]);
 
         if (($summary['warning_count'] ?? 0) > 0 || ($summary['error_count'] ?? 0) > 0) {
             return $redirect->with(
@@ -344,63 +344,63 @@ class PayrollController extends Controller
     /**
      * Lock or unlock the payroll run.
      */
-     public function toggleLock(PayrollRun $payrollRun, Request $request): RedirectResponse
-     {
-         $ownerId = $request->user()->accountOwnerId();
-         abort_if((int) $payrollRun->user_id !== $ownerId, 403);
- 
-         if ($payrollRun->isReleased()) {
-             return back()->with('error', 'Payroll yang sudah dirilis tidak memerlukan lock/unlock.');
-         }
- 
-         $user = $request->user();
- 
-         // If currently locked, perform unlock with PIN verification (user phone number)
-         if ($payrollRun->is_locked) {
-             $validated = $request->validate([
-                 'pin' => ['required', 'string'],
-             ], [
-                 'pin.required' => 'PIN (nomor telepon pengunci) wajib diisi untuk melakukan unlock.',
-             ]);
- 
-             $lockingUser = $payrollRun->lockedBy;
-             $cleanInputPin = preg_replace('/\D/', '', (string) $validated['pin']);
-             $cleanUserPhone = $lockingUser ? preg_replace('/\D/', '', (string) $lockingUser->phone) : '';
- 
-             // Normalize trailing digits if international / leading zero (e.g. 0812 vs 62812)
-             $matchesPhone = false;
-             if ($cleanUserPhone !== '' && $cleanInputPin !== '') {
-                 if ($cleanUserPhone === $cleanInputPin) {
-                     $matchesPhone = true;
-                 } elseif (str_ends_with($cleanUserPhone, $cleanInputPin) || str_ends_with($cleanInputPin, $cleanUserPhone)) {
-                     $matchesPhone = true;
-                 }
-             }
- 
-             if (! $matchesPhone) {
-                 return back()->with('error', 'PIN tidak valid. Masukkan nomor telepon user yang melakukan lock payroll.');
-             }
- 
-             $payrollRun->update([
-                 'is_locked' => false,
-                 'locked_at' => null,
-                 'locked_by' => null,
-             ]);
- 
-             return back()->with('success', 'Payroll berhasil di-unlock. Data sekarang dapat diedit.');
-         }
- 
-         // If currently unlocked, lock it under current user
-         $payrollRun->update([
-             'is_locked' => true,
-             'locked_at' => now(),
-             'locked_by' => $user->id,
-         ]);
- 
-         return back()->with('success', "Payroll berhasil di-lock oleh {$user->name}. Admin lain tidak dapat mengubah data tanpa PIN.");
-     }
- 
-     public function updateItem(PayrollRun $payrollRun, PayrollItem $payrollItem, Request $request): RedirectResponse
+    public function toggleLock(PayrollRun $payrollRun, Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+
+        if ($payrollRun->isReleased()) {
+            return back()->with('error', 'Payroll yang sudah dirilis tidak memerlukan lock/unlock.');
+        }
+
+        $user = $request->user();
+
+        // If currently locked, perform unlock with PIN verification (user phone number)
+        if ($payrollRun->is_locked) {
+            $validated = $request->validate([
+                'pin' => ['required', 'string'],
+            ], [
+                'pin.required' => 'PIN (nomor telepon pengunci) wajib diisi untuk melakukan unlock.',
+            ]);
+
+            $lockingUser = $payrollRun->lockedBy;
+            $cleanInputPin = preg_replace('/\D/', '', (string) $validated['pin']);
+            $cleanUserPhone = $lockingUser ? preg_replace('/\D/', '', (string) $lockingUser->phone) : '';
+
+            // Normalize trailing digits if international / leading zero (e.g. 0812 vs 62812)
+            $matchesPhone = false;
+            if ($cleanUserPhone !== '' && $cleanInputPin !== '') {
+                if ($cleanUserPhone === $cleanInputPin) {
+                    $matchesPhone = true;
+                } elseif (str_ends_with($cleanUserPhone, $cleanInputPin) || str_ends_with($cleanInputPin, $cleanUserPhone)) {
+                    $matchesPhone = true;
+                }
+            }
+
+            if (! $matchesPhone) {
+                return back()->with('error', 'PIN tidak valid. Masukkan nomor telepon user yang melakukan lock payroll.');
+            }
+
+            $payrollRun->update([
+                'is_locked' => false,
+                'locked_at' => null,
+                'locked_by' => null,
+            ]);
+
+            return back()->with('success', 'Payroll berhasil di-unlock. Data sekarang dapat diedit.');
+        }
+
+        // If currently unlocked, lock it under current user
+        $payrollRun->update([
+            'is_locked' => true,
+            'locked_at' => now(),
+            'locked_by' => $user->id,
+        ]);
+
+        return back()->with('success', "Payroll berhasil di-lock oleh {$user->name}. Admin lain tidak dapat mengubah data tanpa PIN.");
+    }
+
+    public function updateItem(PayrollRun $payrollRun, PayrollItem $payrollItem, Request $request): RedirectResponse
     {
         $ownerId = $request->user()->accountOwnerId();
         abort_if((int) $payrollRun->user_id !== $ownerId, 403);
@@ -412,15 +412,28 @@ class PayrollController extends Controller
 
         if ($payrollRun->is_locked && (int) $payrollRun->locked_by !== (int) $request->user()->id) {
             $lockedByName = $payrollRun->lockedBy?->name ?? 'Admin lain';
+
             return back()->with('error', "Payroll sedang di-lock oleh {$lockedByName}. Hanya user tersebut yang dapat mengedit atau melakukan unlock.");
         }
 
+        $terRate = $request->input('pph21_rate');
         $this->normalizePayrollItemInput($request);
+        if (str_starts_with((string) $payrollItem->pph21_method, 'ter_bulanan') && $request->has('pph21_rate')) {
+            $request->merge(['pph21_rate' => $terRate]);
+        }
+        $this->normalizeCompensationRows($request, 'fixed_allowances');
         $this->normalizeCompensationRows($request, 'variable_allowances');
         $this->normalizeCompensationRows($request, 'bonuses');
         $this->normalizeCompensationRows($request, 'manual_deductions');
 
+        $recurringRule = $payrollRun->batch_purpose === 'additional' ? ['in:0'] : [];
         $validated = $request->validate([
+            'fixed_allowances' => ['nullable', 'array', 'max:20'],
+            'fixed_allowances.*.name' => ['required', 'string', 'max:100'],
+            'fixed_allowances.*.amount' => ['required', 'numeric', 'min:0'],
+            'proration_payable_days' => ['nullable', 'integer', 'min:0'],
+            'tax_reviewed' => ['sometimes', 'boolean'],
+            'reset_overrides' => ['sometimes', 'boolean'],
             'base_salary' => ['nullable', 'numeric', 'min:0'],
             'allowances_total' => ['nullable', 'numeric', 'min:0'],
             'overtime_hours' => ['nullable', 'numeric', 'min:0'],
@@ -429,18 +442,18 @@ class PayrollController extends Controller
             'pph21_allowance' => ['nullable', 'numeric', 'min:0'],
             'pph21_deduction' => ['nullable', 'numeric', 'min:0'],
             'pph21_company_borne' => ['nullable', 'numeric', 'min:0'],
-            'kasbon_deduction' => ['nullable', 'numeric', 'min:0'],
-            'denda_deduction' => ['nullable', 'numeric', 'min:0'],
-            'bpjs_kesehatan_company' => ['nullable', 'numeric', 'min:0'],
-            'bpjs_kesehatan_employee' => ['nullable', 'numeric', 'min:0'],
-            'bpjs_jkk_company' => ['nullable', 'numeric', 'min:0'],
-            'bpjs_jkm_company' => ['nullable', 'numeric', 'min:0'],
-            'bpjs_jht_company' => ['nullable', 'numeric', 'min:0'],
-            'bpjs_jht_employee' => ['nullable', 'numeric', 'min:0'],
-            'bpjs_jp_company' => ['nullable', 'numeric', 'min:0'],
-            'bpjs_jp_employee' => ['nullable', 'numeric', 'min:0'],
+            'kasbon_deduction' => ['nullable', 'numeric', 'min:0', ...$recurringRule],
+            'denda_deduction' => ['nullable', 'numeric', 'min:0', ...$recurringRule],
+            'bpjs_kesehatan_company' => ['nullable', 'numeric', 'min:0', ...$recurringRule],
+            'bpjs_kesehatan_employee' => ['nullable', 'numeric', 'min:0', ...$recurringRule],
+            'bpjs_jkk_company' => ['nullable', 'numeric', 'min:0', ...$recurringRule],
+            'bpjs_jkm_company' => ['nullable', 'numeric', 'min:0', ...$recurringRule],
+            'bpjs_jht_company' => ['nullable', 'numeric', 'min:0', ...$recurringRule],
+            'bpjs_jht_employee' => ['nullable', 'numeric', 'min:0', ...$recurringRule],
+            'bpjs_jp_company' => ['nullable', 'numeric', 'min:0', ...$recurringRule],
+            'bpjs_jp_employee' => ['nullable', 'numeric', 'min:0', ...$recurringRule],
             'private_insurance_name' => ['nullable', 'string', 'max:100'],
-            'private_insurance_nominal' => ['nullable', 'numeric', 'min:0'],
+            'private_insurance_nominal' => ['nullable', 'numeric', 'min:0', ...$recurringRule],
             'variable_allowances' => ['nullable', 'array', 'max:20'],
             'variable_allowances.*.name' => ['required', 'string', 'max:100'],
             'variable_allowances.*.amount' => ['required', 'numeric', 'min:0'],
@@ -452,87 +465,9 @@ class PayrollController extends Controller
             'manual_deductions.*.amount' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $variableAllowances = $validated['variable_allowances'] ?? null;
-        $bonuses = $validated['bonuses'] ?? null;
-        $manualDeductions = $validated['manual_deductions'] ?? null;
-        unset($validated['variable_allowances'], $validated['bonuses'], $validated['manual_deductions']);
+        app(PayrollAdjustmentService::class)->update($payrollItem, $validated);
 
-        $payrollItem->fill($validated);
-
-        if ($variableAllowances !== null || $bonuses !== null) {
-            $variableBreakdown = $this->compensationBreakdown(
-                $variableAllowances ?? ($payrollItem->variable_allowance_breakdown ?? [])
-            );
-            $bonusBreakdown = $this->compensationBreakdown(
-                $bonuses ?? ($payrollItem->bonus_breakdown ?? [])
-            );
-            $fixedAllowancesTotal = (float) collect($payrollItem->allowance_breakdown ?? [])->sum();
-
-            $payrollItem->forceFill([
-                'variable_allowance_breakdown' => $variableBreakdown,
-                'bonus_breakdown' => $bonusBreakdown,
-                'allowances_total' => round(
-                    $fixedAllowancesTotal + collect($variableBreakdown)->sum() + collect($bonusBreakdown)->sum(),
-                    2
-                ),
-            ]);
-        }
-
-        if ($manualDeductions !== null) {
-            $manualBreakdown = $this->compensationBreakdown($manualDeductions);
-            $manualDeductionTotal = round(collect($manualBreakdown)->sum(), 2);
-
-            $payrollItem->forceFill([
-                'manual_deduction_breakdown' => $manualBreakdown,
-                'manual_deduction_total' => $manualDeductionTotal,
-            ]);
-        }
-
-        $bpjsTotalCompany = round(
-            (float) $payrollItem->bpjs_kesehatan_company
-            + (float) $payrollItem->bpjs_jkk_company
-            + (float) $payrollItem->bpjs_jkm_company
-            + (float) $payrollItem->bpjs_jht_company
-            + (float) $payrollItem->bpjs_jp_company,
-            2
-        );
-
-        $bpjsTotalEmployee = round(
-            (float) $payrollItem->bpjs_kesehatan_employee
-            + (float) $payrollItem->bpjs_jht_employee
-            + (float) $payrollItem->bpjs_jp_employee
-            + (float) $payrollItem->private_insurance_nominal,
-            2
-        );
-
-        $deductionsTotal = round(
-            (float) $payrollItem->pph21_deduction
-            + (float) $payrollItem->kasbon_deduction
-            + (float) $payrollItem->denda_deduction
-            + (float) $payrollItem->unpaid_leave_deduction
-            + (float) ($payrollItem->manual_deduction_total ?? 0)
-            + $bpjsTotalEmployee,
-            2
-        );
-        $netSalary = round(max(
-            ((float) $payrollItem->base_salary
-                + (float) $payrollItem->allowances_total
-                + (float) $payrollItem->overtime_pay
-                + (float) $payrollItem->pph21_allowance)
-            - $deductionsTotal,
-            0
-        ), 2);
-
-        $payrollItem->forceFill([
-            'bpjs_total_company' => $bpjsTotalCompany,
-            'bpjs_total_employee' => $bpjsTotalEmployee,
-            'deductions_total' => $deductionsTotal,
-            'net_salary' => $netSalary,
-        ])->save();
-
-        $this->refreshPayrollRunTotals($payrollRun);
-
-        return to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular'])
+        return to_route('hris.payrolls.index', ['period' => $payrollRun->period, 'type' => $payrollRun->type ?? 'regular', 'run_id' => $payrollRun->id])
             ->with('success', 'Item payroll berhasil diperbarui.');
     }
 
@@ -620,48 +555,10 @@ class PayrollController extends Controller
             2
         );
 
-        $bpjsTotalEmployee = round(
-            (float) $payrollItem->bpjs_kesehatan_employee
-            + (float) $payrollItem->bpjs_jht_employee
-            + (float) $payrollItem->bpjs_jp_employee
-            + (float) ($payrollItem->private_insurance_nominal ?? 0),
-            2
-        );
-
-        $deductionsTotal = round(
-            (float) $payrollItem->pph21_deduction
-            + (float) $payrollItem->kasbon_deduction
-            + $newDendaTotal
-            + (float) $payrollItem->unpaid_leave_deduction
-            + (float) ($payrollItem->manual_deduction_total ?? 0)
-            + $bpjsTotalEmployee,
-            2
-        );
-
-        $pph21DeductionForNet = $payrollItem->pph21_method === 'gross_up' ? 0 : (float) $payrollItem->pph21_deduction;
-        $netSalary = round(max(
-            ((float) $payrollItem->base_salary
-                + (float) $payrollItem->allowances_total
-                + (float) $payrollItem->overtime_pay)
-            - (
-                (float) $payrollItem->kasbon_deduction
-                + $newDendaTotal
-                + (float) $payrollItem->unpaid_leave_deduction
-                + $pph21DeductionForNet
-                + (float) ($payrollItem->manual_deduction_total ?? 0)
-                + $bpjsTotalEmployee
-            ),
-            0
-        ), 2);
-
-        $payrollItem->forceFill([
+        app(PayrollAdjustmentService::class)->update($payrollItem, [
             'denda_breakdown' => $breakdown,
             'denda_deduction' => $newDendaTotal,
-            'deductions_total' => $deductionsTotal,
-            'net_salary' => $netSalary,
-        ])->save();
-
-        $this->refreshPayrollRunTotals($payrollRun);
+        ]);
 
         $msg = $isNowReverted
             ? 'Denda berhasil dibatalkan (tidak di-apply).'
@@ -700,7 +597,7 @@ class PayrollController extends Controller
         $isThr = $payrollRun->type === 'thr';
         $prefix = $isThr ? 'thr_' : 'payroll_';
         $statusSuffix = $payrollRun->is_saved ? '' : '_draft';
-        $filename = $prefix.$payrollRun->period.$statusSuffix.'.csv';
+        $filename = $prefix.$payrollRun->period.'_'.$payrollRun->code.$statusSuffix.'.csv';
 
         $fixedAllowanceNames = $items
             ->flatMap(fn ($item) => array_keys($item->allowance_breakdown ?? []))
@@ -1055,7 +952,7 @@ class PayrollController extends Controller
         $isThr = $payrollRun->type === 'thr';
         $prefix = $isThr ? 'thr_' : 'payroll_';
         $statusSuffix = $payrollRun->is_saved ? '' : '_draft';
-        $filename = $prefix.$payrollRun->period.$statusSuffix.'.xlsx';
+        $filename = $prefix.$payrollRun->period.'_'.$payrollRun->code.$statusSuffix.'.xlsx';
 
         $fixedAllowanceNames = $items
             ->flatMap(fn ($item) => array_keys($item->allowance_breakdown ?? []))
@@ -1064,7 +961,7 @@ class PayrollController extends Controller
             ->all();
 
         return response()->streamDownload(function () use ($items, $isThr, $fixedAllowanceNames): void {
-            $spreadsheet = new Spreadsheet();
+            $spreadsheet = new Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->setTitle($isThr ? 'THR' : 'Payroll');
 
@@ -1319,7 +1216,7 @@ class PayrollController extends Controller
             ->values();
 
         $period = Carbon::createFromFormat('Y-m', $payrollRun->period)->locale('id')->translatedFormat('F Y');
-        $filename = 'transfer_mandiri_'.$payrollRun->period.'.csv';
+        $filename = 'transfer_mandiri_'.$payrollRun->period.'_'.$payrollRun->code.'.csv';
 
         return response()->streamDownload(function () use ($items, $period): void {
             $out = fopen('php://output', 'wb');
@@ -1460,7 +1357,7 @@ class PayrollController extends Controller
             ->values();
 
         $period = Carbon::createFromFormat('Y-m', $payrollRun->period)->locale('id')->translatedFormat('F Y');
-        $filename = 'transfer_bca_'.$payrollRun->period.'.csv';
+        $filename = 'transfer_bca_'.$payrollRun->period.'_'.$payrollRun->code.'.csv';
 
         return response()->streamDownload(function () use ($items, $period): void {
             $out = fopen('php://output', 'wb');
@@ -1582,4 +1479,3 @@ class PayrollController extends Controller
         return [round($lateDeduction, 2), round($attendanceDeduction, 2)];
     }
 }
-

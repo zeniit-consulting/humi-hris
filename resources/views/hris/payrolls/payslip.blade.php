@@ -169,7 +169,8 @@
                     <td>
                         <h1>Payslip {{ $periodLabel }}</h1>
                         <p class="muted" style="margin-top: 8px;">{{ $companyName }}</p>
-                        <small class="muted" style="margin-top: 1px;">{{ $companyDetails }}</small>
+                        @if ($companyDetails)<small class="muted" style="margin-top: 1px;">{{ $companyDetails }}</small>@endif
+                        <small class="muted" style="display: block; margin-top: 2px;">{{ $run->code }}{{ $run->batch_purpose === 'additional' ? ' · Pembayaran Tambahan' : '' }}</small>
                     </td>
                     <td class="logo-cell">
                         @if (is_file($companyLogoPath))
