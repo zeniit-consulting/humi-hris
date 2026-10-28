@@ -192,4 +192,81 @@ class DynamicWorkingDaysTest extends TestCase
         // Daily rate = 6,000,000 / 20 shifts = 300,000
         $this->assertEquals(300000.0, (float) $item->unpaid_leave_deduction);
     }
+
+    public function test_proration_calculates_actual_clock_ins_plus_sick_and_unpaid_leave_divided_by_working_days(): void
+    {
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'base_salary' => 22000000,
+            'employment_type' => 'PKWT',
+            'hire_date' => '2026-11-10', // Mid-month new hire
+            'pph21_method' => 'gross',
+            'pph21_rate' => 0,
+        ]);
+
+        $setting = CompanySetting::create([
+            'user_id' => $user->id,
+            'name' => 'Test Company',
+            'active_working_days' => 22,
+            'working_days_type' => 'fixed',
+            'payroll_cutoff_day' => 'end_of_month',
+            'bpjs_kesehatan_enabled' => false,
+            'bpjs_ketenagakerjaan_enabled' => false,
+        ]);
+
+        // 12 attendance days with check_in_at
+        for ($i = 10; $i <= 21; $i++) {
+            \App\Models\EmployeeAttendance::create([
+                'user_id' => $user->id,
+                'employee_id' => $employee->id,
+                'attendance_date' => sprintf('2026-11-%02d', $i),
+                'status' => 'present',
+                'check_in_at' => sprintf('2026-11-%02d 08:00:00', $i),
+            ]);
+        }
+
+        // 4 days approved sick leave
+        LeaveRequest::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'sick',
+            'start_date' => '2026-11-22',
+            'end_date' => '2026-11-25',
+            'total_days' => 4,
+            'reason' => 'Sakit demam',
+            'status' => 'approved',
+        ]);
+
+        // 2 days approved unpaid leave
+        LeaveRequest::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'unpaid',
+            'start_date' => '2026-11-26',
+            'end_date' => '2026-11-27',
+            'total_days' => 2,
+            'reason' => 'Keperluan keluarga',
+            'status' => 'approved',
+        ]);
+
+        // Total active days: 12 present + 4 sick + 2 unpaid = 18 days!
+        $service = app(PayrollGenerationService::class);
+        $run = $service->generateForPeriod($user->id, '2026-11', $user->id);
+        $item = $run->items()->where('employee_id', $employee->id)->firstOrFail();
+
+        $this->assertTrue((bool) $item->is_prorated);
+        $this->assertSame(22, $item->proration_working_days);
+        $this->assertSame(18, $item->proration_payable_days);
+        $this->assertEqualsWithDelta(18 / 22, (float) $item->proration_factor, 0.000001);
+
+        // Prorated base salary: 22,000,000 * (18 / 22) = 18,000,000
+        $this->assertEquals(18000000.0, (float) $item->base_salary);
+
+        // Unpaid leave deduction for 2 days: (22,000,000 / 22) * 2 = 2,000,000
+        $this->assertEquals(2000000.0, (float) $item->unpaid_leave_deduction);
+
+        // Net salary: 18,000,000 - 2,000,000 = 16,000,000
+        $this->assertEquals(16000000.0, (float) $item->net_salary);
+    }
 }

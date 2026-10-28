@@ -661,7 +661,7 @@ class PayrollGenerationService
         $schedules = $employee->schedules->keyBy(
             fn ($schedule): string => $schedule->work_date->toDateString()
         );
-        $payableDays = 0;
+        $scheduledDays = 0;
         $workingDaysType = $setting?->working_days_type ?? 'fixed';
 
         for ($date = $start->copy(); $date->lte($end); $date = $date->addDay()) {
@@ -677,17 +677,59 @@ class PayrollGenerationService
             }
 
             if ($date->betweenIncluded($employmentStart, $employmentEnd)) {
-                $payableDays++;
+                $scheduledDays++;
             }
         }
 
-        if ($employmentStart->lte($start) && $employmentEnd->gte($end)) {
-            $payableDays = $workingDays;
-        } else {
-            $payableDays = min($payableDays, $workingDays);
+        $startStr = $start->toDateString();
+        $endStr = $end->toDateString();
+
+        // 1. Absensi aktual dalam periode penggajian (minimal sudah clock in atau berstatus hadir/wfa/on_leave)
+        $attendanceDates = $employee->attendances
+            ->filter(function ($att) use ($startStr, $endStr): bool {
+                $attDate = $att->attendance_date ? Carbon::parse($att->attendance_date)->toDateString() : null;
+                if (! $attDate || $attDate < $startStr || $attDate > $endStr) {
+                    return false;
+                }
+
+                return ! empty($att->check_in_at) || in_array($att->status, ['present', 'late', 'wfa', 'on_leave', 'sick'], true);
+            })
+            ->map(fn ($att) => Carbon::parse($att->attendance_date)->toDateString())
+            ->filter();
+
+        // 2. Izin dan cuti yang disetujui (termasuk sick leave, unpaid leave, annual leave, dll.)
+        $leaveDates = collect();
+        foreach ($employee->leaveRequests as $leave) {
+            if ($leave->status !== 'approved') {
+                continue;
+            }
+
+            $lStart = Carbon::parse($leave->start_date)->max($start);
+            $lEnd = Carbon::parse($leave->end_date)->min($end);
+
+            if ($lStart->lte($lEnd)) {
+                for ($d = $lStart->copy(); $d->lte($lEnd); $d = $d->addDay()) {
+                    $leaveDates->push($d->toDateString());
+                }
+            }
         }
 
-        $factor = $payableDays / $workingDays;
+        $recordedActiveDays = $attendanceDates->toBase()->merge($leaveDates)->unique()->count();
+
+        $isFullPeriod = $employmentStart->lte($start) && $employmentEnd->gte($end);
+
+        if ($isFullPeriod) {
+            $payableDays = $workingDays;
+        } else {
+            // Untuk karyawan prorata (masuk mid-periode / resign mid-periode):
+            // Gunakan jumlah hari absensi aktif (clock in) + sick leave + unpaid leave jika ada data presensi/cuti,
+            // atau fallback ke hitungan hari kerja terjadwal dalam rentang masa kerja.
+            $payableDays = $recordedActiveDays > 0
+                ? min($recordedActiveDays, $workingDays)
+                : min($scheduledDays, $workingDays);
+        }
+
+        $factor = $workingDays > 0 ? min($payableDays / $workingDays, 1.0) : 1.0;
 
         return [$factor, $workingDays, $payableDays];
     }
