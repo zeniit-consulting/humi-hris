@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/api/mobile/v1/payrolls/preview'
 */
 export const preview = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ preview.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/api/mobile/v1/payrolls/preview'
 */
 preview.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ preview.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/api/mobile/v1/payrolls/preview'
 */
 preview.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ preview.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/api/mobile/v1/payrolls/preview'
 */
 preview.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ preview.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/api/mobile/v1/payrolls/preview'
 */
 const previewForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const previewForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/api/mobile/v1/payrolls/preview'
 */
 previewForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ previewForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/api/mobile/v1/payrolls/preview'
 */
 previewForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ preview.form = previewForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::generate
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:43
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:51
 * @route '/api/mobile/v1/payrolls/generate'
 */
 export const generate = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ generate.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::generate
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:43
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:51
 * @route '/api/mobile/v1/payrolls/generate'
 */
 generate.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ generate.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::generate
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:43
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:51
 * @route '/api/mobile/v1/payrolls/generate'
 */
 generate.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ generate.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::generate
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:43
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:51
 * @route '/api/mobile/v1/payrolls/generate'
 */
 const generateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const generateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::generate
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:43
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:51
 * @route '/api/mobile/v1/payrolls/generate'
 */
 generateForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ generate.form = generateForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::save
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:54
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:67
 * @route '/api/mobile/v1/payrolls/{payrollRun}/save'
 */
 export const save = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -153,7 +153,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::save
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:54
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:67
 * @route '/api/mobile/v1/payrolls/{payrollRun}/save'
 */
 save.url = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +186,7 @@ save.url = (args: { payrollRun: number | { id: number } } | [payrollRun: number 
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::save
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:54
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:67
 * @route '/api/mobile/v1/payrolls/{payrollRun}/save'
 */
 save.post = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -196,7 +196,7 @@ save.post = (args: { payrollRun: number | { id: number } } | [payrollRun: number
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::save
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:54
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:67
 * @route '/api/mobile/v1/payrolls/{payrollRun}/save'
 */
 const saveForm = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -206,7 +206,7 @@ const saveForm = (args: { payrollRun: number | { id: number } } | [payrollRun: n
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::save
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:54
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:67
 * @route '/api/mobile/v1/payrolls/{payrollRun}/save'
 */
 saveForm.post = (args: { payrollRun: number | { id: number } } | [payrollRun: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -218,7 +218,7 @@ save.form = saveForm
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::history
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:73
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:80
 * @route '/api/mobile/v1/payrolls/history'
 */
 export const history = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -233,7 +233,7 @@ history.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::history
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:73
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:80
 * @route '/api/mobile/v1/payrolls/history'
 */
 history.url = (options?: RouteQueryOptions) => {
@@ -242,7 +242,7 @@ history.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::history
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:73
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:80
 * @route '/api/mobile/v1/payrolls/history'
 */
 history.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -252,7 +252,7 @@ history.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::history
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:73
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:80
 * @route '/api/mobile/v1/payrolls/history'
 */
 history.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -262,7 +262,7 @@ history.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::history
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:73
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:80
 * @route '/api/mobile/v1/payrolls/history'
 */
 const historyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -272,7 +272,7 @@ const historyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::history
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:73
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:80
 * @route '/api/mobile/v1/payrolls/history'
 */
 historyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -282,7 +282,7 @@ historyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::history
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:73
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:80
 * @route '/api/mobile/v1/payrolls/history'
 */
 historyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

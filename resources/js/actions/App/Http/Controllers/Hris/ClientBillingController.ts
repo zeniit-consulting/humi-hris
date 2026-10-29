@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::index
-* @see app/Http/Controllers/Hris/ClientBillingController.php:20
+* @see app/Http/Controllers/Hris/ClientBillingController.php:21
 * @route '/hris/client-billings'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::index
-* @see app/Http/Controllers/Hris/ClientBillingController.php:20
+* @see app/Http/Controllers/Hris/ClientBillingController.php:21
 * @route '/hris/client-billings'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::index
-* @see app/Http/Controllers/Hris/ClientBillingController.php:20
+* @see app/Http/Controllers/Hris/ClientBillingController.php:21
 * @route '/hris/client-billings'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::index
-* @see app/Http/Controllers/Hris/ClientBillingController.php:20
+* @see app/Http/Controllers/Hris/ClientBillingController.php:21
 * @route '/hris/client-billings'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::index
-* @see app/Http/Controllers/Hris/ClientBillingController.php:20
+* @see app/Http/Controllers/Hris/ClientBillingController.php:21
 * @route '/hris/client-billings'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::index
-* @see app/Http/Controllers/Hris/ClientBillingController.php:20
+* @see app/Http/Controllers/Hris/ClientBillingController.php:21
 * @route '/hris/client-billings'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::index
-* @see app/Http/Controllers/Hris/ClientBillingController.php:20
+* @see app/Http/Controllers/Hris/ClientBillingController.php:21
 * @route '/hris/client-billings'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::store
-* @see app/Http/Controllers/Hris/ClientBillingController.php:84
+* @see app/Http/Controllers/Hris/ClientBillingController.php:85
 * @route '/hris/client-billings'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::store
-* @see app/Http/Controllers/Hris/ClientBillingController.php:84
+* @see app/Http/Controllers/Hris/ClientBillingController.php:85
 * @route '/hris/client-billings'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::store
-* @see app/Http/Controllers/Hris/ClientBillingController.php:84
+* @see app/Http/Controllers/Hris/ClientBillingController.php:85
 * @route '/hris/client-billings'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::store
-* @see app/Http/Controllers/Hris/ClientBillingController.php:84
+* @see app/Http/Controllers/Hris/ClientBillingController.php:85
 * @route '/hris/client-billings'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::store
-* @see app/Http/Controllers/Hris/ClientBillingController.php:84
+* @see app/Http/Controllers/Hris/ClientBillingController.php:85
 * @route '/hris/client-billings'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::update
-* @see app/Http/Controllers/Hris/ClientBillingController.php:133
+* @see app/Http/Controllers/Hris/ClientBillingController.php:134
 * @route '/hris/client-billings/{clientInvoice}'
 */
 export const update = (args: { clientInvoice: number | { id: number } } | [clientInvoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -153,7 +153,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::update
-* @see app/Http/Controllers/Hris/ClientBillingController.php:133
+* @see app/Http/Controllers/Hris/ClientBillingController.php:134
 * @route '/hris/client-billings/{clientInvoice}'
 */
 update.url = (args: { clientInvoice: number | { id: number } } | [clientInvoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +186,7 @@ update.url = (args: { clientInvoice: number | { id: number } } | [clientInvoice:
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::update
-* @see app/Http/Controllers/Hris/ClientBillingController.php:133
+* @see app/Http/Controllers/Hris/ClientBillingController.php:134
 * @route '/hris/client-billings/{clientInvoice}'
 */
 update.put = (args: { clientInvoice: number | { id: number } } | [clientInvoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -196,7 +196,7 @@ update.put = (args: { clientInvoice: number | { id: number } } | [clientInvoice:
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::update
-* @see app/Http/Controllers/Hris/ClientBillingController.php:133
+* @see app/Http/Controllers/Hris/ClientBillingController.php:134
 * @route '/hris/client-billings/{clientInvoice}'
 */
 const updateForm = (args: { clientInvoice: number | { id: number } } | [clientInvoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -211,7 +211,7 @@ const updateForm = (args: { clientInvoice: number | { id: number } } | [clientIn
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::update
-* @see app/Http/Controllers/Hris/ClientBillingController.php:133
+* @see app/Http/Controllers/Hris/ClientBillingController.php:134
 * @route '/hris/client-billings/{clientInvoice}'
 */
 updateForm.put = (args: { clientInvoice: number | { id: number } } | [clientInvoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -228,7 +228,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::destroy
-* @see app/Http/Controllers/Hris/ClientBillingController.php:148
+* @see app/Http/Controllers/Hris/ClientBillingController.php:149
 * @route '/hris/client-billings/{clientInvoice}'
 */
 export const destroy = (args: { clientInvoice: number | { id: number } } | [clientInvoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -243,7 +243,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::destroy
-* @see app/Http/Controllers/Hris/ClientBillingController.php:148
+* @see app/Http/Controllers/Hris/ClientBillingController.php:149
 * @route '/hris/client-billings/{clientInvoice}'
 */
 destroy.url = (args: { clientInvoice: number | { id: number } } | [clientInvoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -276,7 +276,7 @@ destroy.url = (args: { clientInvoice: number | { id: number } } | [clientInvoice
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::destroy
-* @see app/Http/Controllers/Hris/ClientBillingController.php:148
+* @see app/Http/Controllers/Hris/ClientBillingController.php:149
 * @route '/hris/client-billings/{clientInvoice}'
 */
 destroy.delete = (args: { clientInvoice: number | { id: number } } | [clientInvoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -286,7 +286,7 @@ destroy.delete = (args: { clientInvoice: number | { id: number } } | [clientInvo
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::destroy
-* @see app/Http/Controllers/Hris/ClientBillingController.php:148
+* @see app/Http/Controllers/Hris/ClientBillingController.php:149
 * @route '/hris/client-billings/{clientInvoice}'
 */
 const destroyForm = (args: { clientInvoice: number | { id: number } } | [clientInvoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -301,7 +301,7 @@ const destroyForm = (args: { clientInvoice: number | { id: number } } | [clientI
 
 /**
 * @see \App\Http\Controllers\Hris\ClientBillingController::destroy
-* @see app/Http/Controllers/Hris/ClientBillingController.php:148
+* @see app/Http/Controllers/Hris/ClientBillingController.php:149
 * @route '/hris/client-billings/{clientInvoice}'
 */
 destroyForm.delete = (args: { clientInvoice: number | { id: number } } | [clientInvoice: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

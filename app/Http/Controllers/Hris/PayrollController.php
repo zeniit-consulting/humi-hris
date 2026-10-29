@@ -17,6 +17,7 @@ use App\Support\WhatsAppPhone;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -342,6 +343,56 @@ class PayrollController extends Controller
     }
 
     /**
+     * Delete a payroll batch.
+     */
+    public function destroy(PayrollRun $payrollRun, Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+
+        if ($payrollRun->isReleased()) {
+            return back()->with('error', 'Batch payroll yang telah dirilis tidak dapat dihapus.');
+        }
+
+        $isOwner = (int) $request->user()->id === (int) $ownerId;
+        if ($payrollRun->is_locked && (int) $payrollRun->locked_by !== (int) $request->user()->id && ! $isOwner) {
+            return back()->with('error', 'Batch payroll sedang dikunci oleh admin lain.');
+        }
+
+        $period = $payrollRun->period;
+        $type = $payrollRun->type ?? 'regular';
+        $batchCode = $payrollRun->code;
+
+        DB::transaction(function () use ($payrollRun): void {
+            $payrollRun->items()->delete();
+            $payrollRun->delete();
+        });
+
+        $nextRun = PayrollRun::query()
+            ->where('user_id', $ownerId)
+            ->where('period', $period)
+            ->where('type', $type)
+            ->latest('id')
+            ->first();
+
+        $redirectParams = [
+            'period' => $period,
+            'type' => $type,
+        ];
+
+        if ($nextRun) {
+            $redirectParams['run_id'] = $nextRun->id;
+        }
+
+        if ($request->filled('sub_company_id')) {
+            $redirectParams['sub_company_id'] = $request->input('sub_company_id');
+        }
+
+        return to_route('hris.payrolls.index', $redirectParams)
+            ->with('success', "Batch payroll {$batchCode} berhasil dihapus.");
+    }
+
+    /**
      * Lock or unlock the payroll run.
      */
     public function toggleLock(PayrollRun $payrollRun, Request $request): RedirectResponse
@@ -398,6 +449,75 @@ class PayrollController extends Controller
         ]);
 
         return back()->with('success', "Payroll berhasil di-lock oleh {$user->name}. Admin lain tidak dapat mengubah data tanpa PIN.");
+    }
+
+    /**
+     * Delete an individual item from a payroll batch.
+     */
+    public function destroyItem(PayrollRun $payrollRun, PayrollItem $payrollItem, Request $request, PayrollAdjustmentService $adjustments): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+        abort_unless((int) $payrollItem->payroll_run_id === (int) $payrollRun->id, 404);
+
+        if ($payrollRun->isReleased() || $payrollRun->is_saved) {
+            return back()->with('error', 'Item payroll pada batch yang telah dirilis atau disimpan tidak dapat dihapus.');
+        }
+
+        $isOwner = (int) $request->user()->id === (int) $ownerId;
+        if ($payrollRun->is_locked && (int) $payrollRun->locked_by !== (int) $request->user()->id && ! $isOwner) {
+            return back()->with('error', 'Batch payroll sedang dikunci oleh admin lain.');
+        }
+
+        $employeeName = $payrollItem->employee?->full_name ?? 'Karyawan';
+
+        DB::transaction(function () use ($payrollRun, $payrollItem, $adjustments): void {
+            $payrollItem->delete();
+            $adjustments->refreshTotals($payrollRun);
+
+            $payrollRun->update([
+                'selected_employee_ids' => $payrollRun->items()->pluck('employee_id')->all(),
+            ]);
+        });
+
+        return back()->with('success', "Staff {$employeeName} berhasil dikeluarkan dari payroll.");
+    }
+
+    /**
+     * Bulk delete / exclude items from a payroll batch.
+     */
+    public function bulkDestroyItems(PayrollRun $payrollRun, Request $request, PayrollAdjustmentService $adjustments): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+
+        if ($payrollRun->isReleased() || $payrollRun->is_saved) {
+            return back()->with('error', 'Item payroll pada batch yang telah dirilis atau disimpan tidak dapat dihapus.');
+        }
+
+        $isOwner = (int) $request->user()->id === (int) $ownerId;
+        if ($payrollRun->is_locked && (int) $payrollRun->locked_by !== (int) $request->user()->id && ! $isOwner) {
+            return back()->with('error', 'Batch payroll sedang dikunci oleh admin lain.');
+        }
+
+        $validated = $request->validate([
+            'item_ids' => ['required', 'array', 'min:1'],
+            'item_ids.*' => ['integer'],
+        ]);
+
+        $itemIds = $validated['item_ids'];
+        $count = count($itemIds);
+
+        DB::transaction(function () use ($payrollRun, $itemIds, $adjustments): void {
+            $payrollRun->items()->whereIn('id', $itemIds)->delete();
+            $adjustments->refreshTotals($payrollRun);
+
+            $payrollRun->update([
+                'selected_employee_ids' => $payrollRun->items()->pluck('employee_id')->all(),
+            ]);
+        });
+
+        return back()->with('success', "{$count} staff berhasil dikeluarkan dari payroll.");
     }
 
     public function updateItem(PayrollRun $payrollRun, PayrollItem $payrollItem, Request $request): RedirectResponse

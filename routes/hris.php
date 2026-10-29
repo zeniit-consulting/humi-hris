@@ -215,10 +215,13 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
             Route::get('payrolls', [PayrollController::class, 'index'])->name('payrolls.index');
             Route::post('payrolls/generate', [PayrollController::class, 'generate'])->name('payrolls.generate');
             Route::post('payrolls/thr/generate', [PayrollController::class, 'generateThr'])->name('payrolls.thr.generate');
+            Route::delete('payrolls/{payrollRun}', [PayrollController::class, 'destroy'])->name('payrolls.destroy');
             Route::post('payrolls/{payrollRun}/lock', [PayrollController::class, 'toggleLock'])->name('payrolls.lock');
             Route::post('payrolls/{payrollRun}/save', [PayrollController::class, 'save'])->name('payrolls.save');
             Route::post('payrolls/{payrollRun}/release', [PayrollController::class, 'release'])->name('payrolls.release');
             Route::post('payrolls/{payrollRun}/send-payslips', [PayrollController::class, 'sendPayslips'])->name('payrolls.send-payslips');
+            Route::delete('payrolls/{payrollRun}/items/{payrollItem}', [PayrollController::class, 'destroyItem'])->name('payrolls.items.destroy');
+            Route::post('payrolls/{payrollRun}/items/bulk-delete', [PayrollController::class, 'bulkDestroyItems'])->name('payrolls.items.bulk-destroy');
             Route::put('payrolls/{payrollRun}/items/{payrollItem}', [PayrollController::class, 'updateItem'])->name('payrolls.items.update');
             Route::post('payrolls/{payrollRun}/items/{payrollItem}/revert-denda', [PayrollController::class, 'revertDenda'])->name('payrolls.items.revert-denda');
             Route::post('payrolls/{payrollRun}/items/{payrollItem}/send-payslip', [PayrollController::class, 'sendPayslip'])->name('payrolls.items.send-payslip');

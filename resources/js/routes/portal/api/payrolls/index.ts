@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/portal/api/payrolls/preview'
 */
 export const preview = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ preview.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/portal/api/payrolls/preview'
 */
 preview.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ preview.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/portal/api/payrolls/preview'
 */
 preview.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ preview.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/portal/api/payrolls/preview'
 */
 preview.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ preview.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/portal/api/payrolls/preview'
 */
 const previewForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const previewForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/portal/api/payrolls/preview'
 */
 previewForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ previewForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Api\Mobile\V1\PayrollController::preview
-* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:20
+* @see app/Http/Controllers/Api/Mobile/V1/PayrollController.php:21
 * @route '/portal/api/payrolls/preview'
 */
 previewForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

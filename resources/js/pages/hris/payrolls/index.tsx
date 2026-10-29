@@ -489,6 +489,13 @@ export default function PayrollPage() {
     const [isLockSubmitting, setIsLockSubmitting] = useState(false);
     const [releaseDialogOpen, setReleaseDialogOpen] = useState(false);
     const [isReleaseSubmitting, setIsReleaseSubmitting] = useState(false);
+    const [deleteBatchDialogOpen, setDeleteBatchDialogOpen] = useState(false);
+    const [isDeletingBatch, setIsDeletingBatch] = useState(false);
+    const [deletingItem, setDeletingItem] = useState<PayrollItem | null>(null);
+    const [isDeletingItem, setIsDeletingItem] = useState(false);
+    const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
+    const [bulkDeleteStaffOpen, setBulkDeleteStaffOpen] = useState(false);
+    const [isBulkDeletingStaff, setIsBulkDeletingStaff] = useState(false);
     const [sortKey, setSortKey] = useState<string>('employee');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -942,6 +949,73 @@ export default function PayrollPage() {
         );
     };
 
+    const handleDeleteBatch = () => {
+        if (!run) return;
+        setIsDeletingBatch(true);
+        router.delete(`/hris/payrolls/${run.id}`, {
+            data: {
+                sub_company_id:
+                    subCompanyState === '__all' ? undefined : subCompanyState,
+            },
+            preserveScroll: true,
+            onFinish: () => {
+                setIsDeletingBatch(false);
+                setDeleteBatchDialogOpen(false);
+            },
+        });
+    };
+
+    const allItemsSelected =
+        items.length > 0 && items.every((i) => selectedItemIds.includes(i.id));
+
+    const toggleSelectAllItems = () => {
+        if (allItemsSelected) {
+            setSelectedItemIds([]);
+        } else {
+            setSelectedItemIds(items.map((i) => i.id));
+        }
+    };
+
+    const toggleSelectItem = (id: number) => {
+        setSelectedItemIds((prev) =>
+            prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+        );
+    };
+
+    const handleDeleteItem = () => {
+        if (!run || !deletingItem) return;
+        setIsDeletingItem(true);
+        router.delete(`/hris/payrolls/${run.id}/items/${deletingItem.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSelectedItemIds((prev) =>
+                    prev.filter((id) => id !== deletingItem.id),
+                );
+            },
+            onFinish: () => {
+                setIsDeletingItem(false);
+                setDeletingItem(null);
+            },
+        });
+    };
+
+    const handleBulkDeleteStaff = () => {
+        if (!run || selectedItemIds.length === 0) return;
+        setIsBulkDeletingStaff(true);
+        router.post(
+            `/hris/payrolls/${run.id}/items/bulk-delete`,
+            { item_ids: selectedItemIds },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setSelectedItemIds([]);
+                    setBulkDeleteStaffOpen(false);
+                },
+                onFinish: () => setIsBulkDeletingStaff(false),
+            },
+        );
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Payroll" />
@@ -1007,49 +1081,76 @@ export default function PayrollPage() {
                 {batches.length > 0 && (
                     <div className="grid gap-2">
                         <Label htmlFor="payroll-batch">Batch payroll</Label>
-                        <Select
-                            value={String(run?.id ?? '')}
-                            onValueChange={(value) =>
-                                router.get(
-                                    payrollsIndex.url(),
-                                    {
-                                        period,
-                                        type,
-                                        run_id: value,
-                                        sub_company_id:
-                                            subCompanyState === '__all'
-                                                ? undefined
-                                                : subCompanyState,
-                                    },
-                                    { preserveScroll: true },
-                                )
-                            }
-                        >
-                            <SelectTrigger
-                                id="payroll-batch"
-                                className="w-full sm:max-w-xl"
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Select
+                                value={String(run?.id ?? '')}
+                                onValueChange={(value) =>
+                                    router.get(
+                                        payrollsIndex.url(),
+                                        {
+                                            period,
+                                            type,
+                                            run_id: value,
+                                            sub_company_id:
+                                                subCompanyState === '__all'
+                                                    ? undefined
+                                                    : subCompanyState,
+                                        },
+                                        { preserveScroll: true },
+                                    )
+                                }
                             >
-                                <SelectValue placeholder="Pilih batch" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {batches.map((batch) => (
-                                    <SelectItem
-                                        key={batch.id}
-                                        value={String(batch.id)}
-                                    >
-                                        {batch.code} ·{' '}
-                                        {batch.batch_purpose === 'additional'
-                                            ? 'Tambahan'
-                                            : 'Reguler'}{' '}
-                                        ·{' '}
-                                        {batch.status === 'released'
-                                            ? 'Dirilis'
-                                            : 'Draft'}{' '}
-                                        · {batch.employees_count} karyawan
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                                <SelectTrigger
+                                    id="payroll-batch"
+                                    className="w-full sm:max-w-xl"
+                                >
+                                    <SelectValue placeholder="Pilih batch" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {batches.map((batch) => (
+                                        <SelectItem
+                                            key={batch.id}
+                                            value={String(batch.id)}
+                                        >
+                                            {batch.code} ·{' '}
+                                            {batch.batch_purpose === 'additional'
+                                                ? 'Tambahan'
+                                                : 'Reguler'}{' '}
+                                            ·{' '}
+                                            {batch.status === 'released'
+                                                ? 'Dirilis'
+                                                : 'Draft'}{' '}
+                                            · {batch.employees_count} karyawan
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {run && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="default"
+                                    disabled={
+                                        isPayrollReleased ||
+                                        Boolean(
+                                            run.is_locked && !run.is_locked_by_me,
+                                        )
+                                    }
+                                    title={
+                                        isPayrollReleased
+                                            ? 'Batch payroll yang telah dirilis tidak dapat dihapus.'
+                                            : run.is_locked && !run.is_locked_by_me
+                                              ? `Batch dikunci oleh ${run.locked_by_name ?? 'admin lain'}`
+                                              : 'Hapus batch payroll ini'
+                                    }
+                                    className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive whitespace-nowrap disabled:opacity-50"
+                                    onClick={() => setDeleteBatchDialogOpen(true)}
+                                >
+                                    <Trash2 className="size-4" />
+                                    Hapus Batch
+                                </Button>
+                            )}
+                        </div>
                         {run && (
                             <p className="text-xs text-muted-foreground">
                                 {run.code} ·{' '}
@@ -1379,6 +1480,31 @@ export default function PayrollPage() {
                                     )}
                                 </>
                             )}
+                            {run && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={
+                                        isPayrollReleased ||
+                                        Boolean(
+                                            run.is_locked && !run.is_locked_by_me,
+                                        )
+                                    }
+                                    title={
+                                        isPayrollReleased
+                                            ? 'Batch payroll yang telah dirilis tidak dapat dihapus.'
+                                            : run.is_locked && !run.is_locked_by_me
+                                              ? `Batch dikunci oleh ${run.locked_by_name ?? 'admin lain'}`
+                                              : 'Hapus batch payroll ini'
+                                    }
+                                    className="ml-auto border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive whitespace-nowrap disabled:opacity-50"
+                                    onClick={() => setDeleteBatchDialogOpen(true)}
+                                >
+                                    <Trash2 className="size-3.5" />
+                                    Hapus Batch
+                                </Button>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -1700,12 +1826,62 @@ export default function PayrollPage() {
                                 </CardDescription>
                             )}
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-4">
+                        {!isPayrollReleased && selectedItemIds.length > 0 && (
+                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-2.5">
+                                <div className="text-sm font-medium text-destructive">
+                                    {selectedItemIds.length} staf dipilih
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setSelectedItemIds([])}
+                                        className="h-8 text-xs"
+                                    >
+                                        Batal Pilih
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="destructive"
+                                        size="sm"
+                                        disabled={
+                                            Boolean(
+                                                run?.is_locked &&
+                                                    !run?.is_locked_by_me,
+                                            ) || isBulkDeletingStaff
+                                        }
+                                        onClick={() =>
+                                            setBulkDeleteStaffOpen(true)
+                                        }
+                                        className="h-8 gap-1.5 text-xs font-semibold"
+                                    >
+                                        <Trash2 className="size-3.5" />
+                                        Keluarkan {selectedItemIds.length} Staff
+                                        dari Payroll
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                         <div className="overflow-x-auto">
                             {type === 'thr' ? (
                                 <table className="w-full min-w-[1100px] text-sm">
                                     <thead>
                                         <tr className="border-b text-left">
+                                            {!isPayrollReleased && (
+                                                <th className="w-10 px-3 py-2">
+                                                    <Checkbox
+                                                        checked={
+                                                            allItemsSelected
+                                                        }
+                                                        onCheckedChange={
+                                                            toggleSelectAllItems
+                                                        }
+                                                        aria-label="Pilih semua staff"
+                                                    />
+                                                </th>
+                                            )}
                                             <th className="w-32 min-w-[120px] px-3 py-2">
                                                 <button
                                                     type="button"
@@ -1885,7 +2061,11 @@ export default function PayrollPage() {
                                         {sortedItems.length === 0 && (
                                             <tr>
                                                 <td
-                                                    colSpan={9}
+                                                    colSpan={
+                                                        isPayrollReleased
+                                                            ? 9
+                                                            : 10
+                                                    }
                                                     className="px-3 py-8 text-center text-muted-foreground"
                                                 >
                                                     Belum ada data THR di
@@ -1915,6 +2095,21 @@ export default function PayrollPage() {
                                                     key={item.id}
                                                     className="border-b align-top"
                                                 >
+                                                    {!isPayrollReleased && (
+                                                        <td className="w-10 px-3 py-3">
+                                                            <Checkbox
+                                                                checked={selectedItemIds.includes(
+                                                                    item.id,
+                                                                )}
+                                                                onCheckedChange={() =>
+                                                                    toggleSelectItem(
+                                                                        item.id,
+                                                                    )
+                                                                }
+                                                                aria-label={`Pilih ${empName}`}
+                                                            />
+                                                        </td>
+                                                    )}
                                                     <td className="w-32 min-w-[120px] px-3 py-3 font-mono text-xs text-muted-foreground">
                                                         {empCode}
                                                     </td>
@@ -2000,9 +2195,34 @@ export default function PayrollPage() {
                                                         </span>
                                                     </td>
                                                     <td className="px-3 py-3 text-right">
-                                                        <span className="text-xs text-muted-foreground">
-                                                            -
-                                                        </span>
+                                                        {!isPayrollReleased ? (
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() =>
+                                                                    setDeletingItem(
+                                                                        item,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    isPayrollReleased ||
+                                                                    Boolean(
+                                                                        run?.is_locked &&
+                                                                            !run?.is_locked_by_me,
+                                                                    )
+                                                                }
+                                                                className="text-destructive hover:bg-destructive/10 hover:text-destructive whitespace-nowrap"
+                                                                title="Keluarkan karyawan dari batch THR ini"
+                                                            >
+                                                                <Trash2 className="size-4" />
+                                                                Keluarkan
+                                                            </Button>
+                                                        ) : (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                -
+                                                            </span>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             );
@@ -2013,6 +2233,19 @@ export default function PayrollPage() {
                                 <table className="w-full min-w-[1800px] text-sm">
                                     <thead>
                                         <tr className="border-b text-left">
+                                            {!isPayrollReleased && (
+                                                <th className="w-10 px-3 py-2">
+                                                    <Checkbox
+                                                        checked={
+                                                            allItemsSelected
+                                                        }
+                                                        onCheckedChange={
+                                                            toggleSelectAllItems
+                                                        }
+                                                        aria-label="Pilih semua staff"
+                                                    />
+                                                </th>
+                                            )}
                                             <th className="w-32 min-w-[120px] px-3 py-2">
                                                 <button
                                                     type="button"
@@ -2465,7 +2698,11 @@ export default function PayrollPage() {
                                         {sortedItems.length === 0 && (
                                             <tr>
                                                 <td
-                                                    colSpan={22}
+                                                    colSpan={
+                                                        isPayrollReleased
+                                                            ? 22
+                                                            : 23
+                                                    }
                                                     className="px-3 py-8 text-center text-muted-foreground"
                                                 >
                                                     Belum ada data payroll di
@@ -2515,6 +2752,21 @@ export default function PayrollPage() {
                                                     key={item.id}
                                                     className="border-b align-top"
                                                 >
+                                                    {!isPayrollReleased && (
+                                                        <td className="w-10 px-3 py-3">
+                                                            <Checkbox
+                                                                checked={selectedItemIds.includes(
+                                                                    item.id,
+                                                                )}
+                                                                onCheckedChange={() =>
+                                                                    toggleSelectItem(
+                                                                        item.id,
+                                                                    )
+                                                                }
+                                                                aria-label={`Pilih ${empName}`}
+                                                            />
+                                                        </td>
+                                                    )}
                                                     <td className="w-32 min-w-[120px] px-3 py-3 font-mono text-xs text-muted-foreground">
                                                         {empCode}
                                                     </td>
@@ -3090,6 +3342,30 @@ export default function PayrollPage() {
                                                                 <Pencil className="size-4" />
                                                                 Edit
                                                             </Button>
+                                                            {!isPayrollReleased && (
+                                                                <Button
+                                                                    type="button"
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() =>
+                                                                        setDeletingItem(
+                                                                            item,
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        isPayrollReleased ||
+                                                                        Boolean(
+                                                                            run?.is_locked &&
+                                                                            !run?.is_locked_by_me,
+                                                                        )
+                                                                    }
+                                                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive whitespace-nowrap"
+                                                                    title="Keluarkan karyawan dari payroll ini"
+                                                                >
+                                                                    <Trash2 className="size-4" />
+                                                                    Keluarkan
+                                                                </Button>
+                                                            )}
                                                             <Button
                                                                 type="button"
                                                                 size="sm"
@@ -4345,6 +4621,213 @@ export default function PayrollPage() {
                               );
                           })()
                         : null}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={deleteBatchDialogOpen}
+                onOpenChange={setDeleteBatchDialogOpen}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                            <Trash2 className="size-5" />
+                            Hapus Batch Payroll
+                        </DialogTitle>
+                        <DialogDescription>
+                            Tindakan ini tidak dapat dibatalkan. Seluruh data
+                            kalkulasi gaji karyawan dalam batch ini akan dihapus
+                            secara permanen.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {run && (
+                        <div className="space-y-1.5 rounded-lg border bg-muted/40 p-3 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                    Kode Batch:
+                                </span>
+                                <span className="font-semibold text-foreground">
+                                    {run.code}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                    Tipe / Tujuan:
+                                </span>
+                                <span className="text-foreground">
+                                    {run.batch_purpose === 'additional'
+                                        ? 'Pembayaran Tambahan'
+                                        : 'Payroll Reguler'}{' '}
+                                    ({type === 'thr' ? 'THR' : 'Bulanan'})
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                    Periode:
+                                </span>
+                                <span className="text-foreground">
+                                    {run.period}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                    Jumlah Karyawan:
+                                </span>
+                                <span className="text-foreground">
+                                    {run.unfiltered_employees_count ??
+                                        run.employees_count}{' '}
+                                    karyawan
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                    Total Gaji Bersih:
+                                </span>
+                                <span className="font-medium text-foreground">
+                                    {formatCurrency(
+                                        run.unfiltered_total_net_salary ??
+                                            run.total_net_salary,
+                                    )}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={isDeletingBatch}
+                            onClick={() => setDeleteBatchDialogOpen(false)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            disabled={isDeletingBatch || !run}
+                            onClick={handleDeleteBatch}
+                        >
+                            {isDeletingBatch
+                                ? 'Menghapus...'
+                                : 'Ya, Hapus Batch'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={deletingItem !== null}
+                onOpenChange={(open) => !open && setDeletingItem(null)}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                            <Trash2 className="size-5" />
+                            Keluarkan Staff dari Payroll
+                        </DialogTitle>
+                        <DialogDescription>
+                            Data kalkulasi gaji staff ini akan dikeluarkan dari
+                            batch payroll periode {run?.period}. Total batch
+                            akan dihitung ulang secara otomatis.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {deletingItem && (
+                        <div className="space-y-1.5 rounded-lg border bg-muted/40 p-3 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                    Karyawan:
+                                </span>
+                                <span className="font-semibold text-foreground">
+                                    {deletingItem.employee_label}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                    Divisi:
+                                </span>
+                                <span className="text-foreground">
+                                    {deletingItem.division_name}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                    Gaji Bersih:
+                                </span>
+                                <span className="font-medium text-foreground">
+                                    {formatCurrency(deletingItem.net_salary)}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={isDeletingItem}
+                            onClick={() => setDeletingItem(null)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            disabled={isDeletingItem || !deletingItem}
+                            onClick={handleDeleteItem}
+                        >
+                            {isDeletingItem
+                                ? 'Mengeluarkan...'
+                                : 'Ya, Keluarkan Staff'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={bulkDeleteStaffOpen}
+                onOpenChange={setBulkDeleteStaffOpen}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                            <Trash2 className="size-5" />
+                            Keluarkan {selectedItemIds.length} Staff dari Payroll
+                        </DialogTitle>
+                        <DialogDescription>
+                            Sebanyak {selectedItemIds.length} staff yang dipilih
+                            akan dikeluarkan dari batch payroll periode{' '}
+                            {run?.period}. Data kalkulasi gaji mereka akan
+                            dihapus dari batch ini dan total payroll akan
+                            dihitung ulang secara otomatis.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={isBulkDeletingStaff}
+                            onClick={() => setBulkDeleteStaffOpen(false)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            disabled={
+                                isBulkDeletingStaff ||
+                                selectedItemIds.length === 0
+                            }
+                            onClick={handleBulkDeleteStaff}
+                        >
+                            {isBulkDeletingStaff
+                                ? 'Mengeluarkan...'
+                                : `Ya, Keluarkan (${selectedItemIds.length}) Staff`}
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
         </AppLayout>

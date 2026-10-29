@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import locations from './locations'
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::index
-* @see app/Http/Controllers/Hris/SubCompanyController.php:17
+* @see app/Http/Controllers/Hris/SubCompanyController.php:20
 * @route '/hris/sub-companies'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -17,7 +17,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::index
-* @see app/Http/Controllers/Hris/SubCompanyController.php:17
+* @see app/Http/Controllers/Hris/SubCompanyController.php:20
 * @route '/hris/sub-companies'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::index
-* @see app/Http/Controllers/Hris/SubCompanyController.php:17
+* @see app/Http/Controllers/Hris/SubCompanyController.php:20
 * @route '/hris/sub-companies'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -36,7 +36,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::index
-* @see app/Http/Controllers/Hris/SubCompanyController.php:17
+* @see app/Http/Controllers/Hris/SubCompanyController.php:20
 * @route '/hris/sub-companies'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -46,7 +46,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::index
-* @see app/Http/Controllers/Hris/SubCompanyController.php:17
+* @see app/Http/Controllers/Hris/SubCompanyController.php:20
 * @route '/hris/sub-companies'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -56,7 +56,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::index
-* @see app/Http/Controllers/Hris/SubCompanyController.php:17
+* @see app/Http/Controllers/Hris/SubCompanyController.php:20
 * @route '/hris/sub-companies'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -66,7 +66,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::index
-* @see app/Http/Controllers/Hris/SubCompanyController.php:17
+* @see app/Http/Controllers/Hris/SubCompanyController.php:20
 * @route '/hris/sub-companies'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -83,7 +83,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::store
-* @see app/Http/Controllers/Hris/SubCompanyController.php:63
+* @see app/Http/Controllers/Hris/SubCompanyController.php:66
 * @route '/hris/sub-companies'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -98,7 +98,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::store
-* @see app/Http/Controllers/Hris/SubCompanyController.php:63
+* @see app/Http/Controllers/Hris/SubCompanyController.php:66
 * @route '/hris/sub-companies'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -107,7 +107,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::store
-* @see app/Http/Controllers/Hris/SubCompanyController.php:63
+* @see app/Http/Controllers/Hris/SubCompanyController.php:66
 * @route '/hris/sub-companies'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -117,7 +117,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::store
-* @see app/Http/Controllers/Hris/SubCompanyController.php:63
+* @see app/Http/Controllers/Hris/SubCompanyController.php:66
 * @route '/hris/sub-companies'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -127,7 +127,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::store
-* @see app/Http/Controllers/Hris/SubCompanyController.php:63
+* @see app/Http/Controllers/Hris/SubCompanyController.php:66
 * @route '/hris/sub-companies'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -139,7 +139,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::update
-* @see app/Http/Controllers/Hris/SubCompanyController.php:78
+* @see app/Http/Controllers/Hris/SubCompanyController.php:76
 * @route '/hris/sub-companies/{subCompany}'
 */
 export const update = (args: { subCompany: number | { id: number } } | [subCompany: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -154,7 +154,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::update
-* @see app/Http/Controllers/Hris/SubCompanyController.php:78
+* @see app/Http/Controllers/Hris/SubCompanyController.php:76
 * @route '/hris/sub-companies/{subCompany}'
 */
 update.url = (args: { subCompany: number | { id: number } } | [subCompany: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -187,7 +187,7 @@ update.url = (args: { subCompany: number | { id: number } } | [subCompany: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::update
-* @see app/Http/Controllers/Hris/SubCompanyController.php:78
+* @see app/Http/Controllers/Hris/SubCompanyController.php:76
 * @route '/hris/sub-companies/{subCompany}'
 */
 update.put = (args: { subCompany: number | { id: number } } | [subCompany: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -197,7 +197,7 @@ update.put = (args: { subCompany: number | { id: number } } | [subCompany: numbe
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::update
-* @see app/Http/Controllers/Hris/SubCompanyController.php:78
+* @see app/Http/Controllers/Hris/SubCompanyController.php:76
 * @route '/hris/sub-companies/{subCompany}'
 */
 const updateForm = (args: { subCompany: number | { id: number } } | [subCompany: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -212,7 +212,7 @@ const updateForm = (args: { subCompany: number | { id: number } } | [subCompany:
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::update
-* @see app/Http/Controllers/Hris/SubCompanyController.php:78
+* @see app/Http/Controllers/Hris/SubCompanyController.php:76
 * @route '/hris/sub-companies/{subCompany}'
 */
 updateForm.put = (args: { subCompany: number | { id: number } } | [subCompany: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -229,7 +229,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::destroy
-* @see app/Http/Controllers/Hris/SubCompanyController.php:94
+* @see app/Http/Controllers/Hris/SubCompanyController.php:88
 * @route '/hris/sub-companies/{subCompany}'
 */
 export const destroy = (args: { subCompany: number | { id: number } } | [subCompany: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -244,7 +244,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::destroy
-* @see app/Http/Controllers/Hris/SubCompanyController.php:94
+* @see app/Http/Controllers/Hris/SubCompanyController.php:88
 * @route '/hris/sub-companies/{subCompany}'
 */
 destroy.url = (args: { subCompany: number | { id: number } } | [subCompany: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -277,7 +277,7 @@ destroy.url = (args: { subCompany: number | { id: number } } | [subCompany: numb
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::destroy
-* @see app/Http/Controllers/Hris/SubCompanyController.php:94
+* @see app/Http/Controllers/Hris/SubCompanyController.php:88
 * @route '/hris/sub-companies/{subCompany}'
 */
 destroy.delete = (args: { subCompany: number | { id: number } } | [subCompany: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -287,7 +287,7 @@ destroy.delete = (args: { subCompany: number | { id: number } } | [subCompany: n
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::destroy
-* @see app/Http/Controllers/Hris/SubCompanyController.php:94
+* @see app/Http/Controllers/Hris/SubCompanyController.php:88
 * @route '/hris/sub-companies/{subCompany}'
 */
 const destroyForm = (args: { subCompany: number | { id: number } } | [subCompany: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -302,7 +302,7 @@ const destroyForm = (args: { subCompany: number | { id: number } } | [subCompany
 
 /**
 * @see \App\Http\Controllers\Hris\SubCompanyController::destroy
-* @see app/Http/Controllers/Hris/SubCompanyController.php:94
+* @see app/Http/Controllers/Hris/SubCompanyController.php:88
 * @route '/hris/sub-companies/{subCompany}'
 */
 destroyForm.delete = (args: { subCompany: number | { id: number } } | [subCompany: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
