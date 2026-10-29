@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     Building2,
     CheckCircle2,
@@ -10,14 +10,12 @@ import {
     Search,
     Trash2,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentProps, FormEvent } from 'react';
-import { geocodeAddress } from '@/lib/geocoding';
 import InputError from '@/components/input-error';
 import { MapboxLocationMap } from '@/components/mapbox-location-map';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Card,
     CardContent,
@@ -35,6 +33,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SimplePagination } from '@/components/ui/simple-pagination';
 import {
     Table,
     TableBody,
@@ -44,6 +43,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { geocodeAddress } from '@/lib/geocoding';
 import type { BreadcrumbItem } from '@/types';
 
 type PaginatorLink = {
@@ -72,6 +72,7 @@ type SubCompany = {
     id: number;
     code: string;
     name: string;
+    logo_url: string | null;
     contact_person: string | null;
     contact_phone: string | null;
     contact_email: string | null;
@@ -98,6 +99,8 @@ type PageProps = {
 };
 
 type SubCompanyFormData = {
+    logo: File | null;
+    remove_logo: boolean;
     code: string;
     name: string;
     contact_person: string;
@@ -122,6 +125,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const SUB_COMPANY_DEFAULT: SubCompanyFormData = {
+    logo: null,
+    remove_logo: false,
     code: '',
     name: '',
     contact_person: '',
@@ -175,6 +180,29 @@ export default function SubCompaniesIndex() {
         status: filters.status,
     });
     const companyForm = useForm<SubCompanyFormData>(SUB_COMPANY_DEFAULT);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const logoInput = useRef<HTMLInputElement>(null);
+    const logoReader = useRef<FileReader | null>(null);
+    useEffect(() => () => logoReader.current?.abort(), []);
+    const resetLogoSelection = () => {
+        logoReader.current?.abort();
+        setLogoPreview(null);
+        if (logoInput.current) logoInput.current.value = '';
+    };
+    const selectLogo = (file: File | null) => {
+        logoReader.current?.abort();
+        setLogoPreview(null);
+        companyForm.setData('logo', file);
+        companyForm.setData('remove_logo', false);
+        if (!file) return;
+        const reader = new FileReader();
+        logoReader.current = reader;
+        reader.onload = () => {
+            if (logoReader.current === reader)
+                setLogoPreview(String(reader.result));
+        };
+        reader.readAsDataURL(file);
+    };
     const locationForm = useForm<LocationFormData>(LOCATION_DEFAULT);
 
     const parsedLatitude = parseCoordinate(locationForm.data.latitude);
@@ -231,7 +259,10 @@ export default function SubCompaniesIndex() {
             longitude: lngStr,
         }));
 
-        if (!locationForm.data.address || locationForm.data.address.trim() === '') {
+        if (
+            !locationForm.data.address ||
+            locationForm.data.address.trim() === ''
+        ) {
             try {
                 const response = await fetch(
                     `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(
@@ -342,16 +373,20 @@ export default function SubCompaniesIndex() {
     };
 
     const resetCompanyForm = () => {
+        resetLogoSelection();
         setEditingCompany(null);
         companyForm.clearErrors();
         companyForm.setData(SUB_COMPANY_DEFAULT);
     };
 
     const editCompany = (company: SubCompany) => {
+        resetLogoSelection();
         setCompanyDialogOpen(true);
         setEditingCompany(company);
         companyForm.clearErrors();
         companyForm.setData({
+            logo: null,
+            remove_logo: false,
             code: company.code,
             name: company.name,
             contact_person: company.contact_person ?? '',
@@ -366,24 +401,22 @@ export default function SubCompaniesIndex() {
     const submitCompany = (event: FormEvent) => {
         event.preventDefault();
 
-        if (editingCompany) {
-            companyForm.put(`/hris/sub-companies/${editingCompany.id}`, {
+        companyForm.transform((data) =>
+            editingCompany ? { ...data, _method: 'put' } : data,
+        );
+        companyForm.post(
+            editingCompany
+                ? `/hris/sub-companies/${editingCompany.id}`
+                : '/hris/sub-companies',
+            {
+                forceFormData: true,
                 preserveScroll: true,
                 onSuccess: () => {
                     resetCompanyForm();
                     setCompanyDialogOpen(false);
                 },
-            });
-            return;
-        }
-
-        companyForm.post('/hris/sub-companies', {
-            preserveScroll: true,
-            onSuccess: () => {
-                resetCompanyForm();
-                setCompanyDialogOpen(false);
             },
-        });
+        );
     };
 
     const deleteCompany = (company: SubCompany) => {
@@ -698,6 +731,12 @@ export default function SubCompaniesIndex() {
                                                                     }}
                                                                 >
                                                                     <Pencil className="size-4" />
+                                                                    <span className="sr-only">
+                                                                        Edit{' '}
+                                                                        {
+                                                                            company.name
+                                                                        }
+                                                                    </span>
                                                                 </Button>
                                                             </div>
                                                         </TableCell>
@@ -839,11 +878,97 @@ export default function SubCompaniesIndex() {
                                 : 'Tambah Sub Company'}
                         </DialogTitle>
                         <DialogDescription>
-                            Karyawan dengan `sub_company_id` kosong dianggap
-                            karyawan internal.
+                            Kelola identitas dan logo perusahaan. Logo akan
+                            digunakan pada payslip staf yang ditugaskan ke
+                            sub-company ini.
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submitCompany} className="space-y-3">
+                        <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-[112px_1fr]">
+                            <div className="flex min-h-24 items-center justify-center rounded-md bg-muted/40 p-2">
+                                {logoPreview ||
+                                (!companyForm.data.remove_logo &&
+                                    editingCompany?.logo_url) ? (
+                                    <img
+                                        src={
+                                            logoPreview ||
+                                            editingCompany?.logo_url ||
+                                            ''
+                                        }
+                                        alt="Pratinjau logo sub-company"
+                                        className="h-20 w-24 object-contain"
+                                    />
+                                ) : (
+                                    <Building2
+                                        aria-hidden="true"
+                                        className="size-8 text-muted-foreground"
+                                    />
+                                )}
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="sub_company_logo">
+                                    Logo perusahaan
+                                </Label>
+                                <Input
+                                    ref={logoInput}
+                                    id="sub_company_logo"
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    disabled={companyForm.processing}
+                                    onChange={(event) =>
+                                        selectLogo(
+                                            event.target.files?.[0] ?? null,
+                                        )
+                                    }
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    PNG, JPG, atau WEBP hingga 5 MB. Logo
+                                    digunakan pada payslip staf sub-company ini.
+                                </p>
+                                <InputError message={companyForm.errors.logo} />
+                                {editingCompany?.logo_url &&
+                                    !companyForm.data.logo && (
+                                        <CheckboxField
+                                            id="remove_company_logo"
+                                            label="Hapus logo perusahaan"
+                                            checked={
+                                                companyForm.data.remove_logo
+                                            }
+                                            onChange={(checked) =>
+                                                companyForm.setData(
+                                                    'remove_logo',
+                                                    checked,
+                                                )
+                                            }
+                                        />
+                                    )}
+                                {companyForm.data.logo && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="justify-self-start"
+                                        onClick={() => {
+                                            selectLogo(null);
+                                            if (logoInput.current)
+                                                logoInput.current.value = '';
+                                        }}
+                                    >
+                                        Batalkan pilihan logo
+                                    </Button>
+                                )}
+                                {companyForm.progress && (
+                                    <p
+                                        role="status"
+                                        className="text-xs text-muted-foreground"
+                                    >
+                                        Mengunggah{' '}
+                                        {companyForm.progress.percentage}%
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
                         <div className="grid gap-3 md:grid-cols-2">
                             <Field
                                 id="code"
@@ -1007,10 +1132,12 @@ export default function SubCompaniesIndex() {
                                         <span className="text-rose-500">*</span>
                                     </Label>
                                     <p className="text-xs text-muted-foreground">
-                                        Klik kursor pada peta atau gunakan tombol di samping untuk menentukan titik koordinat lokasi absen.
+                                        Klik kursor pada peta atau gunakan
+                                        tombol di samping untuk menentukan titik
+                                        koordinat lokasi absen.
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                                <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -1024,7 +1151,9 @@ export default function SubCompaniesIndex() {
                                         ) : (
                                             <Search className="size-3.5" />
                                         )}
-                                        {isGeocoding ? 'Melacak...' : 'Lacak dari Alamat'}
+                                        {isGeocoding
+                                            ? 'Melacak...'
+                                            : 'Lacak dari Alamat'}
                                     </Button>
                                     <Button
                                         type="button"
@@ -1039,7 +1168,9 @@ export default function SubCompaniesIndex() {
                                         ) : (
                                             <Navigation className="size-3.5" />
                                         )}
-                                        {isLocating ? 'Mencari...' : 'Lokasi Saya'}
+                                        {isLocating
+                                            ? 'Mencari...'
+                                            : 'Lokasi Saya'}
                                     </Button>
                                 </div>
                             </div>
@@ -1070,17 +1201,23 @@ export default function SubCompaniesIndex() {
 
                             <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/30 px-3 py-2 text-xs">
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                                    <MapPin className="size-3.5 text-primary shrink-0" />
+                                    <MapPin className="size-3.5 shrink-0 text-primary" />
                                     <span>Titik Koordinat:</span>
                                 </div>
                                 {hasCoordinates ? (
                                     <div className="flex items-center gap-3 font-mono text-xs font-semibold text-foreground">
-                                        <span>Lat: {locationForm.data.latitude}</span>
-                                        <span className="text-muted-foreground/50">|</span>
-                                        <span>Lng: {locationForm.data.longitude}</span>
+                                        <span>
+                                            Lat: {locationForm.data.latitude}
+                                        </span>
+                                        <span className="text-muted-foreground/50">
+                                            |
+                                        </span>
+                                        <span>
+                                            Lng: {locationForm.data.longitude}
+                                        </span>
                                     </div>
                                 ) : (
-                                    <span className="italic text-amber-600 dark:text-amber-400">
+                                    <span className="text-amber-600 italic dark:text-amber-400">
                                         Belum dipilih (klik kursor pada peta)
                                     </span>
                                 )}

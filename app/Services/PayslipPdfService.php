@@ -6,8 +6,10 @@ use App\Models\CompanySetting;
 use App\Models\Employee;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
+use App\Models\SubCompany;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PayslipPdfService
@@ -53,7 +55,7 @@ class PayslipPdfService
             ],
         );
 
-        $employee = $slip->employee()->with(['division:id,name', 'position:id,name', 'subCompany:id,name,address'])->first();
+        $employee = $slip->employee()->where('user_id', $ownerId)->with(['division:id,name', 'position:id,name', 'subCompany:id,name,address'])->first();
 
         $subCompany = $employee?->subCompany;
         $companyName = $slip->company_name ?: ($subCompany?->name ?: $companySetting->name);
@@ -73,12 +75,33 @@ class PayslipPdfService
             'documentTitle' => $documentTitle,
             'companyName' => $companyName,
             'companyDetails' => $companyDetails,
-            'companyLogoPath' => public_path('logo-color.png'),
+            'companyLogoPath' => $this->companyLogoPath($slip, $employee, $companySetting, $ownerId),
             'employee' => $employee,
             'run' => $run,
             'slip' => $slip,
             'eventOvertimes' => $eventOvertimes,
             'periodLabel' => $run->period_start?->locale('id')->translatedFormat('F Y') ?? $run->period,
         ];
+    }
+
+    private function companyLogoPath(PayrollItem $slip, ?Employee $employee, CompanySetting $parent, int $ownerId): ?string
+    {
+        $identity = $slip->company_identity;
+        if ($identity && ((int) ($identity['owner_id'] ?? 0) !== $ownerId || ! empty($identity['unresolved']))) {
+            return null;
+        }
+        $subCompanyId = $identity !== null ? ($identity['sub_company_id'] ?? null) : $employee?->sub_company_id;
+        $company = $subCompanyId
+            ? SubCompany::query()->where('user_id', $ownerId)->find($subCompanyId)
+            : $parent;
+        if (! $company || (! $identity && $slip->company_name && $slip->company_name !== $company->name)) {
+            return null;
+        }
+        $path = $company->logo_path;
+        if (! $path || ! str_starts_with($path, 'company-logos/') || ! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->path($path);
     }
 }

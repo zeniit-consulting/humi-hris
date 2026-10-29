@@ -8,7 +8,10 @@ use App\Models\SubCompany;
 use App\Models\SubCompanyAttendanceLocation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -65,12 +68,7 @@ class SubCompanyController extends Controller
         $ownerId = $request->user()->accountOwnerId();
         $validated = $this->validateSubCompany($request, $ownerId);
 
-        SubCompany::query()->create([
-            ...$validated,
-            'user_id' => $ownerId,
-            'code' => strtoupper($validated['code']),
-            'is_active' => $request->boolean('is_active', true),
-        ]);
+        $this->persistCompany($request, $ownerId, $validated);
 
         return back()->with('success', 'Sub-company berhasil ditambahkan.');
     }
@@ -82,11 +80,7 @@ class SubCompanyController extends Controller
 
         $validated = $this->validateSubCompany($request, $ownerId, $subCompany->id);
 
-        $subCompany->update([
-            ...$validated,
-            'code' => strtoupper($validated['code']),
-            'is_active' => $request->boolean('is_active', true),
-        ]);
+        $this->persistCompany($request, $ownerId, $validated, $subCompany);
 
         return back()->with('success', 'Sub-company berhasil diperbarui.');
     }
@@ -99,7 +93,11 @@ class SubCompanyController extends Controller
             return back()->with('error', 'Sub-company tidak bisa dihapus karena masih memiliki karyawan.');
         }
 
+        $logoPath = $subCompany->logo_path;
         $subCompany->delete();
+        if ($logoPath) {
+            Storage::disk('public')->delete($logoPath);
+        }
 
         return back()->with('success', 'Sub-company berhasil dihapus.');
     }
@@ -152,6 +150,44 @@ class SubCompanyController extends Controller
         return back()->with('success', 'Lokasi absensi berhasil dihapus.');
     }
 
+    private function persistCompany(Request $request, int $ownerId, array $validated, ?SubCompany $company = null): void
+    {
+        $oldPath = $company?->logo_path;
+        $newPath = null;
+        unset($validated['logo'], $validated['remove_logo']);
+
+        try {
+            DB::transaction(function () use ($request, $ownerId, $validated, $company, &$newPath): void {
+                $company ??= new SubCompany;
+                $company->fill([
+                    ...$validated,
+                    'user_id' => $ownerId,
+                    'code' => strtoupper($validated['code']),
+                    'is_active' => $request->boolean('is_active', true),
+                ])->save();
+
+                if ($request->hasFile('logo')) {
+                    $newPath = $request->file('logo')->store("company-logos/{$ownerId}/sub-companies/{$company->id}", 'public');
+                    if (! $newPath) {
+                        throw ValidationException::withMessages(['logo' => 'Logo tidak dapat disimpan. Silakan coba lagi.']);
+                    }
+                    $company->update(['logo_path' => $newPath]);
+                } elseif ($request->boolean('remove_logo')) {
+                    $company->update(['logo_path' => null]);
+                }
+            });
+        } catch (\Throwable $error) {
+            if ($newPath) {
+                Storage::disk('public')->delete($newPath);
+            }
+            throw $error;
+        }
+
+        if ($oldPath && ($newPath || $request->boolean('remove_logo'))) {
+            Storage::disk('public')->delete($oldPath);
+        }
+    }
+
     private function validateSubCompany(Request $request, int $ownerId, ?int $ignoreId = null): array
     {
         return $request->validate([
@@ -162,6 +198,8 @@ class SubCompanyController extends Controller
                 'regex:/^[A-Za-z0-9_-]+$/',
                 Rule::unique('sub_companies', 'code')->where('user_id', $ownerId)->ignore($ignoreId),
             ],
+            'logo' => ['nullable', 'prohibited_if:remove_logo,true', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'remove_logo' => ['sometimes', 'boolean'],
             'name' => ['required', 'string', 'max:150'],
             'contact_person' => ['nullable', 'string', 'max:150'],
             'contact_phone' => ['nullable', 'string', 'max:30'],
@@ -190,6 +228,7 @@ class SubCompanyController extends Controller
             'id' => $subCompany->id,
             'code' => $subCompany->code,
             'name' => $subCompany->name,
+            'logo_url' => $subCompany->logo_path ? Storage::disk('public')->url($subCompany->logo_path) : null,
             'contact_person' => $subCompany->contact_person,
             'contact_phone' => $subCompany->contact_phone,
             'contact_email' => $subCompany->contact_email,

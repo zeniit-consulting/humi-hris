@@ -132,6 +132,7 @@ class PayrollGenerationService
                     $item->forceFill([
                         'manual_overrides' => $old->manual_overrides,
                         'company_name' => $old->company_name ?: $item->company_name,
+                        'company_identity' => $old->company_identity ?: $item->company_identity,
                         'company_details' => $old->company_name ? $old->company_details : $item->company_details,
                     ]);
                 }
@@ -633,6 +634,7 @@ class PayrollGenerationService
             'user_id' => $ownerId,
             'payroll_run_id' => $run->id,
             'employee_id' => $employee->id,
+            'company_identity' => ['owner_id' => $ownerId, 'sub_company_id' => $employee->sub_company_id],
             'company_name' => $employee->subCompany?->name ?: ($setting?->name ?: 'Perusahaan'),
             'company_details' => $employee->subCompany ? $employee->subCompany->address : $setting?->details,
             'calculation_basis' => ['base_salary' => $monthlyBaseSalary, 'fixed_allowances' => $employee->allowances->groupBy('name')->map(fn ($rows) => round((float) $rows->sum('amount'), 2))->all(), 'monthly' => ! $isDailyWorker, 'ptkp_category' => $employee->ptkp_category ?: 'TK/0', 'unpaid_days' => $unpaidLeaveDays],
@@ -778,6 +780,7 @@ class PayrollGenerationService
      */
     private function thrItems(int $ownerId, PayrollRun $run, Carbon $ref): Collection
     {
+        $companySetting = CompanySetting::query()->withoutGlobalScopes()->where('user_id', $ownerId)->first();
         $employees = Employee::query()
             ->withoutGlobalScopes()
             ->where('user_id', $ownerId)
@@ -785,9 +788,10 @@ class PayrollGenerationService
             ->whereIn('employment_status', ['active', 'probation', 'on_leave'])
             ->whereNotNull('hire_date')
             ->orderBy('first_name')->orderBy('last_name')
-            ->get(['id', 'hire_date', 'base_salary', 'user_id']);
+            ->with(['subCompany' => fn ($q) => $q->withoutGlobalScopes()->where('user_id', $ownerId)])
+            ->get(['id', 'hire_date', 'base_salary', 'user_id', 'sub_company_id']);
 
-        return $employees->map(function (Employee $employee) use ($ownerId, $run, $ref): array {
+        return $employees->map(function (Employee $employee) use ($ownerId, $run, $ref, $companySetting): array {
             $baseSalary = (float) ($employee->base_salary ?? 0);
             $hireDate = Carbon::parse($employee->hire_date);
             $monthsOfService = (int) $hireDate->diffInMonths($ref);
@@ -799,6 +803,9 @@ class PayrollGenerationService
                 'user_id' => $ownerId,
                 'payroll_run_id' => $run->id,
                 'employee_id' => $employee->id,
+                'company_name' => $employee->subCompany?->name ?: ($companySetting?->name ?: 'Perusahaan'),
+                'company_details' => $employee->subCompany ? $employee->subCompany->address : $companySetting?->details,
+                'company_identity' => ['owner_id' => $ownerId, 'sub_company_id' => $employee->sub_company_id],
                 'base_salary' => $baseSalary,
                 'allowances_total' => 0,
                 'overtime_hours' => 0,

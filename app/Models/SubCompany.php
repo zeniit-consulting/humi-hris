@@ -15,6 +15,7 @@ class SubCompany extends Model
         'user_id',
         'code',
         'name',
+        'logo_path',
         'contact_person',
         'contact_phone',
         'contact_email',

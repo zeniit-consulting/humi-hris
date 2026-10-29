@@ -173,7 +173,7 @@
                         <small class="muted" style="display: block; margin-top: 2px;">{{ $run->code }}{{ $run->batch_purpose === 'additional' ? ' · Pembayaran Tambahan' : '' }}</small>
                     </td>
                     <td class="logo-cell">
-                        @if (is_file($companyLogoPath))
+                        @if ($companyLogoPath && is_file($companyLogoPath))
                             <img src="{{ $companyLogoPath }}" class="company-logo" alt="{{ $companyName }}">
                         @endif
                     </td>

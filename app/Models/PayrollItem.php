@@ -22,6 +22,7 @@ class PayrollItem extends Model
         'payroll_run_id',
         'employee_id',
         'company_name',
+        'company_identity',
         'company_details',
         'calculation_basis',
         'manual_overrides',
@@ -78,6 +79,7 @@ class PayrollItem extends Model
     protected function casts(): array
     {
         return [
+            'company_identity' => 'array',
             'calculation_basis' => 'array',
             'manual_overrides' => 'array',
             'tax_reviewed' => 'boolean',
