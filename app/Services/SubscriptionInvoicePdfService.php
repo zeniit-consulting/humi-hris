@@ -52,9 +52,15 @@ class SubscriptionInvoicePdfService
 
         $planName = $planLabels[$invoice->plan_slug] ?? strtoupper($invoice->plan_slug);
 
-        $unitPrice = $invoice->employee_count > 0
-            ? (int) round($invoice->amount / $invoice->employee_count)
+        $fee = (int) ($invoice->payment_fee ?? 0);
+        $total = (int) ($invoice->total_payment ?? $invoice->amount);
+        $subtotal = ($fee > 0 && $total > $fee && $invoice->amount === $total)
+            ? ($total - $fee)
             : $invoice->amount;
+
+        $unitPrice = $invoice->employee_count > 0
+            ? (int) round($subtotal / $invoice->employee_count)
+            : $subtotal;
 
         return [
             'invoice' => $invoice,
@@ -63,9 +69,9 @@ class SubscriptionInvoicePdfService
             'documentTitle' => $documentTitle,
             'planName' => $planName,
             'unitPrice' => $unitPrice,
-            'subtotal' => $invoice->amount,
-            'paymentFee' => $invoice->payment_fee,
-            'total' => $invoice->total_payment ?? $invoice->amount,
+            'subtotal' => $subtotal,
+            'paymentFee' => $fee,
+            'total' => $total,
         ];
     }
 }

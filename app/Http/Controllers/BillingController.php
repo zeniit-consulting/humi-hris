@@ -427,6 +427,16 @@ class BillingController extends Controller
             ? Carbon::parse((string) $completedAtRaw)
             : now();
 
+        $fee = (int) (Arr::get($data, 'fee') ?? $invoice->payment_fee ?? 0);
+        $totalPayment = Arr::has($data, 'total_payment')
+            ? (int) Arr::get($data, 'total_payment')
+            : ($invoice->total_payment ?: $amount);
+
+        $invoice->update([
+            'payment_fee' => $fee,
+            'total_payment' => $totalPayment,
+        ]);
+
         $this->subscriptionService->activateSubscription($invoice->refresh(), $completedAt);
 
         return redirect()->away($this->routePath('dashboard'))

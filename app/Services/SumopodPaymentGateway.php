@@ -137,11 +137,20 @@ class SumopodPaymentGateway
         $paymentNumber = $this->paymentNumberFrom($response);
 
         $fee = (int) (Arr::get($data, 'fee') ?? Arr::get($response, 'fee', 0));
-        $totalPayment = Arr::has($data, 'total_payment')
-            ? (int) Arr::get($data, 'total_payment')
-            : (Arr::has($data, 'amount') && (int) Arr::get($data, 'amount') > $invoice->amount
-                ? (int) Arr::get($data, 'amount')
-                : ($invoice->amount + $fee));
+        $grossAmount = (int) (Arr::get($data, 'amount') ?? Arr::get($response, 'amount', 0));
+        $netAmount = (int) (Arr::get($data, 'net_amount') ?? Arr::get($response, 'net_amount', 0));
+
+        if (Arr::has($data, 'total_payment')) {
+            $totalPayment = (int) Arr::get($data, 'total_payment');
+        } elseif ($grossAmount > 0 && ($grossAmount > $invoice->amount || ($netAmount > 0 && $netAmount < $grossAmount))) {
+            $totalPayment = $grossAmount;
+        } elseif ($grossAmount > 0 && $grossAmount === $invoice->amount && $netAmount === 0 && $fee > 0) {
+            $totalPayment = $invoice->amount + $fee;
+        } elseif ($grossAmount > 0) {
+            $totalPayment = $grossAmount;
+        } else {
+            $totalPayment = $invoice->amount + $fee;
+        }
 
         $expiresAt = filled(Arr::get($data, 'expires_at'))
             ? Carbon::parse((string) Arr::get($data, 'expires_at'))

@@ -87,6 +87,63 @@ class SumopodPaymentGatewayTest extends TestCase
         $this->assertSame(50750, $invoice->total_payment);
     }
 
+    public function test_sumopod_create_payment_uses_gross_amount_without_duplicating_fee(): void
+    {
+        config()->set('services.sumopod.api_key', 'test_sumopod_key_123');
+
+        Http::fake([
+            '*/api/v1/payments' => Http::response([
+                'status' => 'success',
+                'data' => [
+                    'payment_id' => 'sp-uuid-gross-123',
+                    'order_id' => 'INV-1',
+                    'amount' => 15405,
+                    'fee' => 405,
+                    'net_amount' => 15000,
+                    'qr_string' => '00020101021226670016COM.SUMOPOD.QRIS',
+                    'status' => 'pending',
+                    'expires_at' => now()->addHours(24)->toIso8601String(),
+                ],
+            ]),
+        ]);
+
+        $user = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        Employee::factory()
+            ->count(2)
+            ->create(['user_id' => $user->id, 'employment_status' => 'active']);
+
+        SubscriptionPlan::query()->create([
+            'slug' => 'plus',
+            'name' => 'Plus',
+            'price_per_employee' => 7500,
+            'max_employees' => null,
+            'max_months' => null,
+            'locked_features' => [],
+            'is_active' => true,
+        ]);
+
+        $this
+            ->actingAs($user)
+            ->post(route('billing.invoices.store'), [
+                'plan_slug' => 'plus',
+                'employee_count' => 2,
+                'payment_method' => 'qris',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $invoice = SubscriptionInvoice::query()->latest('id')->firstOrFail();
+
+        $this->assertSame(15000, $invoice->amount);
+        $this->assertSame(405, $invoice->payment_fee);
+        $this->assertSame(15405, $invoice->total_payment);
+        $this->assertNotSame(15810, $invoice->total_payment);
+    }
+
     public function test_sumopod_completed_webhook_marks_invoice_paid_and_activates_subscription(): void
     {
         $subscriber = User::factory()->create([
@@ -139,7 +196,7 @@ class SumopodPaymentGatewayTest extends TestCase
         $this->assertNotNull($invoice->subscription_id);
         $this->assertNotNull($invoice->paid_at);
         $this->assertSame(750, $invoice->payment_fee);
-        $this->assertSame(50750, $invoice->total_payment);
+        $this->assertSame(50000, $invoice->total_payment);
 
         $this->assertDatabaseHas('subscriptions', [
             'user_id' => $subscriber->id,
@@ -154,6 +211,62 @@ class SumopodPaymentGatewayTest extends TestCase
             'target_id' => $invoice->id,
             'action' => 'invoice.sumopod_completed',
         ]);
+    }
+
+    public function test_sumopod_webhook_does_not_duplicate_fee_when_amount_includes_fee(): void
+    {
+        $subscriber = User::factory()->create([
+            'role' => 'admin',
+            'parent_user_id' => null,
+        ]);
+
+        $invoice = SubscriptionInvoice::query()->create([
+            'user_id' => $subscriber->id,
+            'subscription_id' => null,
+            'invoice_number' => 'INV-2026-FEE',
+            'amount' => 15000,
+            'employee_count' => 2,
+            'plan_slug' => 'plus',
+            'status' => 'pending',
+            'payment_gateway' => 'sumopod',
+            'payment_method' => 'qris',
+            'payment_fee' => 405,
+            'total_payment' => 15405,
+            'due_date' => now()->addDays(3)->toDateString(),
+            'paid_at' => null,
+            'payment_proof' => null,
+            'notes' => null,
+        ]);
+
+        $payload = [
+            'event_type' => 'payment.completed',
+            'data' => [
+                'payment_id' => 'sp-uuid-fee-check',
+                'order_id' => 'INV-2026-FEE',
+                'amount' => 15405,
+                'fee' => 405,
+                'net_amount' => 15000,
+                'status' => 'completed',
+                'payment_method' => 'qris',
+                'paid_at' => '2026-06-18T12:00:00Z',
+                'settled_at' => '2026-06-20T12:00:00Z',
+                'completed_at' => '2026-06-20T12:00:00Z',
+            ],
+        ];
+
+        $this
+            ->postJson(route('webhooks.sumopod'), $payload)
+            ->assertOk()
+            ->assertJson([
+                'invoice_status' => 'paid',
+            ]);
+
+        $invoice->refresh();
+
+        $this->assertSame('paid', $invoice->status);
+        $this->assertSame(405, $invoice->payment_fee);
+        $this->assertSame(15405, $invoice->total_payment);
+        $this->assertNotSame(15810, $invoice->total_payment);
     }
 
     public function test_sumopod_webhook_rejects_mismatched_amount(): void

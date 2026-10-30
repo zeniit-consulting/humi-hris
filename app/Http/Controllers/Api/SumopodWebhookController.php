@@ -92,7 +92,16 @@ class SumopodWebhookController extends Controller
         }
 
         $fee = (int) ($data['fee'] ?? $invoice->payment_fee ?? 0);
-        $totalPayment = $amount + $fee;
+
+        if (isset($data['total_payment'])) {
+            $totalPayment = (int) $data['total_payment'];
+        } elseif ($invoice->total_payment && $amount === (int) $invoice->total_payment) {
+            $totalPayment = (int) $invoice->total_payment;
+        } elseif (isset($data['net_amount']) && (int) $data['net_amount'] === $amount && $fee > 0) {
+            $totalPayment = $amount + $fee;
+        } else {
+            $totalPayment = $amount;
+        }
 
         $completedAtRaw = $data['completed_at'] ?? $data['paid_at'] ?? null;
         $completedAt = filled($completedAtRaw)

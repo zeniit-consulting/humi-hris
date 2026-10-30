@@ -103,7 +103,12 @@ export default function BillingPaymentPage() {
     }
 
     const qrisValue = invoice.payment_number ?? payment_url ?? '';
+    const feeAmount = invoice.payment_fee ?? 0;
     const payableAmount = invoice.total_payment ?? invoice.amount ?? 0;
+    const nominalAmount =
+        feeAmount > 0 && payableAmount > feeAmount && invoice.amount === payableAmount
+            ? payableAmount - feeAmount
+            : (invoice.amount ?? 0);
     const isPaid = invoice.status === 'paid';
 
     const handleCopy = async () => {
@@ -297,16 +302,16 @@ export default function BillingPaymentPage() {
                                     Nominal
                                 </span>
                                 <span className="font-medium">
-                                    {fmt.format(invoice.amount ?? 0)}
+                                    {fmt.format(nominalAmount)}
                                 </span>
                             </div>
-                            {Boolean(invoice.payment_fee && invoice.payment_fee > 0) && (
+                            {Boolean(feeAmount > 0) && (
                                 <div className="flex justify-between gap-4">
                                     <span className="text-muted-foreground">
                                         Fee
                                     </span>
                                     <span className="font-medium">
-                                        {fmt.format(invoice.payment_fee)}
+                                        {fmt.format(feeAmount)}
                                     </span>
                                 </div>
                             )}
