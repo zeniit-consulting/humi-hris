@@ -34,6 +34,7 @@ type Invoice = {
     total_payment: number | null;
     payment_expires_at: string | null;
     payment_url: string | null;
+    is_sandbox?: boolean;
 };
 
 type PageProps = {
@@ -129,6 +130,11 @@ export default function BillingPaymentPage() {
                             <Badge variant={isPaid ? 'default' : 'secondary'}>
                                 {isPaid ? 'Lunas' : 'Menunggu Pembayaran'}
                             </Badge>
+                            {invoice.is_sandbox && (
+                                <Badge variant="outline" className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                                    Sandbox (Testing)
+                                </Badge>
+                            )}
                         </div>
                         <h1 className="text-2xl font-semibold tracking-tight">
                             Pembayaran Paket {getPlanLabel(invoice.plan_slug)}

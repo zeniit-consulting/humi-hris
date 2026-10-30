@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\PakasirPaymentGateway;
 use App\Services\SubscriptionInvoicePdfService;
 use App\Services\SubscriptionService;
+use App\Services\SumopodPaymentGateway;
 use App\Support\R2Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -23,6 +25,7 @@ class BillingController extends Controller
     public function __construct(
         protected SubscriptionService $subscriptionService,
         protected PakasirPaymentGateway $pakasir,
+        protected SumopodPaymentGateway $sumopod,
         protected SubscriptionInvoicePdfService $invoicePdfService,
     ) {}
 
@@ -129,7 +132,10 @@ class BillingController extends Controller
                 ->with('success', 'Paket berhasil diturunkan. Fitur di luar paket baru otomatis dikunci.');
         }
 
-        if (! $this->pakasir->isConfigured()) {
+        $isQris = $paymentMethod === 'qris';
+        $gateway = ($isQris && $this->sumopod->isConfigured()) ? 'sumopod' : 'pakasir';
+
+        if ($gateway === 'pakasir' && ! $this->pakasir->isConfigured()) {
             Log::warning('billing.invoice.create.pakasir_not_configured', [
                 'user_id' => $user->id,
                 'owner_id' => $ownerId,
@@ -137,6 +143,16 @@ class BillingController extends Controller
 
             return redirect()->away($this->routePath('billing.index'))
                 ->with('error', 'Konfigurasi Pakasir belum lengkap. Isi PAKASIR_PROJECT dan PAKASIR_API_KEY.');
+        }
+
+        if ($gateway === 'sumopod' && ! $this->sumopod->isConfigured()) {
+            Log::warning('billing.invoice.create.sumopod_not_configured', [
+                'user_id' => $user->id,
+                'owner_id' => $ownerId,
+            ]);
+
+            return redirect()->away($this->routePath('billing.index'))
+                ->with('error', 'Konfigurasi Sumopod belum lengkap. Isi SUMOPOD_API_KEY.');
         }
 
         if ($activeEmployeeCount < 1) {
@@ -155,7 +171,7 @@ class BillingController extends Controller
             ->where('plan_slug', $validated['plan_slug'])
             ->where('employee_count', $activeEmployeeCount)
             ->where('status', 'pending')
-            ->where('payment_gateway', 'pakasir')
+            ->where('payment_gateway', $gateway)
             ->where('payment_method', $paymentMethod)
             ->whereNotNull('payment_number')
             ->where(function ($query): void {
@@ -184,6 +200,7 @@ class BillingController extends Controller
                 $validated['plan_slug'],
                 $activeEmployeeCount,
                 $paymentMethod,
+                $gateway,
             );
         } catch (\Throwable $exception) {
             Log::warning('billing.invoice.create.invoice_creation_failed', [
@@ -199,6 +216,40 @@ class BillingController extends Controller
 
             return redirect()->away($this->routePath('billing.index'))
                 ->with('error', 'Invoice belum dapat dibuat. Pastikan paket langganan sudah tersedia dan coba lagi.');
+        }
+
+        if ($gateway === 'sumopod') {
+            try {
+                $response = $this->sumopod->createPayment($invoice);
+                $this->sumopod->applyPaymentResponse($invoice, $response);
+            } catch (\Throwable $exception) {
+                Log::warning('billing.invoice.create.sumopod_failed', [
+                    'user_id' => $user->id,
+                    'owner_id' => $ownerId,
+                    'invoice_id' => $invoice->id,
+                    'invoice_number' => $invoice->invoice_number,
+                    'exception' => $exception::class,
+                    'message' => $exception->getMessage(),
+                ]);
+
+                report($exception);
+                $invoice->delete();
+
+                return redirect()->away($this->routePath('billing.index'))
+                    ->with('error', $exception->getMessage() ?: 'Transaksi Sumopod gagal dibuat. Silakan coba lagi atau hubungi admin.');
+            }
+
+            Log::info('billing.invoice.create.completed', [
+                'user_id' => $user->id,
+                'owner_id' => $ownerId,
+                'invoice_id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+                'payment_method' => $paymentMethod,
+                'gateway' => 'sumopod',
+            ]);
+
+            return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
+                ->with('success', 'Invoice Sumopod berhasil dibuat. Silakan selesaikan pembayaran QRIS.');
         }
 
         try {
@@ -227,6 +278,7 @@ class BillingController extends Controller
             'invoice_id' => $invoice->id,
             'invoice_number' => $invoice->invoice_number,
             'payment_method' => $paymentMethod,
+            'gateway' => 'pakasir',
         ]);
 
         return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
@@ -290,9 +342,13 @@ class BillingController extends Controller
                 ->with('error', 'Invoice pembayaran tidak ditemukan. Silakan buat invoice baru.');
         }
 
+        $paymentUrl = $invoice->payment_gateway === 'sumopod'
+            ? $this->sumopod->paymentUrl($invoice)
+            : $this->pakasir->paymentUrl($invoice);
+
         return Inertia::render('billing/payment', [
             'invoice' => $this->serializeInvoice($invoice),
-            'payment_url' => $this->pakasir->paymentUrl($invoice),
+            'payment_url' => $paymentUrl,
             'billing_url' => $this->routePath('billing.index'),
             'payment_check_url' => $this->routePath('billing.invoices.payment.check', ['invoice' => $invoice->id]),
             'download_url' => $this->routePath('billing.invoices.download', ['invoice' => $invoice->id]),
@@ -305,7 +361,6 @@ class BillingController extends Controller
         $user = $request->user();
 
         abort_if($invoice->user_id !== $user->accountOwnerId(), 403);
-        abort_if($invoice->payment_gateway !== 'pakasir', 422, 'Invoice ini bukan transaksi Pakasir.');
 
         if ($invoice->status === 'paid') {
             return redirect()->away($this->routePath('dashboard'))
@@ -317,6 +372,60 @@ class BillingController extends Controller
                 ->with('error', 'Invoice tidak lagi dalam status menunggu pembayaran.');
         }
 
+        if ($invoice->payment_gateway === 'sumopod') {
+            return $this->checkSumopodPayment($invoice);
+        }
+
+        abort_if($invoice->payment_gateway !== 'pakasir', 422, 'Invoice ini bukan transaksi Pakasir.');
+
+        return $this->checkPakasirPayment($invoice);
+    }
+
+    private function checkSumopodPayment(SubscriptionInvoice $invoice): RedirectResponse
+    {
+        try {
+            $payload = $this->sumopod->checkPaymentStatus($invoice);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
+                ->with('error', $exception->getMessage() ?: 'Status pembayaran belum dapat dicek.');
+        }
+
+        $data = Arr::get($payload, 'data', $payload);
+        $invoice->update([
+            'payment_payload' => array_merge($invoice->payment_payload ?? [], [
+                'status_check' => $payload,
+            ]),
+        ]);
+
+        $status = Arr::get($data, 'status');
+        if ($status !== 'completed') {
+            return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
+                ->with('error', 'Pembayaran belum terdeteksi selesai. Silakan tunggu beberapa saat lalu cek lagi.');
+        }
+
+        $orderId = Arr::get($data, 'order_id');
+        $amount = (int) Arr::get($data, 'amount');
+
+        if ($amount !== $invoice->amount || ($orderId && (string) $orderId !== (string) $invoice->invoice_number)) {
+            return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
+                ->with('error', 'Data pembayaran dari Sumopod tidak sesuai dengan invoice.');
+        }
+
+        $completedAtRaw = Arr::get($data, 'completed_at') ?? Arr::get($data, 'paid_at');
+        $completedAt = filled($completedAtRaw)
+            ? Carbon::parse((string) $completedAtRaw)
+            : now();
+
+        $this->subscriptionService->activateSubscription($invoice->refresh(), $completedAt);
+
+        return redirect()->away($this->routePath('dashboard'))
+            ->with('success', 'Pembayaran berhasil diverifikasi. Akses sistem sudah aktif.');
+    }
+
+    private function checkPakasirPayment(SubscriptionInvoice $invoice): RedirectResponse
+    {
         try {
             $payload = $this->pakasir->transactionDetail($invoice);
         } catch (\Throwable $exception) {
@@ -388,6 +497,10 @@ class BillingController extends Controller
 
     private function serializeInvoice(SubscriptionInvoice $invoice): array
     {
+        $paymentUrl = $invoice->payment_gateway === 'sumopod'
+            ? $this->sumopod->paymentUrl($invoice)
+            : $this->pakasir->paymentUrl($invoice);
+
         return [
             'id' => $invoice->id,
             'invoice_number' => $invoice->invoice_number,
@@ -404,7 +517,10 @@ class BillingController extends Controller
             'due_date' => $invoice->due_date?->toDateString(),
             'paid_at' => $invoice->paid_at?->toIso8601String(),
             'payment_proof' => R2Storage::url($invoice->payment_proof),
-            'payment_url' => $this->pakasir->paymentUrl($invoice),
+            'payment_url' => $paymentUrl,
+            'is_sandbox' => $invoice->payment_gateway === 'sumopod'
+                ? (Arr::get($invoice->payment_payload ?? [], '_environment') === 'sandbox' || Str::contains((string) ($invoice->payment_payload['payment_link_url'] ?? ''), 'sandbox') || $this->sumopod->isSandbox())
+                : false,
             'notes' => $invoice->notes,
             'created_at' => $invoice->created_at?->toIso8601String(),
         ];

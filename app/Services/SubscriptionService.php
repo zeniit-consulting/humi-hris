@@ -7,6 +7,8 @@ use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Services\PakasirPaymentGateway;
+use App\Services\SumopodPaymentGateway;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -17,8 +19,10 @@ class SubscriptionService
 
     public function __construct(
         protected ?PakasirPaymentGateway $pakasir = null,
+        protected ?SumopodPaymentGateway $sumopod = null,
     ) {
         $this->pakasir = $pakasir ?? app(PakasirPaymentGateway::class);
+        $this->sumopod = $sumopod ?? app(SumopodPaymentGateway::class);
     }
 
     public function initializeFreeSubscription(User $user): Subscription
@@ -61,8 +65,13 @@ class SubscriptionService
         return null;
     }
 
-    public function createInvoice(User $user, string $planSlug, int $employeeCount, ?string $paymentMethod = null): SubscriptionInvoice
-    {
+    public function createInvoice(
+        User $user,
+        string $planSlug,
+        int $employeeCount,
+        ?string $paymentMethod = null,
+        ?string $paymentGateway = null,
+    ): SubscriptionInvoice {
         $ownerId = $user->accountOwnerId();
 
         $plan = SubscriptionPlan::query()->where('slug', $planSlug)->firstOrFail();
@@ -73,6 +82,12 @@ class SubscriptionService
             $invoiceNumber = SubscriptionInvoice::generateInvoiceNumber($ownerId);
         } while (SubscriptionInvoice::query()->where('invoice_number', $invoiceNumber)->exists());
 
+        if ($paymentGateway === null && $paymentMethod !== null) {
+            $paymentGateway = ($paymentMethod === 'qris' && $this->sumopod?->isConfigured())
+                ? 'sumopod'
+                : 'pakasir';
+        }
+
         return SubscriptionInvoice::query()->create([
             'user_id' => $ownerId,
             'subscription_id' => null,
@@ -81,7 +96,7 @@ class SubscriptionService
             'employee_count' => $employeeCount,
             'plan_slug' => $planSlug,
             'status' => 'pending',
-            'payment_gateway' => $paymentMethod ? 'pakasir' : null,
+            'payment_gateway' => $paymentGateway,
             'payment_method' => $paymentMethod,
             'due_date' => Carbon::today()->addDays(3)->toDateString(),
             'paid_at' => null,
@@ -254,8 +269,18 @@ class SubscriptionService
                     'due_date' => $subscription->current_period_end?->toDateString() ?? Carbon::today()->addDays($days)->toDateString(),
                 ]);
 
-                // Auto-create QRIS transaction via Pakasir if configured
-                if ($this->pakasir && $this->pakasir->isConfigured()) {
+                // Auto-create QRIS transaction via Sumopod or Pakasir if configured
+                if ($this->sumopod && $this->sumopod->isConfigured()) {
+                    try {
+                        $response = $this->sumopod->createPayment($invoice);
+                        $this->sumopod->applyPaymentResponse($invoice, $response);
+                    } catch (\Throwable $se) {
+                        Log::warning('subscription.proforma_invoice.sumopod_failed', [
+                            'invoice_id' => $invoice->id,
+                            'error' => $se->getMessage(),
+                        ]);
+                    }
+                } elseif ($this->pakasir && $this->pakasir->isConfigured()) {
                     try {
                         $response = $this->pakasir->createTransaction($invoice, 'qris');
                         $this->pakasir->applyTransactionResponse($invoice, $response);

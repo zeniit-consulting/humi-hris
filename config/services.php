@@ -53,6 +53,17 @@ return [
         'timeout' => (int) env('PAKASIR_TIMEOUT', 15),
     ],
 
+    'sumopod' => [
+        'mode' => env('SUMOPOD_MODE', env('SUMOPOD_SANDBOX', true) ? 'sandbox' : 'production'),
+        'sandbox_base_url' => env('SUMOPOD_SANDBOX_BASE_URL', 'https://api-pay-sandbox.sumopod.com'),
+        'production_base_url' => env('SUMOPOD_PRODUCTION_BASE_URL', 'https://api-pay.sumopod.com'),
+        'sandbox_api_key' => env('SUMOPOD_SANDBOX_API_KEY'),
+        'production_api_key' => env('SUMOPOD_PRODUCTION_API_KEY'),
+        'base_url' => env('SUMOPOD_BASE_URL'),
+        'api_key' => env('SUMOPOD_API_KEY'),
+        'timeout' => (int) env('SUMOPOD_TIMEOUT', 15),
+    ],
+
     'firebase' => [
         'credentials' => env('FIREBASE_CREDENTIALS'),
         'web' => [

@@ -56,6 +56,62 @@ pakasirForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 pakasir.form = pakasirForm
 
 /**
+* @see \App\Http\Controllers\Api\SumopodWebhookController::__invoke
+* @see app/Http/Controllers/Api/SumopodWebhookController.php:19
+* @route '/api/webhooks/sumopod'
+*/
+export const sumopod = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: sumopod.url(options),
+    method: 'post',
+})
+
+sumopod.definition = {
+    methods: ["post"],
+    url: '/api/webhooks/sumopod',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Api\SumopodWebhookController::__invoke
+* @see app/Http/Controllers/Api/SumopodWebhookController.php:19
+* @route '/api/webhooks/sumopod'
+*/
+sumopod.url = (options?: RouteQueryOptions) => {
+    return sumopod.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\SumopodWebhookController::__invoke
+* @see app/Http/Controllers/Api/SumopodWebhookController.php:19
+* @route '/api/webhooks/sumopod'
+*/
+sumopod.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: sumopod.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\SumopodWebhookController::__invoke
+* @see app/Http/Controllers/Api/SumopodWebhookController.php:19
+* @route '/api/webhooks/sumopod'
+*/
+const sumopodForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: sumopod.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\SumopodWebhookController::__invoke
+* @see app/Http/Controllers/Api/SumopodWebhookController.php:19
+* @route '/api/webhooks/sumopod'
+*/
+sumopodForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: sumopod.url(options),
+    method: 'post',
+})
+
+sumopod.form = sumopodForm
+
+/**
 * @see \App\Http\Controllers\Api\TelegramWebhookController::telegram
 * @see app/Http/Controllers/Api/TelegramWebhookController.php:33
 * @route '/api/webhooks/telegram'
@@ -113,6 +169,7 @@ telegram.form = telegramForm
 
 const webhooks = {
     pakasir: Object.assign(pakasir, pakasir),
+    sumopod: Object.assign(sumopod, sumopod),
     telegram: Object.assign(telegram, telegram),
 }
 

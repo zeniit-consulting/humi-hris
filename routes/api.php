@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\Mobile\V1\ProfileController;
 use App\Http\Controllers\Api\Mobile\V1\ShiftChangeRequestController;
 use App\Http\Controllers\Api\PakasirWebhookController;
 use App\Http\Controllers\Api\PublicCareerController;
+use App\Http\Controllers\Api\SumopodWebhookController;
 use App\Http\Controllers\Api\ThirdParty\V1\AttendanceController as ThirdPartyAttendanceController;
 use App\Http\Controllers\Api\ThirdParty\V1\AuthController as ThirdPartyAuthController;
 use App\Http\Controllers\Hris\ScheduleController;
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
 Route::post('webhooks/pakasir', PakasirWebhookController::class)->name('webhooks.pakasir');
+Route::post('webhooks/sumopod', SumopodWebhookController::class)->name('webhooks.sumopod');
 Route::post('webhooks/telegram', [\App\Http\Controllers\Api\TelegramWebhookController::class, 'handle'])->name('webhooks.telegram');
 
 // Public Career Recruitment API per Company Account
