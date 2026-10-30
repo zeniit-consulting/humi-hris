@@ -401,14 +401,23 @@ class BillingController extends Controller
 
         $status = Arr::get($data, 'status');
         if ($status !== 'completed') {
-            return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
-                ->with('error', 'Pembayaran belum terdeteksi selesai. Silakan tunggu beberapa saat lalu cek lagi.');
+            $redirect = redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]));
+
+            if (! $request->boolean('quiet') && ! $request->hasHeader('X-Auto-Poll')) {
+                $redirect->with('error', 'Pembayaran belum terdeteksi selesai. Silakan tunggu beberapa saat lalu cek lagi.');
+            }
+
+            return $redirect;
         }
 
         $orderId = Arr::get($data, 'order_id');
         $amount = (int) Arr::get($data, 'amount');
 
-        if ($amount !== $invoice->amount || ($orderId && (string) $orderId !== (string) $invoice->invoice_number)) {
+        $amountMatches = ($amount === (int) $invoice->amount)
+            || ($amount === (int) $invoice->total_payment)
+            || (isset($data['net_amount']) && (int) $data['net_amount'] === (int) $invoice->amount);
+
+        if (! $amountMatches || ($orderId && (string) $orderId !== (string) $invoice->invoice_number)) {
             return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
                 ->with('error', 'Data pembayaran dari Sumopod tidak sesuai dengan invoice.');
         }

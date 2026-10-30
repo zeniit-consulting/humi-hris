@@ -9,6 +9,7 @@ import {
     RefreshCw,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -117,6 +118,30 @@ export default function BillingPaymentPage() {
             preserveScroll: true,
         });
     };
+
+    const isCheckingRef = useRef(false);
+
+    useEffect(() => {
+        if (isPaid || !payment_check_url) return;
+
+        const interval = setInterval(() => {
+            if (isCheckingRef.current || document.hidden) return;
+            isCheckingRef.current = true;
+
+            const pollUrl = payment_check_url.includes('?')
+                ? `${payment_check_url}&quiet=1`
+                : `${payment_check_url}?quiet=1`;
+
+            post(pollUrl, {
+                preserveScroll: true,
+                onFinish: () => {
+                    isCheckingRef.current = false;
+                },
+            });
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [isPaid, payment_check_url]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

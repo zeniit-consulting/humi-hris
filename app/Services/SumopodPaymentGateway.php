@@ -202,6 +202,22 @@ class SumopodPaymentGateway
             ?? Arr::get($invoice->payment_payload, 'data.id')
             ?? Arr::get($invoice->payment_payload, 'id');
 
+        // 1. Try public checkout endpoint (returns realtime payment status: pending, completed, expired)
+        if ($paymentId) {
+            $checkoutUrl = "{$baseUrl}/api/v1/public/payments/{$paymentId}/checkout";
+            $checkoutResponse = Http::timeout((int) config('services.sumopod.timeout', 15))
+                ->acceptJson()
+                ->get($checkoutUrl);
+
+            if ($checkoutResponse->successful()) {
+                $payload = $checkoutResponse->json();
+                if (is_array($payload) && filled(Arr::get($payload, 'status'))) {
+                    return $payload;
+                }
+            }
+        }
+
+        // 2. Fallback to merchant endpoint
         $url = $paymentId
             ? "{$baseUrl}/api/v1/payments/{$paymentId}"
             : "{$baseUrl}/api/v1/payments?order_id={$invoice->invoice_number}";
@@ -211,11 +227,18 @@ class SumopodPaymentGateway
             ->withHeaders(['X-Api-Key' => $apiKey])
             ->get($url);
 
+        if ($response->successful()) {
+            $payload = $response->json();
+            if (is_array($payload)) {
+                return $payload;
+            }
+        }
+
         if ($response->status() === 404) {
             return [
                 'status' => 'pending',
                 'order_id' => $invoice->invoice_number,
-                'amount' => $invoice->amount,
+                'amount' => $invoice->total_payment ?? $invoice->amount,
                 'message' => 'Status pembayaran akan diperbarui secara otomatis via webhook saat pembayaran selesai.',
             ];
         }

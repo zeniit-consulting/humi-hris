@@ -18,6 +18,11 @@ class SumopodWebhookController extends Controller
 
     public function __invoke(Request $request): JsonResponse
     {
+        \Illuminate\Support\Facades\Log::info('sumopod.webhook.received', [
+            'payload' => $request->all(),
+            'headers' => $request->headers->all(),
+        ]);
+
         $validated = $request->validate([
             'event_type' => ['required', 'string'],
             'data' => ['required', 'array'],
@@ -47,7 +52,11 @@ class SumopodWebhookController extends Controller
             return response()->json(['message' => 'Invoice tidak ditemukan.'], 404);
         }
 
-        if ($invoice->amount !== $amount) {
+        $amountMatches = ($invoice->amount === $amount)
+            || ($invoice->total_payment === $amount)
+            || (isset($data['net_amount']) && $invoice->amount === (int) $data['net_amount']);
+
+        if (! $amountMatches) {
             return response()->json(['message' => 'Nominal invoice tidak sesuai.'], 422);
         }
 
