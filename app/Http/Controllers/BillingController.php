@@ -373,15 +373,15 @@ class BillingController extends Controller
         }
 
         if ($invoice->payment_gateway === 'sumopod') {
-            return $this->checkSumopodPayment($invoice);
+            return $this->checkSumopodPayment($request, $invoice);
         }
 
         abort_if($invoice->payment_gateway !== 'pakasir', 422, 'Invoice ini bukan transaksi Pakasir.');
 
-        return $this->checkPakasirPayment($invoice);
+        return $this->checkPakasirPayment($request, $invoice);
     }
 
-    private function checkSumopodPayment(SubscriptionInvoice $invoice): RedirectResponse
+    private function checkSumopodPayment(Request $request, SubscriptionInvoice $invoice): RedirectResponse
     {
         try {
             $payload = $this->sumopod->checkPaymentStatus($invoice);
@@ -443,7 +443,7 @@ class BillingController extends Controller
             ->with('success', 'Pembayaran berhasil diverifikasi. Akses sistem sudah aktif.');
     }
 
-    private function checkPakasirPayment(SubscriptionInvoice $invoice): RedirectResponse
+    private function checkPakasirPayment(Request $request, SubscriptionInvoice $invoice): RedirectResponse
     {
         try {
             $payload = $this->pakasir->transactionDetail($invoice);
@@ -462,8 +462,13 @@ class BillingController extends Controller
         ]);
 
         if (Arr::get($transaction, 'status') !== 'completed') {
-            return redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]))
-                ->with('error', 'Pembayaran belum terdeteksi selesai. Silakan tunggu beberapa saat lalu cek lagi.');
+            $redirect = redirect()->away($this->routePath('billing.invoices.payment', ['invoice' => $invoice->id]));
+
+            if (! $request->boolean('quiet') && ! $request->hasHeader('X-Auto-Poll')) {
+                $redirect->with('error', 'Pembayaran belum terdeteksi selesai. Silakan tunggu beberapa saat lalu cek lagi.');
+            }
+
+            return $redirect;
         }
 
         if ((int) Arr::get($transaction, 'amount') !== $invoice->amount

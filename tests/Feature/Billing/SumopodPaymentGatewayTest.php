@@ -508,6 +508,58 @@ class SumopodPaymentGatewayTest extends TestCase
         ]);
     }
 
+    public function test_payment_check_with_quiet_query_does_not_flash_error_when_pending(): void
+    {
+        config()->set('services.sumopod.api_key', 'test_sumopod_key_123');
+
+        Http::fake([
+            '*/api/v1/public/payments/sp-uuid-pending/checkout' => Http::response([
+                'status' => 'pending',
+                'order_id' => 'INV-SUMOPOD-PENDING',
+                'amount' => 50000,
+            ]),
+        ]);
+
+        $subscriber = User::factory()->create([
+            'role' => 'admin',
+            'phone_verified_at' => now(),
+        ]);
+
+        $invoice = SubscriptionInvoice::query()->create([
+            'user_id' => $subscriber->id,
+            'subscription_id' => null,
+            'invoice_number' => 'INV-SUMOPOD-PENDING',
+            'amount' => 50000,
+            'employee_count' => 5,
+            'plan_slug' => 'core',
+            'status' => 'pending',
+            'payment_gateway' => 'sumopod',
+            'payment_method' => 'qris',
+            'payment_number' => '00020101021226670016COM.SUMOPOD.QRIS',
+            'payment_payload' => [
+                'data' => [
+                    'payment_id' => 'sp-uuid-pending',
+                ],
+            ],
+            'due_date' => now()->addDays(3)->toDateString(),
+            'paid_at' => null,
+            'payment_proof' => null,
+            'notes' => null,
+        ]);
+
+        $this
+            ->actingAs($subscriber)
+            ->post(route('billing.invoices.payment.check', ['invoice' => $invoice, 'quiet' => 1]))
+            ->assertRedirect(route('billing.invoices.payment', $invoice, false))
+            ->assertSessionMissing('error');
+
+        $this
+            ->actingAs($subscriber)
+            ->post(route('billing.invoices.payment.check', $invoice))
+            ->assertRedirect(route('billing.invoices.payment', $invoice, false))
+            ->assertSessionHas('error');
+    }
+
     public function test_existing_pending_sumopod_invoice_is_reused(): void
     {
         config()->set('services.sumopod.api_key', 'test_sumopod_key_123');
