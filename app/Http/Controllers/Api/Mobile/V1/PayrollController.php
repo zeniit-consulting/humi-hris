@@ -111,7 +111,7 @@ class PayrollController extends Controller
                 'code' => $payroll->code,
                 'batch_purpose' => $payroll->batch_purpose,
                 'period' => $payroll->period,
-                'period_label' => Carbon::createFromFormat('Y-m', $payroll->period)->locale('id')->translatedFormat('F Y'),
+                'period_label' => Carbon::createFromFormat('Y-m-d', $payroll->period.'-01')->locale('id')->translatedFormat('F Y'),
                 'period_start' => $payroll->period_start?->toDateString(),
                 'period_end' => $payroll->period_end?->toDateString(),
                 'base_salary' => (float) ($item?->base_salary ?? 0),

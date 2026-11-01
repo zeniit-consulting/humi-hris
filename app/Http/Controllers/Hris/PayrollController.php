@@ -1335,7 +1335,7 @@ class PayrollController extends Controller
             ))
             ->values();
 
-        $period = Carbon::createFromFormat('Y-m', $payrollRun->period)->locale('id')->translatedFormat('F Y');
+        $period = Carbon::createFromFormat('Y-m-d', $payrollRun->period.'-01')->locale('id')->translatedFormat('F Y');
         $filename = 'transfer_mandiri_'.$payrollRun->period.'_'.$payrollRun->code.'.csv';
 
         return response()->streamDownload(function () use ($items, $period): void {
@@ -1476,7 +1476,7 @@ class PayrollController extends Controller
             ))
             ->values();
 
-        $period = Carbon::createFromFormat('Y-m', $payrollRun->period)->locale('id')->translatedFormat('F Y');
+        $period = Carbon::createFromFormat('Y-m-d', $payrollRun->period.'-01')->locale('id')->translatedFormat('F Y');
         $filename = 'transfer_bca_'.$payrollRun->period.'_'.$payrollRun->code.'.csv';
 
         return response()->streamDownload(function () use ($items, $period): void {

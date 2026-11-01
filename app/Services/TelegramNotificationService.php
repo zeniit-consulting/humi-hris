@@ -110,7 +110,7 @@ class TelegramNotificationService
         }
 
         $run = $item->payrollRun;
-        $period = $run ? Carbon::createFromFormat('Y-m', $run->period)->translatedFormat('F Y') : now()->translatedFormat('F Y');
+        $period = $run ? Carbon::createFromFormat('Y-m-d', $run->period.'-01')->translatedFormat('F Y') : now()->translatedFormat('F Y');
 
         try {
             $pdf = Pdf::loadView('pdf.payslip', [

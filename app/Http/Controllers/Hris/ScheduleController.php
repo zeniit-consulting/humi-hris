@@ -741,8 +741,11 @@ class ScheduleController extends Controller
     public function importTemplate(Request $request): StreamedResponse
     {
         $ownerId = $request->user()->accountOwnerId();
-        $month = $request->query('month', now()->format('Y-m'));
-        $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $month = (string) $request->query('month', now()->format('Y-m'));
+        if (! preg_match('/^\d{4}-\d{2}$/', $month)) {
+            $month = now()->format('Y-m');
+        }
+        $start = Carbon::createFromFormat('Y-m-d', $month.'-01')->startOfMonth();
         $end = $start->copy()->endOfMonth();
         $daysInMonth = $end->day;
 
@@ -973,7 +976,7 @@ class ScheduleController extends Controller
             return back()->withErrors(['file' => 'Format bulan tidak valid. Pastikan kolom bulan terisi format YYYY-MM (misal: 2026-09).']);
         }
 
-        $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $start = Carbon::createFromFormat('Y-m-d', $month.'-01')->startOfMonth();
         $daysInMonth = $start->copy()->endOfMonth()->day;
 
         $highestRow = $sheet->getHighestDataRow();
@@ -1169,8 +1172,16 @@ class ScheduleController extends Controller
                     return sprintf('%04d-%02d', (int) $matches[2], (int) $matches[1]);
                 }
 
+                if (preg_match('/^(\d{4})[-_\/.](\d{1,2})[-_\/.]\d{1,2}$/', $valStr, $matches)) {
+                    return sprintf('%04d-%02d', (int) $matches[1], (int) $matches[2]);
+                }
+
+                if (preg_match('/^\d{1,2}[-_\/.](\d{1,2})[-_\/.](\d{4})$/', $valStr, $matches)) {
+                    return sprintf('%04d-%02d', (int) $matches[2], (int) $matches[1]);
+                }
+
                 try {
-                    $parsed = Carbon::parse($valStr);
+                    $parsed = Carbon::parse($valStr)->startOfMonth();
                     if ($parsed->year >= 2000 && $parsed->year <= 2100) {
                         return $parsed->format('Y-m');
                     }
@@ -1184,7 +1195,16 @@ class ScheduleController extends Controller
                 if (preg_match('/^(\d{4})[-_\/.](\d{1,2})$/', $formatted, $matches)) {
                     return sprintf('%04d-%02d', (int) $matches[1], (int) $matches[2]);
                 }
-                $parsed = Carbon::parse($formatted);
+                if (preg_match('/^(\d{1,2})[-_\/.](\d{4})$/', $formatted, $matches)) {
+                    return sprintf('%04d-%02d', (int) $matches[2], (int) $matches[1]);
+                }
+                if (preg_match('/^(\d{4})[-_\/.](\d{1,2})[-_\/.]\d{1,2}$/', $formatted, $matches)) {
+                    return sprintf('%04d-%02d', (int) $matches[1], (int) $matches[2]);
+                }
+                if (preg_match('/^\d{1,2}[-_\/.](\d{1,2})[-_\/.](\d{4})$/', $formatted, $matches)) {
+                    return sprintf('%04d-%02d', (int) $matches[2], (int) $matches[1]);
+                }
+                $parsed = Carbon::parse($formatted)->startOfMonth();
                 if ($parsed->year >= 2000 && $parsed->year <= 2100) {
                     return $parsed->format('Y-m');
                 }

@@ -412,10 +412,10 @@ class DashboardController extends Controller
         } else {
             $startDateStr = is_array($period)
                 ? $period['start_date']->toDateString()
-                : Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
+                : Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth()->toDateString();
             $endDateStr = is_array($period)
                 ? $period['end_date']->toDateString()
-                : Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+                : Carbon::createFromFormat('Y-m-d', $period.'-01')->endOfMonth()->toDateString();
 
             $lateAttendanceQuery->whereBetween('attendance_date', [$startDateStr, $endDateStr]);
         }
@@ -577,8 +577,8 @@ class DashboardController extends Controller
             $start = $period['start_date']->toDateString();
             $end = $period['end_date']->toDateString();
         } else {
-            $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
-            $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+            $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth()->toDateString();
+            $end = Carbon::createFromFormat('Y-m-d', $period.'-01')->endOfMonth()->toDateString();
         }
 
         return AttendanceCorrectionRequest::query()
@@ -609,8 +609,8 @@ class DashboardController extends Controller
             $start = $period['start_date']->toDateString();
             $end = $period['end_date']->toDateString();
         } else {
-            $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
-            $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+            $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth()->toDateString();
+            $end = Carbon::createFromFormat('Y-m-d', $period.'-01')->endOfMonth()->toDateString();
         }
 
         return LeaveRequest::query()
@@ -642,8 +642,8 @@ class DashboardController extends Controller
             $start = $period['start_date']->toDateString();
             $end = $period['end_date']->toDateString();
         } else {
-            $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
-            $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+            $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth()->toDateString();
+            $end = Carbon::createFromFormat('Y-m-d', $period.'-01')->endOfMonth()->toDateString();
         }
 
         return OvertimeRequest::query()
@@ -674,8 +674,8 @@ class DashboardController extends Controller
             $start = $period['start_date']->toDateString();
             $end = $period['end_date']->toDateString();
         } else {
-            $start = Carbon::createFromFormat('Y-m', $period)->startOfMonth()->toDateString();
-            $end = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
+            $start = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth()->toDateString();
+            $end = Carbon::createFromFormat('Y-m-d', $period.'-01')->endOfMonth()->toDateString();
         }
 
         return ShiftChangeRequest::query()
@@ -856,7 +856,7 @@ class DashboardController extends Controller
 
         return $allPeriods->map(fn (string $periodVal): array => [
             'value' => $periodVal,
-            'label' => Carbon::createFromFormat('Y-m', $periodVal)->translatedFormat('F Y'),
+            'label' => Carbon::createFromFormat('Y-m-d', $periodVal.'-01')->translatedFormat('F Y'),
         ])->all();
     }
 
@@ -1034,7 +1034,7 @@ class DashboardController extends Controller
             $period = $now->format('Y-m');
         }
 
-        $periodDate = Carbon::createFromFormat('Y-m', $period)->startOfMonth();
+        $periodDate = Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth();
         [$startDate, $endDate] = $this->resolvePeriodDates($ownerId, $period);
         $periodLabel = $startDate->translatedFormat('d M').' - '.$endDate->translatedFormat('d M Y');
         $label = $periodDate->translatedFormat('F Y');
@@ -1064,7 +1064,7 @@ class DashboardController extends Controller
             $type = $periodInfoOrDate['type'] ?? 'month';
             if (in_array($type, ['semester', 'quarter'], true) && ! empty($periodInfoOrDate['months'])) {
                 return collect($periodInfoOrDate['months'])->map(
-                    fn (string $m) => Carbon::createFromFormat('Y-m', $m)->startOfMonth()
+                    fn (string $m) => Carbon::createFromFormat('Y-m-d', $m.'-01')->startOfMonth()
                 );
             }
             $date = $periodInfoOrDate['period_date'] ?? Carbon::now()->startOfMonth();

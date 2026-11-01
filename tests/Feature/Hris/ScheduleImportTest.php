@@ -406,5 +406,235 @@ class ScheduleImportTest extends TestCase
             ->where('monthlyMatrix.rows.0.total_off_days', 30)
         );
     }
+
+    public function test_schedule_import_for_november_does_not_overflow_to_december_when_executed_on_day_31(): void
+    {
+        \Illuminate\Support\Carbon::setTestNow('2026-10-31 15:30:00');
+
+        $user = User::factory()->create();
+
+        WorkShift::query()->firstOrCreate(
+            ['user_id' => $user->id, 'code' => '0817'],
+            [
+                'name' => 'Shift Pagi',
+                'start_time' => '08:00:00',
+                'end_time' => '17:00:00',
+                'is_day_off' => false,
+            ]
+        );
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-NOV',
+            'first_name' => 'Budi',
+            'last_name' => 'Santoso',
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Row 1: Explicitly set month to 2026-11
+        $sheet->setCellValue('A1', 'Employee ID');
+        $sheet->setCellValue('B1', 'Employee Name');
+        $sheet->setCellValue('C1', 'Bulan');
+        $sheet->setCellValue('D1', '2026-11');
+
+        // Row 2: Table header
+        $sheet->setCellValue('A2', 'ID');
+        $sheet->setCellValue('B2', 'Nama');
+        $sheet->setCellValue('C2', 'Perusahaan');
+        $sheet->setCellValue('D2', 1);
+        $sheet->setCellValue('E2', 2);
+
+        // Row 3: Example row
+        $sheet->setCellValue('A3', 'CONTOH');
+        $sheet->setCellValue('B3', 'Sample');
+        $sheet->setCellValue('C3', 'Internal');
+        $sheet->setCellValue('D3', '0817');
+
+        // Row 4: Employee
+        $sheet->setCellValue('A4', $employee->id);
+        $sheet->setCellValue('B4', $employee->full_name);
+        $sheet->setCellValue('C4', 'PT Induk');
+        $sheet->setCellValue('D4', '0817');
+        $sheet->setCellValue('E4', '0817');
+
+        $writer = new Xlsx($spreadsheet);
+        $tempPath = tempnam(sys_get_temp_dir(), 'sched_nov_');
+        $writer->save($tempPath);
+
+        $uploadedFile = new UploadedFile(
+            $tempPath,
+            'jadwal_november.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true
+        );
+
+        $response = $this->actingAs($user)->post('/hris/schedules/import', [
+            'file' => $uploadedFile,
+            'month' => '2026-11',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $response->assertSessionHasNoErrors();
+
+        // Must be in November, NOT December
+        $this->assertDatabaseHas('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-11-01',
+            'shift_code' => '0817',
+        ]);
+
+        $this->assertDatabaseHas('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-11-02',
+            'shift_code' => '0817',
+        ]);
+
+        $this->assertDatabaseMissing('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-12-01',
+        ]);
+
+        @unlink($tempPath);
+        \Illuminate\Support\Carbon::setTestNow();
+    }
+
+    public function test_schedule_template_for_november_does_not_overflow_to_december_when_downloaded_on_day_31(): void
+    {
+        \Illuminate\Support\Carbon::setTestNow('2026-10-31 15:30:00');
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/hris/schedules/import/template?month=2026-11');
+        $response->assertOk();
+
+        ob_start();
+        $response->sendContent();
+        $content = ob_get_clean();
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'sched_tpl_nov_');
+        file_put_contents($tempFile, $content);
+
+        $spreadsheet = IOFactory::load($tempFile);
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Cell D1 must be 2026-11
+        $this->assertEquals('2026-11', $sheet->getCell('D1')->getValue());
+
+        // November has 30 days: column D (day 1) to column AG (day 30, index 33)
+        $this->assertEquals(30, $sheet->getCell('AG2')->getValue());
+        $this->assertNull($sheet->getCell('AH2')->getValue()); // Day 31 must NOT exist for November
+
+        @unlink($tempFile);
+        \Illuminate\Support\Carbon::setTestNow();
+    }
+
+    public function test_schedule_import_succeeds_when_only_first_7_days_are_filled(): void
+    {
+        $user = User::factory()->create();
+
+        WorkShift::query()->firstOrCreate(
+            ['user_id' => $user->id, 'code' => '0817'],
+            [
+                'name' => 'Shift Pagi',
+                'start_time' => '08:00:00',
+                'end_time' => '17:00:00',
+                'is_day_off' => false,
+            ]
+        );
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Partial',
+            'last_name' => 'Worker',
+            'is_active' => true,
+            'employment_status' => 'active',
+        ]);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Row 1: Month
+        $sheet->setCellValue('A1', 'Employee ID');
+        $sheet->setCellValue('B1', 'Employee Name');
+        $sheet->setCellValue('C1', 'Bulan');
+        $sheet->setCellValue('D1', '2026-11');
+
+        // Row 2: Days 1 to 30
+        $sheet->setCellValue('A2', 'ID');
+        $sheet->setCellValue('B2', 'Nama');
+        $sheet->setCellValue('C2', 'Perusahaan');
+        for ($d = 1; $d <= 30; $d++) {
+            $sheet->setCellValue([3 + $d, 2], $d);
+        }
+
+        // Row 4: Fill only day 1 through 7, leave 8 to 30 blank
+        $sheet->setCellValue('A4', $employee->id);
+        $sheet->setCellValue('B4', $employee->full_name);
+        $sheet->setCellValue('C4', 'PT Induk');
+        for ($d = 1; $d <= 7; $d++) {
+            $sheet->setCellValue([3 + $d, 4], '0817');
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $tempPath = tempnam(sys_get_temp_dir(), 'sched_partial_');
+        $writer->save($tempPath);
+
+        $uploadedFile = new UploadedFile(
+            $tempPath,
+            'jadwal_7_hari.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true
+        );
+
+        $response = $this->actingAs($user)->post('/hris/schedules/import', [
+            'file' => $uploadedFile,
+            'month' => '2026-11',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $response->assertSessionHasNoErrors();
+
+        // Day 1 to 7 should exist
+        for ($d = 1; $d <= 7; $d++) {
+            $this->assertDatabaseHas('employee_schedules', [
+                'user_id' => $user->id,
+                'employee_id' => $employee->id,
+                'work_date' => sprintf('2026-11-%02d', $d),
+                'shift_code' => '0817',
+            ]);
+        }
+
+        // Day 8 to 30 should NOT exist in database
+        $this->assertDatabaseMissing('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-11-08',
+        ]);
+        $this->assertDatabaseMissing('employee_schedules', [
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'work_date' => '2026-11-30',
+        ]);
+
+        $totalSchedules = EmployeeSchedule::query()
+            ->where('employee_id', $employee->id)
+            ->whereBetween('work_date', ['2026-11-01', '2026-11-30'])
+            ->count();
+
+        $this->assertSame(7, $totalSchedules);
+
+        @unlink($tempPath);
+    }
 }
 
