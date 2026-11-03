@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Careers\StoreCareerApplicationRequest;
 use App\Models\JobApplication;
 use App\Models\JobVacancy;
+use App\Support\SeoMetadata;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -82,6 +83,7 @@ class CareerController extends Controller
             ->firstOrFail();
 
         return Inertia::render('careers/show', [
+            'seo' => SeoMetadata::vacancy($vacancy),
             'vacancy' => [
                 'id' => $vacancy->id,
                 'title' => $vacancy->title,

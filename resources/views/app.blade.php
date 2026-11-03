@@ -50,7 +50,12 @@
             }
         </style>
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        @if (config('seo.google_site_verification'))
+            <meta name="google-site-verification" content="{{ config('seo.google_site_verification') }}">
+        @endif
+        @if (config('seo.bing_site_verification'))
+            <meta name="msvalidate.01" content="{{ config('seo.bing_site_verification') }}">
+        @endif
 
         <link rel="icon" href="/icons/favicon-32x32.png" sizes="32x32" type="image/png">
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -103,6 +108,9 @@
         @viteReactRefresh
         @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         @inertiaHead
+        @if (empty($__inertiaSsrResponse))
+            @include('seo-head')
+        @endif
     </head>
     <body class="font-sans antialiased">
         @inertia

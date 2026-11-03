@@ -5,9 +5,12 @@ namespace App\Http\Middleware;
 use App\Models\CompanySetting;
 use App\Services\SubscriptionService;
 use App\Support\R2Storage;
+use App\Support\SeoMetadata;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
+use Symfony\Component\HttpFoundation\Response;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -19,6 +22,23 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    public function handle(Request $request, Closure $next): Response
+    {
+        $response = parent::handle($request, $next);
+        $robots = SeoMetadata::forRequest($request)['robots'];
+        if ($request->routeIs('news.show', 'careers.show') && $response->isSuccessful()) {
+            $robots = SeoMetadata::INDEX;
+        }
+        if ($response->getStatusCode() >= 400) {
+            $robots = 'noindex, nofollow';
+        }
+        if (str_starts_with($robots, 'noindex')) {
+            $response->headers->set('X-Robots-Tag', $robots);
+        }
+
+        return $response;
+    }
 
     /**
      * Determines the current asset version.
@@ -42,6 +62,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'seo' => fn () => SeoMetadata::forRequest($request),
             'appUrl' => rtrim((string) config('app.url'), '/'),
             'companyLogoUrl' => function () use ($request) {
                 if (! $request->user()) {

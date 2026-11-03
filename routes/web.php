@@ -85,6 +85,10 @@ Route::get('robots.txt', function () {
         '/hris',
         '/portal',
         '/settings',
+        '/api/',
+        '/activate-account',
+        '/email/verify',
+        '/storage/recruitment/',
         '/login',
         '/register',
         '/forgot-password',
@@ -191,55 +195,46 @@ Route::get('sitemap.xml', function () {
             'loc' => $baseUrl,
             'priority' => '1.0',
             'changefreq' => 'weekly',
-            'lastmod' => now()->toAtomString(),
         ],
         [
             'loc' => $baseUrl.'/careers',
             'priority' => '0.6',
             'changefreq' => 'daily',
-            'lastmod' => now()->toAtomString(),
         ],
         [
             'loc' => $baseUrl.'/features',
             'priority' => '0.8',
             'changefreq' => 'weekly',
-            'lastmod' => now()->toAtomString(),
         ],
         [
             'loc' => $baseUrl.'/contact',
             'priority' => '0.7',
             'changefreq' => 'monthly',
-            'lastmod' => now()->toAtomString(),
         ],
         [
             'loc' => $baseUrl.'/berita',
             'priority' => '0.8',
             'changefreq' => 'weekly',
-            'lastmod' => now()->toAtomString(),
         ],
         [
             'loc' => $baseUrl.'/hris-outsourcing',
             'priority' => '0.9',
             'changefreq' => 'weekly',
-            'lastmod' => now()->toAtomString(),
         ],
         [
             'loc' => $baseUrl.'/hris-retail-fnb',
             'priority' => '0.9',
             'changefreq' => 'weekly',
-            'lastmod' => now()->toAtomString(),
         ],
         [
             'loc' => $baseUrl.'/hris-manufaktur-shift',
             'priority' => '0.9',
             'changefreq' => 'weekly',
-            'lastmod' => now()->toAtomString(),
         ],
         [
             'loc' => $baseUrl.'/software-hris',
             'priority' => '1.0',
             'changefreq' => 'weekly',
-            'lastmod' => now()->toAtomString(),
         ],
     ];
 
@@ -259,7 +254,7 @@ Route::get('sitemap.xml', function () {
                 'loc' => $baseUrl.'/careers/'.$vacancy->slug,
                 'priority' => '0.5',
                 'changefreq' => 'weekly',
-                'lastmod' => $vacancy->updated_at?->toAtomString() ?? now()->toAtomString(),
+                'lastmod' => $vacancy->updated_at?->toAtomString(),
             ];
         });
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\HumiNews;
+use App\Support\SeoMetadata;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -29,6 +30,7 @@ class NewsController extends Controller
 
         return Inertia::render('news/show', [
             'article' => $article,
+            'seo' => SeoMetadata::article($article),
             'relatedArticles' => $related,
         ]);
     }

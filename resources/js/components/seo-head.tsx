@@ -3,6 +3,19 @@ import type { ReactNode } from 'react';
 
 const DEFAULT_IMAGE = '/og-image.png';
 
+type ServerSeo = {
+    title?: string;
+    description?: string;
+    keywords?: string;
+    canonicalUrl?: string;
+    imageUrl?: string;
+    type?: 'website' | 'article';
+    robots: string;
+    publishedTime?: string;
+    modifiedTime?: string;
+    structuredData?: StructuredData;
+};
+
 type StructuredData = Record<string, unknown> | Record<string, unknown>[];
 
 type SeoHeadProps = {
@@ -40,16 +53,26 @@ export default function SeoHead({
     children,
 }: SeoHeadProps) {
     const page = usePage();
-    const props = page.props as { appUrl?: string };
+    const props = page.props as { appUrl?: string; seo?: ServerSeo };
+    const seo = props.seo;
+    title = seo?.title ?? title;
+    description = seo?.description ?? description;
+    keywords = seo?.keywords ?? keywords;
+    type = seo?.type ?? type;
+    structuredData =
+        type === 'article'
+            ? (seo?.structuredData ?? structuredData)
+            : (structuredData ?? seo?.structuredData);
     const appUrl =
         props.appUrl ??
         (typeof window !== 'undefined' ? window.location.origin : '');
     const path = canonicalPath ?? page.url.split('?')[0] ?? '/';
-    const canonicalUrl = toAbsoluteUrl(appUrl, path);
-    const imageUrl = toAbsoluteUrl(appUrl, image);
+    const canonicalUrl = seo?.canonicalUrl ?? toAbsoluteUrl(appUrl, path);
+    const imageUrl = seo?.imageUrl ?? toAbsoluteUrl(appUrl, image);
     const robots = noIndex
-        ? 'noindex, nofollow, noarchive'
-        : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+        ? 'noindex, follow'
+        : (seo?.robots ??
+          'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
 
     return (
         <Head title={title}>
@@ -64,6 +87,11 @@ export default function SeoHead({
             <meta head-key="robots" name="robots" content={robots} />
             <link head-key="canonical" rel="canonical" href={canonicalUrl} />
 
+            <meta
+                head-key="og:site_name"
+                property="og:site_name"
+                content="Humi HRIS"
+            />
             <meta head-key="og:type" property="og:type" content={type} />
             <meta head-key="og:title" property="og:title" content={title} />
             <meta
@@ -83,7 +111,7 @@ export default function SeoHead({
             <meta
                 head-key="twitter:card"
                 name="twitter:card"
-                content="summary"
+                content="summary_large_image"
             />
             <meta
                 head-key="twitter:title"
@@ -101,12 +129,34 @@ export default function SeoHead({
                 content={imageUrl}
             />
 
+            <meta
+                head-key="twitter:image:alt"
+                name="twitter:image:alt"
+                content="Humi HRIS"
+            />
+            {seo?.publishedTime ? (
+                <meta
+                    head-key="article:published_time"
+                    property="article:published_time"
+                    content={seo.publishedTime}
+                />
+            ) : null}
+            {seo?.modifiedTime ? (
+                <meta
+                    head-key="article:modified_time"
+                    property="article:modified_time"
+                    content={seo.modifiedTime}
+                />
+            ) : null}
             {structuredData ? (
                 <script
                     head-key="structured-data"
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{
-                        __html: JSON.stringify(structuredData),
+                        __html: JSON.stringify(structuredData).replace(
+                            /</g,
+                            '\\u003c',
+                        ),
                     }}
                 />
             ) : null}
