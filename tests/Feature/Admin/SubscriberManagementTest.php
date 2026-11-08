@@ -260,4 +260,31 @@ class SubscriberManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('subscriber.suspended');
     }
+
+    public function test_superadmin_seeder_creates_and_updates_superadmin_user(): void
+    {
+        config()->set('auth.superadmin.email', 'custom-superadmin@humi.local');
+        config()->set('auth.superadmin.name', 'Custom Super Admin');
+        config()->set('auth.superadmin.password', 'SecretPassword123!');
+        config()->set('auth.superadmin.phone', '628999999999');
+
+        $this->seed(\Database\Seeders\SuperAdminSeeder::class);
+
+        $superAdmin = User::query()->where('email', 'custom-superadmin@humi.local')->first();
+        $this->assertNotNull($superAdmin);
+        $this->assertSame('Custom Super Admin', $superAdmin->name);
+        $this->assertSame('superadmin', $superAdmin->role);
+        $this->assertSame('628999999999', $superAdmin->phone);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('SecretPassword123!', $superAdmin->password));
+
+        // Test updating existing superadmin
+        config()->set('auth.superadmin.name', 'Updated Super Admin');
+        config()->set('auth.superadmin.password', 'NewSecretPassword456!');
+
+        $this->seed(\Database\Seeders\SuperAdminSeeder::class);
+
+        $superAdmin->refresh();
+        $this->assertSame('Updated Super Admin', $superAdmin->name);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('NewSecretPassword456!', $superAdmin->password));
+    }
 }

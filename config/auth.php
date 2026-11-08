@@ -103,6 +103,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Superadmin Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Credentials used to seed or synchronize the platform superadmin account.
+    |
+    */
+
+    'superadmin' => [
+        'name' => env('SUPERADMIN_NAME', 'Humi Super Admin'),
+        'email' => env('SUPERADMIN_EMAIL', 'superadmin@humi.local'),
+        'password' => env('SUPERADMIN_PASSWORD', 'ChangeMe123!'),
+        'phone' => env('SUPERADMIN_PHONE', '628111111111'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Password Confirmation Timeout
     |--------------------------------------------------------------------------
     |

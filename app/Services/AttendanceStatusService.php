@@ -47,7 +47,7 @@ class AttendanceStatusService
 
         $attendanceDate = Carbon::parse($data['attendance_date'])->toDateString();
         $shiftStart = Carbon::parse($attendanceDate.' '.$shift->start_time, $timezone);
-        $latestAllowed = $shiftStart->copy()->addMinutes($tolerance);
+        $latestAllowed = $shiftStart->copy()->addMinutes($tolerance)->endOfMinute();
         $checkIn = Carbon::parse($data['check_in_at'], config('app.timezone'))->setTimezone($timezone);
 
         if (! $checkIn->gt($latestAllowed)) {
@@ -234,8 +234,7 @@ class AttendanceStatusService
             return 0.0;
         }
 
-        // If late_minutes is not set, but attendance has check_in_at and a valid shift with start_time
-        if ($lateMinutes <= 0 && ! empty($attendance->check_in_at) && $shift && ! $shift->is_day_off && ! empty($shift->start_time)) {
+        if (! empty($attendance->check_in_at) && $shift && ! $shift->is_day_off && ! empty($shift->start_time)) {
             $tolerance = (int) ($setting->late_tolerance_minutes ?? $shift->late_tolerance_minutes ?? 15);
 
             $timezone = $attendance->timezone ?: config('app.timezone');
@@ -243,7 +242,25 @@ class AttendanceStatusService
             $shiftStart = Carbon::parse($attendanceDate.' '.$shift->start_time, $timezone);
             $checkIn = Carbon::parse($attendance->check_in_at, config('app.timezone'))->setTimezone($timezone);
 
-            if ($checkIn->gt($shiftStart->copy()->addMinutes($tolerance))) {
+            $latestAllowed = $shiftStart->copy()->addMinutes($tolerance)->endOfMinute();
+            if (! $checkIn->gt($latestAllowed)) {
+                if ($syncAttendanceRecord && $attendance->exists) {
+                    $attendance->fill([
+                        'status' => $attendance->status === 'late' ? 'present' : $attendance->status,
+                        'late_minutes' => null,
+                        'late_level' => null,
+                        'late_penalty' => 0.0,
+                        'is_half_day' => false,
+                    ]);
+                    if ($attendance->isDirty()) {
+                        $attendance->saveQuietly();
+                    }
+                }
+
+                return 0.0;
+            }
+
+            if ($lateMinutes <= 0) {
                 $lateMinutes = (int) $shiftStart->diffInMinutes($checkIn);
             }
         }
@@ -371,6 +388,7 @@ class AttendanceStatusService
                 } elseif ($attendance->status === 'present') {
                     $result['on_time']++;
                 }
+
                 continue;
             }
 
@@ -391,6 +409,7 @@ class AttendanceStatusService
                 } elseif ($attendance->status === 'present') {
                     $result['on_time']++;
                 }
+
                 continue;
             }
 
@@ -398,7 +417,7 @@ class AttendanceStatusService
             $shiftStart = Carbon::parse($attendanceDate.' '.$shift->start_time, $timezone);
             $tolerance = (int) ($setting?->late_tolerance_minutes ?? $shift->late_tolerance_minutes ?? 15);
 
-            $latestAllowed = $shiftStart->copy()->addMinutes($tolerance);
+            $latestAllowed = $shiftStart->copy()->addMinutes($tolerance)->endOfMinute();
             $checkIn = $attendance->check_in_at instanceof \DateTimeInterface
                 ? Carbon::instance($attendance->check_in_at)->setTimezone($timezone)
                 : Carbon::parse($attendance->check_in_at, config('app.timezone'))->setTimezone($timezone);
@@ -646,4 +665,3 @@ class AttendanceStatusService
         return 'level_3';
     }
 }
-

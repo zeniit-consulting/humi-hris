@@ -2,17 +2,112 @@
 
 namespace Tests\Feature\Hris;
 
+use App\Models\CompanySetting;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeSchedule;
 use App\Models\User;
 use App\Models\WorkShift;
+use App\Services\AttendanceStatusService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AttendanceToleranceTest extends TestCase
 {
     use RefreshDatabase;
+
+    public static function minuteBoundaries(): array
+    {
+        return [
+            'exact tolerance' => [15, '09:15:00', 'present', null, 0.0],
+            'first second of tolerance minute' => [15, '09:15:01', 'present', null, 0.0],
+            'last second of tolerance minute' => [15, '09:15:59', 'present', null, 0.0],
+            'next minute' => [15, '09:16:00', 'late', 16, 20000.0],
+            'last second of first paid tier' => [15, '09:30:59', 'late', 30, 20000.0],
+            'next paid tier' => [15, '09:31:00', 'late', 31, 50000.0],
+            'zero tolerance still includes starting minute' => [0, '09:00:59', 'present', null, 0.0],
+            'zero tolerance next minute' => [0, '09:01:00', 'late', 1, 20000.0],
+        ];
+    }
+
+    #[DataProvider('minuteBoundaries')]
+    public function test_minute_boundaries_match_for_new_attendance_sync_and_payroll(
+        int $tolerance, string $time, string $status, ?int $minutes, float $penalty
+    ): void {
+        $owner = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $owner->id]);
+        $setting = CompanySetting::query()->updateOrCreate(['user_id' => $owner->id], [
+            'name' => 'Test Company', 'late_tolerance_minutes' => $tolerance,
+            'late_penalty_enabled' => true, 'late_penalty_type' => 'tiered',
+            'late_penalty_tiers' => [
+                ['from_minute' => 1, 'to_minute' => 30, 'penalty_amount' => 20000],
+                ['from_minute' => 31, 'to_minute' => null, 'penalty_amount' => 50000],
+            ],
+        ]);
+        $shift = WorkShift::query()->create([
+            'user_id' => $owner->id, 'code' => 'BOUNDARY', 'name' => 'Pagi',
+            'start_time' => '09:00:00', 'end_time' => '18:00:00',
+            'is_day_off' => false, 'late_tolerance_minutes' => $tolerance,
+        ]);
+        $data = [
+            'user_id' => $owner->id, 'employee_id' => $employee->id, 'shift_id' => $shift->id,
+            'attendance_date' => '2026-11-03', 'check_in_at' => \Illuminate\Support\Carbon::parse('2026-11-03 '.$time, 'Asia/Makassar')->utc()->toDateTimeString(),
+            'status' => 'present', 'timezone' => 'Asia/Makassar',
+        ];
+        $service = app(AttendanceStatusService::class);
+        $resolved = $service->resolveStatusAttributes($data, $owner->id, 'Asia/Makassar');
+        $this->assertSame($status, $resolved['status']);
+        $this->assertSame($minutes, $resolved['late_minutes']);
+        $this->assertSame($penalty, $resolved['late_penalty']);
+
+        $attendance = EmployeeAttendance::query()->create($data);
+        $this->assertSame($penalty, $service->calculateLatePenaltyForAttendance($attendance, $setting, $employee, $shift));
+        $service->syncLateness($owner->id, '2026-11-03', '2026-11-03');
+        $attendance->refresh();
+        $this->assertSame($status, $attendance->status);
+        $this->assertSame($minutes, $attendance->late_minutes);
+        $this->assertSame($penalty, (float) $attendance->late_penalty);
+
+        if ($status === 'present') {
+            $attendance->updateQuietly([
+                'status' => 'late', 'late_minutes' => $tolerance, 'late_level' => 'half_day',
+                'late_penalty' => 50000, 'is_half_day' => true,
+            ]);
+            $this->assertSame(0.0, $service->calculateLatePenaltyForAttendance(
+                $attendance, $setting, $employee, $shift, syncAttendanceRecord: true,
+            ));
+            $attendance->refresh();
+            $this->assertSame('present', $attendance->status);
+            $this->assertNull($attendance->late_minutes);
+            $this->assertNull($attendance->late_level);
+            $this->assertFalse($attendance->is_half_day);
+            $this->assertSame(0.0, (float) $attendance->late_penalty);
+        }
+    }
+
+    public function test_progressive_penalty_starts_after_the_whole_tolerance_minute(): void
+    {
+        $owner = User::factory()->create();
+        CompanySetting::query()->updateOrCreate(['user_id' => $owner->id], [
+            'name' => 'Test Company', 'late_tolerance_minutes' => 15,
+            'late_penalty_enabled' => true, 'late_penalty_type' => 'progressive',
+            'late_base_penalty_minutes' => 15, 'late_base_penalty_amount' => 25000,
+            'late_incremental_penalty_amount' => 5000, 'late_incremental_unit_minutes' => 1,
+        ]);
+        $shift = WorkShift::query()->create([
+            'user_id' => $owner->id, 'code' => 'PROGRESSIVE', 'name' => 'Pagi',
+            'start_time' => '09:00:00', 'end_time' => '18:00:00', 'is_day_off' => false,
+        ]);
+        $service = app(AttendanceStatusService::class);
+        foreach (['09:15:59' => 0.0, '09:16:00' => 30000.0] as $time => $penalty) {
+            $result = $service->resolveStatusAttributes([
+                'shift_id' => $shift->id, 'attendance_date' => '2026-11-03',
+                'status' => 'present', 'check_in_at' => \Illuminate\Support\Carbon::parse('2026-11-03 '.$time, 'Asia/Makassar')->utc()->toDateTimeString(),
+            ], $owner->id, 'Asia/Makassar');
+            $this->assertSame($penalty, $result['late_penalty']);
+        }
+    }
 
     public function test_admin_attendance_is_marked_late_after_shift_tolerance(): void
     {
@@ -841,4 +936,3 @@ class AttendanceToleranceTest extends TestCase
         $response->assertOk();
     }
 }
-
