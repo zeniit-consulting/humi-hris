@@ -8,6 +8,8 @@
             name="description"
             content="Dokumentasi operasional admin HRIS untuk onboarding user baru."
         >
+        <meta name="robots" content="noindex, follow">
+        <link rel="canonical" href="{{ url()->current() }}">
         @vite(['resources/css/app.css'])
         <style>
             :root {

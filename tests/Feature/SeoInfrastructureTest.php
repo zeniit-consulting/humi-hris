@@ -35,6 +35,24 @@ class SeoInfrastructureTest extends TestCase
         }
     }
 
+    public function test_urls_with_trailing_slashes_are_permanently_redirected(): void
+    {
+        $middleware = new \App\Http\Middleware\RedirectTrailingSlash;
+        $request = \Illuminate\Http\Request::create('/features/', 'GET');
+        $response = $middleware->handle($request, fn () => response('ok'));
+        $this->assertSame(301, $response->getStatusCode());
+        $this->assertSame('http://localhost/features', $response->headers->get('Location'));
+
+        $requestWithQuery = \Illuminate\Http\Request::create('/software-hris/?utm_source=test', 'GET');
+        $responseWithQuery = $middleware->handle($requestWithQuery, fn () => response('ok'));
+        $this->assertSame(301, $responseWithQuery->getStatusCode());
+        $this->assertSame('http://localhost/software-hris?utm_source=test', $responseWithQuery->headers->get('Location'));
+
+        $rootRequest = \Illuminate\Http\Request::create('/', 'GET');
+        $rootResponse = $middleware->handle($rootRequest, fn () => response('ok'));
+        $this->assertSame(200, $rootResponse->getStatusCode());
+    }
+
     public function test_article_metadata_matches_inertia_props_and_has_valid_schema(): void
     {
         $this->withoutVite();

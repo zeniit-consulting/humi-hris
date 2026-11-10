@@ -8,6 +8,7 @@ use App\Http\Middleware\EnsureActiveSubscription;
 use App\Http\Middleware\EnsureAdminAccess;
 use App\Http\Middleware\EnsureBillingOwnerAccess;
 use App\Http\Middleware\EnsureModuleAccess;
+use App\Http\Middleware\RedirectTrailingSlash;
 use App\Http\Middleware\RequireBearerToken;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -42,11 +43,16 @@ return Application::configure(basePath: dirname(__DIR__))
             'require.bearer' => RequireBearerToken::class,
         ]);
 
-        $middleware->web(append: [
-            HandleAppearance::class,
-            HandleInertiaRequests::class,
-            AddLinkHeadersForPreloadedAssets::class,
-        ]);
+        $middleware->web(
+            prepend: [
+                RedirectTrailingSlash::class,
+            ],
+            append: [
+                HandleAppearance::class,
+                HandleInertiaRequests::class,
+                AddLinkHeadersForPreloadedAssets::class,
+            ],
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         Integration::handles($exceptions);
