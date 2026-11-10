@@ -328,7 +328,9 @@ export default function MonthlyAttendancePage() {
                                                     className={
                                                         row.status === 'wfa'
                                                             ? 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800'
-                                                            : ''
+                                                            : row.status === 'on_leave'
+                                                                ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
+                                                                : ''
                                                     }
                                                 >
                                                     {statusLabelMap[

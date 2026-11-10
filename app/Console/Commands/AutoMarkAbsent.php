@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeSchedule;
+use App\Models\LeaveRequest;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -63,20 +64,43 @@ class AutoMarkAbsent extends Command
             return self::SUCCESS;
         }
 
-        $rows = $toCreate->map(fn ($schedule) => [
-            'user_id' => $schedule->user_id,
-            'employee_id' => $schedule->employee_id,
-            'shift_id' => null,
-            'attendance_date' => $date,
-            'status' => (bool) $schedule->is_wfa ? 'wfa' : 'absent',
-            'check_in_at' => null,
-            'check_out_at' => null,
-            'notes' => (bool) $schedule->is_wfa
-                ? 'Otomatis ditandai WFA (jadwal shift WFA, bebas absensi)'
-                : 'Otomatis ditandai absen (tidak ada record absensi)',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $approvedLeaves = LeaveRequest::query()
+            ->withoutGlobalScopes()
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $date)
+            ->whereDate('end_date', '>=', $date)
+            ->whereIn('employee_id', $activeEmployeeIds)
+            ->get(['employee_id', 'leave_type', 'reason'])
+            ->keyBy('employee_id');
+
+        $rows = $toCreate->map(function ($schedule) use ($date, $approvedLeaves) {
+            $leave = $approvedLeaves->get($schedule->employee_id);
+            $isWfa = (bool) $schedule->is_wfa;
+
+            if ($leave) {
+                $status = 'on_leave';
+                $notes = 'Cuti: '.($leave->reason ?: ucfirst($leave->leave_type));
+            } elseif ($isWfa) {
+                $status = 'wfa';
+                $notes = 'Otomatis ditandai WFA (jadwal shift WFA, bebas absensi)';
+            } else {
+                $status = 'absent';
+                $notes = 'Otomatis ditandai absen (tidak ada record absensi)';
+            }
+
+            return [
+                'user_id' => $schedule->user_id,
+                'employee_id' => $schedule->employee_id,
+                'shift_id' => null,
+                'attendance_date' => $date,
+                'status' => $status,
+                'check_in_at' => null,
+                'check_out_at' => null,
+                'notes' => $notes,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        });
 
         DB::transaction(function () use ($rows): void {
             foreach ($rows as $row) {
@@ -86,10 +110,12 @@ class AutoMarkAbsent extends Command
 
         $absentCount = $rows->where('status', 'absent')->count();
         $wfaCount = $rows->where('status', 'wfa')->count();
+        $leaveCount = $rows->where('status', 'on_leave')->count();
 
         $this->info(sprintf(
-            'Selesai. %d karyawan ditandai absen, %d karyawan ditandai WFA untuk tanggal %s.',
+            'Selesai. %d karyawan ditandai absen, %d karyawan ditandai cuti, %d karyawan ditandai WFA untuk tanggal %s.',
             $absentCount,
+            $leaveCount,
             $wfaCount,
             $date,
         ));

@@ -5,6 +5,7 @@ namespace Tests\Feature\Hris;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeLeaveBalance;
+use App\Models\LeaveRequest;
 use App\Models\SubCompany;
 use App\Models\User;
 use App\Models\WorkShift;
@@ -137,6 +138,102 @@ class WorkforceModulesTest extends TestCase
                 ->where('attendances.7.check_in_at', '2026-06-08T01:00:00+00:00')
                 ->where('attendances.7.is_missing', false)
                 ->where('attendances.8.id', $late->id)
+            );
+    }
+
+    public function test_monthly_attendance_syncs_with_approved_employee_leave_requests(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-002',
+            'first_name' => 'Budi',
+            'last_name' => 'Santoso',
+        ]);
+
+        // Approved 2-day annual leave (2026-06-15 to 2026-06-16) without attendance record
+        LeaveRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'annual',
+            'start_date' => '2026-06-15',
+            'end_date' => '2026-06-16',
+            'total_days' => 2,
+            'reason' => 'Liburan keluarga',
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $user->id,
+        ]);
+
+        // Approved 1-day sick leave (2026-06-20) where an auto-absent record already existed
+        EmployeeAttendance::factory()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-06-20',
+            'status' => 'absent',
+            'check_in_at' => null,
+            'check_out_at' => null,
+            'notes' => 'Otomatis ditandai absen (tidak ada record absensi)',
+        ]);
+
+        LeaveRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'sick',
+            'start_date' => '2026-06-20',
+            'end_date' => '2026-06-20',
+            'total_days' => 1,
+            'reason' => 'Demam tinggi',
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $user->id,
+        ]);
+
+        // Pending leave should NOT be reflected as on_leave
+        LeaveRequest::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'annual',
+            'start_date' => '2026-06-25',
+            'end_date' => '2026-06-25',
+            'total_days' => 1,
+            'reason' => 'Masih pending',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($user)
+            ->get("/hris/attendances/employees/{$employee->id}/monthly?period=2026-06")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hris/attendances/monthly')
+                ->where('employee.id', $employee->id)
+                ->where('summary.total', 30)
+                ->where('summary.on_leave', 3)
+                ->where('summary.absent', 27)
+                // Day 15 (index 14)
+                ->where('attendances.14.attendance_date', '2026-06-15')
+                ->where('attendances.14.status', 'on_leave')
+                ->where('attendances.14.is_missing', false)
+                ->where('attendances.14.notes', 'Cuti Tahunan: Liburan keluarga')
+                // Day 16 (index 15)
+                ->where('attendances.15.attendance_date', '2026-06-16')
+                ->where('attendances.15.status', 'on_leave')
+                ->where('attendances.15.is_missing', false)
+                ->where('attendances.15.notes', 'Cuti Tahunan: Liburan keluarga')
+                // Day 20 (index 19) - overridden from absent to on_leave
+                ->where('attendances.19.attendance_date', '2026-06-20')
+                ->where('attendances.19.status', 'on_leave')
+                ->where('attendances.19.is_missing', false)
+                ->where('attendances.19.notes', 'Izin Sakit: Demam tinggi')
+                // Day 25 (index 24) - pending leave remains absent
+                ->where('attendances.24.attendance_date', '2026-06-25')
+                ->where('attendances.24.status', 'absent')
+                ->where('attendances.24.is_missing', true)
             );
     }
 

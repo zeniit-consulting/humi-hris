@@ -191,6 +191,52 @@ class WorkShiftWfaTest extends TestCase
         $this->assertStringContainsString('absen', $onsiteAttendance->notes);
     }
 
+    public function test_auto_absent_command_marks_employee_with_approved_leave_as_on_leave(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $employee = Employee::factory()->create([
+            'user_id' => $admin->id,
+            'is_active' => true,
+        ]);
+
+        $testDate = '2026-06-15';
+
+        \App\Models\EmployeeSchedule::query()->create([
+            'user_id' => $admin->id,
+            'employee_id' => $employee->id,
+            'work_date' => $testDate,
+            'shift_code' => 'PAGI',
+            'start_time' => '08:00',
+            'end_time' => '17:00',
+            'is_day_off' => false,
+            'is_wfa' => false,
+        ]);
+
+        \App\Models\LeaveRequest::query()->create([
+            'user_id' => $admin->id,
+            'employee_id' => $employee->id,
+            'leave_type' => 'annual',
+            'start_date' => $testDate,
+            'end_date' => $testDate,
+            'total_days' => 1,
+            'reason' => 'Cuti tahunan disetujui',
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $admin->id,
+        ]);
+
+        $this->artisan('attendance:auto-absent', ['--date' => $testDate])
+            ->assertSuccessful();
+
+        $attendance = EmployeeAttendance::query()
+            ->where('employee_id', $employee->id)
+            ->whereDate('attendance_date', $testDate)
+            ->firstOrFail();
+
+        $this->assertSame('on_leave', $attendance->status);
+        $this->assertStringContainsString('Cuti', $attendance->notes);
+    }
+
     public function test_attendance_status_service_skips_lateness_and_late_penalty_for_wfa_shift(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

@@ -9,6 +9,7 @@ use App\Models\CompanySetting;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\EmployeeSchedule;
+use App\Models\LeaveRequest;
 use App\Services\AttendanceStatusService;
 use App\Services\MissingCheckoutLeaveSyncService;
 use App\Support\AttendancePhoto;
@@ -261,6 +262,23 @@ class AttendanceController extends Controller
             ->get(['id', 'employee_id', 'work_date', 'shift_code', 'is_day_off', 'is_wfa', 'start_time', 'end_time'])
             ->groupBy(fn ($s) => $s->employee_id.'_'.$s->work_date->toDateString());
 
+        $allLeaves = LeaveRequest::query()
+            ->where('user_id', $ownerId)
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $hEndDate->toDateString())
+            ->whereDate('end_date', '>=', $hStartDate->toDateString())
+            ->when($filters['employee_id'] !== '', fn ($q) => $q->where('employee_id', $filters['employee_id']))
+            ->get(['id', 'employee_id', 'leave_type', 'start_date', 'end_date', 'reason']);
+
+        $leavesByEmployeeDate = collect();
+        foreach ($allLeaves as $l) {
+            $lStart = Carbon::parse($l->start_date)->max($hStartDate);
+            $lEnd = Carbon::parse($l->end_date)->min($hEndDate);
+            for ($d = $lStart->copy(); $d->lte($lEnd); $d = $d->addDay()) {
+                $leavesByEmployeeDate->put($l->employee_id.'_'.$d->toDateString(), $l);
+            }
+        }
+
         $hDates = collect();
         $curr = $hStartDate->copy();
         while ($curr->lte($hEndDate)) {
@@ -285,7 +303,7 @@ class AttendanceController extends Controller
             $curr = $curr->addDay();
         }
 
-        $horizontalRows = $allEmployees->map(function (Employee $emp) use ($hDates, $allAttendances, $allSchedules) {
+        $horizontalRows = $allEmployees->map(function (Employee $emp) use ($hDates, $allAttendances, $allSchedules, $leavesByEmployeeDate) {
             $days = [];
             $summary = [
                 'present' => 0,
@@ -300,6 +318,7 @@ class AttendanceController extends Controller
                 $dateKey = $dateInfo['date'];
                 $sched = $allSchedules->get($emp->id.'_'.$dateKey)?->first();
                 $att = $allAttendances->get($emp->id.'_'.$dateKey)?->first();
+                $leave = $leavesByEmployeeDate->get($emp->id.'_'.$dateKey);
 
                 $shiftCode = $sched?->shift_code;
                 $isDayOff = (bool) ($sched?->is_day_off ?? false);
@@ -309,12 +328,17 @@ class AttendanceController extends Controller
                     $status = $att->status;
                     if ($status === 'present' && ($att->late_minutes ?? 0) > 0) {
                         $status = 'late';
+                    } elseif ($leave && ($status === 'absent' || $status === 'on_leave' || $att->check_in_at === null)) {
+                        $status = 'on_leave';
                     }
                     if (isset($summary[$status])) {
                         $summary[$status]++;
                     }
                 } else {
-                    if ($isDayOff || $shiftCode === 'OFF' || ($dateInfo['is_weekend'] && ! $sched)) {
+                    if ($leave) {
+                        $status = 'on_leave';
+                        $summary['on_leave']++;
+                    } elseif ($isDayOff || $shiftCode === 'OFF' || ($dateInfo['is_weekend'] && ! $sched)) {
                         $status = 'off';
                     } elseif ($isWfa) {
                         $status = 'wfa';
@@ -327,10 +351,18 @@ class AttendanceController extends Controller
                     }
                 }
 
+                $leaveTypeLabel = match ($leave?->leave_type) {
+                    'annual' => 'Cuti Tahunan',
+                    'sick' => 'Izin Sakit',
+                    'unpaid' => 'Cuti Tanpa Upah',
+                    'other' => 'Izin Lainnya',
+                    default => 'Cuti',
+                };
+
                 $statusLabel = match ($status) {
                     'present' => 'Hadir',
                     'late' => 'Terlambat'.($att && $att->late_minutes ? " ({$att->late_minutes}m)" : ''),
-                    'on_leave' => 'Cuti',
+                    'on_leave' => $leaveTypeLabel,
                     'absent' => 'Absen',
                     'missing' => 'Tidak Absen',
                     'wfa' => 'WFA',
@@ -339,7 +371,7 @@ class AttendanceController extends Controller
                     default => ucfirst($status),
                 };
 
-                $cellShiftCode = $shiftCode ?: ($status === 'off' ? 'OFF' : ($sched ? 'REG' : '-'));
+                $cellShiftCode = $shiftCode ?: ($status === 'on_leave' ? 'CUTI' : ($status === 'off' ? 'OFF' : ($sched ? 'REG' : '-')));
 
                 $checkInStr = $att?->check_in_at ? Carbon::parse($att->check_in_at)->format('H:i') : null;
                 $checkOutStr = $att?->check_out_at ? Carbon::parse($att->check_out_at)->format('H:i') : null;
@@ -426,61 +458,111 @@ class AttendanceController extends Controller
             ->get(['work_date', 'shift_code', 'is_wfa', 'is_day_off'])
             ->keyBy(fn (EmployeeSchedule $schedule) => $schedule->work_date->toDateString());
 
+        $leaves = LeaveRequest::query()
+            ->where('employee_id', $employee->id)
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $end->toDateString())
+            ->whereDate('end_date', '>=', $start->toDateString())
+            ->get(['id', 'leave_type', 'start_date', 'end_date', 'reason']);
+
+        $leaveByDate = collect();
+        foreach ($leaves as $leave) {
+            $leaveStart = Carbon::parse($leave->start_date)->max($start);
+            $leaveEnd = Carbon::parse($leave->end_date)->min($end);
+
+            for ($d = $leaveStart->copy(); $d->lte($leaveEnd); $d = $d->addDay()) {
+                $leaveByDate->put($d->toDateString(), $leave);
+            }
+        }
+
         $rows = collect();
         for ($date = $start->copy(); $date->lte($end); $date = $date->addDay()) {
             $dateKey = $date->toDateString();
             $attendance = $attendanceByDate->get($dateKey);
             $sched = $scheduleByDate->get($dateKey);
+            $leave = $leaveByDate->get($dateKey);
             $isWfa = (bool) ($sched?->is_wfa ?? false);
             $isOff = (bool) ($sched?->is_day_off ?? false) || $sched?->shift_code === 'OFF';
 
-            $rows->push($attendance ? [
-                'id' => $attendance->id,
-                'attendance_date' => $dateKey,
-                'timezone' => $attendance->timezone,
-                'shift_name' => $attendance->shift?->name
-                    ?? $attendance->shift?->code
-                    ?? $sched?->shift_code
-                    ?? 'OFF',
-                'status' => $attendance->status,
-                'is_backup' => (bool) ($attendance->is_backup ?? false),
-                'backup_for_employee' => $attendance->backupForEmployee ? [
-                    'id' => $attendance->backupForEmployee->id,
-                    'employee_code' => $attendance->backupForEmployee->employee_code,
-                    'full_name' => $attendance->backupForEmployee->full_name,
-                ] : null,
-                'late_minutes' => $attendance->late_minutes,
-                'late_duration_label' => $this->formatLateDuration($attendance->late_minutes),
-                'late_level' => $attendance->late_level,
-                'late_penalty' => (float) ($attendance->late_penalty ?? 0),
-                'is_half_day' => (bool) ($attendance->is_half_day ?? false),
-                'check_in_at' => $attendance->check_in_at?->toIso8601String(),
-                'check_out_at' => $attendance->check_out_at?->toIso8601String(),
-                'check_in_photo_url' => $attendance->check_in_photo_url,
-                'check_out_photo_url' => $attendance->check_out_photo_url,
-                'face_similarity_score' => $attendance->face_similarity_score !== null ? (float) $attendance->face_similarity_score : null,
-                'has_photo' => ! empty($attendance->check_in_photo_url) || ! empty($attendance->check_out_photo_url),
-                'notes' => $attendance->notes,
-                'is_missing' => false,
-            ] : [
-                'id' => null,
-                'attendance_date' => $dateKey,
-                'timezone' => $employee->timezone,
-                'shift_name' => $sched?->shift_code ?? 'OFF',
-                'status' => $isOff ? 'off' : ($isWfa ? 'wfa' : 'absent'),
-                'late_minutes' => null,
-                'late_level' => null,
-                'late_penalty' => 0.0,
-                'is_half_day' => false,
-                'check_in_at' => null,
-                'check_out_at' => null,
-                'check_in_photo_url' => null,
-                'check_out_photo_url' => null,
-                'face_similarity_score' => null,
-                'has_photo' => false,
-                'notes' => $isWfa ? 'Shift WFA (Bebas Absensi)' : null,
-                'is_missing' => ! $isWfa && ! $isOff,
-            ]);
+            $leaveTypeLabel = match ($leave?->leave_type) {
+                'annual' => 'Cuti Tahunan',
+                'sick' => 'Izin Sakit',
+                'unpaid' => 'Cuti Tanpa Upah',
+                'other' => 'Izin Lainnya',
+                default => 'Cuti',
+            };
+            $leaveNote = $leave ? ($leave->reason ? $leaveTypeLabel.': '.$leave->reason : $leaveTypeLabel) : null;
+
+            if ($attendance) {
+                $status = $attendance->status;
+                $isMissing = false;
+                $notes = $attendance->notes;
+
+                if ($leave && ($status === 'absent' || $status === 'on_leave' || $attendance->check_in_at === null)) {
+                    $status = 'on_leave';
+                    $notes = $leaveNote ?? $notes;
+                }
+
+                $rows->push([
+                    'id' => $attendance->id,
+                    'attendance_date' => $dateKey,
+                    'timezone' => $attendance->timezone,
+                    'shift_name' => $attendance->shift?->name
+                        ?? $attendance->shift?->code
+                        ?? $sched?->shift_code
+                        ?? ($status === 'on_leave' ? ($sched?->shift_code ?? 'Cuti') : 'OFF'),
+                    'status' => $status,
+                    'is_backup' => (bool) ($attendance->is_backup ?? false),
+                    'backup_for_employee' => $attendance->backupForEmployee ? [
+                        'id' => $attendance->backupForEmployee->id,
+                        'employee_code' => $attendance->backupForEmployee->employee_code,
+                        'full_name' => $attendance->backupForEmployee->full_name,
+                    ] : null,
+                    'late_minutes' => $attendance->late_minutes,
+                    'late_duration_label' => $this->formatLateDuration($attendance->late_minutes),
+                    'late_level' => $attendance->late_level,
+                    'late_penalty' => (float) ($attendance->late_penalty ?? 0),
+                    'is_half_day' => (bool) ($attendance->is_half_day ?? false),
+                    'check_in_at' => $attendance->check_in_at?->toIso8601String(),
+                    'check_out_at' => $attendance->check_out_at?->toIso8601String(),
+                    'check_in_photo_url' => $attendance->check_in_photo_url,
+                    'check_out_photo_url' => $attendance->check_out_photo_url,
+                    'face_similarity_score' => $attendance->face_similarity_score !== null ? (float) $attendance->face_similarity_score : null,
+                    'has_photo' => ! empty($attendance->check_in_photo_url) || ! empty($attendance->check_out_photo_url),
+                    'notes' => $notes,
+                    'is_missing' => $isMissing,
+                ]);
+            } else {
+                if ($leave) {
+                    $status = 'on_leave';
+                    $isMissing = false;
+                    $notes = $leaveNote;
+                } else {
+                    $status = $isOff ? 'off' : ($isWfa ? 'wfa' : 'absent');
+                    $isMissing = ! $isWfa && ! $isOff;
+                    $notes = $isWfa ? 'Shift WFA (Bebas Absensi)' : null;
+                }
+
+                $rows->push([
+                    'id' => null,
+                    'attendance_date' => $dateKey,
+                    'timezone' => $employee->timezone,
+                    'shift_name' => $sched?->shift_code ?? ($leave ? 'Cuti' : 'OFF'),
+                    'status' => $status,
+                    'late_minutes' => null,
+                    'late_level' => null,
+                    'late_penalty' => 0.0,
+                    'is_half_day' => false,
+                    'check_in_at' => null,
+                    'check_out_at' => null,
+                    'check_in_photo_url' => null,
+                    'check_out_photo_url' => null,
+                    'face_similarity_score' => null,
+                    'has_photo' => false,
+                    'notes' => $notes,
+                    'is_missing' => $isMissing,
+                ]);
+            }
         }
 
         $summary = $rows
@@ -505,6 +587,7 @@ class AttendanceController extends Controller
             'summary' => [
                 'total' => $rows->count(),
                 'present' => (int) ($summary['present'] ?? 0),
+                'wfa' => (int) ($summary['wfa'] ?? 0),
                 'late' => (int) ($summary['late'] ?? 0),
                 'on_leave' => (int) ($summary['on_leave'] ?? 0),
                 'absent' => (int) ($summary['absent'] ?? 0),
