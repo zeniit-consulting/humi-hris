@@ -39,9 +39,27 @@ class PayrollReadinessService
             ->whereDoesntHave('bankAccounts', fn ($query) => $query->where('is_primary', true))
             ->count();
 
+        $periodStart = $run?->period_start ? \Carbon\Carbon::parse($run->period_start) : \Carbon\Carbon::createFromFormat('Y-m-d', $period.'-01')->startOfMonth();
+        $periodEnd = $run?->period_end ? \Carbon\Carbon::parse($run->period_end) : $periodStart->copy()->endOfMonth();
+
         $resignedIncludedCount = $run
-            ? $run->items->filter(fn ($item) => $item->employee
-                && (! $item->employee->is_active || $item->employee->employment_status === 'resigned'))->count()
+            ? $run->items->filter(function ($item) use ($periodStart, $periodEnd) {
+                if (! $item->employee || ($item->employee->is_active && $item->employee->employment_status !== 'resigned')) {
+                    return false;
+                }
+                if (! empty($item->manual_overrides)) {
+                    return false;
+                }
+                $hasAttendance = $item->employee->attendances()
+                    ->withoutGlobalScopes()
+                    ->whereBetween('attendance_date', [$periodStart->toDateString(), $periodEnd->toDateString()])
+                    ->where(function ($att) {
+                        $att->whereNotNull('check_in_at')->orWhereIn('status', ['present', 'late', 'wfa']);
+                    })
+                    ->exists();
+
+                return ! $hasAttendance;
+            })->count()
             : 0;
 
         $pendingApprovals = $this->pendingApprovalCount($ownerId);

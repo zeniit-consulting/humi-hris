@@ -20,6 +20,7 @@ import {
     Send,
     Sparkles,
     Trash2,
+    UserPlus,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { LockedFeatureBanner } from '@/components/locked-feature-banner';
@@ -193,6 +194,16 @@ type PageProps = {
         service_fee_points: string | number;
         regular_paid?: boolean;
         sub_company_id?: number | null;
+    }>;
+    resignedEmployeeOptions?: Array<{
+        id: number;
+        employee_code: string;
+        full_name: string;
+        label: string;
+        offboarded_at: string | null;
+        sub_company_label: string;
+        division_name: string;
+        base_salary: number;
     }>;
     subCompanies: Array<{ id: number; label: string }>;
     payrollSettings?: {
@@ -450,6 +461,7 @@ export default function PayrollPage() {
         type,
         sub_company_id,
         employeeOptions,
+        resignedEmployeeOptions = [],
         subCompanies,
         payrollSettings,
         payrollReadiness,
@@ -464,6 +476,7 @@ export default function PayrollPage() {
     );
     const [sendingPayslips, setSendingPayslips] = useState(false);
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+    const [addResignedDialogOpen, setAddResignedDialogOpen] = useState(false);
     const [sendingPayslipItemIds, setSendingPayslipItemIds] = useState<
         number[]
     >([]);
@@ -475,6 +488,15 @@ export default function PayrollPage() {
         run_id: null as number | null,
         excluded_employee_ids: [] as number[],
         service_fee_total: '',
+    });
+    const addResignedForm = useForm({
+        employee_id: '',
+        base_salary: '',
+        fixed_allowances: [] as CompensationRow[],
+        variable_allowances: [] as CompensationRow[],
+        bonuses: [] as CompensationRow[],
+        manual_deductions: [] as CompensationRow[],
+        notes: '',
     });
     const [editingItem, setEditingItem] = useState<PayrollItem | null>(null);
     const [salaryEdited, setSalaryEdited] = useState(false);
@@ -508,6 +530,27 @@ export default function PayrollPage() {
         if (!dendaModalItem) return null;
         return items.find((i) => i.id === dendaModalItem.id) ?? dendaModalItem;
     }, [items, dendaModalItem]);
+
+    const manualNetSalary = useMemo(() => {
+        const base = Number(addResignedForm.data.base_salary) || 0;
+        const fixedAll = addResignedForm.data.fixed_allowances.reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+        const varAll = addResignedForm.data.variable_allowances.reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+        const bon = addResignedForm.data.bonuses.reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+        const ded = addResignedForm.data.manual_deductions.reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+        return Math.max(0, base + fixedAll + varAll + bon - ded);
+    }, [addResignedForm.data]);
+
+    const handleAddResignedSubmit = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!run) return;
+        addResignedForm.post(`/hris/payrolls/${run.id}/items`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setAddResignedDialogOpen(false);
+                addResignedForm.reset();
+            },
+        });
+    };
 
     const handleToggleRevertDenda = (
         item: PayrollItem,
@@ -1224,6 +1267,23 @@ export default function PayrollPage() {
                                         Hitung Ulang Batch
                                     </Button>
                                 )}
+                            {run &&
+                                type === 'regular' &&
+                                !isPayrollReleased &&
+                                !run.is_locked && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            addResignedForm.reset();
+                                            setAddResignedDialogOpen(true);
+                                        }}
+                                        className="gap-1.5"
+                                    >
+                                        <UserPlus className="size-4" />
+                                        Tambah Karyawan Resign
+                                    </Button>
+                                )}
                             {type === 'regular' ? (
                                 <>
                                     {isPayrollReleased ? (
@@ -1803,6 +1863,24 @@ export default function PayrollPage() {
                                     </Badge>
                                 )}
                             </CardTitle>
+                            {run &&
+                                type === 'regular' &&
+                                !isPayrollReleased &&
+                                !run.is_locked && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            addResignedForm.reset();
+                                            setAddResignedDialogOpen(true);
+                                        }}
+                                        className="gap-1.5"
+                                    >
+                                        <UserPlus className="size-4" />
+                                        Tambah Karyawan Resign
+                                    </Button>
+                                )}
                         </div>
                         <CardDescription>
                             {run?.generated_at
@@ -4828,6 +4906,140 @@ export default function PayrollPage() {
                                 : `Ya, Keluarkan (${selectedItemIds.length}) Staff`}
                         </Button>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Tambah Karyawan Resign (Manual) */}
+            <Dialog
+                open={addResignedDialogOpen}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setAddResignedDialogOpen(false);
+                        addResignedForm.reset();
+                    }
+                }}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <UserPlus className="size-5 text-primary" />
+                            Tambah Karyawan Resign (Input Nilai Manual)
+                        </DialogTitle>
+                        <DialogDescription>
+                            Tambahkan karyawan yang telah resign ke batch payroll periode {run?.period} dengan menginputkan komponen gaji secara manual (misalnya uang pesangon, kompensasi sisa cuti, atau hak gaji lainnya).
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleAddResignedSubmit} className="space-y-4 pt-2">
+                        <div className="grid gap-2">
+                            <Label htmlFor="resigned_employee_id">Pilih Karyawan Resign</Label>
+                            <Select
+                                value={addResignedForm.data.employee_id}
+                                onValueChange={(value) => {
+                                    addResignedForm.setData('employee_id', value);
+                                    const emp = (resignedEmployeeOptions ?? []).find(e => String(e.id) === value);
+                                    if (emp && emp.base_salary > 0) {
+                                        addResignedForm.setData('base_salary', String(emp.base_salary));
+                                    }
+                                }}
+                            >
+                                <SelectTrigger id="resigned_employee_id">
+                                    <SelectValue placeholder="Pilih staf yang telah resign..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {(resignedEmployeeOptions ?? [])
+                                        .filter(emp => !items.some(item => item.employee_id === emp.id))
+                                        .map((emp) => (
+                                            <SelectItem key={emp.id} value={String(emp.id)}>
+                                                {emp.label} · {emp.sub_company_label}
+                                            </SelectItem>
+                                        ))}
+                                </SelectContent>
+                            </Select>
+                            {addResignedForm.errors.employee_id && (
+                                <p className="text-xs text-destructive">{addResignedForm.errors.employee_id}</p>
+                            )}
+                        </div>
+
+                        {addResignedForm.data.employee_id && (
+                            <>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="manual_base_salary">Gaji Pokok / Pesangon / Uang Pisah (Rp)</Label>
+                                    <Input
+                                        id="manual_base_salary"
+                                        inputMode="numeric"
+                                        value={formatThousandDigits(addResignedForm.data.base_salary)}
+                                        onChange={(e) =>
+                                            addResignedForm.setData('base_salary', normalizeDigitInput(e.target.value))
+                                        }
+                                        placeholder="Contoh: 5.000.000"
+                                    />
+                                    {addResignedForm.errors.base_salary && (
+                                        <p className="text-xs text-destructive">{addResignedForm.errors.base_salary}</p>
+                                    )}
+                                </div>
+
+                                <CompensationRowsEditor
+                                    title="Tunjangan Tetap"
+                                    addLabel="Tambah Tunjangan Tetap"
+                                    rows={addResignedForm.data.fixed_allowances}
+                                    onChange={(rows) => addResignedForm.setData('fixed_allowances', rows)}
+                                />
+
+                                <CompensationRowsEditor
+                                    title="Tunjangan Lainnya / Variabel"
+                                    addLabel="Tambah Tunjangan Lainnya"
+                                    rows={addResignedForm.data.variable_allowances}
+                                    onChange={(rows) => addResignedForm.setData('variable_allowances', rows)}
+                                />
+
+                                <CompensationRowsEditor
+                                    title="Bonus / Kompensasi / Pesangon Tambahan"
+                                    addLabel="Tambah Bonus / Kompensasi"
+                                    rows={addResignedForm.data.bonuses}
+                                    onChange={(rows) => addResignedForm.setData('bonuses', rows)}
+                                />
+
+                                <CompensationRowsEditor
+                                    title="Potongan Manual"
+                                    addLabel="Tambah Potongan Manual"
+                                    rows={addResignedForm.data.manual_deductions}
+                                    onChange={(rows) => addResignedForm.setData('manual_deductions', rows)}
+                                />
+
+                                <div className="rounded-lg border bg-muted/40 p-4">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="font-medium text-foreground">Total Gaji Bersih (Take Home Pay)</span>
+                                        <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                                            {formatCurrency(manualNetSalary)}
+                                        </span>
+                                    </div>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Dihitung dari Gaji Pokok + Total Tunjangan + Total Bonus - Total Potongan.
+                                    </p>
+                                </div>
+                            </>
+                        )}
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setAddResignedDialogOpen(false);
+                                    addResignedForm.reset();
+                                }}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={!addResignedForm.data.employee_id || addResignedForm.processing}
+                            >
+                                {addResignedForm.processing ? 'Menyimpan...' : 'Tambahkan ke Batch'}
+                            </Button>
+                        </div>
+                    </form>
                 </DialogContent>
             </Dialog>
         </AppLayout>

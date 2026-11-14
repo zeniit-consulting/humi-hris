@@ -6,6 +6,7 @@ import {
     Clock3,
     ExternalLink,
     Filter,
+    MapPin,
     RotateCcw,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -61,7 +62,11 @@ type AttendanceRecord = {
     late_penalty?: number;
     is_half_day?: boolean;
     check_in_at: string | null;
+    check_in_latitude?: number | null;
+    check_in_longitude?: number | null;
     check_out_at: string | null;
+    check_out_latitude?: number | null;
+    check_out_longitude?: number | null;
     check_in_photo_url?: string | null;
     check_out_photo_url?: string | null;
     face_similarity_score?: number | null;
@@ -375,21 +380,35 @@ export default function MonthlyAttendancePage() {
                                                         )}
                                                     </span>
                                                 </div>
-                                                {row.check_in_photo_url && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setSelectedPhotoRecord(
-                                                                row,
-                                                            )
-                                                        }
-                                                        className="mt-1 inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors"
-                                                        title="Tampilkan foto check-in"
-                                                    >
-                                                        <Camera className="size-3" />
-                                                        Foto Masuk
-                                                    </button>
-                                                )}
+                                                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                                    {row.check_in_photo_url && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setSelectedPhotoRecord(
+                                                                    row,
+                                                                )
+                                                            }
+                                                            className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors"
+                                                            title="Tampilkan foto check-in"
+                                                        >
+                                                            <Camera className="size-3" />
+                                                            Foto Masuk
+                                                        </button>
+                                                    )}
+                                                    {row.check_in_latitude !== null && row.check_in_latitude !== undefined && row.check_in_longitude !== null && row.check_in_longitude !== undefined && (
+                                                        <a
+                                                            href={`https://www.google.com/maps?q=${row.check_in_latitude},${row.check_in_longitude}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50/70 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 transition-colors"
+                                                            title={`Lokasi Masuk: ${row.check_in_latitude}, ${row.check_in_longitude}`}
+                                                        >
+                                                            <MapPin className="size-3 text-emerald-600 dark:text-emerald-400" />
+                                                            Lokasi Masuk
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-3 py-3">
                                                 <div>
@@ -398,21 +417,35 @@ export default function MonthlyAttendancePage() {
                                                         row.timezone,
                                                     )}
                                                 </div>
-                                                {row.check_out_photo_url && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setSelectedPhotoRecord(
-                                                                row,
-                                                            )
-                                                        }
-                                                        className="mt-1 inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors"
-                                                        title="Tampilkan foto check-out"
-                                                    >
-                                                        <Camera className="size-3" />
-                                                        Foto Pulang
-                                                    </button>
-                                                )}
+                                                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                                    {row.check_out_photo_url && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setSelectedPhotoRecord(
+                                                                    row,
+                                                                )
+                                                            }
+                                                            className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors"
+                                                            title="Tampilkan foto check-out"
+                                                        >
+                                                            <Camera className="size-3" />
+                                                            Foto Pulang
+                                                        </button>
+                                                    )}
+                                                    {row.check_out_latitude !== null && row.check_out_latitude !== undefined && row.check_out_longitude !== null && row.check_out_longitude !== undefined && (
+                                                        <a
+                                                            href={`https://www.google.com/maps?q=${row.check_out_latitude},${row.check_out_longitude}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-1 rounded border border-rose-200 bg-rose-50/70 px-1.5 py-0.5 text-[11px] font-medium text-rose-700 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300 transition-colors"
+                                                            title={`Lokasi Pulang: ${row.check_out_latitude}, ${row.check_out_longitude}`}
+                                                        >
+                                                            <MapPin className="size-3 text-rose-600 dark:text-rose-400" />
+                                                            Lokasi Pulang
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="max-w-[240px] px-3 py-3">
                                                 <span className="line-clamp-2">
@@ -626,6 +659,72 @@ export default function MonthlyAttendancePage() {
                                         admin atau verifikasi wajah dinonaktifkan
                                         saat absensi dilakukan).
                                     </p>
+                                </div>
+                            )}
+
+                            {/* Lokasi Presensi GPS */}
+                            {(selectedPhotoRecord.check_in_latitude !== null ||
+                                selectedPhotoRecord.check_out_latitude !== null) && (
+                                <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+                                    <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                                        <MapPin className="size-3.5 text-primary" />
+                                        Lokasi Presensi GPS Karyawan
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-2 text-xs">
+                                        {/* Clock in location */}
+                                        <div className="rounded border bg-card p-2.5">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                                                    <MapPin className="size-3 text-emerald-600" />
+                                                    Lokasi Masuk (Check-In)
+                                                </span>
+                                                {selectedPhotoRecord.check_in_latitude !== null &&
+                                                    selectedPhotoRecord.check_in_longitude !== null && (
+                                                        <a
+                                                            href={`https://www.google.com/maps?q=${selectedPhotoRecord.check_in_latitude},${selectedPhotoRecord.check_in_longitude}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-primary hover:underline flex items-center gap-0.5 text-[11px]"
+                                                        >
+                                                            Google Maps <ExternalLink className="size-2.5" />
+                                                        </a>
+                                                    )}
+                                            </div>
+                                            <p className="mt-1 font-mono text-muted-foreground text-[11px]">
+                                                {selectedPhotoRecord.check_in_latitude !== null &&
+                                                selectedPhotoRecord.check_in_longitude !== null
+                                                    ? `${selectedPhotoRecord.check_in_latitude}, ${selectedPhotoRecord.check_in_longitude}`
+                                                    : 'Tidak ada data koordinat'}
+                                            </p>
+                                        </div>
+
+                                        {/* Clock out location */}
+                                        <div className="rounded border bg-card p-2.5">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium text-rose-700 dark:text-rose-400 flex items-center gap-1">
+                                                    <MapPin className="size-3 text-rose-600" />
+                                                    Lokasi Pulang (Check-Out)
+                                                </span>
+                                                {selectedPhotoRecord.check_out_latitude !== null &&
+                                                    selectedPhotoRecord.check_out_longitude !== null && (
+                                                        <a
+                                                            href={`https://www.google.com/maps?q=${selectedPhotoRecord.check_out_latitude},${selectedPhotoRecord.check_out_longitude}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-primary hover:underline flex items-center gap-0.5 text-[11px]"
+                                                        >
+                                                            Google Maps <ExternalLink className="size-2.5" />
+                                                        </a>
+                                                    )}
+                                            </div>
+                                            <p className="mt-1 font-mono text-muted-foreground text-[11px]">
+                                                {selectedPhotoRecord.check_out_latitude !== null &&
+                                                selectedPhotoRecord.check_out_longitude !== null
+                                                    ? `${selectedPhotoRecord.check_out_latitude}, ${selectedPhotoRecord.check_out_longitude}`
+                                                    : 'Tidak ada data koordinat'}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 

@@ -7,6 +7,7 @@ use App\Http\Requests\Hris\GeneratePayrollRequest;
 use App\Jobs\SendPayslipToWhatsApp;
 use App\Models\CompanySetting;
 use App\Models\Employee;
+use App\Models\EmployeeAttendance;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\SubCompany;
@@ -83,6 +84,72 @@ class PayrollController extends Controller
 
         $paidEmployeeIds = PayrollItem::query()->where('user_id', $ownerId)->whereHas('payrollRun', fn ($q) => $q->where('user_id', $ownerId)->where('period', $period)->where('type', 'regular')->where('batch_purpose', 'regular')->released())->pluck('employee_id')->all();
 
+        [$periodStart, $periodEnd] = app(PayrollGenerationService::class)->calculatePeriodDates($period, $companySetting);
+
+        $resignedWithAttendanceIds = EmployeeAttendance::query()
+            ->withoutGlobalScopes()
+            ->where('user_id', $ownerId)
+            ->whereBetween('attendance_date', [$periodStart->toDateString(), $periodEnd->toDateString()])
+            ->where(function ($att) {
+                $att->whereNotNull('check_in_at')
+                    ->orWhereIn('status', ['present', 'late', 'wfa']);
+            })
+            ->whereIn('employee_id', function ($q) use ($ownerId) {
+                $q->select('id')->from('employees')
+                    ->where('user_id', $ownerId)
+                    ->where('employment_status', 'resigned');
+            })
+            ->pluck('employee_id')
+            ->unique()
+            ->all();
+
+        $employeeOptions = Employee::query()
+            ->with('subCompany:id,code,name')
+            ->where('user_id', $ownerId)
+            ->where(function ($q) use ($resignedWithAttendanceIds) {
+                $q->where(function ($active) {
+                    $active->where('is_active', true)
+                        ->whereIn('employment_status', ['active', 'probation', 'on_leave']);
+                });
+                if (! empty($resignedWithAttendanceIds)) {
+                    $q->orWhereIn('id', $resignedWithAttendanceIds);
+                }
+            })
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id', 'service_fee_points', 'employment_status'])
+            ->map(fn (Employee $employee): array => [
+                'id' => $employee->id,
+                'label' => $employee->employee_code.' - '.$employee->full_name.($employee->employment_status === 'resigned' ? ' (Resign - Ada Absensi)' : ''),
+                'sub_company_label' => $employee->subCompany
+                    ? $employee->subCompany->code.' - '.$employee->subCompany->name
+                    : 'Internal',
+                'service_fee_points' => $employee->service_fee_points,
+                'sub_company_id' => $employee->sub_company_id,
+                'employment_status' => $employee->employment_status,
+                'regular_paid' => in_array($employee->id, $paidEmployeeIds, true),
+            ]);
+
+        $resignedEmployeeOptions = Employee::query()
+            ->with(['subCompany:id,code,name', 'division:id,name'])
+            ->where('user_id', $ownerId)
+            ->where('employment_status', 'resigned')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id', 'division_id', 'offboarded_at', 'base_salary'])
+            ->map(fn (Employee $employee): array => [
+                'id' => $employee->id,
+                'employee_code' => $employee->employee_code,
+                'full_name' => $employee->full_name,
+                'label' => $employee->employee_code.' - '.$employee->full_name.' (Resign'.($employee->offboarded_at ? ': '.Carbon::parse($employee->offboarded_at)->format('d/m/Y') : '').')',
+                'offboarded_at' => $employee->offboarded_at ? Carbon::parse($employee->offboarded_at)->format('Y-m-d') : null,
+                'sub_company_label' => $employee->subCompany
+                    ? $employee->subCompany->code.' - '.$employee->subCompany->name
+                    : 'Internal',
+                'division_name' => $employee->division?->name ?? '-',
+                'base_salary' => (float) ($employee->base_salary ?? 0),
+            ]);
+
         return Inertia::render('hris/payrolls/index', [
             'period' => $period,
             'type' => $type,
@@ -92,23 +159,8 @@ class PayrollController extends Controller
                 'payroll_cutoff_day' => (string) ($companySetting?->payroll_cutoff_day ?? 'end_of_month'),
                 'payroll_period_start_day' => $companySetting?->payroll_period_start_day ? (string) $companySetting->payroll_period_start_day : null,
             ],
-            'employeeOptions' => Employee::query()
-                ->with('subCompany:id,code,name')
-                ->where('user_id', $ownerId)
-                ->where(fn ($q) => $q->where(fn ($active) => $active->where('is_active', true)->whereIn('employment_status', ['active', 'probation', 'on_leave']))->orWhere('employment_status', 'resigned'))
-                ->orderBy('first_name')
-                ->orderBy('last_name')
-                ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id', 'service_fee_points', 'employment_status'])
-                ->map(fn (Employee $employee): array => [
-                    'id' => $employee->id,
-                    'label' => $employee->employee_code.' - '.$employee->full_name.($employee->employment_status === 'resigned' ? ' (Resign)' : ''),
-                    'sub_company_label' => $employee->subCompany
-                        ? $employee->subCompany->code.' - '.$employee->subCompany->name
-                        : 'Internal',
-                    'service_fee_points' => $employee->service_fee_points,
-                    'sub_company_id' => $employee->sub_company_id,
-                    'regular_paid' => in_array($employee->id, $paidEmployeeIds, true),
-                ]),
+            'employeeOptions' => $employeeOptions,
+            'resignedEmployeeOptions' => $resignedEmployeeOptions,
             'subCompanies' => SubCompany::query()
                 ->where('user_id', $ownerId)
                 ->orderBy('name')
@@ -518,6 +570,148 @@ class PayrollController extends Controller
         });
 
         return back()->with('success', "{$count} staff berhasil dikeluarkan dari payroll.");
+    }
+
+    /**
+     * Add a resigned / manual employee to a draft payroll run with manual input values.
+     */
+    public function storeItem(PayrollRun $payrollRun, Request $request): RedirectResponse
+    {
+        $ownerId = $request->user()->accountOwnerId();
+        abort_if((int) $payrollRun->user_id !== $ownerId, 403);
+
+        if ($payrollRun->isReleased() || $payrollRun->is_saved) {
+            return back()->with('error', 'Payroll yang sudah disimpan atau dirilis tidak bisa ditambahkan karyawan.');
+        }
+
+        $isOwner = (int) $request->user()->id === (int) $ownerId;
+        if ($payrollRun->is_locked && (int) $payrollRun->locked_by !== (int) $request->user()->id && ! $isOwner) {
+            $lockedByName = $payrollRun->lockedBy?->name ?? 'Admin lain';
+
+            return back()->with('error', "Payroll sedang di-lock oleh {$lockedByName}. Hanya user tersebut yang dapat mengedit.");
+        }
+
+        $this->normalizePayrollItemInput($request);
+        $this->normalizeCompensationRows($request, 'fixed_allowances');
+        $this->normalizeCompensationRows($request, 'variable_allowances');
+        $this->normalizeCompensationRows($request, 'bonuses');
+        $this->normalizeCompensationRows($request, 'manual_deductions');
+
+        $validated = $request->validate([
+            'employee_id' => [
+                'required',
+                'integer',
+                Rule::exists('employees', 'id')->where('user_id', $ownerId),
+                Rule::unique('payroll_items', 'employee_id')->where('payroll_run_id', $payrollRun->id),
+            ],
+            'base_salary' => ['required', 'numeric', 'min:0'],
+            'fixed_allowances' => ['nullable', 'array', 'max:20'],
+            'fixed_allowances.*.name' => ['required', 'string', 'max:100'],
+            'fixed_allowances.*.amount' => ['required', 'numeric', 'min:0'],
+            'variable_allowances' => ['nullable', 'array', 'max:20'],
+            'variable_allowances.*.name' => ['required', 'string', 'max:100'],
+            'variable_allowances.*.amount' => ['required', 'numeric', 'min:0'],
+            'bonuses' => ['nullable', 'array', 'max:20'],
+            'bonuses.*.name' => ['required', 'string', 'max:100'],
+            'bonuses.*.amount' => ['required', 'numeric', 'min:0'],
+            'manual_deductions' => ['nullable', 'array', 'max:20'],
+            'manual_deductions.*.name' => ['required', 'string', 'max:100'],
+            'manual_deductions.*.amount' => ['required', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $employee = Employee::query()->where('user_id', $ownerId)->findOrFail($validated['employee_id']);
+        $setting = CompanySetting::query()->where('user_id', $ownerId)->first();
+
+        $baseSalary = (float) $validated['base_salary'];
+        $fixedAllowances = $this->compensationBreakdown($validated['fixed_allowances'] ?? []);
+        $variableAllowances = $this->compensationBreakdown($validated['variable_allowances'] ?? []);
+        $bonuses = $this->compensationBreakdown($validated['bonuses'] ?? []);
+        $manualDeductions = $this->compensationBreakdown($validated['manual_deductions'] ?? []);
+
+        $allowancesTotal = round(
+            collect($fixedAllowances)->sum() + collect($variableAllowances)->sum() + collect($bonuses)->sum(),
+            2
+        );
+        $deductionsTotal = round(collect($manualDeductions)->sum(), 2);
+        $netSalary = max(0, round($baseSalary + $allowancesTotal - $deductionsTotal, 2));
+
+        DB::transaction(function () use ($ownerId, $payrollRun, $employee, $setting, $baseSalary, $fixedAllowances, $variableAllowances, $bonuses, $manualDeductions, $allowancesTotal, $deductionsTotal, $netSalary, $validated): void {
+            $item = new PayrollItem();
+            $item->user_id = $ownerId;
+            $item->payroll_run_id = $payrollRun->id;
+            $item->employee_id = $employee->id;
+            $item->company_identity = ['owner_id' => $ownerId, 'sub_company_id' => $employee->sub_company_id];
+            $item->company_name = $employee->subCompany?->name ?: ($setting?->name ?: 'Perusahaan');
+            $item->company_details = $employee->subCompany ? $employee->subCompany->address : $setting?->details;
+            $item->calculation_basis = [
+                'base_salary' => $baseSalary,
+                'fixed_allowances' => $fixedAllowances,
+                'monthly' => true,
+                'ptkp_category' => $employee->ptkp_category ?: 'TK/0',
+                'unpaid_days' => 0,
+            ];
+            $item->base_salary = $baseSalary;
+            $item->allowances_total = $allowancesTotal;
+            $item->is_prorated = false;
+            $item->proration_working_days = 0;
+            $item->proration_payable_days = 0;
+            $item->proration_factor = 1.0;
+            $item->overtime_hours = 0;
+            $item->overtime_pay = 0;
+            $item->pph21_method = 'none';
+            $item->salary_type = $employee->salary_type ?? 'gross';
+            $item->pph21_rate = 0;
+            $item->pph21_allowance = 0;
+            $item->pph21_deduction = 0;
+            $item->pph21_company_borne = 0;
+            $item->bpjs_kesehatan_company = 0;
+            $item->bpjs_kesehatan_employee = 0;
+            $item->bpjs_jkk_company = 0;
+            $item->bpjs_jkm_company = 0;
+            $item->bpjs_jht_company = 0;
+            $item->bpjs_jht_employee = 0;
+            $item->bpjs_jp_company = 0;
+            $item->bpjs_jp_employee = 0;
+            $item->bpjs_total_company = 0;
+            $item->bpjs_total_employee = 0;
+            $item->private_insurance_name = null;
+            $item->private_insurance_nominal = 0;
+            $item->kasbon_deduction = 0;
+            $item->denda_deduction = 0;
+            $item->denda_breakdown = [];
+            $item->unpaid_leave_deduction = 0;
+            $item->manual_deduction_total = $deductionsTotal;
+            $item->manual_deduction_breakdown = $manualDeductions;
+            $item->deductions_total = $deductionsTotal;
+            $item->net_salary = $netSalary;
+            $item->allowance_breakdown = $fixedAllowances;
+            $item->variable_allowance_breakdown = $variableAllowances;
+            $item->bonus_breakdown = $bonuses;
+
+            $item->manual_overrides = [
+                'is_manual_entry' => true,
+                'base_salary' => $baseSalary,
+                'base_salary_basis' => $baseSalary,
+                'fixed_allowances' => $validated['fixed_allowances'] ?? [],
+                'variable_allowances' => $validated['variable_allowances'] ?? [],
+                'bonuses' => $validated['bonuses'] ?? [],
+                'manual_deductions' => $validated['manual_deductions'] ?? [],
+            ];
+            $item->save();
+
+            $payrollRun->update([
+                'selected_employee_ids' => $payrollRun->items()->pluck('employee_id')->all(),
+            ]);
+
+            app(PayrollAdjustmentService::class)->refreshTotals($payrollRun);
+        });
+
+        return to_route('hris.payrolls.index', [
+            'period' => $payrollRun->period,
+            'type' => $payrollRun->type ?? 'regular',
+            'run_id' => $payrollRun->id,
+        ])->with('success', "Karyawan {$employee->full_name} berhasil ditambahkan ke batch payroll secara manual.");
     }
 
     public function updateItem(PayrollRun $payrollRun, PayrollItem $payrollItem, Request $request): RedirectResponse

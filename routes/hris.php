@@ -220,6 +220,7 @@ Route::middleware(['auth', 'account.activated', 'account.not_suspended', 'admin.
             Route::post('payrolls/{payrollRun}/save', [PayrollController::class, 'save'])->name('payrolls.save');
             Route::post('payrolls/{payrollRun}/release', [PayrollController::class, 'release'])->name('payrolls.release');
             Route::post('payrolls/{payrollRun}/send-payslips', [PayrollController::class, 'sendPayslips'])->name('payrolls.send-payslips');
+            Route::post('payrolls/{payrollRun}/items', [PayrollController::class, 'storeItem'])->name('payrolls.items.store');
             Route::delete('payrolls/{payrollRun}/items/{payrollItem}', [PayrollController::class, 'destroyItem'])->name('payrolls.items.destroy');
             Route::post('payrolls/{payrollRun}/items/bulk-delete', [PayrollController::class, 'bulkDestroyItems'])->name('payrolls.items.bulk-destroy');
             Route::put('payrolls/{payrollRun}/items/{payrollItem}', [PayrollController::class, 'updateItem'])->name('payrolls.items.update');

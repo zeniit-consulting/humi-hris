@@ -135,6 +135,29 @@ class PayrollGenerationService
                         'company_identity' => $old->company_identity ?: $item->company_identity,
                         'company_details' => $old->company_name ? $old->company_details : $item->company_details,
                     ]);
+                    if (! empty($old->manual_overrides['is_manual_entry'])) {
+                        $item->forceFill([
+                            'is_prorated' => false,
+                            'proration_working_days' => 0,
+                            'proration_payable_days' => 0,
+                            'proration_factor' => 1.0,
+                            'pph21_method' => 'none',
+                            'denda_deduction' => 0,
+                            'denda_breakdown' => [],
+                            'kasbon_deduction' => 0,
+                            'unpaid_leave_deduction' => 0,
+                            'bpjs_kesehatan_company' => 0,
+                            'bpjs_kesehatan_employee' => 0,
+                            'bpjs_jkk_company' => 0,
+                            'bpjs_jkm_company' => 0,
+                            'bpjs_jht_company' => 0,
+                            'bpjs_jht_employee' => 0,
+                            'bpjs_jp_company' => 0,
+                            'bpjs_jp_employee' => 0,
+                            'bpjs_total_company' => 0,
+                            'bpjs_total_employee' => 0,
+                        ]);
+                    }
                 }
                 if ($run->batch_purpose === 'additional') {
                     $adjustments->initializeAdditional($item);
@@ -224,7 +247,7 @@ class PayrollGenerationService
             ->where('user_id', $ownerId)
             ->first();
 
-        $employees = $this->employees($ownerId, $start, $end, $includeSubCompanyEmployees, $excludedEmployeeIds);
+        $employees = $this->employees($ownerId, $start, $end, $includeSubCompanyEmployees, $excludedEmployeeIds, $run->selected_employee_ids);
         if ($run->selected_employee_ids !== null) {
             $employees = $employees->whereIn('id', $run->selected_employee_ids);
         }
@@ -242,25 +265,43 @@ class PayrollGenerationService
     }
 
     /**
+     * @param  list<int>  $excludedEmployeeIds
+     * @param  list<int>|null  $selectedEmployeeIds
      * @return Collection<int, Employee>
      */
-    private function employees(int $ownerId, Carbon $start, Carbon $end, bool $includeSubCompanyEmployees = true, array $excludedEmployeeIds = []): Collection
+    private function employees(int $ownerId, Carbon $start, Carbon $end, bool $includeSubCompanyEmployees = true, array $excludedEmployeeIds = [], ?array $selectedEmployeeIds = null): Collection
     {
         return Employee::query()
             ->withoutGlobalScopes()
             ->where('user_id', $ownerId)
             ->whereDate('hire_date', '<=', $end->toDateString())
-            ->where(function ($query) use ($start): void {
+            ->where(function ($query) use ($start, $end, $selectedEmployeeIds): void {
                 $query
                     ->where(function ($active): void {
                         $active->where('is_active', true)
                             ->whereIn('employment_status', ['active', 'probation', 'on_leave']);
                     })
-                    ->orWhere(function ($resigned) use ($start): void {
+                    ->orWhere(function ($resigned) use ($start, $end): void {
                         $resigned->where('employment_status', 'resigned')
-                            ->whereNotNull('offboarded_at')
-                            ->whereDate('offboarded_at', '>=', $start->toDateString());
+                            ->where(function ($q) use ($start, $end): void {
+                                $q->whereHas('attendances', function ($attQuery) use ($start, $end): void {
+                                    $attQuery->withoutGlobalScopes()
+                                        ->whereBetween('attendance_date', [$start->toDateString(), $end->toDateString()])
+                                        ->where(function ($att): void {
+                                            $att->whereNotNull('check_in_at')
+                                                ->orWhereIn('status', ['present', 'late', 'wfa']);
+                                        });
+                                })
+                                ->orWhere(function ($offboarded) use ($start, $end): void {
+                                    $offboarded->whereNotNull('offboarded_at')
+                                        ->whereBetween('offboarded_at', [$start->toDateString(), $end->toDateString()]);
+                                });
+                            });
                     });
+
+                if (! empty($selectedEmployeeIds)) {
+                    $query->orWhereIn('id', $selectedEmployeeIds);
+                }
             })
             ->when(! $includeSubCompanyEmployees, fn ($query) => $query->whereNull('sub_company_id'))
             ->when($excludedEmployeeIds !== [], fn ($query) => $query->whereNotIn('id', $excludedEmployeeIds))
