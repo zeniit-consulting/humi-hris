@@ -4,7 +4,6 @@ namespace Tests\Feature\Hris;
 
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
-use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\User;
 use App\Services\PayrollGenerationService;
@@ -17,7 +16,7 @@ class PayrollResignedFlowAndAttendanceLocationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_employee_options_excludes_resigned_employee_without_attendance(): void
+    public function test_employee_options_include_all_current_statuses_for_filtering(): void
     {
         $user = User::factory()->create(['email_verified_at' => now()]);
 
@@ -59,19 +58,27 @@ class PayrollResignedFlowAndAttendanceLocationTest extends TestCase
             'status' => 'present',
         ]);
 
+        $inactive = Employee::factory()->create(['user_id' => $user->id, 'is_active' => false, 'employment_status' => 'active', 'offboarded_at' => null]);
+        $offboarded = Employee::factory()->create(['user_id' => $user->id, 'is_active' => true, 'employment_status' => 'active', 'offboarded_at' => today()->subDay()]);
+        $otherOwner = Employee::factory()->create();
+
         $response = $this->actingAs($user)->get(route('hris.payrolls.index', ['period' => '2026-06']));
         $response->assertOk();
 
-        $response->assertInertia(function (Assert $page) use ($activeEmp, $resignedWithAttendance, $resignedNoAttendance): void {
+        $response->assertInertia(function (Assert $page) use ($activeEmp, $resignedWithAttendance, $resignedNoAttendance, $inactive, $offboarded, $otherOwner): void {
             $page->component('hris/payrolls/index');
 
-            // employeeOptions should contain active employee and resigned employee with attendance, but NOT resigned without attendance
-            $page->where('employeeOptions', function ($options) use ($activeEmp, $resignedWithAttendance, $resignedNoAttendance) {
+            $page->where('employeeOptions', function ($options) use ($activeEmp, $resignedWithAttendance, $resignedNoAttendance, $inactive, $offboarded, $otherOwner) {
                 $ids = collect($options)->pluck('id')->all();
 
                 return in_array($activeEmp->id, $ids, true)
                     && in_array($resignedWithAttendance->id, $ids, true)
-                    && ! in_array($resignedNoAttendance->id, $ids, true);
+                    && in_array($resignedNoAttendance->id, $ids, true)
+                    && ! in_array($otherOwner->id, $ids, true)
+                    && collect($options)->firstWhere('id', $activeEmp->id)['payroll_status'] === 'active'
+                    && collect($options)->firstWhere('id', $inactive->id)['payroll_status'] === 'inactive'
+                    && collect($options)->firstWhere('id', $resignedNoAttendance->id)['payroll_status'] === 'resigned'
+                    && collect($options)->firstWhere('id', $offboarded->id)['payroll_status'] === 'resigned';
             });
 
             // resignedEmployeeOptions should list all resigned employees for optional manual addition

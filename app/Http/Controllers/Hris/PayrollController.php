@@ -7,7 +7,6 @@ use App\Http\Requests\Hris\GeneratePayrollRequest;
 use App\Jobs\SendPayslipToWhatsApp;
 use App\Models\CompanySetting;
 use App\Models\Employee;
-use App\Models\EmployeeAttendance;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
 use App\Models\SubCompany;
@@ -84,49 +83,24 @@ class PayrollController extends Controller
 
         $paidEmployeeIds = PayrollItem::query()->where('user_id', $ownerId)->whereHas('payrollRun', fn ($q) => $q->where('user_id', $ownerId)->where('period', $period)->where('type', 'regular')->where('batch_purpose', 'regular')->released())->pluck('employee_id')->all();
 
-        [$periodStart, $periodEnd] = app(PayrollGenerationService::class)->calculatePeriodDates($period, $companySetting);
-
-        $resignedWithAttendanceIds = EmployeeAttendance::query()
-            ->withoutGlobalScopes()
-            ->where('user_id', $ownerId)
-            ->whereBetween('attendance_date', [$periodStart->toDateString(), $periodEnd->toDateString()])
-            ->where(function ($att) {
-                $att->whereNotNull('check_in_at')
-                    ->orWhereIn('status', ['present', 'late', 'wfa']);
-            })
-            ->whereIn('employee_id', function ($q) use ($ownerId) {
-                $q->select('id')->from('employees')
-                    ->where('user_id', $ownerId)
-                    ->where('employment_status', 'resigned');
-            })
-            ->pluck('employee_id')
-            ->unique()
-            ->all();
-
         $employeeOptions = Employee::query()
             ->with('subCompany:id,code,name')
             ->where('user_id', $ownerId)
-            ->where(function ($q) use ($resignedWithAttendanceIds) {
-                $q->where(function ($active) {
-                    $active->where('is_active', true)
-                        ->whereIn('employment_status', ['active', 'probation', 'on_leave']);
-                });
-                if (! empty($resignedWithAttendanceIds)) {
-                    $q->orWhereIn('id', $resignedWithAttendanceIds);
-                }
-            })
             ->orderBy('first_name')
             ->orderBy('last_name')
-            ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id', 'service_fee_points', 'employment_status'])
+            ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id', 'service_fee_points', 'employment_status', 'is_active', 'offboarded_at'])
             ->map(fn (Employee $employee): array => [
                 'id' => $employee->id,
-                'label' => $employee->employee_code.' - '.$employee->full_name.($employee->employment_status === 'resigned' ? ' (Resign - Ada Absensi)' : ''),
+                'label' => $employee->employee_code.' - '.$employee->full_name,
                 'sub_company_label' => $employee->subCompany
                     ? $employee->subCompany->code.' - '.$employee->subCompany->name
                     : 'Internal',
                 'service_fee_points' => $employee->service_fee_points,
                 'sub_company_id' => $employee->sub_company_id,
                 'employment_status' => $employee->employment_status,
+                'payroll_status' => $employee->employment_status === 'resigned' || ($employee->offboarded_at && $employee->offboarded_at->startOfDay()->lte(today()))
+                    ? 'resigned'
+                    : ($employee->is_active && in_array($employee->employment_status, ['active', 'probation', 'on_leave'], true) ? 'active' : 'inactive'),
                 'regular_paid' => in_array($employee->id, $paidEmployeeIds, true),
             ]);
 

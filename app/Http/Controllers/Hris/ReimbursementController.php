@@ -273,11 +273,48 @@ class ReimbursementController extends Controller
     public function updateStatus(Request $request, ReimbursementRequest $reimbursement): RedirectResponse
     {
         $this->authorizeOwner($request, $reimbursement);
-        $validated = $request->validate(['status' => ['required', Rule::in(['processing', 'paid'])], 'finance_notes' => ['nullable', 'string', 'max:2000']]);
-        abort_unless($reimbursement->status === 'approved' || ($reimbursement->status === 'processing' && $validated['status'] === 'paid'), 422, 'Status reimbursement belum siap diperbarui.');
-        $reimbursement->update(['status' => $validated['status'], 'processed_by' => $request->user()->id, 'processed_at' => now(), 'finance_notes' => $validated['finance_notes'] ?? $reimbursement->finance_notes]);
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['processing', 'paid'])],
+            'finance_notes' => ['nullable', 'string', 'max:2000'],
+        ]);
 
-        return back()->with('success', $validated['status'] === 'paid' ? 'Reimbursement ditandai sudah dibayar.' : 'Reimbursement diteruskan ke Finance.');
+        $nextStatus = $validated['status'];
+        $currentStatus = $reimbursement->status;
+
+        // Idempotent: jika sudah memiliki status yang sama, sukseskan tanpa error
+        if ($currentStatus === $nextStatus) {
+            if (array_key_exists('finance_notes', $validated) && $validated['finance_notes'] !== null) {
+                $reimbursement->update(['finance_notes' => $validated['finance_notes']]);
+            }
+
+            return back()->with('success', $nextStatus === 'paid' ? 'Reimbursement ditandai sudah dibayar.' : 'Reimbursement diteruskan ke Finance.');
+        }
+
+        $isValidTransition = match ($nextStatus) {
+            'processing' => in_array($currentStatus, ['pending', 'approved'], true),
+            'paid' => in_array($currentStatus, ['processing', 'approved'], true),
+            default => false,
+        };
+
+        abort_unless($isValidTransition, 422, 'Status reimbursement belum siap diperbarui.');
+
+        $updates = [
+            'status' => $nextStatus,
+            'processed_by' => $request->user()->id,
+            'processed_at' => now(),
+            'finance_notes' => $validated['finance_notes'] ?? $reimbursement->finance_notes,
+        ];
+
+        // Jika langsung diproses dari status pending, lengkapi juga data persetujuan
+        if ($currentStatus === 'pending') {
+            $updates['approved_by'] = $reimbursement->approved_by ?? $request->user()->id;
+            $updates['approved_at'] = $reimbursement->approved_at ?? now();
+            $updates['rejection_reason'] = null;
+        }
+
+        $reimbursement->update($updates);
+
+        return back()->with('success', $nextStatus === 'paid' ? 'Reimbursement ditandai sudah dibayar.' : 'Reimbursement diteruskan ke Finance.');
     }
 
     private function authorizeOwner(Request $request, ReimbursementRequest $reimbursement): void

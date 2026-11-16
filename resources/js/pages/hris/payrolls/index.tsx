@@ -57,6 +57,14 @@ import {
     formatThousandDigits,
     normalizeDigitInput,
 } from '@/lib/currency-input';
+import {
+    filterPayrollEmployees,
+    selectablePayrollEmployeeIds,
+} from '@/lib/payroll-employee-selection';
+import type {
+    PayrollEmployeeFilters,
+    PayrollEmployeeStatus,
+} from '@/lib/payroll-employee-selection';
 import { formatDeviceDateTime } from '@/lib/utils';
 import {
     generate as generatePayroll,
@@ -204,6 +212,7 @@ type PageProps = {
         label: string;
         sub_company_label: string;
         service_fee_points: string | number;
+        payroll_status: PayrollEmployeeStatus;
         regular_paid?: boolean;
         sub_company_id?: number | null;
     }>;
@@ -512,6 +521,8 @@ export default function PayrollPage() {
         sub_company_id || '__all',
     );
     const [sendingPayslips, setSendingPayslips] = useState(false);
+    const [employeeStatusFilter, setEmployeeStatusFilter] =
+        useState<PayrollEmployeeFilters['status']>('active');
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
     const [viewPeriodsDialogOpen, setViewPeriodsDialogOpen] = useState(false);
     const [noDataDialogOpen, setNoDataDialogOpen] = useState(false);
@@ -603,11 +614,44 @@ export default function PayrollPage() {
         }
     };
 
+    const employeeFilters: PayrollEmployeeFilters = {
+        status: employeeStatusFilter,
+        subCompany: subCompanyState,
+        scope: generateForm.data.employee_scope,
+    };
+    const filteredEmployeeOptions = filterPayrollEmployees(
+        employeeOptions,
+        employeeFilters,
+    );
+    const payrollStatusLabels: Record<PayrollEmployeeStatus, string> = {
+        active: 'Aktif',
+        inactive: 'Tidak Aktif',
+        resigned: 'Resign',
+    };
+    const autoSelectEmployees = (
+        overrides: Partial<PayrollEmployeeFilters> = {},
+        batchPurpose = generateForm.data.batch_purpose,
+        targetPeriod = periodState,
+    ) => {
+        generateForm.setData(
+            'selected_employee_ids',
+            selectablePayrollEmployeeIds(
+                filterPayrollEmployees(employeeOptions, {
+                    ...employeeFilters,
+                    ...overrides,
+                }),
+                batchPurpose,
+                targetPeriod === period,
+            ),
+        );
+    };
+
     const handleOpenGenerate = (targetPeriod?: string) => {
         const periodToUse = targetPeriod || periodState || period;
         setPeriodState(periodToUse);
         generateForm.setData('period', periodToUse);
         generateForm.setData('run_id', null);
+        autoSelectEmployees({}, generateForm.data.batch_purpose, periodToUse);
         setGenerateDialogOpen(true);
     };
 
@@ -857,24 +901,19 @@ export default function PayrollPage() {
     };
 
     const handleGenerate = () => {
+        const selectableIds = new Set(
+            selectablePayrollEmployeeIds(
+                filteredEmployeeOptions,
+                generateForm.data.batch_purpose,
+                periodState === period,
+            ),
+        );
         generateForm.transform((data) => ({
             ...data,
             period: periodState,
-            selected_employee_ids: data.selected_employee_ids.filter((id) => {
-                const employee = employeeOptions.find(
-                    (candidate) => candidate.id === id,
-                );
-                return (
-                    employee &&
-                    (subCompanyState === '__all' ||
-                        String(employee.sub_company_id) === subCompanyState) &&
-                    (data.employee_scope !== 'parent_only' ||
-                        !employee.sub_company_id) &&
-                    (data.batch_purpose === 'additional' ||
-                        periodState !== period ||
-                        !employee.regular_paid)
-                );
-            }),
+            selected_employee_ids: data.selected_employee_ids.filter((id) =>
+                selectableIds.has(id),
+            ),
         }));
         generateForm.post(generatePayroll.url(), {
             preserveScroll: true,
@@ -3635,9 +3674,14 @@ export default function PayrollPage() {
                                         id="period"
                                         type="month"
                                         value={periodState}
-                                        onChange={(event) =>
-                                            setPeriodState(event.target.value)
-                                        }
+                                        onChange={(event) => {
+                                            setPeriodState(event.target.value);
+                                            autoSelectEmployees(
+                                                {},
+                                                generateForm.data.batch_purpose,
+                                                event.target.value,
+                                            );
+                                        }}
                                         className="pl-9"
                                     />
                                 </div>
@@ -3673,7 +3717,12 @@ export default function PayrollPage() {
                                 </Label>
                                 <Select
                                     value={subCompanyState}
-                                    onValueChange={setSubCompanyState}
+                                    onValueChange={(value) => {
+                                        setSubCompanyState(value);
+                                        autoSelectEmployees({
+                                            subCompany: value,
+                                        });
+                                    }}
                                 >
                                     <SelectTrigger id="generate-sub-company">
                                         <SelectValue />
@@ -3731,10 +3780,7 @@ export default function PayrollPage() {
                                                 'batch_purpose',
                                                 value,
                                             );
-                                            generateForm.setData(
-                                                'selected_employee_ids',
-                                                [],
-                                            );
+                                            autoSelectEmployees({}, value);
                                         }}
                                     >
                                         <SelectTrigger id="generate-batch-purpose">
@@ -3762,12 +3808,15 @@ export default function PayrollPage() {
                                     </Label>
                                     <Select
                                         value={generateForm.data.employee_scope}
-                                        onValueChange={(value) =>
+                                        onValueChange={(value) => {
                                             generateForm.setData(
                                                 'employee_scope',
                                                 value,
-                                            )
-                                        }
+                                            );
+                                            autoSelectEmployees({
+                                                scope: value,
+                                            });
+                                        }}
                                     >
                                         <SelectTrigger id="generate-employee-scope">
                                             <SelectValue />
@@ -3887,30 +3936,12 @@ export default function PayrollPage() {
                                         onClick={() =>
                                             generateForm.setData(
                                                 'selected_employee_ids',
-                                                employeeOptions
-                                                    .filter(
-                                                        (employee) =>
-                                                            (subCompanyState ===
-                                                                '__all' ||
-                                                                String(
-                                                                    employee.sub_company_id,
-                                                                ) ===
-                                                                    subCompanyState) &&
-                                                            (generateForm.data
-                                                                .employee_scope !==
-                                                                'parent_only' ||
-                                                                !employee.sub_company_id) &&
-                                                            (generateForm.data
-                                                                .batch_purpose ===
-                                                                'additional' ||
-                                                                periodState !==
-                                                                    period ||
-                                                                !employee.regular_paid),
-                                                    )
-                                                    .map(
-                                                        (employee) =>
-                                                            employee.id,
-                                                    ),
+                                                selectablePayrollEmployeeIds(
+                                                    filteredEmployeeOptions,
+                                                    generateForm.data
+                                                        .batch_purpose,
+                                                    periodState === period,
+                                                ),
                                             )
                                         }
                                     >
@@ -3933,22 +3964,49 @@ export default function PayrollPage() {
                                         </Button>
                                     ) : null}
                                 </div>
+                                <div className="grid gap-2 sm:max-w-56">
+                                    <Label htmlFor="generate-employee-status">
+                                        Status karyawan
+                                    </Label>
+                                    <Select
+                                        value={employeeStatusFilter}
+                                        onValueChange={(
+                                            value: PayrollEmployeeFilters['status'],
+                                        ) => {
+                                            setEmployeeStatusFilter(value);
+                                            autoSelectEmployees({
+                                                status: value,
+                                            });
+                                        }}
+                                    >
+                                        <SelectTrigger id="generate-employee-status">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">
+                                                Semua status
+                                            </SelectItem>
+                                            <SelectItem value="active">
+                                                Aktif
+                                            </SelectItem>
+                                            <SelectItem value="inactive">
+                                                Tidak Aktif
+                                            </SelectItem>
+                                            <SelectItem value="resigned">
+                                                Resign
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                                 <div className="max-h-56 overflow-y-auto rounded-md border">
-                                    {employeeOptions.length === 0 ? (
+                                    {filteredEmployeeOptions.length === 0 ? (
                                         <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                                            Belum ada karyawan aktif.
+                                            Tidak ada karyawan yang sesuai
+                                            filter.
                                         </p>
                                     ) : (
-                                        employeeOptions
-                                            .filter(
-                                                (employee) =>
-                                                    subCompanyState ===
-                                                        '__all' ||
-                                                    String(
-                                                        employee.sub_company_id,
-                                                    ) === subCompanyState,
-                                            )
-                                            .map((employee) => {
+                                        filteredEmployeeOptions.map(
+                                            (employee) => {
                                                 const checked =
                                                     generateForm.data.selected_employee_ids.includes(
                                                         employee.id,
@@ -3992,16 +4050,25 @@ export default function PayrollPage() {
                                                             <span className="block text-xs text-muted-foreground">
                                                                 {
                                                                     employee.sub_company_label
+                                                                }{' '}
+                                                                ·{' '}
+                                                                {
+                                                                    payrollStatusLabels[
+                                                                        employee
+                                                                            .payroll_status
+                                                                    ]
                                                                 }
                                                             </span>
                                                         </span>
                                                     </label>
                                                 );
-                                            })
+                                            },
+                                        )
                                     )}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Centang karyawan yang akan menerima batch
+                                    Karyawan sesuai filter otomatis tercentang.
+                                    Lepas centang untuk mengecualikan dari batch
                                     ini. Karyawan yang sudah menerima gaji
                                     reguler hanya dapat dipilih untuk pembayaran
                                     tambahan.

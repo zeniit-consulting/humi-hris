@@ -282,4 +282,172 @@ class ReimbursementTest extends TestCase
             ->has('stats')
         );
     }
+
+    public function test_admin_can_update_status_to_processing_from_approved(): void
+    {
+        $this->withoutVite();
+
+        $company = User::factory()->create([
+            'email_verified_at' => now(),
+            'role' => 'superadmin',
+        ]);
+        $employee = Employee::factory()->create(['user_id' => $company->id]);
+
+        $reimbursement = ReimbursementRequest::create([
+            'user_id' => $company->id,
+            'employee_id' => $employee->id,
+            'title' => 'Biaya Internet',
+            'description' => 'Tagihan bulanan',
+            'amount' => 500000,
+            'status' => 'approved',
+            'approved_by' => $company->id,
+            'approved_at' => now(),
+        ]);
+
+        $response = $this->actingAs($company)->post("/hris/reimbursements/{$reimbursement->id}/status", [
+            'status' => 'processing',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Reimbursement diteruskan ke Finance.');
+
+        $this->assertDatabaseHas('reimbursement_requests', [
+            'id' => $reimbursement->id,
+            'status' => 'processing',
+            'processed_by' => $company->id,
+        ]);
+    }
+
+    public function test_admin_can_update_status_to_processing_from_pending(): void
+    {
+        $this->withoutVite();
+
+        $company = User::factory()->create([
+            'email_verified_at' => now(),
+            'role' => 'superadmin',
+        ]);
+        $employee = Employee::factory()->create(['user_id' => $company->id]);
+
+        $reimbursement = ReimbursementRequest::create([
+            'user_id' => $company->id,
+            'employee_id' => $employee->id,
+            'title' => 'Biaya Transportasi',
+            'description' => 'Taksi bandara',
+            'amount' => 200000,
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($company)->post("/hris/reimbursements/{$reimbursement->id}/status", [
+            'status' => 'processing',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Reimbursement diteruskan ke Finance.');
+
+        $this->assertDatabaseHas('reimbursement_requests', [
+            'id' => $reimbursement->id,
+            'status' => 'processing',
+            'approved_by' => $company->id,
+            'processed_by' => $company->id,
+        ]);
+    }
+
+    public function test_update_status_to_processing_is_idempotent(): void
+    {
+        $this->withoutVite();
+
+        $company = User::factory()->create([
+            'email_verified_at' => now(),
+            'role' => 'superadmin',
+        ]);
+        $employee = Employee::factory()->create(['user_id' => $company->id]);
+
+        $reimbursement = ReimbursementRequest::create([
+            'user_id' => $company->id,
+            'employee_id' => $employee->id,
+            'title' => 'Cetak Dokumen',
+            'description' => 'Fotokopi',
+            'amount' => 50000,
+            'status' => 'processing',
+            'processed_by' => $company->id,
+            'processed_at' => now(),
+        ]);
+
+        // Sending processing again should succeed without throwing 422
+        $response = $this->actingAs($company)->post("/hris/reimbursements/{$reimbursement->id}/status", [
+            'status' => 'processing',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Reimbursement diteruskan ke Finance.');
+    }
+
+    public function test_admin_can_update_status_to_paid_and_is_idempotent(): void
+    {
+        $this->withoutVite();
+
+        $company = User::factory()->create([
+            'email_verified_at' => now(),
+            'role' => 'superadmin',
+        ]);
+        $employee = Employee::factory()->create(['user_id' => $company->id]);
+
+        $reimbursement = ReimbursementRequest::create([
+            'user_id' => $company->id,
+            'employee_id' => $employee->id,
+            'title' => 'Makan Siang',
+            'description' => 'Traktir vendor',
+            'amount' => 150000,
+            'status' => 'processing',
+            'processed_by' => $company->id,
+            'processed_at' => now(),
+        ]);
+
+        $response = $this->actingAs($company)->post("/hris/reimbursements/{$reimbursement->id}/status", [
+            'status' => 'paid',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Reimbursement ditandai sudah dibayar.');
+
+        $this->assertDatabaseHas('reimbursement_requests', [
+            'id' => $reimbursement->id,
+            'status' => 'paid',
+        ]);
+
+        // Second click / repeat call should also succeed idempotently
+        $responseRepeat = $this->actingAs($company)->post("/hris/reimbursements/{$reimbursement->id}/status", [
+            'status' => 'paid',
+        ]);
+
+        $responseRepeat->assertRedirect();
+        $responseRepeat->assertSessionHas('success', 'Reimbursement ditandai sudah dibayar.');
+    }
+
+    public function test_cannot_update_status_from_rejected(): void
+    {
+        $this->withoutVite();
+
+        $company = User::factory()->create([
+            'email_verified_at' => now(),
+            'role' => 'superadmin',
+        ]);
+        $employee = Employee::factory()->create(['user_id' => $company->id]);
+
+        $reimbursement = ReimbursementRequest::create([
+            'user_id' => $company->id,
+            'employee_id' => $employee->id,
+            'title' => 'Hotel',
+            'description' => 'Hotel pribadi',
+            'amount' => 800000,
+            'status' => 'rejected',
+            'rejection_reason' => 'Tidak sesuai kebijakan',
+        ]);
+
+        $response = $this->actingAs($company)->post("/hris/reimbursements/{$reimbursement->id}/status", [
+            'status' => 'processing',
+        ]);
+
+        $response->assertStatus(422);
+    }
 }

@@ -6,6 +6,7 @@ import {
     ArrowUp,
     ArrowUpDown,
     FileSpreadsheet,
+    Loader2,
     WalletCards,
     X,
 } from 'lucide-react';
@@ -267,12 +268,20 @@ export default function ReimbursementsPage() {
             },
         });
     };
-    const updateStatus = (row: Row, nextStatus: 'processing' | 'paid') =>
+    const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
+
+    const updateStatus = (row: Row, nextStatus: 'processing' | 'paid') => {
+        if (updatingStatusId !== null) return;
+        setUpdatingStatusId(row.id);
         router.post(
             `${pageUrl}/${row.id}/status`,
             { status: nextStatus },
-            { preserveScroll: true },
+            {
+                preserveScroll: true,
+                onFinish: () => setUpdatingStatusId(null),
+            },
         );
+    };
 
     const applyFilter = (newFilters: { period?: string; status?: string | null; category?: string | null }) => {
         const query: Record<string, any> = {
@@ -656,6 +665,7 @@ export default function ReimbursementsPage() {
                                                       'approved' ? (
                                                         <Button
                                                             size="sm"
+                                                            disabled={updatingStatusId === row.id}
                                                             onClick={() =>
                                                                 updateStatus(
                                                                     row,
@@ -663,13 +673,18 @@ export default function ReimbursementsPage() {
                                                                 )
                                                             }
                                                         >
-                                                            <WalletCards className="size-4" />
+                                                            {updatingStatusId === row.id ? (
+                                                                <Loader2 className="mr-1.5 size-4 animate-spin" />
+                                                            ) : (
+                                                                <WalletCards className="mr-1.5 size-4" />
+                                                            )}
                                                             Kirim ke Finance
                                                         </Button>
                                                     ) : row.status ===
                                                       'processing' ? (
                                                         <Button
                                                             size="sm"
+                                                            disabled={updatingStatusId === row.id}
                                                             onClick={() =>
                                                                 updateStatus(
                                                                     row,
@@ -677,6 +692,9 @@ export default function ReimbursementsPage() {
                                                                 )
                                                             }
                                                         >
+                                                            {updatingStatusId === row.id && (
+                                                                <Loader2 className="mr-1.5 size-4 animate-spin" />
+                                                            )}
                                                             Tandai dibayar
                                                         </Button>
                                                     ) : null}
