@@ -150,9 +150,31 @@ class PayrollController extends Controller
                 'base_salary' => (float) ($employee->base_salary ?? 0),
             ]);
 
+        $existingRuns = PayrollRun::query()
+            ->where('user_id', $ownerId)
+            ->where('type', $type)
+            ->latest('id')
+            ->get(['id', 'period', 'type', 'status', 'is_saved', 'employees_count', 'total_net_salary', 'created_at']);
+
+        $existingPeriods = $existingRuns
+            ->groupBy('period')
+            ->map(function ($periodRuns, $periodKey): array {
+                return [
+                    'period' => (string) $periodKey,
+                    'batches_count' => $periodRuns->count(),
+                    'total_employees' => (int) $periodRuns->sum('employees_count'),
+                    'total_net_salary' => (float) $periodRuns->sum('total_net_salary'),
+                    'has_released' => $periodRuns->contains(fn ($r) => $r->status === 'released' || (bool) $r->is_saved),
+                    'latest_created_at' => $periodRuns->max('created_at')?->toIso8601String(),
+                ];
+            })
+            ->sortByDesc('period')
+            ->values();
+
         return Inertia::render('hris/payrolls/index', [
             'period' => $period,
             'type' => $type,
+            'existingPeriods' => $existingPeriods,
             'batches' => PayrollRun::query()->where('user_id', $ownerId)->where('period', $period)->where('type', $type)->latest('id')->get(['id', 'code', 'batch_purpose', 'status', 'employees_count', 'total_net_salary']),
             'sub_company_id' => $subCompanyId ? (string) $subCompanyId : '',
             'payrollSettings' => [

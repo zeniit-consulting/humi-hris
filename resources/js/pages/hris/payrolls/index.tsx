@@ -180,10 +180,20 @@ type PayrollItem = {
 
 type CompensationRow = { name: string; amount: string };
 
+type ExistingPeriod = {
+    period: string;
+    batches_count: number;
+    total_employees: number;
+    total_net_salary: number;
+    has_released: boolean;
+    latest_created_at?: string | null;
+};
+
 type PageProps = {
     period: string;
     run: PayrollRun | null;
     batches: PayrollRun[];
+    existingPeriods?: ExistingPeriod[];
     items: PayrollItem[];
     type: string;
     sub_company_id: string;
@@ -258,6 +268,30 @@ const getPeriodDateRange = (periodYm: string, cutoffDay?: string) => {
     const startStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}-${String(prevDate.getDate()).padStart(2, '0')}`;
 
     return { start: startStr, end: endStr };
+};
+
+const formatPeriodMonthYear = (periodYm: string) => {
+    if (!periodYm || !periodYm.includes('-')) return periodYm;
+    const [year, month] = periodYm.split('-');
+    const monthNames = [
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember',
+    ];
+    const mIndex = parseInt(month, 10) - 1;
+    if (mIndex >= 0 && mIndex < 12) {
+        return `${monthNames[mIndex]} ${year}`;
+    }
+    return periodYm;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -457,6 +491,7 @@ export default function PayrollPage() {
         period,
         run,
         batches,
+        existingPeriods = [],
         items,
         type,
         sub_company_id,
@@ -476,6 +511,10 @@ export default function PayrollPage() {
     );
     const [sendingPayslips, setSendingPayslips] = useState(false);
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+    const [viewPeriodsDialogOpen, setViewPeriodsDialogOpen] = useState(false);
+    const [noDataDialogOpen, setNoDataDialogOpen] = useState(false);
+    const [noDataPeriod, setNoDataPeriod] = useState<string | null>(null);
+    const [searchPeriodInput, setSearchPeriodInput] = useState(period);
     const [addResignedDialogOpen, setAddResignedDialogOpen] = useState(false);
     const [sendingPayslipItemIds, setSendingPayslipItemIds] = useState<
         number[]
@@ -550,6 +589,24 @@ export default function PayrollPage() {
                 addResignedForm.reset();
             },
         });
+    };
+
+    const handleOpenViewPeriods = () => {
+        if (!existingPeriods || existingPeriods.length === 0) {
+            setNoDataPeriod(null);
+            setNoDataDialogOpen(true);
+        } else {
+            setSearchPeriodInput(periodState || period);
+            setViewPeriodsDialogOpen(true);
+        }
+    };
+
+    const handleOpenGenerate = (targetPeriod?: string) => {
+        const periodToUse = targetPeriod || periodState || period;
+        setPeriodState(periodToUse);
+        generateForm.setData('period', periodToUse);
+        generateForm.setData('run_id', null);
+        setGenerateDialogOpen(true);
     };
 
     const handleToggleRevertDenda = (
@@ -1078,47 +1135,72 @@ export default function PayrollPage() {
                     />
                 )}
 
-                <div className="flex gap-2">
-                    <Button
-                        variant={type === 'regular' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() =>
-                            router.get(
-                                payrollsIndex.url(),
-                                {
-                                    period,
-                                    type: 'regular',
-                                    sub_company_id:
-                                        subCompanyState === '__all'
-                                            ? undefined
-                                            : subCompanyState,
-                                },
-                                { replace: true, preserveScroll: true },
-                            )
-                        }
-                    >
-                        Payroll Reguler
-                    </Button>
-                    <Button
-                        variant={type === 'thr' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() =>
-                            router.get(
-                                payrollsIndex.url(),
-                                {
-                                    period,
-                                    type: 'thr',
-                                    sub_company_id:
-                                        subCompanyState === '__all'
-                                            ? undefined
-                                            : subCompanyState,
-                                },
-                                { replace: true, preserveScroll: true },
-                            )
-                        }
-                    >
-                        THR
-                    </Button>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex gap-2">
+                        <Button
+                            variant={type === 'regular' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() =>
+                                router.get(
+                                    payrollsIndex.url(),
+                                    {
+                                        period,
+                                        type: 'regular',
+                                        sub_company_id:
+                                            subCompanyState === '__all'
+                                                ? undefined
+                                                : subCompanyState,
+                                    },
+                                    { replace: true, preserveScroll: true },
+                                )
+                            }
+                        >
+                            Payroll Reguler
+                        </Button>
+                        <Button
+                            variant={type === 'thr' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() =>
+                                router.get(
+                                    payrollsIndex.url(),
+                                    {
+                                        period,
+                                        type: 'thr',
+                                        sub_company_id:
+                                            subCompanyState === '__all'
+                                                ? undefined
+                                                : subCompanyState,
+                                    },
+                                    { replace: true, preserveScroll: true },
+                                )
+                            }
+                        >
+                            THR
+                        </Button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleOpenViewPeriods}
+                            className="gap-1.5"
+                        >
+                            <CalendarDays className="size-4" />
+                            Lihat Periode
+                        </Button>
+                        <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => handleOpenGenerate()}
+                            disabled={isLocked}
+                            className="gap-1.5"
+                        >
+                            <Calculator className="size-4" />
+                            {type === 'thr' ? 'Generate THR' : 'Generate Payroll'}
+                        </Button>
+                    </div>
                 </div>
 
                 {batches.length > 0 && (
@@ -1207,38 +1289,21 @@ export default function PayrollPage() {
 
                 <Card>
                     <CardHeader>
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                                <CardTitle>
-                                    {type === 'thr'
-                                        ? 'Generate THR'
-                                        : 'Generate Payroll'}
-                                </CardTitle>
-                                <CardDescription>
-                                    Periode {periodState || '-'} ·{' '}
-                                    {subCompanyState === '__all'
-                                        ? 'Semua karyawan'
-                                        : (subCompanies.find(
-                                              (company) =>
-                                                  String(company.id) ===
-                                                  subCompanyState,
-                                          )?.label ?? 'Sub-company')}
-                                </CardDescription>
-                            </div>
-                            <Button
-                                type="button"
-                                onClick={() => {
-                                    generateForm.setData('run_id', null);
-                                    setGenerateDialogOpen(true);
-                                }}
-                                disabled={isLocked}
-                            >
-                                <Calculator className="size-4" />
-                                {type === 'thr'
-                                    ? 'Buka Generate THR'
-                                    : 'Buat Batch Payroll'}
-                            </Button>
-                        </div>
+                        <CardTitle>
+                            {type === 'thr'
+                                ? 'Kelola THR'
+                                : 'Kelola Payroll'}
+                        </CardTitle>
+                        <CardDescription>
+                            Periode {formatPeriodMonthYear(periodState)} ({periodState || '-'}) ·{' '}
+                            {subCompanyState === '__all'
+                                ? 'Semua karyawan'
+                                : (subCompanies.find(
+                                      (company) =>
+                                          String(company.id) ===
+                                          subCompanyState,
+                                  )?.label ?? 'Sub-company')}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-wrap items-center gap-2">
@@ -2144,10 +2209,39 @@ export default function PayrollPage() {
                                                             ? 9
                                                             : 10
                                                     }
-                                                    className="px-3 py-8 text-center text-muted-foreground"
+                                                    className="px-3 py-10 text-center"
                                                 >
-                                                    Belum ada data THR di
-                                                    periode ini.
+                                                    <div className="flex flex-col items-center justify-center gap-2">
+                                                        <CalendarDays className="size-8 text-muted-foreground/50" />
+                                                        <p className="font-medium text-foreground">
+                                                            Belum ada data THR di periode {formatPeriodMonthYear(periodState)} ({periodState})
+                                                        </p>
+                                                        <p className="max-w-sm text-xs text-muted-foreground">
+                                                            Buat batch THR baru untuk periode ini atau lihat periode yang sudah ada sebelumnya.
+                                                        </p>
+                                                        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={handleOpenViewPeriods}
+                                                                className="gap-1.5"
+                                                            >
+                                                                <CalendarDays className="size-3.5" />
+                                                                Lihat Periode
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                disabled={isLocked}
+                                                                onClick={() => handleOpenGenerate()}
+                                                                className="gap-1.5"
+                                                            >
+                                                                <Calculator className="size-3.5" />
+                                                                Generate THR Sekarang
+                                                            </Button>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         )}
@@ -2781,10 +2875,39 @@ export default function PayrollPage() {
                                                             ? 22
                                                             : 23
                                                     }
-                                                    className="px-3 py-8 text-center text-muted-foreground"
+                                                    className="px-3 py-10 text-center"
                                                 >
-                                                    Belum ada data payroll di
-                                                    periode ini.
+                                                    <div className="flex flex-col items-center justify-center gap-2">
+                                                        <CalendarDays className="size-8 text-muted-foreground/50" />
+                                                        <p className="font-medium text-foreground">
+                                                            Belum ada data payroll di periode {formatPeriodMonthYear(periodState)} ({periodState})
+                                                        </p>
+                                                        <p className="max-w-sm text-xs text-muted-foreground">
+                                                            Buat batch payroll baru untuk periode ini atau lihat periode yang sudah ada sebelumnya.
+                                                        </p>
+                                                        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={handleOpenViewPeriods}
+                                                                className="gap-1.5"
+                                                            >
+                                                                <CalendarDays className="size-3.5" />
+                                                                Lihat Periode
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                disabled={isLocked}
+                                                                onClick={() => handleOpenGenerate()}
+                                                                className="gap-1.5"
+                                                            >
+                                                                <Calculator className="size-3.5" />
+                                                                Generate Payroll Sekarang
+                                                            </Button>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         )}
@@ -3882,6 +4005,224 @@ export default function PayrollPage() {
                                       : 'Generate Payroll'}
                             </Button>
                         </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog: Tidak Ada Data Tersedia */}
+            <Dialog open={noDataDialogOpen} onOpenChange={setNoDataDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader className="text-center sm:text-center">
+                        <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
+                            <CalendarDays className="size-6" />
+                        </div>
+                        <DialogTitle className="text-center text-lg">
+                            Tidak ada data tersedia
+                        </DialogTitle>
+                        <DialogDescription className="text-center text-sm">
+                            {noDataPeriod
+                                ? `Tidak ada data ${type === 'thr' ? 'THR' : 'payroll'} yang tersimpan untuk periode ${formatPeriodMonthYear(noDataPeriod)} (${noDataPeriod}).`
+                                : `Belum ada data periode ${type === 'thr' ? 'THR' : 'payroll'} yang tersimpan di sistem.`}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-center">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setNoDataDialogOpen(false)}
+                        >
+                            Tutup
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                const target = noDataPeriod || periodState;
+                                setNoDataDialogOpen(false);
+                                handleOpenGenerate(target);
+                            }}
+                            className="gap-1.5"
+                        >
+                            <Calculator className="size-4" />
+                            {type === 'thr'
+                                ? 'Generate THR Sekarang'
+                                : 'Generate Payroll Sekarang'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog: Periode yang Sudah Ada */}
+            <Dialog
+                open={viewPeriodsDialogOpen}
+                onOpenChange={setViewPeriodsDialogOpen}
+            >
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-lg">
+                            <CalendarDays className="size-5 text-primary" />
+                            Periode {type === 'thr' ? 'THR' : 'Payroll'} yang Sudah Ada
+                        </DialogTitle>
+                        <DialogDescription>
+                            Pilih periode di bawah ini untuk melihat rincian batch dan penggajian.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 pt-1">
+                        <div className="flex items-end gap-2 rounded-lg border bg-muted/40 p-3">
+                            <div className="grid flex-1 gap-1.5">
+                                <Label
+                                    htmlFor="search-period-input"
+                                    className="text-xs font-medium"
+                                >
+                                    Cek atau Buka Periode Tertentu
+                                </Label>
+                                <Input
+                                    id="search-period-input"
+                                    type="month"
+                                    value={searchPeriodInput}
+                                    onChange={(e) =>
+                                        setSearchPeriodInput(e.target.value)
+                                    }
+                                    className="h-9 bg-background"
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                className="h-9"
+                                onClick={() => {
+                                    if (!searchPeriodInput) return;
+                                    const exists = existingPeriods.some(
+                                        (p) => p.period === searchPeriodInput,
+                                    );
+                                    if (!exists) {
+                                        setViewPeriodsDialogOpen(false);
+                                        setNoDataPeriod(searchPeriodInput);
+                                        setNoDataDialogOpen(true);
+                                    } else {
+                                        setViewPeriodsDialogOpen(false);
+                                        router.get(
+                                            payrollsIndex.url(),
+                                            {
+                                                period: searchPeriodInput,
+                                                type,
+                                                sub_company_id:
+                                                    subCompanyState === '__all'
+                                                        ? undefined
+                                                        : subCompanyState,
+                                            },
+                                            { preserveScroll: true },
+                                        );
+                                    }
+                                }}
+                            >
+                                Buka Periode
+                            </Button>
+                        </div>
+
+                        <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+                            {existingPeriods.map((p) => {
+                                const isCurrent = p.period === period;
+                                return (
+                                    <div
+                                        key={p.period}
+                                        onClick={() => {
+                                            setViewPeriodsDialogOpen(false);
+                                            router.get(
+                                                payrollsIndex.url(),
+                                                {
+                                                    period: p.period,
+                                                    type,
+                                                    sub_company_id:
+                                                        subCompanyState === '__all'
+                                                            ? undefined
+                                                            : subCompanyState,
+                                                },
+                                                { preserveScroll: true },
+                                            );
+                                        }}
+                                        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition hover:border-primary/50 hover:bg-muted/40 ${
+                                            isCurrent
+                                                ? 'border-primary/60 bg-primary/5 shadow-xs'
+                                                : 'border-border'
+                                        }`}
+                                    >
+                                        <div className="space-y-1">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="font-semibold text-foreground">
+                                                    {formatPeriodMonthYear(p.period)}
+                                                </span>
+                                                <span className="font-mono text-xs text-muted-foreground">
+                                                    ({p.period})
+                                                </span>
+                                                {isCurrent && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="border-primary/40 text-[10px] text-primary"
+                                                    >
+                                                        Sedang Dibuka
+                                                    </Badge>
+                                                )}
+                                                {p.has_released ? (
+                                                    <Badge className="bg-emerald-600 text-[10px] text-white">
+                                                        Dirilis
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="border-amber-300 bg-amber-50 text-[10px] text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                                                    >
+                                                        Draft
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
+                                                <span>{p.batches_count} batch</span>
+                                                <span>·</span>
+                                                <span>{p.total_employees} karyawan</span>
+                                                <span>·</span>
+                                                <span className="font-medium text-foreground">
+                                                    {formatCurrency(p.total_net_salary)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant={isCurrent ? 'secondary' : 'outline'}
+                                            size="sm"
+                                        >
+                                            {isCurrent ? 'Aktif' : 'Buka'}
+                                        </Button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setViewPeriodsDialogOpen(false)}
+                        >
+                            Tutup
+                        </Button>
+                        <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => {
+                                setViewPeriodsDialogOpen(false);
+                                handleOpenGenerate();
+                            }}
+                            className="gap-1.5"
+                        >
+                            <Plus className="size-4" />
+                            {type === 'thr'
+                                ? 'Generate THR Baru'
+                                : 'Generate Payroll Baru'}
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>
