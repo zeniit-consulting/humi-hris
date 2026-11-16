@@ -27,8 +27,32 @@ class ThreeMonthsDummyDataSeeder extends Seeder
         }
         $ownerId = $owner->id;
 
-        // 1. Select the 10 active employees
-        $targetEmployeeIds = [1, 12, 17, 7, 22, 20, 6, 19, 15, 9];
+        // 1. Get or create 10 employees for this owner
+        $employees = Employee::query()->where('user_id', $ownerId)->take(10)->get();
+        if ($employees->count() < 10) {
+            $needed = 10 - $employees->count();
+            for ($i = 1; $i <= $needed; $i++) {
+                $code = 'EMP-DUMMY-'.str_pad((string) ($employees->count() + $i), 4, '0', STR_PAD_LEFT);
+                Employee::create([
+                    'user_id' => $ownerId,
+                    'employee_code' => $code,
+                    'first_name' => 'Karyawan',
+                    'last_name' => "Dummy {$i}",
+                    'email' => "karyawan.dummy.{$i}@example.com",
+                    'phone' => '0812'.random_int(10000000, 99999999),
+                    'hire_date' => '2025-01-01',
+                    'employment_status' => 'active',
+                    'employment_type' => 'PKWTT',
+                    'base_salary' => 6000000 + ($i * 500000),
+                    'salary_type' => 'gross',
+                    'is_active' => true,
+                ]);
+            }
+            $employees = Employee::query()->where('user_id', $ownerId)->take(10)->get();
+        }
+
+        $empList = $employees->values();
+        $targetEmployeeIds = $empList->pluck('id')->all();
 
         // Ensure these 10 are active
         Employee::query()->where('user_id', $ownerId)->whereIn('id', $targetEmployeeIds)->update([
@@ -41,8 +65,6 @@ class ThreeMonthsDummyDataSeeder extends Seeder
             'is_active' => false,
             'employment_status' => 'inactive',
         ]);
-
-        $employees = Employee::query()->where('user_id', $ownerId)->whereIn('id', $targetEmployeeIds)->get();
 
         // Ensure company settings
         $setting = CompanySetting::query()->where('user_id', $ownerId)->first();
@@ -121,19 +143,19 @@ class ThreeMonthsDummyDataSeeder extends Seeder
         // 4. Create Leaves
         $leaves = [
             // Sept 2026
-            ['employee_id' => 12, 'leave_type' => 'annual', 'start_date' => '2026-09-14', 'end_date' => '2026-09-15', 'total_days' => 2, 'reason' => 'Cuti Tahunan - Urusan Keluarga', 'status' => 'approved'],
-            ['employee_id' => 22, 'leave_type' => 'sick', 'start_date' => '2026-09-21', 'end_date' => '2026-09-21', 'total_days' => 1, 'reason' => 'Sakit Demam & Flu (Surat Dokter)', 'status' => 'approved'],
-            ['employee_id' => 17, 'leave_type' => 'annual', 'start_date' => '2026-09-28', 'end_date' => '2026-09-28', 'total_days' => 1, 'reason' => 'Cuti Tahunan Pribadi', 'status' => 'approved'],
+            ['employee_id' => $empList[1]->id, 'leave_type' => 'annual', 'start_date' => '2026-09-14', 'end_date' => '2026-09-15', 'total_days' => 2, 'reason' => 'Cuti Tahunan - Urusan Keluarga', 'status' => 'approved'],
+            ['employee_id' => $empList[4]->id, 'leave_type' => 'sick', 'start_date' => '2026-09-21', 'end_date' => '2026-09-21', 'total_days' => 1, 'reason' => 'Sakit Demam & Flu (Surat Dokter)', 'status' => 'approved'],
+            ['employee_id' => $empList[2]->id, 'leave_type' => 'annual', 'start_date' => '2026-09-28', 'end_date' => '2026-09-28', 'total_days' => 1, 'reason' => 'Cuti Tahunan Pribadi', 'status' => 'approved'],
 
             // Oct 2026
-            ['employee_id' => 7, 'leave_type' => 'annual', 'start_date' => '2026-10-08', 'end_date' => '2026-10-09', 'total_days' => 2, 'reason' => 'Cuti Tahunan - Liburan Keluarga', 'status' => 'approved'],
-            ['employee_id' => 19, 'leave_type' => 'sick', 'start_date' => '2026-10-15', 'end_date' => '2026-10-15', 'total_days' => 1, 'reason' => 'Sakit Migrain (Surat Dokter)', 'status' => 'approved'],
-            ['employee_id' => 9, 'leave_type' => 'annual', 'start_date' => '2026-10-22', 'end_date' => '2026-10-23', 'total_days' => 2, 'reason' => 'Cuti Acara Pernikahan Saudara', 'status' => 'approved'],
+            ['employee_id' => $empList[3]->id, 'leave_type' => 'annual', 'start_date' => '2026-10-08', 'end_date' => '2026-10-09', 'total_days' => 2, 'reason' => 'Cuti Tahunan - Liburan Keluarga', 'status' => 'approved'],
+            ['employee_id' => $empList[7]->id, 'leave_type' => 'sick', 'start_date' => '2026-10-15', 'end_date' => '2026-10-15', 'total_days' => 1, 'reason' => 'Sakit Migrain (Surat Dokter)', 'status' => 'approved'],
+            ['employee_id' => $empList[9]->id, 'leave_type' => 'annual', 'start_date' => '2026-10-22', 'end_date' => '2026-10-23', 'total_days' => 2, 'reason' => 'Cuti Acara Pernikahan Saudara', 'status' => 'approved'],
 
             // Nov 2026 (Bulan berjalan)
-            ['employee_id' => 6, 'leave_type' => 'annual', 'start_date' => '2026-11-05', 'end_date' => '2026-11-06', 'total_days' => 2, 'reason' => 'Cuti Tahunan', 'status' => 'approved'],
-            ['employee_id' => 15, 'leave_type' => 'sick', 'start_date' => '2026-11-12', 'end_date' => '2026-11-12', 'total_days' => 1, 'reason' => 'Sakit Flu & Batuk', 'status' => 'approved'],
-            ['employee_id' => 20, 'leave_type' => 'annual', 'start_date' => '2026-11-20', 'end_date' => '2026-11-20', 'total_days' => 1, 'reason' => 'Cuti Tahunan Akhir Pekan', 'status' => 'pending'],
+            ['employee_id' => $empList[6]->id, 'leave_type' => 'annual', 'start_date' => '2026-11-05', 'end_date' => '2026-11-06', 'total_days' => 2, 'reason' => 'Cuti Tahunan', 'status' => 'approved'],
+            ['employee_id' => $empList[8]->id, 'leave_type' => 'sick', 'start_date' => '2026-11-12', 'end_date' => '2026-11-12', 'total_days' => 1, 'reason' => 'Sakit Flu & Batuk', 'status' => 'approved'],
+            ['employee_id' => $empList[5]->id, 'leave_type' => 'annual', 'start_date' => '2026-11-20', 'end_date' => '2026-11-20', 'total_days' => 1, 'reason' => 'Cuti Tahunan Akhir Pekan', 'status' => 'pending'],
         ];
 
         $approvedLeavesMap = [];
@@ -165,21 +187,21 @@ class ThreeMonthsDummyDataSeeder extends Seeder
         // 5. Create Overtimes
         $overtimes = [
             // Sept 2026
-            ['employee_id' => 1, 'work_date' => '2026-09-04', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Review Evaluasi Q3 Management', 'status' => 'approved'],
-            ['employee_id' => 7, 'work_date' => '2026-09-11', 'start_time' => '18:00:00', 'end_time' => '21:00:00', 'total_hours' => 3.0, 'reason' => 'Maintenance Server & Operasional', 'status' => 'approved'],
-            ['employee_id' => 20, 'work_date' => '2026-09-18', 'start_time' => '18:00:00', 'end_time' => '20:30:00', 'total_hours' => 2.5, 'reason' => 'Update Sistem HR & Absensi', 'status' => 'approved'],
+            ['employee_id' => $empList[0]->id, 'work_date' => '2026-09-04', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Review Evaluasi Q3 Management', 'status' => 'approved'],
+            ['employee_id' => $empList[3]->id, 'work_date' => '2026-09-11', 'start_time' => '18:00:00', 'end_time' => '21:00:00', 'total_hours' => 3.0, 'reason' => 'Maintenance Server & Operasional', 'status' => 'approved'],
+            ['employee_id' => $empList[5]->id, 'work_date' => '2026-09-18', 'start_time' => '18:00:00', 'end_time' => '20:30:00', 'total_hours' => 2.5, 'reason' => 'Update Sistem HR & Absensi', 'status' => 'approved'],
 
             // Oct 2026
-            ['employee_id' => 12, 'work_date' => '2026-10-06', 'start_time' => '18:00:00', 'end_time' => '21:00:00', 'total_hours' => 3.0, 'reason' => 'Screening Kandidat Batch Rekrutmen', 'status' => 'approved'],
-            ['employee_id' => 6, 'work_date' => '2026-10-14', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Pengadaan Logistik Kantor', 'status' => 'approved'],
-            ['employee_id' => 15, 'work_date' => '2026-10-21', 'start_time' => '18:00:00', 'end_time' => '20:30:00', 'total_hours' => 2.5, 'reason' => 'Materi Kampanye Marketing Q4', 'status' => 'approved'],
-            ['employee_id' => 9, 'work_date' => '2026-10-28', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Rekonsiliasi Pajak Bulanan', 'status' => 'approved'],
+            ['employee_id' => $empList[1]->id, 'work_date' => '2026-10-06', 'start_time' => '18:00:00', 'end_time' => '21:00:00', 'total_hours' => 3.0, 'reason' => 'Screening Kandidat Batch Rekrutmen', 'status' => 'approved'],
+            ['employee_id' => $empList[6]->id, 'work_date' => '2026-10-14', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Pengadaan Logistik Kantor', 'status' => 'approved'],
+            ['employee_id' => $empList[8]->id, 'work_date' => '2026-10-21', 'start_time' => '18:00:00', 'end_time' => '20:30:00', 'total_hours' => 2.5, 'reason' => 'Materi Kampanye Marketing Q4', 'status' => 'approved'],
+            ['employee_id' => $empList[9]->id, 'work_date' => '2026-10-28', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Rekonsiliasi Pajak Bulanan', 'status' => 'approved'],
 
             // Nov 2026 (Bulan berjalan)
-            ['employee_id' => 19, 'work_date' => '2026-11-04', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Rekap Data Penjualan Q4', 'status' => 'approved'],
-            ['employee_id' => 9, 'work_date' => '2026-11-10', 'start_time' => '18:00:00', 'end_time' => '21:00:00', 'total_hours' => 3.0, 'reason' => 'Audit Keuangan Internal Tahunan', 'status' => 'approved'],
-            ['employee_id' => 22, 'work_date' => '2026-11-13', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Persiapan Pelatihan Karyawan', 'status' => 'approved'],
-            ['employee_id' => 20, 'work_date' => '2026-11-16', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Penyelesaian Tiket IT Kantor Hari Ini', 'status' => 'pending'],
+            ['employee_id' => $empList[7]->id, 'work_date' => '2026-11-04', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Rekap Data Penjualan Q4', 'status' => 'approved'],
+            ['employee_id' => $empList[9]->id, 'work_date' => '2026-11-10', 'start_time' => '18:00:00', 'end_time' => '21:00:00', 'total_hours' => 3.0, 'reason' => 'Audit Keuangan Internal Tahunan', 'status' => 'approved'],
+            ['employee_id' => $empList[4]->id, 'work_date' => '2026-11-13', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Persiapan Pelatihan Karyawan', 'status' => 'approved'],
+            ['employee_id' => $empList[5]->id, 'work_date' => '2026-11-16', 'start_time' => '18:00:00', 'end_time' => '20:00:00', 'total_hours' => 2.0, 'reason' => 'Penyelesaian Tiket IT Kantor Hari Ini', 'status' => 'pending'],
         ];
 
         foreach ($overtimes as $item) {
@@ -251,35 +273,35 @@ class ThreeMonthsDummyDataSeeder extends Seeder
                 $notes = null;
 
                 // Specific late scenarios
-                if ($emp->id === 20 && $dateStr === '2026-09-08') {
+                if ($emp->id === $empList[5]->id && $dateStr === '2026-09-08') {
                     $checkInAt = Carbon::parse("{$dateStr} 08:24:00");
                     $status = 'late';
                     $lateMinutes = 24;
                     $lateLevel = 'level_1';
                     $latePenalty = 20000.00;
                     $notes = 'Terlambat 24 menit (Macet)';
-                } elseif ($emp->id === 7 && $dateStr === '2026-09-23') {
+                } elseif ($emp->id === $empList[3]->id && $dateStr === '2026-09-23') {
                     $checkInAt = Carbon::parse("{$dateStr} 08:35:00");
                     $status = 'late';
                     $lateMinutes = 35;
                     $lateLevel = 'level_2';
                     $latePenalty = 50000.00;
                     $notes = 'Terlambat 35 menit';
-                } elseif ($emp->id === 12 && $dateStr === '2026-10-12') {
+                } elseif ($emp->id === $empList[1]->id && $dateStr === '2026-10-12') {
                     $checkInAt = Carbon::parse("{$dateStr} 08:20:00");
                     $status = 'late';
                     $lateMinutes = 20;
                     $lateLevel = 'level_1';
                     $latePenalty = 20000.00;
                     $notes = 'Terlambat 20 menit';
-                } elseif ($emp->id === 19 && $dateStr === '2026-10-27') {
+                } elseif ($emp->id === $empList[7]->id && $dateStr === '2026-10-27') {
                     $checkInAt = Carbon::parse("{$dateStr} 08:40:00");
                     $status = 'late';
                     $lateMinutes = 40;
                     $lateLevel = 'level_2';
                     $latePenalty = 50000.00;
                     $notes = 'Terlambat 40 menit';
-                } elseif ($emp->id === 22 && $dateStr === '2026-11-09') {
+                } elseif ($emp->id === $empList[4]->id && $dateStr === '2026-11-09') {
                     $checkInAt = Carbon::parse("{$dateStr} 08:18:00");
                     $status = 'late';
                     $lateMinutes = 18;
