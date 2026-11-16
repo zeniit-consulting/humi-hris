@@ -8,6 +8,7 @@ import {
     ArrowDown,
     ArrowUpRight,
     CheckCircle2,
+    ChevronDown,
     Download,
     Filter,
     FileText,
@@ -23,6 +24,7 @@ import {
     UserPlus,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 import { LockedFeatureBanner } from '@/components/locked-feature-banner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -3609,7 +3611,7 @@ export default function PayrollPage() {
                 open={generateDialogOpen}
                 onOpenChange={setGenerateDialogOpen}
             >
-                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>
                             {type === 'thr'
@@ -3619,74 +3621,78 @@ export default function PayrollPage() {
                         <DialogDescription>
                             {type === 'thr'
                                 ? 'Generate Tunjangan Hari Raya berdasarkan tanggal referensi masa kerja.'
-                                : 'Pilih periode payroll, lalu sistem akan auto-generate dari gaji pokok, tunjangan aktif, potongan kasbon, dan denda.'}
+                                : 'Pilih periode dan karyawan untuk membuat draft payroll.'}
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="grid gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="period">Periode</Label>
-                            <div className="relative">
-                                <CalendarDays className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    id="period"
-                                    type="month"
-                                    value={periodState}
-                                    onChange={(event) =>
-                                        setPeriodState(event.target.value)
-                                    }
-                                    className="pl-9"
-                                />
+                    <div className="grid gap-5">
+                        <div className="grid items-start gap-4 sm:grid-cols-2">
+                            <div className="grid gap-2">
+                                <Label htmlFor="period">Periode</Label>
+                                <div className="relative">
+                                    <CalendarDays className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        id="period"
+                                        type="month"
+                                        value={periodState}
+                                        onChange={(event) =>
+                                            setPeriodState(event.target.value)
+                                        }
+                                        className="pl-9"
+                                    />
+                                </div>
+                                {(() => {
+                                    const range = getPeriodDateRange(
+                                        periodState,
+                                        payrollSettings?.payroll_cutoff_day,
+                                    );
+                                    if (!range) return null;
+                                    return (
+                                        <p className="text-xs text-muted-foreground">
+                                            Rentang cut-off absensi & denda:{' '}
+                                            <span className="font-semibold text-foreground">
+                                                {range.start}
+                                            </span>{' '}
+                                            s/d{' '}
+                                            <span className="font-semibold text-foreground">
+                                                {range.end}
+                                            </span>
+                                            {payrollSettings?.payroll_cutoff_day &&
+                                            payrollSettings.payroll_cutoff_day !==
+                                                'end_of_month'
+                                                ? ` (Cut-off tanggal ${payrollSettings.payroll_cutoff_day})`
+                                                : ' (Cut-off akhir bulan)'}
+                                        </p>
+                                    );
+                                })()}
                             </div>
-                            {(() => {
-                                const range = getPeriodDateRange(
-                                    periodState,
-                                    payrollSettings?.payroll_cutoff_day,
-                                );
-                                if (!range) return null;
-                                return (
-                                    <p className="text-xs text-muted-foreground">
-                                        Rentang cut-off absensi & denda:{' '}
-                                        <span className="font-semibold text-foreground">
-                                            {range.start}
-                                        </span>{' '}
-                                        s/d{' '}
-                                        <span className="font-semibold text-foreground">
-                                            {range.end}
-                                        </span>
-                                        {payrollSettings?.payroll_cutoff_day &&
-                                        payrollSettings.payroll_cutoff_day !==
-                                            'end_of_month'
-                                            ? ` (Cut-off tanggal ${payrollSettings.payroll_cutoff_day})`
-                                            : ' (Cut-off akhir bulan)'}
-                                    </p>
-                                );
-                            })()}
-                        </div>
 
-                        <div className="grid gap-2">
-                            <Label>Sub-company</Label>
-                            <Select
-                                value={subCompanyState}
-                                onValueChange={setSubCompanyState}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="__all">
-                                        Semua karyawan
-                                    </SelectItem>
-                                    {subCompanies.map((company) => (
-                                        <SelectItem
-                                            key={company.id}
-                                            value={String(company.id)}
-                                        >
-                                            {company.label}
+                            <div className="grid gap-2">
+                                <Label htmlFor="generate-sub-company">
+                                    Sub-company
+                                </Label>
+                                <Select
+                                    value={subCompanyState}
+                                    onValueChange={setSubCompanyState}
+                                >
+                                    <SelectTrigger id="generate-sub-company">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="__all">
+                                            Semua karyawan
                                         </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                        {subCompanies.map((company) => (
+                                            <SelectItem
+                                                key={company.id}
+                                                value={String(company.id)}
+                                            >
+                                                {company.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
                         {type === 'thr' ? (
@@ -3713,123 +3719,167 @@ export default function PayrollPage() {
                         ) : null}
 
                         {type === 'regular' ? (
-                            <div className="grid gap-2">
-                                <Label>Jenis pembayaran</Label>
-                                <Select
-                                    value={generateForm.data.batch_purpose}
-                                    onValueChange={(value) => {
-                                        generateForm.setData(
-                                            'batch_purpose',
-                                            value,
-                                        );
-                                        generateForm.setData(
-                                            'selected_employee_ids',
-                                            [],
-                                        );
-                                    }}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="regular">
-                                            Reguler
-                                        </SelectItem>
-                                        <SelectItem value="additional">
-                                            Tambahan
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <p className="text-xs text-muted-foreground">
-                                    {generateForm.data.batch_purpose ===
-                                    'additional'
-                                        ? 'Komponen dimulai dari nol. Isi hanya pembayaran tambahan pada draft yang dibuat.'
-                                        : 'Gaji dan potongan dihitung untuk karyawan pilihan yang belum menerima gaji reguler.'}
-                                </p>
-                                <Label>Cakupan Generate</Label>
-                                <Select
-                                    value={generateForm.data.employee_scope}
-                                    onValueChange={(value) =>
-                                        generateForm.setData(
-                                            'employee_scope',
-                                            value,
-                                        )
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">
-                                            Semua karyawan
-                                        </SelectItem>
-                                        <SelectItem value="parent_only">
-                                            Perusahaan parent saja
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <p className="text-xs text-muted-foreground">
-                                    Pilihan parent saja hanya membuat payroll
-                                    untuk karyawan internal, tanpa karyawan yang
-                                    berada di sub-company.
-                                </p>
+                            <div className="grid items-start gap-4 sm:grid-cols-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="generate-batch-purpose">
+                                        Jenis pembayaran
+                                    </Label>
+                                    <Select
+                                        value={generateForm.data.batch_purpose}
+                                        onValueChange={(value) => {
+                                            generateForm.setData(
+                                                'batch_purpose',
+                                                value,
+                                            );
+                                            generateForm.setData(
+                                                'selected_employee_ids',
+                                                [],
+                                            );
+                                        }}
+                                    >
+                                        <SelectTrigger id="generate-batch-purpose">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="regular">
+                                                Reguler
+                                            </SelectItem>
+                                            <SelectItem value="additional">
+                                                Tambahan
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">
+                                        {generateForm.data.batch_purpose ===
+                                        'additional'
+                                            ? 'Komponen dimulai dari nol. Isi hanya pembayaran tambahan pada draft yang dibuat.'
+                                            : 'Gaji dan potongan dihitung untuk karyawan pilihan yang belum menerima gaji reguler.'}
+                                    </p>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="generate-employee-scope">
+                                        Cakupan Generate
+                                    </Label>
+                                    <Select
+                                        value={generateForm.data.employee_scope}
+                                        onValueChange={(value) =>
+                                            generateForm.setData(
+                                                'employee_scope',
+                                                value,
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger id="generate-employee-scope">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">
+                                                Semua karyawan
+                                            </SelectItem>
+                                            <SelectItem value="parent_only">
+                                                Perusahaan parent saja
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">
+                                        Pilihan parent saja hanya membuat
+                                        payroll untuk karyawan internal, tanpa
+                                        karyawan yang berada di sub-company.
+                                    </p>
+                                </div>
                             </div>
                         ) : null}
 
                         {type === 'regular' &&
                         generateForm.data.batch_purpose !== 'additional' ? (
-                            <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="service_fee_total">
-                                        Total Service Fee
-                                    </Label>
-                                    <Input
-                                        id="service_fee_total"
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={formatThousandDigits(
+                            <details className="group rounded-md border">
+                                <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center gap-2 rounded-md px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+                                    <span className="font-medium">
+                                        <span className="group-open:hidden">
+                                            Tampilkan Service Fee
+                                        </span>
+                                        <span className="hidden group-open:inline">
+                                            Sembunyikan Service Fee
+                                        </span>
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                        {Number(
                                             generateForm.data.service_fee_total,
-                                        )}
-                                        onChange={(event) =>
-                                            generateForm.setData(
-                                                'service_fee_total',
-                                                normalizeDigitInput(
-                                                    event.target.value,
-                                                ),
-                                            )
-                                        }
-                                        placeholder="Contoh: 10.000.000"
+                                        ) > 0
+                                            ? `Rp ${formatThousandDigits(generateForm.data.service_fee_total)}`
+                                            : 'Opsional'}
+                                    </span>
+                                    <ChevronDown
+                                        aria-hidden="true"
+                                        className="ml-auto size-4 shrink-0 text-muted-foreground group-open:rotate-180"
                                     />
-                                    <p className="text-xs text-muted-foreground">
-                                        Opsional. Nominal dibagikan proporsional
-                                        kepada staf dengan poin Service Fee
-                                        lebih dari 0 dan dicatat sebagai bonus
-                                        payroll.
-                                    </p>
+                                </summary>
+                                <div className="border-t p-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="service_fee_total">
+                                            Total Service Fee
+                                        </Label>
+                                        <Input
+                                            id="service_fee_total"
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={formatThousandDigits(
+                                                generateForm.data
+                                                    .service_fee_total,
+                                            )}
+                                            onChange={(event) =>
+                                                generateForm.setData(
+                                                    'service_fee_total',
+                                                    normalizeDigitInput(
+                                                        event.target.value,
+                                                    ),
+                                                )
+                                            }
+                                            placeholder="Contoh: 10.000.000"
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Opsional. Nominal dibagikan
+                                            proporsional kepada staf dengan poin
+                                            Service Fee lebih dari 0 dan dicatat
+                                            sebagai bonus payroll.
+                                        </p>
+                                    </div>
+                                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                        {employeeOptions
+                                            .filter(
+                                                (employee) =>
+                                                    Number(
+                                                        employee.service_fee_points,
+                                                    ) > 0,
+                                            )
+                                            .map((employee) => (
+                                                <span key={employee.id}>
+                                                    {employee.label}:{' '}
+                                                    {
+                                                        employee.service_fee_points
+                                                    }{' '}
+                                                    poin
+                                                </span>
+                                            ))}
+                                    </div>
                                 </div>
-                                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                                    {employeeOptions
-                                        .filter(
-                                            (employee) =>
-                                                Number(
-                                                    employee.service_fee_points,
-                                                ) > 0,
-                                        )
-                                        .map((employee) => (
-                                            <span key={employee.id}>
-                                                {employee.label}:{' '}
-                                                {employee.service_fee_points}{' '}
-                                                poin
-                                            </span>
-                                        ))}
-                                </div>
-                            </div>
+                            </details>
                         ) : null}
 
                         {type === 'regular' ? (
                             <div className="grid gap-2">
-                                <div className="flex items-center justify-between gap-3">
-                                    <Label>Karyawan dalam batch</Label>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="mr-auto text-sm font-medium">
+                                        Karyawan dalam batch
+                                        <span className="ml-2 font-normal text-muted-foreground">
+                                            {
+                                                generateForm.data
+                                                    .selected_employee_ids
+                                                    .length
+                                            }{' '}
+                                            dipilih
+                                        </span>
+                                    </span>
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -3971,7 +4021,7 @@ export default function PayrollPage() {
                                 )}
                             </div>
                         )}
-                        <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
+                        <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
                             <Button
                                 type="button"
                                 variant="outline"
