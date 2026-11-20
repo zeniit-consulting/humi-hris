@@ -125,20 +125,39 @@ export function LandingFooter({
                     </nav>
                 </div>
 
-                <div className="mt-14 flex flex-col gap-6 border-t border-[var(--landing-color-paper)]/15 pt-6 sm:flex-row sm:items-end sm:justify-between">
-                    <Link
-                        href="/"
-                        aria-label="Humi — halaman utama"
-                        className="inline-flex size-14 items-center justify-center rounded-[var(--landing-radius-card)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--landing-color-focus)]"
-                    >
-                        <img
-                            src="/humi-mark-footer.png"
-                            width={64}
-                            height={64}
-                            className="size-14 object-contain"
-                            alt="Humi"
+                <div className="mt-14 flex flex-col gap-6 border-t border-[var(--landing-color-paper)]/15 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                        <Link
+                            href="/"
+                            aria-label="Humi — halaman utama"
+                            className="inline-flex size-14 items-center justify-center rounded-[var(--landing-radius-card)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--landing-color-focus)]"
+                        >
+                            <img
+                                src="/humi-mark-footer.png"
+                                width={64}
+                                height={64}
+                                className="size-14 object-contain"
+                                alt="Humi"
+                            />
+                        </Link>
+                        <div
+                            className="h-8 w-px bg-[var(--landing-color-paper)]/15"
+                            aria-hidden="true"
                         />
-                    </Link>
+                        <div
+                            className="inline-flex items-center rounded-lg bg-white px-2.5 py-1.5 shadow-xs"
+                            title="Penyelenggara Sistem Elektronik (PSE) Terdaftar di Kementerian Komunikasi dan Digital"
+                        >
+                            <img
+                                src="/images/logo-pse.webp"
+                                alt="Penyelenggara Sistem Elektronik (PSE) Terdaftar di Kominfo"
+                                width={120}
+                                height={56}
+                                className="h-8 w-auto object-contain sm:h-9"
+                                loading="lazy"
+                            />
+                        </div>
+                    </div>
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-[var(--landing-color-paper)]/70">
                         <span className="whitespace-nowrap">
                             © {new Date().getFullYear()} Humi

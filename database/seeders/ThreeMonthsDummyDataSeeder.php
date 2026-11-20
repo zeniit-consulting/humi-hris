@@ -20,12 +20,26 @@ class ThreeMonthsDummyDataSeeder extends Seeder
 {
     public function run(): void
     {
-        $owner = User::find(1) ?? User::first();
+        $targetEmail = env('SEED_USER_EMAIL');
+        $targetUserId = env('SEED_USER_ID');
+
+        $owner = null;
+        if ($targetEmail) {
+            $owner = User::where('email', $targetEmail)->first();
+        } elseif ($targetUserId) {
+            $owner = User::find($targetUserId);
+        }
+
+        if (! $owner) {
+            $owner = User::find(1) ?? User::where('role', 'admin')->first() ?? User::first();
+        }
+
         if (! $owner) {
             $this->command?->error('No user found.');
             return;
         }
         $ownerId = $owner->id;
+        $this->command?->info("Generating dummy data for: {$owner->name} ({$owner->email}, ID: {$owner->id})");
 
         // 1. Get or create 10 employees for this owner
         $employees = Employee::query()->where('user_id', $ownerId)->take(10)->get();
@@ -373,13 +387,20 @@ class ThreeMonthsDummyDataSeeder extends Seeder
             'saved_at' => Carbon::parse('2026-10-31 17:30:00'),
         ]);
 
-        // 7c. November 2026 (Draft - Bulan Berjalan)
+        // 7c. November 2026 (Released)
         $novRun = $payrollService->generateForPeriod(
             ownerId: $ownerId,
             period: '2026-11',
             generatedBy: $ownerId,
             selectedEmployeeIds: $targetEmployeeIds,
         );
+        $novRun->update([
+            'status' => 'released',
+            'is_saved' => true,
+            'released_at' => Carbon::parse('2026-11-16 17:30:00'),
+            'released_by' => $ownerId,
+            'saved_at' => Carbon::parse('2026-11-16 17:30:00'),
+        ]);
 
         $this->command?->info("Dummy data created successfully for 10 employees across 3 months (Sept, Oct, Nov 2026)!");
     }

@@ -467,11 +467,19 @@ export default function MintlifyLanding({
 
                 <footer className="border-t border-[#f2f2f2] bg-white">
                     <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-5 px-5 py-8 text-[13px] text-black/55 sm:flex-row">
-                        <img
-                            src="/logo.png"
-                            alt="Humi"
-                            className="h-7 w-auto"
-                        />
+                        <div className="flex items-center gap-4">
+                            <img
+                                src="/logo.png"
+                                alt="Humi"
+                                className="h-7 w-auto"
+                            />
+                            <div className="h-4 w-px bg-black/15" aria-hidden="true" />
+                            <img
+                                src="/images/logo-pse.webp"
+                                alt="Penyelenggara Sistem Elektronik (PSE) Terdaftar di Kominfo"
+                                className="h-7 w-auto object-contain"
+                            />
+                        </div>
                         <p>
                             &copy; {new Date().getFullYear()} Humi. All rights
                             reserved.
