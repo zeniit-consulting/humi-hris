@@ -83,26 +83,67 @@ class PayrollController extends Controller
 
         $paidEmployeeIds = PayrollItem::query()->where('user_id', $ownerId)->whereHas('payrollRun', fn ($q) => $q->where('user_id', $ownerId)->where('period', $period)->where('type', 'regular')->where('batch_purpose', 'regular')->released())->pluck('employee_id')->all();
 
+        $payrolls = app(PayrollGenerationService::class);
+        [$periodStart, $periodEnd] = $payrolls->calculatePeriodDates($period, $companySetting);
+
+        $employeesWithAttendance = DB::table('employee_attendances')
+            ->where(function ($q) use ($ownerId) {
+                $q->where('user_id', $ownerId)->orWhereNull('user_id');
+            })
+            ->whereBetween('attendance_date', [$periodStart->toDateString(), $periodEnd->toDateString()])
+            ->where(function ($att) {
+                $att->whereNotNull('check_in_at')
+                    ->orWhereIn('status', ['present', 'late', 'wfa', 'on_leave', 'sick']);
+            })
+            ->distinct()
+            ->pluck('employee_id')
+            ->flip()
+            ->all();
+
         $employeeOptions = Employee::query()
             ->with('subCompany:id,code,name')
             ->where('user_id', $ownerId)
             ->orderBy('first_name')
             ->orderBy('last_name')
-            ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id', 'service_fee_points', 'employment_status', 'is_active', 'offboarded_at'])
-            ->map(fn (Employee $employee): array => [
-                'id' => $employee->id,
-                'label' => $employee->employee_code.' - '.$employee->full_name,
-                'sub_company_label' => $employee->subCompany
-                    ? $employee->subCompany->code.' - '.$employee->subCompany->name
-                    : 'Internal',
-                'service_fee_points' => $employee->service_fee_points,
-                'sub_company_id' => $employee->sub_company_id,
-                'employment_status' => $employee->employment_status,
-                'payroll_status' => $employee->employment_status === 'resigned' || ($employee->offboarded_at && $employee->offboarded_at->startOfDay()->lte(today()))
-                    ? 'resigned'
-                    : ($employee->is_active && in_array($employee->employment_status, ['active', 'probation', 'on_leave'], true) ? 'active' : 'inactive'),
-                'regular_paid' => in_array($employee->id, $paidEmployeeIds, true),
-            ]);
+            ->get(['id', 'employee_code', 'first_name', 'last_name', 'sub_company_id', 'service_fee_points', 'employment_status', 'is_active', 'hire_date', 'offboarded_at'])
+            ->map(function (Employee $employee) use ($paidEmployeeIds, $periodStart, $periodEnd, $employeesWithAttendance): array {
+                $isActive = $employee->is_active && in_array($employee->employment_status, ['active', 'probation', 'on_leave'], true);
+                $offboardedAtStr = $employee->offboarded_at ? Carbon::parse($employee->offboarded_at)->toDateString() : null;
+                $hasAttendance = isset($employeesWithAttendance[$employee->id]);
+
+                // Resign with prorata: has resigned/offboarded, AND (has attendance in period OR offboarded within/after period start)
+                $isResignedWithSalary = ! $isActive && (
+                    $hasAttendance ||
+                    ($offboardedAtStr && $offboardedAtStr >= $periodStart->toDateString() && (! $employee->hire_date || $employee->hire_date->toDateString() <= $periodEnd->toDateString()))
+                );
+
+                if ($isActive) {
+                    $payrollStatus = 'active';
+                } elseif ($isResignedWithSalary) {
+                    $payrollStatus = 'resigned';
+                } else {
+                    $payrollStatus = 'inactive';
+                }
+
+                return [
+                    'id' => $employee->id,
+                    'employee_code' => $employee->employee_code,
+                    'full_name' => $employee->full_name,
+                    'label' => $employee->employee_code.' - '.$employee->full_name,
+                    'sub_company_label' => $employee->subCompany
+                        ? $employee->subCompany->code.' - '.$employee->subCompany->name
+                        : 'Internal',
+                    'service_fee_points' => $employee->service_fee_points,
+                    'sub_company_id' => $employee->sub_company_id,
+                    'employment_status' => $employee->employment_status,
+                    'is_active' => (bool) $employee->is_active,
+                    'offboarded_at' => $offboardedAtStr,
+                    'payroll_status' => $payrollStatus,
+                    'has_prorata' => $isResignedWithSalary,
+                    'is_default' => $payrollStatus === 'active' || $payrollStatus === 'resigned',
+                    'regular_paid' => in_array($employee->id, $paidEmployeeIds, true),
+                ];
+            });
 
         $resignedEmployeeOptions = Employee::query()
             ->with(['subCompany:id,code,name', 'division:id,name'])

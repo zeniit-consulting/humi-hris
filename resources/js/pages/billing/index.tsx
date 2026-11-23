@@ -6,7 +6,6 @@ import {
     Clock,
     CreditCard,
     Download,
-    FileText,
     Lock,
     Receipt,
     Sparkles,
@@ -485,13 +484,13 @@ const coreFeaturesIncluded = [
     'Jadwal Kerja',
     'Cuti & Izin',
     'Lembur',
-    'Penggajian',
     'Notifikasi',
     'Survey',
     'Struktur Organisasi',
 ];
 
 const coreFeatureLocked = [
+    'Penggajian',
     'Rekrutmen',
     'Performance',
     'Kasbon',

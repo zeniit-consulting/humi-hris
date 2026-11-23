@@ -92,7 +92,6 @@ const coreFeaturesIncluded = [
     'Jadwal Kerja',
     'Cuti & Izin',
     'Lembur',
-    'Penggajian',
     'Notifikasi',
     'Survey',
     'Struktur Organisasi',
@@ -100,6 +99,7 @@ const coreFeaturesIncluded = [
 
 const plusFeatures = [
     ...coreFeaturesIncluded,
+    'Penggajian',
     'Rekrutmen',
     'Kasbon',
     'Asset Management',
@@ -132,7 +132,7 @@ const pricingPlans = [
         price: fmt.format(PRICE_PLUS),
         period: '/karyawan/bulan',
         description:
-            'Paket lengkap untuk rekrutmen, kasbon, dan asset management.',
+            'Paket lengkap untuk penggajian, rekrutmen, kasbon, dan asset management.',
         cta: 'Pilih Plus',
         badge: 'REKOMENDASI',
         features: plusFeatures,

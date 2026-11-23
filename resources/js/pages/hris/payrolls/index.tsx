@@ -7,6 +7,8 @@ import {
     ArrowUp,
     ArrowDown,
     ArrowUpRight,
+    ArrowRight,
+    Check,
     CheckCircle2,
     ChevronDown,
     Download,
@@ -18,10 +20,13 @@ import {
     Pencil,
     Plus,
     RotateCcw,
+    Search,
     Send,
     Sparkles,
     Trash2,
     UserPlus,
+    Users,
+    X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -209,10 +214,17 @@ type PageProps = {
     sub_company_id: string;
     employeeOptions: Array<{
         id: number;
+        employee_code?: string;
+        full_name?: string;
         label: string;
         sub_company_label: string;
         service_fee_points: string | number;
         payroll_status: PayrollEmployeeStatus;
+        employment_status?: string;
+        is_active?: boolean;
+        offboarded_at?: string | null;
+        has_prorata?: boolean;
+        is_default?: boolean;
         regular_paid?: boolean;
         sub_company_id?: number | null;
     }>;
@@ -522,7 +534,9 @@ export default function PayrollPage() {
     );
     const [sendingPayslips, setSendingPayslips] = useState(false);
     const [employeeStatusFilter, setEmployeeStatusFilter] =
-        useState<PayrollEmployeeFilters['status']>('active');
+        useState<PayrollEmployeeFilters['status']>('default');
+    const [availableSearchInput, setAvailableSearchInput] = useState('');
+    const [selectedSearchInput, setSelectedSearchInput] = useState('');
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
     const [viewPeriodsDialogOpen, setViewPeriodsDialogOpen] = useState(false);
     const [noDataDialogOpen, setNoDataDialogOpen] = useState(false);
@@ -623,10 +637,117 @@ export default function PayrollPage() {
         employeeOptions,
         employeeFilters,
     );
-    const payrollStatusLabels: Record<PayrollEmployeeStatus, string> = {
-        active: 'Aktif',
-        inactive: 'Tidak Aktif',
-        resigned: 'Resign',
+    const filteredAvailableEmployees = useMemo(() => {
+        if (!availableSearchInput.trim()) return filteredEmployeeOptions;
+        const q = availableSearchInput.toLowerCase().trim();
+        return filteredEmployeeOptions.filter(
+            (e) =>
+                e.label.toLowerCase().includes(q) ||
+                (e.sub_company_label &&
+                    e.sub_company_label.toLowerCase().includes(q)),
+        );
+    }, [filteredEmployeeOptions, availableSearchInput]);
+
+    const selectedEmployeesList = useMemo(() => {
+        const selectedMap = new Map(employeeOptions.map((e) => [e.id, e]));
+        return generateForm.data.selected_employee_ids
+            .map((id) => selectedMap.get(id))
+            .filter(Boolean) as typeof employeeOptions;
+    }, [employeeOptions, generateForm.data.selected_employee_ids]);
+
+    const filteredSelectedEmployees = useMemo(() => {
+        if (!selectedSearchInput.trim()) return selectedEmployeesList;
+        const q = selectedSearchInput.toLowerCase().trim();
+        return selectedEmployeesList.filter(
+            (e) =>
+                e.label.toLowerCase().includes(q) ||
+                (e.sub_company_label &&
+                    e.sub_company_label.toLowerCase().includes(q)),
+        );
+    }, [selectedEmployeesList, selectedSearchInput]);
+
+    const handleAddEmployee = (employeeId: number) => {
+        if (!generateForm.data.selected_employee_ids.includes(employeeId)) {
+            generateForm.setData('selected_employee_ids', [
+                ...generateForm.data.selected_employee_ids,
+                employeeId,
+            ]);
+        }
+    };
+
+    const handleRemoveEmployee = (employeeId: number) => {
+        generateForm.setData(
+            'selected_employee_ids',
+            generateForm.data.selected_employee_ids.filter(
+                (id) => id !== employeeId,
+            ),
+        );
+    };
+
+    const handleAddAllFiltered = () => {
+        const isRegularBatch = generateForm.data.batch_purpose === 'regular';
+        const isCurrent = periodState === period;
+        const eligibleIds = filteredAvailableEmployees
+            .filter((e) => !(isRegularBatch && isCurrent && e.regular_paid))
+            .map((e) => e.id);
+        generateForm.setData('selected_employee_ids', [
+            ...new Set([
+                ...generateForm.data.selected_employee_ids,
+                ...eligibleIds,
+            ]),
+        ]);
+    };
+
+    const handleResetToDefault = () => {
+        setEmployeeStatusFilter('default');
+        setAvailableSearchInput('');
+        autoSelectEmployees(
+            { status: 'default' },
+            generateForm.data.batch_purpose,
+            periodState,
+        );
+    };
+
+    const handleClearSelected = () => {
+        generateForm.setData('selected_employee_ids', []);
+    };
+
+    const renderStatusBadge = (status: PayrollEmployeeStatus) => {
+        switch (status) {
+            case 'active':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 text-[10px] px-1.5 py-0 h-4 font-normal"
+                    >
+                        Aktif
+                    </Badge>
+                );
+            case 'resigned':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 text-[10px] px-1.5 py-0 h-4 font-normal"
+                    >
+                        Resign (Prorata)
+                    </Badge>
+                );
+            case 'inactive':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 text-[10px] px-1.5 py-0 h-4 font-normal"
+                    >
+                        Nonaktif
+                    </Badge>
+                );
+            default:
+                return (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                        {status}
+                    </Badge>
+                );
+        }
     };
     const autoSelectEmployees = (
         overrides: Partial<PayrollEmployeeFilters> = {},
@@ -649,9 +770,12 @@ export default function PayrollPage() {
     const handleOpenGenerate = (targetPeriod?: string) => {
         const periodToUse = targetPeriod || periodState || period;
         setPeriodState(periodToUse);
+        setEmployeeStatusFilter('default');
+        setAvailableSearchInput('');
+        setSelectedSearchInput('');
         generateForm.setData('period', periodToUse);
         generateForm.setData('run_id', null);
-        autoSelectEmployees({}, generateForm.data.batch_purpose, periodToUse);
+        autoSelectEmployees({ status: 'default' }, generateForm.data.batch_purpose, periodToUse);
         setGenerateDialogOpen(true);
     };
 
@@ -919,16 +1043,6 @@ export default function PayrollPage() {
             preserveScroll: true,
             onSuccess: () => setGenerateDialogOpen(false),
         });
-    };
-
-    const toggleSelectedEmployee = (employeeId: number, checked: boolean) => {
-        const nextIds = checked
-            ? [...generateForm.data.selected_employee_ids, employeeId]
-            : generateForm.data.selected_employee_ids.filter(
-                  (id) => id !== employeeId,
-              );
-
-        generateForm.setData('selected_employee_ids', [...new Set(nextIds)]);
     };
 
     const handleGenerateTHR = () => {
@@ -3650,7 +3764,7 @@ export default function PayrollPage() {
                 open={generateDialogOpen}
                 onOpenChange={setGenerateDialogOpen}
             >
-                <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
+                <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-4xl xl:max-w-5xl">
                     <DialogHeader>
                         <DialogTitle>
                             {type === 'thr'
@@ -3916,162 +4030,292 @@ export default function PayrollPage() {
                         ) : null}
 
                         {type === 'regular' ? (
-                            <div className="grid gap-2">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <span className="mr-auto text-sm font-medium">
-                                        Karyawan dalam batch
-                                        <span className="ml-2 font-normal text-muted-foreground">
-                                            {
-                                                generateForm.data
-                                                    .selected_employee_ids
-                                                    .length
-                                            }{' '}
-                                            dipilih
-                                        </span>
-                                    </span>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() =>
-                                            generateForm.setData(
-                                                'selected_employee_ids',
-                                                selectablePayrollEmployeeIds(
-                                                    filteredEmployeeOptions,
-                                                    generateForm.data
-                                                        .batch_purpose,
-                                                    periodState === period,
-                                                ),
-                                            )
-                                        }
-                                    >
-                                        Pilih Semua
-                                    </Button>
-                                    {generateForm.data.selected_employee_ids
-                                        .length > 0 ? (
+                            <div className="grid gap-3 pt-1">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+                                    <div>
+                                        <Label className="text-sm font-semibold text-foreground">
+                                            Pilih Karyawan untuk Diproses
+                                        </Label>
+                                        <p className="text-xs text-muted-foreground">
+                                            Filter karyawan di tabel kiri dan masukkan ke tabel kanan untuk dihitung gajinya.
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
                                         <Button
                                             type="button"
-                                            variant="ghost"
+                                            variant="outline"
                                             size="sm"
-                                            onClick={() =>
-                                                generateForm.setData(
-                                                    'selected_employee_ids',
-                                                    [],
-                                                )
-                                            }
+                                            className="h-7 text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
+                                            onClick={handleResetToDefault}
+                                            title="Kembalikan pilihan ke karyawan Aktif dan Resign Prorata"
                                         >
-                                            Reset
+                                            <RotateCcw className="size-3" />
+                                            Reset ke Default
                                         </Button>
-                                    ) : null}
+                                    </div>
                                 </div>
-                                <div className="grid gap-2 sm:max-w-56">
-                                    <Label htmlFor="generate-employee-status">
-                                        Status karyawan
-                                    </Label>
-                                    <Select
-                                        value={employeeStatusFilter}
-                                        onValueChange={(
-                                            value: PayrollEmployeeFilters['status'],
-                                        ) => {
-                                            setEmployeeStatusFilter(value);
-                                            autoSelectEmployees({
-                                                status: value,
-                                            });
-                                        }}
-                                    >
-                                        <SelectTrigger id="generate-employee-status">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">
-                                                Semua status
-                                            </SelectItem>
-                                            <SelectItem value="active">
-                                                Aktif
-                                            </SelectItem>
-                                            <SelectItem value="inactive">
-                                                Tidak Aktif
-                                            </SelectItem>
-                                            <SelectItem value="resigned">
-                                                Resign
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="max-h-56 overflow-y-auto rounded-md border">
-                                    {filteredEmployeeOptions.length === 0 ? (
-                                        <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                                            Tidak ada karyawan yang sesuai
-                                            filter.
-                                        </p>
-                                    ) : (
-                                        filteredEmployeeOptions.map(
-                                            (employee) => {
-                                                const checked =
-                                                    generateForm.data.selected_employee_ids.includes(
-                                                        employee.id,
-                                                    );
 
-                                                return (
-                                                    <label
-                                                        key={employee.id}
-                                                        className="flex cursor-pointer items-start gap-3 border-b px-3 py-2 text-sm last:border-b-0 hover:bg-muted/50"
+                                {/* 2-Column Card Tables */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                                    {/* Kolom Kiri: Karyawan Tersedia */}
+                                    <Card className="flex flex-col border shadow-sm">
+                                        <CardHeader className="p-3 pb-2.5 border-b bg-muted/20 space-y-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Users className="size-3.5 text-primary" />
+                                                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                        Karyawan Tersedia
+                                                    </CardTitle>
+                                                    <Badge variant="secondary" className="text-[11px] h-4.5 px-1.5 font-normal">
+                                                        {filteredAvailableEmployees.length}
+                                                    </Badge>
+                                                </div>
+                                                {filteredAvailableEmployees.some(
+                                                    (e) =>
+                                                        !generateForm.data.selected_employee_ids.includes(e.id) &&
+                                                        !(
+                                                            generateForm.data.batch_purpose === 'regular' &&
+                                                            periodState === period &&
+                                                            e.regular_paid
+                                                        ),
+                                                ) && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 text-[11px] text-primary hover:text-primary px-1.5 gap-1"
+                                                        onClick={handleAddAllFiltered}
                                                     >
-                                                        <Checkbox
-                                                            checked={checked}
-                                                            disabled={
-                                                                generateForm
-                                                                    .data
-                                                                    .batch_purpose ===
-                                                                    'regular' &&
-                                                                periodState ===
-                                                                    period &&
-                                                                employee.regular_paid
-                                                            }
-                                                            onCheckedChange={(
-                                                                value,
-                                                            ) =>
-                                                                toggleSelectedEmployee(
-                                                                    employee.id,
-                                                                    value ===
-                                                                        true,
-                                                                )
-                                                            }
-                                                        />
-                                                        <span>
-                                                            <span className="block font-medium">
-                                                                {employee.label}
-                                                                {periodState ===
-                                                                    period &&
-                                                                employee.regular_paid
-                                                                    ? ' · Reguler sudah dirilis'
-                                                                    : ''}
-                                                            </span>
-                                                            <span className="block text-xs text-muted-foreground">
-                                                                {
-                                                                    employee.sub_company_label
-                                                                }{' '}
-                                                                ·{' '}
-                                                                {
-                                                                    payrollStatusLabels[
-                                                                        employee
-                                                                            .payroll_status
-                                                                    ]
-                                                                }
-                                                            </span>
-                                                        </span>
-                                                    </label>
-                                                );
-                                            },
-                                        )
-                                    )}
+                                                        <ArrowRight className="size-3" />
+                                                        Pindahkan Semua
+                                                    </Button>
+                                                )}
+                                            </div>
+
+                                            <div className="flex flex-col sm:flex-row gap-2">
+                                                <div className="w-full sm:w-44 shrink-0">
+                                                    <Select
+                                                        value={employeeStatusFilter}
+                                                        onValueChange={(
+                                                            val: PayrollEmployeeFilters['status'],
+                                                        ) => {
+                                                            setEmployeeStatusFilter(val);
+                                                        }}
+                                                    >
+                                                        <SelectTrigger className="h-8 text-xs">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="default" className="text-xs font-medium">
+                                                                Default (Aktif &amp; Resign)
+                                                            </SelectItem>
+                                                            <SelectItem value="all" className="text-xs">
+                                                                Semua Data
+                                                            </SelectItem>
+                                                            <SelectItem value="active" className="text-xs">
+                                                                Aktif
+                                                            </SelectItem>
+                                                            <SelectItem value="resigned" className="text-xs">
+                                                                Resign (Ada Prorata)
+                                                            </SelectItem>
+                                                            <SelectItem value="inactive" className="text-xs">
+                                                                Nonaktif (Tanpa Gaji)
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="relative flex-1">
+                                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-muted-foreground pointer-events-none" />
+                                                    <Input
+                                                        placeholder="Cari nama atau NIK..."
+                                                        value={availableSearchInput}
+                                                        onChange={(e) => setAvailableSearchInput(e.target.value)}
+                                                        className="h-8 pl-7.5 pr-6 text-xs"
+                                                    />
+                                                    {availableSearchInput && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setAvailableSearchInput('')}
+                                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <X className="size-3" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+
+                                        <div className="h-72 overflow-y-auto divide-y text-xs">
+                                            {filteredAvailableEmployees.length === 0 ? (
+                                                <div className="p-8 text-center text-muted-foreground">
+                                                    Tidak ada karyawan yang sesuai filter.
+                                                </div>
+                                            ) : (
+                                                filteredAvailableEmployees.map((emp) => {
+                                                    const isSelected =
+                                                        generateForm.data.selected_employee_ids.includes(emp.id);
+                                                    const isPaid =
+                                                        generateForm.data.batch_purpose === 'regular' &&
+                                                        periodState === period &&
+                                                        Boolean(emp.regular_paid);
+
+                                                    return (
+                                                        <div
+                                                            key={emp.id}
+                                                            className={`flex items-center justify-between p-2.5 transition-colors ${
+                                                                isSelected
+                                                                    ? 'bg-muted/30 opacity-70'
+                                                                    : 'hover:bg-muted/15'
+                                                            }`}
+                                                        >
+                                                            <div className="min-w-0 pr-2">
+                                                                <div className="font-medium text-foreground truncate">
+                                                                    {emp.label}
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
+                                                                    <span>{emp.sub_company_label}</span>
+                                                                    <span>•</span>
+                                                                    {renderStatusBadge(emp.payroll_status)}
+                                                                    {isPaid && (
+                                                                        <span className="text-amber-600 font-medium text-[10px]">
+                                                                            (Sudah dirilis)
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div className="shrink-0">
+                                                                {isSelected ? (
+                                                                    <Badge
+                                                                        variant="secondary"
+                                                                        className="text-[10px] h-6 px-2 gap-1 text-muted-foreground font-normal"
+                                                                    >
+                                                                        <Check className="size-3 text-emerald-600" />
+                                                                        Dipilih
+                                                                    </Badge>
+                                                                ) : (
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        disabled={isPaid}
+                                                                        onClick={() => handleAddEmployee(emp.id)}
+                                                                        className="h-6 px-2 text-[11px] gap-1 hover:border-primary hover:text-primary"
+                                                                        title={
+                                                                            isPaid
+                                                                                ? 'Sudah dirilis reguler'
+                                                                                : 'Masukkan ke daftar payroll'
+                                                                        }
+                                                                    >
+                                                                        <Plus className="size-3" />
+                                                                        Pilih
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    </Card>
+
+                                    {/* Kolom Kanan: Karyawan Diproses */}
+                                    <Card className="flex flex-col border shadow-sm">
+                                        <CardHeader className="p-3 pb-2.5 border-b bg-muted/20 space-y-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5">
+                                                    <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                        Diproses Payroll
+                                                    </CardTitle>
+                                                    <Badge variant="default" className="text-[11px] h-4.5 px-1.5 font-normal">
+                                                        {selectedEmployeesList.length}
+                                                    </Badge>
+                                                </div>
+                                                {selectedEmployeesList.length > 0 && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 text-[11px] text-destructive hover:text-destructive px-1.5 gap-1"
+                                                        onClick={handleClearSelected}
+                                                    >
+                                                        <Trash2 className="size-3" />
+                                                        Kosongkan
+                                                    </Button>
+                                                )}
+                                            </div>
+
+                                            <div className="relative">
+                                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-muted-foreground pointer-events-none" />
+                                                <Input
+                                                    placeholder="Cari dalam daftar dipilih..."
+                                                    value={selectedSearchInput}
+                                                    onChange={(e) => setSelectedSearchInput(e.target.value)}
+                                                    className="h-8 pl-7.5 pr-6 text-xs"
+                                                />
+                                                {selectedSearchInput && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSelectedSearchInput('')}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                                    >
+                                                        <X className="size-3" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </CardHeader>
+
+                                        <div className="h-72 overflow-y-auto divide-y text-xs">
+                                            {selectedEmployeesList.length === 0 ? (
+                                                <div className="p-6 text-center text-muted-foreground flex flex-col items-center justify-center h-full">
+                                                    <Users className="size-7 text-muted-foreground/30 mb-2" />
+                                                    <p className="font-medium text-xs text-foreground">
+                                                        Belum ada karyawan dipilih
+                                                    </p>
+                                                    <p className="text-[11px] text-muted-foreground mt-1 max-w-[220px]">
+                                                        Pilih karyawan dari tabel di sebelah kiri atau klik tombol &quot;Reset ke Default&quot;.
+                                                    </p>
+                                                </div>
+                                            ) : filteredSelectedEmployees.length === 0 ? (
+                                                <div className="p-8 text-center text-muted-foreground">
+                                                    Tidak ada karyawan yang cocok dengan pencarian.
+                                                </div>
+                                            ) : (
+                                                filteredSelectedEmployees.map((emp) => (
+                                                    <div
+                                                        key={emp.id}
+                                                        className="flex items-center justify-between p-2.5 hover:bg-muted/15 transition-colors"
+                                                    >
+                                                        <div className="min-w-0 pr-2">
+                                                            <div className="font-medium text-foreground truncate">
+                                                                {emp.label}
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
+                                                                <span>{emp.sub_company_label}</span>
+                                                                <span>•</span>
+                                                                {renderStatusBadge(emp.payroll_status)}
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleRemoveEmployee(emp.id)}
+                                                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                                                            title="Keluarkan dari daftar payroll"
+                                                        >
+                                                            <X className="size-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </Card>
                                 </div>
+
                                 <p className="text-xs text-muted-foreground">
-                                    Karyawan sesuai filter otomatis tercentang.
-                                    Lepas centang untuk mengecualikan dari batch
-                                    ini. Karyawan yang sudah menerima gaji
-                                    reguler hanya dapat dipilih untuk pembayaran
-                                    tambahan.
+                                    Karyawan di tabel kanan akan dimasukkan ke perhitungan payroll periode ini.
+                                    Karyawan yang sudah menerima gaji reguler hanya dapat dipilih pada batch tambahan.
                                 </p>
                             </div>
                         ) : null}

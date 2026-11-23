@@ -207,7 +207,6 @@ const basicFeatures = [
     'Jadwal Kerja',
     'Cuti & Izin',
     'Lembur',
-    'Penggajian',
     'Notifikasi',
     'Survey',
     'Struktur Organisasi',
@@ -215,6 +214,7 @@ const basicFeatures = [
 
 const plusFeatures = [
     ...basicFeatures,
+    'Penggajian',
     'Rekrutmen',
     'Kasbon',
     'Asset Management',
@@ -233,24 +233,24 @@ const pricingPlans: PricingPlanData[] = [
             'Fitur operasional inti',
             'Portal karyawan',
         ],
-        lockedFeatures: ['Rekrutmen', 'Kasbon', 'Asset Management'],
+        lockedFeatures: ['Penggajian', 'Rekrutmen', 'Kasbon', 'Asset Management'],
     },
     {
         name: 'Basic',
         price: currency.format(PRICE_BASIC),
         period: '/karyawan/bulan',
         description:
-            'Untuk perusahaan yang ingin menjalankan administrasi dan payroll dalam satu sistem.',
+            'Untuk perusahaan yang ingin menjalankan administrasi dan operasional HR dalam satu sistem.',
         cta: 'Pilih Basic',
         features: basicFeatures,
-        lockedFeatures: ['Rekrutmen', 'Kasbon', 'Asset Management'],
+        lockedFeatures: ['Penggajian', 'Rekrutmen', 'Kasbon', 'Asset Management'],
     },
     {
         name: 'Plus',
         price: currency.format(PRICE_PLUS),
         period: '/karyawan/bulan',
         description:
-            'Untuk tim yang membutuhkan alur HR lengkap, dari rekrutmen sampai pengelolaan aset.',
+            'Untuk tim yang membutuhkan alur HR lengkap, dari penggajian, rekrutmen sampai pengelolaan aset.',
         cta: 'Pilih Plus',
         features: plusFeatures,
         recommended: true,

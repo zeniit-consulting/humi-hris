@@ -65,7 +65,7 @@ class CheckSubscriptionFeature
             default => ucfirst($currentPlan),
         };
 
-        $freeOnlyLocked = ['survey', 'notifications', 'payroll'];
+        $freeOnlyLocked = ['survey', 'notifications'];
         $upgradeTarget = in_array($feature, $freeOnlyLocked, true) ? 'Basic atau Plus' : 'Plus';
 
         $request->session()->flash(

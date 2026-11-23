@@ -77,8 +77,8 @@ class PayrollResignedFlowAndAttendanceLocationTest extends TestCase
                     && ! in_array($otherOwner->id, $ids, true)
                     && collect($options)->firstWhere('id', $activeEmp->id)['payroll_status'] === 'active'
                     && collect($options)->firstWhere('id', $inactive->id)['payroll_status'] === 'inactive'
-                    && collect($options)->firstWhere('id', $resignedNoAttendance->id)['payroll_status'] === 'resigned'
-                    && collect($options)->firstWhere('id', $offboarded->id)['payroll_status'] === 'resigned';
+                    && collect($options)->firstWhere('id', $resignedWithAttendance->id)['payroll_status'] === 'resigned'
+                    && collect($options)->firstWhere('id', $resignedNoAttendance->id)['payroll_status'] === 'inactive';
             });
 
             // resignedEmployeeOptions should list all resigned employees for optional manual addition

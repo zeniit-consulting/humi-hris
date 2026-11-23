@@ -11,7 +11,13 @@ const employees = [
 const filters = { status: 'active', subCompany: '__all', scope: 'all' };
 
 test('status filters include only the requested current status', () => {
-    for (const [status, ids] of [['active', [1, 2]], ['inactive', [3]], ['resigned', [4]], ['all', [1, 2, 3, 4]]]) {
+    for (const [status, ids] of [
+        ['default', [1, 2, 4]],
+        ['active', [1, 2]],
+        ['inactive', [3]],
+        ['resigned', [4]],
+        ['all', [1, 2, 3, 4]],
+    ]) {
         assert.deepEqual(filterPayrollEmployees(employees, { ...filters, status }).map(e => e.id), ids);
     }
 });
