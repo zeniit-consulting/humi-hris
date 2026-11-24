@@ -3,7 +3,11 @@
 namespace App\Services;
 
 use App\Models\Employee;
+use App\Models\EmployeeAttendance;
 use App\Models\EmployeeEmploymentHistory;
+use App\Models\EmployeeSchedule;
+use App\Models\LeaveRequest;
+use App\Models\OvertimeRequest;
 use App\Models\User;
 use App\Support\WhatsAppPhone;
 use Carbon\Carbon;
@@ -161,6 +165,30 @@ class EmployeeOffboardingService
     public function finalizeOffboardingEffects(Employee $employee, ?User $actor = null, ?string $reason = null): void
     {
         $employee->directReports()->update(['manager_id' => null]);
+
+        if ($employee->offboarded_at) {
+            $offboardDateStr = Carbon::parse($employee->offboarded_at)->toDateString();
+
+            EmployeeAttendance::query()
+                ->where('employee_id', $employee->id)
+                ->whereDate('attendance_date', '>', $offboardDateStr)
+                ->delete();
+
+            EmployeeSchedule::query()
+                ->where('employee_id', $employee->id)
+                ->whereDate('work_date', '>', $offboardDateStr)
+                ->delete();
+
+            LeaveRequest::query()
+                ->where('employee_id', $employee->id)
+                ->whereDate('start_date', '>', $offboardDateStr)
+                ->delete();
+
+            OvertimeRequest::query()
+                ->where('employee_id', $employee->id)
+                ->whereDate('work_date', '>', $offboardDateStr)
+                ->delete();
+        }
 
         if (! $employee->phone && ! $employee->email) {
             return;

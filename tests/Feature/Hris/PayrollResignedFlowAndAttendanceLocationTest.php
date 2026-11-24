@@ -278,4 +278,95 @@ class PayrollResignedFlowAndAttendanceLocationTest extends TestCase
             });
         });
     }
+
+    public function test_employee_resigned_in_september_is_not_prorated_or_defaulted_in_november_payroll(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $employee = Employee::factory()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Karyawan',
+            'last_name' => 'Dummy 4',
+            'hire_date' => '2025-01-01',
+            'is_active' => true,
+            'employment_status' => 'active',
+            'base_salary' => 8_000_000,
+        ]);
+
+        // Create attendances across Sept, Oct, and Nov
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-09-20',
+            'check_in_at' => Carbon::parse('2026-09-20 08:00:00'),
+            'status' => 'present',
+        ]);
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-10-10',
+            'check_in_at' => Carbon::parse('2026-10-10 08:00:00'),
+            'status' => 'present',
+        ]);
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-11-05',
+            'check_in_at' => Carbon::parse('2026-11-05 08:00:00'),
+            'status' => 'present',
+        ]);
+
+        // Offboard employee on 25 September 2026
+        $offboardService = app(\App\Services\EmployeeOffboardingService::class);
+        $offboardService->scheduleOrExecuteOffboard($employee, [
+            'offboarded_at' => '2026-09-25',
+            'offboarding_reason' => 'resigned',
+        ], $user);
+
+        $employee->refresh();
+        $this->assertFalse((bool) $employee->is_active);
+        $this->assertSame('resigned', $employee->employment_status);
+        $this->assertSame('2026-09-25', $employee->offboarded_at->toDateString());
+
+        // Attendances after 2026-09-25 should have been cleaned up
+        $this->assertEquals(0, EmployeeAttendance::where('employee_id', $employee->id)->whereDate('attendance_date', '>', '2026-09-25')->count());
+
+        // Even if an orphaned attendance was subsequently inserted in November:
+        EmployeeAttendance::query()->create([
+            'user_id' => $user->id,
+            'employee_id' => $employee->id,
+            'attendance_date' => '2026-11-02',
+            'check_in_at' => Carbon::parse('2026-11-02 08:00:00'),
+            'status' => 'present',
+        ]);
+
+        // In November payroll index, employee should be inactive (not defaulted, no prorata)
+        $response = $this->actingAs($user)->get(route('hris.payrolls.index', ['period' => '2026-11']));
+        $response->assertOk();
+        $response->assertInertia(function (Assert $page) use ($employee): void {
+            $page->where('employeeOptions', function ($options) use ($employee) {
+                $opt = collect($options)->firstWhere('id', $employee->id);
+
+                return $opt !== null
+                    && $opt['payroll_status'] === 'inactive'
+                    && $opt['has_prorata'] === false
+                    && $opt['is_default'] === false;
+            });
+        });
+
+        // Automatic payroll generation for November 2026 must exclude this employee
+        $service = app(PayrollGenerationService::class);
+        $activeOther = Employee::factory()->create([
+            'user_id' => $user->id,
+            'hire_date' => '2025-01-01',
+            'is_active' => true,
+            'employment_status' => 'active',
+            'base_salary' => 5_000_000,
+        ]);
+
+        $run = $service->generateForPeriod($user->id, '2026-11', $user->id);
+        $itemEmployeeIds = $run->items()->pluck('employee_id')->all();
+        $this->assertContains($activeOther->id, $itemEmployeeIds);
+        $this->assertNotContains($employee->id, $itemEmployeeIds);
+    }
 }

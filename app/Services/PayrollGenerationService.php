@@ -252,6 +252,27 @@ class PayrollGenerationService
             $employees = $employees->whereIn('id', $run->selected_employee_ids);
         }
         if ($run->batch_purpose !== 'additional') {
+            $existingManualEmployeeIds = $run->exists
+                ? $run->items()
+                    ->whereNotNull('manual_overrides')
+                    ->get(['employee_id', 'manual_overrides'])
+                    ->filter(fn ($item) => ! empty($item->manual_overrides['is_manual_entry']))
+                    ->pluck('employee_id')
+                    ->all()
+                : [];
+
+            $employees = $employees->filter(function (Employee $employee) use ($start, $existingManualEmployeeIds): bool {
+                if (in_array($employee->id, $existingManualEmployeeIds, true)) {
+                    return true;
+                }
+
+                if ($employee->offboarded_at && Carbon::parse($employee->offboarded_at)->toDateString() < $start->toDateString()) {
+                    return false;
+                }
+
+                return true;
+            });
+
             $alreadyPaid = \App\Models\PayrollItem::query()->where('user_id', $ownerId)
                 ->whereHas('payrollRun', fn ($q) => $q->where('user_id', $ownerId)->where('period', $run->period)->where('type', 'regular')->where('batch_purpose', 'regular')->released())
                 ->pluck('employee_id');
@@ -284,17 +305,22 @@ class PayrollGenerationService
                     ->orWhere(function ($resigned) use ($start, $end): void {
                         $resigned->where('employment_status', 'resigned')
                             ->where(function ($q) use ($start, $end): void {
-                                $q->whereHas('attendances', function ($attQuery) use ($start, $end): void {
-                                    $attQuery->withoutGlobalScopes()
-                                        ->whereBetween('attendance_date', [$start->toDateString(), $end->toDateString()])
-                                        ->where(function ($att): void {
-                                            $att->whereNotNull('check_in_at')
-                                                ->orWhereIn('status', ['present', 'late', 'wfa']);
-                                        });
-                                })
-                                ->orWhere(function ($offboarded) use ($start, $end): void {
+                                $q->where(function ($offboarded) use ($start, $end): void {
                                     $offboarded->whereNotNull('offboarded_at')
                                         ->whereBetween('offboarded_at', [$start->toDateString(), $end->toDateString()]);
+                                })
+                                ->orWhere(function ($withAtt) use ($start, $end): void {
+                                    $withAtt->where(function ($o) use ($start): void {
+                                        $o->whereNull('offboarded_at')
+                                            ->orWhere('offboarded_at', '>=', $start->toDateString());
+                                    })->whereHas('attendances', function ($attQuery) use ($start, $end): void {
+                                        $attQuery->withoutGlobalScopes()
+                                            ->whereBetween('attendance_date', [$start->toDateString(), $end->toDateString()])
+                                            ->where(function ($att): void {
+                                                $att->whereNotNull('check_in_at')
+                                                    ->orWhereIn('status', ['present', 'late', 'wfa']);
+                                            });
+                                    });
                                 });
                             });
                     });
@@ -767,10 +793,14 @@ class PayrollGenerationService
         $endStr = $end->toDateString();
 
         // 1. Absensi aktual dalam periode penggajian (minimal sudah clock in atau berstatus hadir/wfa/on_leave)
+        // Abaikan absensi di luar masa aktif kerja karyawan (misal absensi setelah offboarded_at)
         $attendanceDates = $employee->attendances
-            ->filter(function ($att) use ($startStr, $endStr): bool {
+            ->filter(function ($att) use ($startStr, $endStr, $employmentStart, $employmentEnd): bool {
                 $attDate = $att->attendance_date ? Carbon::parse($att->attendance_date)->toDateString() : null;
                 if (! $attDate || $attDate < $startStr || $attDate > $endStr) {
+                    return false;
+                }
+                if ($attDate < $employmentStart->toDateString() || $attDate > $employmentEnd->toDateString()) {
                     return false;
                 }
 

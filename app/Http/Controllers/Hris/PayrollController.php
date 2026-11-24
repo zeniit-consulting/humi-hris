@@ -111,10 +111,13 @@ class PayrollController extends Controller
                 $offboardedAtStr = $employee->offboarded_at ? Carbon::parse($employee->offboarded_at)->toDateString() : null;
                 $hasAttendance = isset($employeesWithAttendance[$employee->id]);
 
-                // Resign with prorata: has resigned/offboarded, AND (has attendance in period OR offboarded within/after period start)
-                $isResignedWithSalary = ! $isActive && (
-                    $hasAttendance ||
+                // Resign with prorata: has resigned/offboarded, AND was employed during this period.
+                // An employee who was offboarded before this period started has already left in a past period
+                // and cannot receive salary in this period, even if orphaned attendance records exist.
+                $resignedBeforePeriod = $offboardedAtStr && $offboardedAtStr < $periodStart->toDateString();
+                $isResignedWithSalary = ! $isActive && ! $resignedBeforePeriod && (
                     ($offboardedAtStr && $offboardedAtStr >= $periodStart->toDateString() && (! $employee->hire_date || $employee->hire_date->toDateString() <= $periodEnd->toDateString()))
+                    || ($offboardedAtStr === null && $hasAttendance)
                 );
 
                 if ($isActive) {

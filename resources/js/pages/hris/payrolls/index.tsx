@@ -28,7 +28,7 @@ import {
     Users,
     X,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { LockedFeatureBanner } from '@/components/locked-feature-banner';
 import { Badge } from '@/components/ui/badge';
@@ -537,6 +537,8 @@ export default function PayrollPage() {
         useState<PayrollEmployeeFilters['status']>('default');
     const [availableSearchInput, setAvailableSearchInput] = useState('');
     const [selectedSearchInput, setSelectedSearchInput] = useState('');
+    const [recentlyAddedIds, setRecentlyAddedIds] = useState<number[]>([]);
+    const selectedListContainerRef = useRef<HTMLDivElement>(null);
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
     const [viewPeriodsDialogOpen, setViewPeriodsDialogOpen] = useState(false);
     const [noDataDialogOpen, setNoDataDialogOpen] = useState(false);
@@ -672,6 +674,21 @@ export default function PayrollPage() {
                 ...generateForm.data.selected_employee_ids,
                 employeeId,
             ]);
+            setRecentlyAddedIds((prev) => [...prev, employeeId]);
+            setTimeout(() => {
+                setRecentlyAddedIds((prev) =>
+                    prev.filter((id) => id !== employeeId),
+                );
+            }, 1200);
+
+            requestAnimationFrame(() => {
+                if (selectedListContainerRef.current) {
+                    selectedListContainerRef.current.scrollTo({
+                        top: selectedListContainerRef.current.scrollHeight,
+                        behavior: 'smooth',
+                    });
+                }
+            });
         }
     };
 
@@ -682,6 +699,7 @@ export default function PayrollPage() {
                 (id) => id !== employeeId,
             ),
         );
+        setRecentlyAddedIds((prev) => prev.filter((id) => id !== employeeId));
     };
 
     const handleAddAllFiltered = () => {
@@ -690,17 +708,38 @@ export default function PayrollPage() {
         const eligibleIds = filteredAvailableEmployees
             .filter((e) => !(isRegularBatch && isCurrent && e.regular_paid))
             .map((e) => e.id);
+        const newIds = eligibleIds.filter(
+            (id) => !generateForm.data.selected_employee_ids.includes(id),
+        );
+        if (newIds.length === 0) return;
+
         generateForm.setData('selected_employee_ids', [
             ...new Set([
                 ...generateForm.data.selected_employee_ids,
                 ...eligibleIds,
             ]),
         ]);
+        setRecentlyAddedIds((prev) => [...prev, ...newIds]);
+        setTimeout(() => {
+            setRecentlyAddedIds((prev) =>
+                prev.filter((id) => !newIds.includes(id)),
+            );
+        }, 1200);
+
+        requestAnimationFrame(() => {
+            if (selectedListContainerRef.current) {
+                selectedListContainerRef.current.scrollTo({
+                    top: selectedListContainerRef.current.scrollHeight,
+                    behavior: 'smooth',
+                });
+            }
+        });
     };
 
     const handleResetToDefault = () => {
         setEmployeeStatusFilter('default');
         setAvailableSearchInput('');
+        setRecentlyAddedIds([]);
         autoSelectEmployees(
             { status: 'default' },
             generateForm.data.batch_purpose,
@@ -709,6 +748,7 @@ export default function PayrollPage() {
     };
 
     const handleClearSelected = () => {
+        setRecentlyAddedIds([]);
         generateForm.setData('selected_employee_ids', []);
     };
 
@@ -4162,7 +4202,7 @@ export default function PayrollPage() {
                                                     return (
                                                         <div
                                                             key={emp.id}
-                                                            className={`flex items-center justify-between p-2.5 transition-colors ${
+                                                            className={`flex items-center justify-between p-2.5 transition-all duration-300 ${
                                                                 isSelected
                                                                     ? 'bg-muted/30 opacity-70'
                                                                     : 'hover:bg-muted/15'
@@ -4187,7 +4227,7 @@ export default function PayrollPage() {
                                                                 {isSelected ? (
                                                                     <Badge
                                                                         variant="secondary"
-                                                                        className="text-[10px] h-6 px-2 gap-1 text-muted-foreground font-normal"
+                                                                        className="text-[10px] h-6 px-2 gap-1 text-muted-foreground font-normal animate-in fade-in-0 zoom-in-95 duration-200"
                                                                     >
                                                                         <Check className="size-3 text-emerald-600" />
                                                                         Dipilih
@@ -4199,7 +4239,7 @@ export default function PayrollPage() {
                                                                         size="sm"
                                                                         disabled={isPaid}
                                                                         onClick={() => handleAddEmployee(emp.id)}
-                                                                        className="h-6 px-2 text-[11px] gap-1 hover:border-primary hover:text-primary"
+                                                                        className="h-6 px-2 text-[11px] gap-1 hover:border-primary hover:text-primary transition-all active:scale-95"
                                                                         title={
                                                                             isPaid
                                                                                 ? 'Sudah dirilis reguler'
@@ -4265,7 +4305,10 @@ export default function PayrollPage() {
                                             </div>
                                         </CardHeader>
 
-                                        <div className="h-72 overflow-y-auto divide-y text-xs">
+                                        <div
+                                            ref={selectedListContainerRef}
+                                            className="h-72 overflow-y-auto divide-y text-xs"
+                                        >
                                             {selectedEmployeesList.length === 0 ? (
                                                 <div className="p-6 text-center text-muted-foreground flex flex-col items-center justify-center h-full">
                                                     <Users className="size-7 text-muted-foreground/30 mb-2" />
@@ -4281,33 +4324,45 @@ export default function PayrollPage() {
                                                     Tidak ada karyawan yang cocok dengan pencarian.
                                                 </div>
                                             ) : (
-                                                filteredSelectedEmployees.map((emp) => (
-                                                    <div
-                                                        key={emp.id}
-                                                        className="flex items-center justify-between p-2.5 hover:bg-muted/15 transition-colors"
-                                                    >
-                                                        <div className="min-w-0 pr-2">
-                                                            <div className="font-medium text-foreground truncate">
-                                                                {emp.label}
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
-                                                                <span>{emp.sub_company_label}</span>
-                                                                <span>•</span>
-                                                                {renderStatusBadge(emp.payroll_status)}
-                                                            </div>
-                                                        </div>
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleRemoveEmployee(emp.id)}
-                                                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0"
-                                                            title="Keluarkan dari daftar payroll"
+                                                filteredSelectedEmployees.map((emp) => {
+                                                    const isRecentlyAdded = recentlyAddedIds.includes(emp.id);
+                                                    return (
+                                                        <div
+                                                            key={emp.id}
+                                                            className={`flex items-center justify-between p-2.5 transition-all duration-500 ${
+                                                                isRecentlyAdded
+                                                                    ? 'animate-in fade-in-0 slide-in-from-left-6 bg-emerald-500/15 dark:bg-emerald-500/20 ring-1 ring-inset ring-emerald-500/30 duration-300'
+                                                                    : 'hover:bg-muted/15'
+                                                            }`}
                                                         >
-                                                            <X className="size-3.5" />
-                                                        </Button>
-                                                    </div>
-                                                ))
+                                                            <div className="min-w-0 pr-2">
+                                                                <div className="font-medium text-foreground truncate flex items-center gap-1.5">
+                                                                    <span>{emp.label}</span>
+                                                                    {isRecentlyAdded && (
+                                                                        <span className="inline-flex items-center text-[10px] text-emerald-600 dark:text-emerald-400 font-medium animate-in fade-in-0 zoom-in-75 duration-200">
+                                                                            Baru
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
+                                                                    <span>{emp.sub_company_label}</span>
+                                                                    <span>•</span>
+                                                                    {renderStatusBadge(emp.payroll_status)}
+                                                                </div>
+                                                            </div>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleRemoveEmployee(emp.id)}
+                                                                className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0 transition-transform active:scale-90"
+                                                                title="Keluarkan dari daftar payroll"
+                                                            >
+                                                                <X className="size-3.5" />
+                                                            </Button>
+                                                        </div>
+                                                    );
+                                                })
                                             )}
                                         </div>
                                     </Card>
