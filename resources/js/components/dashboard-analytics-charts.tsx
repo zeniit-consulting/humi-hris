@@ -190,51 +190,34 @@ export const formatAxisNominal = (value: number | string) => {
 type Point = { x: number; y: number };
 
 /**
- * Generates a smooth cubic Bezier curve (wavy line) passing naturally through all data points.
- * Uses Catmull-Rom spline formulation converted to cubic Bezier segments.
+ * Generates a straight / rigid line (linear polyline) connecting all data points directly.
  */
-export function getWavyPath(points: Point[]): string {
+export function getStraightPath(points: Point[]): string {
     if (points.length === 0) return '';
-    if (points.length === 1) return `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
-    if (points.length === 2) {
-        const dx = (points[1].x - points[0].x) / 3;
-        return `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)} C ${(points[0].x + dx).toFixed(1)} ${points[0].y.toFixed(1)}, ${(points[1].x - dx).toFixed(1)} ${points[1].y.toFixed(1)}, ${points[1].x.toFixed(1)} ${points[1].y.toFixed(1)}`;
-    }
-
     let path = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
-
-    for (let i = 0; i < points.length - 1; i++) {
-        const p0 = points[i === 0 ? 0 : i - 1];
-        const p1 = points[i];
-        const p2 = points[i + 1];
-        const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
-
-        // Smooth tension factor (0.18 yields a natural smooth wave without overshooting)
-        const cp1x = p1.x + (p2.x - p0.x) * 0.18;
-        const cp1y = p1.y + (p2.y - p0.y) * 0.18;
-
-        const cp2x = p2.x - (p3.x - p1.x) * 0.18;
-        const cp2y = p2.y - (p3.y - p1.y) * 0.18;
-
-        path += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+    for (let i = 1; i < points.length; i++) {
+        path += ` L ${points[i].x.toFixed(1)} ${points[i].y.toFixed(1)}`;
     }
-
     return path;
 }
 
 /**
- * Generates a closed area underneath the smooth wavy curve down to baselineY.
+ * Generates a closed area underneath the straight / rigid line down to baselineY.
  */
-export function getWavyAreaPath(points: Point[], baselineY: number): string {
+export function getStraightAreaPath(points: Point[], baselineY: number): string {
     if (points.length < 2) return '';
-    const linePath = getWavyPath(points);
+    const linePath = getStraightPath(points);
     const last = points[points.length - 1];
     const first = points[0];
     return `${linePath} L ${last.x.toFixed(1)} ${baselineY.toFixed(1)} L ${first.x.toFixed(1)} ${baselineY.toFixed(1)} Z`;
 }
 
+// Backward-compatible aliases for existing imports
+export const getWavyPath = getStraightPath;
+export const getWavyAreaPath = getStraightAreaPath;
+
 /**
- * 1. Wavy Line Chart: Payroll Burnrate Card
+ * 1. Line Chart: Payroll Burnrate Card
  */
 export function PayrollBurnrateCard({
     data,
@@ -333,14 +316,14 @@ export function PayrollBurnrateCard({
                 <span>Avg: {formatRupiahCompact(data.avg_per_employee)}</span>
             </div>
 
-            {/* Wavy Line Chart Container */}
+            {/* Line Chart Container */}
             <div className="px-3 pt-0.5">
                 <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0 min-h-[150px]">
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
                         className="h-[150px] min-h-[150px] w-full"
                         role="img"
-                        aria-label="Payroll Burnrate Wavy Line Chart"
+                        aria-label="Payroll Burnrate Line Chart"
                     >
                         <defs>
                             <linearGradient id="payrollWaveGrad" x1="0" y1="0" x2="0" y2="1">
@@ -390,18 +373,18 @@ export function PayrollBurnrateCard({
                             </g>
                         ))}
 
-                        {/* Wave Area Fill */}
+                        {/* Area Fill */}
                         {netPoints.length > 1 && (
                             <path
-                                d={getWavyAreaPath(netPoints, baselineY)}
+                                d={getStraightAreaPath(netPoints, baselineY)}
                                 fill="url(#payrollWaveGrad)"
                             />
                         )}
 
-                        {/* Primary Net Salary Wavy Line (Solid emerald) */}
+                        {/* Primary Net Salary Line (Solid emerald) */}
                         {netPoints.length > 1 && (
                             <path
-                                d={getWavyPath(netPoints)}
+                                d={getStraightPath(netPoints)}
                                 fill="none"
                                 stroke="#10b981"
                                 strokeWidth="2.5"
@@ -550,7 +533,7 @@ export function PayrollBurnrateCard({
 }
 
 /**
- * 2. Wavy Line Chart: Insurance Burnrate Card (Social Insurance)
+ * 2. Line Chart: Insurance Burnrate Card (Social Insurance)
  */
 export function InsuranceBurnrateCard({
     data,
@@ -651,14 +634,14 @@ export function InsuranceBurnrateCard({
                 <span>Total: {formatRupiahCompact(data.current_insurance_burn)}</span>
             </div>
 
-            {/* Wavy Line Chart Container */}
+            {/* Line Chart Container */}
             <div className="px-3 pt-0.5">
                 <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0 min-h-[150px]">
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
                         className="h-[150px] min-h-[150px] w-full"
                         role="img"
-                        aria-label="Insurance Burnrate Wavy Line Chart"
+                        aria-label="Insurance Burnrate Line Chart"
                     >
                         {/* Vertical Y-Axis Line */}
                         <line
@@ -704,7 +687,7 @@ export function InsuranceBurnrateCard({
                         {/* BPJS Kesehatan: Solid Green Line */}
                         {kesPoints.length > 1 && (
                             <path
-                                d={getWavyPath(kesPoints)}
+                                d={getStraightPath(kesPoints)}
                                 fill="none"
                                 stroke="#16a34a"
                                 strokeWidth="2.4"
@@ -717,7 +700,7 @@ export function InsuranceBurnrateCard({
                         {/* BPJS Tenaga Kerja: Solid Blue Line */}
                         {tkPoints.length > 1 && (
                             <path
-                                d={getWavyPath(tkPoints)}
+                                d={getStraightPath(tkPoints)}
                                 fill="none"
                                 stroke="#2563eb"
                                 strokeWidth="2.4"
@@ -875,7 +858,7 @@ export function InsuranceBurnrateCard({
 }
 
 /**
- * 3. Wavy Line Chart: Employee Mobility Card
+ * 3. Line Chart: Employee Mobility Card
  */
 export function EmployeeMobilityCard({
     data,
@@ -969,14 +952,14 @@ export function EmployeeMobilityCard({
                 <span>{trend.length > 0 ? `${trend.length} bln: ` : ''}+{data.total_hires}/-{data.total_exits}</span>
             </div>
 
-            {/* Wavy Line Chart Container */}
+            {/* Line Chart Container */}
             <div className="px-3 pt-0.5">
                 <div ref={containerRef} className="relative overflow-hidden rounded-md border bg-muted/10 pt-0.5 pb-0.5 px-0 min-h-[150px]">
                     <svg
                         viewBox={`0 0 ${width} ${svgHeight}`}
                         className="h-[150px] min-h-[150px] w-full"
                         role="img"
-                        aria-label="Employee Mobility Wavy Line Chart"
+                        aria-label="Employee Mobility Line Chart"
                     >
                         <defs>
                             <linearGradient id="mobilityHiresWaveGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1030,26 +1013,26 @@ export function EmployeeMobilityCard({
                             </g>
                         ))}
 
-                        {/* Hires Wave Area Fill */}
+                        {/* Hires Area Fill */}
                         {hirePoints.length > 1 && (
                             <path
-                                d={getWavyAreaPath(hirePoints, baselineY)}
+                                d={getStraightAreaPath(hirePoints, baselineY)}
                                 fill="url(#mobilityHiresWaveGrad)"
                             />
                         )}
 
-                        {/* Exits Wave Area Fill */}
+                        {/* Exits Area Fill */}
                         {exitPoints.length > 1 && (
                             <path
-                                d={getWavyAreaPath(exitPoints, baselineY)}
+                                d={getStraightAreaPath(exitPoints, baselineY)}
                                 fill="url(#mobilityExitsWaveGrad)"
                             />
                         )}
 
-                        {/* Mutations Wave Line (Purple dashed) */}
+                        {/* Mutations Line (Purple dashed) */}
                         {mutPoints.length > 1 && (
                             <path
-                                d={getWavyPath(mutPoints)}
+                                d={getStraightPath(mutPoints)}
                                 fill="none"
                                 stroke="#8b5cf6"
                                 strokeWidth="1.6"
@@ -1059,10 +1042,10 @@ export function EmployeeMobilityCard({
                             />
                         )}
 
-                        {/* Exits Wave Line (Rose) */}
+                        {/* Exits Line (Rose) */}
                         {exitPoints.length > 1 && (
                             <path
-                                d={getWavyPath(exitPoints)}
+                                d={getStraightPath(exitPoints)}
                                 fill="none"
                                 stroke="#f43f5e"
                                 strokeWidth="2.2"
@@ -1072,10 +1055,10 @@ export function EmployeeMobilityCard({
                             />
                         )}
 
-                        {/* Hires Wave Line (Emerald) */}
+                        {/* Hires Line (Emerald) */}
                         {hirePoints.length > 1 && (
                             <path
-                                d={getWavyPath(hirePoints)}
+                                d={getStraightPath(hirePoints)}
                                 fill="none"
                                 stroke="#10b981"
                                 strokeWidth="2.4"

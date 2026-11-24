@@ -7,7 +7,7 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { getWavyPath, getWavyAreaPath, useChartWidth } from '@/components/dashboard-analytics-charts';
+import { getStraightPath, getStraightAreaPath, useChartWidth } from '@/components/dashboard-analytics-charts';
 
 export type AttendancePoint = {
     date: string;
@@ -282,17 +282,17 @@ export function AttendanceChartCard({
 
                                 return (
                                     <g key={series.key}>
-                                        {/* Soft Wave Area for present (Hadir) series */}
+                                        {/* Soft Area for present (Hadir) series */}
                                         {series.key === 'present' && totalPoints > 1 && (
                                             <path
-                                                d={getWavyAreaPath(points, baseY)}
+                                                d={getStraightAreaPath(points, baseY)}
                                                 fill="url(#attendancePresentGrad)"
                                             />
                                         )}
 
                                         {totalPoints > 1 && (
                                             <path
-                                                d={getWavyPath(points)}
+                                                d={getStraightPath(points)}
                                                 fill="none"
                                                 stroke={series.color}
                                                 strokeWidth="2.5"
