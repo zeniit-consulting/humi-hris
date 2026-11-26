@@ -66,6 +66,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import {
     browserTimezone,
@@ -385,6 +386,18 @@ export default function AttendancePage() {
 
     const submitAttendance = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        attendanceForm.transform((data) => ({
+            ...data,
+            check_in_at:
+                editingRecord || !data.check_in_at
+                    ? data.check_in_at
+                    : `${data.attendance_date}T${data.check_in_at}`,
+            check_out_at:
+                editingRecord || !data.check_out_at
+                    ? data.check_out_at
+                    : `${data.attendance_date}T${data.check_out_at}`,
+        }));
 
         if (editingRecord) {
             attendanceForm.put(`/hris/attendances/${editingRecord.id}`, {
@@ -1725,11 +1738,11 @@ export default function AttendancePage() {
                     </DialogHeader>
 
                     <form
-                        className="grid gap-3 md:grid-cols-2"
+                        className="grid gap-3 sm:grid-cols-6"
                         onSubmit={submitAttendance}
                     >
-                        <div className="grid gap-2 md:col-span-2">
-                            <Label htmlFor="employee_id">Karyawan</Label>
+                        <div className="grid gap-2 sm:col-span-3">
+                            <Label htmlFor="employee_id">Nama</Label>
                             <SearchableSelect
                                 id="employee_id"
                                 value={
@@ -1759,26 +1772,7 @@ export default function AttendancePage() {
                             />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="attendance_date">Tanggal</Label>
-                            <Input
-                                id="attendance_date"
-                                type="date"
-                                value={attendanceForm.data.attendance_date}
-                                onChange={(event) =>
-                                    attendanceForm.setData(
-                                        'attendance_date',
-                                        event.target.value,
-                                    )
-                                }
-                                required
-                            />
-                            <InputError
-                                message={attendanceForm.errors.attendance_date}
-                            />
-                        </div>
-
-                        <div className="grid gap-2">
+                        <div className="grid gap-2 sm:col-span-3">
                             <Label htmlFor="attendance_status">Status</Label>
                             <Select
                                 value={attendanceForm.data.status}
@@ -1805,11 +1799,30 @@ export default function AttendancePage() {
                             />
                         </div>
 
-                        <div className="grid gap-2">
+                        <div className="grid gap-2 sm:col-span-2">
+                            <Label htmlFor="attendance_date">Tanggal</Label>
+                            <Input
+                                id="attendance_date"
+                                type="date"
+                                value={attendanceForm.data.attendance_date}
+                                onChange={(event) =>
+                                    attendanceForm.setData(
+                                        'attendance_date',
+                                        event.target.value,
+                                    )
+                                }
+                                required
+                            />
+                            <InputError
+                                message={attendanceForm.errors.attendance_date}
+                            />
+                        </div>
+
+                        <div className="grid gap-2 sm:col-span-2">
                             <Label htmlFor="check_in_at">Check-in</Label>
                             <Input
                                 id="check_in_at"
-                                type="datetime-local"
+                                type={editingRecord ? 'datetime-local' : 'time'}
                                 value={attendanceForm.data.check_in_at}
                                 onChange={(event) =>
                                     attendanceForm.setData(
@@ -1823,11 +1836,11 @@ export default function AttendancePage() {
                             />
                         </div>
 
-                        <div className="grid gap-2">
+                        <div className="grid gap-2 sm:col-span-2">
                             <Label htmlFor="check_out_at">Check-out</Label>
                             <Input
                                 id="check_out_at"
-                                type="datetime-local"
+                                type={editingRecord ? 'datetime-local' : 'time'}
                                 value={attendanceForm.data.check_out_at}
                                 onChange={(event) =>
                                     attendanceForm.setData(
@@ -1847,10 +1860,12 @@ export default function AttendancePage() {
                             value={attendanceForm.data.timezone}
                         />
 
-                        <div className="grid gap-2 md:col-span-2">
+                        <div className="grid gap-2 sm:col-span-6">
                             <Label htmlFor="notes">Catatan</Label>
-                            <Input
+                            <Textarea
                                 id="notes"
+                                rows={3}
+                                maxLength={255}
                                 value={attendanceForm.data.notes}
                                 onChange={(event) =>
                                     attendanceForm.setData(
@@ -1862,7 +1877,7 @@ export default function AttendancePage() {
                             <InputError message={attendanceForm.errors.notes} />
                         </div>
 
-                        <div className="flex justify-end gap-2 md:col-span-2">
+                        <div className="flex justify-end gap-2 sm:col-span-6">
                             <Button
                                 type="button"
                                 variant="outline"
