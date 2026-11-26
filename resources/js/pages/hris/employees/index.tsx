@@ -579,7 +579,7 @@ const buildEmployeeDefault = (): EmployeeFormData => ({
     full_name: '',
     email: '',
     phone: '',
-    gender: '',
+    gender: 'male',
     birth_place: '',
     birth_date: '',
     last_education: '',
@@ -4112,161 +4112,190 @@ export default function EmployeesIndex() {
                                     <Label htmlFor="full_name">
                                         Nama Lengkap
                                     </Label>
-                                    <div className="space-y-1">
-                                        <Input
-                                            id="full_name"
-                                            value={employeeForm.data.full_name}
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'full_name',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            required
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.full_name
-                                            }
-                                        />
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        <div className="space-y-1">
+                                            <Input
+                                                id="full_name"
+                                                value={
+                                                    employeeForm.data.full_name
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'full_name',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                required
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .full_name
+                                                }
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label
+                                                htmlFor="gender"
+                                                className="sr-only"
+                                            >
+                                                Gender
+                                            </Label>
+                                            <Select
+                                                value={
+                                                    employeeForm.data.gender ===
+                                                    ''
+                                                        ? '__none'
+                                                        : employeeForm.data
+                                                              .gender
+                                                }
+                                                onValueChange={(value) =>
+                                                    employeeForm.setData(
+                                                        'gender',
+                                                        value === '__none'
+                                                            ? ''
+                                                            : value,
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger
+                                                    id="gender"
+                                                    className="w-full"
+                                                >
+                                                    <SelectValue placeholder="Pilih gender" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="__none">
+                                                        -
+                                                    </SelectItem>
+                                                    {options.genders.map(
+                                                        (gender) => (
+                                                            <SelectItem
+                                                                key={gender}
+                                                                value={gender}
+                                                            >
+                                                                {genderLabels[
+                                                                    gender
+                                                                ] ?? gender}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors.gender
+                                                }
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                     <Label htmlFor="email">Email</Label>
-                                    <div className="space-y-1">
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            value={employeeForm.data.email}
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'email',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={employeeForm.errors.email}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="phone">Nomor HP</Label>
-                                    <div className="space-y-1">
-                                        <Input
-                                            id="phone"
-                                            value={employeeForm.data.phone}
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'phone',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={employeeForm.errors.phone}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="gender">Gender</Label>
-                                    <div className="space-y-1">
-                                        <Select
-                                            value={
-                                                employeeForm.data.gender === ''
-                                                    ? '__none'
-                                                    : employeeForm.data.gender
-                                            }
-                                            onValueChange={(value) =>
-                                                employeeForm.setData(
-                                                    'gender',
-                                                    value === '__none'
-                                                        ? ''
-                                                        : value,
-                                                )
-                                            }
-                                        >
-                                            <SelectTrigger
-                                                id="gender"
-                                                className="w-full"
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        <div className="space-y-1">
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                placeholder="example@gmail.com"
+                                                value={employeeForm.data.email}
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'email',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors.email
+                                                }
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label
+                                                htmlFor="phone"
+                                                className="sr-only"
                                             >
-                                                <SelectValue placeholder="Pilih gender" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="__none">
-                                                    -
-                                                </SelectItem>
-                                                {options.genders.map(
-                                                    (gender) => (
-                                                        <SelectItem
-                                                            key={gender}
-                                                            value={gender}
-                                                        >
-                                                            {genderLabels[
-                                                                gender
-                                                            ] ?? gender}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError
-                                            message={employeeForm.errors.gender}
-                                        />
+                                                Nomor HP
+                                            </Label>
+                                            <Input
+                                                id="phone"
+                                                type="tel"
+                                                placeholder="62xxx"
+                                                value={employeeForm.data.phone}
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'phone',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors.phone
+                                                }
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
                                     <Label htmlFor="birth_place">
-                                        Tempat Lahir
+                                        Tempat, Tgl Lahir
                                     </Label>
-                                    <div className="space-y-1">
-                                        <Input
-                                            id="birth_place"
-                                            value={
-                                                employeeForm.data.birth_place
-                                            }
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'birth_place',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="Contoh: Makassar"
-                                            maxLength={150}
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.birth_place
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="birth_date">
-                                        Tanggal Lahir
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <Input
-                                            id="birth_date"
-                                            type="date"
-                                            value={employeeForm.data.birth_date}
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'birth_date',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.birth_date
-                                            }
-                                        />
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        <div className="space-y-1">
+                                            <Input
+                                                id="birth_place"
+                                                value={
+                                                    employeeForm.data
+                                                        .birth_place
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'birth_place',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Contoh: Makassar"
+                                                maxLength={150}
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .birth_place
+                                                }
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label
+                                                htmlFor="birth_date"
+                                                className="sr-only"
+                                            >
+                                                Tanggal Lahir
+                                            </Label>
+                                            <Input
+                                                id="birth_date"
+                                                type="date"
+                                                value={
+                                                    employeeForm.data.birth_date
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'birth_date',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .birth_date
+                                                }
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
