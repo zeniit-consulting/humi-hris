@@ -63,6 +63,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { WysiwygEditor } from '@/components/ui/wysiwyg-editor';
 import AppLayout from '@/layouts/app-layout';
 import { browserTimezone } from '@/lib/attendance-timezone';
 import {
@@ -732,17 +733,6 @@ const typeLabels: Record<string, string> = {
     freelance: 'FL',
 };
 
-const pph21MethodLabels: Record<string, string> = {
-    none: 'Nonaktif',
-    ter_bulanan: 'TER Bulanan (Gross - PP 58/2023)',
-    ter_bulanan_net: 'TER Bulanan (Net / Ditanggung Perusahaan)',
-    ter_bulanan_gross_up: 'TER Bulanan (Gross Up / Tunjangan Pajak)',
-    ter_harian: 'TER Harian',
-    gross: 'Manual Gross',
-    net: 'Manual Net',
-    gross_up: 'Manual Gross Up',
-};
-
 const ptkpToTerCategory = (ptkp: string | null | undefined): 'A' | 'B' | 'C' => {
     if (!ptkp) return 'A';
     const upper = ptkp.toUpperCase().trim();
@@ -1091,15 +1081,16 @@ export default function EmployeesIndex() {
                 'position_id',
                 'manager_id',
                 'base_salary',
-                'bank_name',
-                'account_number',
-                'account_holder_name',
+                'service_fee_points',
                 'fixed_allowances',
                 'is_active',
                 'change_effective_date',
                 'change_notes',
             ],
             3: [
+                'bank_name',
+                'account_number',
+                'account_holder_name',
                 'family_card_number',
                 'ktp_number',
                 'npwp_number',
@@ -2428,7 +2419,9 @@ export default function EmployeesIndex() {
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1400px] text-xs">
+                            <table
+                                className={`w-full text-xs ${isResignedList ? 'min-w-[1000px]' : 'min-w-[1400px]'}`}
+                            >
                                 <thead>
                                     <tr className="border-b text-center">
                                         <SortableEmployeeHeader
@@ -2439,30 +2432,36 @@ export default function EmployeesIndex() {
                                             onSort={handleSort}
                                             className="sticky left-0 z-20 min-w-[220px] bg-background px-2 py-1.5 text-center shadow-[6px_0_8px_-8px_rgba(15,23,42,0.25)]"
                                         />
-                                        <SortableEmployeeHeader
-                                            label="Kode"
-                                            sortKey="code"
-                                            activeSort={filters.sort}
-                                            direction={filters.direction}
-                                            onSort={handleSort}
-                                            className="min-w-[110px] px-2 py-1.5 text-center"
-                                        />
-                                        <SortableEmployeeHeader
-                                            label="Kontak"
-                                            sortKey="contact"
-                                            activeSort={filters.sort}
-                                            direction={filters.direction}
-                                            onSort={handleSort}
-                                            className="min-w-[190px] px-2 py-1.5 text-center"
-                                        />
-                                        <SortableEmployeeHeader
-                                            label="Usia"
-                                            sortKey="age"
-                                            activeSort={filters.sort}
-                                            direction={filters.direction}
-                                            onSort={handleSort}
-                                            className="min-w-[95px] px-2 py-1.5 text-center"
-                                        />
+                                        {!isResignedList && (
+                                            <SortableEmployeeHeader
+                                                label="Kode"
+                                                sortKey="code"
+                                                activeSort={filters.sort}
+                                                direction={filters.direction}
+                                                onSort={handleSort}
+                                                className="min-w-[110px] px-2 py-1.5 text-center"
+                                            />
+                                        )}
+                                        {!isResignedList && (
+                                            <SortableEmployeeHeader
+                                                label="Kontak"
+                                                sortKey="contact"
+                                                activeSort={filters.sort}
+                                                direction={filters.direction}
+                                                onSort={handleSort}
+                                                className="min-w-[190px] px-2 py-1.5 text-center"
+                                            />
+                                        )}
+                                        {!isResignedList && (
+                                            <SortableEmployeeHeader
+                                                label="Usia"
+                                                sortKey="age"
+                                                activeSort={filters.sort}
+                                                direction={filters.direction}
+                                                onSort={handleSort}
+                                                className="min-w-[95px] px-2 py-1.5 text-center"
+                                            />
+                                        )}
                                         <SortableEmployeeHeader
                                             label="Divisi"
                                             sortKey="division"
@@ -2471,22 +2470,26 @@ export default function EmployeesIndex() {
                                             onSort={handleSort}
                                             className="px-2 py-1.5 text-center"
                                         />
-                                        <SortableEmployeeHeader
-                                            label="Perusahaan"
-                                            sortKey="sub_company"
-                                            activeSort={filters.sort}
-                                            direction={filters.direction}
-                                            onSort={handleSort}
-                                            className="min-w-[160px] px-2 py-1.5 text-center"
-                                        />
-                                        <SortableEmployeeHeader
-                                            label="Jabatan"
-                                            sortKey="position"
-                                            activeSort={filters.sort}
-                                            direction={filters.direction}
-                                            onSort={handleSort}
-                                            className="px-2 py-1.5 text-center"
-                                        />
+                                        {!isResignedList && (
+                                            <SortableEmployeeHeader
+                                                label="Perusahaan"
+                                                sortKey="sub_company"
+                                                activeSort={filters.sort}
+                                                direction={filters.direction}
+                                                onSort={handleSort}
+                                                className="min-w-[160px] px-2 py-1.5 text-center"
+                                            />
+                                        )}
+                                        {!isResignedList && (
+                                            <SortableEmployeeHeader
+                                                label="Jabatan"
+                                                sortKey="position"
+                                                activeSort={filters.sort}
+                                                direction={filters.direction}
+                                                onSort={handleSort}
+                                                className="px-2 py-1.5 text-center"
+                                            />
+                                        )}
                                         <SortableEmployeeHeader
                                             label="Tgl Masuk"
                                             sortKey="hire_date"
@@ -2503,17 +2506,30 @@ export default function EmployeesIndex() {
                                             onSort={handleSort}
                                             className="min-w-[110px] px-2 py-1.5 text-center"
                                         />
-                                        <SortableEmployeeHeader
-                                            label="Gaji"
-                                            sortKey="base_salary"
-                                            activeSort={filters.sort}
-                                            direction={filters.direction}
-                                            onSort={handleSort}
-                                            className="min-w-[135px] px-2 py-1.5 text-center"
-                                        />
-                                        <th className="min-w-[140px] px-2 py-1.5 text-center font-medium">
-                                            Rekening Bank
-                                        </th>
+                                        {!isResignedList && (
+                                            <SortableEmployeeHeader
+                                                label="Gaji"
+                                                sortKey="base_salary"
+                                                activeSort={filters.sort}
+                                                direction={filters.direction}
+                                                onSort={handleSort}
+                                                className="min-w-[135px] px-2 py-1.5 text-center"
+                                            />
+                                        )}
+                                        {isResignedList ? (
+                                            <>
+                                                <th className="min-w-[130px] px-2 py-1.5 font-medium">
+                                                    Tanggal Offboard
+                                                </th>
+                                                <th className="min-w-[160px] px-2 py-1.5 font-medium">
+                                                    Alasan Offboard
+                                                </th>
+                                            </>
+                                        ) : (
+                                            <th className="min-w-[140px] px-2 py-1.5 text-center font-medium">
+                                                Rekening Bank
+                                            </th>
+                                        )}
                                         <SortableEmployeeHeader
                                             label="Status"
                                             sortKey="status"
@@ -2531,7 +2547,9 @@ export default function EmployeesIndex() {
                                     {employees.data.length === 0 && (
                                         <tr>
                                             <td
-                                                colSpan={13}
+                                                colSpan={
+                                                    isResignedList ? 11 : 13
+                                                }
                                                 className="px-3 py-8 text-center text-muted-foreground"
                                             >
                                                 {isResignedList
@@ -2572,7 +2590,16 @@ export default function EmployeesIndex() {
                                                                         employee.full_name
                                                                     }
                                                                 </p>
-                                                                {employee.is_wfa ? (
+                                                                {isResignedList ? (
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className="h-5 px-1.5 text-[10px]"
+                                                                    >
+                                                                        {
+                                                                            employee.employee_code
+                                                                        }
+                                                                    </Badge>
+                                                                ) : employee.is_wfa ? (
                                                                     <Badge
                                                                         variant="secondary"
                                                                         className="h-4 px-1 text-[9px]"
@@ -2581,68 +2608,86 @@ export default function EmployeesIndex() {
                                                                     </Badge>
                                                                 ) : null}
                                                             </div>
-                                                            <p className="max-w-[150px] truncate text-[11px] text-muted-foreground">
-                                                                {employee
-                                                                    .position
-                                                                    ?.name ??
-                                                                    '-'}
-                                                            </p>
+                                                            {isResignedList ? (
+                                                                <p className="text-[11px] text-muted-foreground">
+                                                                    No. HP:{' '}
+                                                                    {employee.phone ||
+                                                                        '-'}
+                                                                </p>
+                                                            ) : (
+                                                                <p className="max-w-[150px] truncate text-[11px] text-muted-foreground">
+                                                                    {employee
+                                                                        .position
+                                                                        ?.name ??
+                                                                        '-'}
+                                                                </p>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-2 py-2 font-mono text-[11px] uppercase">
-                                                    {employee.employee_code}
-                                                </td>
-                                                <td className="px-2 py-2">
-                                                    <div className="space-y-0.5">
-                                                        <p className="max-w-[170px] truncate">
-                                                            {employee.email ??
-                                                                '-'}
-                                                        </p>
-                                                        <p className="text-[11px] text-muted-foreground">
-                                                            {employee.phone ??
-                                                                '-'}
-                                                        </p>
-                                                    </div>
-                                                </td>
-                                                <td className="px-2 py-2 text-center whitespace-nowrap">
-                                                    {formatAgeDisplay(
-                                                        employee.birth_date,
-                                                        employee.age,
-                                                        employee.age_formatted,
-                                                    )}
-                                                </td>
+                                                {!isResignedList && (
+                                                    <td className="px-2 py-2 font-mono text-[11px] uppercase">
+                                                        {employee.employee_code}
+                                                    </td>
+                                                )}
+                                                {!isResignedList && (
+                                                    <td className="px-2 py-2">
+                                                        <div className="space-y-0.5">
+                                                            <p className="max-w-[170px] truncate">
+                                                                {employee.email ??
+                                                                    '-'}
+                                                            </p>
+                                                            <p className="text-[11px] text-muted-foreground">
+                                                                {employee.phone ??
+                                                                    '-'}
+                                                            </p>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                                {!isResignedList && (
+                                                    <td className="px-2 py-2 text-center whitespace-nowrap">
+                                                        {formatAgeDisplay(
+                                                            employee.birth_date,
+                                                            employee.age,
+                                                            employee.age_formatted,
+                                                        )}
+                                                    </td>
+                                                )}
                                                 <td className="px-2 py-2">
                                                     {employee.division?.name ??
                                                         '-'}
                                                 </td>
-                                                <td className="px-2 py-2">
-                                                    {employee.sub_company ? (
-                                                        <div>
-                                                            <p className="max-w-[140px] truncate">
-                                                                {
-                                                                    employee
-                                                                        .sub_company
-                                                                        .name
-                                                                }
-                                                            </p>
-                                                            <p className="text-[11px] text-muted-foreground">
-                                                                Sub Company
-                                                            </p>
-                                                        </div>
-                                                    ) : (
-                                                        <Badge
-                                                            variant="outline"
-                                                            className="h-5 px-1.5 text-[10px]"
-                                                        >
-                                                            -
-                                                        </Badge>
-                                                    )}
-                                                </td>
-                                                <td className="px-2 py-2">
-                                                    {employee.position?.name ??
-                                                        '-'}
-                                                </td>
+                                                {!isResignedList && (
+                                                    <td className="px-2 py-2">
+                                                        {employee.sub_company ? (
+                                                            <div>
+                                                                <p className="max-w-[140px] truncate">
+                                                                    {
+                                                                        employee
+                                                                            .sub_company
+                                                                            .name
+                                                                    }
+                                                                </p>
+                                                                <p className="text-[11px] text-muted-foreground">
+                                                                    Sub Company
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="h-5 px-1.5 text-[10px]"
+                                                            >
+                                                                -
+                                                            </Badge>
+                                                        )}
+                                                    </td>
+                                                )}
+                                                {!isResignedList && (
+                                                    <td className="px-2 py-2">
+                                                        {employee.position
+                                                            ?.name ?? '-'}
+                                                    </td>
+                                                )}
                                                 <td className="px-2 py-2">
                                                     {formatDateDisplay(
                                                         employee.hire_date,
@@ -2654,46 +2699,67 @@ export default function EmployeesIndex() {
                                                     ] ??
                                                         employee.employment_type}
                                                 </td>
-                                                <td className="px-2 py-2">
-                                                    {formatCurrencyDisplay(
-                                                        employee.employment_type ===
-                                                            'DW'
-                                                            ? employee.daily_wage
-                                                            : employee.base_salary,
-                                                    )}
-                                                </td>
-                                                <td className="px-2 py-2">
-                                                    {(() => {
-                                                        const primaryBank =
-                                                            employee.bank_accounts?.find(
-                                                                (b) =>
-                                                                    b.is_primary,
-                                                            ) ??
-                                                            employee
-                                                                .bank_accounts?.[0];
-                                                        if (!primaryBank) {
+                                                {!isResignedList && (
+                                                    <td className="px-2 py-2">
+                                                        {formatCurrencyDisplay(
+                                                            employee.employment_type ===
+                                                                'DW'
+                                                                ? employee.daily_wage
+                                                                : employee.base_salary,
+                                                        )}
+                                                    </td>
+                                                )}
+                                                {isResignedList ? (
+                                                    <>
+                                                        <td className="px-2 py-2 whitespace-nowrap">
+                                                            {formatDateDisplay(
+                                                                employee.offboarded_at,
+                                                            )}
+                                                        </td>
+                                                        <td className="px-2 py-2">
+                                                            {employee.offboarding_reason
+                                                                ? (offboardingReasonLabels[
+                                                                      employee
+                                                                          .offboarding_reason
+                                                                  ] ??
+                                                                  employee.offboarding_reason)
+                                                                : '-'}
+                                                        </td>
+                                                    </>
+                                                ) : (
+                                                    <td className="px-2 py-2">
+                                                        {(() => {
+                                                            const primaryBank =
+                                                                employee.bank_accounts?.find(
+                                                                    (b) =>
+                                                                        b.is_primary,
+                                                                ) ??
+                                                                employee
+                                                                    .bank_accounts?.[0];
+                                                            if (!primaryBank) {
+                                                                return (
+                                                                    <span className="text-muted-foreground">
+                                                                        -
+                                                                    </span>
+                                                                );
+                                                            }
                                                             return (
-                                                                <span className="text-muted-foreground">
-                                                                    -
-                                                                </span>
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-semibold text-foreground">
+                                                                        {
+                                                                            primaryBank.bank_name
+                                                                        }
+                                                                    </span>
+                                                                    <span className="font-mono text-[11px] text-muted-foreground">
+                                                                        {
+                                                                            primaryBank.account_number
+                                                                        }
+                                                                    </span>
+                                                                </div>
                                                             );
-                                                        }
-                                                        return (
-                                                            <div className="flex flex-col">
-                                                                <span className="font-semibold text-foreground">
-                                                                    {
-                                                                        primaryBank.bank_name
-                                                                    }
-                                                                </span>
-                                                                <span className="font-mono text-[11px] text-muted-foreground">
-                                                                    {
-                                                                        primaryBank.account_number
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    })()}
-                                                </td>
+                                                        })()}
+                                                    </td>
+                                                )}
                                                 <td className="px-2 py-2">
                                                     <div className="flex flex-col items-start gap-1">
                                                         <Badge
@@ -2738,7 +2804,11 @@ export default function EmployeesIndex() {
                                                 <td className="sticky right-0 z-10 bg-background px-2 py-2 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.25)]">
                                                     <div className="flex items-center justify-end gap-1">
                                                         <ActionIconButton
-                                                            label="Detail karyawan"
+                                                            label={
+                                                                isResignedList
+                                                                    ? 'Lihat Detail'
+                                                                    : 'Detail karyawan'
+                                                            }
                                                             icon={Eye}
                                                             variant="outline"
                                                             onClick={() =>
@@ -2747,183 +2817,222 @@ export default function EmployeesIndex() {
                                                                 )
                                                             }
                                                         />
-                                                        <ActionIconButton
-                                                            label="Edit karyawan"
-                                                            icon={Pencil}
-                                                            variant="outline"
-                                                            onClick={() =>
-                                                                openEditEmployeeDialog(
-                                                                    employee,
-                                                                )
-                                                            }
-                                                        />
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger
-                                                                asChild
-                                                            >
-                                                                <Button
-                                                                    type="button"
-                                                                    size="icon"
+                                                        {isResignedList ? (
+                                                            <ActionIconButton
+                                                                label="Re-hire"
+                                                                icon={
+                                                                    UserRoundCheck
+                                                                }
+                                                                variant="outline"
+                                                                onClick={() => {
+                                                                    openEditEmployeeDialog(
+                                                                        employee,
+                                                                    );
+                                                                    employeeForm.setData(
+                                                                        (
+                                                                            prev,
+                                                                        ) => ({
+                                                                            ...prev,
+                                                                            employment_status:
+                                                                                'active',
+                                                                            is_active: true,
+                                                                            change_notes:
+                                                                                'Onboard kembali (Re-hire)',
+                                                                        }),
+                                                                    );
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <>
+                                                                <ActionIconButton
+                                                                    label="Edit karyawan"
+                                                                    icon={
+                                                                        Pencil
+                                                                    }
                                                                     variant="outline"
-                                                                    className="size-7"
-                                                                    aria-label="Aksi lainnya"
-                                                                >
-                                                                    <MoreHorizontal className="size-3.5" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
-                                                                <DropdownMenuItem
                                                                     onClick={() =>
-                                                                        setSelectedEmployeeId(
-                                                                            employee.id,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Landmark className="size-4" />
-                                                                    Kelola
-                                                                    rekening
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem
-                                                                    onClick={() =>
-                                                                        openEmployeeContract(
-                                                                            employee.id,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Download className="size-4" />
-                                                                    Generate
-                                                                    kontrak
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem
-                                                                    onClick={() =>
-                                                                        copyPortalInvitation(
+                                                                        openEditEmployeeDialog(
                                                                             employee,
                                                                         )
                                                                     }
-                                                                >
-                                                                    <Copy className="size-4" />
-                                                                    Salin Teks Undangan Login
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem
-                                                                    onClick={() => {
-                                                                        router.visit(
-                                                                            `/settings/users?assign_employee_id=${employee.id}`,
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    <ShieldCheck className="size-4 text-primary" />
-                                                                    Jadikan / Kelola Akses Admin
-                                                                </DropdownMenuItem>
-                                                                {Boolean(
-                                                                    employee.face_enrolled ||
-                                                                        employee.face_photo_url ||
-                                                                        employee.face_enrolled_at,
-                                                                ) && (
-                                                                    <DropdownMenuItem
-                                                                        onClick={() =>
-                                                                            setResetFaceEmployee(
-                                                                                employee,
-                                                                            )
-                                                                        }
-                                                                        className="text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+                                                                />
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger
+                                                                        asChild
                                                                     >
-                                                                        <ScanFace className="size-4 text-rose-500" />
-                                                                        Hapus Verifikasi Wajah
-                                                                    </DropdownMenuItem>
-                                                                )}
-                                                                {employee.employment_type ===
-                                                                    'PKWTT' &&
-                                                                    employee.employment_status ===
-                                                                        'probation' && (
+                                                                        <Button
+                                                                            type="button"
+                                                                            size="icon"
+                                                                            variant="outline"
+                                                                            className="size-7"
+                                                                            aria-label="Aksi lainnya"
+                                                                        >
+                                                                            <MoreHorizontal className="size-3.5" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end">
                                                                         <DropdownMenuItem
                                                                             onClick={() =>
-                                                                                openPkwttActivationDialog(
+                                                                                setSelectedEmployeeId(
+                                                                                    employee.id,
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <Landmark className="size-4" />
+                                                                            Kelola
+                                                                            rekening
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem
+                                                                            onClick={() =>
+                                                                                openEmployeeContract(
+                                                                                    employee.id,
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <Download className="size-4" />
+                                                                            Generate
+                                                                            kontrak
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem
+                                                                            onClick={() =>
+                                                                                copyPortalInvitation(
                                                                                     employee,
                                                                                 )
                                                                             }
                                                                         >
-                                                                            <UserRoundCheck className="size-4" />
-                                                                            Aktivasi
-                                                                            PKWTT
-                                                                        </DropdownMenuItem>
-                                                                    )}
-                                                                {employee.employment_status ===
-                                                                'resigned' ||
-                                                                (employee.offboarded_at !==
-                                                                    null &&
-                                                                    !employee.is_offboard_scheduled &&
-                                                                    employee.offboarded_at <=
-                                                                        todayDate()) ? (
-                                                                    <DropdownMenuItem
-                                                                        onClick={() => {
-                                                                            openEditEmployeeDialog(
-                                                                                employee,
-                                                                            );
-                                                                            employeeForm.setData(
-                                                                                (
-                                                                                    prev,
-                                                                                ) => ({
-                                                                                    ...prev,
-                                                                                    employment_status:
-                                                                                        'active',
-                                                                                    is_active:
-                                                                                        true,
-                                                                                    change_notes:
-                                                                                        'Onboard kembali (Re-hire)',
-                                                                                }),
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        <UserRoundCheck className="size-4 text-emerald-600" />
-                                                                        Onboard
-                                                                        kembali
-                                                                        (Re-hire)
-                                                                    </DropdownMenuItem>
-                                                                ) : employee.is_offboard_scheduled ||
-                                                                  (employee.offboarded_at !==
-                                                                      null &&
-                                                                      employee.offboarded_at >
-                                                                          todayDate()) ? (
-                                                                    <>
-                                                                        <DropdownMenuItem
-                                                                            onClick={() =>
-                                                                                openOffboardingDialog(
-                                                                                    employee,
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <UserRoundX className="size-4 text-amber-600" />
-                                                                            Ubah
-                                                                            Jadwal
-                                                                            Offboarding
+                                                                            <Copy className="size-4" />
+                                                                            Salin
+                                                                            Teks
+                                                                            Undangan
+                                                                            Login
                                                                         </DropdownMenuItem>
                                                                         <DropdownMenuItem
-                                                                            onClick={() =>
-                                                                                handleCancelOffboard(
-                                                                                    employee,
-                                                                                )
-                                                                            }
-                                                                            className="text-rose-600 focus:bg-rose-50 focus:text-rose-600"
+                                                                            onClick={() => {
+                                                                                router.visit(
+                                                                                    `/settings/users?assign_employee_id=${employee.id}`,
+                                                                                );
+                                                                            }}
                                                                         >
-                                                                            <RotateCcw className="size-4" />
-                                                                            Batalkan
-                                                                            Offboarding
+                                                                            <ShieldCheck className="size-4 text-primary" />
+                                                                            Jadikan
+                                                                            /
+                                                                            Kelola
+                                                                            Akses
+                                                                            Admin
                                                                         </DropdownMenuItem>
-                                                                    </>
-                                                                ) : (
-                                                                    <DropdownMenuItem
-                                                                        onClick={() =>
-                                                                            openOffboardingDialog(
-                                                                                employee,
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <UserRoundX className="size-4" />
-                                                                        Offboarding
-                                                                    </DropdownMenuItem>
-                                                                )}
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
+                                                                        {Boolean(
+                                                                            employee.face_enrolled ||
+                                                                            employee.face_photo_url ||
+                                                                            employee.face_enrolled_at,
+                                                                        ) && (
+                                                                            <DropdownMenuItem
+                                                                                onClick={() =>
+                                                                                    setResetFaceEmployee(
+                                                                                        employee,
+                                                                                    )
+                                                                                }
+                                                                                className="text-rose-600 focus:bg-rose-50 focus:text-rose-600"
+                                                                            >
+                                                                                <ScanFace className="size-4 text-rose-500" />
+                                                                                Hapus
+                                                                                Verifikasi
+                                                                                Wajah
+                                                                            </DropdownMenuItem>
+                                                                        )}
+                                                                        {employee.employment_type ===
+                                                                            'PKWTT' &&
+                                                                            employee.employment_status ===
+                                                                                'probation' && (
+                                                                                <DropdownMenuItem
+                                                                                    onClick={() =>
+                                                                                        openPkwttActivationDialog(
+                                                                                            employee,
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    <UserRoundCheck className="size-4" />
+                                                                                    Aktivasi
+                                                                                    PKWTT
+                                                                                </DropdownMenuItem>
+                                                                            )}
+                                                                        {employee.employment_status ===
+                                                                            'resigned' ||
+                                                                        (employee.offboarded_at !==
+                                                                            null &&
+                                                                            !employee.is_offboard_scheduled &&
+                                                                            employee.offboarded_at <=
+                                                                                todayDate()) ? (
+                                                                            <DropdownMenuItem
+                                                                                onClick={() => {
+                                                                                    openEditEmployeeDialog(
+                                                                                        employee,
+                                                                                    );
+                                                                                    employeeForm.setData(
+                                                                                        (
+                                                                                            prev,
+                                                                                        ) => ({
+                                                                                            ...prev,
+                                                                                            employment_status:
+                                                                                                'active',
+                                                                                            is_active: true,
+                                                                                            change_notes:
+                                                                                                'Onboard kembali (Re-hire)',
+                                                                                        }),
+                                                                                    );
+                                                                                }}
+                                                                            >
+                                                                                <UserRoundCheck className="size-4 text-emerald-600" />
+                                                                                Onboard
+                                                                                kembali
+                                                                                (Re-hire)
+                                                                            </DropdownMenuItem>
+                                                                        ) : employee.is_offboard_scheduled ||
+                                                                          (employee.offboarded_at !==
+                                                                              null &&
+                                                                              employee.offboarded_at >
+                                                                                  todayDate()) ? (
+                                                                            <>
+                                                                                <DropdownMenuItem
+                                                                                    onClick={() =>
+                                                                                        openOffboardingDialog(
+                                                                                            employee,
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    <UserRoundX className="size-4 text-amber-600" />
+                                                                                    Ubah
+                                                                                    Jadwal
+                                                                                    Offboarding
+                                                                                </DropdownMenuItem>
+                                                                                <DropdownMenuItem
+                                                                                    onClick={() =>
+                                                                                        handleCancelOffboard(
+                                                                                            employee,
+                                                                                        )
+                                                                                    }
+                                                                                    className="text-rose-600 focus:bg-rose-50 focus:text-rose-600"
+                                                                                >
+                                                                                    <RotateCcw className="size-4" />
+                                                                                    Batalkan
+                                                                                    Offboarding
+                                                                                </DropdownMenuItem>
+                                                                            </>
+                                                                        ) : (
+                                                                            <DropdownMenuItem
+                                                                                onClick={() =>
+                                                                                    openOffboardingDialog(
+                                                                                        employee,
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                <UserRoundX className="size-4" />
+                                                                                Offboarding
+                                                                            </DropdownMenuItem>
+                                                                        )}
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -3994,20 +4103,26 @@ export default function EmployeesIndex() {
                     }
                 }}
             >
-                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
-                    <DialogHeader>
+                <DialogContent className="flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl">
+                    <DialogHeader className="shrink-0 px-5 pt-5 pb-3 text-left sm:px-6">
                         <DialogTitle>
                             {editingEmployee
                                 ? 'Edit Data Karyawan'
                                 : 'Tambah Karyawan Baru'}
                         </DialogTitle>
                         <DialogDescription>
-                            Lengkapi data personal, organisasi, dan payroll.
+                            Isi data pribadi, pekerjaan, lalu dokumen pendukung.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <form onSubmit={submitEmployeeForm} className="space-y-4">
-                        <div className="grid gap-2 sm:grid-cols-3">
+                    <form
+                        onSubmit={submitEmployeeForm}
+                        className="flex min-h-0 flex-col"
+                    >
+                        <nav
+                            aria-label="Tahap pengisian karyawan"
+                            className="grid shrink-0 grid-cols-3 gap-1 border-b px-5 pb-3 sm:px-6"
+                        >
                             {[
                                 {
                                     step: 1,
@@ -4025,387 +4140,790 @@ export default function EmployeesIndex() {
                                 <button
                                     key={item.step}
                                     type="button"
-                                    className={`rounded-md border px-3 py-2 text-left text-sm transition ${
+                                    aria-current={
                                         employeeFormStep === item.step
-                                            ? 'border-primary bg-primary/10'
-                                            : 'border-border bg-muted/30'
+                                            ? 'step'
+                                            : undefined
+                                    }
+                                    className={`flex items-center gap-2 rounded-md px-2 py-2 text-left text-[15px] transition-colors focus-visible:outline-2 focus-visible:outline-ring sm:px-3 sm:text-[17.5px] ${
+                                        employeeFormStep === item.step
+                                            ? 'bg-primary/10 font-semibold text-primary'
+                                            : 'text-muted-foreground hover:bg-muted'
                                     }`}
                                     onClick={() =>
                                         setEmployeeFormStep(item.step)
                                     }
                                 >
-                                    <p className="text-xs text-muted-foreground">
-                                        Langkah {item.step}
-                                    </p>
-                                    <p className="font-medium">{item.title}</p>
+                                    <span
+                                        aria-hidden="true"
+                                        className="shrink-0 tabular-nums"
+                                    >
+                                        {item.step}.
+                                    </span>
+                                    <span>{item.title}</span>
                                 </button>
                             ))}
-                        </div>
+                        </nav>
 
-                        {employeeErrorSummary.length > 0 ? (
-                            <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
-                                <div className="flex items-start gap-2">
-                                    <AlertTriangle className="mt-0.5 size-4 text-rose-700" />
-                                    <div className="space-y-1 text-sm text-rose-800">
-                                        <p className="font-semibold">
-                                            Data belum bisa disimpan. Periksa
-                                            input berikut:
-                                        </p>
-                                        <ul className="list-disc space-y-1 pl-5">
-                                            {employeeErrorSummary.map(
-                                                (error) => (
-                                                    <li
-                                                        key={`${error.field}-${error.message}`}
-                                                    >
-                                                        <span className="font-medium">
-                                                            {error.label}:
-                                                        </span>{' '}
-                                                        {error.message}
-                                                    </li>
-                                                ),
-                                            )}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : null}
-
-                        {employeeFormStep === 1 && (
-                            <div className="space-y-3">
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="employee_code">
-                                        ID Karyawan
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <Input
-                                            id="employee_code"
-                                            value={
-                                                employeeForm.data.employee_code
-                                            }
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'employee_code',
-                                                    event.target.value.toUpperCase(),
-                                                )
-                                            }
-                                            placeholder={
-                                                previewEmployeeCode ||
-                                                'ID karyawan'
-                                            }
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            Isi manual atau kosongkan agar
-                                            dibuat otomatis dari kode jabatan +
-                                            urutan divisi + bulan/tahun masuk
-                                            kerja.
-                                        </p>
-                                        <InputError
-                                            message={
-                                                employeeForm.errors
-                                                    .employee_code
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="full_name">
-                                        Nama Lengkap
-                                    </Label>
-                                    <div className="grid gap-2 sm:grid-cols-2">
-                                        <div className="space-y-1">
-                                            <Input
-                                                id="full_name"
-                                                value={
-                                                    employeeForm.data.full_name
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'full_name',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                required
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .full_name
-                                                }
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="gender"
-                                                className="sr-only"
-                                            >
-                                                Gender
-                                            </Label>
-                                            <Select
-                                                value={
-                                                    employeeForm.data.gender ===
-                                                    ''
-                                                        ? '__none'
-                                                        : employeeForm.data
-                                                              .gender
-                                                }
-                                                onValueChange={(value) =>
-                                                    employeeForm.setData(
-                                                        'gender',
-                                                        value === '__none'
-                                                            ? ''
-                                                            : value,
-                                                    )
-                                                }
-                                            >
-                                                <SelectTrigger
-                                                    id="gender"
-                                                    className="w-full"
-                                                >
-                                                    <SelectValue placeholder="Pilih gender" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="__none">
-                                                        -
-                                                    </SelectItem>
-                                                    {options.genders.map(
-                                                        (gender) => (
-                                                            <SelectItem
-                                                                key={gender}
-                                                                value={gender}
-                                                            >
-                                                                {genderLabels[
-                                                                    gender
-                                                                ] ?? gender}
-                                                            </SelectItem>
-                                                        ),
-                                                    )}
-                                                </SelectContent>
-                                            </Select>
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors.gender
-                                                }
-                                            />
+                        <div className="min-h-0 overflow-y-auto px-5 py-4 sm:px-6">
+                            {employeeErrorSummary.length > 0 ? (
+                                <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+                                    <div className="flex items-start gap-2">
+                                        <AlertTriangle className="mt-0.5 size-4 text-rose-700" />
+                                        <div className="space-y-1 text-sm text-rose-800">
+                                            <p className="font-semibold">
+                                                Data belum bisa disimpan.
+                                                Periksa input berikut:
+                                            </p>
+                                            <ul className="list-disc space-y-1 pl-5">
+                                                {employeeErrorSummary.map(
+                                                    (error) => (
+                                                        <li
+                                                            key={`${error.field}-${error.message}`}
+                                                        >
+                                                            <span className="font-medium">
+                                                                {error.label}:
+                                                            </span>{' '}
+                                                            {error.message}
+                                                        </li>
+                                                    ),
+                                                )}
+                                            </ul>
                                         </div>
                                     </div>
                                 </div>
+                            ) : null}
 
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="email">Email</Label>
-                                    <div className="grid gap-2 sm:grid-cols-2">
+                            {employeeFormStep === 1 && (
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold sm:col-span-2">
+                                        Identitas & kontak
+                                    </h3>
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="employee_code">
+                                            ID Karyawan
+                                        </Label>
                                         <div className="space-y-1">
                                             <Input
-                                                id="email"
-                                                type="email"
-                                                placeholder="example@gmail.com"
-                                                value={employeeForm.data.email}
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'email',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors.email
-                                                }
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="phone"
-                                                className="sr-only"
-                                            >
-                                                Nomor HP
-                                            </Label>
-                                            <Input
-                                                id="phone"
-                                                type="tel"
-                                                placeholder="62xxx"
-                                                value={employeeForm.data.phone}
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'phone',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors.phone
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="birth_place">
-                                        Tempat, Tgl Lahir
-                                    </Label>
-                                    <div className="grid gap-2 sm:grid-cols-2">
-                                        <div className="space-y-1">
-                                            <Input
-                                                id="birth_place"
+                                                id="employee_code"
                                                 value={
                                                     employeeForm.data
-                                                        .birth_place
+                                                        .employee_code
                                                 }
                                                 onChange={(event) =>
                                                     employeeForm.setData(
-                                                        'birth_place',
-                                                        event.target.value,
+                                                        'employee_code',
+                                                        event.target.value.toUpperCase(),
                                                     )
                                                 }
-                                                placeholder="Contoh: Makassar"
-                                                maxLength={150}
+                                                placeholder={
+                                                    previewEmployeeCode ||
+                                                    'ID karyawan'
+                                                }
                                             />
+                                            <p className="text-xs text-muted-foreground">
+                                                Kosongkan untuk membuat ID
+                                                otomatis.
+                                            </p>
                                             <InputError
                                                 message={
                                                     employeeForm.errors
-                                                        .birth_place
-                                                }
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="birth_date"
-                                                className="sr-only"
-                                            >
-                                                Tanggal Lahir
-                                            </Label>
-                                            <Input
-                                                id="birth_date"
-                                                type="date"
-                                                value={
-                                                    employeeForm.data.birth_date
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'birth_date',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .birth_date
+                                                        .employee_code
                                                 }
                                             />
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="last_education">
-                                        Pendidikan Terakhir
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <SearchableSelect
-                                            id="last_education"
-                                            value={
-                                                employeeForm.data
-                                                    .last_education === ''
-                                                    ? '__none'
-                                                    : employeeForm.data
-                                                          .last_education
-                                            }
-                                            onValueChange={(value) =>
-                                                employeeForm.setData(
-                                                    'last_education',
-                                                    value === '__none'
-                                                        ? ''
-                                                        : value,
-                                                )
-                                            }
-                                            placeholder="Pilih pendidikan"
-                                            searchPlaceholder="Cari pendidikan..."
-                                            options={[
-                                                {
-                                                    value: '__none',
-                                                    label: '-',
-                                                },
-                                                ...options.last_education_levels.map(
-                                                    (level) => ({
-                                                        value: level,
-                                                        label: level,
-                                                    }),
-                                                ),
-                                            ]}
-                                            className="w-full"
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors
-                                                    .last_education
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="marital_status">
-                                        Status Keluarga
-                                    </Label>
-                                    <div className="space-y-2">
-                                        <div
-                                            className={`grid gap-2 ${
-                                                employeeForm.data
-                                                    .marital_status !== '' &&
-                                                employeeForm.data
-                                                    .marital_status !== 'single'
-                                                    ? 'md:grid-cols-2'
-                                                    : 'md:grid-cols-1'
-                                            }`}
-                                        >
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="full_name">
+                                            Nama Lengkap
+                                        </Label>
+                                        <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="space-y-1">
+                                                <Input
+                                                    id="full_name"
+                                                    value={
+                                                        employeeForm.data
+                                                            .full_name
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'full_name',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    required
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .full_name
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label
+                                                    htmlFor="gender"
+                                                    className="sr-only"
+                                                >
+                                                    Gender
+                                                </Label>
                                                 <Select
                                                     value={
                                                         employeeForm.data
-                                                            .marital_status ===
-                                                        ''
+                                                            .gender === ''
                                                             ? '__none'
                                                             : employeeForm.data
-                                                                  .marital_status
+                                                                  .gender
                                                     }
-                                                    onValueChange={(value) => {
-                                                        const maritalStatus =
+                                                    onValueChange={(value) =>
+                                                        employeeForm.setData(
+                                                            'gender',
                                                             value === '__none'
                                                                 ? ''
-                                                                : value;
-
-                                                        employeeForm.setData(
-                                                            'marital_status',
-                                                            maritalStatus,
-                                                        );
-
-                                                        if (
-                                                            maritalStatus ===
-                                                                '' ||
-                                                            maritalStatus ===
-                                                                'single'
-                                                        ) {
-                                                            employeeForm.setData(
-                                                                'children_count',
-                                                                '0',
-                                                            );
-                                                        }
-                                                    }}
+                                                                : value,
+                                                        )
+                                                    }
                                                 >
                                                     <SelectTrigger
-                                                        id="marital_status"
+                                                        id="gender"
                                                         className="w-full"
                                                     >
-                                                        <SelectValue placeholder="Pilih status perkawinan" />
+                                                        <SelectValue placeholder="Pilih gender" />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="__none">
                                                             -
                                                         </SelectItem>
-                                                        {options.marital_statuses.map(
+                                                        {options.genders.map(
+                                                            (gender) => (
+                                                                <SelectItem
+                                                                    key={gender}
+                                                                    value={
+                                                                        gender
+                                                                    }
+                                                                >
+                                                                    {genderLabels[
+                                                                        gender
+                                                                    ] ?? gender}
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .gender
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="email">Email</Label>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="space-y-1">
+                                                <Input
+                                                    id="email"
+                                                    type="email"
+                                                    placeholder="example@gmail.com"
+                                                    value={
+                                                        employeeForm.data.email
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'email',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .email
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label
+                                                    htmlFor="phone"
+                                                    className="sr-only"
+                                                >
+                                                    Nomor HP
+                                                </Label>
+                                                <Input
+                                                    id="phone"
+                                                    type="tel"
+                                                    placeholder="62xxx"
+                                                    value={
+                                                        employeeForm.data.phone
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'phone',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .phone
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="birth_place">
+                                            Tempat, Tgl Lahir
+                                        </Label>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="space-y-1">
+                                                <Input
+                                                    id="birth_place"
+                                                    value={
+                                                        employeeForm.data
+                                                            .birth_place
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'birth_place',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Contoh: Makassar"
+                                                    maxLength={150}
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .birth_place
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label
+                                                    htmlFor="birth_date"
+                                                    className="sr-only"
+                                                >
+                                                    Tanggal Lahir
+                                                </Label>
+                                                <Input
+                                                    id="birth_date"
+                                                    type="date"
+                                                    value={
+                                                        employeeForm.data
+                                                            .birth_date
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'birth_date',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .birth_date
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h3 className="border-t pt-3 text-sm font-semibold sm:col-span-2">
+                                        Data pribadi
+                                    </h3>
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="last_education">
+                                            Pendidikan Terakhir
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <SearchableSelect
+                                                id="last_education"
+                                                value={
+                                                    employeeForm.data
+                                                        .last_education === ''
+                                                        ? '__none'
+                                                        : employeeForm.data
+                                                              .last_education
+                                                }
+                                                onValueChange={(value) =>
+                                                    employeeForm.setData(
+                                                        'last_education',
+                                                        value === '__none'
+                                                            ? ''
+                                                            : value,
+                                                    )
+                                                }
+                                                placeholder="Pilih pendidikan"
+                                                searchPlaceholder="Cari pendidikan..."
+                                                options={[
+                                                    {
+                                                        value: '__none',
+                                                        label: '-',
+                                                    },
+                                                    ...options.last_education_levels.map(
+                                                        (level) => ({
+                                                            value: level,
+                                                            label: level,
+                                                        }),
+                                                    ),
+                                                ]}
+                                                className="w-full"
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .last_education
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="marital_status">
+                                            Status Keluarga
+                                        </Label>
+                                        <div className="space-y-2">
+                                            <div
+                                                className={`grid gap-2 ${
+                                                    employeeForm.data
+                                                        .marital_status !==
+                                                        '' &&
+                                                    employeeForm.data
+                                                        .marital_status !==
+                                                        'single'
+                                                        ? 'md:grid-cols-2'
+                                                        : 'md:grid-cols-1'
+                                                }`}
+                                            >
+                                                <div className="space-y-1">
+                                                    <Select
+                                                        value={
+                                                            employeeForm.data
+                                                                .marital_status ===
+                                                            ''
+                                                                ? '__none'
+                                                                : employeeForm
+                                                                      .data
+                                                                      .marital_status
+                                                        }
+                                                        onValueChange={(
+                                                            value,
+                                                        ) => {
+                                                            const maritalStatus =
+                                                                value ===
+                                                                '__none'
+                                                                    ? ''
+                                                                    : value;
+
+                                                            employeeForm.setData(
+                                                                'marital_status',
+                                                                maritalStatus,
+                                                            );
+
+                                                            if (
+                                                                maritalStatus ===
+                                                                    '' ||
+                                                                maritalStatus ===
+                                                                    'single'
+                                                            ) {
+                                                                employeeForm.setData(
+                                                                    'children_count',
+                                                                    '0',
+                                                                );
+                                                            }
+                                                        }}
+                                                    >
+                                                        <SelectTrigger
+                                                            id="marital_status"
+                                                            className="w-full"
+                                                        >
+                                                            <SelectValue placeholder="Pilih status perkawinan" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="__none">
+                                                                -
+                                                            </SelectItem>
+                                                            {options.marital_statuses.map(
+                                                                (status) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            status
+                                                                        }
+                                                                        value={
+                                                                            status
+                                                                        }
+                                                                    >
+                                                                        {maritalStatusLabels[
+                                                                            status
+                                                                        ] ??
+                                                                            status}
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .marital_status
+                                                        }
+                                                    />
+                                                </div>
+
+                                                {employeeForm.data
+                                                    .marital_status !== '' &&
+                                                    employeeForm.data
+                                                        .marital_status !==
+                                                        'single' && (
+                                                        <div className="space-y-1">
+                                                            <Input
+                                                                id="children_count"
+                                                                type="number"
+                                                                min="0"
+                                                                value={
+                                                                    employeeForm
+                                                                        .data
+                                                                        .children_count
+                                                                }
+                                                                onChange={(
+                                                                    event,
+                                                                ) =>
+                                                                    employeeForm.setData(
+                                                                        'children_count',
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                placeholder="Jumlah anak"
+                                                            />
+                                                            <InputError
+                                                                message={
+                                                                    employeeForm
+                                                                        .errors
+                                                                        .children_count
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="biological_mother_name">
+                                            Nama Ibu Kandung
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <Input
+                                                id="biological_mother_name"
+                                                value={
+                                                    employeeForm.data
+                                                        .biological_mother_name
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'biological_mother_name',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .biological_mother_name
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="blood_type">
+                                            Golongan Darah
+                                        </Label>
+                                        <Select
+                                            value={
+                                                employeeForm.data.blood_type ||
+                                                '__none'
+                                            }
+                                            onValueChange={(value) =>
+                                                employeeForm.setData(
+                                                    'blood_type',
+                                                    value === '__none'
+                                                        ? ''
+                                                        : value,
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger
+                                                id="blood_type"
+                                                className="w-full"
+                                            >
+                                                <SelectValue placeholder="Pilih golongan darah" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__none">
+                                                    -
+                                                </SelectItem>
+                                                {['A', 'B', 'AB', 'O'].map(
+                                                    (bloodType) => (
+                                                        <SelectItem
+                                                            key={bloodType}
+                                                            value={bloodType}
+                                                        >
+                                                            {bloodType}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="religion">Agama</Label>
+                                        <Select
+                                            value={
+                                                employeeForm.data.religion ||
+                                                '__none'
+                                            }
+                                            onValueChange={(value) =>
+                                                employeeForm.setData(
+                                                    'religion',
+                                                    value === '__none'
+                                                        ? ''
+                                                        : value,
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger
+                                                id="religion"
+                                                className="w-full"
+                                            >
+                                                <SelectValue placeholder="Pilih agama" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__none">
+                                                    -
+                                                </SelectItem>
+                                                {[
+                                                    'Islam',
+                                                    'Kristen',
+                                                    'Katolik',
+                                                    'Hindu',
+                                                    'Buddha',
+                                                    'Konghucu',
+                                                    'Lainnya',
+                                                ].map((religion) => (
+                                                    <SelectItem
+                                                        key={religion}
+                                                        value={religion}
+                                                    >
+                                                        {religion}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <h3 className="border-t pt-3 text-sm font-semibold sm:col-span-2">
+                                        Alamat
+                                    </h3>
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="address">
+                                            Alamat KTP
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <textarea
+                                                id="address"
+                                                value={
+                                                    employeeForm.data.address
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'address',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                rows={2}
+                                                maxLength={500}
+                                                className="min-h-16 w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors.address
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="domicile_address">
+                                            Alamat Domisili
+                                        </Label>
+                                        <div className="flex flex-col gap-1">
+                                            <textarea
+                                                id="domicile_address"
+                                                value={
+                                                    employeeForm.data
+                                                        .domicile_address
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'domicile_address',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                rows={2}
+                                                maxLength={500}
+                                                className="min-h-16 w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .domicile_address
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <h3 className="border-t pt-3 text-sm font-semibold sm:col-span-2">
+                                        Kontak darurat
+                                    </h3>
+                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
+                                        <Label htmlFor="emergency_contact_name">
+                                            Kontak Darurat
+                                        </Label>
+                                        <div className="grid gap-2 md:grid-cols-3">
+                                            <Input
+                                                id="emergency_contact_name"
+                                                value={
+                                                    employeeForm.data
+                                                        .emergency_contact_name
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'emergency_contact_name',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Nama"
+                                            />
+                                            <Input
+                                                id="emergency_contact_phone"
+                                                value={
+                                                    employeeForm.data
+                                                        .emergency_contact_phone
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'emergency_contact_phone',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Nomor telepon"
+                                            />
+                                            <Input
+                                                id="emergency_contact_relationship"
+                                                value={
+                                                    employeeForm.data
+                                                        .emergency_contact_relationship
+                                                }
+                                                onChange={(event) =>
+                                                    employeeForm.setData(
+                                                        'emergency_contact_relationship',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Hubungan"
+                                            />
+                                            <div className="md:col-span-3">
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .emergency_contact_name ??
+                                                        employeeForm.errors
+                                                            .emergency_contact_phone ??
+                                                        employeeForm.errors
+                                                            .emergency_contact_relationship
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {employeeFormStep === 2 && (
+                                <div className="space-y-3">
+                                    <div className="grid items-start gap-2 md:grid-cols-[150px_minmax(0,1fr)_minmax(0,1fr)]">
+                                        <div className="contents">
+                                            <Label
+                                                htmlFor="hire_date"
+                                                className="md:pt-2"
+                                            >
+                                                Tanggal Masuk
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <Input
+                                                    id="hire_date"
+                                                    type="date"
+                                                    value={
+                                                        employeeForm.data
+                                                            .hire_date
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'hire_date',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    required
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .hire_date
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid items-center gap-2">
+                                            <Label
+                                                htmlFor="employment_status"
+                                                className="sr-only"
+                                            >
+                                                Status
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <Select
+                                                    value={
+                                                        employeeForm.data
+                                                            .employment_status
+                                                    }
+                                                    onValueChange={(value) =>
+                                                        employeeForm.setData(
+                                                            'employment_status',
+                                                            value,
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger
+                                                        id="employment_status"
+                                                        className="w-full"
+                                                    >
+                                                        <SelectValue placeholder="Pilih status" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {options.employment_statuses.map(
                                                             (status) => (
                                                                 <SelectItem
                                                                     key={status}
@@ -4413,7 +4931,7 @@ export default function EmployeesIndex() {
                                                                         status
                                                                     }
                                                                 >
-                                                                    {maritalStatusLabels[
+                                                                    {statusLabels[
                                                                         status
                                                                     ] ?? status}
                                                                 </SelectItem>
@@ -4424,2183 +4942,2028 @@ export default function EmployeesIndex() {
                                                 <InputError
                                                     message={
                                                         employeeForm.errors
-                                                            .marital_status
+                                                            .employment_status
                                                     }
                                                 />
                                             </div>
-
-                                            {employeeForm.data
-                                                .marital_status !== '' &&
-                                                employeeForm.data
-                                                    .marital_status !==
-                                                    'single' && (
-                                                    <div className="space-y-1">
-                                                        <Input
-                                                            id="children_count"
-                                                            type="number"
-                                                            min="0"
-                                                            value={
-                                                                employeeForm
-                                                                    .data
-                                                                    .children_count
-                                                            }
-                                                            onChange={(event) =>
-                                                                employeeForm.setData(
-                                                                    'children_count',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            placeholder="Jumlah anak"
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                employeeForm
-                                                                    .errors
-                                                                    .children_count
-                                                            }
-                                                        />
-                                                    </div>
-                                                )}
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="biological_mother_name">
-                                        Nama Ibu Kandung
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <Input
-                                            id="biological_mother_name"
-                                            value={
-                                                employeeForm.data
-                                                    .biological_mother_name
-                                            }
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'biological_mother_name',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors
-                                                    .biological_mother_name
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="address">Alamat KTP</Label>
-                                    <div className="space-y-1">
-                                        <textarea
-                                            id="address"
-                                            value={employeeForm.data.address}
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'address',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            rows={3}
-                                            maxLength={500}
-                                            className="min-h-20 w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.address
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="domicile_address">
-                                        Alamat Domisili
-                                    </Label>
-                                    <div className="flex flex-col gap-1">
-                                        <textarea
-                                            id="domicile_address"
-                                            value={
-                                                employeeForm.data
-                                                    .domicile_address
-                                            }
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'domicile_address',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            rows={3}
-                                            maxLength={500}
-                                            className="min-h-20 w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors
-                                                    .domicile_address
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="blood_type">
-                                        Golongan Darah
-                                    </Label>
-                                    <Select
-                                        value={
-                                            employeeForm.data.blood_type ||
-                                            '__none'
-                                        }
-                                        onValueChange={(value) =>
-                                            employeeForm.setData(
-                                                'blood_type',
-                                                value === '__none' ? '' : value,
-                                            )
-                                        }
-                                    >
-                                        <SelectTrigger
-                                            id="blood_type"
-                                            className="w-full"
-                                        >
-                                            <SelectValue placeholder="Pilih golongan darah" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="__none">
-                                                -
-                                            </SelectItem>
-                                            {['A', 'B', 'AB', 'O'].map(
-                                                (bloodType) => (
-                                                    <SelectItem
-                                                        key={bloodType}
-                                                        value={bloodType}
-                                                    >
-                                                        {bloodType}
-                                                    </SelectItem>
-                                                ),
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="religion">Agama</Label>
-                                    <Select
-                                        value={
-                                            employeeForm.data.religion ||
-                                            '__none'
-                                        }
-                                        onValueChange={(value) =>
-                                            employeeForm.setData(
-                                                'religion',
-                                                value === '__none' ? '' : value,
-                                            )
-                                        }
-                                    >
-                                        <SelectTrigger
-                                            id="religion"
-                                            className="w-full"
-                                        >
-                                            <SelectValue placeholder="Pilih agama" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="__none">
-                                                -
-                                            </SelectItem>
-                                            {[
-                                                'Islam',
-                                                'Kristen',
-                                                'Katolik',
-                                                'Hindu',
-                                                'Buddha',
-                                                'Konghucu',
-                                                'Lainnya',
-                                            ].map((religion) => (
-                                                <SelectItem
-                                                    key={religion}
-                                                    value={religion}
-                                                >
-                                                    {religion}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="emergency_contact_name">
-                                        Kontak Darurat
-                                    </Label>
-                                    <div className="grid gap-2 md:grid-cols-3">
-                                        <Input
-                                            id="emergency_contact_name"
-                                            value={
-                                                employeeForm.data
-                                                    .emergency_contact_name
-                                            }
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'emergency_contact_name',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="Nama"
-                                        />
-                                        <Input
-                                            id="emergency_contact_phone"
-                                            value={
-                                                employeeForm.data
-                                                    .emergency_contact_phone
-                                            }
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'emergency_contact_phone',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="Nomor telepon"
-                                        />
-                                        <Input
-                                            id="emergency_contact_relationship"
-                                            value={
-                                                employeeForm.data
-                                                    .emergency_contact_relationship
-                                            }
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'emergency_contact_relationship',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="Hubungan"
-                                        />
-                                        <div className="md:col-span-3">
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .emergency_contact_name ??
-                                                    employeeForm.errors
-                                                        .emergency_contact_phone ??
-                                                    employeeForm.errors
-                                                        .emergency_contact_relationship
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {employeeFormStep === 2 && (
-                            <div className="space-y-3">
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="hire_date">
-                                        Tanggal Masuk
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <Input
-                                            id="hire_date"
-                                            type="date"
-                                            value={employeeForm.data.hire_date}
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'hire_date',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            required
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.hire_date
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="employment_status">
-                                        Status
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <Select
-                                            value={
-                                                employeeForm.data
-                                                    .employment_status
-                                            }
-                                            onValueChange={(value) =>
-                                                employeeForm.setData(
-                                                    'employment_status',
-                                                    value,
-                                                )
-                                            }
-                                        >
-                                            <SelectTrigger
-                                                id="employment_status"
-                                                className="w-full"
+                                    <div className="grid items-start gap-2 md:grid-cols-[150px_minmax(0,1fr)_minmax(0,1fr)]">
+                                        <div className="contents">
+                                            <Label
+                                                htmlFor="employment_type"
+                                                className="md:pt-2"
                                             >
-                                                <SelectValue placeholder="Pilih status" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {options.employment_statuses.map(
-                                                    (status) => (
-                                                        <SelectItem
-                                                            key={status}
-                                                            value={status}
-                                                        >
-                                                            {statusLabels[
-                                                                status
-                                                            ] ?? status}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError
-                                            message={
-                                                employeeForm.errors
-                                                    .employment_status
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="employment_type">
-                                        Tipe
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <Select
-                                            value={
-                                                employeeForm.data
-                                                    .employment_type
-                                            }
-                                            onValueChange={(value) =>
-                                                employeeForm.setData(
-                                                    (data) => ({
-                                                        ...data,
-                                                        employment_type: value,
-                                                        contract_duration_months:
-                                                            value === 'PKWT'
-                                                                ? data.contract_duration_months
-                                                                : '',
-                                                        contract_end_date:
-                                                            value === 'PKWT'
-                                                                ? data.contract_end_date
-                                                                : '',
-                                                        probation_duration_months:
-                                                            value === 'PKWTT'
-                                                                ? data.probation_duration_months
-                                                                : '0',
-                                                    }),
-                                                )
-                                            }
-                                        >
-                                            <SelectTrigger
-                                                id="employment_type"
-                                                className="w-full"
-                                            >
-                                                <SelectValue placeholder="Pilih tipe" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {options.employment_types.map(
-                                                    (type) => (
-                                                        <SelectItem
-                                                            key={type}
-                                                            value={type}
-                                                        >
-                                                            {typeLabels[type] ??
-                                                                type}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError
-                                            message={
-                                                employeeForm.errors
-                                                    .employment_type
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                {employeeForm.data.employment_type ===
-                                    'PKWT' && (
-                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="contract_end_mode">
-                                            Masa Kontrak
-                                        </Label>
-                                        <div className="flex flex-col gap-2">
-                                            <Select
-                                                value={contractEndMode}
-                                                onValueChange={(value) => {
-                                                    const mode = value as
-                                                        | 'duration'
-                                                        | 'manual';
-                                                    setContractEndMode(mode);
-                                                    if (mode === 'duration') {
-                                                        employeeForm.setData(
-                                                            'contract_end_date',
-                                                            '',
-                                                        );
-                                                    } else {
-                                                        employeeForm.setData(
-                                                            'contract_duration_months',
-                                                            '',
-                                                        );
-                                                    }
-                                                }}
-                                            >
-                                                <SelectTrigger
-                                                    id="contract_end_mode"
-                                                    className="w-full"
-                                                >
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="duration">
-                                                        Hitung dari durasi bulan
-                                                    </SelectItem>
-                                                    <SelectItem value="manual">
-                                                        Tentukan tanggal akhir
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-
-                                            {contractEndMode === 'duration' ? (
-                                                <>
-                                                    <Input
-                                                        id="contract_duration_months"
-                                                        type="number"
-                                                        min="1"
-                                                        max="120"
-                                                        value={
-                                                            employeeForm.data
-                                                                .contract_duration_months
-                                                        }
-                                                        onChange={(event) =>
-                                                            employeeForm.setData(
-                                                                'contract_duration_months',
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                        placeholder="Contoh: 12 bulan"
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            employeeForm.errors
-                                                                .contract_duration_months
-                                                        }
-                                                    />
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Input
-                                                        id="contract_end_date"
-                                                        type="date"
-                                                        min={
-                                                            employeeForm.data
-                                                                .hire_date
-                                                        }
-                                                        value={
-                                                            employeeForm.data
-                                                                .contract_end_date
-                                                        }
-                                                        onChange={(event) =>
-                                                            employeeForm.setData(
-                                                                'contract_end_date',
-                                                                event.target
-                                                                    .value,
-                                                            )
-                                                        }
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            employeeForm.errors
-                                                                .contract_end_date
-                                                        }
-                                                    />
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {employeeForm.data.employment_type ===
-                                    'PKWTT' && (
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="probation_duration_months">
-                                            Masa Probation
-                                        </Label>
-                                        <div className="flex flex-col gap-1">
-                                            <Input
-                                                id="probation_duration_months"
-                                                type="number"
-                                                min="0"
-                                                max="12"
-                                                value={
-                                                    employeeForm.data
-                                                        .probation_duration_months
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'probation_duration_months',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                            />
-                                            <p className="text-xs text-muted-foreground">
-                                                Isi 0 jika tidak melalui
-                                                probation.
-                                            </p>
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .probation_duration_months
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="pph21_enabled">
-                                        Perhitungan PPh21
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-                                            <input
-                                                id="pph21_enabled"
-                                                type="checkbox"
-                                                checked={employeeForm.data.pph21_enabled}
-                                                onChange={(e) => {
-                                                    const enabled = e.target.checked;
-                                                    employeeForm.setData((prev) => ({
-                                                        ...prev,
-                                                        pph21_enabled: enabled,
-                                                        pph21_method: enabled
-                                                            ? (prev.pph21_method === 'none' ? 'gross' : prev.pph21_method)
-                                                            : 'none',
-                                                        pph21_rate: enabled ? prev.pph21_rate : '0',
-                                                    }));
-                                                }}
-                                                className="size-4 rounded border-input text-primary focus:ring-primary"
-                                            />
-                                            <span>
-                                                {employeeForm.data.pph21_enabled
-                                                    ? 'Aktif (Dikenakan PPh21)'
-                                                    : 'Nonaktif / Bebas Pajak PPh21'}
-                                            </span>
-                                        </label>
-                                        <p className="text-xs text-muted-foreground">
-                                            {employeeForm.data.pph21_enabled
-                                                ? 'Hilangkan centang jika ingin menonaktifkan PPh21 untuk karyawan/freelance ini.'
-                                                : 'PPh21 dinonaktifkan. Seluruh input PPh21 disembunyikan dan karyawan tidak dipotong/dikenakan pajak pada payroll.'}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {employeeForm.data.pph21_enabled && (
-                                    <>
-                                        <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                            <Label htmlFor="pph21_method">
-                                                Metode PPh21
+                                                Tipe Kontrak
                                             </Label>
                                             <div className="space-y-1">
                                                 <Select
                                                     value={
-                                                        employeeForm.data.pph21_method
+                                                        employeeForm.data
+                                                            .employment_type
                                                     }
                                                     onValueChange={(value) =>
                                                         employeeForm.setData(
-                                                            'pph21_method',
-                                                            value,
+                                                            (data) => ({
+                                                                ...data,
+                                                                employment_type:
+                                                                    value,
+                                                                contract_duration_months:
+                                                                    value ===
+                                                                    'PKWT'
+                                                                        ? data.contract_duration_months
+                                                                        : '',
+                                                                contract_end_date:
+                                                                    value ===
+                                                                    'PKWT'
+                                                                        ? data.contract_end_date
+                                                                        : '',
+                                                                probation_duration_months:
+                                                                    value ===
+                                                                    'PKWTT'
+                                                                        ? data.probation_duration_months
+                                                                        : '0',
+                                                            }),
                                                         )
                                                     }
                                                 >
                                                     <SelectTrigger
-                                                        id="pph21_method"
+                                                        id="employment_type"
                                                         className="w-full"
                                                     >
-                                                        <SelectValue placeholder="Pilih metode PPh21" />
+                                                        <SelectValue placeholder="Pilih tipe" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {options.pph21_methods.map(
-                                                            (method) => (
+                                                        {options.employment_types.map(
+                                                            (type) => (
                                                                 <SelectItem
-                                                                    key={method.value}
-                                                                    value={method.value}
+                                                                    key={type}
+                                                                    value={type}
                                                                 >
-                                                                    {method.label}
+                                                                    {typeLabels[
+                                                                        type
+                                                                    ] ?? type}
                                                                 </SelectItem>
                                                             ),
                                                         )}
                                                     </SelectContent>
                                                 </Select>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {
-                                                        options.pph21_methods.find(
-                                                            (method) =>
-                                                                method.value ===
-                                                                employeeForm.data
-                                                                    .pph21_method,
-                                                        )?.description
-                                                    }
-                                                </p>
-                                                <InputError
-                                                    message={
-                                                        employeeForm.errors.pph21_method
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                            <Label htmlFor="ptkp_category">
-                                                Kategori PTKP
-                                            </Label>
-                                            <div className="space-y-1">
-                                                <Select
-                                                    value={
-                                                        employeeForm.data
-                                                            .ptkp_category || ''
-                                                    }
-                                                    onValueChange={(value) =>
-                                                        employeeForm.setData(
-                                                            'ptkp_category',
-                                                            value,
-                                                        )
-                                                    }
-                                                >
-                                                    <SelectTrigger
-                                                        id="ptkp_category"
-                                                        className="w-full"
-                                                    >
-                                                        <SelectValue placeholder="Pilih kategori PTKP" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {Object.entries(
-                                                            ptkpCategoryLabels,
-                                                        ).map(([code, label]) => (
-                                                            <SelectItem
-                                                                key={code}
-                                                                value={code}
-                                                            >
-                                                                {label}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
                                                 <InputError
                                                     message={
                                                         employeeForm.errors
-                                                            .ptkp_category
+                                                            .employment_type
                                                     }
                                                 />
                                             </div>
                                         </div>
 
-                                        {['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'].includes(
-                                            employeeForm.data.pph21_method,
-                                        ) ? (
-                                            <div className="rounded-md border border-sky-200 bg-sky-50/50 p-3 text-xs text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/20 dark:text-sky-300">
-                                                <div className="flex items-center gap-2 font-medium">
-                                                    <span className="rounded bg-sky-200 px-1.5 py-0.5 text-[11px] font-semibold text-sky-900 dark:bg-sky-900 dark:text-sky-100">
-                                                        TER Kategori {ptkpToTerCategory(employeeForm.data.ptkp_category)}
-                                                    </span>
-                                                    <span>Perhitungan Otomatis PP 58/2023 & PMK 168/2023</span>
-                                                </div>
-                                                <p className="mt-1 text-muted-foreground dark:text-sky-400/80">
-                                                    PPh 21 dihitung otomatis dari penghasilan bruto bulanan (Gaji Pokok + Tunjangan + Lembur + BPJS porsi perusahaan) sesuai tarif TER Kategori {ptkpToTerCategory(employeeForm.data.ptkp_category)}.
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                                <Label htmlFor="pph21_rate">
-                                                    Nominal PPh21
+                                        {employeeForm.data.employment_type ===
+                                            'PKWTT' && (
+                                            <div className="grid items-center gap-2">
+                                                <Label
+                                                    htmlFor="probation_duration_months"
+                                                    className="sr-only"
+                                                >
+                                                    Masa Probation
                                                 </Label>
-                                                <div className="space-y-1">
+                                                <div className="flex flex-col gap-1">
                                                     <Input
-                                                        id="pph21_rate"
-                                                        type="text"
-                                                        inputMode="numeric"
-                                                        value={formatThousandDigits(
-                                                            employeeForm.data.pph21_rate,
-                                                        )}
+                                                        id="probation_duration_months"
+                                                        type="number"
+                                                        min="0"
+                                                        max="12"
+                                                        value={
+                                                            employeeForm.data
+                                                                .probation_duration_months
+                                                        }
                                                         onChange={(event) =>
                                                             employeeForm.setData(
-                                                                'pph21_rate',
-                                                                normalizeDigitInput(
-                                                                    event.target.value,
-                                                                ),
+                                                                'probation_duration_months',
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
-                                                        placeholder="Contoh: 250.000"
                                                     />
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Isi 0 jika tidak melalui
+                                                        probation.
+                                                    </p>
                                                     <InputError
                                                         message={
-                                                            employeeForm.errors.pph21_rate
+                                                            employeeForm.errors
+                                                                .probation_duration_months
                                                         }
                                                     />
                                                 </div>
                                             </div>
                                         )}
-                                    </>
-                                )}
+                                    </div>
 
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="division_id">Divisi</Label>
-                                    <div className="space-y-1">
-                                        <SearchableSelect
-                                            id="division_id"
-                                            value={
-                                                employeeForm.data
-                                                    .division_id === ''
-                                                    ? '__none'
-                                                    : employeeForm.data
-                                                          .division_id
-                                            }
-                                            onValueChange={(value) => {
-                                                const divisionId =
-                                                    value === '__none'
-                                                        ? ''
-                                                        : value;
+                                    {employeeForm.data.employment_type ===
+                                        'PKWT' && (
+                                        <div className="grid items-start gap-2 md:grid-cols-[150px_1fr]">
+                                            <Label htmlFor="contract_end_mode">
+                                                Masa Kontrak
+                                            </Label>
+                                            <div className="flex flex-col gap-2">
+                                                <Select
+                                                    value={contractEndMode}
+                                                    onValueChange={(value) => {
+                                                        const mode = value as
+                                                            | 'duration'
+                                                            | 'manual';
+                                                        setContractEndMode(
+                                                            mode,
+                                                        );
+                                                        if (
+                                                            mode === 'duration'
+                                                        ) {
+                                                            employeeForm.setData(
+                                                                'contract_end_date',
+                                                                '',
+                                                            );
+                                                        } else {
+                                                            employeeForm.setData(
+                                                                'contract_duration_months',
+                                                                '',
+                                                            );
+                                                        }
+                                                    }}
+                                                >
+                                                    <SelectTrigger
+                                                        id="contract_end_mode"
+                                                        className="w-full"
+                                                    >
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="duration">
+                                                            Hitung dari durasi
+                                                            bulan
+                                                        </SelectItem>
+                                                        <SelectItem value="manual">
+                                                            Tentukan tanggal
+                                                            akhir
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
 
-                                                employeeForm.setData(
-                                                    'division_id',
-                                                    divisionId,
-                                                );
-
-                                                if (
-                                                    divisionId !== '' &&
-                                                    employeeForm.data
-                                                        .position_id !== ''
-                                                ) {
-                                                    const selectedPosition =
-                                                        positionOptions.find(
-                                                            (position) =>
-                                                                String(
-                                                                    position.id,
-                                                                ) ===
+                                                {contractEndMode ===
+                                                'duration' ? (
+                                                    <>
+                                                        <Input
+                                                            id="contract_duration_months"
+                                                            type="number"
+                                                            min="1"
+                                                            max="120"
+                                                            value={
                                                                 employeeForm
                                                                     .data
-                                                                    .position_id,
-                                                        );
-
-                                                    if (
-                                                        selectedPosition &&
-                                                        selectedPosition.division_id !==
-                                                            Number(divisionId)
-                                                    ) {
-                                                        employeeForm.setData(
-                                                            'position_id',
-                                                            '',
-                                                        );
-                                                    }
-                                                }
-                                            }}
-                                            placeholder="Pilih divisi"
-                                            searchPlaceholder="Cari divisi..."
-                                            options={[
-                                                {
-                                                    value: '__none',
-                                                    label: '-',
-                                                },
-                                                ...divisionOptions.map(
-                                                    (division) => ({
-                                                        value: String(
-                                                            division.id,
-                                                        ),
-                                                        label: `${division.code} - ${division.name}`,
-                                                    }),
-                                                ),
-                                            ]}
-                                            className="w-full"
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.division_id
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="sub_company_id">
-                                        Sub Company
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <SearchableSelect
-                                            id="sub_company_id"
-                                            value={
-                                                employeeForm.data
-                                                    .sub_company_id === ''
-                                                    ? '__internal'
-                                                    : employeeForm.data
-                                                          .sub_company_id
-                                            }
-                                            onValueChange={(value) => {
-                                                const subCompanyId =
-                                                    value === '__internal'
-                                                        ? ''
-                                                        : value;
-
-                                                employeeForm.setData(
-                                                    'sub_company_id',
-                                                    subCompanyId,
-                                                );
-
-                                                if (
-                                                    subCompanyId === '' &&
-                                                    employeeForm.data
-                                                        .employment_type ===
-                                                        'OS'
-                                                ) {
-                                                    employeeForm.setData(
-                                                        'employment_type',
-                                                        'PKWTT',
-                                                    );
-                                                }
-                                            }}
-                                            placeholder="Pilih sub-company"
-                                            searchPlaceholder="Cari sub-company..."
-                                            options={[
-                                                ...(employeeAccess.requires_sub_company
-                                                    ? []
-                                                    : [
-                                                          {
-                                                              value: '__internal',
-                                                              label: 'Tanpa Sub Company',
-                                                          },
-                                                      ]),
-                                                ...subCompanyOptions.map(
-                                                    (company) => ({
-                                                        value: String(
-                                                            company.id,
-                                                        ),
-                                                        label: `${company.code} - ${company.name}`,
-                                                    }),
-                                                ),
-                                            ]}
-                                            className="w-full"
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            Pilih sub-company jika karyawan
-                                            berada di bawah perusahaan klien.
-                                        </p>
-                                        <InputError
-                                            message={
-                                                employeeForm.errors
-                                                    .sub_company_id
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="timezone" className="pt-2">
-                                        Zona Waktu Utama
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <Select
-                                            value={employeeForm.data.timezone}
-                                            onValueChange={(value) =>
-                                                employeeForm.setData(
-                                                    'timezone',
-                                                    value,
-                                                )
-                                            }
-                                        >
-                                            <SelectTrigger
-                                                id="timezone"
-                                                className="w-full"
-                                            >
-                                                <SelectValue placeholder="Pilih zona waktu" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {options.timezones.map(
-                                                    (timezone) => (
-                                                        <SelectItem
-                                                            key={timezone.value}
-                                                            value={
-                                                                timezone.value
+                                                                    .contract_duration_months
                                                             }
-                                                        >
-                                                            {timezone.label}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                        <p className="text-xs text-muted-foreground">
-                                            Menjadi fallback. Zona perangkat
-                                            saat presensi tetap diprioritaskan.
-                                        </p>
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.timezone
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="is_wfa" className="pt-1">
-                                        Mode Kerja
-                                    </Label>
-                                    <label className="flex cursor-pointer items-start gap-3 rounded-md border p-3">
-                                        <Checkbox
-                                            id="is_wfa"
-                                            checked={employeeForm.data.is_wfa}
-                                            onCheckedChange={(checked) =>
-                                                employeeForm.setData(
-                                                    'is_wfa',
-                                                    checked === true,
-                                                )
-                                            }
-                                        />
-                                        <span>
-                                            <span className="block text-sm font-medium">
-                                                Karyawan WFA
-                                            </span>
-                                            <span className="block text-xs text-muted-foreground">
-                                                Dapat melakukan absensi dari
-                                                lokasi mana pun. GPS tetap
-                                                direkam.
-                                            </span>
-                                        </span>
-                                    </label>
-                                </div>
-
-                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label className="pt-2">
-                                        Lokasi Absensi
-                                    </Label>
-                                    <div className="space-y-2">
-                                        <p className="text-xs text-muted-foreground">
-                                            {employeeForm.data.is_wfa
-                                                ? 'Assignment lokasi diabaikan selama mode WFA aktif.'
-                                                : 'Kosongkan untuk menggunakan lokasi utama perusahaan.'}
-                                        </p>
-                                        {attendanceLocationOptions.length ===
-                                        0 ? (
-                                            <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-                                                Belum ada lokasi pada
-                                                Multi-location attendance.
-                                            </p>
-                                        ) : (
-                                            <div
-                                                className={`grid gap-2 sm:grid-cols-2 ${employeeForm.data.is_wfa ? 'opacity-50' : ''}`}
-                                            >
-                                                {attendanceLocationOptions.map(
-                                                    (location) => {
-                                                        const checked =
-                                                            employeeForm.data.attendance_location_ids.includes(
-                                                                location.id,
-                                                            );
-
-                                                        return (
-                                                            <label
-                                                                key={
-                                                                    location.id
-                                                                }
-                                                                className="flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm"
-                                                            >
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={
-                                                                        checked
-                                                                    }
-                                                                    disabled={
-                                                                        employeeForm
-                                                                            .data
-                                                                            .is_wfa
-                                                                    }
-                                                                    onChange={(
-                                                                        event,
-                                                                    ) => {
-                                                                        const next =
-                                                                            event
-                                                                                .target
-                                                                                .checked
-                                                                                ? [
-                                                                                      ...employeeForm
-                                                                                          .data
-                                                                                          .attendance_location_ids,
-                                                                                      location.id,
-                                                                                  ]
-                                                                                : employeeForm.data.attendance_location_ids.filter(
-                                                                                      (
-                                                                                          id,
-                                                                                      ) =>
-                                                                                          id !==
-                                                                                          location.id,
-                                                                                  );
-                                                                        employeeForm.setData(
-                                                                            'attendance_location_ids',
-                                                                            next,
-                                                                        );
-                                                                    }}
-                                                                    className="mt-0.5 size-4 rounded border-input accent-primary"
-                                                                />
-                                                                <span>
-                                                                    <span className="block font-medium">
-                                                                        {
-                                                                            location.name
-                                                                        }
-                                                                    </span>
-                                                                    {location.address ? (
-                                                                        <span className="block text-xs text-muted-foreground">
-                                                                            {
-                                                                                location.address
-                                                                            }
-                                                                        </span>
-                                                                    ) : null}
-                                                                </span>
-                                                            </label>
-                                                        );
-                                                    },
+                                                            onChange={(event) =>
+                                                                employeeForm.setData(
+                                                                    'contract_duration_months',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            placeholder="Contoh: 12 bulan"
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                employeeForm
+                                                                    .errors
+                                                                    .contract_duration_months
+                                                            }
+                                                        />
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Input
+                                                            id="contract_end_date"
+                                                            type="date"
+                                                            min={
+                                                                employeeForm
+                                                                    .data
+                                                                    .hire_date
+                                                            }
+                                                            value={
+                                                                employeeForm
+                                                                    .data
+                                                                    .contract_end_date
+                                                            }
+                                                            onChange={(event) =>
+                                                                employeeForm.setData(
+                                                                    'contract_end_date',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                employeeForm
+                                                                    .errors
+                                                                    .contract_end_date
+                                                            }
+                                                        />
+                                                    </>
                                                 )}
                                             </div>
-                                        )}
-                                        <InputError
-                                            message={
-                                                employeeForm.errors
-                                                    .attendance_location_ids
-                                            }
-                                        />
-                                    </div>
-                                </div>
+                                        </div>
+                                    )}
 
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="position_id">Jabatan</Label>
-                                    <div className="space-y-1">
-                                        <SearchableSelect
-                                            id="position_id"
-                                            value={
-                                                employeeForm.data
-                                                    .position_id === ''
-                                                    ? '__none'
-                                                    : employeeForm.data
-                                                          .position_id
-                                            }
-                                            onValueChange={(value) =>
-                                                employeeForm.setData(
-                                                    'position_id',
-                                                    value === '__none'
-                                                        ? ''
-                                                        : value,
-                                                )
-                                            }
-                                            placeholder="Pilih jabatan"
-                                            searchPlaceholder="Cari jabatan..."
-                                            options={[
-                                                {
-                                                    value: '__none',
-                                                    label: '-',
-                                                },
-                                                ...availablePositions.map(
-                                                    (position) => ({
-                                                        value: String(
-                                                            position.id,
-                                                        ),
-                                                        label: `${position.code} - ${position.name}${
-                                                            position.division_name
-                                                                ? ` (${position.division_name})`
-                                                                : ''
-                                                        }`,
-                                                    }),
-                                                ),
-                                            ]}
-                                            className="w-full"
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.position_id
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="manager_id">Atasan</Label>
-                                    <div className="space-y-1">
-                                        <SearchableSelect
-                                            id="manager_id"
-                                            value={
-                                                employeeForm.data.manager_id ===
-                                                ''
-                                                    ? '__none'
-                                                    : employeeForm.data
-                                                          .manager_id
-                                            }
-                                            onValueChange={(value) =>
-                                                employeeForm.setData(
-                                                    'manager_id',
-                                                    value === '__none'
-                                                        ? ''
-                                                        : value,
-                                                )
-                                            }
-                                            placeholder="Pilih atasan"
-                                            searchPlaceholder="Cari atasan..."
-                                            options={[
-                                                {
-                                                    value: '__none',
-                                                    label: '-',
-                                                },
-                                                ...managerOptions
-                                                    .filter(
-                                                        (option) =>
-                                                            editingEmployee?.id !==
-                                                            option.id,
-                                                    )
-                                                    .map((option) => ({
-                                                        value: String(
-                                                            option.id,
-                                                        ),
-                                                        label: option.label,
-                                                    })),
-                                            ]}
-                                            className="w-full"
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.manager_id
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="base_salary">
-                                        {employeeForm.data.employment_type ===
-                                        'DW'
-                                            ? 'Gaji Pokok (tidak digunakan)'
-                                            : 'Gaji Pokok'}
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <Input
-                                            id="base_salary"
-                                            type="text"
-                                            inputMode="numeric"
-                                            value={formatThousandDigits(
-                                                employeeForm.data.base_salary,
-                                            )}
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'base_salary',
-                                                    normalizeDigitInput(
-                                                        event.target.value,
-                                                    ),
-                                                )
-                                            }
-                                            placeholder="5.000.000"
-                                        />
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.base_salary
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="salary_type">
-                                        Iuran BPJS (Nett atau Gross)
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <select
-                                            id="salary_type"
-                                            value={employeeForm.data.salary_type || 'gross'}
-                                            onChange={(e) =>
-                                                employeeForm.setData(
-                                                    'salary_type',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus:ring-2 focus:ring-ring"
-                                        >
-                                            <option value="gross">Gross – BPJS karyawan dipotong dari gaji</option>
-                                            <option value="net">Nett – BPJS karyawan ditanggung perusahaan</option>
-                                        </select>
-                                        {employeeForm.data.salary_type === 'net' && (
-                                            <p className="text-xs text-amber-600 dark:text-amber-400">
-                                                Gaji nett: porsi BPJS TK karyawan (JHT 2%, JP 1%) dan BPJS Kes karyawan (1%) seluruhnya menjadi beban perusahaan.
+                                    <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                        <Label htmlFor="pph21_enabled">
+                                            Perhitungan PPh21
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                                                <input
+                                                    id="pph21_enabled"
+                                                    type="checkbox"
+                                                    checked={
+                                                        employeeForm.data
+                                                            .pph21_enabled
+                                                    }
+                                                    onChange={(e) => {
+                                                        const enabled =
+                                                            e.target.checked;
+                                                        employeeForm.setData(
+                                                            (prev) => ({
+                                                                ...prev,
+                                                                pph21_enabled:
+                                                                    enabled,
+                                                                pph21_method:
+                                                                    enabled
+                                                                        ? prev.pph21_method ===
+                                                                          'none'
+                                                                            ? 'gross'
+                                                                            : prev.pph21_method
+                                                                        : 'none',
+                                                                pph21_rate:
+                                                                    enabled
+                                                                        ? prev.pph21_rate
+                                                                        : '0',
+                                                            }),
+                                                        );
+                                                    }}
+                                                    className="size-4 rounded border-input text-primary focus:ring-primary"
+                                                />
+                                                <span>
+                                                    {employeeForm.data
+                                                        .pph21_enabled
+                                                        ? 'Aktif (Dikenakan PPh21)'
+                                                        : 'Nonaktif / Bebas Pajak PPh21'}
+                                                </span>
+                                            </label>
+                                            <p className="text-xs text-muted-foreground">
+                                                {employeeForm.data.pph21_enabled
+                                                    ? 'Hilangkan centang jika ingin menonaktifkan PPh21 untuk karyawan/freelance ini.'
+                                                    : 'PPh21 dinonaktifkan. Seluruh input PPh21 disembunyikan dan karyawan tidak dipotong/dikenakan pajak pada payroll.'}
                                             </p>
-                                        )}
-                                        <InputError
-                                            message={
-                                                employeeForm.errors.salary_type
-                                            }
-                                        />
+                                        </div>
                                     </div>
-                                </div>
 
-                                {employeeForm.data.employment_type === 'DW' && (
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="daily_wage">
-                                            Upah Harian
+                                    {employeeForm.data.pph21_enabled && (
+                                        <>
+                                            <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                                <Label htmlFor="pph21_method">
+                                                    Metode PPh21
+                                                </Label>
+                                                <div className="space-y-1">
+                                                    <Select
+                                                        value={
+                                                            employeeForm.data
+                                                                .pph21_method
+                                                        }
+                                                        onValueChange={(
+                                                            value,
+                                                        ) =>
+                                                            employeeForm.setData(
+                                                                'pph21_method',
+                                                                value,
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger
+                                                            id="pph21_method"
+                                                            className="w-full"
+                                                        >
+                                                            <SelectValue placeholder="Pilih metode PPh21" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {options.pph21_methods.map(
+                                                                (method) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            method.value
+                                                                        }
+                                                                        value={
+                                                                            method.value
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            method.label
+                                                                        }
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {
+                                                            options.pph21_methods.find(
+                                                                (method) =>
+                                                                    method.value ===
+                                                                    employeeForm
+                                                                        .data
+                                                                        .pph21_method,
+                                                            )?.description
+                                                        }
+                                                    </p>
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .pph21_method
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                                <Label htmlFor="ptkp_category">
+                                                    Kategori PTKP
+                                                </Label>
+                                                <div className="space-y-1">
+                                                    <Select
+                                                        value={
+                                                            employeeForm.data
+                                                                .ptkp_category ||
+                                                            ''
+                                                        }
+                                                        onValueChange={(
+                                                            value,
+                                                        ) =>
+                                                            employeeForm.setData(
+                                                                'ptkp_category',
+                                                                value,
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger
+                                                            id="ptkp_category"
+                                                            className="w-full"
+                                                        >
+                                                            <SelectValue placeholder="Pilih kategori PTKP" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {Object.entries(
+                                                                ptkpCategoryLabels,
+                                                            ).map(
+                                                                ([
+                                                                    code,
+                                                                    label,
+                                                                ]) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            code
+                                                                        }
+                                                                        value={
+                                                                            code
+                                                                        }
+                                                                    >
+                                                                        {label}
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .ptkp_category
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {[
+                                                'ter_bulanan',
+                                                'ter_bulanan_net',
+                                                'ter_bulanan_gross_up',
+                                            ].includes(
+                                                employeeForm.data.pph21_method,
+                                            ) ? (
+                                                <div className="rounded-md border border-sky-200 bg-sky-50/50 p-3 text-xs text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/20 dark:text-sky-300">
+                                                    <div className="flex items-center gap-2 font-medium">
+                                                        <span className="rounded bg-sky-200 px-1.5 py-0.5 text-[11px] font-semibold text-sky-900 dark:bg-sky-900 dark:text-sky-100">
+                                                            TER Kategori{' '}
+                                                            {ptkpToTerCategory(
+                                                                employeeForm
+                                                                    .data
+                                                                    .ptkp_category,
+                                                            )}
+                                                        </span>
+                                                        <span>
+                                                            Perhitungan Otomatis
+                                                            PP 58/2023 & PMK
+                                                            168/2023
+                                                        </span>
+                                                    </div>
+                                                    <p className="mt-1 text-muted-foreground dark:text-sky-400/80">
+                                                        PPh 21 dihitung otomatis
+                                                        dari penghasilan bruto
+                                                        bulanan (Gaji Pokok +
+                                                        Tunjangan + Lembur +
+                                                        BPJS porsi perusahaan)
+                                                        sesuai tarif TER
+                                                        Kategori{' '}
+                                                        {ptkpToTerCategory(
+                                                            employeeForm.data
+                                                                .ptkp_category,
+                                                        )}
+                                                        .
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                                    <Label htmlFor="pph21_rate">
+                                                        Nominal PPh21
+                                                    </Label>
+                                                    <div className="space-y-1">
+                                                        <Input
+                                                            id="pph21_rate"
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={formatThousandDigits(
+                                                                employeeForm
+                                                                    .data
+                                                                    .pph21_rate,
+                                                            )}
+                                                            onChange={(event) =>
+                                                                employeeForm.setData(
+                                                                    'pph21_rate',
+                                                                    normalizeDigitInput(
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    ),
+                                                                )
+                                                            }
+                                                            placeholder="Contoh: 250.000"
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                employeeForm
+                                                                    .errors
+                                                                    .pph21_rate
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
+                                    <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                        <Label htmlFor="division_id">
+                                            Divisi
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <SearchableSelect
+                                                id="division_id"
+                                                value={
+                                                    employeeForm.data
+                                                        .division_id === ''
+                                                        ? '__none'
+                                                        : employeeForm.data
+                                                              .division_id
+                                                }
+                                                onValueChange={(value) => {
+                                                    const divisionId =
+                                                        value === '__none'
+                                                            ? ''
+                                                            : value;
+
+                                                    employeeForm.setData(
+                                                        'division_id',
+                                                        divisionId,
+                                                    );
+
+                                                    if (
+                                                        divisionId !== '' &&
+                                                        employeeForm.data
+                                                            .position_id !== ''
+                                                    ) {
+                                                        const selectedPosition =
+                                                            positionOptions.find(
+                                                                (position) =>
+                                                                    String(
+                                                                        position.id,
+                                                                    ) ===
+                                                                    employeeForm
+                                                                        .data
+                                                                        .position_id,
+                                                            );
+
+                                                        if (
+                                                            selectedPosition &&
+                                                            selectedPosition.division_id !==
+                                                                Number(
+                                                                    divisionId,
+                                                                )
+                                                        ) {
+                                                            employeeForm.setData(
+                                                                'position_id',
+                                                                '',
+                                                            );
+                                                        }
+                                                    }
+                                                }}
+                                                placeholder="Pilih divisi"
+                                                searchPlaceholder="Cari divisi..."
+                                                options={[
+                                                    {
+                                                        value: '__none',
+                                                        label: '-',
+                                                    },
+                                                    ...divisionOptions.map(
+                                                        (division) => ({
+                                                            value: String(
+                                                                division.id,
+                                                            ),
+                                                            label: `${division.code} - ${division.name}`,
+                                                        }),
+                                                    ),
+                                                ]}
+                                                className="w-full"
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .division_id
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {subCompanyOptions.length > 0 && (
+                                        <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                            <Label htmlFor="sub_company_id">
+                                                Sub Company
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <SearchableSelect
+                                                    id="sub_company_id"
+                                                    value={
+                                                        employeeForm.data
+                                                            .sub_company_id ===
+                                                        ''
+                                                            ? '__internal'
+                                                            : employeeForm.data
+                                                                  .sub_company_id
+                                                    }
+                                                    onValueChange={(value) => {
+                                                        const subCompanyId =
+                                                            value ===
+                                                            '__internal'
+                                                                ? ''
+                                                                : value;
+
+                                                        employeeForm.setData(
+                                                            'sub_company_id',
+                                                            subCompanyId,
+                                                        );
+
+                                                        if (
+                                                            subCompanyId ===
+                                                                '' &&
+                                                            employeeForm.data
+                                                                .employment_type ===
+                                                                'OS'
+                                                        ) {
+                                                            employeeForm.setData(
+                                                                'employment_type',
+                                                                'PKWTT',
+                                                            );
+                                                        }
+                                                    }}
+                                                    placeholder="Pilih sub-company"
+                                                    searchPlaceholder="Cari sub-company..."
+                                                    options={[
+                                                        ...(employeeAccess.requires_sub_company
+                                                            ? []
+                                                            : [
+                                                                  {
+                                                                      value: '__internal',
+                                                                      label: 'Tanpa Sub Company',
+                                                                  },
+                                                              ]),
+                                                        ...subCompanyOptions.map(
+                                                            (company) => ({
+                                                                value: String(
+                                                                    company.id,
+                                                                ),
+                                                                label: `${company.code} - ${company.name}`,
+                                                            }),
+                                                        ),
+                                                    ]}
+                                                    className="w-full"
+                                                />
+                                                <p className="text-xs text-muted-foreground">
+                                                    Pilih sub-company jika
+                                                    karyawan berada di bawah
+                                                    perusahaan klien.
+                                                </p>
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .sub_company_id
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="grid items-start gap-2 md:grid-cols-[150px_1fr]">
+                                        <Label
+                                            htmlFor="timezone"
+                                            className="pt-2"
+                                        >
+                                            Zona Waktu Utama
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <Select
+                                                value={
+                                                    employeeForm.data.timezone
+                                                }
+                                                onValueChange={(value) =>
+                                                    employeeForm.setData(
+                                                        'timezone',
+                                                        value,
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger
+                                                    id="timezone"
+                                                    className="w-full"
+                                                >
+                                                    <SelectValue placeholder="Pilih zona waktu" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {options.timezones.map(
+                                                        (timezone) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    timezone.value
+                                                                }
+                                                                value={
+                                                                    timezone.value
+                                                                }
+                                                            >
+                                                                {timezone.label}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                            <p className="text-xs text-muted-foreground">
+                                                Menjadi fallback. Zona perangkat
+                                                saat presensi tetap
+                                                diprioritaskan.
+                                            </p>
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors.timezone
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-start gap-2 md:grid-cols-[150px_1fr]">
+                                        <Label
+                                            htmlFor="is_wfa"
+                                            className="pt-1"
+                                        >
+                                            Mode Kerja
+                                        </Label>
+                                        <label className="flex cursor-pointer items-start gap-3 rounded-md border p-3">
+                                            <Checkbox
+                                                id="is_wfa"
+                                                checked={
+                                                    employeeForm.data.is_wfa
+                                                }
+                                                onCheckedChange={(checked) =>
+                                                    employeeForm.setData(
+                                                        'is_wfa',
+                                                        checked === true,
+                                                    )
+                                                }
+                                            />
+                                            <span>
+                                                <span className="block text-sm font-medium">
+                                                    Karyawan WFA
+                                                </span>
+                                                <span className="block text-xs text-muted-foreground">
+                                                    Dapat melakukan absensi dari
+                                                    lokasi mana pun. GPS tetap
+                                                    direkam.
+                                                </span>
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    {!employeeForm.data.is_wfa && (
+                                        <div className="grid items-start gap-2 md:grid-cols-[150px_1fr]">
+                                            <Label className="pt-2">
+                                                Lokasi Absensi
+                                            </Label>
+                                            <div className="space-y-2">
+                                                <p className="text-xs text-muted-foreground">
+                                                    {employeeForm.data.is_wfa
+                                                        ? 'Assignment lokasi diabaikan selama mode WFA aktif.'
+                                                        : 'Kosongkan untuk menggunakan lokasi utama perusahaan.'}
+                                                </p>
+                                                {attendanceLocationOptions.length ===
+                                                0 ? (
+                                                    <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                                                        Belum ada lokasi pada
+                                                        Multi-location
+                                                        attendance.
+                                                    </p>
+                                                ) : (
+                                                    <div
+                                                        className={`grid gap-2 sm:grid-cols-2 ${employeeForm.data.is_wfa ? 'opacity-50' : ''}`}
+                                                    >
+                                                        {attendanceLocationOptions.map(
+                                                            (location) => {
+                                                                const checked =
+                                                                    employeeForm.data.attendance_location_ids.includes(
+                                                                        location.id,
+                                                                    );
+
+                                                                return (
+                                                                    <label
+                                                                        key={
+                                                                            location.id
+                                                                        }
+                                                                        className="flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm"
+                                                                    >
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={
+                                                                                checked
+                                                                            }
+                                                                            disabled={
+                                                                                employeeForm
+                                                                                    .data
+                                                                                    .is_wfa
+                                                                            }
+                                                                            onChange={(
+                                                                                event,
+                                                                            ) => {
+                                                                                const next =
+                                                                                    event
+                                                                                        .target
+                                                                                        .checked
+                                                                                        ? [
+                                                                                              ...employeeForm
+                                                                                                  .data
+                                                                                                  .attendance_location_ids,
+                                                                                              location.id,
+                                                                                          ]
+                                                                                        : employeeForm.data.attendance_location_ids.filter(
+                                                                                              (
+                                                                                                  id,
+                                                                                              ) =>
+                                                                                                  id !==
+                                                                                                  location.id,
+                                                                                          );
+                                                                                employeeForm.setData(
+                                                                                    'attendance_location_ids',
+                                                                                    next,
+                                                                                );
+                                                                            }}
+                                                                            className="mt-0.5 size-4 rounded border-input accent-primary"
+                                                                        />
+                                                                        <span>
+                                                                            <span className="block font-medium">
+                                                                                {
+                                                                                    location.name
+                                                                                }
+                                                                            </span>
+                                                                            {location.address ? (
+                                                                                <span className="block text-xs text-muted-foreground">
+                                                                                    {
+                                                                                        location.address
+                                                                                    }
+                                                                                </span>
+                                                                            ) : null}
+                                                                        </span>
+                                                                    </label>
+                                                                );
+                                                            },
+                                                        )}
+                                                    </div>
+                                                )}
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .attendance_location_ids
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                        <Label htmlFor="position_id">
+                                            Jabatan
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <SearchableSelect
+                                                id="position_id"
+                                                value={
+                                                    employeeForm.data
+                                                        .position_id === ''
+                                                        ? '__none'
+                                                        : employeeForm.data
+                                                              .position_id
+                                                }
+                                                onValueChange={(value) =>
+                                                    employeeForm.setData(
+                                                        'position_id',
+                                                        value === '__none'
+                                                            ? ''
+                                                            : value,
+                                                    )
+                                                }
+                                                placeholder="Pilih jabatan"
+                                                searchPlaceholder="Cari jabatan..."
+                                                options={[
+                                                    {
+                                                        value: '__none',
+                                                        label: '-',
+                                                    },
+                                                    ...availablePositions.map(
+                                                        (position) => ({
+                                                            value: String(
+                                                                position.id,
+                                                            ),
+                                                            label: `${position.code} - ${position.name}${
+                                                                position.division_name
+                                                                    ? ` (${position.division_name})`
+                                                                    : ''
+                                                            }`,
+                                                        }),
+                                                    ),
+                                                ]}
+                                                className="w-full"
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .position_id
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                        <Label htmlFor="manager_id">
+                                            Atasan
+                                        </Label>
+                                        <div className="space-y-1">
+                                            <SearchableSelect
+                                                id="manager_id"
+                                                value={
+                                                    employeeForm.data
+                                                        .manager_id === ''
+                                                        ? '__none'
+                                                        : employeeForm.data
+                                                              .manager_id
+                                                }
+                                                onValueChange={(value) =>
+                                                    employeeForm.setData(
+                                                        'manager_id',
+                                                        value === '__none'
+                                                            ? ''
+                                                            : value,
+                                                    )
+                                                }
+                                                placeholder="Pilih atasan"
+                                                searchPlaceholder="Cari atasan..."
+                                                options={[
+                                                    {
+                                                        value: '__none',
+                                                        label: '-',
+                                                    },
+                                                    ...managerOptions
+                                                        .filter(
+                                                            (option) =>
+                                                                editingEmployee?.id !==
+                                                                option.id,
+                                                        )
+                                                        .map((option) => ({
+                                                            value: String(
+                                                                option.id,
+                                                            ),
+                                                            label: option.label,
+                                                        })),
+                                                ]}
+                                                className="w-full"
+                                            />
+                                            <InputError
+                                                message={
+                                                    employeeForm.errors
+                                                        .manager_id
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                        <Label htmlFor="base_salary">
+                                            {employeeForm.data
+                                                .employment_type === 'DW'
+                                                ? 'Gaji Pokok (tidak digunakan)'
+                                                : 'Gaji Pokok'}
                                         </Label>
                                         <div className="space-y-1">
                                             <Input
-                                                id="daily_wage"
+                                                id="base_salary"
                                                 type="text"
                                                 inputMode="numeric"
                                                 value={formatThousandDigits(
                                                     employeeForm.data
-                                                        .daily_wage,
+                                                        .base_salary,
                                                 )}
                                                 onChange={(event) =>
                                                     employeeForm.setData(
-                                                        'daily_wage',
+                                                        'base_salary',
                                                         normalizeDigitInput(
                                                             event.target.value,
                                                         ),
                                                     )
                                                 }
-                                                placeholder="150.000"
+                                                placeholder="5.000.000"
                                             />
-                                            <p className="text-xs text-muted-foreground">
-                                                Payroll dihitung dari absensi
-                                                hadir atau terlambat dikali upah
-                                                harian.
-                                            </p>
                                             <InputError
                                                 message={
                                                     employeeForm.errors
-                                                        .daily_wage
+                                                        .base_salary
                                                 }
                                             />
                                         </div>
                                     </div>
-                                )}
 
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="service_fee_points">
-                                        Poin Service Fee
-                                    </Label>
-                                    <div className="space-y-1">
-                                        <Input
-                                            id="service_fee_points"
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            value={
-                                                employeeForm.data
-                                                    .service_fee_points
-                                            }
-                                            onChange={(event) =>
-                                                employeeForm.setData(
-                                                    'service_fee_points',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="Contoh: 1"
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            Digunakan untuk pembagian
-                                            proporsional bonus Service Fee pada
-                                            payroll.
-                                        </p>
-                                        <InputError
-                                            message={
-                                                employeeForm.errors
-                                                    .service_fee_points
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                    <div>
-                                        <Label>Tunjangan Tetap</Label>
-                                        <p className="mt-1 text-xs text-muted-foreground">
-                                            Komponen bulanan tanpa batas waktu.
-                                        </p>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {employeeForm.data.fixed_allowances.map(
-                                            (allowance, index) => (
-                                                <div
-                                                    key={index}
-                                                    className="grid gap-2 rounded-md border p-2 sm:grid-cols-[1fr_180px_36px]"
-                                                >
-                                                    <div>
-                                                        <Input
-                                                            aria-label={`Nama tunjangan tetap ${index + 1}`}
-                                                            value={
-                                                                allowance.name
-                                                            }
-                                                            placeholder="Contoh: Tunjangan Jabatan"
-                                                            onChange={(
-                                                                event,
-                                                            ) => {
-                                                                const rows = [
-                                                                    ...employeeForm
-                                                                        .data
-                                                                        .fixed_allowances,
-                                                                ];
-                                                                rows[index] = {
-                                                                    ...rows[
-                                                                        index
-                                                                    ],
-                                                                    name: event
-                                                                        .target
-                                                                        .value,
-                                                                };
-                                                                employeeForm.setData(
-                                                                    'fixed_allowances',
-                                                                    rows,
-                                                                );
-                                                            }}
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                (
-                                                                    employeeForm.errors as Record<
-                                                                        string,
-                                                                        string
-                                                                    >
-                                                                )[
-                                                                    `fixed_allowances.${index}.name`
-                                                                ]
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <Input
-                                                            aria-label={`Nominal tunjangan tetap ${index + 1}`}
-                                                            inputMode="numeric"
-                                                            maxLength={10}
-                                                            value={formatThousandDigits(
-                                                                allowance.amount,
-                                                            )}
-                                                            placeholder="500.000"
-                                                            onChange={(
-                                                                event,
-                                                            ) => {
-                                                                const rows = [
-                                                                    ...employeeForm
-                                                                        .data
-                                                                        .fixed_allowances,
-                                                                ];
-                                                                rows[index] = {
-                                                                    ...rows[
-                                                                        index
-                                                                    ],
-                                                                    amount: normalizeFixedAllowanceInput(
-                                                                        event
-                                                                            .target
-                                                                            .value,
-                                                                    ),
-                                                                };
-                                                                employeeForm.setData(
-                                                                    'fixed_allowances',
-                                                                    rows,
-                                                                );
-                                                            }}
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                (
-                                                                    employeeForm.errors as Record<
-                                                                        string,
-                                                                        string
-                                                                    >
-                                                                )[
-                                                                    `fixed_allowances.${index}.amount`
-                                                                ]
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        title="Hapus tunjangan tetap"
-                                                        onClick={() =>
-                                                            employeeForm.setData(
-                                                                'fixed_allowances',
-                                                                employeeForm.data.fixed_allowances.filter(
-                                                                    (
-                                                                        _,
-                                                                        rowIndex,
-                                                                    ) =>
-                                                                        rowIndex !==
-                                                                        index,
-                                                                ),
-                                                            )
-                                                        }
-                                                    >
-                                                        <Trash2 className="size-4" />
-                                                    </Button>
-                                                </div>
-                                            ),
-                                        )}
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() =>
-                                                employeeForm.setData(
-                                                    'fixed_allowances',
-                                                    [
-                                                        ...employeeForm.data
-                                                            .fixed_allowances,
-                                                        {
-                                                            name: '',
-                                                            amount: '',
-                                                        },
-                                                    ],
-                                                )
-                                            }
-                                        >
-                                            <Plus className="size-4" />
-                                            Tambah Tunjangan Tetap
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
-                                    <div className="flex items-center gap-2">
-                                        <Landmark className="size-4 text-primary" />
-                                        <p className="text-sm font-semibold text-foreground">
-                                            Rekening Bank Penggajian (Utama)
-                                        </p>
-                                    </div>
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="employee_bank_name">
-                                            Nama Bank
+                                    <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                        <Label htmlFor="salary_type">
+                                            Iuran BPJS (Nett atau Gross)
                                         </Label>
                                         <div className="space-y-1">
-                                            <Input
-                                                id="employee_bank_name"
-                                                value={
-                                                    employeeForm.data.bank_name
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'bank_name',
-                                                        event.target.value.toUpperCase(),
-                                                    )
-                                                }
-                                                placeholder="Contoh: BCA, MANDIRI, BRI, BNI"
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .bank_name
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="employee_account_number">
-                                            Nomor Rekening
-                                        </Label>
-                                        <div className="space-y-1">
-                                            <Input
-                                                id="employee_account_number"
+                                            <select
+                                                id="salary_type"
                                                 value={
                                                     employeeForm.data
-                                                        .account_number
+                                                        .salary_type || 'gross'
                                                 }
-                                                onChange={(event) =>
+                                                onChange={(e) =>
                                                     employeeForm.setData(
-                                                        'account_number',
-                                                        event.target.value,
+                                                        'salary_type',
+                                                        e.target.value,
                                                     )
                                                 }
-                                                placeholder="Contoh: 1350020990899"
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .account_number
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="employee_account_holder_name">
-                                            Nama Pemilik Rekening
-                                        </Label>
-                                        <div className="space-y-1">
-                                            <Input
-                                                id="employee_account_holder_name"
-                                                value={
-                                                    employeeForm.data
-                                                        .account_holder_name
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'account_holder_name',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder={
-                                                    employeeForm.data
-                                                        .full_name ||
-                                                    'Sesuai buku tabungan'
-                                                }
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .account_holder_name
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                    <Label htmlFor="employee_is_active">
-                                        Status Aktif
-                                    </Label>
-                                    <div className="flex items-center gap-2">
-                                        <Checkbox
-                                            id="employee_is_active"
-                                            checked={
-                                                employeeForm.data.is_active
-                                            }
-                                            onCheckedChange={(checked) =>
-                                                employeeForm.setData(
-                                                    'is_active',
-                                                    checked === true,
-                                                )
-                                            }
-                                        />
-                                        <Label htmlFor="employee_is_active">
-                                            Karyawan aktif
-                                        </Label>
-                                    </div>
-                                </div>
-
-                                {editingEmployee && (
-                                    <>
-                                        <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                            <Label htmlFor="change_effective_date">
-                                                Efektif Perubahan
-                                            </Label>
-                                            <div className="flex flex-col gap-1">
-                                                <Input
-                                                    id="change_effective_date"
-                                                    type="date"
-                                                    max={todayDate()}
-                                                    value={
-                                                        employeeForm.data
-                                                            .change_effective_date
-                                                    }
-                                                    onChange={(event) =>
-                                                        employeeForm.setData(
-                                                            'change_effective_date',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    message={
-                                                        employeeForm.errors
-                                                            .change_effective_date
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                            <Label htmlFor="change_notes">
-                                                Catatan Perubahan
-                                            </Label>
-                                            <div className="flex flex-col gap-1">
-                                                <textarea
-                                                    id="change_notes"
-                                                    value={
-                                                        employeeForm.data
-                                                            .change_notes
-                                                    }
-                                                    onChange={(event) =>
-                                                        employeeForm.setData(
-                                                            'change_notes',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    rows={3}
-                                                    className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                                    placeholder="Contoh: promosi hasil evaluasi semester"
-                                                />
-                                                <InputError
-                                                    message={
-                                                        employeeForm.errors
-                                                            .change_notes
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
-
-                        {employeeFormStep === 3 && (
-                            <div className="space-y-4">
-                                <div className="grid gap-2 rounded-md border p-3 text-sm">
-                                    <p>
-                                        <span className="font-medium">
-                                            Nama:
-                                        </span>{' '}
-                                        {employeeForm.data.full_name.trim() ||
-                                            '-'}
-                                    </p>
-                                    <p>
-                                        <span className="font-medium">
-                                            Kode:
-                                        </span>{' '}
-                                        {previewEmployeeCode || '-'}
-                                    </p>
-                                    <p>
-                                        <span className="font-medium">
-                                            Status:
-                                        </span>{' '}
-                                        {statusLabels[
-                                            employeeForm.data.employment_status
-                                        ] ??
-                                            employeeForm.data.employment_status}
-                                    </p>
-                                    <p>
-                                        <span className="font-medium">
-                                            Perusahaan:
-                                        </span>{' '}
-                                        {employeeForm.data.sub_company_id === ''
-                                            ? '-'
-                                            : (subCompanyOptions.find(
-                                                  (company) =>
-                                                      String(company.id) ===
-                                                      employeeForm.data
-                                                          .sub_company_id,
-                                              )?.name ?? '-')}
-                                    </p>
-                                    <p>
-                                        <span className="font-medium">
-                                            Tipe Karyawan:
-                                        </span>{' '}
-                                        {typeLabels[
-                                            employeeForm.data.employment_type
-                                        ] ?? employeeForm.data.employment_type}
-                                    </p>
-                                    {employeeForm.data.pph21_enabled &&
-                                    employeeForm.data.pph21_method !==
-                                        'none' ? (
-                                        <>
-                                            <p>
-                                                <span className="font-medium">
-                                                    Metode PPh21:
-                                                </span>{' '}
-                                                {pph21MethodLabels[
-                                                    employeeForm.data.pph21_method
-                                                ] ??
-                                                    employeeForm.data.pph21_method}
-                                            </p>
-                                            {['ter_bulanan', 'ter_bulanan_net', 'ter_bulanan_gross_up'].includes(
-                                                employeeForm.data.pph21_method,
-                                            ) ? (
-                                                <p>
-                                                    <span className="font-medium">
-                                                        Kategori TER Bulanan:
-                                                    </span>{' '}
-                                                    Kategori {ptkpToTerCategory(employeeForm.data.ptkp_category)} (Otomatis PP 58/2023)
-                                                </p>
-                                            ) : (
-                                                <p>
-                                                    <span className="font-medium">
-                                                        Nominal PPh21:
-                                                    </span>{' '}
-                                                    Rp{' '}
-                                                    {formatThousandDigits(
-                                                        employeeForm.data.pph21_rate ||
-                                                            '0',
-                                                    ) || '0'}
+                                                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus:ring-2 focus:ring-ring"
+                                            >
+                                                <option value="gross">
+                                                    Gross – BPJS karyawan
+                                                    dipotong dari gaji
+                                                </option>
+                                                <option value="net">
+                                                    Nett – BPJS karyawan
+                                                    ditanggung perusahaan
+                                                </option>
+                                            </select>
+                                            {employeeForm.data.salary_type ===
+                                                'net' && (
+                                                <p className="text-xs text-amber-600 dark:text-amber-400">
+                                                    Gaji nett: porsi BPJS TK
+                                                    karyawan (JHT 2%, JP 1%) dan
+                                                    BPJS Kes karyawan (1%)
+                                                    seluruhnya menjadi beban
+                                                    perusahaan.
                                                 </p>
                                             )}
-                                        </>
-                                    ) : (
-                                        <p>
-                                            <span className="font-medium">
-                                                PPh21:
-                                            </span>{' '}
-                                            <span className="text-muted-foreground">
-                                                Nonaktif / Bebas Pajak
-                                            </span>
-                                        </p>
-                                    )}
-                                    <p>
-                                        <span className="font-medium">
-                                            Rekening Bank:
-                                        </span>{' '}
-                                        {employeeForm.data.account_number
-                                            ? `${employeeForm.data.bank_name || 'Bank'} • ${employeeForm.data.account_number} (a.n. ${employeeForm.data.account_holder_name || employeeForm.data.full_name || '-'})`
-                                            : '-'}
-                                    </p>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="family_card_number">
-                                            No. KK
-                                        </Label>
-                                        <div className="space-y-1">
-                                            <Input
-                                                id="family_card_number"
-                                                value={
-                                                    employeeForm.data
-                                                        .family_card_number
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'family_card_number',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="Opsional"
-                                            />
                                             <InputError
                                                 message={
                                                     employeeForm.errors
-                                                        .family_card_number
+                                                        .salary_type
                                                 }
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="ktp_number">
-                                            No. KTP
-                                        </Label>
-                                        <div className="space-y-1">
-                                            <Input
-                                                id="ktp_number"
-                                                value={
-                                                    employeeForm.data.ktp_number
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'ktp_number',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="Opsional"
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .ktp_number
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="npwp_number">
-                                            NPWP
-                                        </Label>
-                                        <div className="flex flex-col gap-1">
-                                            <Input
-                                                id="npwp_number"
-                                                value={
-                                                    employeeForm.data
-                                                        .npwp_number
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'npwp_number',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="Opsional"
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .npwp_number
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="bpjs_kesehatan_number">
-                                            BPJS Kesehatan
-                                        </Label>
-                                        <div className="space-y-1">
-                                            <Input
-                                                id="bpjs_kesehatan_number"
-                                                value={
-                                                    employeeForm.data
-                                                        .bpjs_kesehatan_number
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'bpjs_kesehatan_number',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="Opsional"
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .bpjs_kesehatan_number
-                                                }
-                                            />
-                                            <div className="flex flex-wrap items-center gap-4">
-                                                <div className="flex items-center gap-2">
-                                                    <Label htmlFor="bpjs_kesehatan_class" className="text-xs text-muted-foreground whitespace-nowrap">
-                                                        Kelas BPJS Kes:
-                                                    </Label>
-                                                    <select
-                                                        id="bpjs_kesehatan_class"
-                                                        value={employeeForm.data.bpjs_kesehatan_class || 'I'}
-                                                        onChange={(e) =>
-                                                            employeeForm.setData(
-                                                                'bpjs_kesehatan_class',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        className="h-8 rounded-md border border-input bg-transparent px-2.5 text-xs shadow-xs outline-none"
-                                                    >
-                                                        <option value="I">Kelas I</option>
-                                                        <option value="II">Kelas II</option>
-                                                        <option value="III">Kelas III</option>
-                                                    </select>
-                                                </div>
-                                                <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={employeeForm.data.bpjs_kesehatan_enabled}
-                                                        onChange={(e) =>
-                                                            employeeForm.setData(
-                                                                'bpjs_kesehatan_enabled',
-                                                                e.target.checked,
-                                                            )
-                                                        }
-                                                        className="size-3.5 rounded border-input"
-                                                    />
-                                                    <span>Aktif dipotong iuran</span>
-                                                </label>
+                                    {employeeForm.data.employment_type ===
+                                        'DW' && (
+                                        <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                            <Label htmlFor="daily_wage">
+                                                Upah Harian
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <Input
+                                                    id="daily_wage"
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    value={formatThousandDigits(
+                                                        employeeForm.data
+                                                            .daily_wage,
+                                                    )}
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'daily_wage',
+                                                            normalizeDigitInput(
+                                                                event.target
+                                                                    .value,
+                                                            ),
+                                                        )
+                                                    }
+                                                    placeholder="150.000"
+                                                />
+                                                <p className="text-xs text-muted-foreground">
+                                                    Payroll dihitung dari
+                                                    absensi hadir atau terlambat
+                                                    dikali upah harian.
+                                                </p>
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .daily_wage
+                                                    }
+                                                />
                                             </div>
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .bpjs_kesehatan_number
-                                                }
-                                            />
-                                            {employeeForm.data.bpjs_kesehatan_enabled && (
-                                                <div className="grid gap-1 pt-1">
-                                                    <Label htmlFor="bpjs_kesehatan_reported_wage" className="text-xs text-muted-foreground">
-                                                        Gaji yang dilaporkan ke BPJS Kes (opsional)
-                                                    </Label>
+                                        </div>
+                                    )}
+
+                                    <details
+                                        className="rounded-md border px-3 py-2"
+                                        open={
+                                            employeeForm.errors
+                                                .service_fee_points
+                                                ? true
+                                                : undefined
+                                        }
+                                    >
+                                        <summary className="cursor-pointer text-sm font-medium">
+                                            Poin service fee (opsional)
+                                        </summary>
+                                        <div className="pt-3">
+                                            <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                                <Label htmlFor="service_fee_points">
+                                                    Poin Service Fee
+                                                </Label>
+                                                <div className="space-y-1">
                                                     <Input
-                                                        id="bpjs_kesehatan_reported_wage"
-                                                        type="text"
-                                                        inputMode="numeric"
-                                                        value={formatThousandDigits(
-                                                            employeeForm.data.bpjs_kesehatan_reported_wage,
-                                                        )}
+                                                        id="service_fee_points"
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={
+                                                            employeeForm.data
+                                                                .service_fee_points
+                                                        }
                                                         onChange={(event) =>
                                                             employeeForm.setData(
-                                                                'bpjs_kesehatan_reported_wage',
-                                                                normalizeDigitInput(event.target.value),
+                                                                'service_fee_points',
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
-                                                        placeholder="Kosong = gunakan upah aktual"
-                                                        className="h-8 text-xs"
+                                                        placeholder="Contoh: 1"
                                                     />
                                                     <p className="text-xs text-muted-foreground">
-                                                        Jika diisi, nilai ini digunakan sebagai dasar hitung iuran BPJS Kesehatan (bisa berbeda dari upah aktual karyawan).
+                                                        Digunakan untuk
+                                                        pembagian proporsional
+                                                        bonus Service Fee pada
+                                                        payroll.
                                                     </p>
                                                     <InputError
                                                         message={
                                                             employeeForm.errors
-                                                                .bpjs_kesehatan_reported_wage
+                                                                .service_fee_points
                                                         }
                                                     />
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </details>
+
+                                    <div className="grid items-start gap-2 md:grid-cols-[150px_1fr]">
+                                        <div>
+                                            <Label>Tunjangan Tetap</Label>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Komponen bulanan tanpa batas
+                                                waktu.
+                                            </p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {employeeForm.data.fixed_allowances.map(
+                                                (allowance, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="grid gap-2 rounded-md border p-2 sm:grid-cols-[1fr_180px_36px]"
+                                                    >
+                                                        <div>
+                                                            <Input
+                                                                aria-label={`Nama tunjangan tetap ${index + 1}`}
+                                                                value={
+                                                                    allowance.name
+                                                                }
+                                                                placeholder="Contoh: Tunjangan Jabatan"
+                                                                onChange={(
+                                                                    event,
+                                                                ) => {
+                                                                    const rows =
+                                                                        [
+                                                                            ...employeeForm
+                                                                                .data
+                                                                                .fixed_allowances,
+                                                                        ];
+                                                                    rows[
+                                                                        index
+                                                                    ] = {
+                                                                        ...rows[
+                                                                            index
+                                                                        ],
+                                                                        name: event
+                                                                            .target
+                                                                            .value,
+                                                                    };
+                                                                    employeeForm.setData(
+                                                                        'fixed_allowances',
+                                                                        rows,
+                                                                    );
+                                                                }}
+                                                            />
+                                                            <InputError
+                                                                message={
+                                                                    (
+                                                                        employeeForm.errors as Record<
+                                                                            string,
+                                                                            string
+                                                                        >
+                                                                    )[
+                                                                        `fixed_allowances.${index}.name`
+                                                                    ]
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <Input
+                                                                aria-label={`Nominal tunjangan tetap ${index + 1}`}
+                                                                inputMode="numeric"
+                                                                maxLength={10}
+                                                                value={formatThousandDigits(
+                                                                    allowance.amount,
+                                                                )}
+                                                                placeholder="500.000"
+                                                                onChange={(
+                                                                    event,
+                                                                ) => {
+                                                                    const rows =
+                                                                        [
+                                                                            ...employeeForm
+                                                                                .data
+                                                                                .fixed_allowances,
+                                                                        ];
+                                                                    rows[
+                                                                        index
+                                                                    ] = {
+                                                                        ...rows[
+                                                                            index
+                                                                        ],
+                                                                        amount: normalizeFixedAllowanceInput(
+                                                                            event
+                                                                                .target
+                                                                                .value,
+                                                                        ),
+                                                                    };
+                                                                    employeeForm.setData(
+                                                                        'fixed_allowances',
+                                                                        rows,
+                                                                    );
+                                                                }}
+                                                            />
+                                                            <InputError
+                                                                message={
+                                                                    (
+                                                                        employeeForm.errors as Record<
+                                                                            string,
+                                                                            string
+                                                                        >
+                                                                    )[
+                                                                        `fixed_allowances.${index}.amount`
+                                                                    ]
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            title="Hapus tunjangan tetap"
+                                                            onClick={() =>
+                                                                employeeForm.setData(
+                                                                    'fixed_allowances',
+                                                                    employeeForm.data.fixed_allowances.filter(
+                                                                        (
+                                                                            _,
+                                                                            rowIndex,
+                                                                        ) =>
+                                                                            rowIndex !==
+                                                                            index,
+                                                                    ),
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    </div>
+                                                ),
                                             )}
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    employeeForm.setData(
+                                                        'fixed_allowances',
+                                                        [
+                                                            ...employeeForm.data
+                                                                .fixed_allowances,
+                                                            {
+                                                                name: '',
+                                                                amount: '',
+                                                            },
+                                                        ],
+                                                    )
+                                                }
+                                            >
+                                                <Plus className="size-4" />
+                                                Tambah Tunjangan Tetap
+                                            </Button>
                                         </div>
                                     </div>
 
-                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="bpjs_ketenagakerjaan_number" className="pt-2">
-                                            BPJS Tenaga Kerja
+                                    <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                        <Label htmlFor="employee_is_active">
+                                            Status Aktif
                                         </Label>
-                                        <div className="space-y-2">
-                                            <Input
-                                                id="bpjs_ketenagakerjaan_number"
-                                                value={
-                                                    employeeForm.data
-                                                        .bpjs_ketenagakerjaan_number
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id="employee_is_active"
+                                                checked={
+                                                    employeeForm.data.is_active
                                                 }
-                                                onChange={(event) =>
+                                                onCheckedChange={(checked) =>
                                                     employeeForm.setData(
-                                                        'bpjs_ketenagakerjaan_number',
-                                                        event.target.value,
+                                                        'is_active',
+                                                        checked === true,
                                                     )
                                                 }
-                                                placeholder="Nomor kartu BPJS TK / KPJ"
                                             />
-                                            <div className="rounded-md border bg-slate-50/50 p-2.5 space-y-1.5">
-                                                <span className="text-xs font-medium text-slate-700 block">
-                                                    Program BPJS Ketenagakerjaan yang Diikuti:
-                                                </span>
-                                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={employeeForm.data.bpjs_jkk_enabled}
-                                                            onChange={(e) =>
-                                                                employeeForm.setData(
-                                                                    'bpjs_jkk_enabled',
-                                                                    e.target.checked,
-                                                                )
-                                                            }
-                                                            className="size-3.5 rounded border-input"
-                                                        />
-                                                        <span>JKK</span>
-                                                    </label>
-                                                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={employeeForm.data.bpjs_jkm_enabled}
-                                                            onChange={(e) =>
-                                                                employeeForm.setData(
-                                                                    'bpjs_jkm_enabled',
-                                                                    e.target.checked,
-                                                                )
-                                                            }
-                                                            className="size-3.5 rounded border-input"
-                                                        />
-                                                        <span>JKM</span>
-                                                    </label>
-                                                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={employeeForm.data.bpjs_jht_enabled}
-                                                            onChange={(e) =>
-                                                                employeeForm.setData(
-                                                                    'bpjs_jht_enabled',
-                                                                    e.target.checked,
-                                                                )
-                                                            }
-                                                            className="size-3.5 rounded border-input"
-                                                        />
-                                                        <span>JHT</span>
-                                                    </label>
-                                                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={employeeForm.data.bpjs_jp_enabled}
-                                                            onChange={(e) =>
-                                                                employeeForm.setData(
-                                                                    'bpjs_jp_enabled',
-                                                                    e.target.checked,
-                                                                )
-                                                            }
-                                                            className="size-3.5 rounded border-input"
-                                                        />
-                                                        <span>JP</span>
-                                                    </label>
+                                            <Label htmlFor="employee_is_active">
+                                                Karyawan aktif
+                                            </Label>
+                                        </div>
+                                    </div>
+
+                                    {editingEmployee && (
+                                        <>
+                                            <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                                <Label htmlFor="change_effective_date">
+                                                    Efektif Perubahan
+                                                </Label>
+                                                <div className="flex flex-col gap-1">
+                                                    <Input
+                                                        id="change_effective_date"
+                                                        type="date"
+                                                        max={todayDate()}
+                                                        value={
+                                                            employeeForm.data
+                                                                .change_effective_date
+                                                        }
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'change_effective_date',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .change_effective_date
+                                                        }
+                                                    />
                                                 </div>
                                             </div>
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .bpjs_ketenagakerjaan_number
-                                                }
-                                            />
-                                        </div>
-                                    </div>
+                                            <div className="grid items-start gap-2 md:grid-cols-[150px_1fr]">
+                                                <Label htmlFor="change_notes">
+                                                    Catatan Perubahan
+                                                </Label>
+                                                <div className="flex flex-col gap-1">
+                                                    <textarea
+                                                        id="change_notes"
+                                                        value={
+                                                            employeeForm.data
+                                                                .change_notes
+                                                        }
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'change_notes',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        rows={3}
+                                                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                        placeholder="Contoh: promosi hasil evaluasi semester"
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .change_notes
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
 
-                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="private_insurance_enabled" className="pt-2">
-                                            Asuransi Swasta
-                                        </Label>
-                                        <div className="space-y-2">
-                                            <label className="flex items-center gap-2 text-xs font-medium text-slate-800 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    id="private_insurance_enabled"
-                                                    checked={employeeForm.data.private_insurance_enabled}
-                                                    onChange={(e) =>
+                            {employeeFormStep === 3 && (
+                                <div className="space-y-4">
+                                    <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+                                        <div className="flex items-center gap-2">
+                                            <Landmark className="size-4 text-primary" />
+                                            <p className="text-sm font-semibold text-foreground">
+                                                Rekening Bank Penggajian (Utama)
+                                            </p>
+                                        </div>
+                                        <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                            <Label htmlFor="employee_bank_name">
+                                                Nama Bank
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <Input
+                                                    id="employee_bank_name"
+                                                    value={
+                                                        employeeForm.data
+                                                            .bank_name
+                                                    }
+                                                    onChange={(event) =>
                                                         employeeForm.setData(
-                                                            'private_insurance_enabled',
-                                                            e.target.checked,
+                                                            'bank_name',
+                                                            event.target.value.toUpperCase(),
                                                         )
                                                     }
-                                                    className="size-4 rounded border-input"
+                                                    placeholder="Contoh: BCA, MANDIRI, BRI, BNI"
                                                 />
-                                                <span>Gunakan Asuransi Swasta Tambahan</span>
-                                            </label>
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .bank_name
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                            <Label htmlFor="employee_account_number">
+                                                Nomor Rekening
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <Input
+                                                    id="employee_account_number"
+                                                    value={
+                                                        employeeForm.data
+                                                            .account_number
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'account_number',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Contoh: 1350020990899"
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .account_number
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid items-center gap-2 md:grid-cols-[150px_1fr]">
+                                            <Label htmlFor="employee_account_holder_name">
+                                                Nama Pemilik Rekening
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <Input
+                                                    id="employee_account_holder_name"
+                                                    value={
+                                                        employeeForm.data
+                                                            .account_holder_name
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'account_holder_name',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder={
+                                                        employeeForm.data
+                                                            .full_name ||
+                                                        'Sesuai buku tabungan'
+                                                    }
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .account_holder_name
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                            {employeeForm.data.private_insurance_enabled && (
-                                                <div className="grid gap-2 rounded-md border bg-slate-50/50 p-2.5 sm:grid-cols-2">
-                                                    <div>
-                                                        <Label htmlFor="emp_private_insurance_name" className="text-xs text-muted-foreground">
-                                                            Nama Asuransi
+                                    <div className="space-y-3">
+                                        <div
+                                            role="group"
+                                            aria-labelledby="identity_numbers_label"
+                                            className="grid items-start gap-2 md:grid-cols-[150px_1fr]"
+                                        >
+                                            <span
+                                                id="identity_numbers_label"
+                                                className="text-sm font-medium md:pt-2"
+                                            >
+                                                Nomor Identitas
+                                            </span>
+                                            <div className="grid gap-2 sm:grid-cols-3">
+                                                <div className="space-y-1">
+                                                    <Input
+                                                        id="family_card_number"
+                                                        value={
+                                                            employeeForm.data
+                                                                .family_card_number
+                                                        }
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'family_card_number',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="KK"
+                                                        aria-label="KK"
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .family_card_number
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Input
+                                                        id="ktp_number"
+                                                        value={
+                                                            employeeForm.data
+                                                                .ktp_number
+                                                        }
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'ktp_number',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="KTP"
+                                                        aria-label="KTP"
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .ktp_number
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                    <Input
+                                                        id="npwp_number"
+                                                        value={
+                                                            employeeForm.data
+                                                                .npwp_number
+                                                        }
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'npwp_number',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="NPWP"
+                                                        aria-label="NPWP"
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .npwp_number
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid items-start gap-2 md:grid-cols-[150px_1fr]">
+                                            <Label
+                                                htmlFor="bpjs_kesehatan_number"
+                                                className="md:pt-2"
+                                            >
+                                                BPJS Kesehatan
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <Input
+                                                    id="bpjs_kesehatan_number"
+                                                    value={
+                                                        employeeForm.data
+                                                            .bpjs_kesehatan_number
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'bpjs_kesehatan_number',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Opsional"
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .bpjs_kesehatan_number
+                                                    }
+                                                />
+                                                <div className="flex flex-wrap items-center gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <Label
+                                                            htmlFor="bpjs_kesehatan_class"
+                                                            className="text-xs whitespace-nowrap text-muted-foreground"
+                                                        >
+                                                            Kelas BPJS Kes:
                                                         </Label>
-                                                        <Input
-                                                            id="emp_private_insurance_name"
-                                                            value={employeeForm.data.private_insurance_name}
+                                                        <select
+                                                            id="bpjs_kesehatan_class"
+                                                            value={
+                                                                employeeForm
+                                                                    .data
+                                                                    .bpjs_kesehatan_class ||
+                                                                'I'
+                                                            }
                                                             onChange={(e) =>
                                                                 employeeForm.setData(
-                                                                    'private_insurance_name',
-                                                                    e.target.value,
+                                                                    'bpjs_kesehatan_class',
+                                                                    e.target
+                                                                        .value,
                                                                 )
                                                             }
-                                                            placeholder="Contoh: Prudential / Allianz"
-                                                            className="mt-1 h-8 text-xs"
+                                                            className="h-8 rounded-md border border-input bg-transparent px-2.5 text-xs shadow-xs outline-none"
+                                                        >
+                                                            <option value="I">
+                                                                Kelas I
+                                                            </option>
+                                                            <option value="II">
+                                                                Kelas II
+                                                            </option>
+                                                            <option value="III">
+                                                                Kelas III
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                    <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-700">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={
+                                                                employeeForm
+                                                                    .data
+                                                                    .bpjs_kesehatan_enabled
+                                                            }
+                                                            onChange={(e) =>
+                                                                employeeForm.setData(
+                                                                    'bpjs_kesehatan_enabled',
+                                                                    e.target
+                                                                        .checked,
+                                                                )
+                                                            }
+                                                            className="size-3.5 rounded border-input"
+                                                        />
+                                                        <span>
+                                                            Aktif dipotong iuran
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .bpjs_kesehatan_number
+                                                    }
+                                                />
+                                                {employeeForm.data
+                                                    .bpjs_kesehatan_enabled && (
+                                                    <div className="grid gap-1 pt-1">
+                                                        <Label
+                                                            htmlFor="bpjs_kesehatan_reported_wage"
+                                                            className="text-xs text-muted-foreground"
+                                                        >
+                                                            Gaji yang dilaporkan
+                                                            ke BPJS Kes
+                                                            (opsional)
+                                                        </Label>
+                                                        <Input
+                                                            id="bpjs_kesehatan_reported_wage"
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={formatThousandDigits(
+                                                                employeeForm
+                                                                    .data
+                                                                    .bpjs_kesehatan_reported_wage,
+                                                            )}
+                                                            onChange={(event) =>
+                                                                employeeForm.setData(
+                                                                    'bpjs_kesehatan_reported_wage',
+                                                                    normalizeDigitInput(
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    ),
+                                                                )
+                                                            }
+                                                            placeholder="Kosong = gunakan upah aktual"
+                                                            className="h-8 text-xs"
+                                                        />
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Jika diisi, nilai
+                                                            ini digunakan
+                                                            sebagai dasar hitung
+                                                            iuran BPJS Kesehatan
+                                                            (bisa berbeda dari
+                                                            upah aktual
+                                                            karyawan).
+                                                        </p>
+                                                        <InputError
+                                                            message={
+                                                                employeeForm
+                                                                    .errors
+                                                                    .bpjs_kesehatan_reported_wage
+                                                            }
                                                         />
                                                     </div>
-                                                    <div>
-                                                        <Label htmlFor="emp_private_insurance_nominal" className="text-xs text-muted-foreground">
-                                                            Nominal Potongan Premi (Rp)
-                                                        </Label>
-                                                        <Input
-                                                            id="emp_private_insurance_nominal"
-                                                            type="number"
-                                                            min="0"
-                                                            value={employeeForm.data.private_insurance_nominal}
-                                                            onChange={(e) =>
-                                                                employeeForm.setData(
-                                                                    'private_insurance_nominal',
-                                                                    e.target.value,
-                                                                )
-                                                            }
-                                                            placeholder="0"
-                                                            className="mt-1 h-8 text-xs"
-                                                        />
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid items-start gap-2 md:grid-cols-[150px_1fr]">
+                                            <Label
+                                                htmlFor="bpjs_ketenagakerjaan_number"
+                                                className="pt-2"
+                                            >
+                                                BPJS Tenaga Kerja
+                                            </Label>
+                                            <div className="space-y-2">
+                                                <Input
+                                                    id="bpjs_ketenagakerjaan_number"
+                                                    value={
+                                                        employeeForm.data
+                                                            .bpjs_ketenagakerjaan_number
+                                                    }
+                                                    onChange={(event) =>
+                                                        employeeForm.setData(
+                                                            'bpjs_ketenagakerjaan_number',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Nomor kartu BPJS TK / KPJ"
+                                                />
+                                                <div className="space-y-1.5 rounded-md border bg-slate-50/50 p-2.5">
+                                                    <span className="block text-xs font-medium text-slate-700">
+                                                        Program BPJS
+                                                        Ketenagakerjaan yang
+                                                        Diikuti:
+                                                    </span>
+                                                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                                        <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={
+                                                                    employeeForm
+                                                                        .data
+                                                                        .bpjs_jkk_enabled
+                                                                }
+                                                                onChange={(e) =>
+                                                                    employeeForm.setData(
+                                                                        'bpjs_jkk_enabled',
+                                                                        e.target
+                                                                            .checked,
+                                                                    )
+                                                                }
+                                                                className="size-3.5 rounded border-input"
+                                                            />
+                                                            <span>JKK</span>
+                                                        </label>
+                                                        <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={
+                                                                    employeeForm
+                                                                        .data
+                                                                        .bpjs_jkm_enabled
+                                                                }
+                                                                onChange={(e) =>
+                                                                    employeeForm.setData(
+                                                                        'bpjs_jkm_enabled',
+                                                                        e.target
+                                                                            .checked,
+                                                                    )
+                                                                }
+                                                                className="size-3.5 rounded border-input"
+                                                            />
+                                                            <span>JKM</span>
+                                                        </label>
+                                                        <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={
+                                                                    employeeForm
+                                                                        .data
+                                                                        .bpjs_jht_enabled
+                                                                }
+                                                                onChange={(e) =>
+                                                                    employeeForm.setData(
+                                                                        'bpjs_jht_enabled',
+                                                                        e.target
+                                                                            .checked,
+                                                                    )
+                                                                }
+                                                                className="size-3.5 rounded border-input"
+                                                            />
+                                                            <span>JHT</span>
+                                                        </label>
+                                                        <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={
+                                                                    employeeForm
+                                                                        .data
+                                                                        .bpjs_jp_enabled
+                                                                }
+                                                                onChange={(e) =>
+                                                                    employeeForm.setData(
+                                                                        'bpjs_jp_enabled',
+                                                                        e.target
+                                                                            .checked,
+                                                                    )
+                                                                }
+                                                                className="size-3.5 rounded border-input"
+                                                            />
+                                                            <span>JP</span>
+                                                        </label>
                                                     </div>
                                                 </div>
-                                            )}
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .bpjs_ketenagakerjaan_number
+                                                    }
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="sim_a_number">
-                                            SIM A
-                                        </Label>
-                                        <div className="space-y-1">
-                                            <Input
-                                                id="sim_a_number"
-                                                value={
-                                                    employeeForm.data
-                                                        .sim_a_number
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'sim_a_number',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="Opsional"
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .sim_a_number
-                                                }
-                                            />
+                                        <div className="grid items-start gap-2 md:grid-cols-[150px_1fr]">
+                                            <Label
+                                                htmlFor="private_insurance_enabled"
+                                                className="pt-2"
+                                            >
+                                                Asuransi Swasta
+                                            </Label>
+                                            <div className="space-y-2">
+                                                <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-800">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="private_insurance_enabled"
+                                                        checked={
+                                                            employeeForm.data
+                                                                .private_insurance_enabled
+                                                        }
+                                                        onChange={(e) =>
+                                                            employeeForm.setData(
+                                                                'private_insurance_enabled',
+                                                                e.target
+                                                                    .checked,
+                                                            )
+                                                        }
+                                                        className="size-4 rounded border-input"
+                                                    />
+                                                    <span>
+                                                        Gunakan Asuransi Swasta
+                                                        Tambahan
+                                                    </span>
+                                                </label>
+
+                                                {employeeForm.data
+                                                    .private_insurance_enabled && (
+                                                    <div className="grid gap-2 rounded-md border bg-slate-50/50 p-2.5 sm:grid-cols-2">
+                                                        <div>
+                                                            <Label
+                                                                htmlFor="emp_private_insurance_name"
+                                                                className="text-xs text-muted-foreground"
+                                                            >
+                                                                Nama Asuransi
+                                                            </Label>
+                                                            <Input
+                                                                id="emp_private_insurance_name"
+                                                                value={
+                                                                    employeeForm
+                                                                        .data
+                                                                        .private_insurance_name
+                                                                }
+                                                                onChange={(e) =>
+                                                                    employeeForm.setData(
+                                                                        'private_insurance_name',
+                                                                        e.target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                placeholder="Contoh: Prudential / Allianz"
+                                                                className="mt-1 h-8 text-xs"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <Label
+                                                                htmlFor="emp_private_insurance_nominal"
+                                                                className="text-xs text-muted-foreground"
+                                                            >
+                                                                Nominal Potongan
+                                                                Premi (Rp)
+                                                            </Label>
+                                                            <Input
+                                                                id="emp_private_insurance_nominal"
+                                                                type="number"
+                                                                min="0"
+                                                                value={
+                                                                    employeeForm
+                                                                        .data
+                                                                        .private_insurance_nominal
+                                                                }
+                                                                onChange={(e) =>
+                                                                    employeeForm.setData(
+                                                                        'private_insurance_nominal',
+                                                                        e.target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                placeholder="0"
+                                                                className="mt-1 h-8 text-xs"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="sim_b_number">
-                                            SIM B
-                                        </Label>
-                                        <div className="space-y-1">
-                                            <Input
-                                                id="sim_b_number"
-                                                value={
-                                                    employeeForm.data
-                                                        .sim_b_number
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'sim_b_number',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="Opsional"
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .sim_b_number
-                                                }
-                                            />
+                                        <div
+                                            role="group"
+                                            aria-labelledby="sim_numbers_label"
+                                            className="grid items-start gap-2 md:grid-cols-[150px_1fr]"
+                                        >
+                                            <span
+                                                id="sim_numbers_label"
+                                                className="text-sm font-medium md:pt-2"
+                                            >
+                                                Nomor SIM
+                                            </span>
+                                            <div className="grid gap-2 sm:grid-cols-3">
+                                                <div className="space-y-1">
+                                                    <Input
+                                                        id="sim_a_number"
+                                                        value={
+                                                            employeeForm.data
+                                                                .sim_a_number
+                                                        }
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'sim_a_number',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="SIM A"
+                                                        aria-label="SIM A"
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .sim_a_number
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Input
+                                                        id="sim_b_number"
+                                                        value={
+                                                            employeeForm.data
+                                                                .sim_b_number
+                                                        }
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'sim_b_number',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="SIM B"
+                                                        aria-label="SIM B"
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .sim_b_number
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Input
+                                                        id="sim_c_number"
+                                                        value={
+                                                            employeeForm.data
+                                                                .sim_c_number
+                                                        }
+                                                        onChange={(event) =>
+                                                            employeeForm.setData(
+                                                                'sim_c_number',
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="SIM C"
+                                                        aria-label="SIM C"
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            employeeForm.errors
+                                                                .sim_c_number
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="grid items-center gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="sim_c_number">
-                                            SIM C
-                                        </Label>
-                                        <div className="space-y-1">
-                                            <Input
-                                                id="sim_c_number"
-                                                value={
-                                                    employeeForm.data
-                                                        .sim_c_number
-                                                }
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'sim_c_number',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="Opsional"
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors
-                                                        .sim_c_number
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid items-start gap-2 md:grid-cols-[180px_1fr]">
-                                        <Label htmlFor="notes">Catatan</Label>
-                                        <div className="space-y-1">
-                                            <textarea
-                                                id="notes"
-                                                value={employeeForm.data.notes}
-                                                onChange={(event) =>
-                                                    employeeForm.setData(
-                                                        'notes',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                rows={4}
-                                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                            />
-                                            <InputError
-                                                message={
-                                                    employeeForm.errors.notes
-                                                }
-                                            />
+                                        <div className="grid items-start gap-2 md:grid-cols-[150px_1fr]">
+                                            <Label htmlFor="notes">
+                                                Catatan
+                                            </Label>
+                                            <div className="space-y-1">
+                                                <WysiwygEditor
+                                                    id="notes"
+                                                    value={
+                                                        employeeForm.data.notes
+                                                    }
+                                                    onChange={(value) =>
+                                                        employeeForm.setData(
+                                                            'notes',
+                                                            value,
+                                                        )
+                                                    }
+                                                    placeholder="Tambahkan catatan karyawan..."
+                                                    minHeight="min-h-[120px]"
+                                                />
+                                                <InputError
+                                                    message={
+                                                        employeeForm.errors
+                                                            .notes
+                                                    }
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-
-                        <div className="flex flex-wrap justify-between gap-2 border-t pt-4">
+                            )}
+                        </div>
+                        <div className="flex shrink-0 flex-wrap justify-between gap-2 border-t bg-background px-5 py-3 sm:px-6">
                             <div className="flex gap-2">
                                 <Button
                                     type="button"
@@ -6626,7 +6989,7 @@ export default function EmployeesIndex() {
                                         type="button"
                                         onClick={goToNextEmployeeStep}
                                     >
-                                        Simpan
+                                        Lanjut
                                     </Button>
                                 ) : (
                                     <Button
@@ -6635,7 +6998,7 @@ export default function EmployeesIndex() {
                                     >
                                         {editingEmployee
                                             ? 'Simpan Perubahan'
-                                            : 'Simpan'}
+                                            : 'Simpan Karyawan'}
                                     </Button>
                                 )}
                             </div>
